@@ -159,10 +159,14 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Logged out successfully.',
-        ]);
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Logged out successfully.',
+            ]);
+        }
+
+        return redirect()->to("/{$lang}/")->with('status', 'Logged out successfully.');
     }
 
     /**

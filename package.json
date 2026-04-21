@@ -17,6 +17,7 @@
     },
     "dependencies": {
         "@alpinejs/collapse": "^3.15.11",
+        "@alpinejs/focus": "^3.15.11",
         "@fontsource/inter": "^5.1.0",
         "@fontsource/jetbrains-mono": "^5.1.0",
         "@fontsource/plus-jakarta-sans": "^5.1.0",

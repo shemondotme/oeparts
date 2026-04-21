@@ -1,115 +1,144 @@
 {{--
-Toast Notification System (Modern Glassmorphism Design)
-Position: Bottom-Right
+Toast Notification — Industrial Blueprint
+Position: Bottom-Right · Stack: vertical
+Types: success · error · warning · info
 --}}
 <div
     x-data="toastComponent()"
     x-init="init()"
-    class="fixed bottom-8 right-8 flex flex-col gap-3 pointer-events-none"
+    class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 flex flex-col gap-3 pointer-events-none"
     style="z-index: 99999 !important;"
 >
     <template x-for="toast in toasts" :key="toast.id">
         <div
             x-show="toast.visible"
-            x-transition:enter="transition ease-out duration-500 transform"
-            x-transition:enter-start="opacity-0 translate-y-12 scale-90 blur-sm"
-            x-transition:enter-end="opacity-100 translate-y-0 scale-100 blur-0"
-            x-transition:leave="transition ease-in duration-300 transform"
-            x-transition:leave-start="opacity-100 scale-100 blur-0"
-            x-transition:leave-end="opacity-0 translate-x-12 scale-95 blur-sm"
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="opacity-0 translate-x-8 translate-y-2"
+            x-transition:enter-end="opacity-100 translate-x-0 translate-y-0"
+            x-transition:leave="transition ease-in duration-200 transform"
+            x-transition:leave-start="opacity-100 translate-x-0"
+            x-transition:leave-end="opacity-0 translate-x-8"
             @mouseenter="pauseToast(toast.id)"
             @mouseleave="resumeToast(toast.id)"
-            class="pointer-events-auto min-w-[340px] max-w-[440px] overflow-hidden rounded-[24px] 
-                   bg-white/80 backdrop-blur-xl 
-                   shadow-[0_25px_50px_-12px_rgba(0,0,0,0.15),0_0_15px_rgba(0,0,0,0.02)] 
-                   border border-white/40 ring-1 ring-black/5"
+            class="pointer-events-auto relative w-[360px] max-w-[calc(100vw-3rem)] bg-paper border border-ink
+                   shadow-[6px_6px_0_0_theme(colors.ink.DEFAULT)] motion-reduce:transition-none"
+            role="status"
+            aria-live="polite"
         >
-            <div class="relative p-4 flex items-start gap-4">
-                {{-- Type indicator (Icon Box) --}}
-                <div 
-                    class="flex-shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner"
+            {{-- Type-coloured tick strip --}}
+            <div
+                class="h-1 w-full shrink-0"
+                :class="{
+                    'bg-amber': toast.type === 'success',
+                    'bg-red-600': toast.type === 'error',
+                    'bg-amber-ink': toast.type === 'warning',
+                    'bg-ink': toast.type === 'info'
+                }"
+                aria-hidden="true"
+            ></div>
+
+            {{-- Corner register marks --}}
+            <span class="pointer-events-none absolute top-2 left-2 w-2.5 h-2.5 border-l border-t border-rule-strong" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute top-2 right-2 w-2.5 h-2.5 border-r border-t border-rule-strong" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute bottom-2 left-2 w-2.5 h-2.5 border-l border-b border-rule-strong" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute bottom-2 right-2 w-2.5 h-2.5 border-r border-b border-rule-strong" aria-hidden="true"></span>
+
+            <div class="relative px-4 py-4 flex items-start gap-3.5">
+                {{-- Icon tile --}}
+                <div
+                    class="flex-shrink-0 w-10 h-10 border flex items-center justify-center"
                     :class="{
-                        'bg-emerald-500/10 text-emerald-600': toast.type === 'success',
-                        'bg-red-500/10 text-red-600': toast.type === 'error',
-                        'bg-amber-500/10 text-amber-600': toast.type === 'warning',
-                        'bg-navy/10 text-navy': toast.type === 'info'
+                        'border-ink bg-ivory-alt text-ink': toast.type === 'success',
+                        'border-red-600 bg-red-50 text-red-700': toast.type === 'error',
+                        'border-amber-ink bg-amber/10 text-amber-ink': toast.type === 'warning',
+                        'border-ink bg-paper text-ink': toast.type === 'info'
                     }"
                 >
-                    {{-- Success Icon --}}
                     <template x-if="toast.type === 'success'">
-                        <div class="relative">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                            </svg>
-                            <span class="absolute -inset-1 rounded-full bg-emerald-500/20 animate-ping"></span>
-                        </div>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                            <path stroke-linecap="square" stroke-linejoin="miter" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
                     </template>
-                    {{-- Error Icon --}}
                     <template x-if="toast.type === 'error'">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                            <path stroke-linecap="square" stroke-linejoin="miter" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </template>
-                    {{-- Warning Icon --}}
                     <template x-if="toast.type === 'warning'">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                            <path stroke-linecap="square" stroke-linejoin="miter" d="M12 9v4m0 3.5h.01M4.062 19.5h15.876c1.54 0 2.502-1.667 1.732-3L13.732 4.5c-.77-1.333-2.694-1.333-3.464 0L2.33 16.5c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                     </template>
-                    {{-- Info Icon --}}
                     <template x-if="toast.type === 'info'">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                            <path stroke-linecap="square" stroke-linejoin="miter" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </template>
                 </div>
 
-                {{-- Content Area --}}
-                <div class="flex-1 min-w-0 py-1">
-                    <h4 class="text-xs font-black uppercase tracking-widest mb-0.5 opacity-60"
-                        :class="{
-                            'text-emerald-800': toast.type === 'success',
-                            'text-red-800': toast.type === 'error',
-                            'text-amber-800': toast.type === 'warning',
-                            'text-navy/80': toast.type === 'info'
-                        }"
-                        x-text="toast.title || (toast.type === 'success' ? 'Confirmed' : 'System Note')"></h4>
-                    
-                    <p class="text-[14px] font-bold text-navy leading-tight" x-text="toast.message"></p>
-                    
-                    {{-- Specialized view for cart-toast meta info if available --}}
+                {{-- Content --}}
+                <div class="flex-1 min-w-0 pt-0.5">
+                    {{-- Doc header: § TAG · TYPE --}}
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="inline-block w-3 h-[2px]"
+                              :class="{
+                                  'bg-amber': toast.type === 'success',
+                                  'bg-red-600': toast.type === 'error',
+                                  'bg-amber-ink': toast.type === 'warning',
+                                  'bg-ink': toast.type === 'info'
+                              }"></span>
+                        <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase"
+                              :class="{
+                                  'text-amber-ink': toast.type === 'success',
+                                  'text-red-700': toast.type === 'error',
+                                  'text-amber-ink': toast.type === 'warning',
+                                  'text-ink-muted': toast.type === 'info'
+                              }"
+                              x-text="toast.title"></span>
+                    </div>
+
+                    {{-- Message --}}
+                    <p class="text-[13px] font-semibold text-ink leading-snug tracking-tight" x-text="toast.message"></p>
+
+                    {{-- Cart-specific ledger link --}}
                     <template x-if="toast.context === 'cart'">
-                        <div class="mt-2 flex items-center gap-2">
-                             <div class="px-2 py-0.5 rounded-full bg-navy/5 border border-navy/10 text-[10px] font-bold text-navy/60 uppercase tracking-tighter">
-                                 Added to Shopping Bag
-                             </div>
-                        </div>
+                        <a href="{{ url('/'.app()->getLocale().'/cart') }}"
+                           class="mt-2 inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase
+                                  text-ink border-b border-amber pb-0.5 hover:text-amber-ink hover:border-ink transition-colors">
+                            <span>View Cart</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                                <path stroke-linecap="square" stroke-linejoin="miter" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                            </svg>
+                        </a>
                     </template>
                 </div>
 
-                {{-- Close Button --}}
+                {{-- Close button --}}
                 <button
                     @click="removeToast(toast.id)"
-                    class="flex-shrink-0 -mt-1 -mr-1 p-2 rounded-full text-navy/20 hover:text-navy/60 hover:bg-navy/5 transition-all duration-200"
+                    class="flex-shrink-0 w-7 h-7 -mt-0.5 border border-rule-strong text-ink-muted
+                           hover:bg-ink hover:text-amber hover:border-ink transition-colors
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-1"
+                    aria-label="Dismiss"
                 >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                    <svg class="w-3.5 h-3.5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                        <path stroke-linecap="square" stroke-linejoin="miter" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
                 </button>
             </div>
 
-            {{-- Slim Progress Bar --}}
-            <div class="px-5 pb-4">
-                <div class="h-1 w-full bg-navy/5 rounded-full overflow-hidden">
-                    <div
-                        class="h-full transition-all duration-100 ease-linear rounded-full shadow-[0_0_8px_rgba(0,0,0,0.1)]"
-                        :class="{
-                            'bg-emerald-500': toast.type === 'success',
-                            'bg-red-500': toast.type === 'error',
-                            'bg-amber-500': toast.type === 'warning',
-                            'bg-navy': toast.type === 'info'
-                        }"
-                        :style="{ width: toast.progress + '%' }"
-                    ></div>
-                </div>
+            {{-- Bottom: progress leader line --}}
+            <div class="h-[2px] w-full bg-rule overflow-hidden">
+                <div
+                    class="h-full transition-all duration-100 ease-linear"
+                    :class="{
+                        'bg-amber': toast.type === 'success',
+                        'bg-red-600': toast.type === 'error',
+                        'bg-amber-ink': toast.type === 'warning',
+                        'bg-ink': toast.type === 'info'
+                    }"
+                    :style="{ width: toast.progress + '%' }"
+                ></div>
             </div>
         </div>
     </template>
@@ -129,13 +158,21 @@ function toastComponent() {
                 this.showCartToast(productName, quantity);
             });
         },
+        defaultTitle(type) {
+            switch (type) {
+                case 'success': return '§ OK · CONFIRMED';
+                case 'error':   return '§ ERR · FAILED';
+                case 'warning': return '§ ATT · NOTICE';
+                case 'info':
+                default:        return '§ INFO · SYSTEM';
+            }
+        },
         showToast(message, type = 'info', title = null, duration = 4000, context = null) {
             const now = Date.now();
+            // Deduplicate: ignore identical message within 1 second
             if (this.toasts.length > 0) {
-                const lastToast = this.toasts[this.toasts.length - 1];
-                if (lastToast.message === message && (now - lastToast.id < 1000)) {
-                    return;
-                }
+                const last = this.toasts[this.toasts.length - 1];
+                if (last.message === message && (now - last.id < 1000)) return;
             }
 
             const id = now + Math.random();
@@ -143,7 +180,7 @@ function toastComponent() {
                 id,
                 message,
                 type,
-                title: title || (type === 'success' ? 'SUCCESS' : type.toUpperCase()),
+                title: title || this.defaultTitle(type),
                 visible: true,
                 progress: 100,
                 duration,
@@ -156,9 +193,9 @@ function toastComponent() {
         },
         showCartToast(productName, quantity) {
             this.showToast(
-                `${productName} × ${quantity}`,
+                `${productName} × ${quantity} added to cart`,
                 'success',
-                'PRODUCT ADDED',
+                '§ CART · UPDATED',
                 5000,
                 'cart'
             );
@@ -193,7 +230,7 @@ function toastComponent() {
                 this.toasts[index].visible = false;
                 setTimeout(() => {
                     this.toasts = this.toasts.filter(t => t.id !== id);
-                }, 500);
+                }, 300);
             }
         }
     };

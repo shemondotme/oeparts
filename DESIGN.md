@@ -1,419 +1,747 @@
-# OEMHub — Design System Reference
+# OEMHub — Design System
+## Industrial Blueprint v2 — Single Source of Truth
 
-## 1. Visual Theme & Atmosphere
+This document governs **every** visual surface of OEMHub: public frontend, transactional emails, admin panel, and any future page, component, or template. If a pattern is not in this file, it does not exist — add it here first, then build it.
 
-OEMHub is a **search-first e-commerce platform for genuine OEM auto parts** in Europe. The design communicates trust, precision, and speed — a professional parts catalog that feels reliable to both B2B workshops and B2C car owners.
+**Read order:**
+1. §1–3: Philosophy + tokens + typography (read once, internalize)
+2. §4–5: Primitives + components (reference while building)
+3. §8: Accessibility (non-negotiable)
+4. §11–12: Email + admin adaptations (only when building those surfaces)
+5. §13: Page-creation checklist (use every time you create a new page)
 
-The visual identity is built on a **navy + amber** pairing: deep navy (`#0B3A68`) for authority and structure, warm amber (`#F59E0B`) for energy and action. The page sits on a cool-neutral gray canvas (`#F8FAFC`) that keeps attention on content. Cards and sections float on white, creating clear visual layers.
+---
 
-Typography is split between two complementary families: **Plus Jakarta Sans** — a geometric display face with strong personality — anchors all headings, while **Inter** handles body text and UI with quiet professionalism. **JetBrains Mono** is reserved exclusively for OEM part numbers, making them instantly recognizable and scannable across the entire site.
+## 1. Brand Philosophy
 
-The design leans into **gradient accents** and **soft depth**: amber-to-orange gradients on primary CTAs, blurred blob decorations for visual warmth, and generous border-radius (2xl–3xl) creating a modern, approachable feel. Sections use scroll-triggered fade-in-up animations via Alpine.js + IntersectionObserver, giving the page a progressive reveal rhythm.
+OEMHub is a **search-first parts catalog** for European mechanics and workshops. The interface looks and feels like a **technical specification sheet** — flat, hairline-ruled, monospace-dense, documentary. No rounded corners on structural elements. No drop shadows as visual candy. No gradients for their own sake. Every ornament earns its place by signalling category, status, or hierarchy.
 
-**Key Characteristics:**
-- Navy + amber dual-tone identity — authority meets energy
-- Cool-neutral page canvas (`#F8FAFC`) with white card surfaces
-- Split typography: Plus Jakarta Sans (display) / Inter (body) / JetBrains Mono (OEM numbers only)
-- Gradient CTAs with amber-to-orange transitions and glow shadows
-- Generous border-radius (`rounded-2xl` / `rounded-3xl`) throughout
-- Scroll-triggered entrance animations (IntersectionObserver + Alpine.js)
-- Decorative gradient blobs as section backgrounds (blurred, low-opacity)
-- No product images — text-first, data-driven part listings
-- Heroicons v2 (outline for UI, solid for active states)
-- Mobile-first responsive with Tailwind utility classes
+We call this aesthetic **Industrial Blueprint**. It borrows from:
+- Engineering drawings (callouts, section markers, numbered indices)
+- Parts manuals (monospaced part numbers, leader dots, tabular alignment)
+- Swiss typography (strict grid, hairline rules, asymmetric weight)
+- Early-web documentary design (`§` glyphs, small caps, tracked uppercase labels)
 
-## 2. Color Palette & Roles
+**Core principles:**
 
-### Primary Brand
-- **Navy** (`#0B3A68`): The primary brand color. Used for headings, hero backgrounds, navbar, footer, sidebar, primary text emphasis, and `.btn-secondary`. The foundation of trust and authority.
-- **Amber** (`#F59E0B`): The accent/action color. Used for CTA buttons, active states, progress bars, badge backgrounds, icon wrappers, and decorative elements. Always draws the eye to the next action.
-- **Amber Text** (`#B45309`): WCAG AA-compliant amber for text on white/light backgrounds. **NEVER use `#F59E0B` as text on white** — it fails contrast. Used in eyebrow badges, inline links, and any amber text on light surfaces.
+| Principle | What it means in practice |
+|---|---|
+| **Flat, not skeuomorphic** | No box-shadows except the signature `4px 4px 0 ink` stamp. No gradients except intentional ink-to-ink blueprint fields. No glassmorphism. |
+| **Hairline rules over fills** | 1px `border-rule` lines separate content. Backgrounds stay ivory/paper; separation comes from rules, not tinted blocks. |
+| **Monospace carries authority** | Part numbers, spec labels, breadcrumbs, timestamps, IDs — all `font-mono`. Display type (`font-display`) is reserved for headlines and product names. |
+| **Amber is a scalpel, not a highlighter** | Amber marks **one** action or **one** status per viewport. Used everywhere it stops signalling anything. |
+| **Dense, tabular, scannable** | B2B users scan tables. Columns align on tabular numerals. Leader dots connect label to value. Whitespace comes from rule density, not padding. |
+| **Progressive reveal, not spectacle** | Subtle `fade-in-up` and `rule-draw` entrance animations. No parallax. No hero video. No confetti. |
 
-### Semantic Text
-- **Body** (`#334155`): Primary body text — a cool slate-gray. All paragraph text, descriptions, and content.
-- **Muted** (`#64748B`): Secondary text — labels, timestamps, metadata, helper text, and de-emphasized content.
-- **White** (`#FFFFFF`): Text on navy/dark backgrounds — headings, nav links, footer text.
-- **Navy** (`#0B3A68`): Heading text on light backgrounds — all H1, H2, H3 on white/gray surfaces.
+**The aesthetic pledge:** If a component looks like it could appear on a modern SaaS landing page, it is wrong for OEMHub. If it could appear on a printed parts catalogue from a precision manufacturer, it is right.
 
-### Surface & Background
-- **Page Background** (`#F8FAFC`): The default page canvas — a barely-blue cool gray.
-- **White** (`#FFFFFF`): Card surfaces, inputs, modals, form containers.
-- **Section Alt** (`#EEF4FF`): Alternating section background — a 6% navy tint for visual rhythm between sections.
-- **Off-White** (`#FAFAF8`): Stats counter and subtle section backgrounds — warm near-white.
-- **Amber 50 tints** (`amber-50/50`, `orange-50/30`): Soft warm gradients for trust bar, part inquiry, and newsletter section backgrounds.
+---
 
-### Dark Surfaces (Hero, Navbar, Footer)
-- **Navy** (`#0B3A68`): Hero section, navbar, CTA sections.
-- **Navy → Blue 900**: Footer gradient (`from-navy via-navy to-blue-950`).
-- **Navy → Blue 700**: Dark card headers (`from-navy to-blue-700`).
-- **White/10–30%**: Borders, hover states, and glassmorphism on dark surfaces (`border-white/10`, `bg-white/15`).
+## 2. Design Tokens
 
-### Condition Badges (Product Listing)
+All tokens are defined in `tailwind.config.js` and consumed via Tailwind utilities. Never hardcode hex values in Blade templates.
+
+### 2.1 Color Tokens
+
+#### Structural ink & paper
+| Token | Hex | Use |
+|---|---|---|
+| `ink` | `#0A1228` | Primary text on light surfaces. Dark header backgrounds. Borders on cards (`border-ink`). |
+| `ink-muted` | `#4E5A74` | Secondary text, labels, metadata, de-emphasized content. |
+| `ivory` | `#F7F3E7` | Primary page background. Warm off-white. |
+| `ivory-alt` | `#EFE9D6` | Section alt background, card header strips, hover states. |
+| `paper` | `#FFFFFF` | Card surfaces, inputs, modals, form containers. |
+
+#### Rules
+| Token | Hex | Use |
+|---|---|---|
+| `rule` | `#D8CFB6` | Default hairline rule. Dividers, subtle borders. |
+| `rule-strong` | `#B8AE90` | Stronger rule on ivory. Dotted leader lines, emphasized separators. |
+| `rule-dark` | `#1D2A44` | Rule on dark (`ink`) surfaces. |
+
+#### Accent — amber
+| Token | Hex | Use | Contrast |
+|---|---|---|---|
+| `amber` | `#F59E0B` | Amber fills, accent strips, active-state backgrounds on **dark ink**. Also as text on `ink`/dark surfaces. | ❌ Fails on ivory/paper as text |
+| `amber-text` | `#B45309` | Minimum WCAG AA amber text on paper/ivory. Use for body-text inline links. | ✅ AA on paper |
+| `amber-ink` | `#9A5A00` | Default amber text token on ivory/paper. Used in `.bp-spec`, eyebrows, inline emphasis. | ✅ AA on ivory/paper |
+
+**Amber contrast rule — non-negotiable:**
+- On `ink`/dark surface → `text-amber` is correct
+- On `ivory`/`paper` → `text-amber-ink` (preferred) or `text-amber-text` (bolder body links)
+- **Never** `text-amber` on paper/ivory — only permitted as decorative non-text (e.g., `bg-amber` fills, the amber period after headings when adjacent to ink-colored siblings at large size).
+
+#### Legacy (do not use for new work)
+| Token | Hex | Status |
+|---|---|---|
+| `navy` | `#0B3A68` | Kept for back-compat only. Use `ink` for new components. |
+| `bg-page` | `#F8FAFC` | Kept for back-compat. Use `ivory` for new pages. |
+
+#### Condition badges
+Dual-token pairs (bg + text), always used together:
 | Condition | Background | Text |
-|-----------|-----------|------|
-| New | `#DCFCE7` | `#16A34A` (green) |
-| Used Grade A | `#DBEAFE` | `#1D4ED8` (blue) |
-| Used Grade B | `#FEF3C7` | `#D97706` (amber) |
-| Used Grade C | `#F1F5F9` | `#64748B` (gray) |
-| Remanufactured | `#F3E8FF` | `#7C3AED` (purple) |
-| Aftermarket | `#FEE2E2` | `#DC2626` (red) |
-| New Old Stock | `#ECFDF5` | `#059669` (teal) |
+|---|---|---|
+| `new` | `#DCFCE7` | `#16A34A` |
+| `used_grade_a` | `#DBEAFE` | `#1D4ED8` |
+| `used_grade_b` | `#FEF3C7` | `#D97706` |
+| `used_grade_c` | `#F1F5F9` | `#64748B` |
+| `remanufactured` | `#F3E8FF` | `#7C3AED` |
+| `aftermarket` | `#FEE2E2` | `#DC2626` |
+| `new_old_stock` | `#ECFDF5` | `#059669` |
 
-### Semantic Status
-- **Success**: green-500/600 backgrounds with green text
-- **Error**: red-50 bg, red-200 border, red-700 text
-- **Warning**: amber-50 bg, amber-200 border, amber-700 text
-- **Info**: blue-50 bg, blue-200 border, blue-700 text
+#### Semantic (flash banners, states)
+| Token | Use |
+|---|---|
+| `text-emerald-600` / `border-emerald-600` / `bg-emerald-50` | Success banner |
+| `text-red-600` / `border-red-600` / `bg-red-50` | Error banner |
+| `text-amber-ink` / `border-amber` / `bg-amber-50` | Warning / notice |
+| `text-ink` / `border-rule` / `bg-ivory-alt` | Neutral / info |
 
-### Gradient System
-OEMHub uses gradients in specific, consistent ways:
-- **Primary CTA**: `bg-gradient-to-r from-amber to-orange-500` with `shadow-lg shadow-amber/30`
-- **Secondary CTA**: `bg-gradient-to-r from-navy to-navy/90` with `shadow-lg shadow-navy/30`
-- **Hero background**: Solid navy with animated gradient blobs (`amber`, `blue-500`, `purple-500` at 20% opacity, blurred)
-- **Navbar**: `bg-gradient-to-r from-navy via-navy to-blue-900`
-- **Footer**: `bg-gradient-to-b from-navy via-navy to-blue-950`
-- **Section badges**: `bg-gradient-to-r from-amber/15 to-orange-50/15` with `border border-amber/25`
-- **Decorative blobs**: Low-opacity (10–20%) amber and blue circles with `filter blur-3xl`
-- **NEVER** use gradients on body text, borders, or structural elements
+### 2.2 Border & Shadow
 
-## 3. Typography Rules
+**Borders** are the primary structural device. Use `border-ink` (1px solid) for cards, `border-rule` for dividers, `border-rule-strong` for emphasized separators.
 
-### Font Families (loaded via @fontsource — no Google CDN)
-- **Display**: `Plus Jakarta Sans` (weights: 600, 700, 800) — H1, H2, H3, logo, hero text, section headings
-- **Body / UI**: `Inter` (weights: 400, 500, 600) — body text, labels, navigation, descriptions, buttons
-- **Mono**: `JetBrains Mono` (weights: 400, 500) — OEM part numbers ONLY. Every single OEM number on the site must use `font-mono`
+**Radius**: `rounded-none` is the default for all structural elements (cards, buttons, inputs, badges). The only acceptable curves are:
+- `rounded-full` for status dots, avatar initials, and chip-style status pills
+- `rounded-sm` on a **very** limited set (never on cards)
 
-### Hierarchy
+**Shadows**: one shadow only, the blueprint stamp:
+```css
+box-shadow: 4px 4px 0 rgba(20,22,29,1);   /* default ink stamp */
+box-shadow: 3px 3px 0 rgba(241,145,58,1); /* amber stamp on avatar initials */
+box-shadow: 2px 2px 0 rgba(20,22,29,1);   /* small components */
+```
+No `shadow-lg`, no `drop-shadow`, no glows. The stamp is applied via inline `style` because Tailwind's shadow utilities cannot express `0 blur`.
 
-| Role | Font | Size | Weight | Tailwind Class | Notes |
-|------|------|------|--------|----------------|-------|
-| Hero Heading | Plus Jakarta Sans | 4xl → 7xl responsive | 800 (extrabold) | `font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold` | Gradient text on dark bg |
-| Section Heading | Plus Jakarta Sans | 3xl → 5xl responsive | 900 (black) | `section-heading` = `font-display text-3xl md:text-4xl lg:text-5xl font-black` | Navy on light, white on dark |
-| Card Title | Plus Jakarta Sans | xl–2xl | 700 (bold) | `font-display text-xl font-bold text-navy` | — |
-| Feature Title | Plus Jakarta Sans | lg | 700 (bold) | `font-display text-lg font-bold text-navy` | — |
-| Body Large | Inter | xl–2xl | 400 | `text-xl text-body` or `text-xl text-white/70` | Intro paragraphs, subheadlines |
-| Body | Inter | base (16px) | 400–500 | `text-base text-body` | Standard content |
-| Body Small | Inter | sm (14px) | 400–500 | `text-sm text-body` | Compact content |
-| Label | Inter | sm (14px) | 600 (semibold) | `text-sm font-semibold text-navy` | Form labels |
-| Muted / Meta | Inter | sm–xs | 400 | `text-sm text-muted` or `text-xs text-muted` | Timestamps, helper text |
-| Eyebrow / Badge | Inter | xs (12px) | 700 (bold) | `section-badge` = `text-xs font-bold tracking-widest uppercase` | All-caps with amber styling |
-| Navigation | Inter | sm (14px) | 600 (semibold) | `text-sm font-semibold text-white/90` | Navbar links |
-| Button Text | Inter | sm–base | 600 (semibold) | `font-semibold` | All button variants |
-| OEM Number | JetBrains Mono | sm–xl | 400–500 | `font-mono` | Always uppercase, always monospace |
+### 2.3 Background Patterns
+Defined in `tailwind.config.js` under `backgroundImage`:
+- `bg-grid-ivory` / `bg-grid-ivory-fine` — faint ivory grid for body/hero backgrounds
+- `bg-grid-navy` — grid on dark `ink` surfaces
+- `bg-dotted-leader` — horizontal dotted rule for leader lines
+- `bg-grid-lg` / `bg-grid-md` — paired size utilities
 
-### Typography Principles
-- **Display for structure, sans for function**: Plus Jakarta Sans carries all structural headings (H1–H3), creating a bold, modern hierarchy. Inter handles everything functional — body, buttons, labels, nav.
-- **OEM numbers are sacred**: Every OEM part number uses JetBrains Mono (`font-mono`). No exceptions. They render uppercase with `autocapitalize="characters"` in inputs.
-- **Navy headings, slate body**: Headings are always navy (`text-navy`) on light backgrounds, white on dark. Body text is always slate (`text-body` / `#334155`).
-- **Weight discipline**: Display text uses 600–900 weights. Body text uses 400–600. Never use 800+ on Inter body text.
-- **Responsive scaling**: Hero headings scale from `text-4xl` on mobile to `text-7xl` on desktop. Section headings scale from `text-3xl` to `text-5xl`.
+Always layer patterns behind content with `pointer-events-none` and `opacity-40`–`60`.
 
-## 4. Component Stylings
+### 2.4 Spacing
+Tailwind default scale (4px base). No custom spacing tokens. Density rules:
+- Card header strip: `px-4 py-3`
+- Card body: `p-4` (compact) or `p-5`–`p-6` (spacious)
+- Form field vertical rhythm: `py-2.5` between rows in a definition list
+- Section gap: `gap-y-8` in grid layouts, `space-y-6` between major sections
+- Hero padding: `pt-10 pb-6` on dark headers
 
-### Buttons
+### 2.5 Z-index
+- Preloader: `z-[9999]`
+- Modal overlay: `z-50`
+- Sticky header / sidebar: `z-40` (or `lg:sticky lg:top-10` for in-page sidebars)
+- Flash region: `z-30`
+- Default: `z-auto`
 
-**Primary (`.btn-primary`)**
-- Background: `bg-gradient-to-r from-amber to-orange-500`
-- Text: White, font-semibold
-- Shadow: `shadow-lg shadow-amber/30`
-- Hover: `scale-105`, `from-amber/90 to-orange-500/90`, `shadow-xl shadow-amber/40`
-- Radius: `rounded-2xl`
-- Padding: `px-6 py-3`
-- The main CTA — amber gradient with glow shadow
+---
 
-**Secondary (`.btn-secondary`)**
-- Background: `bg-gradient-to-r from-navy to-navy/90`
-- Text: White, font-semibold
-- Shadow: `shadow-lg shadow-navy/30`
-- Hover: `scale-105`, inverted gradient direction, `shadow-xl`
-- Radius: `rounded-2xl`
-- For secondary actions — navy gradient
+## 3. Typography System
 
-**Outline (`.btn-outline`)**
-- Background: Transparent
-- Border: `border-2 border-amber`
-- Text: `text-amber`, font-semibold
-- Hover: `bg-amber/5`, `scale-105`
-- Radius: `rounded-2xl`
-- For tertiary actions on light backgrounds
+### 3.1 Families
+| Family | CSS | Use |
+|---|---|---|
+| `font-display` | Plus Jakarta Sans | H1, H2, H3, card titles, product names, body in hero. Weight 800 for hero, 700 for cards, 600 for inline. |
+| `font-sans` | Inter | Body text, paragraphs, helper text, button labels. |
+| `font-mono` | JetBrains Mono | Spec labels, part numbers, breadcrumbs, timestamps, indices, amounts, form hints. |
 
-**Ghost (`.btn-ghost`)**
-- Background: Transparent → `hover:bg-gray-100`
-- Text: `text-gray-700`, font-semibold
-- Radius: `rounded-2xl`
-- For minimal-emphasis actions
+Fonts are bundled via `@fontsource/*` imported in `resources/css/app.css`. Never use Google Fonts CDN.
 
-**Button Sizes**
-- Small: `px-4 py-2 text-sm rounded-2xl`
-- Medium: `px-6 py-3 text-sm rounded-2xl`
-- Large: `px-8 py-4 text-base rounded-2xl`
+### 3.2 Scale
 
-### Cards & Containers
-- Background: White (`bg-white`) on page background
-- Border: `border border-gray-100` (light, subtle)
-- Radius: `rounded-2xl` (standard) or `rounded-3xl` (featured/large)
-- Shadow: `shadow-sm` → `hover:shadow-lg` for interactive cards
-- Larger cards: `shadow-lg` or `shadow-xl shadow-amber/5`
-- Internal padding: `p-6` (compact) or `p-8 md:p-12` (spacious)
-- Transition: `transition-all duration-300` with `hover:-translate-y-1` for lift effect
+**Custom fluid scale** (defined in `tailwind.config.js`):
+- `text-blueprint-xl` — hero titles (clamp ~48–80px)
+- `text-blueprint-lg` — section titles (clamp ~36–56px)
+- `text-blueprint-md` — subsection titles (clamp ~24–40px)
+- `text-spec-sm` / `text-spec-xs` — spec labels, micro-captions (10–12px with wide tracking)
 
-### Icon Wrappers
-Three variants for consistent icon presentation:
-- **Gradient**: `bg-gradient-to-br from-amber/10 to-orange-100 text-amber` — the default, warm and subtle
-- **Solid**: `bg-amber text-white` — for emphasis and active states
-- **Outline**: `border-2 border-amber text-amber bg-transparent` — for lighter contexts
+**Standard Tailwind scale**:
+- Body: `text-sm` (14px) default, `text-base` (16px) for prose pages
+- Buttons: `text-[11px]` tracked uppercase for spec buttons, `text-sm` for primary actions
 
-Icon sizes: `w-8 h-8` (sm), `w-12 h-12` (md), `w-16 h-16` (lg)
-Inner icon sizes: `w-4 h-4` (sm), `w-6 h-6` (md), `w-8 h-8` (lg)
+### 3.3 Heading Pattern
 
-### Inputs & Forms
-- Background: `bg-gray-50` (subtle gray tint, not pure white)
-- Border: `border border-gray-200`
-- Focus: `focus:border-navy focus:ring-2 focus:ring-navy/10`
-- Radius: `rounded-xl` (standard inputs) or `rounded-2xl` (search bars)
-- Padding: `px-4 py-3` (standard) or `px-4 py-2.5` (compact)
-- Text: `text-navy text-sm`
-- Placeholder: `placeholder:text-gray-400`
-- OEM inputs: Add `font-mono uppercase autocapitalize="characters" inputmode="text"`
-- Email inputs: Add `inputmode="email"`
-- Honeypot: `<input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">` on all public forms
+The signature OEMHub heading:
 
-### Section Heading Component (`<x-section-heading>`)
-Reusable component with:
-- **Eyebrow badge**: `section-badge` class — pill shape, amber gradient bg, uppercase tracking-widest, animated pulse dot
-- **Headline**: `section-heading` class — Plus Jakarta Sans, font-black, navy, responsive 3xl→5xl
-- **Subheadline**: `section-subheading` class — Inter, font-medium, `text-body`, max-w-2xl centered
-- **Animation**: IntersectionObserver triggers `opacity-0 translate-y-4` → `opacity-100 translate-y-0` on scroll
-- Props: `eyebrow`, `headline`, `subheadline`, `accentBar`, `align` (center/left), `dark` (bool)
-
-### Navigation (Navbar)
-- **Homepage**: Transparent initially, becomes `bg-navy/95 backdrop-blur-xl shadow-xl` on scroll
-- **Inner pages**: Sticky, solid `bg-gradient-to-r from-navy via-navy to-blue-900`
-- Top accent bar: `h-0.5 bg-gradient-to-r from-amber via-orange-400 to-amber` (inner pages only)
-- Height: `h-20`
-- Logo: Amber icon box (`bg-gradient-to-br from-amber to-orange-500 rounded-xl`) + "OEM" (amber) + "Hub" (white)
-- Links: `text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-lg`
-- CTA: Sign In button with amber styling
-- Language switcher: Flag icon + dropdown
-- Cart icon with badge counter
-- Mobile: hamburger menu with slide-out panel
-
-### Footer
-- Background: `bg-gradient-to-b from-navy via-navy to-blue-950`
-- 4-column grid: Brand info, Quick Links, My Account, Get in Touch
-- Logo: Same as navbar
-- Links: `text-white/70 hover:text-amber transition-colors`
-- Phone/email with icons
-- Language flags
-- Payment badges (VISA, Mastercard, PayPal, Apple Pay)
-- Bottom bar: Copyright, trust badges (Secure Checkout, EU Shipping, etc.), legal links
-- Decorative: Low-opacity amber/blue blurred blobs
-
-## 5. Homepage Sections (in order)
-
-| # | Section Type | Background | Key Design Elements |
-|---|-------------|-----------|-------------------|
-| 1 | `hero` | Solid navy with animated gradient blobs | Gradient text heading, glassmorphism search bar with 3D tilt, typing placeholder, popular OEM pills, wave SVG divider |
-| 2 | `stats_counter` | Off-white (`#FAFAF8`) | 4-column card grid, amber animated counters (countUp.js), icon wrappers, eyebrow badge, CTA button |
-| 3 | `how_it_works` | White with decorative blobs | 3-step cards with numbered amber badges (01/02/03), icons, descriptions |
-| 4 | `featured_brands` | Gradient gray-amber (`from-gray-50 via-amber-50/20 to-gray-50`) | Brand cards with logos, alphabet filter tabs, "View All Brands" CTA, scroll animations |
-| 5 | `popular_searches` | Gradient gray-orange (`from-gray-50 via-orange-50/10 to-gray-50`) | Tiered list leaderboard with progress bars, rank badges, search counts |
-| 6 | `part_inquiry` | Soft amber-cream gradient | Inline form card (OEM number + email + optional vehicle details), submit button, scroll animation |
-| 7 | `banner` | Navy with animated blobs | Promo/feature grid with 6 feature cards, social proof indicators, CTA button, staggered card animations |
-| 8 | `testimonials` | Gradient amber-white (`from-amber-50/30 via-white to-amber-50/30`) | 3-column review cards with star ratings, customer names, verified badges |
-| 9 | `shipping_info` | Gradient blue-white (`from-white via-blue-50/20 to-white`) | 4 stat cards + carrier cards grid (DHL, DPD, GLS, FedEx, UPS) with brand colors |
-| 10 | `blog_preview` | Section alt with decorative blobs | 3-column blog post cards with category badges, author avatars, read more CTA |
-| 11 | `faqs` | Gradient blue-white (`from-blue-50/30 via-white to-blue-50/30`) | Accordion with Alpine.js x-show/x-collapse toggle, numbered badges |
-| 12 | `contact_cta` | Navy gradient with decorative blobs | Dark section with white text, "Contact Us" + phone buttons, trust text, scroll animation |
-| 13 | `newsletter` | Soft gray-amber gradient | White card with email input + subscribe button, trust text, scroll animation |
-| 14 | `trust_bar` | Soft amber-cream gradient | Horizontal trust badges (truck, shield, returns, lock), scroll-triggered stagger animation |
-
-## 6. Layout Principles
-
-### Spacing System (Tailwind scale)
-- Section vertical padding: `py-14 md:py-20` (standard) or `py-24 md:py-28` (spacious)
-- Section content max-width: `max-w-6xl mx-auto` (standard), `max-w-5xl` (hero), `max-w-2xl` (forms)
-- Card grid gap: `gap-4 md:gap-6` (tight) or `gap-6 md:gap-8` (standard)
-- Card internal padding: `p-6` (compact) or `p-8 md:p-12` (spacious)
-- Component spacing: `mb-4` (tight), `mb-8` (standard), `mb-10` (generous)
-- Page horizontal padding: `px-4 sm:px-6`
-
-### Grid System
-- Hero: Single-column centered, `max-w-5xl`
-- Stats: `grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5`
-- How It Works: `grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8`
-- Testimonials: `grid grid-cols-1 md:grid-cols-3 gap-6`
-- Brands: `grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4`
-- Shipping stats: `grid grid-cols-2 lg:grid-cols-4 gap-4`
-- Footer: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10`
-
-### Border Radius Scale
-- Inputs: `rounded-xl` (12px)
-- Buttons: `rounded-2xl` (16px)
-- Cards (standard): `rounded-2xl` (16px)
-- Cards (featured): `rounded-3xl` (24px)
-- Hero search bar: `rounded-[2.5rem]` (40px)
-- Icon wrappers: `rounded-2xl` (16px)
-- Badges/pills: `rounded-full`
-- Navbar logo icon: `rounded-xl` (12px)
-
-### Animation System
-All animations use Alpine.js with IntersectionObserver:
-
-```javascript
-// Standard scroll-triggered entrance
-x-data="{ shown: false }"
-x-init="
-    const observer = new IntersectionObserver(
-        (entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    setTimeout(() => shown = true, delay);
-                    observer.unobserve(entry.target);
-                }
-            });
-        },
-        { threshold: 0.2 }
-    );
-    observer.observe($el);
-"
-:class='shown ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"'
+```blade
+<h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
+    Review order<span class="text-amber">.</span>
+</h1>
 ```
 
-Animations available:
-- **Fade in up**: `opacity-0 translate-y-4` → `opacity-100 translate-y-0` (most sections)
-- **Scale in**: `opacity-0 scale-95` → `opacity-100 scale-100` (hero search)
-- **Blob float**: `animate-blob` with delays (hero background)
-- **Float particles**: `animate-float` (hero background)
-- **Counter**: `countup` Alpine data component (stats section)
-- **Marquee**: `animate-marquee` (infinite horizontal scroll)
-- **Stagger**: Delay per index (`delay = index * 100`) for list items
-- **Reduced motion**: All animations respect `prefers-reduced-motion: reduce`
+- `font-display` always
+- `font-extrabold` (H1) or `font-bold` (H2, H3)
+- `tracking-[-0.03em]` (H1) / `tracking-[-0.02em]` (H2) — tight tracking is part of the mark
+- `leading-[0.95]` on display sizes
+- **Always** terminate with `<span class="text-amber">.</span>` or `<span class="text-amber-ink">.</span>` (pick based on surface contrast)
 
-## 7. Depth & Elevation
+### 3.4 Spec Labels — `.bp-spec`
 
-| Level | Treatment | Use |
-|-------|-----------|-----|
-| Flat (0) | No shadow | Page background, inline text, section backgrounds |
-| Subtle (1) | `shadow-sm` | Default cards, list items |
-| Interactive (2) | `shadow-sm hover:shadow-lg transition-shadow` | Clickable cards, brand cards |
-| Elevated (3) | `shadow-lg` or `shadow-xl shadow-amber/5` | Featured cards, newsletter container, form cards |
-| Hero (4) | `shadow-2xl shadow-navy/60` | Hero search bar (glassmorphism) |
-| CTA Glow (5) | `shadow-lg shadow-amber/30` or `shadow-lg shadow-navy/30` | Primary/secondary CTA buttons |
-
-**Shadow Philosophy**: OEMHub uses warm-tinted shadows (`shadow-amber/30`, `shadow-navy/30`, `shadow-amber/5`) on key interactive elements. Generic gray shadows (`shadow-sm`, `shadow-lg`) are used for structural cards. Buttons always have colored glow shadows matching their background. Hover states escalate shadow intensity (e.g., `shadow-sm` → `shadow-lg`). Cards with hover lift combine shadow escalation with `hover:-translate-y-1`.
-
-### Glassmorphism (Hero only)
-- Background: `bg-white/15 backdrop-blur-xl`
-- Border: `border border-white/30`
-- Shadow: `shadow-2xl shadow-navy/60`
-- Hover: `bg-white/20 border-white/50`
-- Used exclusively for the hero search bar
-
-### Decorative Depth (Section Backgrounds)
-- **Gradient blobs**: `bg-amber/15 rounded-full filter blur-3xl` at 10–20% opacity
-- **Dot grid**: `bg-[radial-gradient(circle,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:24px_24px]` (hero only)
-- **Wave divider**: SVG wave between hero and next section
-
-## 8. Do's and Don'ts
-
-### Do
-- Use `font-mono` (JetBrains Mono) for every OEM part number — no exceptions
-- Use `text-amber-text` (`#B45309`) when amber text appears on white/light backgrounds
-- Use `btn-primary` (amber gradient) for the most important action on each page
-- Use `section-heading` / `section-badge` / `section-subheading` classes for consistent section headers
-- Use `rounded-2xl` or `rounded-3xl` for cards — the site is soft and modern
-- Use `shadow-amber/30` glow on amber buttons and `shadow-navy/30` on navy buttons
-- Keep all monetary values in `font-mono` for precision feel
-- Use IntersectionObserver-based scroll animations for section entrances
-- Use Alpine.js (`x-data`, `x-show`, `x-bind`) for all interactivity
-- Respect `prefers-reduced-motion` — all animations must have `motion-reduce:` fallbacks
-- Include honeypot field on all public forms: `<input type="text" name="website" class="hidden" tabindex="-1">`
-- Use Heroicons v2 outline (`<x-heroicon-o-...>`) for UI, solid (`<x-heroicon-s-...>`) for active states only
-
-### Don't
-- **NEVER** use `#F59E0B` (amber) as text on white backgrounds — fails WCAG. Use `#B45309` instead
-- **NEVER** use Vue.js, React, Livewire, jQuery, or any JS framework besides Alpine.js
-- **NEVER** render SEO tags (`<meta>`, hreflang, canonical, JSON-LD) with JavaScript — server-side Blade only
-- **NEVER** use product images — OEM parts are text-only by design
-- **NEVER** use `Cache::flush()` — invalidate specific keys only
-- Don't use sharp corners (`rounded-sm`, `rounded`) — minimum is `rounded-xl` for inputs, `rounded-2xl` for cards/buttons
-- Don't use cool blue-gray backgrounds for sections — page bg is `#F8FAFC`, alt sections use `#EEF4FF`
-- Don't use generic gray shadows on buttons — always use warm-tinted shadows
-- Don't hardcode settings values — always use `settings('key', default)` helper
-- Don't use Google Fonts CDN — fonts are bundled via `@fontsource` and Vite
-- Don't create dedicated /login or /register pages — authentication uses modals only
-- Don't add inline `style=""` attributes except for dynamic CSS variables from settings
-- Don't use custom CSS classes for one-off styles — Tailwind utility classes only
-
-## 9. Responsive Behavior
-
-### Breakpoints (Tailwind defaults)
-| Name | Width | Key Changes |
-|------|-------|-------------|
-| Default | < 640px | Single column, compact padding, hamburger nav, hero text 4xl |
-| `sm` | ≥ 640px | 2-column grids begin, slightly wider content |
-| `md` | ≥ 768px | 3-column layouts, expanded section padding, hero text 6xl |
-| `lg` | ≥ 1024px | 4-column grids, desktop nav visible, full sidebar |
-| `xl` | ≥ 1280px | Maximum content width, most generous spacing |
-
-### Touch Targets
-- Buttons: minimum `py-3 px-6` (48px+ height)
-- Nav links: `px-4 py-2.5` with adequate spacing
-- Card surfaces: entire card is clickable where applicable
-- Mobile menu items: full-width with generous vertical padding
-
-### Collapsing Strategy
-- **Navbar**: Full horizontal nav → hamburger menu with slide-out panel
-- **Hero heading**: `text-4xl` → `text-5xl` → `text-6xl` → `text-7xl` across breakpoints
-- **Stats grid**: `grid-cols-2` mobile → `grid-cols-4` desktop
-- **Feature grids**: `grid-cols-1` → `grid-cols-2` → `grid-cols-3` or `grid-cols-4`
-- **Footer**: `grid-cols-1` → `grid-cols-2` → `grid-cols-4`
-- **Section padding**: `py-14 px-4` mobile → `py-20 px-6` desktop
-- **Card padding**: `p-6` mobile → `p-8 md:p-12` desktop
-
-## 10. Agent Prompt Guide
-
-### Quick Color Reference
+Defined in `resources/css/app.css`:
+```css
+.bp-spec {
+    @apply font-mono text-[10px] tracking-[0.22em] uppercase;
+}
 ```
-Primary Brand:     Navy #0B3A68
-Accent:            Amber #F59E0B
-Amber Text:        #B45309 (on light bg ONLY)
-Body Text:         #334155
-Muted Text:        #64748B
-Page Background:   #F8FAFC
-Section Alt:       #EEF4FF
-Card Surface:      #FFFFFF
+Used for:
+- Section eyebrow labels: `§ Manifest · Order items`
+- Card header strips
+- Form labels above inputs
+- Breadcrumbs
+- Status chips (`Active`, `Delivered`)
+
+**The `§` glyph** is the OEMHub section marker. Use it to introduce any labeled region. Pair with `·` (middle dot) as separator between classifier tokens.
+
+### 3.5 Monospace rules
+- Every OEM part number: `font-mono tabular-nums`
+- Every amount, count, timestamp: `font-mono tabular-nums`
+- Indices (`01`, `02`, …): `font-mono tabular-nums tracking-[0.18em] uppercase`
+- Use `str_pad($n, 2, '0', STR_PAD_LEFT)` to render `01`, `02` — never `1.`, `2.`
+
+### 3.6 Prose (blog, CMS pages)
+
+Use Tailwind `prose` plugin with overrides matched to the design tokens:
+```html
+<article class="prose prose-neutral max-w-none
+                prose-headings:font-display prose-headings:font-bold prose-headings:text-ink prose-headings:tracking-[-0.02em]
+                prose-a:text-amber-ink prose-a:font-medium prose-a:underline-offset-2
+                prose-strong:text-ink prose-strong:font-bold
+                prose-code:font-mono prose-code:bg-ivory-alt prose-code:border prose-code:border-rule prose-code:px-1 prose-code:rounded-none
+                prose-hr:border-rule">
+  {!! $htmlBody !!}
+</article>
 ```
 
-### Quick Class Reference
+---
+
+## 4. Core Blueprint Primitives
+
+These are the reusable foundations. Any new component must compose from these — do not invent parallel styles.
+
+### 4.1 `.bp-card` and `.bp-card-ivory`
+```blade
+{{-- Standard paper card --}}
+<div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+    <header class="px-4 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
+        <span class="bp-spec text-amber-ink flex items-center gap-2">
+            <x-heroicon-o-cube class="w-3.5 h-3.5" />
+            § Section · Title
+        </span>
+        {{-- optional right-side count/chip --}}
+    </header>
+    <div class="p-5">
+        {{-- body --}}
+    </div>
+</div>
 ```
-Heading:     font-display text-3xl md:text-4xl lg:text-5xl font-black text-navy
-Body:        text-base text-body
-Muted:       text-sm text-muted
-OEM Number:  font-mono uppercase
-Button:      btn-primary / btn-secondary / btn-outline / btn-ghost
-Card:        bg-white rounded-2xl shadow-sm border border-gray-100 p-6
-Section:     py-14 md:py-20 px-4
-Badge:       section-badge
-Icon:        icon-wrapper-gradient icon-md + icon-inner-md
+
+The card is the primary container for **every** substantive content block on the site. Variants:
+- `.bp-card-ivory` — ivory body instead of paper, for lower-priority context blocks
+- No-header variant — omit the header strip for content-dominant cards (e.g., long prose)
+
+### 4.2 Buttons
+
+Defined in `resources/css/app.css` (see `@layer components`). Canonical snippets:
+
+| Variant | Use | Class |
+|---|---|---|
+| Primary | Main CTA | `bp-btn bp-btn-primary` |
+| Amber | High-vis action | `bp-btn bp-btn-amber` |
+| Outline | Secondary action | `bp-btn bp-btn-outline` |
+| Ghost | Tertiary / text-only | `bp-btn bp-btn-ghost` |
+
+```blade
+<button class="bp-btn bp-btn-primary">
+    Dispatch Query
+</button>
 ```
 
-### Example Component Prompts
-- "Create a section on white background with a `section-badge` eyebrow in amber, a `section-heading` in navy, and a `section-subheading` in body text. Below, add a 3-column grid of white cards with `rounded-2xl shadow-sm border border-gray-100`. Each card has an `icon-wrapper-gradient icon-md` at top, a `font-display text-lg font-bold text-navy` title, and `text-sm text-body` description."
+### 4.3 Inputs
 
-- "Build a CTA section on navy background (`bg-gradient-to-r from-navy via-navy to-blue-800`). White headline in `font-display text-3xl font-black`. Subheading in `text-white/70`. Two buttons: `btn-primary` (amber gradient) and an outline button with `border-2 border-white/30 text-white hover:bg-white/10`. Add decorative blobs: `bg-amber/15 rounded-full filter blur-3xl` at low opacity."
+```blade
+<input type="text" class="bp-input" placeholder="Enter OEM number..." />
+<input type="text" class="bp-input-mono" placeholder="VIN / CHASSIS" />
+```
 
-- "Design an inline form in a white card (`bg-white rounded-2xl shadow-lg p-8`). Form fields: OEM number input with `font-mono uppercase bg-gray-50 border border-gray-200 rounded-xl focus:border-navy focus:ring-2 focus:ring-navy/10`. Email input below. Full-width `btn-primary` submit button. Trust badge below: lock icon + text in `text-xs text-muted`."
+- `bp-input`: Standard text input. Transparent bg, rule border, focus becomes ink border.
+- `bp-input-mono`: For technical data (VIN, OEM, Phone). Uppercase, mono font.
 
-- "Create a product listing row with OEM number in `font-mono text-sm text-navy font-medium`, price in `font-mono text-lg font-bold text-navy`, condition badge using the condition color map (e.g., `bg-condition-new-bg text-condition-new-text rounded-full px-3 py-1 text-xs font-semibold`), and an 'Add to Cart' `btn-primary btn-sm`."
+### 4.4 Leader Dots (`.bp-leader` / `.bp-leader-dots`)
 
-### Iteration Guide
-1. Always specify `font-display` or `font-sans` or `font-mono` — never leave font family ambiguous
-2. Reference Tailwind classes directly: "use `text-navy`" not "use navy color"
-3. For dark sections, always add `text-white` base and `text-white/70` for secondary text
-4. For amber text on light bg, always say `text-amber-text` not `text-amber`
-5. For shadows on buttons, specify the glow: `shadow-lg shadow-amber/30` not just `shadow-lg`
-6. For animations, say "IntersectionObserver fade-in-up with stagger delay" — never use CSS-only animations for entrance effects
-7. For interactive states, always include `transition-all duration-300` and specify the hover transform
-8. Every OEM number anywhere on the site must include `font-mono` — this is non-negotiable
+Used for spec lists where label and value must align visually.
+
+```blade
+<div class="bp-leader">
+    <dt class="text-ink-muted">Catalogue</dt>
+    <span class="bp-leader-dots"></span>
+    <dd class="font-mono font-bold text-ink tabular-nums">1,024,837</dd>
+</div>
+```
+
+### 4.5 Amber Rule (`.bp-amber-rule`)
+
+A short amber underline used to accent headings or key terms.
+
+```blade
+<h2 class="bp-amber-rule">Technical Specifications</h2>
+```
+
+### 4.6 Inline Link (`.bp-link`)
+
+```blade
+<a href="#" class="bp-link">View full details</a>
+```
+
+### 4.7 Status Pill
+
+```blade
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-condition-new-bg text-condition-new-text">
+    New
+</span>
+```
+
+### 4.8 Index Number
+
+```blade
+<span class="font-mono text-[10px] font-bold tracking-[0.2em] text-ink-muted">§01</span>
+```
+
+### 4.9 Tape (`.bp-tape`)
+
+Diagonal safety tape divider. Used sparingly for section breaks.
+
+```blade
+<div class="h-2 w-full bp-tape"></div>
+```
+
+### 4.10 Motion — `.bp-rise` / `.bp-rule-draw`
+
+- `.bp-rise`: Fade up entrance. Use on page load for major blocks.
+- `.bp-rule-draw`: Animates width of a rule line from left to right. Use under headings.
+
+---
+
+## 5. Component Library
+
+### 5.1 Doc Header (hero)
+
+See `components/sections/hero.blade.php`. Key features:
+- Grid texture background
+- Corner register marks
+- Spec-sheet header row with meta info
+- 12-column editorial grid
+- Full-width search form with mono input
+
+### 5.2 Breadcrumb
+
+```blade
+<nav aria-label="Breadcrumb">
+    <ol class="flex items-center gap-2 text-sm font-mono text-ink-muted">
+        <li><a href="/" class="hover:text-amber-ink">Home</a></li>
+        <li><span class="text-rule">/</span></li>
+        <li><a href="/parts" class="hover:text-amber-ink">Parts</a></li>
+        <li><span class="text-rule">/</span></li>
+        <li class="text-ink">1K0698151E</li>
+    </ol>
+</nav>
+```
+
+### 5.3 Form Field (full)
+
+```blade
+<div class="space-y-2">
+    <label for="email" class="bp-spec text-ink">Email Address</label>
+    <input type="email" id="email" class="bp-input" />
+    <p class="text-xs text-ink-muted">We'll never share your email.</p>
+</div>
+```
+
+### 5.4 Flash Banners
+
+```blade
+{{-- Success --}}
+<div class="border border-emerald-600 bg-emerald-50 text-emerald-600 px-4 py-3">
+    <span class="bp-spec">Success</span>
+    <p class="text-sm mt-1">Order placed successfully.</p>
+</div>
+
+{{-- Error --}}
+<div class="border border-red-600 bg-red-50 text-red-600 px-4 py-3">
+    <span class="bp-spec">Error</span>
+    <p class="text-sm mt-1">Payment failed. Please try again.</p>
+</div>
+```
+
+### 5.5 Tables (data-dense)
+
+```blade
+<table class="w-full text-sm text-left">
+    <thead class="bg-ivory-alt border-b border-ink">
+        <tr>
+            <th class="px-4 py-3 font-mono text-xs uppercase tracking-wider text-ink-muted">OEM</th>
+            <th class="px-4 py-3 font-mono text-xs uppercase tracking-wider text-ink-muted">Price</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-rule">
+        <tr class="hover:bg-ivory-alt/50 transition-colors">
+            <td class="px-4 py-3 font-mono text-ink">1K0698151E</td>
+            <td class="px-4 py-3 font-mono text-ink tabular-nums">€120.00</td>
+        </tr>
+    </tbody>
+</table>
+```
+
+### 5.6 Empty State
+
+```blade
+<div class="text-center py-12 border border-rule bg-paper">
+    <x-heroicon-o-magnifying-glass class="w-12 h-12 mx-auto text-rule-strong" />
+    <h3 class="mt-4 font-display font-bold text-ink">No results found</h3>
+    <p class="mt-2 text-sm text-ink-muted">Try adjusting your search criteria.</p>
+</div>
+```
+
+### 5.7 Modal
+
+```blade
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="bg-paper border border-ink w-full max-w-lg p-6" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+        <header class="flex items-center justify-between mb-4">
+            <h2 class="font-display font-bold text-ink">Modal Title</h2>
+            <button class="text-ink-muted hover:text-ink">&times;</button>
+        </header>
+        <div class="text-sm text-body">
+            Content goes here.
+        </div>
+    </div>
+</div>
+```
+
+### 5.8 Modal-only auth
+
+Auth modals follow the same structure but include honeypot fields and specific input types (tel for OTP, email for email).
+
+---
+
+## 6. Layout System
+
+### 6.1 Container widths
+- Max width: `max-w-[1440px]`
+- Padding: `px-4 sm:px-6 lg:px-10`
+
+### 6.2 Account/dashboard grid
+- Sidebar: `w-64` fixed on desktop, hidden on mobile (toggleable)
+- Main content: `flex-1`
+
+### 6.3 Body background texture
+- Default: `bg-ivory` with `bg-grid-ivory` overlay at low opacity.
+
+### 6.4 Section rhythm
+- Vertical spacing between sections: `py-16 md:py-24`
+- Internal section padding: `px-4 sm:px-6 lg:px-10`
+
+---
+
+## 7. State Patterns
+
+- **Hover**: Change text color to `amber-ink` or background to `ink` with `text-ivory`.
+- **Active**: Translate Y by 1px (`active:translate-y-[1px]`) for buttons.
+- **Focus**: `focus-visible:ring-2 focus-visible:ring-ink focus-visible:ring-offset-2 focus-visible:ring-offset-ivory`.
+- **Disabled**: `opacity-50 cursor-not-allowed`.
+
+---
+
+## 8. Accessibility — WCAG 2.1 AA (Non-Negotiable)
+
+### 8.1 Contrast
+- All text must meet AA contrast ratios.
+- Amber text on white/ivory MUST use `amber-ink` (#9A5A00) or `amber-text` (#B45309). Never `amber` (#F59E0B).
+
+### 8.2 Focus
+- All interactive elements must have visible focus rings.
+- Use `focus-visible` to avoid rings on mouse clicks.
+
+### 8.3 Semantics
+- Use proper HTML5 tags: `header`, `nav`, `main`, `footer`, `section`, `article`.
+- Headings must be hierarchical (H1 → H2 → H3).
+
+### 8.4 ARIA
+- Use `aria-label` for icon-only buttons.
+- Use `aria-describedby` for form hints.
+- Use `role="alert"` for flash messages.
+
+### 8.5 Touch & keyboard
+- Touch targets minimum 44x44px.
+- All functionality accessible via keyboard.
+
+### 8.6 Reduced motion
+- Respect `prefers-reduced-motion: reduce`.
+- Disable animations/transitions for users who prefer reduced motion.
+
+### 8.7 External links
+- Indicate external links with an icon or text.
+
+### 8.8 Language
+- Declare `lang` attribute on `<html>`.
+- Use `hreflang` for multilingual pages.
+
+---
+
+## 9. Motion & Animation
+
+- **Entrance**: `bp-rise` (fade up) for page loads.
+- **Drawing**: `bp-rule-draw` for underlines.
+- **Hover**: Smooth color transitions (150ms).
+- **Loading**: Shimmer effect for skeletons.
+- **Reduced motion**: Disable all animations if `prefers-reduced-motion` is set.
+
+---
+
+## 10. Frontend Patterns
+
+### 10.1 Page skeleton
+1. SEO Meta Tags (Title, Description, OG, Canonical, Hreflang, JSON-LD)
+2. Layout Extension (`@extends('layouts.app')`)
+3. Content Section (`@section('content')`)
+4. Hero/Header (if applicable)
+5. Main Content Grid
+6. Footer
+
+### 10.2 Public forms (contact, newsletter, inquiry)
+- Always include honeypot field: `<input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">`
+- Use CSRF token: `@csrf`
+- Use appropriate input types: `email`, `tel`, `text` with `inputmode` hints.
+
+### 10.3 Mobile input hints
+- OEM number: `type="text" inputmode="text" autocapitalize="characters"`
+- OTP digit: `type="tel" inputmode="numeric" maxlength="1"`
+- Email: `type="email" inputmode="email"`
+- Phone: `type="tel" inputmode="tel"`
+- Price: `type="text" inputmode="decimal"`
+- Postal: `type="text" inputmode="numeric"`
+
+### 10.4 Checkout pattern
+- Single URL, session-based steps.
+- Progress indicator using numbered steps (`§01`, `§02`, etc.).
+
+### 10.5 Trust strip / spec row
+- Row of icons/text indicating trust signals (SSL, Verified, Shipping).
+- Use `font-mono` and `text-ink-muted`.
+
+### 10.6 Part-number card (catalog listing)
+- Image (if available, otherwise placeholder)
+- OEM Number (mono, bold)
+- Manufacturer
+- Price (mono, tabular)
+- Condition Badge
+- "Add to Cart" button
+
+---
+
+## 11. Email Template Design
+
+### 11.1 Client rules
+- Table-based layout for compatibility.
+- Inline CSS only.
+- Max width 600px.
+
+### 11.2 Email color palette
+- Use same tokens as web: `ink`, `ivory`, `amber`, `rule`.
+- Background: `#F7F3E7` (ivory).
+- Text: `#0A1228` (ink).
+
+### 11.3 Email layout skeleton (600px)
+```html
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#F7F3E7">
+    <tr>
+        <td align="center">
+            <table width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#FFFFFF" style="border: 1px solid #D8CFB6;">
+                <!-- Header -->
+                <tr>
+                    <td style="padding: 20px; border-bottom: 1px solid #D8CFB6;">
+                        <h1 style="font-family: sans-serif; color: #0A1228;">OEMHub</h1>
+                    </td>
+                </tr>
+                <!-- Body -->
+                <tr>
+                    <td style="padding: 20px;">
+                        <p style="font-family: sans-serif; color: #334155;">Content...</p>
+                    </td>
+                </tr>
+                <!-- Footer -->
+                <tr>
+                    <td style="padding: 20px; border-top: 1px solid #D8CFB6; text-align: center;">
+                        <p style="font-family: sans-serif; color: #64748B; font-size: 12px;">© {{ date('Y') }} OEMHub</p>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+```
+
+### 11.4 Email block components
+- **Header**: Logo + Site Name
+- **Hero**: Headline + Subheadline
+- **Order Details**: Table with items, prices, totals
+- **CTA Button**: Amber background, Ink text
+- **Footer**: Contact info, Unsubscribe link
+
+### 11.5 Per-template guide
+- **Order Confirmation**: Include order summary, shipping address, tracking link.
+- **Shipping Update**: Include tracking number, carrier, expected delivery.
+- **Password Reset**: Include reset link, expiration time.
+- **OTP**: Include code, expiration time.
+
+### 11.6 Email anti-patterns
+- No JavaScript.
+- No external CSS files.
+- No complex layouts (floats, grids).
+- No large images (optimize for slow connections).
+
+---
+
+## 12. Admin Panel Design
+
+### 12.1 Layout shell
+- Sidebar navigation (left, fixed)
+- Top bar (search, user menu)
+- Main content area
+
+### 12.2 Sidebar nav item
+- Icon + Label
+- Active state: `bg-white/10 text-white`
+- Hover state: `bg-white/5 text-white`
+
+### 12.3 Admin page header
+- Title (H1)
+- Breadcrumb
+- Actions (buttons)
+
+### 12.4 Admin data table
+- Sortable columns
+- Pagination
+- Filters
+
+### 12.5 Stat card
+- Label
+- Value (large, mono)
+- Trend (up/down arrow)
+
+### 12.6 Admin form
+- Grouped fields
+- Clear labels
+- Validation messages
+
+### 12.7 Admin a11y & keyboard
+- Same as frontend: focus rings, semantic HTML, ARIA.
+
+### 12.8 Admin-only patterns
+- Bulk actions
+- Export buttons
+- Log viewers
+
+---
+
+## 13. Page-Creation Checklist
+
+### Structure
+- [ ] Extend correct layout (`app.blade.php` or `admin.blade.php`)
+- [ ] Define SEO meta tags
+- [ ] Use semantic HTML5 tags
+
+### Brand signatures
+- [ ] Use `ink`, `ivory`, `amber`, `rule` tokens
+- [ ] Use `font-display` for headings, `font-mono` for data
+- [ ] Add `§` section markers where appropriate
+- [ ] Terminate headings with amber period
+
+### Forms (if applicable)
+- [ ] Include CSRF token
+- [ ] Include honeypot field
+- [ ] Use correct input types and modes
+- [ ] Add validation messages
+
+### SEO
+- [ ] Title tag
+- [ ] Meta description
+- [ ] Canonical URL
+- [ ] Hreflang tags (if multilingual)
+- [ ] JSON-LD schema
+
+### Accessibility
+- [ ] Alt text for images
+- [ ] ARIA labels for icons
+- [ ] Focus states visible
+- [ ] Contrast ratios met
+
+### Content
+- [ ] Headings hierarchical
+- [ ] Links descriptive
+- [ ] Lists structured
+
+### Performance
+- [ ] Images optimized
+- [ ] Lazy loading for below-fold content
+- [ ] Minimal JS/CSS
+
+### Verification
+- [ ] Test on mobile
+- [ ] Test on tablet
+- [ ] Test on desktop
+- [ ] Check console for errors
+
+---
+
+## 14. Anti-Patterns
+
+- ❌ Using `navy` instead of `ink`
+- ❌ Using `bg-page` instead of `ivory`
+- ❌ Rounded corners on cards/buttons
+- ❌ Soft shadows (`shadow-lg`)
+- ❌ Gradients for decoration
+- ❌ `text-amber` on white/ivory backgrounds
+- ❌ Missing honeypot fields on public forms
+- ❌ Hardcoded hex colors in Blade
+- ❌ JavaScript-rendered SEO tags
+- ❌ Float arithmetic for money
+
+---
+
+## Appendix A — File Map
+
+### Tokens & global styles
+- `tailwind.config.js` — Color, font, animation definitions
+- `resources/css/app.css` — Custom classes (`.bp-*`), imports
+
+### Layouts
+- `resources/views/layouts/app.blade.php` — Frontend layout
+- `resources/views/layouts/admin.blade.php` — Admin layout
+
+### Shared components
+- `resources/views/components/navbar.blade.php`
+- `resources/views/components/footer.blade.php`
+- `resources/views/components/button.blade.php`
+- `resources/views/components/section-heading.blade.php`
+
+### Email templates
+- `resources/views/emails/*.blade.php`
+
+### Admin views
+- `resources/views/admin/**/*.blade.php`
+
+---
+
+## Appendix B — Review Cadence
+
+- **Weekly**: Audit new pages for token compliance
+- **Monthly**: Review accessibility scores
+- **Quarterly**: Update design system with new patterns
+
+---
+
+**Last Updated:** 2026-04-20
+**Version:** 2.0 (Industrial Blueprint)

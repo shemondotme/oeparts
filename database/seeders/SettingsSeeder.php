@@ -119,10 +119,10 @@ class SettingsSeeder extends Seeder
             ['group' => 'orders', 'key' => 'auto_complete_days',            'value' => '14',  'type' => $i],
 
             // ── PAYMENT ──────────────────────────────────────────────────────────
-            ['group' => 'payment', 'key' => 'bank_name',             'value' => '',        'type' => $s],
-            ['group' => 'payment', 'key' => 'bank_iban',             'value' => '',        'type' => $s],
-            ['group' => 'payment', 'key' => 'bank_bic',              'value' => '',        'type' => $s],
-            ['group' => 'payment', 'key' => 'bank_account_holder',   'value' => '',        'type' => $s],
+            ['group' => 'payment', 'key' => 'bank_name',             'value' => 'Demo Bank EU',           'type' => $s],
+            ['group' => 'payment', 'key' => 'bank_iban',             'value' => 'DE89 3704 0044 0532 0130 00', 'type' => $s],
+            ['group' => 'payment', 'key' => 'bank_bic',              'value' => 'COBADEFFXXX',            'type' => $s],
+            ['group' => 'payment', 'key' => 'bank_account_holder',   'value' => 'OEMHub EU GmbH',         'type' => $s],
             ['group' => 'payment', 'key' => 'bank_reference_prefix', 'value' => 'OEM',     'type' => $s],
             ['group' => 'payment', 'key' => 'airwallex_environment', 'value' => 'sandbox', 'type' => $s],
             ['group' => 'payment', 'key' => 'airwallex_api_key',     'value' => '',        'type' => $e, 'encrypted' => true],

@@ -1,374 +1,657 @@
 @extends('layouts.app')
 
-@section('title', trans('contact.title', [], $locale ?? 'en'))
-@section('description', trans('contact.description', [], $locale ?? 'en'))
+@php
+    $lang     = app()->getLocale();
+    $siteName = settings('general.site_name', 'OEMHub');
+    $phone    = settings('contact.phone', '');
+    $email    = settings('contact.email', config('mail.from.address'));
+    $contactTitle = trans('contact.title', [], $lang);
+    $contactDescr = trans('contact.description', [], $lang);
+@endphp
 
+@section('title'){{ $contactTitle }} · {{ $siteName }}@endsection
+@section('description'){{ $contactDescr }}@endsection
+
+{{-- ══════════════════════════════════════════════════════════════════════
+     INDUSTRIAL BLUEPRINT — CONTACT
+     Document-style enquiry panel with OTP-verified contact form.
+     ══════════════════════════════════════════════════════════════════ --}}
 @section('content')
-{{-- Hero Section --}}
-<section class="bg-navy py-12 lg:py-16">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center">
-            <h1 class="text-3xl lg:text-4xl font-display font-bold text-white mb-4">
-                {{ trans('contact.title', [], $locale ?? 'en') }}
-            </h1>
-            <p class="text-lg text-white/80 max-w-2xl mx-auto">
-                {{ trans('contact.description', [], $locale ?? 'en') }}
-            </p>
+
+<div class="relative bg-ivory text-ink min-h-screen">
+
+    <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-sm opacity-70 pointer-events-none" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-24">
+
+        {{-- ═══ Doc header ═══ --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
+            <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
+                <span class="text-rule-strong">/</span>
+                <span class="text-ink">{{ __('Contact') }}</span>
+            </nav>
+            <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
+                DOC · CONTACT · ENQUIRY-FORM
+            </div>
         </div>
-    </div>
-</section>
 
-{{-- Contact Form Section --}}
-<section class="py-12 lg:py-16 bg-gray-50">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 lg:p-8">
-            {{-- Success Message --}}
-            <div id="success-message" class="hidden mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <x-heroicon-o-check-circle class="w-6 h-6 text-emerald-600" />
-                    <p class="text-emerald-800 font-medium" data-message="success"></p>
+        {{-- ═══ Hero ═══ --}}
+        <header class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 gap-y-8 mb-12 bp-rise bp-rise-delay-1">
+            <div class="col-span-12 lg:col-span-8">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="bp-spec text-amber-ink">§ {{ __('Contact · Desk') }}</span>
                 </div>
+                <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[22ch]">
+                    {{ $contactTitle }}<span class="text-amber">.</span>
+                </h1>
+                <div class="mt-6 mb-6">
+                    <div class="bp-rule-draw h-px bg-ink/70 origin-left"></div>
+                </div>
+                <p class="max-w-xl text-lg text-body leading-relaxed">
+                    {{ $contactDescr }}
+                </p>
             </div>
 
-            {{-- Error Message --}}
-            <div id="error-message" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <div class="flex items-center gap-3">
-                    <x-heroicon-o-x-circle class="w-6 h-6 text-red-600" />
-                    <p class="text-red-800 font-medium" data-message="error"></p>
-                </div>
-            </div>
-
-            <form id="contact-form" class="space-y-6">
-                @csrf
-
-                {{-- Name --}}
-                <div>
-                    <label for="name" class="block text-sm font-medium text-slate-700 mb-2">
-                        {{ trans('contact.name') }} <span class="text-red-500">*</span>
-                    </label>
-                    <input type="text" 
-                           id="name" 
-                           name="name" 
-                           required
-                           class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent"
-                           placeholder="{{ trans('contact.name_placeholder') }}">
-                    <p class="mt-1 text-sm text-red-500 hidden" data-error="name"></p>
-                </div>
-
-                {{-- Email --}}
-                <div>
-                    <label for="email" class="block text-sm font-medium text-slate-700 mb-2">
-                        {{ trans('contact.email') }} <span class="text-red-500">*</span>
-                    </label>
-                    <div class="flex gap-2">
-                        <input type="email" 
-                               id="email" 
-                               name="email" 
-                               required
-                               class="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent"
-                               placeholder="{{ trans('contact.email_placeholder') }}">
-                        <button type="button" 
-                                id="send-otp-btn"
-                                class="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium whitespace-nowrap">
-                            {{ trans('contact.verify_email') }}
-                        </button>
+            {{-- Quick contact strip --}}
+            <aside class="col-span-12 lg:col-span-4">
+                <div class="border border-ink bg-paper bp-register">
+                    <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('§ Direct · Channel') }}</span>
+                        <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ __('MON–FRI') }}</span>
                     </div>
-                    <p class="mt-1 text-sm text-slate-500">{{ trans('contact.email_verification_note') }}</p>
-                    <p class="mt-1 text-sm text-red-500 hidden" data-error="email"></p>
+                    <dl class="p-5 space-y-3.5">
+                        <div>
+                            <dt class="bp-spec text-ink-muted">{{ __('Email') }}</dt>
+                            <dd class="mt-1">
+                                <a href="mailto:{{ $email }}" class="font-mono text-sm font-bold text-ink hover:text-amber-ink transition-colors break-all">
+                                    {{ $email }}
+                                </a>
+                            </dd>
+                        </div>
+                        @if($phone)
+                        <div>
+                            <dt class="bp-spec text-ink-muted">{{ __('Phone') }}</dt>
+                            <dd class="mt-1">
+                                <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}" class="font-mono text-sm font-bold text-ink hover:text-amber-ink transition-colors tabular-nums">
+                                    {{ $phone }}
+                                </a>
+                            </dd>
+                        </div>
+                        @endif
+                        <div>
+                            <dt class="bp-spec text-ink-muted">{{ trans('contact.response_time') }}</dt>
+                            <dd class="mt-1 font-mono text-sm font-bold text-ink">
+                                {{ trans('contact.response_time_value') }}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="bp-spec text-ink-muted">{{ __('Hours') }}</dt>
+                            <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums">09:00–18:00 CET</dd>
+                        </div>
+                    </dl>
+                </div>
+            </aside>
+        </header>
+
+        {{-- ═══ Main grid: Form + Info rail ═══ --}}
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 gap-y-10 bp-rise bp-rise-delay-2">
+
+            {{-- ── Form column ── --}}
+            <section class="col-span-12 lg:col-span-8">
+                <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
+                    <span class="bp-spec text-ink">§ 01 · {{ __('Enquiry · Form') }}</span>
+                    <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
+                        {{ __('OTP-verified') }}
+                    </span>
                 </div>
 
-                {{-- OTP Verification --}}
-                <div id="otp-section" class="hidden">
-                    <label for="otp" class="block text-sm font-medium text-slate-700 mb-2">
-                        {{ trans('contact.verification_code') }} <span class="text-red-500">*</span>
-                    </label>
-                    <div class="flex gap-2">
-                        <input type="tel" 
-                               id="otp" 
-                               name="otp" 
-                               maxlength="6"
-                               inputmode="numeric"
-                               class="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent tracking-widest text-center text-lg"
-                               placeholder="000000">
-                        <button type="button" 
-                                id="verify-otp-btn"
-                                class="px-4 py-2 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors text-sm font-medium whitespace-nowrap">
-                            {{ trans('contact.verify') }}
-                        </button>
+                <div x-data="contactForm()"
+                     class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                    {{-- Status bar --}}
+                    <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">ENQ-FORM · REV.02</span>
+                        <span class="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/70">
+                            <span class="w-1.5 h-1.5" :class="verified ? 'bg-amber' : 'bg-emerald-500'"></span>
+                            <span x-text="verified ? '{{ trans('contact.email_verified') }}' : '{{ __('Operational') }}'"></span>
+                        </span>
                     </div>
-                    <p class="mt-1 text-sm text-red-500 hidden" data-error="otp"></p>
-                    <p class="mt-1 text-sm text-emerald-600 hidden" id="otp-verified">
-                        <x-heroicon-o-check-circle class="w-4 h-4 inline mr-1" />
-                        {{ trans('contact.email_verified') }}
+
+                    <div class="p-6 lg:p-8">
+
+                        {{-- Success Message --}}
+                        <div x-show="successMsg" x-cloak x-transition
+                             role="status" aria-live="polite"
+                             class="mb-6 px-4 py-3 border border-emerald-600 bg-emerald-50 flex items-start gap-3">
+                            <x-heroicon-s-check-circle class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+                            <p class="text-sm text-emerald-800" x-text="successMsg"></p>
+                        </div>
+
+                        {{-- Error Message --}}
+                        <div x-show="errorMsg" x-cloak x-transition
+                             role="alert" aria-live="assertive"
+                             class="mb-6 px-4 py-3 border border-red-600 bg-red-50 flex items-start gap-3">
+                            <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
+                            <p class="text-sm text-red-800" x-text="errorMsg"></p>
+                        </div>
+
+                        <form @submit.prevent="submitForm" class="space-y-6">
+                            @csrf
+                            <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+                            {{-- Name --}}
+                            <div>
+                                <label for="name" class="flex items-center justify-between mb-2">
+                                    <span class="bp-spec text-ink">{{ trans('contact.name') }} <span class="text-red-600">*</span></span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.01</span>
+                                </label>
+                                <input type="text" id="name" x-model="form.name" required
+                                       class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                              focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                       placeholder="{{ trans('contact.name_placeholder') }}">
+                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.name" x-text="fieldErrors.name"></p>
+                            </div>
+
+                            {{-- ─── Email + verification (3 states) ─── --}}
+                            <div>
+                                <label for="email" class="flex items-center justify-between mb-2">
+                                    <span class="bp-spec text-ink">{{ trans('contact.email') }} <span class="text-red-600">*</span></span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.02</span>
+                                </label>
+
+                                {{-- State A: unverified + send-code action --}}
+                                <template x-if="!codeSent && !verified">
+                                    <div>
+                                        <div class="flex flex-col sm:flex-row gap-0">
+                                            <input type="email" id="email" x-model="form.email" required
+                                                   class="w-full sm:flex-1 px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                                          focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted
+                                                          sm:border-r-0"
+                                                   placeholder="{{ trans('contact.email_placeholder') }}">
+                                            <button type="button" @click="sendOtp" :disabled="sending"
+                                                    class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ink bg-ink text-ivory
+                                                           font-mono text-[11px] font-bold tracking-[0.22em] uppercase
+                                                           hover:bg-amber hover:text-ink hover:border-amber transition-colors
+                                                           whitespace-nowrap disabled:opacity-60 disabled:cursor-wait">
+                                                <x-heroicon-o-paper-airplane class="w-3.5 h-3.5" />
+                                                <span x-text="sending ? '{{ trans('contact.sending') }}…' : '{{ trans('contact.verify_email') }}'"></span>
+                                            </button>
+                                        </div>
+                                        <p class="mt-1.5 font-mono text-[10px] tracking-[0.06em] text-ink-muted">
+                                            {{ trans('contact.email_verification_note') }}
+                                        </p>
+                                    </div>
+                                </template>
+
+                                {{-- State B: code sent → OTP entry --}}
+                                <template x-if="codeSent && !verified">
+                                    <div class="border border-amber bg-amber/10">
+                                        <div class="px-4 py-2 bg-amber/20 border-b border-amber/40 flex items-center justify-between">
+                                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink flex items-center gap-2">
+                                                <x-heroicon-s-envelope-open class="w-3.5 h-3.5" />
+                                                <span x-text="form.email"></span>
+                                            </span>
+                                            <button type="button" @click="changeEmail"
+                                                    class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink-muted hover:text-ink underline underline-offset-2">
+                                                {{ trans('contact.change_email') }}
+                                            </button>
+                                        </div>
+                                        <div class="p-4">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="bp-spec text-amber-ink">{{ trans('contact.verification_code') }} <span class="text-red-600">*</span></span>
+                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">6 · DIGITS</span>
+                                            </div>
+                                            <div class="flex flex-col sm:flex-row gap-0">
+                                                <input type="tel" x-model="form.otp" maxlength="6" inputmode="numeric"
+                                                       @input="form.otp = form.otp.replace(/\D/g,'').slice(0,6)"
+                                                       @keydown.enter.prevent="verifyOtp"
+                                                       class="w-full sm:flex-1 px-4 py-3 border border-ink bg-ivory font-mono text-lg font-bold text-ink
+                                                              focus:outline-none focus:bg-paper focus:border-amber
+                                                              tracking-[0.6em] text-center tabular-nums sm:border-r-0"
+                                                       placeholder="······">
+                                                <button type="button" @click="verifyOtp" :disabled="verifying || form.otp.length !== 6"
+                                                        class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ink bg-ink text-ivory
+                                                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
+                                                               hover:bg-amber hover:text-ink hover:border-amber transition-colors
+                                                               whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
+                                                    <x-heroicon-s-check class="w-3.5 h-3.5" />
+                                                    <span x-text="verifying ? '{{ trans('contact.verifying') }}…' : '{{ trans('contact.verify') }}'"></span>
+                                                </button>
+                                            </div>
+                                            <div class="mt-3 flex items-center justify-between">
+                                                <p class="font-mono text-[11px] text-red-600" x-show="fieldErrors.otp" x-text="fieldErrors.otp"></p>
+                                                <button type="button" @click="sendOtp" :disabled="sending"
+                                                        class="ml-auto font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink hover:text-ink underline underline-offset-2 disabled:opacity-50">
+                                                    <span x-text="sending ? '{{ trans('contact.sending') }}…' : '{{ trans('contact.resend_code') }}'"></span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- State C: verified --}}
+                                <template x-if="verified">
+                                    <div class="border border-emerald-600 bg-emerald-50 flex items-center gap-3 px-4 py-3">
+                                        <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                                            <x-heroicon-s-check class="w-5 h-5" />
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-emerald-700">
+                                                {{ trans('contact.email_verified') }}
+                                            </p>
+                                            <p class="mt-0.5 font-mono text-sm font-bold text-ink truncate" x-text="form.email"></p>
+                                        </div>
+                                        <button type="button" @click="changeEmail"
+                                                class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink-muted hover:text-ink underline underline-offset-2">
+                                            {{ trans('contact.change_email') }}
+                                        </button>
+                                    </div>
+                                </template>
+
+                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.email" x-text="fieldErrors.email"></p>
+                            </div>
+
+                            {{-- Subject Type --}}
+                            <div>
+                                <label for="subject_type" class="flex items-center justify-between mb-2">
+                                    <span class="bp-spec text-ink">{{ trans('contact.subject') }} <span class="text-red-600">*</span></span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.03</span>
+                                </label>
+                                <div class="relative">
+                                    <select id="subject_type" x-model="form.subject_type" required
+                                            class="w-full px-4 py-3 pr-10 border border-ink bg-ivory font-mono text-sm text-ink
+                                                   focus:outline-none focus:bg-paper focus:border-amber appearance-none cursor-pointer">
+                                        <option value="">{{ trans('contact.select_subject') }}</option>
+                                        <option value="general_inquiry">{{ trans('contact.subjects.general_inquiry') }}</option>
+                                        <option value="part_not_found">{{ trans('contact.subjects.part_not_found') }}</option>
+                                        <option value="order_issue">{{ trans('contact.subjects.order_issue') }}</option>
+                                        <option value="shipping_question">{{ trans('contact.subjects.shipping_question') }}</option>
+                                        <option value="return_refund">{{ trans('contact.subjects.return_refund') }}</option>
+                                        <option value="b2b_partnership">{{ trans('contact.subjects.b2b_partnership') }}</option>
+                                        <option value="other">{{ trans('contact.subjects.other') }}</option>
+                                    </select>
+                                    <x-heroicon-s-chevron-down class="w-4 h-4 text-ink-muted absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                </div>
+                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.subject_type" x-text="fieldErrors.subject_type"></p>
+                            </div>
+
+                            {{-- ─── Conditional: Order details (order_issue / shipping_question / return_refund) ─── --}}
+                            <div x-show="needsOrder" x-cloak x-collapse>
+                                <div class="flex items-center gap-3 mb-3 pt-2">
+                                    <span class="w-6 h-[2px] bg-amber inline-block"></span>
+                                    <span class="bp-spec text-amber-ink">§ {{ trans('contact.section_order_details') }}</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="order_number" class="flex items-center justify-between mb-2">
+                                            <span class="bp-spec text-ink">
+                                                {{ trans('contact.order_number') }}
+                                                <span class="text-red-600" x-show="form.subject_type === 'order_issue' || form.subject_type === 'return_refund'">*</span>
+                                            </span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.04</span>
+                                        </label>
+                                        <input type="text" id="order_number" x-model="form.order_number"
+                                               class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                                      focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                               placeholder="{{ trans('contact.order_number_placeholder') }}">
+                                        <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.order_number" x-text="fieldErrors.order_number"></p>
+                                    </div>
+                                    <div x-show="form.subject_type === 'return_refund'">
+                                        <label for="oem_number_r" class="flex items-center justify-between mb-2">
+                                            <span class="bp-spec text-ink">{{ trans('contact.oem_number') }}</span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.05</span>
+                                        </label>
+                                        <input type="text" id="oem_number_r" x-model="form.oem_number"
+                                               class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tracking-wide
+                                                      focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                               placeholder="{{ trans('contact.oem_number_placeholder') }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ─── Conditional: Part details (part_not_found) ─── --}}
+                            <div x-show="form.subject_type === 'part_not_found'" x-cloak x-collapse>
+                                <div class="flex items-center gap-3 mb-3 pt-2">
+                                    <span class="w-6 h-[2px] bg-amber inline-block"></span>
+                                    <span class="bp-spec text-amber-ink">§ {{ trans('contact.section_part_details') }}</span>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="oem_number" class="flex items-center justify-between mb-2">
+                                            <span class="bp-spec text-ink">{{ trans('contact.oem_number') }} <span class="text-red-600">*</span></span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.05</span>
+                                        </label>
+                                        <input type="text" id="oem_number" x-model="form.oem_number"
+                                               class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tracking-wide
+                                                      focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                               placeholder="{{ trans('contact.oem_number_placeholder') }}">
+                                        <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.oem_number" x-text="fieldErrors.oem_number"></p>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div class="sm:col-span-1">
+                                            <label for="manufacturer" class="flex items-center justify-between mb-2">
+                                                <span class="bp-spec text-ink">{{ trans('contact.manufacturer') }}</span>
+                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.06</span>
+                                            </label>
+                                            <input type="text" id="manufacturer" x-model="form.manufacturer"
+                                                   class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                                          focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                                   placeholder="{{ trans('contact.manufacturer_placeholder') }}">
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <label for="car_model" class="flex items-center justify-between mb-2">
+                                                <span class="bp-spec text-ink">{{ trans('contact.car_model') }}</span>
+                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.07</span>
+                                            </label>
+                                            <input type="text" id="car_model" x-model="form.car_model"
+                                                   class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                                          focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                                   placeholder="{{ trans('contact.car_model_placeholder') }}">
+                                        </div>
+                                        <div class="sm:col-span-1">
+                                            <label for="year" class="flex items-center justify-between mb-2">
+                                                <span class="bp-spec text-ink">{{ trans('contact.vehicle_year') }}</span>
+                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.08</span>
+                                            </label>
+                                            <input type="text" id="year" x-model="form.year" inputmode="numeric" maxlength="4"
+                                                   class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tabular-nums
+                                                          focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                                   placeholder="{{ trans('contact.vehicle_year_placeholder') }}">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="vin_number" class="flex items-center justify-between mb-2">
+                                            <span class="bp-spec text-ink">{{ trans('contact.vin_number') }}</span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.09</span>
+                                        </label>
+                                        <input type="text" id="vin_number" x-model="form.vin_number" maxlength="17"
+                                               class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tracking-[0.1em] uppercase
+                                                      focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                               placeholder="{{ trans('contact.vin_number_placeholder') }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- ─── Conditional: B2B details ─── --}}
+                            <div x-show="form.subject_type === 'b2b_partnership'" x-cloak x-collapse>
+                                <div class="flex items-center gap-3 mb-3 pt-2">
+                                    <span class="w-6 h-[2px] bg-amber inline-block"></span>
+                                    <span class="bp-spec text-amber-ink">§ {{ trans('contact.section_b2b_details') }}</span>
+                                </div>
+                                <div>
+                                    <label for="company" class="flex items-center justify-between mb-2">
+                                        <span class="bp-spec text-ink">{{ trans('contact.company_name') }}</span>
+                                        <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.10</span>
+                                    </label>
+                                    <input type="text" id="company" x-model="form.manufacturer"
+                                           class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                                  focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                           placeholder="{{ trans('contact.company_name_placeholder') }}">
+                                </div>
+                            </div>
+
+                            {{-- Message --}}
+                            <div>
+                                <label for="message" class="flex items-center justify-between mb-2">
+                                    <span class="bp-spec text-ink">{{ trans('contact.message') }} <span class="text-red-600">*</span></span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.11</span>
+                                </label>
+                                <textarea id="message" x-model="form.message" required rows="6"
+                                          class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                                 focus:outline-none focus:bg-paper focus:border-amber resize-y placeholder:text-ink-muted"
+                                          placeholder="{{ trans('contact.message_placeholder') }}"></textarea>
+                                <div class="flex items-center justify-between mt-1.5">
+                                    <p class="font-mono text-[10px] tracking-[0.06em] text-ink-muted">{{ trans('contact.message_min_length') }}</p>
+                                    <p class="font-mono text-[10px] tabular-nums" :class="form.message.length >= 10 ? 'text-emerald-700' : 'text-ink-muted'">
+                                        <span x-text="form.message.length"></span> / 5000
+                                    </p>
+                                </div>
+                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.message" x-text="fieldErrors.message"></p>
+                            </div>
+
+                            {{-- Honeypot --}}
+                            <input type="text" x-model="form.website" class="hidden" tabindex="-1" autocomplete="off">
+
+                            {{-- Submit --}}
+                            <div class="pt-2">
+                                <button type="submit" :disabled="!verified || submitting"
+                                        class="group w-full inline-flex items-center justify-center gap-3 px-6 py-4
+                                               bg-ink text-ivory border border-ink
+                                               font-mono text-[12px] font-bold tracking-[0.24em] uppercase
+                                               hover:bg-amber hover:text-ink hover:border-amber
+                                               disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-ink disabled:hover:text-ivory
+                                               transition-colors">
+                                    <x-heroicon-o-paper-airplane class="w-4 h-4" />
+                                    <span x-text="submitting ? '{{ trans('contact.sending') }}…' : '{{ trans('contact.send_message') }}'"></span>
+                                    <x-heroicon-s-arrow-long-right class="w-4 h-4 transition-transform group-hover:translate-x-1" x-show="!submitting" />
+                                </button>
+                                <p class="mt-3 font-mono text-[10px] tracking-[0.18em] uppercase text-center"
+                                   :class="verified ? 'text-emerald-700' : 'text-ink-muted'">
+                                    <span x-show="!verified">{{ __('Verify email to enable submit') }}</span>
+                                    <span x-show="verified" class="inline-flex items-center gap-1.5">
+                                        <x-heroicon-s-check class="w-3 h-3" />
+                                        {{ __('Ready to send') }}
+                                    </span>
+                                </p>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            {{-- ── Info rail ── --}}
+            <aside class="col-span-12 lg:col-span-4 space-y-6">
+                <div class="flex items-end justify-between pb-3 border-b border-ink">
+                    <span class="bp-spec text-ink">§ 02 · {{ __('Info · Rail') }}</span>
+                </div>
+
+                <div class="border border-ink bg-paper">
+                    <div class="px-5 py-4 border-b border-rule flex items-start gap-4">
+                        <div class="w-10 h-10 border border-ink bg-ivory-alt flex items-center justify-center shrink-0">
+                            <x-heroicon-s-envelope class="w-5 h-5 text-ink" />
+                        </div>
+                        <div class="min-w-0">
+                            <p class="bp-spec text-amber-ink">{{ trans('contact.email_us') }}</p>
+                            <a href="mailto:{{ $email }}" class="mt-1 block font-mono text-sm font-bold text-ink hover:text-amber-ink break-all">
+                                {{ $email }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="px-5 py-4 border-b border-rule flex items-start gap-4">
+                        <div class="w-10 h-10 border border-ink bg-ivory-alt flex items-center justify-center shrink-0">
+                            <x-heroicon-s-clock class="w-5 h-5 text-ink" />
+                        </div>
+                        <div class="min-w-0">
+                            <p class="bp-spec text-amber-ink">{{ trans('contact.response_time') }}</p>
+                            <p class="mt-1 font-mono text-sm font-bold text-ink">{{ trans('contact.response_time_value') }}</p>
+                        </div>
+                    </div>
+                    <div class="px-5 py-4 flex items-start gap-4">
+                        <div class="w-10 h-10 border border-ink bg-ivory-alt flex items-center justify-center shrink-0">
+                            <x-heroicon-s-shield-check class="w-5 h-5 text-ink" />
+                        </div>
+                        <div class="min-w-0">
+                            <p class="bp-spec text-amber-ink">{{ trans('contact.secure') }}</p>
+                            <p class="mt-1 text-sm text-body leading-relaxed">{{ trans('contact.secure_note') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Quick actions panel --}}
+                <div class="border border-ink bg-ink text-ivory p-5">
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">§ {{ __('Shortcut · Panel') }}</p>
+                    <p class="font-display text-lg font-extrabold tracking-[-0.02em] leading-tight">
+                        {{ __('Looking for a part?') }}
                     </p>
+                    <p class="mt-2 text-sm text-ivory/70 leading-relaxed">
+                        {{ __('For part searches, use the console directly — you will get results in seconds.') }}
+                    </p>
+                    <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
+                       class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-amber text-ink
+                              font-mono text-[11px] font-bold tracking-[0.22em] uppercase
+                              hover:bg-paper transition-colors">
+                        {{ __('Open search') }}
+                        <x-heroicon-s-arrow-long-right class="w-4 h-4" />
+                    </a>
                 </div>
-
-                {{-- Subject Type --}}
-                <div>
-                    <label for="subject_type" class="block text-sm font-medium text-slate-700 mb-2">
-                        {{ trans('contact.subject') }} <span class="text-red-500">*</span>
-                    </label>
-                    <select id="subject_type" 
-                            name="subject_type" 
-                            required
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent">
-                        <option value="">{{ trans('contact.select_subject') }}</option>
-                        <option value="general_inquiry">{{ trans('contact.subjects.general_inquiry') }}</option>
-                        <option value="part_not_found">{{ trans('contact.subjects.part_not_found') }}</option>
-                        <option value="order_issue">{{ trans('contact.subjects.order_issue') }}</option>
-                        <option value="shipping_question">{{ trans('contact.subjects.shipping_question') }}</option>
-                        <option value="return_refund">{{ trans('contact.subjects.return_refund') }}</option>
-                        <option value="b2b_partnership">{{ trans('contact.subjects.b2b_partnership') }}</option>
-                        <option value="other">{{ trans('contact.subjects.other') }}</option>
-                    </select>
-                    <p class="mt-1 text-sm text-red-500 hidden" data-error="subject_type"></p>
-                </div>
-
-                {{-- Order Number (optional) --}}
-                <div>
-                    <label for="order_number" class="block text-sm font-medium text-slate-700 mb-2">
-                        {{ trans('contact.order_number') }}
-                    </label>
-                    <input type="text" 
-                           id="order_number" 
-                           name="order_number"
-                           class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent"
-                           placeholder="ORD-2025-03-00123">
-                </div>
-
-                {{-- OEM Number (optional) --}}
-                <div>
-                    <label for="oem_number" class="block text-sm font-medium text-slate-700 mb-2">
-                        {{ trans('contact.oem_number') }}
-                    </label>
-                    <input type="text" 
-                           id="oem_number" 
-                           name="oem_number"
-                           class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent font-mono"
-                           placeholder="e.g., BMW-11127556503">
-                </div>
-
-                {{-- Message --}}
-                <div>
-                    <label for="message" class="block text-sm font-medium text-slate-700 mb-2">
-                        {{ trans('contact.message') }} <span class="text-red-500">*</span>
-                    </label>
-                    <textarea id="message" 
-                              name="message" 
-                              required
-                              rows="6"
-                              class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber focus:border-transparent resize-none"
-                              placeholder="{{ trans('contact.message_placeholder') }}"></textarea>
-                    <p class="mt-1 text-sm text-slate-500">{{ trans('contact.message_min_length') }}</p>
-                    <p class="mt-1 text-sm text-red-500 hidden" data-error="message"></p>
-                </div>
-
-                {{-- Honeypot (spam protection) --}}
-                <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
-
-                {{-- Submit Button --}}
-                <div>
-                    <button type="submit" 
-                            id="submit-btn"
-                            disabled
-                            class="w-full px-6 py-3 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed">
-                        {{ trans('contact.send_message') }}
-                    </button>
-                </div>
-            </form>
+            </aside>
         </div>
 
-        {{-- Contact Info --}}
-        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 text-center">
-                <x-heroicon-o-envelope class="w-8 h-8 text-amber mx-auto mb-3" />
-                <h3 class="font-semibold text-navy mb-1">{{ trans('contact.email_us') }}</h3>
-                <a href="mailto:{{ config('mail.from.address') }}" class="text-amber hover:underline">
-                    {{ config('mail.from.address') }}
-                </a>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 text-center">
-                <x-heroicon-o-clock class="w-8 h-8 text-amber mx-auto mb-3" />
-                <h3 class="font-semibold text-navy mb-1">{{ trans('contact.response_time') }}</h3>
-                <p class="text-slate-600">{{ trans('contact.response_time_value') }}</p>
-            </div>
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 text-center">
-                <x-heroicon-o-shield-check class="w-8 h-8 text-amber mx-auto mb-3" />
-                <h3 class="font-semibold text-navy mb-1">{{ trans('contact.secure') }}</h3>
-                <p class="text-slate-600">{{ trans('contact.secure_note') }}</p>
-            </div>
-        </div>
     </div>
-</section>
+</div>
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('contact-form');
-    const emailInput = document.getElementById('email');
-    const sendOtpBtn = document.getElementById('send-otp-btn');
-    const otpSection = document.getElementById('otp-section');
-    const otpInput = document.getElementById('otp');
-    const verifyOtpBtn = document.getElementById('verify-otp-btn');
-    const submitBtn = document.getElementById('submit-btn');
-    const successMessage = document.getElementById('success-message');
-    const errorMessage = document.getElementById('error-message');
-    const otpVerified = document.getElementById('otp-verified');
+function contactForm() {
+    const sendOtpUrl   = @json(route('frontend.contact.send-otp', ['lang' => $lang]));
+    const verifyOtpUrl = @json(route('frontend.contact.verify-otp', ['lang' => $lang]));
+    const submitUrl    = @json(route('frontend.contact.submit', ['lang' => $lang]));
+    const csrfToken    = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-    let isEmailVerified = false;
+    return {
+        form: {
+            name: '',
+            email: '',
+            otp: '',
+            subject_type: '',
+            order_number: '',
+            oem_number: '',
+            manufacturer: '',
+            car_model: '',
+            year: '',
+            vin_number: '',
+            message: '',
+            website: '',
+        },
+        sending: false,
+        verifying: false,
+        submitting: false,
+        codeSent: false,
+        verified: false,
+        successMsg: '',
+        errorMsg: '',
+        fieldErrors: {},
 
-    // Show error message
-    function showError(message) {
-        errorMessage.classList.remove('hidden');
-        errorMessage.querySelector('[data-message="error"]').textContent = message;
-        successMessage.classList.add('hidden');
-    }
+        get needsOrder() {
+            return ['order_issue', 'shipping_question', 'return_refund'].includes(this.form.subject_type);
+        },
 
-    // Show success message
-    function showSuccess(message) {
-        successMessage.classList.remove('hidden');
-        successMessage.querySelector('[data-message="success"]').textContent = message;
-        errorMessage.classList.add('hidden');
-    }
+        resetMsgs() {
+            this.successMsg = '';
+            this.errorMsg = '';
+            this.fieldErrors = {};
+        },
 
-    // Clear errors
-    function clearErrors() {
-        document.querySelectorAll('[data-error]').forEach(el => el.classList.add('hidden'));
-        errorMessage.classList.add('hidden');
-    }
+        changeEmail() {
+            this.codeSent = false;
+            this.verified = false;
+            this.form.otp = '';
+            this.resetMsgs();
+        },
 
-    // Send OTP
-    sendOtpBtn.addEventListener('click', async function() {
-        clearErrors();
-        const email = emailInput.value.trim();
-
-        if (!email) {
-            document.querySelector('[data-error="email"]').classList.remove('hidden');
-            document.querySelector('[data-error="email"]').textContent = 'Please enter your email';
-            return;
-        }
-
-        sendOtpBtn.disabled = true;
-        sendOtpBtn.textContent = '{{ trans("contact.sending") }}...';
-
-        try {
-            const response = await fetch('{{ route("frontend.contact.send-otp", ["lang" => $locale ?? "en"]) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
-                },
-                body: JSON.stringify({ email })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                otpSection.classList.remove('hidden');
-                otpInput.focus();
-                showSuccess(data.message);
-            } else {
-                showError(data.message || 'Failed to send verification code');
+        async sendOtp() {
+            this.resetMsgs();
+            if (!this.form.email || !this.form.email.includes('@')) {
+                this.fieldErrors = { email: 'Please enter a valid email address.' };
+                return;
             }
-        } catch (error) {
-            showError('An error occurred. Please try again.');
-        } finally {
-            sendOtpBtn.disabled = false;
-            sendOtpBtn.textContent = '{{ trans("contact.verify_email") }}';
-        }
-    });
-
-    // Verify OTP
-    verifyOtpBtn.addEventListener('click', async function() {
-        clearErrors();
-        const email = emailInput.value.trim();
-        const otp = otpInput.value.trim();
-
-        if (!otp || otp.length !== 6) {
-            document.querySelector('[data-error="otp"]').classList.remove('hidden');
-            document.querySelector('[data-error="otp"]').textContent = 'Please enter a valid 6-digit code';
-            return;
-        }
-
-        verifyOtpBtn.disabled = true;
-        verifyOtpBtn.textContent = '{{ trans("contact.verifying") }}...';
-
-        try {
-            const response = await fetch('{{ route("frontend.contact.verify-otp", ["lang" => $locale ?? "en"]) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
-                },
-                body: JSON.stringify({ email, otp })
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                isEmailVerified = true;
-                submitBtn.disabled = false;
-                otpVerified.classList.remove('hidden');
-                verifyOtpBtn.classList.add('hidden');
-                showSuccess(data.message);
-            } else {
-                showError(data.message || 'Invalid verification code');
+            this.sending = true;
+            try {
+                const res = await fetch(sendOtpUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                    body: JSON.stringify({ email: this.form.email }),
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.codeSent = true;
+                    this.successMsg = data.message || @json(trans('contact.otp_sent'));
+                } else {
+                    this.errorMsg = data.message || 'Failed to send verification code.';
+                }
+            } catch (e) {
+                this.errorMsg = 'Network error. Please try again.';
+            } finally {
+                this.sending = false;
             }
-        } catch (error) {
-            showError('An error occurred. Please try again.');
-        } finally {
-            verifyOtpBtn.disabled = false;
-            verifyOtpBtn.textContent = '{{ trans("contact.verify") }}';
-        }
-    });
-
-    // Submit form
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        clearErrors();
-
-        if (!isEmailVerified) {
-            showError('Please verify your email first');
-            return;
-        }
-
-        submitBtn.disabled = true;
-        submitBtn.textContent = '{{ trans("contact.sending") }}...';
-
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        try {
-            const response = await fetch('{{ route("frontend.contact.submit", ["lang" => $locale ?? "en"]) }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_csrf"]').value
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                showSuccess(result.message);
-                form.reset();
-                otpSection.classList.add('hidden');
-                otpVerified.classList.add('hidden');
-                verifyOtpBtn.classList.remove('hidden');
-                submitBtn.disabled = true;
-                isEmailVerified = false;
-            } else {
-                showError(result.message || 'Failed to send message');
+            // Non-critical UX: focus the OTP input if it now exists. Keep outside
+            // the try/catch above so a focus failure can never surface as a
+            // misleading "Network error." banner alongside the success message.
+            if (this.codeSent) {
+                await this.$nextTick();
+                try {
+                    const otpInput = (this.$root || document).querySelector('input[inputmode="numeric"]');
+                    otpInput?.focus();
+                } catch (_) { /* ignore */ }
             }
-        } catch (error) {
-            showError('An error occurred. Please try again.');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = '{{ trans("contact.send_message") }}';
-        }
-    });
-});
+        },
+
+        async verifyOtp() {
+            this.resetMsgs();
+            if (this.form.otp.length !== 6) {
+                this.fieldErrors = { otp: 'Enter the 6-digit code from your email.' };
+                return;
+            }
+            this.verifying = true;
+            try {
+                const res = await fetch(verifyOtpUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                    body: JSON.stringify({ email: this.form.email, otp: this.form.otp }),
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.verified = true;
+                    this.codeSent = false;
+                    this.successMsg = data.message || @json(trans('contact.email_verified'));
+                } else {
+                    this.fieldErrors = { otp: data.message || @json(trans('contact.otp_invalid')) };
+                }
+            } catch (e) {
+                this.errorMsg = 'Network error. Please try again.';
+            } finally {
+                this.verifying = false;
+            }
+        },
+
+        async submitForm() {
+            this.resetMsgs();
+            if (!this.verified) {
+                this.errorMsg = 'Please verify your email first.';
+                return;
+            }
+            this.submitting = true;
+            try {
+                const res = await fetch(submitUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                    body: JSON.stringify(this.form),
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    this.successMsg = data.message || @json(trans('contact.sent_success'));
+                    this.form = {
+                        name: '', email: '', otp: '', subject_type: '',
+                        order_number: '', oem_number: '', manufacturer: '',
+                        car_model: '', year: '', vin_number: '', message: '', website: '',
+                    };
+                    this.verified = false;
+                    this.codeSent = false;
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: this.successMsg, type: 'success' } }));
+                } else {
+                    if (data.errors) { this.fieldErrors = Object.fromEntries(Object.entries(data.errors).map(([k,v]) => [k, Array.isArray(v) ? v[0] : v])); }
+                    this.errorMsg = data.message || @json(trans('contact.sent_failed'));
+                }
+            } catch (e) {
+                this.errorMsg = 'Network error. Please try again.';
+            } finally {
+                this.submitting = false;
+            }
+        },
+    };
+}
 </script>
 @endpush
 @endsection

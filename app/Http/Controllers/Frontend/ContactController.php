@@ -57,8 +57,8 @@ class ContactController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        // Dispatch OTP email
-        dispatch(new SendOtpEmail($email, $otpCode, 'Contact form verification'));
+        // Dispatch OTP email (3rd arg is locale, not purpose)
+        dispatch(new SendOtpEmail($email, $otpCode, app()->getLocale()));
 
         return response()->json(['success' => true, 'message' => 'Verification code sent to your email']);
     }

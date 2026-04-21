@@ -110,22 +110,44 @@
                     observer.observe($el);
                 "
             >
-                {{-- Skeleton placeholder while loading --}}
+                {{-- Skeleton placeholder · Blueprint hairlines --}}
                 <div
                     x-show="!loaded"
                     x-transition:leave="transition ease-in duration-300"
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
-                    class="py-14 md:py-20 px-4 bg-gray-50 animate-pulse"
+                    class="relative bg-ivory border-b border-rule py-20 md:py-28 px-4 sm:px-6 lg:px-10"
                     aria-hidden="true"
                 >
-                    <div class="max-w-4xl mx-auto space-y-6">
-                        <div class="h-8 bg-gray-200 rounded-lg w-1/3 mx-auto"></div>
-                        <div class="h-4 bg-gray-200 rounded w-2/3 mx-auto"></div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="h-48 bg-gray-200 rounded-2xl"></div>
-                            <div class="h-48 bg-gray-200 rounded-2xl"></div>
-                            <div class="h-48 bg-gray-200 rounded-2xl"></div>
+                    <div class="max-w-[1440px] mx-auto">
+                        {{-- Header row skeleton --}}
+                        <div class="grid grid-cols-12 gap-x-6 items-end pb-8 mb-12 border-b border-ink">
+                            <div class="col-span-12 md:col-span-7 space-y-4 animate-pulse">
+                                <div class="flex items-center gap-4">
+                                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                                    <span class="h-3 w-32 bg-rule inline-block"></span>
+                                </div>
+                                <div class="h-10 md:h-14 w-4/5 bg-rule"></div>
+                                <div class="h-10 md:h-14 w-2/3 bg-rule"></div>
+                            </div>
+                            <div class="hidden md:block col-span-5 animate-pulse">
+                                <div class="h-3 w-full bg-rule mb-2"></div>
+                                <div class="h-3 w-3/4 bg-rule"></div>
+                            </div>
+                        </div>
+                        {{-- Content ledger skeleton --}}
+                        <div class="grid grid-cols-1 md:grid-cols-3 border border-ink animate-pulse">
+                            @for($i = 0; $i < 3; $i++)
+                            <div class="p-6 sm:p-8 border-b md:border-b-0 md:border-r last:border-r-0 border-rule bg-paper">
+                                <div class="flex items-center justify-between mb-6">
+                                    <span class="h-2 w-8 bg-rule"></span>
+                                    <span class="w-8 h-8 border border-rule"></span>
+                                </div>
+                                <div class="h-10 w-1/2 bg-rule mb-6"></div>
+                                <div class="h-3 w-4/5 bg-rule mb-2"></div>
+                                <div class="h-3 w-3/5 bg-rule"></div>
+                            </div>
+                            @endfor
                         </div>
                     </div>
                 </div>

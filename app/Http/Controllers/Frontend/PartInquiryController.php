@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Enums\PartInquiryStatus;
 use App\Http\Controllers\Controller;
+use App\Jobs\SendPartInquiryNotification;
 use App\Models\PartInquiry;
 use App\Services\OemNormalizerService;
 use Illuminate\Http\Request;
@@ -36,7 +37,7 @@ class PartInquiryController extends Controller
             'website'      => ['max:0'], // honeypot
         ]);
 
-        PartInquiry::create([
+        $inquiry = PartInquiry::create([
             'email'        => $validated['email'],
             'phone'        => $validated['phone'] ?? null,
             'oem_number'   => strtoupper(trim($validated['oem_number'])),
@@ -50,6 +51,8 @@ class PartInquiryController extends Controller
             'status'       => PartInquiryStatus::New,
             'ip_address'   => $request->ip(),
         ]);
+
+        dispatch(new SendPartInquiryNotification($inquiry));
 
         $hours = (int) settings('part_inquiry.response_hours', 24);
 

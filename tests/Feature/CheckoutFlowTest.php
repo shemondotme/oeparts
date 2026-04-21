@@ -152,9 +152,14 @@ class CheckoutFlowTest extends TestCase
         $this->assertTrue($checkout['data']['otp_verified'] ?? false, 'otp_verified should be true');
         $this->assertEquals(2, $checkout['step'] ?? 0, 'Should be at step 2 after OTP verification');
 
-        // Step 2: B2B VAT (skip) - after OTP verification, we should be at step 2
+        // Step 2: Address
         $response = $this->post('/en/checkout', [
-            'is_b2b' => 0,
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'street' => '123 Main St',
+            'city' => 'Berlin',
+            'postal_code' => '10115',
+            'country_code' => 'DE',
         ]);
         $response->assertRedirect();
         
@@ -162,19 +167,15 @@ class CheckoutFlowTest extends TestCase
         $checkout = $checkoutService->get($checkoutId);
         $this->assertEquals(3, $checkout['step'] ?? 0, 'Should be at step 3 after skipping B2B');
 
-        // Step 3: Address
+        // Step 3: Shipping method
         $response = $this->post('/en/checkout', [
-            'name' => 'John Doe',
-            'address_line1' => '123 Main St',
-            'city' => 'Berlin',
-            'postal_code' => '10115',
-            'country_code' => 'DE',
+            'shipping_method_id' => $this->shippingMethod->id,
         ]);
         $response->assertRedirect();
 
-        // Step 4: Shipping method
+        // Step 4: Review
         $response = $this->post('/en/checkout', [
-            'shipping_method_id' => $this->shippingMethod->id,
+            'agree_terms' => 1,
         ]);
         $response->assertRedirect();
 
@@ -191,7 +192,6 @@ class CheckoutFlowTest extends TestCase
         $response = $this->post('/en/checkout', [
             'payment_method' => 'card',
             'customer_note' => 'Please deliver before 5pm',
-            'terms' => 1,
         ]);
         
         // Debug: check if there's an error in session

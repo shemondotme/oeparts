@@ -4,6 +4,7 @@
     $lang = app()->getLocale();
     $siteName = settings('general.site_name', 'OEMHub');
     $inquiryHours = (int) settings('part_inquiry.response_hours', 24);
+    $minChars = (int) settings('search.min_chars', 3);
     $zeroJsonLd = [
         '@context' => 'https://schema.org',
         '@type' => 'SearchResultsPage',
@@ -54,184 +55,305 @@
 <script type="application/ld+json">{!! json_encode($zeroJsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 @endsection
 
-{{-- ── Content ──────────────────────────────────────────────────────────── --}}
+{{-- ══════════════════════════════════════════════════════════════════════
+     INDUSTRIAL BLUEPRINT — ZERO RESULTS PAGE
+     Treats "no match" like a formal field report: document-style framing,
+     diagnostic details, and a concierge handoff.
+     ══════════════════════════════════════════════════════════════════ --}}
 @section('content')
 
-<div class="min-h-screen bg-bg-page pb-24">
+<div class="relative bg-ivory text-ink min-h-screen">
 
-    {{-- ── Navy search strip (matches site language) ────────────────── --}}
-    <div class="bg-gradient-to-b from-navy to-blue-900 border-b border-white/10">
-        <div class="max-w-5xl mx-auto px-4 py-5"
-             x-data="{
-                 q: '{{ $normalized_query }}',
-                 submit() {
-                     const oem = this.q.trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                     if (oem.length >= {{ settings('search.min_chars', 3) }}) {
-                         window.location.href = '/{{ $lang }}/parts/' + oem;
+    {{-- Blueprint grid background --}}
+    <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-sm opacity-70 pointer-events-none" aria-hidden="true"></div>
+
+    <div class="relative max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-24">
+
+        {{-- ═══ Document header: breadcrumb + doc ID ═══ --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
+            <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">Home</a>
+                <span class="text-rule-strong">/</span>
+                <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">Search</a>
+                <span class="text-rule-strong">/</span>
+                <span class="text-ink">No Match</span>
+            </nav>
+            <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
+                DOC · FIELD-REPORT · 404-A
+            </div>
+        </div>
+
+        {{-- ═══ 12-column grid: header + spec panel ═══ --}}
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 gap-y-8 mb-16 bp-rise bp-rise-delay-1">
+
+            {{-- Left: headline (8 cols) --}}
+            <header class="col-span-12 lg:col-span-8">
+                <div class="flex items-center gap-4 mb-8">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="bp-spec text-amber-ink">{{ __('search.zero_eyebrow') }}</span>
+                </div>
+
+                <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[20ch]">
+                    {{ __('search.zero_heading_new') }}<span class="text-amber">.</span>
+                </h1>
+
+                <div class="mt-6 mb-8">
+                    <div class="bp-rule-draw h-px bg-ink/70 origin-left"></div>
+                </div>
+
+                <p class="max-w-xl text-lg text-body leading-relaxed">
+                    {{ __('search.zero_cta_subtitle', ['hours' => $inquiryHours]) }}
+                </p>
+            </header>
+
+            {{-- Right: query spec panel (4 cols) --}}
+            <aside class="col-span-12 lg:col-span-4">
+                <div class="relative border border-ink bg-paper bp-register">
+                    <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">QUERY · LOG</span>
+                        <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ now()->format('Y.m.d · H:i') }}</span>
+                    </div>
+                    <div class="p-5 space-y-3">
+                        <div>
+                            <p class="bp-spec text-ink-muted mb-2">Submitted</p>
+                            <p class="font-mono text-xl sm:text-2xl font-bold text-ink tracking-wide uppercase break-all">
+                                {{ $normalized_query }}
+                            </p>
+                        </div>
+                        <div class="bp-leader pt-2">
+                            <dt class="text-sm text-ink-muted">Normalized</dt>
+                            <span class="bp-leader-dots"></span>
+                            <dd class="font-mono text-sm font-bold text-ink">✓</dd>
+                        </div>
+                        <div class="bp-leader">
+                            <dt class="text-sm text-ink-muted">Catalogue</dt>
+                            <span class="bp-leader-dots"></span>
+                            <dd class="font-mono text-sm font-bold text-red-700">0 hits</dd>
+                        </div>
+                        <div class="bp-leader">
+                            <dt class="text-sm text-ink-muted">Cross-refs</dt>
+                            <span class="bp-leader-dots"></span>
+                            <dd class="font-mono text-sm font-bold text-red-700">0 hits</dd>
+                        </div>
+                        <div class="bp-leader">
+                            <dt class="text-sm text-ink-muted">Status</dt>
+                            <span class="bp-leader-dots"></span>
+                            <dd class="font-mono text-sm font-bold text-amber-ink uppercase tracking-wide">Concierge</dd>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        {{-- ═══ Re-submit bar ═══ --}}
+        <section class="mb-16 bp-rise bp-rise-delay-2"
+                 x-data="{
+                     q: '{{ $normalized_query }}',
+                     submit() {
+                         const oem = this.q.trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                         if (oem.length >= {{ $minChars }}) {
+                             window.location.href = '{{ url('/'.$lang.'/parts') }}/' + oem;
+                         }
                      }
-                 }
-             }"
-        >
-            <form @submit.prevent="submit" class="flex items-center gap-2">
+                 }">
+            <div class="flex items-end justify-between pb-3 border-b border-ink">
+                <span class="bp-spec text-ink">§02 · Re-submit query</span>
+                <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
+                    min {{ $minChars }} chars · alphanumeric
+                </span>
+            </div>
+            <form @submit.prevent="submit" class="flex flex-col sm:flex-row items-stretch bg-paper border-x border-b border-ink" role="search">
                 @csrf
                 <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
-                <div class="flex-1 flex items-center gap-3 bg-white rounded-full px-5 py-2.5 border border-white/20 shadow-sm">
-                    <x-heroicon-o-magnifying-glass class="w-5 h-5 text-navy shrink-0" />
+                <div class="flex-1 flex items-center gap-4 px-5 sm:px-7 py-4 min-w-0">
+                    <x-heroicon-o-magnifying-glass class="w-5 h-5 text-ink shrink-0" aria-hidden="true" />
                     <input type="text"
                            x-model="q"
                            placeholder="{{ __('search.mini_search_placeholder') }}"
+                           aria-label="Search by OEM part number"
                            autocomplete="off"
                            autocapitalize="characters"
                            inputmode="text"
-                           class="flex-1 text-navy font-mono font-bold text-sm uppercase
-                                  placeholder:normal-case placeholder:font-sans placeholder:font-medium placeholder:text-gray-400
-                                  border-0 focus:outline-none focus:ring-0 p-0 bg-transparent">
+                           class="flex-1 bg-transparent font-mono uppercase tracking-wider
+                                  text-lg sm:text-xl font-medium text-ink
+                                  placeholder:normal-case placeholder:tracking-normal placeholder:font-sans placeholder:text-ink-muted/60
+                                  border-0 focus:outline-none focus:ring-0 min-w-0 py-1">
                     <button type="button"
                             x-show="q.length > 0"
                             x-cloak
                             @click="q = ''"
-                            class="text-gray-400 hover:text-red-500 shrink-0">
+                            class="text-ink-muted hover:text-red-700 shrink-0"
+                            aria-label="Clear">
                         <x-heroicon-o-x-mark class="w-4 h-4" />
                     </button>
                 </div>
                 <button type="submit"
-                        class="shrink-0 inline-flex items-center justify-center gap-1.5 px-5 py-2.5 bg-amber text-navy font-extrabold text-sm rounded-full hover:bg-amber/90 transition-colors">
-                    <span class="hidden sm:inline">{{ __('search.mini_search_button') }}</span>
-                    <x-heroicon-m-magnifying-glass class="w-4 h-4" />
+                        class="group shrink-0 inline-flex items-center justify-center gap-3 px-6 sm:px-8 py-4
+                               bg-ink text-ivory font-sans text-[12px] font-bold uppercase tracking-[0.22em]
+                               border-t sm:border-t-0 sm:border-l border-ink
+                               hover:bg-amber hover:text-ink transition-colors duration-150">
+                    {{ __('search.mini_search_button') }}
+                    <x-heroicon-s-arrow-long-right class="w-4 h-4 transform transition-transform group-hover:translate-x-1" aria-hidden="true" />
                 </button>
             </form>
-        </div>
-    </div>
+        </section>
 
-    <div class="max-w-3xl mx-auto px-4 mt-10">
-
-        {{-- ── Hero ──────────────────────────────────────────────────── --}}
-        <div class="text-center mb-10">
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-amber/30 shadow-sm mb-5">
-                <x-heroicon-o-magnifying-glass class="w-8 h-8 text-amber-text" />
+        {{-- ═══ Primary: Concierge inquiry card ═══ --}}
+        <section class="mb-16 bp-rise bp-rise-delay-3">
+            <div class="flex items-end justify-between pb-3 border-b border-ink">
+                <span class="bp-spec text-ink">§03 · {{ __('search.zero_cta_title') }}</span>
+                <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
+                    RESPONSE · {{ $inquiryHours }}h
+                </span>
             </div>
-            <p class="text-[11px] font-bold text-amber-text uppercase tracking-widest mb-2">
-                {{ __('search.zero_eyebrow') }}
-            </p>
-            <h1 class="font-display text-3xl md:text-4xl font-extrabold text-navy leading-tight mb-3">
-                {{ __('search.zero_heading_new') }}
-            </h1>
-            <p class="text-sm text-muted">
-                <span>{{ __('search.zero_searched_for') }}:</span>
-                <span class="font-mono text-navy bg-amber/10 border border-amber/20 px-2.5 py-0.5 rounded-lg font-bold ml-1">{{ $normalized_query }}</span>
-            </p>
-        </div>
 
-        {{-- ── Inquiry concierge card (primary) ───────────────────────── --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-6">
-            {{-- Header strip --}}
-            <div class="bg-gradient-to-r from-amber/10 via-amber/5 to-transparent px-6 sm:px-8 py-5 border-b border-amber/15">
-                <div class="flex items-start gap-4">
-                    <div class="w-11 h-11 rounded-xl bg-amber flex items-center justify-center shrink-0 shadow-sm">
-                        <x-heroicon-o-paper-airplane class="w-5 h-5 text-navy" />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h2 class="font-display text-lg sm:text-xl font-bold text-navy mb-1">
-                            {{ __('search.zero_cta_title') }}
-                        </h2>
-                        <p class="text-sm text-body leading-relaxed">
-                            {{ __('search.zero_cta_subtitle', ['hours' => $inquiryHours]) }}
+            <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 border-x border-b border-ink bg-paper">
+
+                {{-- Left: 3-step process (7 cols) --}}
+                <div class="col-span-12 md:col-span-7 p-6 sm:p-10 md:border-r md:border-rule">
+                    <ol class="space-y-0 divide-y divide-rule">
+                        @foreach([
+                            ['01', __('search.zero_step_1_title'), __('search.zero_step_1_body')],
+                            ['02', __('search.zero_step_2_title'), __('search.zero_step_2_body')],
+                            ['03', __('search.zero_step_3_title'), __('search.zero_step_3_body', ['hours' => $inquiryHours])],
+                        ] as [$n, $title, $body])
+                        <li class="flex items-start gap-5 py-5 first:pt-0 last:pb-0">
+                            <span class="font-mono text-2xl sm:text-3xl font-medium text-ink tabular-nums leading-none pt-1">
+                                {{ $n }}
+                            </span>
+                            <div class="flex-1 min-w-0 border-l border-rule pl-5">
+                                <p class="font-display text-base sm:text-lg font-bold text-ink leading-snug">{{ $title }}</p>
+                                <p class="mt-1.5 text-sm text-body leading-relaxed">{{ $body }}</p>
+                            </div>
+                        </li>
+                        @endforeach
+                    </ol>
+
+                    {{-- Primary CTA --}}
+                    <button type="button"
+                            onclick="window.dispatchEvent(new CustomEvent('open-inquiry-modal', { detail: { oem: {{ json_encode($normalized_query) }} } }))"
+                            class="mt-8 w-full group inline-flex items-center justify-center gap-3
+                                   px-6 py-4
+                                   bg-ink text-ivory font-sans text-[13px] font-bold uppercase tracking-[0.22em]
+                                   border border-ink
+                                   hover:bg-amber hover:text-ink
+                                   transition-colors duration-150
+                                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2 focus-visible:ring-offset-paper">
+                        <x-heroicon-o-paper-airplane class="w-4 h-4" aria-hidden="true" />
+                        {{ __('search.inquiry_submit') }}
+                        <x-heroicon-s-arrow-long-right class="w-5 h-5 transform transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                    </button>
+                </div>
+
+                {{-- Right: trust spec panel (5 cols) --}}
+                <aside class="col-span-12 md:col-span-5 p-6 sm:p-10 bg-ivory border-t md:border-t-0 border-rule">
+                    <p class="bp-spec text-ink mb-5">Trust · Record</p>
+
+                    <dl class="space-y-4">
+                        <div class="flex items-start gap-3">
+                            <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
+                            <div>
+                                <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_suppliers') }}</dt>
+                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">Background-checked</dd>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <x-heroicon-s-building-storefront class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
+                            <div>
+                                <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_warehouse') }}</dt>
+                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">EU despatch · 24-48h</dd>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <x-heroicon-s-trophy class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
+                            <div>
+                                <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_quality') }}</dt>
+                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">Genuine · warranty-backed</dd>
+                            </div>
+                        </div>
+                    </dl>
+
+                    <div class="mt-8 pt-6 border-t border-rule">
+                        <p class="bp-spec text-ink-muted mb-3">Typical SLA</p>
+                        <p class="font-mono text-4xl sm:text-5xl font-bold text-ink leading-none tabular-nums">
+                            {{ $inquiryHours }}<span class="text-amber">h</span>
+                        </p>
+                        <p class="mt-2 font-mono text-[11px] text-ink-muted uppercase tracking-[0.16em]">
+                            Business-hours response
                         </p>
                     </div>
-                </div>
+                </aside>
             </div>
+        </section>
 
-            {{-- Body --}}
-            <div class="px-6 sm:px-8 py-6">
-                {{-- What happens next (3-step timeline) --}}
-                <ol class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                    @foreach([
-                        ['1', __('search.zero_step_1_title'), __('search.zero_step_1_body')],
-                        ['2', __('search.zero_step_2_title'), __('search.zero_step_2_body')],
-                        ['3', __('search.zero_step_3_title'), __('search.zero_step_3_body', ['hours' => $inquiryHours])],
-                    ] as [$n, $title, $body])
-                    <li class="flex items-start gap-3 p-3.5 rounded-xl bg-bg-page border border-gray-100">
-                        <span class="w-7 h-7 rounded-lg bg-navy text-white text-xs font-extrabold flex items-center justify-center shrink-0 shadow-sm">{{ $n }}</span>
-                        <div class="min-w-0">
-                            <p class="text-xs font-bold text-navy leading-tight">{{ $title }}</p>
-                            <p class="text-[11px] text-muted mt-1 leading-snug">{{ $body }}</p>
-                        </div>
-                    </li>
-                    @endforeach
-                </ol>
-
-                {{-- Primary CTA --}}
-                <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-inquiry-modal', { detail: { oem: {{ json_encode($normalized_query) }} } }))"
-                        class="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-amber text-navy font-extrabold text-sm shadow-sm hover:bg-amber/90 hover:shadow-md transition-all">
-                    <x-heroicon-o-paper-airplane class="w-4 h-4" />
-                    {{ __('search.inquiry_submit') }}
-                </button>
-
-                {{-- Trust signals --}}
-                <div class="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-4 text-[11px] font-medium text-muted">
-                    <span class="inline-flex items-center gap-1.5">
-                        <x-heroicon-s-shield-check class="h-3.5 w-3.5 text-emerald-600" />
-                        {{ __('search.inquiry_trust_suppliers') }}
-                    </span>
-                    <span class="text-gray-300">·</span>
-                    <span class="inline-flex items-center gap-1.5">
-                        <x-heroicon-s-building-storefront class="h-3.5 w-3.5 text-blue-600" />
-                        {{ __('search.inquiry_trust_warehouse') }}
-                    </span>
-                    <span class="text-gray-300">·</span>
-                    <span class="inline-flex items-center gap-1.5">
-                        <x-heroicon-s-trophy class="h-3.5 w-3.5 text-amber-text" />
-                        {{ __('search.inquiry_trust_quality') }}
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        {{-- ── Secondary: Popular OEMs ────────────────────────────────── --}}
+        {{-- ═══ Popular OEMs · Indexed ═══ --}}
         @if($popularOems->isNotEmpty())
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-            <h2 class="text-xs font-bold text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
-                <x-heroicon-s-fire class="w-3.5 h-3.5 text-amber-text" />
-                {{ __('search.zero_popular_heading') }}
-            </h2>
-            <div class="flex flex-wrap gap-2">
-                @foreach($popularOems as $oem)
+        <section class="mb-16 bp-rise">
+            <div class="flex items-end justify-between pb-3 border-b border-ink">
+                <span class="bp-spec text-ink">§04 · {{ __('search.zero_popular_heading') }}</span>
+                <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
+                    frequently indexed
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border-x border-b border-ink bg-paper">
+                @foreach($popularOems as $i => $oem)
                 <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $oem]) }}"
-                   class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-bg-page hover:bg-amber/10 border border-gray-200 hover:border-amber/30 rounded-lg transition-colors">
-                    <span class="font-mono text-xs font-semibold text-navy">{{ $oem }}</span>
-                    <x-heroicon-o-arrow-right class="w-3 h-3 text-gray-400" />
+                   class="group relative flex items-center justify-between gap-3 p-5
+                          border-rule
+                          {{ $i < $popularOems->count() - 1 ? 'sm:border-r lg:border-r border-b sm:border-b-0 lg:border-b-0' : '' }}
+                          {{ ($i + 1) % 2 === 0 ? 'sm:border-r-0 lg:border-r' : '' }}
+                          hover:bg-ink hover:text-ivory transition-colors duration-150">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <span class="font-mono text-[10px] font-bold text-ink-muted group-hover:text-amber tracking-[0.2em] uppercase shrink-0">
+                            {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
+                        </span>
+                        <span class="font-mono text-sm sm:text-base font-bold tracking-wide uppercase truncate">
+                            {{ $oem }}
+                        </span>
+                    </div>
+                    <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted group-hover:text-amber transform transition-transform group-hover:translate-x-1 shrink-0" aria-hidden="true" />
                 </a>
                 @endforeach
             </div>
-        </div>
+        </section>
         @endif
 
-        {{-- ── Tips (footer helper) ──────────────────────────────────── --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
-            <p class="text-xs font-bold text-muted uppercase tracking-widest mb-3 flex items-center gap-2">
-                <x-heroicon-o-light-bulb class="w-3.5 h-3.5 text-amber-text" />
-                {{ __('search.zero_tips_heading') }}
-            </p>
-            <ul class="space-y-2">
-                @foreach(['zero_tip_1', 'zero_tip_2', 'zero_tip_3', 'zero_tip_4'] as $tipKey)
-                <li class="flex items-start gap-2 text-xs text-body leading-relaxed">
-                    <x-heroicon-s-check-circle class="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                    {{ __('search.' . $tipKey) }}
-                </li>
-                @endforeach
-            </ul>
-        </div>
+        {{-- ═══ Diagnostic tips ═══ --}}
+        <section class="mb-16 bp-rise">
+            <div class="flex items-end justify-between pb-3 border-b border-ink">
+                <span class="bp-spec text-ink">§05 · {{ __('search.zero_tips_heading') }}</span>
+                <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
+                    diagnostic
+                </span>
+            </div>
 
-        {{-- ── Back to Home ─────────────────────────────────────────── --}}
-        <div class="text-center">
-            <a href="/{{ $lang }}/"
-               class="inline-flex items-center gap-2 text-xs font-semibold text-muted hover:text-navy transition-colors">
-                <x-heroicon-o-arrow-left class="w-3.5 h-3.5" />
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-0 border-x border-b border-ink bg-paper">
+                @foreach(['zero_tip_1', 'zero_tip_2', 'zero_tip_3', 'zero_tip_4'] as $i => $tipKey)
+                <div class="flex items-start gap-4 p-5 sm:p-6
+                            {{ $i % 2 === 0 ? 'md:border-r border-rule' : '' }}
+                            {{ $i < 2 ? 'border-b border-rule' : '' }}">
+                    <span class="font-mono text-xs font-bold tracking-[0.2em] text-amber-ink uppercase shrink-0 mt-1 w-8">
+                        {{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}
+                    </span>
+                    <p class="text-sm text-body leading-relaxed">{{ __('search.' . $tipKey) }}</p>
+                </div>
+                @endforeach
+            </div>
+        </section>
+
+        {{-- ═══ Back to home ═══ --}}
+        <div class="pt-6 border-t border-rule flex items-center justify-between bp-rise">
+            <a href="{{ url('/'.$lang.'/') }}"
+               class="group inline-flex items-center gap-3 font-mono text-[12px] font-bold tracking-[0.2em] uppercase text-ink border-b border-ink hover:text-amber-ink hover:border-amber-ink pb-0.5 transition-colors">
+                <x-heroicon-s-arrow-long-left class="w-4 h-4 transform transition-transform group-hover:-translate-x-1" />
                 {{ __('search.zero_back') }}
             </a>
+            <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
+                END · FIELD-REPORT
+            </span>
         </div>
-
     </div>
 </div>
 

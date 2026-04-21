@@ -8,6 +8,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\ShippingMethod;
 use App\Models\User;
 use App\Models\UserAddress;
 use Illuminate\Support\Facades\DB;
@@ -50,6 +51,8 @@ class CheckoutService
             'cart_id' => $cart->id,
             'step' => 1,
             'data' => [
+                'contact_email' => null,
+                'contact_phone' => null,
                 'guest_email' => null,
                 'otp_verified' => false,
                 'vat_number' => null,
@@ -58,6 +61,7 @@ class CheckoutService
                 'is_b2b' => false,
                 'shipping_address' => null,
                 'shipping_method_id' => null,
+                'payment_method' => 'card',
                 'customer_note' => null,
                 'urgent_processing' => false,
             ],
@@ -91,6 +95,22 @@ class CheckoutService
     }
 
     /**
+     * Move back one step, never below step 1.
+     */
+    public function goBack(string $checkoutId): bool
+    {
+        $checkout = $this->get($checkoutId);
+        if (!$checkout) {
+            return false;
+        }
+
+        $checkout['step'] = max(1, ((int) $checkout['step']) - 1);
+        Session::put("checkout.{$checkoutId}", $checkout);
+
+        return true;
+    }
+
+    /**
      * Check whether a specific step is complete.
      */
     public function isStepComplete(string $checkoutId, int $step): bool
@@ -104,19 +124,27 @@ class CheckoutService
 
         switch ($step) {
             case 1:
-                return !empty($data['guest_email']) && $data['otp_verified'] === true;
+                // Testing bypass — see CHECKOUT_SKIP_OTP in .env.
+                $skipOtp = (bool) config('app.checkout_skip_otp');
+                return !empty($data['contact_email'])
+                    && ($skipOtp || $data['otp_verified'] === true || auth()->check());
             case 2:
-                // VAT step is optional; if is_b2b is true, vat_number must be validated
-                if ($data['is_b2b'] ?? false) {
-                    return !empty($data['vat_number']) && ($data['vat_exempt'] ?? false) !== null;
+                if (empty($data['shipping_address'])) {
+                    return false;
                 }
+
+                if ($data['is_b2b'] ?? false) {
+                    return !empty($data['company_name']) && !empty($data['vat_number']);
+                }
+
                 return true;
             case 3:
-                return !empty($data['shipping_address']);
-            case 4:
                 return !empty($data['shipping_method_id']);
+            case 4:
+                return $this->isStepComplete($checkoutId, 1)
+                    && $this->isStepComplete($checkoutId, 2)
+                    && $this->isStepComplete($checkoutId, 3);
             case 5:
-                // Step 5 is review – considered complete when all previous steps are done
                 return $this->isStepComplete($checkoutId, 1)
                     && $this->isStepComplete($checkoutId, 2)
                     && $this->isStepComplete($checkoutId, 3)
@@ -154,6 +182,13 @@ class CheckoutService
         $checkout = $this->get($checkoutId);
         if (!$checkout) {
             return false;
+        }
+
+        foreach (['step', 'expires_at', 'created_at', 'cart_id'] as $topLevelKey) {
+            if (array_key_exists($topLevelKey, $updates)) {
+                $checkout[$topLevelKey] = $updates[$topLevelKey];
+                unset($updates[$topLevelKey]);
+            }
         }
 
         $checkout['data'] = array_merge($checkout['data'], $updates);
@@ -204,11 +239,12 @@ class CheckoutService
             }
 
             $data = $checkout['data'];
+            $cart->loadMissing('items.product.manufacturer');
 
             // Calculate totals using CartService
             $cartSummary = $this->cartService->getSummary($cart);
-            $subtotal = $cartSummary['subtotal'];
-            $shippingCost = $this->calculateShippingCost($data['shipping_method_id']);
+            $subtotal = number_format((float) $cartSummary['subtotal'], 2, '.', '');
+            $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id']);
             $taxableBase = bcadd((string) $subtotal, (string) $shippingCost, 2);
             $vatAmount = $data['vat_exempt'] ? '0.00' : $this->calculateVat($taxableBase);
             $grandTotal = bcadd($taxableBase, $vatAmount, 2);
@@ -243,6 +279,15 @@ class CheckoutService
                 };
             }
 
+            $shippingAddress = $data['shipping_address'] ?? [];
+            $shippingMethod = !empty($data['shipping_method_id'])
+                ? ShippingMethod::find($data['shipping_method_id'])
+                : null;
+            $shippingName = trim(implode(' ', array_filter([
+                $shippingAddress['first_name'] ?? null,
+                $shippingAddress['last_name'] ?? null,
+            ])));
+
             // Create order
             $order = Order::create([
                 'order_number' => $this->sequenceService->nextOrderNumber(),
@@ -258,11 +303,14 @@ class CheckoutService
                 'coupon_id'       => $couponId,
                 'discount_amount' => $discountAmount,
                 'shipping_method_id' => $data['shipping_method_id'],
-                'shipping_name' => $data['shipping_address']['name'] ?? null,
-                'shipping_address_line1' => $data['shipping_address']['address_line1'] ?? null,
-                'shipping_city' => $data['shipping_address']['city'] ?? null,
-                'shipping_postal_code' => $data['shipping_address']['postal_code'] ?? null,
-                'shipping_country_code' => $data['shipping_address']['country_code'] ?? null,
+                'shipping_method_name_snapshot' => $shippingMethod ? trans_field($shippingMethod->name) : null,
+                'shipping_estimated_days_min' => $shippingMethod?->estimated_days_min,
+                'shipping_estimated_days_max' => $shippingMethod?->estimated_days_max,
+                'shipping_name' => $shippingName,
+                'shipping_address_line1' => $shippingAddress['street'] ?? null,
+                'shipping_city' => $shippingAddress['city'] ?? null,
+                'shipping_postal_code' => $shippingAddress['postal_code'] ?? null,
+                'shipping_country_code' => $shippingAddress['country_code'] ?? null,
                 'is_b2b' => $data['is_b2b'] ?? false,
                 'company_name' => $data['company_name'],
                 'vat_number' => $data['vat_number'],
@@ -280,12 +328,24 @@ class CheckoutService
             // Create order items
             foreach ($cart->items as $item) {
                 $product = $item->product;
+
+                // Manufacturer name is stored as a multilingual JSON array on the
+                // Manufacturer model — snapshot the current locale's value.
+                $manufacturerSnapshot = $product && $product->manufacturer
+                    ? (trans_field($product->manufacturer->name) ?: 'Unknown')
+                    : 'Unknown';
+
+                // Condition is a BackedEnum cast on Product; materialise as scalar.
+                $conditionSnapshot = $product && $product->condition instanceof \BackedEnum
+                    ? $product->condition->value
+                    : (string) ($product->condition ?? '');
+
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
-                    'oem_number_snapshot' => $product->oem_number,
-                    'manufacturer_snapshot' => $product->manufacturer->name ?? 'Unknown',
-                    'condition_snapshot' => $product->condition,
+                    'oem_number_snapshot' => $product->oem_number ?? '',
+                    'manufacturer_snapshot' => $manufacturerSnapshot,
+                    'condition_snapshot' => $conditionSnapshot,
                     'quantity' => $item->quantity,
                     'unit_price' => $item->price_at_add,
                     'total_price' => bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
@@ -316,10 +376,38 @@ class CheckoutService
     /**
      * Calculate shipping cost based on selected method.
      */
-    private function calculateShippingCost(?int $shippingMethodId): string
+    public function calculateShippingCost(Cart $cart, ?int $shippingMethodId): string
     {
-        // TODO: implement actual shipping cost lookup
-        return '0.00';
+        if (!$shippingMethodId) {
+            return '0.00';
+        }
+
+        $shippingMethod = ShippingMethod::find($shippingMethodId);
+        if (!$shippingMethod || !$shippingMethod->is_active) {
+            return '0.00';
+        }
+
+        $subtotal = '0.00';
+        foreach ($cart->items as $item) {
+            $subtotal = bcadd(
+                $subtotal,
+                bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
+                2
+            );
+        }
+
+        $freeShippingThreshold = $shippingMethod->free_shipping_threshold !== null
+            ? (string) $shippingMethod->free_shipping_threshold
+            : (string) settings('shipping.free_threshold', 0);
+
+        if (
+            bccomp($freeShippingThreshold, '0.00', 2) === 1
+            && bccomp($subtotal, $freeShippingThreshold, 2) >= 0
+        ) {
+            return '0.00';
+        }
+
+        return number_format((float) $shippingMethod->flat_rate, 2, '.', '');
     }
 
     /**

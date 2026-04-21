@@ -1,122 +1,92 @@
-{{-- Section: faqs
-     content: headline(ml)
-     $sectionData['faqs'] is injected by SectionRendererService.
-     Alpine.js accordion — each item opens independently.
+{{-- Section: faqs (Industrial Blueprint)
+     content: eyebrow, headline(ml), subheadline(ml)
+     $sectionData['faqs'] injected by SectionRendererService.
 --}}
-@php $faqs = $sectionData['faqs'] ?? collect(); @endphp
+@php
+    $faqs = $sectionData['faqs'] ?? collect();
+    $eyebrow = trans_field($section->content['eyebrow'] ?? null);
+    $headline = trans_field($section->content['headline'] ?? null);
+    $subheadline = trans_field($section->content['subheadline'] ?? null);
+    $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+@endphp
 
 @if($faqs->isNotEmpty())
-<section class="bg-gradient-to-b from-blue-50/30 via-white to-blue-50/30 py-14 md:py-20 px-4 relative overflow-hidden">
+<section class="relative bg-ivory text-ink border-b border-rule overflow-hidden">
+    <div class="absolute inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
 
-    {{-- Decorative background --}}
-    <div class="absolute inset-0 opacity-20" aria-hidden="true">
-        <div class="absolute bottom-0 right-0 w-96 h-96 bg-amber/10 rounded-full filter blur-3xl"></div>
-        <div class="absolute top-0 left-0 w-72 h-72 bg-blue-500/10 rounded-full filter blur-3xl"></div>
-    </div>
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
 
-    <div class="max-w-4xl mx-auto relative z-10">
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 gap-y-10">
+            {{-- Left: section intro --}}
+            <aside class="col-span-12 lg:col-span-4 lg:sticky lg:top-28 lg:self-start">
+                @if($eyebrow)
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                </div>
+                @endif
+                @if($headline)
+                <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl">
+                    {{ $headline }}<span class="text-amber">.</span>
+                </h2>
+                @endif
+                @if($subheadline)
+                <p class="mt-6 text-base text-body leading-relaxed max-w-sm">
+                    {{ $subheadline }}
+                </p>
+                @endif
+                <p class="mt-8 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    Manual · Index · {{ $faqs->count() }} entries
+                </p>
+                <div class="mt-2 h-[3px] w-10 bg-amber"></div>
+            </aside>
 
-        <x-section-heading
-            :eyebrow="trans_field($section->content['eyebrow'] ?? null)"
-            :headline="trans_field($section->content['headline'] ?? null)"
-            :subheadline="trans_field($section->content['subheadline'] ?? null)"
-            :accentBar="true"
-            class="mb-12"
-        />
-
-        <dl class="space-y-4">
-            @foreach($faqs as $index => $faq)
-            @php
-                $delay = $index * 100;
-            @endphp
-
-            <div
-                x-data="{ open: false }"
-                x-init="
-                    const observer = new IntersectionObserver(
-                        (entries) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    setTimeout(() => $refs.item.style.opacity = '1', {{ $delay }});
-                                    observer.unobserve(entry.target);
-                                }
-                            });
-                        },
-                        { threshold: 0.2 }
-                    );
-                    observer.observe($el);
-                "
-                x-ref="item"
-                class="opacity-0 transform translate-y-4 transition-all duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none"
-            >
-                <div
-                    class="group relative bg-gradient-to-br from-white via-gray-50/50 to-white
-                           rounded-2xl border-2 border-gray-100
-                           shadow-md shadow-amber/5 hover:shadow-xl hover:shadow-amber/10
-                           transition-all duration-300
-                           hover:border-amber/30"
-                >
+            {{-- Right: FAQ ledger --}}
+            <dl class="col-span-12 lg:col-span-8 border border-ink bg-paper">
+                @foreach($faqs as $index => $faq)
+                @php
+                    $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
+                    $isLast = $loop->last;
+                @endphp
+                <div x-data="{ open: {{ $index === 0 ? 'true' : 'false' }} }"
+                     class="{{ !$isLast ? 'border-b border-rule' : '' }}">
                     <dt>
-                        <button
-                            @click="open = !open"
-                            class="w-full flex items-center justify-between px-6 py-5 text-left
-                                   group-hover:bg-gradient-to-r group-hover:from-amber/5 group-hover:to-transparent
-                                   rounded-2xl transition-all duration-300"
-                            :aria-expanded="open"
-                            :aria-controls="'faq-answer-{{ $index }}'"
-                        >
-                            <div class="flex items-center gap-4">
-                                {{-- Question number badge with improved design --}}
-                                <div class="w-9 h-9 rounded-xl
-                                          bg-gradient-to-br from-amber/20 to-orange-50/20
-                                          flex items-center justify-center
-                                          group-hover:from-amber group-hover:to-orange-500
-                                          transition-all duration-300
-                                          border border-amber/10 group-hover:border-transparent">
-                                    <span class="text-sm font-bold text-amber group-hover:text-white transition-colors">
-                                        {{ $loop->iteration }}
-                                    </span>
-                                </div>
-
-                                <span class="font-display font-semibold text-navy text-base
-                                           group-hover:text-amber-text transition-colors duration-300">
-                                    {{ trans_field($faq->question) }}
-                                </span>
-                            </div>
-
-                            {{-- Icon with improved circular background --}}
-                            <div class="w-11 h-11 rounded-xl
-                                      bg-gray-50 group-hover:bg-amber
-                                      flex items-center justify-center
-                                      transition-all duration-300
-                                      border border-gray-100 group-hover:border-transparent">
-                                <x-heroicon-o-chevron-down
-                                    class="w-5 h-5 text-gray-400 group-hover:text-white
-                                           transform transition-transform duration-300 ease-out"
-                                    ::class="{ 'rotate-180': open }"
-                                />
-                            </div>
+                        <button @click="open = !open"
+                                :aria-expanded="open"
+                                :aria-controls="'faq-answer-{{ $index }}'"
+                                class="w-full flex items-start gap-4 sm:gap-6 px-6 py-5 text-left
+                                       hover:bg-ivory focus-visible:bg-ivory
+                                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-[-2px]
+                                       transition-colors">
+                            <span class="font-mono text-sm font-bold tabular-nums text-amber-ink shrink-0 mt-0.5">
+                                {{ $num }}
+                            </span>
+                            <span class="flex-1 font-display text-base sm:text-lg font-semibold text-ink tracking-tight leading-snug text-balance">
+                                {{ trans_field($faq->question) }}
+                            </span>
+                            <span class="shrink-0 w-7 h-7 border border-ink flex items-center justify-center mt-0.5"
+                                  :class="open ? 'bg-ink text-ivory' : 'bg-paper text-ink'">
+                                <x-heroicon-s-plus class="w-3.5 h-3.5" x-show="!open" />
+                                <x-heroicon-s-minus class="w-3.5 h-3.5" x-show="open" x-cloak />
+                            </span>
                         </button>
                     </dt>
-
-                    {{-- Answer with smooth reveal --}}
-                    <dd
-                        x-show="open"
+                    <dd x-show="open"
                         x-collapse
                         :id="'faq-answer-{{ $index }}'"
                         role="region"
-                        class="px-6 pb-5 pt-2"
-                    >
-                        <div class="ml-12 pl-4 border-l-4 border-amber/40">
-                            <p class="text-body text-base leading-relaxed">
+                        class="px-6 pb-6 pt-0">
+                        <div class="pl-12 border-l-2 border-amber">
+                            <p class="text-base text-body leading-relaxed">
                                 {{ trans_field($faq->answer) }}
                             </p>
                         </div>
                     </dd>
                 </div>
-            </div>
-            @endforeach
-        </dl>
+                @endforeach
+            </dl>
+        </div>
 
         {{-- JSON-LD FAQPage --}}
         <script type="application/ld+json">
@@ -137,7 +107,6 @@
             ]
         }
         </script>
-
     </div>
 </section>
 @endif

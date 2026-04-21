@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             SequencesSeeder::class,
             CarriersSeeder::class,
             SectionsSeeder::class,
+            ShippingZonesAndMethodsSeeder::class,
             DemoManufacturersAndPartsSeeder::class,
             DemoDataSeeder::class,
         ]);

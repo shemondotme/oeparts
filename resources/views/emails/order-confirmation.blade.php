@@ -1,78 +1,78 @@
 @extends('emails.layout')
 
 @section('content')
+    {{-- ══════════════════════════════════════════════════════════════════════
+         ORDER CONFIRMATION — INDUSTRIAL BLUEPRINT RECEIPT
+         Dense, tabular, spec-sheet aesthetic.
+         ══════════════════════════════════════════════════════════════════ --}}
+
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+
+        {{-- ═══ DOC HEADER: Order Summary ═══ --}}
         <tr>
-            <td style="padding: 40px 40px 20px; text-align: center;">
-                <h1 style="margin: 0; font-size: 24px; line-height: 32px; color: #333333; font-weight: 600;">
-                    {{ trans('emails.order_confirmation.title', [], $locale) }}
-                </h1>
-                <p style="margin: 20px 0 0; font-size: 16px; line-height: 24px; color: #666666;">
-                    {{ trans('emails.order_confirmation.greeting', ['name' => $order->shipping_name], $locale) }}
+            <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
+                <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
+                    § ORDER · CONFIRMED
                 </p>
-            </td>
-        </tr>
-        <tr>
-            <td style="padding: 20px 40px;">
-                <p style="margin: 0 0 20px; font-size: 16px; line-height: 24px; color: #333333;">
+                <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
+                    Thank you for your order<span class="text-amber">.</span>
+                </h2>
+                <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
+                    {{ trans('emails.order_confirmation.greeting', ['name' => $order->shipping_name], $locale) }}
+                    <br>
                     {{ trans('emails.order_confirmation.body', ['order_number' => $order->order_number], $locale) }}
                 </p>
-                <p style="margin: 0 0 20px; font-size: 16px; line-height: 24px; color: #333333;">
-                    {{ trans('emails.order_confirmation.estimated_delivery', [
-                        'min' => $order->shipping_estimated_days_min,
-                        'max' => $order->shipping_estimated_days_max
-                    ], $locale) }}
-                </p>
             </td>
         </tr>
+
+        {{-- ═══ SPEC LEDGER: Key Details ═══ --}}
         <tr>
-            <td style="padding: 0 40px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+            <td style="padding: 24px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; background-color: #F7F3E7;">
                     <tr>
-                        <td style="padding: 24px; background-color: #f9fafb; border-radius: 8px;">
-                            <h2 style="margin: 0 0 16px; font-size: 18px; line-height: 24px; color: #333333; font-weight: 600;">
-                                {{ trans('emails.order_confirmation.order_summary', [], $locale) }}
-                            </h2>
+                        <td style="padding: 16px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                {{-- Order Number --}}
                                 <tr>
-                                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                                        <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                            {{ trans('emails.order_confirmation.order_number', [], $locale) }}
-                                        </span>
-                                        <span style="float: right; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500;">
+                                    <td style="padding-bottom: 8px;">
+                                        <span class="spec-label" style="color: #4E5A74;">ORDER NO.</span>
+                                    </td>
+                                    <td align="right" style="padding-bottom: 8px;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228; font-weight: bold;">
                                             {{ $order->order_number }}
                                         </span>
                                     </td>
                                 </tr>
+                                {{-- Date --}}
                                 <tr>
-                                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                                        <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                            {{ trans('emails.order_confirmation.order_date', [], $locale) }}
-                                        </span>
-                                        <span style="float: right; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500;">
-                                            {{ $order->created_at->format('d.m.Y') }}
+                                    <td style="padding-bottom: 8px;">
+                                        <span class="spec-label" style="color: #4E5A74;">DATE</span>
+                                    </td>
+                                    <td align="right" style="padding-bottom: 8px;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228;">
+                                            {{ $order->created_at->format('d M Y') }}
                                         </span>
                                     </td>
                                 </tr>
+                                {{-- Shipping Method --}}
                                 <tr>
-                                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                                        <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                            {{ trans('emails.order_confirmation.shipping_method', [], $locale) }}
-                                        </span>
-                                        <span style="float: right; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500;">
+                                    <td style="padding-bottom: 8px;">
+                                        <span class="spec-label" style="color: #4E5A74;">SHIPPING</span>
+                                    </td>
+                                    <td align="right" style="padding-bottom: 8px;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228;">
                                             {{ $order->shipping_method_name_snapshot }}
                                         </span>
                                     </td>
                                 </tr>
+                                {{-- Estimated Delivery --}}
                                 <tr>
-                                    <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
-                                        <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                            {{ trans('emails.order_confirmation.shipping_address', [], $locale) }}
-                                        </span>
-                                        <span style="float: right; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500; text-align: right;">
-                                            {{ $order->shipping_address_line1 }}<br>
-                                            {{ $order->shipping_city }}, {{ $order->shipping_postal_code }}<br>
-                                            {{ $order->shipping_country_code }}
+                                    <td style="padding-top: 8px; border-top: 1px dashed #D8CFB6;">
+                                        <span class="spec-label" style="color: #4E5A74;">EST. DELIVERY</span>
+                                    </td>
+                                    <td align="right" style="padding-top: 8px; border-top: 1px dashed #D8CFB6;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228; font-weight: bold;">
+                                            {{ $order->shipping_estimated_days_min }}–{{ $order->shipping_estimated_days_max }} Days
                                         </span>
                                     </td>
                                 </tr>
@@ -82,43 +82,77 @@
                 </table>
             </td>
         </tr>
+
+        {{-- ═══ SHIPPING ADDRESS ═══ --}}
         <tr>
-            <td style="padding: 20px 40px;">
-                <h2 style="margin: 0 0 16px; font-size: 18px; line-height: 24px; color: #333333; font-weight: 600;">
-                    {{ trans('emails.order_confirmation.order_items', [], $locale) }}
-                </h2>
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse: collapse;">
+            <td style="padding-bottom: 24px;">
+                <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
+                    § DELIVERING TO
+                </p>
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; background-color: #FFFFFF;">
+                    <tr>
+                        <td style="padding: 16px;">
+                            <p style="margin: 0; font-size: 14px; line-height: 20px; color: #0A1228;">
+                                <strong>{{ $order->shipping_name }}</strong><br>
+                                {{ $order->shipping_address_line1 }}<br>
+                                @if($order->shipping_address_line2)
+                                    {{ $order->shipping_address_line2 }}<br>
+                                @endif
+                                {{ $order->shipping_postal_code }} {{ $order->shipping_city }}<br>
+                                {{ $order->shipping_country_code }}
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+        {{-- ═══ ORDER ITEMS MANIFEST ═══ --}}
+        <tr>
+            <td style="padding-bottom: 24px;">
+                <p class="spec-label" style="margin: 0 0 12px 0; color: #9A5A00;">
+                    § ITEM MANIFEST
+                </p>
+
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; border-collapse: collapse;">
+                    {{-- Table Header --}}
                     <thead>
-                        <tr>
-                            <th style="padding: 12px 0; border-bottom: 2px solid #e5e7eb; text-align: left; font-size: 14px; line-height: 20px; color: #666666; font-weight: 500;">
-                                {{ trans('emails.order_confirmation.product', [], $locale) }}
+                        <tr style="background-color: #EFE9D6; border-bottom: 1px solid #D8CFB6;">
+                            <th align="left" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
+                                OEM / PRODUCT
                             </th>
-                            <th style="padding: 12px 0; border-bottom: 2px solid #e5e7eb; text-align: right; font-size: 14px; line-height: 20px; color: #666666; font-weight: 500;">
-                                {{ trans('emails.order_confirmation.quantity', [], $locale) }}
+                            <th align="center" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
+                                QTY
                             </th>
-                            <th style="padding: 12px 0; border-bottom: 2px solid #e5e7eb; text-align: right; font-size: 14px; line-height: 20px; color: #666666; font-weight: 500;">
-                                {{ trans('emails.order_confirmation.price', [], $locale) }}
+                            <th align="right" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
+                                PRICE
                             </th>
-                            <th style="padding: 12px 0; border-bottom: 2px solid #e5e7eb; text-align: right; font-size: 14px; line-height: 20px; color: #666666; font-weight: 500;">
-                                {{ trans('emails.order_confirmation.total', [], $locale) }}
+                            <th align="right" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
+                                TOTAL
                             </th>
                         </tr>
                     </thead>
+
+                    {{-- Table Body --}}
                     <tbody>
                         @foreach($order->items as $item)
-                            <tr>
-                                <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px; line-height: 20px; color: #333333;">
-                                    <strong>{{ $item->product ? trans_field($item->product->name) : $item->oem_number_snapshot }}</strong><br>
-                                    <span style="color: #666666;">{{ $item->oem_number_snapshot }}</span>
+                            <tr style="border-bottom: 1px solid #D8CFB6;">
+                                <td style="padding: 12px; font-size: 14px; color: #0A1228; vertical-align: top;">
+                                    <strong style="display: block; margin-bottom: 4px;">
+                                        {{ $item->product ? trans_field($item->product->name) : $item->oem_number_snapshot }}
+                                    </strong>
+                                    <span class="font-mono" style="font-size: 12px; color: #4E5A74;">
+                                        {{ $item->oem_number_snapshot }}
+                                    </span>
                                 </td>
-                                <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-size: 14px; line-height: 20px; color: #333333;">
-                                    {{ $item->quantity }}
+                                <td align="center" style="padding: 12px; font-size: 14px; color: #0A1228; vertical-align: top;">
+                                    <span class="font-mono">{{ $item->quantity }}</span>
                                 </td>
-                                <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-size: 14px; line-height: 20px; color: #333333;">
-                                    {{ number_format($item->unit_price, 2) }} €
+                                <td align="right" style="padding: 12px; font-size: 14px; color: #0A1228; vertical-align: top;">
+                                    <span class="font-mono">{{ number_format($item->unit_price, 2) }} €</span>
                                 </td>
-                                <td style="padding: 12px 0; border-bottom: 1px solid #e5e7eb; text-align: right; font-size: 14px; line-height: 20px; color: #333333;">
-                                    {{ number_format($item->total_price, 2) }} €
+                                <td align="right" style="padding: 12px; font-size: 14px; color: #0A1228; vertical-align: top;">
+                                    <span class="font-mono" style="font-weight: bold;">{{ number_format($item->total_price, 2) }} €</span>
                                 </td>
                             </tr>
                         @endforeach
@@ -126,73 +160,88 @@
                 </table>
             </td>
         </tr>
+
+        {{-- ═══ FINANCIAL SUMMARY ═══ --}}
         <tr>
-            <td style="padding: 20px 40px;">
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border-collapse: collapse;">
+            <td style="padding-bottom: 32px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
-                        <td style="padding: 8px 0; text-align: right;">
-                            <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                {{ trans('emails.order_confirmation.subtotal', [], $locale) }}
-                            </span>
-                            <span style="margin-left: 16px; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500;">
-                                {{ number_format($order->subtotal, 2) }} €
-                            </span>
-                        </td>
-                    </tr>
-                    @if($order->discount_amount > 0)
-                        <tr>
-                            <td style="padding: 8px 0; text-align: right;">
-                                <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                    {{ trans('emails.order_confirmation.discount', [], $locale) }}
-                                </span>
-                                <span style="margin-left: 16px; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500;">
-                                    -{{ number_format($order->discount_amount, 2) }} €
-                                </span>
-                            </td>
-                        </tr>
-                    @endif
-                    <tr>
-                        <td style="padding: 8px 0; text-align: right;">
-                            <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                {{ trans('emails.order_confirmation.shipping', [], $locale) }}
-                            </span>
-                            <span style="margin-left: 16px; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500;">
-                                {{ number_format($order->shipping_cost, 2) }} €
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 8px 0; text-align: right;">
-                            <span style="font-size: 14px; line-height: 20px; color: #666666;">
-                                {{ trans('emails.order_confirmation.vat', [], $locale) }}
-                            </span>
-                            <span style="margin-left: 16px; font-size: 14px; line-height: 20px; color: #333333; font-weight: 500;">
-                                {{ number_format($order->vat_amount, 2) }} €
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 12px 0; border-top: 2px solid #e5e7eb; text-align: right;">
-                            <span style="font-size: 16px; line-height: 24px; color: #333333; font-weight: 600;">
-                                {{ trans('emails.order_confirmation.grand_total', [], $locale) }}
-                            </span>
-                            <span style="margin-left: 16px; font-size: 16px; line-height: 24px; color: #333333; font-weight: 600;">
-                                {{ number_format($order->grand_total, 2) }} €
-                            </span>
+                        <td width="50%"></td>
+                        <td width="50%">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                {{-- Subtotal --}}
+                                <tr>
+                                    <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span style="font-size: 14px; color: #4E5A74;">Subtotal</span>
+                                    </td>
+                                    <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ number_format($order->subtotal, 2) }} €</span>
+                                    </td>
+                                </tr>
+
+                                {{-- Discount (if any) --}}
+                                @if($order->discount_amount > 0)
+                                    <tr>
+                                        <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                            <span style="font-size: 14px; color: #4E5A74;">Discount</span>
+                                        </td>
+                                        <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                            <span class="font-mono" style="font-size: 14px; color: #DC2626;">-{{ number_format($order->discount_amount, 2) }} €</span>
+                                        </td>
+                                    </tr>
+                                @endif
+
+                                {{-- Shipping --}}
+                                <tr>
+                                    <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span style="font-size: 14px; color: #4E5A74;">Shipping</span>
+                                    </td>
+                                    <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ number_format($order->shipping_cost, 2) }} €</span>
+                                    </td>
+                                </tr>
+
+                                {{-- VAT --}}
+                                <tr>
+                                    <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span style="font-size: 14px; color: #4E5A74;">VAT</span>
+                                    </td>
+                                    <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ number_format($order->vat_amount, 2) }} €</span>
+                                    </td>
+                                </tr>
+
+                                {{-- Grand Total --}}
+                                <tr>
+                                    <td style="padding: 12px 0;">
+                                        <span class="spec-label" style="color: #0A1228;">GRAND TOTAL</span>
+                                    </td>
+                                    <td align="right" style="padding: 12px 0;">
+                                        <span class="font-mono" style="font-size: 18px; color: #0A1228; font-weight: bold;">
+                                            {{ number_format($order->grand_total, 2) }} €
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                 </table>
             </td>
         </tr>
+
+        {{-- ═══ CTA BUTTON ═══ --}}
         <tr>
-            <td style="padding: 20px 40px; text-align: center;">
-                <p style="margin: 0 0 20px; font-size: 14px; line-height: 20px; color: #666666;">
+            <td align="center" style="padding: 24px 0; border-top: 1px solid #D8CFB6;">
+                <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
                     {{ trans('emails.order_confirmation.footer', [], $locale) }}
                 </p>
-                <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $order->id]) }}" style="display: inline-block; padding: 12px 24px; background-color: #0B3A68; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 16px; line-height: 24px; font-weight: 500;">
-                    {{ trans('emails.order_confirmation.view_order', [], $locale) }}
+                <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $order->id]) }}"
+                   class="btn-primary"
+                   style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
+                    VIEW ORDER DETAILS →
                 </a>
             </td>
         </tr>
+
     </table>
 @endsection

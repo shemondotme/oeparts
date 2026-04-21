@@ -1,74 +1,52 @@
-{{-- Section: trust_bar
-     content: items[] — each: icon (heroicon name), text(ml)
-     Design: Simple centered icons in rounded squares, no skewing
+{{-- Section: trust_bar (Industrial Blueprint)
+     content: items[] — each: icon, text(ml)
 --}}
 @php $items = $section->content['items'] ?? []; @endphp
 
-<section class="bg-gradient-to-b from-amber-50/50 via-orange-50/30 to-amber-50/50 py-8 px-4 relative overflow-hidden">
-
-    <div class="w-full px-4 relative z-10">
-        <ul class="flex flex-wrap justify-center gap-4 md:gap-6">
+@if(!empty($items))
+@php
+    $itemCount = count($items);
+    $tbGrid = match(true) {
+        $itemCount === 1 => 'md:grid-cols-1',
+        $itemCount === 2 => 'md:grid-cols-2',
+        $itemCount === 3 => 'md:grid-cols-3',
+        $itemCount === 4 => 'md:grid-cols-4',
+        default          => 'md:grid-cols-5',
+    };
+@endphp
+<section class="relative bg-ivory-alt border-b border-rule" aria-label="Trust signals">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
+        <ul class="grid grid-cols-2 {{ $tbGrid }} divide-x divide-rule">
             @foreach($items as $index => $item)
             @php
-                $delay = $index * 100;
+                $icon = $item['icon'] ?? 'check-circle';
+                $text = trans_field($item['text'] ?? null);
+                $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
+                $needsTopBorder = $index >= 2 && count($items) > 2;
             @endphp
+            <li class="flex items-center gap-4 px-5 py-5 sm:px-6
+                       {{ $needsTopBorder ? 'border-t md:border-t-0 border-rule' : '' }}"
+                role="listitem">
 
-            <li
-                x-data="{ shown: false }"
-                x-init="
-                    const observer = new IntersectionObserver(
-                        (entries) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    setTimeout(() => shown = true, {{ $delay }});
-                                    observer.unobserve(entry.target);
-                                }
-                            });
-                        },
-                        { threshold: 0.2 }
-                    );
-                    observer.observe($el);
-                "
-                class="group flex items-center gap-3 px-5 py-3.5
-                       bg-white/80 backdrop-blur-sm
-                       rounded-2xl border border-gray-100
-                       shadow-sm hover:shadow-lg hover:shadow-amber/10
-                       transform transition-all duration-500 ease-out
-                       hover:-translate-y-1 hover:border-amber/30
-                       focus-within:border-amber focus-within:ring-2 focus-within:ring-amber/20
-                       :class='shown ? \"opacity-100 translate-y-0\" : \"opacity-0 translate-y-4\"'"
-                role="listitem"
-                aria-label="{{ trans_field($item['text'] ?? null) }}"
-            >
-                {{-- Icon container - centered, no skewing --}}
-                <div class="relative w-11 h-11 rounded-xl bg-amber/5 flex items-center justify-center shrink-0">
-                    @switch($item['icon'] ?? '')
-                        @case('truck')
-                            <x-heroicon-o-truck class="w-6 h-6 text-amber" />
-                            @break
-                        @case('shield-check')
-                            <x-heroicon-o-shield-check class="w-6 h-6 text-amber" />
-                            @break
-                        @case('arrow-path')
-                            <x-heroicon-o-arrow-path class="w-6 h-6 text-amber" />
-                            @break
-                        @case('lock-closed')
-                            <x-heroicon-o-lock-closed class="w-6 h-6 text-amber" />
-                            @break
-                        @case('check-circle')
-                            <x-heroicon-o-check-circle class="w-6 h-6 text-amber" />
-                            @break
-                        @default
-                            <x-heroicon-o-check-circle class="w-6 h-6 text-amber" />
+                <div class="w-9 h-9 border border-ink flex items-center justify-center shrink-0 bg-paper">
+                    @switch($icon)
+                        @case('truck')         <x-heroicon-o-truck class="w-4 h-4 text-ink" /> @break
+                        @case('shield-check')  <x-heroicon-o-shield-check class="w-4 h-4 text-ink" /> @break
+                        @case('arrow-path')    <x-heroicon-o-arrow-path class="w-4 h-4 text-ink" /> @break
+                        @case('lock-closed')   <x-heroicon-o-lock-closed class="w-4 h-4 text-ink" /> @break
+                        @case('check-circle')  <x-heroicon-o-check-circle class="w-4 h-4 text-ink" /> @break
+                        @default               <x-heroicon-o-check-circle class="w-4 h-4 text-ink" />
                     @endswitch
                 </div>
 
-                {{-- Text --}}
-                <span class="text-sm text-body font-semibold group-hover:text-navy transition-colors duration-300">
-                    {{ trans_field($item['text'] ?? null) }}
-                </span>
+                <div class="min-w-0">
+                    <p class="font-mono text-[11px] font-bold tracking-[0.14em] uppercase text-ink leading-tight truncate">
+                        {{ $text }}
+                    </p>
+                </div>
             </li>
             @endforeach
         </ul>
     </div>
 </section>
+@endif

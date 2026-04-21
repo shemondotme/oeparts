@@ -1,16 +1,12 @@
-{{-- Section: featured_brands
-     content: headline(ml), subheadline(ml)
-     $sectionData['manufacturers'] is injected by SectionRendererService
-     Design: Logo-Centric Minimal - Large logos, grayscale→color on hover, clean layout
+{{-- Section: featured_brands (Industrial Blueprint)
+     content: eyebrow, headline(ml), subheadline(ml), view_all_text(ml)
+     $sectionData['manufacturers'] injected by SectionRendererService
 --}}
 @php
     $manufacturers = $sectionData['manufacturers'] ?? collect();
     $lang = app()->getLocale();
+    $featuredBrands = $manufacturers->take(8);
 
-    // Get top 6 brands by product count for featured section
-    $featuredBrands = $manufacturers->take(6);
-
-    // Preload product counts to avoid N+1 queries
     $brandProductCounts = [];
     if ($featuredBrands->isNotEmpty()) {
         $brandIds = $featuredBrands->pluck('id')->toArray();
@@ -22,186 +18,159 @@
             ->toArray();
     }
 
-    // Generate alphabet letters
     $alphabet = range('A', 'Z');
+    $eyebrow = trans_field($section->content['eyebrow'] ?? null);
+    $headline = trans_field($section->content['headline'] ?? null);
+    $subheadline = trans_field($section->content['subheadline'] ?? null);
+    $viewAllText = trans_field($section->content['view_all_text'] ?? null) ?: 'View All Brands';
+    $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
 @endphp
 
 @if($manufacturers->isNotEmpty())
-<section class="bg-gradient-to-b from-gray-50 via-amber-50/20 to-gray-50 py-14 md:py-20 px-4 relative overflow-hidden">
+<section class="relative bg-ivory text-ink border-b border-rule overflow-hidden">
+    <div class="absolute inset-0 bg-grid-ivory bg-grid-lg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
-    {{-- Decorative background elements --}}
-    <div class="absolute inset-0 opacity-5" aria-hidden="true">
-        <div class="absolute top-10 right-10 w-96 h-96 bg-amber rounded-full filter blur-3xl"></div>
-        <div class="absolute bottom-10 left-10 w-96 h-96 bg-blue-500 rounded-full filter blur-3xl"></div>
-    </div>
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
 
-    <div class="max-w-6xl mx-auto relative z-10">
-
-        {{-- Section Heading --}}
-        <x-section-heading
-            :eyebrow="trans_field($section->content['eyebrow'] ?? null)"
-            :headline="trans_field($section->content['headline'] ?? null)"
-            :subheadline="trans_field($section->content['subheadline'] ?? null)"
-            :accentBar="true"
-            class="mb-12"
-        />
-
-        {{-- Featured Brands Grid - Logo-Centric Minimal Design --}}
-        <div class="mb-12">
-            <div class="flex items-center gap-3 mb-8">
-                <div class="w-1 h-10 bg-gradient-to-b from-amber to-orange-500 rounded-full"></div>
-                <h3 class="font-display text-xl font-bold text-navy uppercase tracking-wide">
-                    Popular Brands
-                </h3>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($featuredBrands as $brand)
-                @php
-                    // Use preloaded count to avoid N+1 queries
-                    $partsCount = $brandProductCounts[$brand->id] ?? 0;
-                    $formattedCount = $partsCount >= 1000
-                        ? number_format($partsCount / 1000, 1) . 'K+'
-                        : $partsCount . '+';
-                @endphp
-
-                <div class="h-full">
-                <a
-                    href="/{{ $lang }}/brand/{{ $brand->slug }}"
-                    class="group relative overflow-hidden rounded-2xl bg-white border-2 border-gray-100 h-full
-                           shadow-md shadow-amber/5 hover:shadow-2xl hover:shadow-amber/15
-                           focus-visible:border-amber focus-visible:ring-4 focus-visible:ring-amber/20
-                           transform transition-all duration-500 hover:-translate-y-2 hover:border-amber/30
-                           flex flex-col"
-                >
-                    <div class="p-6 flex flex-col gap-4 flex-1">
-                        {{-- Brand Logo - Balanced size --}}
-                        <div class="mb-6 flex items-center justify-center min-h-[140px]">
-                            @if($brand->logo && ($brand->logo->file_path || $brand->logo->file_url))
-                                @php
-                                    $logoSrc = $brand->logo->file_path
-                                        ? asset('storage/' . ltrim(preg_replace('#^storage/#', '', $brand->logo->file_path), '/'))
-                                        : $brand->logo->file_url;
-                                @endphp
-                                <img
-                                    src="{{ $logoSrc }}"
-                                    alt="{{ trans_field($brand->name) }}"
-                                    loading="lazy"
-                                    class="max-h-[120px] w-auto object-contain transition-all duration-500
-                                           grayscale group-hover:grayscale-0 group-hover:scale-110"
-                                >
-                            @else
-                                {{-- Fallback: Brand initials in circle --}}
-                                <div class="w-28 h-28 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200
-                                            flex items-center justify-center group-hover:from-amber/20 group-hover:to-orange-50/20
-                                            transition-all duration-500">
-                                    <span class="font-display text-5xl font-black text-gray-400 group-hover:text-amber-text
-                                                 transition-all duration-500">
-                                        {{ strtoupper(substr(trans_field($brand->name), 0, 2)) }}
-                                    </span>
-                                </div>
-                            @endif
-                        </div>
-
-                        {{-- Divider --}}
-                        <div class="w-16 h-0.5 bg-gradient-to-r from-gray-200 to-transparent mx-auto mb-5
-                                    group-hover:from-amber group-hover:to-orange-500 transition-all duration-500"></div>
-
-                        {{-- Brand Name --}}
-                        <h4 class="font-display text-xl font-bold text-center text-navy mb-3
-                                   group-hover:text-amber-text transition-colors duration-300">
-                            {{ trans_field($brand->name) }}
-                        </h4>
-
-                        {{-- Parts Count with Icon --}}
-                        <div class="flex items-center justify-center gap-2.5 mb-5">
-                            <div class="w-8 h-8 rounded-lg bg-amber/10
-                                        flex items-center justify-center
-                                        group-hover:bg-amber group-hover:scale-110 transition-all duration-300">
-                                <x-heroicon-o-cube class="w-4 h-4 text-amber group-hover:text-white transition-colors" aria-hidden="true" />
-                            </div>
-                            <div class="text-center">
-                                <p class="text-lg font-bold text-amber-text">
-                                    {{ $formattedCount }}
-                                </p>
-                                <p class="text-xs text-muted font-medium uppercase tracking-wide">
-                                    {{ $partsCount === 1 ? 'Part' : 'Parts' }}
-                                </p>
-                            </div>
-                        </div>
-
-                        {{-- Arrow Icon (shows on hover) --}}
-                        <div class="flex items-center justify-center gap-2 text-amber-text
-                                    opacity-0 group-hover:opacity-100
-                                    transform translate-y-2 group-hover:translate-y-0
-                                    transition-all duration-300">
-                            <span class="text-sm font-semibold">Browse Parts</span>
-                            <x-heroicon-o-arrow-right class="w-4 h-4" aria-hidden="true" />
-                        </div>
-
-                        {{-- Decorative corner accent --}}
-                        <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl
-                                    from-amber/5 to-transparent rounded-bl-full
-                                    opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    </div>
-                </a>
+        {{-- Header --}}
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-ink">
+            <div class="col-span-12 md:col-span-7">
+                @if($eyebrow)
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
                 </div>
-                @endforeach
+                @endif
+                @if($headline)
+                <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
+                    {{ $headline }}<span class="text-amber">.</span>
+                </h2>
+                @endif
             </div>
+            @if($subheadline)
+            <div class="col-span-12 md:col-span-5 mt-6 md:mt-0 md:pl-8 md:border-l md:border-rule">
+                <p class="text-base text-body leading-relaxed">
+                    {{ $subheadline }}
+                </p>
+                <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    Index · {{ $manufacturers->count() }} manufacturers · verified
+                </p>
+            </div>
+            @endif
         </div>
 
-        {{-- Browse by Letter --}}
-        <div class="mb-10">
-            <div class="flex items-center gap-3 mb-6">
-                <div class="w-1 h-8 bg-gradient-to-b from-navy to-blue-500 rounded-full"></div>
-                <h3 class="font-display text-lg font-bold text-navy uppercase tracking-wide">
-                    Browse by Letter
-                </h3>
+        {{-- Brand grid: 2/3/4 column ledger --}}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border border-ink bg-paper">
+            @foreach($featuredBrands as $index => $brand)
+            @php
+                $partsCount = $brandProductCounts[$brand->id] ?? 0;
+                $formattedCount = $partsCount >= 1000
+                    ? number_format($partsCount / 1000, 1) . 'K+'
+                    : $partsCount;
+                $rowNum = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
+                $isLastRow = $index >= (count($featuredBrands) - (count($featuredBrands) % 4 ?: 4));
+                $brandName = trans_field($brand->name);
+            @endphp
+
+            <a href="{{ url('/'.$lang.'/brand/'.$brand->slug) }}"
+               class="group relative block p-5 sm:p-6
+                      border-r border-b border-rule
+                      hover:bg-ivory focus-visible:bg-ivory
+                      focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-[-2px]
+                      transition-colors">
+
+                {{-- Top meta row: index + part count --}}
+                <div class="flex items-center justify-between mb-6">
+                    <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        № {{ $rowNum }}
+                    </span>
+                    <span class="font-mono text-[11px] tabular-nums text-ink-muted">
+                        {{ $formattedCount }}&nbsp;<span class="uppercase tracking-wider">pcs</span>
+                    </span>
+                </div>
+
+                {{-- Logo plate --}}
+                <div class="aspect-[3/2] border border-rule bg-ivory-alt flex items-center justify-center p-4 mb-5
+                            group-hover:bg-paper group-hover:border-ink transition-colors">
+                    @if($brand->logo && ($brand->logo->file_path || $brand->logo->file_url))
+                        @php
+                            $logoSrc = $brand->logo->file_path
+                                ? asset('storage/' . ltrim(preg_replace('#^storage/#', '', $brand->logo->file_path), '/'))
+                                : $brand->logo->file_url;
+                        @endphp
+                        <img src="{{ $logoSrc }}"
+                             alt="{{ $brandName }}"
+                             loading="lazy"
+                             class="max-h-[90px] w-auto object-contain
+                                    grayscale opacity-85 group-hover:grayscale-0 group-hover:opacity-100
+                                    transition-all duration-300">
+                    @else
+                        <span class="font-display text-4xl font-black text-ink-muted group-hover:text-ink transition-colors">
+                            {{ strtoupper(substr($brandName, 0, 2)) }}
+                        </span>
+                    @endif
+                </div>
+
+                {{-- Brand name + arrow --}}
+                <div class="flex items-end justify-between gap-2">
+                    <h3 class="font-display text-base sm:text-lg font-bold text-ink leading-tight tracking-tight">
+                        {{ $brandName }}
+                    </h3>
+                    <x-heroicon-s-arrow-up-right class="w-4 h-4 text-ink-muted group-hover:text-amber-ink transition-colors shrink-0 mb-1" />
+                </div>
+
+                {{-- Amber underscore on hover --}}
+                <div class="mt-3 h-px w-0 bg-amber group-hover:w-full transition-all duration-500"></div>
+            </a>
+            @endforeach
+        </div>
+
+        {{-- Alphabet index + CTA --}}
+        <div class="mt-12 pt-8 border-t border-ink">
+            <div class="flex items-baseline gap-4 mb-6">
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">§ Index by letter</span>
+                <span class="flex-1 h-px bg-rule"></span>
             </div>
 
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-1.5">
                 @foreach($alphabet as $letter)
                 @php
-                    // Check if any brand starts with this letter
                     $hasBrands = $manufacturers->contains(function($brand) use ($letter) {
                         return strtoupper(substr(trans_field($brand->name), 0, 1)) === $letter;
                     });
                 @endphp
-                <a
-                    href="/{{ $lang }}/brand?letter={{ $letter }}"
-                    class="group w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center
-                           {{ $hasBrands
-                               ? 'bg-white border-2 border-gray-200 text-navy font-bold hover:bg-amber hover:border-amber hover:text-white hover:scale-110 focus-visible:ring-4 focus-visible:ring-amber/20'
-                               : 'bg-gray-100 border-2 border-gray-100 text-gray-300 cursor-not-allowed' }}"
-                    @if(!$hasBrands) tabindex="-1" aria-hidden="true" @endif
-                    title="{{ $hasBrands ? 'Browse brands starting with ' . $letter : 'No brands' }}"
-                >
-                    <span class="text-sm sm:text-base font-bold transition-all duration-300">
-                        {{ $letter }}
-                    </span>
+                <a href="{{ url('/'.$lang.'/brand').'?letter='.$letter }}"
+                   class="w-10 h-10 font-mono text-sm font-bold inline-flex items-center justify-center
+                          border border-rule tabular-nums
+                          {{ $hasBrands
+                              ? 'text-ink hover:bg-ink hover:text-ivory hover:border-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber focus-visible:outline-offset-2'
+                              : 'text-rule-strong cursor-not-allowed pointer-events-none' }}
+                          transition-colors"
+                   @if(!$hasBrands) tabindex="-1" aria-hidden="true" @endif
+                   title="{{ $hasBrands ? 'Browse brands starting with ' . $letter : 'No brands' }}">
+                    {{ $letter }}
                 </a>
                 @endforeach
-                <a
-                    href="/{{ $lang }}/brand"
-                    class="group min-w-[3rem] h-10 sm:h-12 px-4 rounded-xl flex items-center justify-center
-                           bg-gradient-to-r from-navy to-blue-600 text-white font-bold
-                           hover:from-amber hover:to-orange-500 hover:scale-105
-                           shadow-md hover:shadow-lg transition-all duration-300"
-                    title="View all brands"
-                >
-                    <span class="text-xs sm:text-sm">ALL</span>
+                <a href="{{ url('/'.$lang.'/brand') }}"
+                   class="h-10 px-4 font-mono text-xs font-bold inline-flex items-center gap-2
+                          border border-ink bg-ink text-ivory hover:bg-amber hover:border-amber hover:text-ink
+                          transition-colors uppercase tracking-[0.22em]">
+                    All · Index
+                    <x-heroicon-s-arrow-long-right class="w-4 h-4" />
+                </a>
+            </div>
+
+            <div class="mt-10 flex flex-wrap items-center justify-between gap-4">
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    Source · OEM manufacturer catalogues · EU
+                </span>
+                <a href="{{ url('/'.$lang.'/brand/') }}" class="bp-btn-primary">
+                    {{ $viewAllText }}
+                    <x-heroicon-s-arrow-long-right class="w-5 h-5" />
                 </a>
             </div>
         </div>
-
-        {{-- CTA Button --}}
-        <div class="text-center">
-            <x-button variant="secondary" href="/{{ $lang }}/brand/" size="lg">
-                {{ trans_field($section->content['view_all_text'] ?? null) ?: 'View All Brands' }}
-                <x-heroicon-o-arrow-right class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-            </x-button>
-        </div>
-
     </div>
 </section>
 @endif

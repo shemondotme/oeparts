@@ -1,120 +1,135 @@
-{{-- Section: Promo Banner - Grid/Mosaic Layout with Social Proof
+{{-- Section: banner (Industrial Blueprint)
      content: eyebrow(ml), headline(ml), subheadline(ml), button_text(ml), button_url
-     Design: Modern Grid Layout with Interactive Feature Cards & Social Proof
+     6 feature cards with trust indicators.
 --}}
-<section class="relative py-14 md:py-20 px-4 overflow-hidden bg-navy">
-    {{-- Decorative Gradient Background --}}
-    <div class="absolute inset-0 bg-gradient-to-br from-navy via-navy to-blue-900 pointer-events-none" aria-hidden="true"></div>
-    <div class="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" aria-hidden="true"></div>
+@php
+    $eyebrow = trans_field($section->content['eyebrow'] ?? null);
+    $headline = trans_field($section->content['headline'] ?? null);
+    $subheadline = trans_field($section->content['subheadline'] ?? null);
+    $buttonText = trans_field($section->content['button_text'] ?? null) ?: __('Open a Workshop Account');
+    $buttonUrl = $section->content['button_url'] ?: null;
 
-    {{-- Animated Gradient Blobs --}}
-    <div class="absolute inset-0 opacity-10 pointer-events-none" aria-hidden="true">
-        <div class="absolute top-10 left-1/4 w-96 h-96 bg-amber/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-        <div class="absolute bottom-10 right-1/4 w-80 h-80 bg-blue-500/30 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-    </div>
+    $features = [
+        ['icon' => 'wrench-screwdriver', 'title' => 'Workshop Pricing',     'desc' => 'Volume tiers up to 35% off retail — automatic on every invoice once you qualify.'],
+        ['icon' => 'document-text',      'title' => 'Net-30 Terms',         'desc' => 'Order on account, pay monthly. Credit lines from €2K to €100K based on history.'],
+        ['icon' => 'clipboard-check',    'title' => 'Bulk RFQ Desk',        'desc' => 'Quote 50+ OEM numbers in one request. Answers within 4 working hours.'],
+        ['icon' => 'chat-bubble',        'title' => 'Dedicated B2B Support', 'desc' => 'Named account manager, direct line, DE · EN · FR · LT · ES.'],
+        ['icon' => 'truck',              'title' => 'Scheduled Delivery',   'desc' => 'Daily courier runs across the EU. Morning-order, next-day-arrival on stocked SKUs.'],
+        ['icon' => 'shield-check',       'title' => 'Certified Genuine',    'desc' => 'Only OEM-authorised distributors. ISO 9001 supply chain, traceable lot numbers.'],
+    ];
+    $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+@endphp
 
-    <div class="relative max-w-6xl mx-auto z-10">
+<section class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
+    <div class="absolute inset-0 bg-grid-navy bg-grid-lg opacity-60 pointer-events-none" aria-hidden="true"></div>
 
-        {{-- Header Section --}}
-        <x-section-heading
-            :eyebrow="trans_field($section->content['eyebrow'] ?? null)"
-            :headline="trans_field($section->content['headline'] ?? null)"
-            :subheadline="trans_field($section->content['subheadline'] ?? null)"
-            :dark="true"
-            class="mb-8"
-        />
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
 
-        {{-- CTA Button --}}
-        @if(!empty($section->content['button_text']) && !empty($section->content['button_url']))
-        <div class="text-center mb-12">
-            <a href="{{ $section->content['button_url'] }}"
-               class="group btn-primary px-8 py-4 text-base">
-                {{ trans_field($section->content['button_text']) }}
-                <x-heroicon-o-arrow-right class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-            </a>
-        </div>
-        @endif
-
-        {{-- Feature Cards Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
-
-            {{-- Card 1: Certified Workshops --}}
-            <div class="group relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 hover:bg-white/10 hover:border-amber/50 transition-all duration-300">
-                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-amber to-orange-500 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <x-heroicon-s-wrench-screwdriver class="w-8 h-8 text-navy" />
+        {{-- Header --}}
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-white/20">
+            <div class="col-span-12 md:col-span-7">
+                @if($eyebrow)
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ {{ $eyebrow }}</span>
                 </div>
-
-                <h3 class="text-white text-lg font-bold mb-2">Certified Workshops</h3>
-                <p class="text-white/60 text-sm leading-relaxed">Join 500+ verified workshops across Europe</p>
+                @endif
+                @if($headline)
+                @php $headlineClean = rtrim($headline, '.'); @endphp
+                <h2 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[20ch]">
+                    {{ $headlineClean }}<span class="text-amber">.</span>
+                </h2>
+                @endif
             </div>
-
-            {{-- Card 2: No Setup Fees --}}
-            <div class="group relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 hover:bg-white/10 hover:border-blue-500/50 transition-all duration-300">
-                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <x-heroicon-s-currency-dollar class="w-8 h-8 text-white" />
-                </div>
-
-                <h3 class="text-white text-lg font-bold mb-2">No Setup Fees</h3>
-                <p class="text-white/60 text-sm leading-relaxed">Start free, scale as your business grows</p>
-            </div>
-
-            {{-- Card 3: 24/7 Support --}}
-            <div class="group relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 hover:bg-white/10 hover:border-purple-500/50 transition-all duration-300">
-                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <x-heroicon-s-chat-bubble-left-right class="w-8 h-8 text-white" />
-                </div>
-
-                <h3 class="text-white text-lg font-bold mb-2">24/7 Support</h3>
-                <p class="text-white/60 text-sm leading-relaxed">Expert help available anytime, anywhere</p>
-            </div>
-
-            {{-- Card 4: Bulk Pricing --}}
-            <div class="group relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 hover:bg-white/10 hover:border-green-500/50 transition-all duration-300">
-                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <x-heroicon-s-clipboard-document-check class="w-8 h-8 text-white" />
-                </div>
-
-                <h3 class="text-white text-lg font-bold mb-2">Bulk Pricing</h3>
-                <p class="text-white/60 text-sm leading-relaxed">Volume discounts up to 35% off</p>
-            </div>
-
-            {{-- Card 5: Fast Delivery --}}
-            <div class="group relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 hover:bg-white/10 hover:border-orange-500/50 transition-all duration-300">
-                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <x-heroicon-s-truck class="w-8 h-8 text-white" />
-                </div>
-
-                <h3 class="text-white text-lg font-bold mb-2">Fast Delivery</h3>
-                <p class="text-white/60 text-sm leading-relaxed">2-3 days worldwide express shipping</p>
-            </div>
-
-            {{-- Card 6: Quality Guarantee --}}
-            <div class="group relative overflow-hidden rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6 hover:bg-white/10 hover:border-cyan-500/50 transition-all duration-300">
-                <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <x-heroicon-s-shield-check class="w-8 h-8 text-white" />
-                </div>
-
-                <h3 class="text-white text-lg font-bold mb-2">Quality Guarantee</h3>
-                <p class="text-white/60 text-sm leading-relaxed">100% certified OEM parts, ISO 9001</p>
-            </div>
-
-        </div>
-
-        {{-- Minimal Trust Indicators --}}
-        <div class="mt-12 flex flex-wrap justify-center gap-6 md:gap-10 text-white/50 text-sm">
-            <div class="flex items-center gap-2">
-                <x-heroicon-s-star class="w-4 h-4 text-amber" />
-                <span class="font-semibold text-white/70">4.8/5 Rating</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <x-heroicon-s-users class="w-4 h-4 text-blue-400" />
-                <span class="font-semibold text-white/70">2,400+ Customers</span>
-            </div>
-            <div class="flex items-center gap-2">
-                <x-heroicon-s-lock-closed class="w-4 h-4 text-green-400" />
-                <span class="font-semibold text-white/70">Secure Checkout</span>
+            <div class="col-span-12 md:col-span-5 mt-6 md:mt-0 md:pl-8 md:border-l md:border-white/20">
+                @if($subheadline)
+                <p class="text-base text-ivory/75 leading-relaxed">
+                    {{ $subheadline }}
+                </p>
+                @endif
+                @if($buttonText)
+                    @if($buttonUrl)
+                        <a href="{{ $buttonUrl }}" class="mt-6 bp-btn-amber">
+                            {{ $buttonText }}
+                            <x-heroicon-s-arrow-long-right class="w-5 h-5" />
+                        </a>
+                    @else
+                        <button type="button"
+                                @click="$dispatch('open-auth-modal', { tab: 'register', role: 'b2b' })"
+                                class="mt-6 bp-btn-amber">
+                            {{ $buttonText }}
+                            <x-heroicon-s-arrow-long-right class="w-5 h-5" />
+                        </button>
+                    @endif
+                @endif
             </div>
         </div>
 
+        {{-- Feature ledger --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border border-white/20">
+            @foreach($features as $index => $f)
+            @php
+                $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
+            @endphp
+            <div class="relative p-6 sm:p-8 border-white/20
+                        {{ !$loop->last ? 'border-b lg:border-b' : '' }}
+                        {{ ($index + 1) % 3 !== 0 ? 'lg:border-r' : '' }}
+                        {{ ($index + 1) % 2 !== 0 ? 'sm:border-r lg:border-r' : '' }}
+                        {{ $index < count($features) - 3 ? 'lg:border-b' : 'lg:border-b-0' }}">
+
+                {{-- Row num + icon --}}
+                <div class="flex items-center justify-between mb-6">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ivory/50">
+                        № {{ $num }}
+                    </span>
+                    <div class="w-9 h-9 border border-white/30 flex items-center justify-center">
+                        @switch($f['icon'])
+                            @case('wrench-screwdriver') <x-heroicon-o-wrench-screwdriver class="w-4 h-4 text-amber" /> @break
+                            @case('document-text')      <x-heroicon-o-document-text class="w-4 h-4 text-amber" /> @break
+                            @case('chat-bubble')        <x-heroicon-o-chat-bubble-left-right class="w-4 h-4 text-amber" /> @break
+                            @case('clipboard-check')    <x-heroicon-o-clipboard-document-check class="w-4 h-4 text-amber" /> @break
+                            @case('truck')              <x-heroicon-o-truck class="w-4 h-4 text-amber" /> @break
+                            @case('shield-check')       <x-heroicon-o-shield-check class="w-4 h-4 text-amber" /> @break
+                            @default                    <x-heroicon-o-check-circle class="w-4 h-4 text-amber" />
+                        @endswitch
+                    </div>
+                </div>
+
+                {{-- Title --}}
+                <h3 class="font-display text-xl font-bold text-ivory leading-tight tracking-tight mb-3 text-balance">
+                    {{ $f['title'] }}
+                </h3>
+
+                {{-- Description --}}
+                <p class="text-sm text-ivory/70 leading-relaxed">
+                    {{ $f['desc'] }}
+                </p>
+
+                {{-- Amber underscore --}}
+                <div class="mt-5 h-[2px] w-8 bg-amber"></div>
+            </div>
+            @endforeach
+        </div>
+
+        {{-- B2B Trust indicators --}}
+        <div class="mt-12 pt-8 border-t border-white/20 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
+                <x-heroicon-s-building-storefront class="w-3.5 h-3.5 text-amber" />
+                500+ Active Workshops
+            </span>
+            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
+                <x-heroicon-s-globe-europe-africa class="w-3.5 h-3.5 text-amber" />
+                27 EU Countries
+            </span>
+            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
+                <x-heroicon-s-check-badge class="w-3.5 h-3.5 text-amber" />
+                ISO 9001 Supply Chain
+            </span>
+            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
+                <x-heroicon-s-clock class="w-3.5 h-3.5 text-amber" />
+                4h RFQ Response
+            </span>
+        </div>
     </div>
 </section>

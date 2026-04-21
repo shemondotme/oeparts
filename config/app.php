@@ -86,6 +86,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Checkout — Skip Email OTP (testing only)
+    |--------------------------------------------------------------------------
+    |
+    | When CHECKOUT_SKIP_OTP=true in .env, guest checkout will bypass the
+    | 6-digit email verification step. Use this only for local testing.
+    | ALWAYS keep this false in production.
+    |
+    */
+
+    'checkout_skip_otp' => env('CHECKOUT_SKIP_OTP', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

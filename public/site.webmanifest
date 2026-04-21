@@ -1,0 +1,13 @@
+{
+    "name": "OEMHub",
+    "short_name": "OEMHub",
+    "description": "The central hub for genuine OEM auto parts in Europe.",
+    "icons": [
+        { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+        { "src": "/apple-touch-icon.svg", "sizes": "180x180", "type": "image/svg+xml", "purpose": "maskable" }
+    ],
+    "theme_color": "#0B1A29",
+    "background_color": "#F4EFE1",
+    "display": "standalone",
+    "start_url": "/"
+}

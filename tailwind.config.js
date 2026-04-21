@@ -23,6 +23,24 @@ export default {
                 "bg-page": "#F8FAFC", // Page background
                 "section-alt": "#EEF4FF", // Alternating section bg — navy 6% tint
 
+                // ── Industrial Blueprint tokens ───────────────────────
+                // Deep ink for primary text on ivory — more contrast than navy
+                ink: "#0A1228",
+                // Secondary ink — for muted text on ivory surfaces
+                "ink-muted": "#4E5A74",
+                // Warm cream page background — evokes blueprint / spec-sheet paper
+                ivory: "#F7F3E7",
+                // Darker cream for alternating strips
+                "ivory-alt": "#EFE9D6",
+                // Paper white — card surfaces on ivory
+                paper: "#FFFFFF",
+                // Hairline rule colors (borders without shadows)
+                rule: "#D8CFB6", // default hairline on ivory (warm)
+                "rule-strong": "#B8AE90", // emphasized hairline
+                "rule-dark": "#1D2A44", // hairline on navy/dark surfaces
+                // Blueprint amber — slightly desaturated for ivory surfaces
+                "amber-ink": "#9A5A00", // maximal contrast amber text (> AA) on ivory
+
                 // Condition badge colors (bg / text pairs)
                 "condition-new-bg": "#DCFCE7",
                 "condition-new-text": "#16A34A",
@@ -48,8 +66,50 @@ export default {
                 ],
                 // Inter for body, labels, nav, descriptions
                 sans: ["Inter", ...defaultTheme.fontFamily.sans],
-                // JetBrains Mono for OEM numbers ONLY — every single one
+                // JetBrains Mono for OEM numbers AND all numeric content (Blueprint)
                 mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
+            },
+
+            fontSize: {
+                // Industrial Blueprint display scale — tight, confident, technical
+                "blueprint-xl": [
+                    "clamp(3rem, 11vw, 9.5rem)",
+                    { lineHeight: "0.88", letterSpacing: "-0.045em" },
+                ],
+                "blueprint-lg": [
+                    "clamp(2.25rem, 7vw, 6rem)",
+                    { lineHeight: "0.92", letterSpacing: "-0.03em" },
+                ],
+                "blueprint-md": [
+                    "clamp(1.75rem, 4.5vw, 3.5rem)",
+                    { lineHeight: "1.0", letterSpacing: "-0.02em" },
+                ],
+                // Small-caps meta label sizes
+                "spec-xs": ["10px", { lineHeight: "1.2", letterSpacing: "0.22em" }],
+                "spec-sm": ["11px", { lineHeight: "1.3", letterSpacing: "0.20em" }],
+            },
+
+            backgroundImage: {
+                // Blueprint grid textures — used on ivory / navy surfaces
+                "grid-ivory":
+                    "linear-gradient(to right, rgba(10,18,40,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(10,18,40,0.045) 1px, transparent 1px)",
+                "grid-ivory-fine":
+                    "linear-gradient(to right, rgba(10,18,40,0.025) 1px, transparent 1px), linear-gradient(to bottom, rgba(10,18,40,0.025) 1px, transparent 1px)",
+                "grid-navy":
+                    "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
+                "grid-navy-fine":
+                    "linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px)",
+                // Dotted leader — for spec lists (label ........... value)
+                "dotted-leader":
+                    "radial-gradient(circle, rgba(10,18,40,0.3) 1px, transparent 1.5px)",
+            },
+
+            backgroundSize: {
+                "grid-sm": "16px 16px",
+                "grid-md": "24px 24px",
+                "grid-lg": "48px 48px",
+                "grid-xl": "96px 96px",
+                leader: "6px 1px",
             },
 
             animation: {

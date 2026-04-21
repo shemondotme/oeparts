@@ -10,11 +10,12 @@ use App\Services\PaymentService;
 use App\Enums\OtpPurpose;
 use App\Enums\PaymentMethod;
 use App\Models\Order;
+use App\Models\ShippingMethod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CheckoutController extends Controller
 {
@@ -31,37 +32,35 @@ class CheckoutController extends Controller
      */
     public function index(Request $request, string $lang)
     {
-        // Get current user (if any) and guest token
         $user = Auth::user();
         $guestToken = $request->cookie('guest_token');
-        
-        // Ensure there is a cart with items
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
+
         if (!$cart || $cart->items->isEmpty()) {
             return redirect()->route('frontend.cart.index', compact('lang'))
                 ->with('error', __('Your cart is empty.'));
         }
 
-        // Check if a checkout session already exists
         $checkoutId = Session::get('active_checkout_id');
         if (!$checkoutId) {
-            // Start a new checkout session
             $checkoutId = $this->checkoutService->start($cart);
             Session::put('active_checkout_id', $checkoutId);
         }
 
-        // Retrieve checkout state
         $checkout = $this->checkoutService->get($checkoutId);
         if (!$checkout) {
-            // Session expired, restart
             $checkoutId = $this->checkoutService->start($cart);
             Session::put('active_checkout_id', $checkoutId);
             $checkout = $this->checkoutService->get($checkoutId);
         }
 
+        if ($request->query('_back') === '1') {
+            $this->checkoutService->goBack($checkoutId);
+            $checkout = $this->checkoutService->get($checkoutId);
+        }
+
         $step = $checkout['step'];
 
-        // Redirect to the appropriate step view
         return match ($step) {
             1 => $this->showStep1($checkoutId, $checkout, $lang),
             2 => $this->showStep2($checkoutId, $checkout, $lang),
@@ -101,26 +100,20 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Step 1: Guest email + OTP.
+     * Step 1: Contact details and guest OTP verification.
      */
     private function showStep1(string $checkoutId, array $checkout, string $lang)
     {
-        $data = $checkout['data'];
-        $email = $data['guest_email'] ?? null;
-        $otpSent = !empty($email) && $data['otp_verified'] === false;
-
-        return view('frontend.checkout.step1', [
-            'checkoutId' => $checkoutId,
-            'email' => $email,
-            'otpSent' => $otpSent,
-            'lang' => $lang,
-        ]);
+        return $this->renderCheckoutStep('frontend.checkout.step1', $checkoutId, $checkout, $lang);
     }
 
     private function processStep1(Request $request, string $checkoutId, string $lang)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|max:255',
+            'phone' => 'nullable|string|max:50',
+            'is_b2b' => 'nullable|boolean',
+            'otp_verified' => 'nullable|boolean',
             'otp' => 'nullable|string|size:6',
         ]);
 
@@ -128,159 +121,159 @@ class CheckoutController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $email = $request->input('email');
-        $otp = $request->input('otp');
+        $user = Auth::user();
+        $isGuest = !$user;
+        $otpValue = $request->input('otp');
+        $otpVerified = !$isGuest || $request->boolean('otp_verified');
 
-        // If OTP is provided, verify it
-        if ($otp) {
-            $result = $this->otpService->verify($email, $otp, OtpPurpose::GuestCheckout);
+        // Testing bypass — see CHECKOUT_SKIP_OTP in .env.
+        // When enabled, guest email verification is treated as passed.
+        $skipOtp = (bool) config('app.checkout_skip_otp');
+
+        if ($isGuest && $otpValue && !$skipOtp) {
+            $result = $this->otpService->verify($request->input('email'), $otpValue, OtpPurpose::GuestCheckout);
             if ($result !== OtpService::RESULT_OK) {
                 return back()->with('error', $this->otpErrorMessage($result))
                     ->withInput();
             }
 
-            // OTP verified
-            $this->checkoutService->update($checkoutId, [
-                'guest_email' => $email,
-                'otp_verified' => true,
-            ]);
-
-            // Advance to step 2
-            $this->checkoutService->advance($checkoutId);
-            return redirect()->route('frontend.checkout', compact('lang'));
+            $otpVerified = true;
         }
 
-        // No OTP yet – send OTP
-        try {
-            $this->otpService->generate($email, OtpPurpose::GuestCheckout, $request->ip());
-        } catch (\RuntimeException $e) {
-            return back()->with('error', $e->getMessage())->withInput();
+        if ($skipOtp) {
+            $otpVerified = true;
+        }
+
+        if ($isGuest && !$otpVerified) {
+            try {
+                $this->otpService->generate($request->input('email'), OtpPurpose::GuestCheckout, $request->ip());
+            } catch (\RuntimeException $e) {
+                return back()->with('error', $e->getMessage())->withInput();
+            }
+
+            $this->checkoutService->update($checkoutId, [
+                'contact_email' => $request->input('email'),
+                'contact_phone' => $request->input('phone'),
+                'guest_email' => $request->input('email'),
+                'otp_verified' => false,
+                'is_b2b' => $request->boolean('is_b2b'),
+            ]);
+
+            return back()->with('success', __('OTP sent to your email.'))->withInput();
         }
 
         $this->checkoutService->update($checkoutId, [
-            'guest_email' => $email,
-            'otp_verified' => false,
-        ]);
-
-        return back()->with('success', __('OTP sent to your email.'))->withInput();
-    }
-
-    /**
-     * Step 2: B2B VAT validation (optional).
-     */
-    private function showStep2(string $checkoutId, array $checkout, string $lang)
-    {
-        $data = $checkout['data'];
-        return view('frontend.checkout.step2', [
-            'checkoutId' => $checkoutId,
-            'is_b2b' => $data['is_b2b'] ?? false,
-            'vat_number' => $data['vat_number'] ?? '',
-            'company_name' => $data['company_name'] ?? '',
-            'vat_exempt' => $data['vat_exempt'] ?? false,
-            'lang' => $lang,
-        ]);
-    }
-
-    private function processStep2(Request $request, string $checkoutId, string $lang)
-    {
-        $isB2b = $request->has('is_b2b') && $request->input('is_b2b') === '1';
-
-        if (!$isB2b) {
-            // Skip VAT validation
-            $this->checkoutService->update($checkoutId, [
-                'is_b2b' => false,
-                'vat_number' => null,
-                'vat_exempt' => false,
-                'company_name' => null,
-            ]);
-            $this->checkoutService->advance($checkoutId);
-            return redirect()->route('frontend.checkout', compact('lang'));
-        }
-
-        $validator = Validator::make($request->all(), [
-            'vat_number' => 'required|string|max:20',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $vatNumber = $request->input('vat_number');
-
-        // Validate via VIES
-        $result = $this->checkoutService->validateVat($checkoutId, $vatNumber);
-
-        if ($result['valid'] ?? false) {
-            $this->checkoutService->advance($checkoutId);
-            return redirect()->route('frontend.checkout', compact('lang'))
-                ->with('success', __('VAT number validated.'));
-        }
-
-        // VAT invalid or service unavailable – customer can proceed but will be charged VAT
-        $this->checkoutService->update($checkoutId, [
-            'is_b2b' => true,
-            'vat_number' => $vatNumber,
-            'vat_exempt' => false,
-            'company_name' => $result['name'] ?? null,
+            'contact_email' => $request->input('email'),
+            'contact_phone' => $request->input('phone'),
+            'guest_email' => $isGuest ? $request->input('email') : null,
+            'otp_verified' => $otpVerified,
+            'is_b2b' => $request->boolean('is_b2b'),
+            'vat_number' => $request->boolean('is_b2b') ? ($this->checkoutService->get($checkoutId)['data']['vat_number'] ?? null) : null,
+            'vat_exempt' => $request->boolean('is_b2b') ? ($this->checkoutService->get($checkoutId)['data']['vat_exempt'] ?? false) : false,
+            'company_name' => $request->boolean('is_b2b') ? ($this->checkoutService->get($checkoutId)['data']['company_name'] ?? null) : null,
         ]);
 
         $this->checkoutService->advance($checkoutId);
-        return redirect()->route('frontend.checkout', compact('lang'))
-            ->with('warning', __('VAT validation failed. VAT will be applied.'));
-    }
 
-    /**
-     * Step 3: Shipping address.
-     */
-    private function showStep3(string $checkoutId, array $checkout, string $lang)
-    {
-        $data = $checkout['data'];
-        $address = $data['shipping_address'] ?? [];
-
-        return view('frontend.checkout.step3', [
-            'checkoutId' => $checkoutId,
-            'address' => $address,
-            'lang' => $lang,
-        ]);
-    }
-
-    private function processStep3(Request $request, string $checkoutId, string $lang)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:100',
-            'address_line1' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'postal_code' => 'required|string|max:20',
-            'country_code' => 'required|string|size:2',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $this->checkoutService->update($checkoutId, [
-            'shipping_address' => $request->only([
-                'name', 'address_line1', 'city', 'postal_code', 'country_code',
-            ]),
-        ]);
-
-        $this->checkoutService->advance($checkoutId);
         return redirect()->route('frontend.checkout', compact('lang'));
     }
 
     /**
-     * Step 4: Shipping method selection.
+     * Step 2: Shipping address and optional B2B details.
      */
-    private function showStep4(string $checkoutId, array $checkout, string $lang)
+    private function showStep2(string $checkoutId, array $checkout, string $lang)
+    {
+        return $this->renderCheckoutStep('frontend.checkout.step2', $checkoutId, $checkout, $lang);
+    }
+
+    private function processStep2(Request $request, string $checkoutId, string $lang)
+    {
+        $checkout = $this->checkoutService->get($checkoutId);
+        $isB2b = (bool) ($checkout['data']['is_b2b'] ?? false);
+
+        $rules = [
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'street' => 'required|string|max:255',
+            'city' => 'required|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'country_code' => 'required|string|size:2',
+        ];
+
+        if ($isB2b) {
+            $rules['company'] = 'required|string|max:200';
+            $rules['vat_number'] = 'required|string|max:20';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $updates = [
+            'shipping_address' => [
+                'first_name' => $request->input('first_name'),
+                'last_name' => $request->input('last_name'),
+                'street' => $request->input('street'),
+                'city' => $request->input('city'),
+                'postal_code' => $request->input('postal_code'),
+                'country_code' => $request->input('country_code'),
+            ],
+            'is_b2b' => $isB2b,
+            'company_name' => $isB2b ? $request->input('company') : null,
+            'vat_number' => $isB2b ? $request->input('vat_number') : null,
+            'vat_exempt' => false,
+        ];
+
+        $flashType = null;
+        $flashMessage = null;
+
+        if ($isB2b) {
+            try {
+                $result = $this->checkoutService->validateVat(
+                    $checkoutId,
+                    $request->input('vat_number'),
+                    $request->input('country_code')
+                );
+                $updates['vat_exempt'] = (bool) ($result['valid'] ?? false);
+                $updates['company_name'] = $result['name'] ?? $request->input('company');
+
+                if ($updates['vat_exempt']) {
+                    $flashType = 'success';
+                    $flashMessage = __('VAT number validated.');
+                } else {
+                    $flashType = 'warning';
+                    $flashMessage = __('VAT validation failed. VAT will be applied.');
+                }
+            } catch (\Throwable) {
+                $flashType = 'warning';
+                $flashMessage = __('VAT validation failed. VAT will be applied.');
+            }
+        }
+
+        $this->checkoutService->update($checkoutId, $updates);
+        $this->checkoutService->advance($checkoutId);
+
+        $response = redirect()->route('frontend.checkout', compact('lang'));
+        if ($flashType && $flashMessage) {
+            $response->with($flashType, $flashMessage);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Step 3: Shipping method selection.
+     */
+    private function showStep3(string $checkoutId, array $checkout, string $lang)
     {
         $data = $checkout['data'];
         $countryCode = $data['shipping_address']['country_code'] ?? null;
-        $selectedId = $data['shipping_method_id'] ?? null;
-
-        // Fetch shipping methods for the selected country
         $methods = collect();
+
         if ($countryCode) {
-            $methods = \App\Models\ShippingMethod::join('shipping_countries', 'shipping_methods.zone_id', '=', 'shipping_countries.zone_id')
+            $methods = ShippingMethod::join('shipping_countries', 'shipping_methods.zone_id', '=', 'shipping_countries.zone_id')
                 ->join('shipping_zones', 'shipping_methods.zone_id', '=', 'shipping_zones.id')
                 ->where('shipping_countries.country_code', $countryCode)
                 ->where('shipping_methods.is_active', true)
@@ -290,27 +283,30 @@ class CheckoutController extends Controller
                 ->get();
         }
 
-        // Check if free shipping threshold is met
-        $cart = $this->cartService->getCartByCheckout($checkoutId);
-        $cartTotal = $cart ? $cart->items->sum(fn($item) => $item->price_at_add * $item->quantity) : 0;
-        $freeShippingThreshold = (float) settings('shipping.free_shipping_threshold', 150.00);
-        $qualifiesForFreeShipping = $cartTotal >= $freeShippingThreshold;
-
-        return view('frontend.checkout.step4', [
-            'checkoutId' => $checkoutId,
+        return $this->renderCheckoutStep('frontend.checkout.step3', $checkoutId, $checkout, $lang, [
             'methods' => $methods,
-            'selectedId' => $selectedId,
-            'lang' => $lang,
-            'cartTotal' => $cartTotal,
-            'freeShippingThreshold' => $freeShippingThreshold,
-            'qualifiesForFreeShipping' => $qualifiesForFreeShipping,
+            'selectedId' => $data['shipping_method_id'] ?? null,
         ]);
     }
 
-    private function processStep4(Request $request, string $checkoutId, string $lang)
+    private function processStep3(Request $request, string $checkoutId, string $lang)
     {
+        $checkout = $this->checkoutService->get($checkoutId);
+        $countryCode = $checkout['data']['shipping_address']['country_code'] ?? null;
+        $allowedMethodIds = $countryCode
+            ? ShippingMethod::join('shipping_countries', 'shipping_methods.zone_id', '=', 'shipping_countries.zone_id')
+                ->join('shipping_zones', 'shipping_methods.zone_id', '=', 'shipping_zones.id')
+                ->where('shipping_countries.country_code', $countryCode)
+                ->where('shipping_methods.is_active', true)
+                ->where('shipping_zones.is_active', true)
+                ->pluck('shipping_methods.id')
+                ->all()
+            : [];
+
         $validator = Validator::make($request->all(), [
-            'shipping_method_id' => 'required|integer|exists:shipping_methods,id',
+            'shipping_method_id' => ['required', 'integer', Rule::in($allowedMethodIds)],
+        ], [
+            'shipping_method_id.in' => __('Please select a valid shipping method.'),
         ]);
 
         if ($validator->fails()) {
@@ -318,7 +314,7 @@ class CheckoutController extends Controller
         }
 
         $this->checkoutService->update($checkoutId, [
-            'shipping_method_id' => $request->input('shipping_method_id'),
+            'shipping_method_id' => (int) $request->input('shipping_method_id'),
         ]);
 
         $this->checkoutService->advance($checkoutId);
@@ -326,71 +322,131 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Step 5: Review & place order.
+     * Step 4: Review order and accept terms.
+     */
+    private function showStep4(string $checkoutId, array $checkout, string $lang)
+    {
+        return $this->renderCheckoutStep('frontend.checkout.step4', $checkoutId, $checkout, $lang);
+    }
+
+    private function processStep4(Request $request, string $checkoutId, string $lang)
+    {
+        if (!$request->boolean('agree_terms')) {
+            return back()->withErrors([
+                'agree_terms' => __('Please accept the terms before continuing.'),
+            ])->withInput();
+        }
+
+        $this->checkoutService->advance($checkoutId);
+        return redirect()->route('frontend.checkout', compact('lang'));
+    }
+
+    /**
+     * Step 5: Choose payment method and create order.
      */
     private function showStep5(string $checkoutId, array $checkout, string $lang)
     {
-        $cart = $this->cartService->getOrCreateCart(null, request()->cookie('guest_token'));
-        $summary = $this->cartService->getSummary($cart);
-        $data = $checkout['data'];
-
-        // Calculate totals (simplified)
-        $subtotal = (string) ($summary['subtotal'] ?? '0.00');
-        $shippingCost = '0.00'; // TODO: calculate based on selected method
-        $vatRate = settings('tax.default_vat_rate', 21);
-        $taxableBase = bcadd($subtotal, $shippingCost, 2);
-        $vatAmount = $data['vat_exempt'] ? '0.00' : bcmul($taxableBase, bcdiv((string) $vatRate, '100', 4), 2);
-        $grandTotal = bcadd($taxableBase, $vatAmount, 2);
-
-        return view('frontend.checkout.step5', [
-            'checkoutId' => $checkoutId,
-            'cart' => $cart,
-            'summary' => $summary,
-            'data' => $data,
-            'subtotal' => $subtotal,
-            'shippingCost' => $shippingCost,
-            'vatAmount' => $vatAmount,
-            'grandTotal' => $grandTotal,
-            'lang' => $lang,
-        ]);
+        return $this->renderCheckoutStep('frontend.checkout.step5', $checkoutId, $checkout, $lang);
     }
 
     private function processStep5(Request $request, string $checkoutId, string $lang)
     {
-        // Validate that all previous steps are complete
-        if (!$this->checkoutService->isStepComplete($checkoutId, 5)) {
+        if (!$this->checkoutService->isStepComplete($checkoutId, 4)) {
             return back()->with('error', __('Please complete all previous steps.'));
         }
 
-        // Validate payment method selection
         $validated = $request->validate([
             'payment_method' => 'required|in:card,bank_transfer',
             'customer_note' => 'nullable|string|max:500',
-            'urgent_processing' => 'boolean',
-            'terms' => 'accepted',
         ]);
 
-        // Store payment method and additional data
         $this->checkoutService->update($checkoutId, [
             'payment_method' => $validated['payment_method'],
-            'customer_note' => $validated['customer_note'] ?? '',
-            'urgent_processing' => $request->has('urgent_processing'),
+            'customer_note' => $validated['customer_note'] ?? null,
         ]);
 
         try {
             $order = $this->checkoutService->createOrder($checkoutId);
-        } catch (\Exception $e) {
-            return back()->with('error', __('Order creation failed: ') . $e->getMessage());
+        } catch (\Throwable $e) {
+            report($e);
+
+            $message = __('We could not create your order. Please try again.');
+            if (config('app.debug')) {
+                $message .= ' [debug: ' . $e->getMessage() . ']';
+            }
+
+            return back()->with('error', $message);
         }
 
-        // Clear active checkout ID
         Session::forget('active_checkout_id');
 
-        // Redirect to payment page
+        // Remember which orders this session owns so the guest can access the
+        // payment / thank-you pages without an account (orders table has no
+        // guest_token column).
+        $ownedOrderIds = Session::get('owned_order_ids', []);
+        $ownedOrderIds[] = $order->id;
+        Session::put('owned_order_ids', array_values(array_unique($ownedOrderIds)));
+
         return redirect()->route('frontend.checkout.payment', [
             'lang' => $lang,
             'order' => $order->order_number,
         ]);
+    }
+
+    private function renderCheckoutStep(string $view, string $checkoutId, array $checkout, string $lang, array $data = [])
+    {
+        $checkoutData = $checkout['data'];
+        $cart = $this->cartService->getCartByCheckout($checkoutId);
+        $summary = $cart ? $this->cartService->getSummary($cart) : null;
+        $selectedShippingMethod = !empty($checkoutData['shipping_method_id'])
+            ? ShippingMethod::find($checkoutData['shipping_method_id'])
+            : null;
+
+        $shippingCost = null;
+        if ($cart && $selectedShippingMethod) {
+            $shippingCost = $this->checkoutService->calculateShippingCost($cart, $selectedShippingMethod->id);
+        }
+
+        $sidebar = $this->buildSidebarSummary($checkoutData, $summary, $shippingCost);
+
+        return view($view, array_merge($data, [
+            'checkoutId' => $checkoutId,
+            'lang' => $lang,
+            'step' => $checkout['step'],
+            'checkoutData' => $checkoutData,
+            'checkoutCart' => $cart,
+            'checkoutSummary' => $summary,
+            'selectedShippingMethod' => $selectedShippingMethod,
+            'selectedShippingCost' => $shippingCost,
+            'sidebarSummary' => $sidebar,
+        ]));
+    }
+
+    private function buildSidebarSummary(array $checkoutData, ?array $summary, ?string $shippingCost): array
+    {
+        $subtotal = number_format((float) ($summary['subtotal'] ?? 0), 2, '.', '');
+        $couponDiscount = number_format((float) ($summary['coupon_discount'] ?? 0), 2, '.', '');
+        $discountedSubtotal = bcsub($subtotal, $couponDiscount, 2);
+        $vatRate = (string) ($summary['vat_rate'] ?? settings('tax.default_vat_rate', 21));
+        $shipping = $shippingCost ?? '0.00';
+        $vatBase = $shippingCost !== null
+            ? bcadd($discountedSubtotal, $shipping, 2)
+            : $discountedSubtotal;
+        $vatAmount = ($checkoutData['vat_exempt'] ?? false)
+            ? '0.00'
+            : bcmul($vatBase, bcdiv($vatRate, '100', 4), 2);
+        $grandTotal = $shippingCost !== null
+            ? bcadd($vatBase, $vatAmount, 2)
+            : bcadd($discountedSubtotal, $vatAmount, 2);
+
+        return [
+            'subtotal' => $subtotal,
+            'coupon_discount' => $couponDiscount,
+            'vat_rate' => $vatRate,
+            'vat_amount' => $vatAmount,
+            'shipping_cost' => $shippingCost,
+            'grand_total' => $grandTotal,
+        ];
     }
 
     /**
@@ -412,12 +468,6 @@ class CheckoutController extends Controller
             ]);
         }
         
-        // Get payment intent for Airwallex
-        $airwallexIntent = null;
-        if ($order->payment_method === PaymentMethod::Card) {
-            $airwallexIntent = $this->paymentService->createAirwallexIntent($order);
-        }
-        
         // Get bank transfer details if applicable
         $bankTransferDetails = null;
         if ($order->payment_method === PaymentMethod::BankTransfer) {
@@ -427,7 +477,6 @@ class CheckoutController extends Controller
         return view('frontend.checkout.payment', [
             'order' => $order,
             'lang' => $lang,
-            'airwallexIntent' => $airwallexIntent,
             'bankDetails' => $bankTransferDetails,
             'selectedMethod' => $order->payment_method?->value ?? 'card',
         ]);
@@ -453,7 +502,12 @@ class CheckoutController extends Controller
         
         return response()->json([
             'success' => true,
-            'data' => $intent,
+            'payment_intent_id' => $intent['payment_intent_id'],
+            'client_secret' => $intent['client_secret'],
+            'payment_id' => $intent['payment_id'],
+            'env' => settings('payment.airwallex_environment', 'sandbox') === 'live' ? 'prod' : 'demo',
+            'currency' => 'EUR',
+            'amount' => (int) bcmul((string) $order->grand_total, '100', 0),
         ]);
     }
     
@@ -492,8 +546,10 @@ class CheckoutController extends Controller
                     ],
                 ]);
             }
-            
-            return redirect()->route('frontend.checkout.payment.success', [
+
+            // Land the customer on the thank-you page, which already shows
+            // order details + bank-transfer next-step instructions.
+            return redirect()->route('frontend.checkout.thank-you', [
                 'lang' => $lang,
                 'order' => $order->order_number,
             ]);
@@ -522,12 +578,12 @@ class CheckoutController extends Controller
         // Check payment status via webhook
         $payment = $order->payment;
         if ($payment && $payment->status === 'paid') {
-            return redirect()->route('frontend.checkout.payment.success', [
+            return redirect()->route('frontend.checkout.thank-you', [
                 'lang' => $lang,
                 'order' => $order->order_number,
             ]);
         }
-        
+
         // If still pending, show waiting page
         return view('frontend.checkout.payment-return', [
             'order' => $order,
@@ -543,7 +599,7 @@ class CheckoutController extends Controller
     {
         $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
-        
+
         // Ensure payment is at least pending or paid
         $payment = $order->payment;
         if (!$payment || ($payment->status !== 'paid' && $payment->status !== 'pending')) {
@@ -552,11 +608,11 @@ class CheckoutController extends Controller
                 'order' => $order->order_number,
             ]);
         }
-        
-        return view('frontend.checkout.payment-success', [
-            'order' => $order,
+
+        // Redirect to the rich thank-you page (order + instructions already there).
+        return redirect()->route('frontend.checkout.thank-you', [
             'lang' => $lang,
-            'payment' => $payment,
+            'order' => $order->order_number,
         ]);
     }
     
@@ -581,20 +637,19 @@ class CheckoutController extends Controller
     private function authorizePaymentAccess(Order $order): void
     {
         $user = Auth::user();
-        $guestToken = request()->cookie('guest_token');
-        
-        // If user is logged in, check ownership
-        if ($user) {
-            if ($order->user_id !== $user->id) {
-                abort(403, 'You do not have permission to access this payment.');
-            }
+
+        // Session-owned orders (placed by this session, guest or user).
+        $ownedOrderIds = (array) Session::get('owned_order_ids', []);
+        if (in_array($order->id, $ownedOrderIds, true)) {
             return;
         }
-        
-        // For guest, check guest token matches order's guest token
-        if ($order->guest_token !== $guestToken) {
-            abort(403, 'You do not have permission to access this payment.');
+
+        // Logged-in user must own the order.
+        if ($user && $order->user_id === $user->id) {
+            return;
         }
+
+        abort(403, 'You do not have permission to access this payment.');
     }
 
     /**
@@ -604,6 +659,8 @@ class CheckoutController extends Controller
     public function thankYou(string $lang, string $order)
     {
         $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
+
+        $this->authorizePaymentAccess($order);
 
         return view('frontend.checkout.thank-you', [
             'order' => $order,

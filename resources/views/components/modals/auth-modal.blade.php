@@ -1,15 +1,24 @@
 {{--
-  Auth modal — Login / Register
-  Opened by dispatching: $dispatch('open-auth-modal') or $dispatch('open-auth-modal', { tab: 'register' })
-  Triggers OTP modal after register: $dispatch('open-otp-modal', { email, purpose: 'email_verify' })
+  ═══════════════════════════════════════════════════════════════════
+  INDUSTRIAL BLUEPRINT — Auth Modal (Login / Register)
+  ═══════════════════════════════════════════════════════════════════
+  Opened by: $dispatch('open-auth-modal') or $dispatch('open-auth-modal', { tab: 'register' })
+  Triggers OTP modal after register:  $dispatch('open-otp-modal', { email, purpose: 'email_verify' })
 --}}
+@php
+    $pwMin = settings('auth.customer_password_min', 8);
+    $lang  = app()->getLocale();
+    $loginUrl    = url("/{$lang}/login");
+    $registerUrl = url("/{$lang}/register");
+@endphp
 <div
     x-data="{
         show: false,
         tab: 'login',
         loading: false,
         error: '',
-
+        showPw: false,
+        showPw2: false,
         open(tab = 'login') {
             this.tab = tab;
             this.show = true;
@@ -26,7 +35,7 @@
     @keydown.escape.window="close()"
     x-cloak
 >
-    {{-- Backdrop with blur --}}
+    {{-- Backdrop --}}
     <div
         x-show="show"
         x-transition:enter="transition ease-out duration-300"
@@ -36,87 +45,127 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="close()"
-        class="fixed inset-0 z-50 bg-navy/60 backdrop-blur-sm"
+        class="fixed inset-0 z-50 bg-ink/75 backdrop-blur-[3px]"
     ></div>
 
-    {{-- Modal panel --}}
+    {{-- Modal panel wrapper — scrollable on overflow (register tab is tall) --}}
     <div
         x-show="show"
         x-transition:enter="transition ease-out duration-300"
-        x-transition:enter-start="opacity-0 scale-95 translate-y-4"
-        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+        x-transition:enter-start="opacity-0 translate-y-4"
+        x-transition:enter-end="opacity-100 translate-y-0"
         x-transition:leave="transition ease-in duration-200"
-        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-        x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-        class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        x-transition:leave-start="opacity-100 translate-y-0"
+        x-transition:leave-end="opacity-0 translate-y-4"
+        class="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
         @click.self="close()"
     >
-        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden" role="dialog" aria-modal="true">
+        <div class="flex min-h-full items-center justify-center p-4" @click.self="close()">
+        <div class="relative bg-paper border border-ink w-full max-w-md shadow-[8px_8px_0_0_rgba(11,26,41,0.12)]"
+             role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
 
-            {{-- Decorative background elements --}}
-            <div class="absolute top-0 right-0 w-64 h-64 bg-amber/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-            <div class="absolute bottom-0 left-0 w-48 h-48 bg-navy/5 rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+            {{-- Corner register marks --}}
+            <span class="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-amber" aria-hidden="true"></span>
+            <span class="absolute -top-1 -right-1 w-3 h-3 border-r-2 border-t-2 border-amber" aria-hidden="true"></span>
+            <span class="absolute -bottom-1 -left-1 w-3 h-3 border-l-2 border-b-2 border-amber" aria-hidden="true"></span>
+            <span class="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-amber" aria-hidden="true"></span>
 
-            {{-- Header with gradient --}}
-            <div class="relative bg-gradient-to-r from-navy to-blue-600 px-8 pt-8 pb-6">
-                {{-- Close button --}}
-                <button @click="close()" class="absolute top-4 right-4 text-white/60 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all" aria-label="Close">
-                    <x-heroicon-o-x-mark class="w-5 h-5" />
-                </button>
+            {{-- ═══ Document header (dark) ═══ --}}
+            <div class="relative bg-ink text-ivory border-b border-ink overflow-hidden">
+                <div class="absolute inset-0 bg-grid-navy bg-grid-md opacity-60 pointer-events-none" aria-hidden="true"></div>
 
-                {{-- Logo/Brand --}}
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20">
-                        <x-heroicon-o-key class="w-6 h-6 text-amber" />
-                    </div>
-                    <div>
-                        <h2 class="font-display font-bold text-xl text-white">
-                            <span x-show="tab === 'login'">Welcome Back</span>
-                            <span x-show="tab === 'register'" x-cloak>Join OEMHub</span>
-                        </h2>
-                        <p class="text-white/60 text-xs">
-                            <span x-show="tab === 'login'">Sign in to your account</span>
-                            <span x-show="tab === 'register'" x-cloak>Create your free account</span>
-                        </p>
-                    </div>
+                {{-- Amber tick strip top --}}
+                <div class="relative h-[3px] flex" aria-hidden="true">
+                    <span class="w-12 bg-amber"></span>
+                    <span class="flex-1 bg-white/10"></span>
                 </div>
 
-                {{-- Tabs --}}
-                <div class="flex gap-2 mt-6">
-                    <button
-                        @click="tab = 'login'"
-                        :class="tab === 'login' ? 'bg-white text-navy shadow-lg' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300"
-                    >Sign in</button>
-                    <button
-                        @click="tab = 'register'"
-                        :class="tab === 'register' ? 'bg-white text-navy shadow-lg' : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'"
-                        class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-300"
-                    >Register</button>
+                <div class="relative px-7 pt-6 pb-5">
+                    {{-- Doc ID + close --}}
+                    <div class="flex items-center justify-between mb-5">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">
+                            § AUTH · <span x-text="tab === 'login' ? 'PROTOCOL-IN' : 'PROTOCOL-REG'"></span>
+                        </span>
+                        <button @click="close()"
+                                class="w-8 h-8 flex items-center justify-center border border-white/20 text-ivory/70
+                                       hover:bg-amber hover:text-ink hover:border-amber transition-colors"
+                                aria-label="Close">
+                            <x-heroicon-o-x-mark class="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    {{-- Headline --}}
+                    <h2 id="auth-modal-title"
+                        class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.02em] text-3xl md:text-[34px]">
+                        <span x-show="tab === 'login'">Welcome back<span class="text-amber">.</span></span>
+                        <span x-show="tab === 'register'" x-cloak>Create account<span class="text-amber">.</span></span>
+                    </h2>
+                    <p class="mt-2 font-mono text-[11px] tracking-[0.22em] uppercase text-ivory/60">
+                        <span x-show="tab === 'login'">Sign in to continue · Secure session</span>
+                        <span x-show="tab === 'register'" x-cloak>Free account · Verified email</span>
+                    </p>
+
+                    {{-- Tabs --}}
+                    <div class="mt-6 grid grid-cols-2 border border-white/20 bg-ink/50" role="tablist">
+                        <button
+                            @click="tab = 'login'; error = ''"
+                            :class="tab === 'login' ? 'bg-amber text-ink' : 'text-ivory/70 hover:text-ivory hover:bg-white/5'"
+                            class="relative py-3 font-mono text-[11px] font-bold tracking-[0.22em] uppercase transition-colors"
+                            role="tab"
+                            :aria-selected="tab === 'login'"
+                        >
+                            <span class="inline-flex items-center gap-2">
+                                <span class="font-mono text-[10px] opacity-60">01</span>
+                                Sign in
+                            </span>
+                        </button>
+                        <button
+                            @click="tab = 'register'; error = ''"
+                            :class="tab === 'register' ? 'bg-amber text-ink' : 'text-ivory/70 hover:text-ivory hover:bg-white/5'"
+                            class="relative py-3 font-mono text-[11px] font-bold tracking-[0.22em] uppercase transition-colors border-l border-white/20"
+                            role="tab"
+                            :aria-selected="tab === 'register'"
+                        >
+                            <span class="inline-flex items-center gap-2">
+                                <span class="font-mono text-[10px] opacity-60">02</span>
+                                Register
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
             {{-- Error alert --}}
-            <div x-show="error" x-transition class="mx-6 mt-6">
-                <div class="flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-                    <x-heroicon-o-exclamation-circle class="w-5 h-5 shrink-0 mt-0.5" />
-                    <span x-text="error"></span>
+            <div x-show="error" x-transition class="px-7 pt-5" x-cloak>
+                <div class="flex items-start gap-3 px-4 py-3 border border-red-600 bg-red-50">
+                    <x-heroicon-s-exclamation-circle class="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <span class="font-mono text-[11px] tracking-[0.1em] text-red-700 leading-relaxed" x-text="error"></span>
                 </div>
             </div>
 
-            {{-- LOGIN FORM --}}
-            <div x-show="tab === 'login'" class="px-8 py-6 relative z-10">
+            {{-- ═══ LOGIN FORM ═══ --}}
+            <div x-show="tab === 'login'" role="tabpanel" class="px-7 py-6">
                 <form
                     method="POST"
-                    action="/login"
+                    action="{{ $loginUrl }}"
                     @submit.prevent="
                         loading = true; error = '';
-                        fetch('/login', {
+                        fetch('{{ $loginUrl }}', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                            },
+                            credentials: 'same-origin',
                             body: JSON.stringify({ email: $refs.loginEmail.value, password: $refs.loginPassword.value })
                         })
-                        .then(r => r.json())
+                        .then(async r => {
+                            const text = await r.text();
+                            try { return JSON.parse(text); }
+                            catch { return { success: false, message: r.status + ' ' + r.statusText }; }
+                        })
                         .then(d => {
                             if(d.success) { window.location.reload(); }
                             else { error = d.message || 'Invalid credentials'; loading = false; }
@@ -125,77 +174,112 @@
                     "
                     class="space-y-5"
                 >
+                    {{-- Email --}}
                     <div>
-                        <label class="block text-sm font-semibold text-navy mb-2" for="login-email">Email address</label>
-                        <div class="relative">
-                            <x-heroicon-o-envelope class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                        <label for="login-email" class="bp-spec block mb-2 text-ink">§ Email address</label>
+                        <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                                <x-heroicon-o-envelope class="w-4 h-4" />
+                            </span>
                             <input
                                 id="login-email"
+                                name="email"
                                 type="email"
                                 inputmode="email"
                                 autocomplete="email"
                                 x-ref="loginEmail"
-                                x-ref.first="firstInput"
+                                x-init="$el.__first = true"
                                 required
-                                class="w-full rounded-xl border-2 border-gray-200 pl-12 pr-4 py-2.5 text-sm focus:outline-none focus:ring-0 focus:border-amber transition-all"
+                                class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
                                 placeholder="you@example.com"
                             >
                         </div>
                     </div>
+
+                    {{-- Password --}}
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="block text-sm font-semibold text-navy" for="login-password">Password</label>
-                            <a href="/{{ app()->getLocale() }}/reset-password" class="text-xs text-amber-text hover:underline font-medium">Forgot password?</a>
+                            <label for="login-password" class="bp-spec text-ink">§ Password</label>
+                            <a href="{{ url('/'.app()->getLocale().'/reset-password') }}"
+                               class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink hover:text-ink transition-colors">
+                                Forgot?
+                            </a>
                         </div>
-                        <div class="relative">
-                            <x-heroicon-o-lock-closed class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                        <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                                <x-heroicon-o-lock-closed class="w-4 h-4" />
+                            </span>
                             <input
                                 id="login-password"
-                                type="password"
+                                name="password"
+                                :type="showPw ? 'text' : 'password'"
                                 autocomplete="current-password"
                                 x-ref="loginPassword"
                                 required
-                                class="w-full rounded-xl border-2 border-gray-200 pl-12 pr-4 py-2.5 text-sm focus:outline-none focus:ring-0 focus:border-amber transition-all"
+                                class="w-full pl-10 pr-11 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
                                 placeholder="••••••••"
                             >
+                            <button type="button" @click="showPw = !showPw"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-ivory-alt transition-colors"
+                                    :aria-label="showPw ? 'Hide password' : 'Show password'">
+                                <x-heroicon-o-eye class="w-4 h-4" x-show="!showPw" />
+                                <x-heroicon-o-eye-slash class="w-4 h-4" x-show="showPw" x-cloak />
+                            </button>
                         </div>
                     </div>
 
                     {{-- Honeypot --}}
                     <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
 
-                    <button
-                        type="submit"
-                        :disabled="loading"
-                        class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber to-orange-500 text-navy text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-amber/30 hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100 transition-all duration-300"
-                    >
-                        <svg x-show="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    {{-- Submit --}}
+                    <button type="submit" :disabled="loading"
+                            class="bp-btn-primary w-full justify-center py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg x-show="loading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                         </svg>
+                        <x-heroicon-s-lock-closed class="w-4 h-4" x-show="!loading" />
                         <span x-text="loading ? 'Signing in…' : 'Sign in'"></span>
+                        <x-heroicon-s-arrow-long-right class="w-4 h-4" x-show="!loading" />
                     </button>
                 </form>
 
-                <p class="mt-6 text-center text-sm text-muted">
-                    Don't have an account?
-                    <button @click="tab = 'register'" class="text-amber-text font-semibold hover:underline">Create one free</button>
-                </p>
+                {{-- Divider + register swap --}}
+                <div class="mt-6 flex items-center gap-3">
+                    <span class="flex-1 h-px bg-rule"></span>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-ink-muted">New here?</span>
+                    <span class="flex-1 h-px bg-rule"></span>
+                </div>
+                <button @click="tab = 'register'; error = ''"
+                        class="bp-btn-outline w-full justify-center mt-4 py-3 text-sm">
+                    Create free account
+                    <x-heroicon-s-user-plus class="w-4 h-4" />
+                </button>
             </div>
 
-            {{-- REGISTER FORM --}}
-            <div x-show="tab === 'register'" x-cloak class="px-8 py-6 relative z-10">
+            {{-- ═══ REGISTER FORM ═══ --}}
+            <div x-show="tab === 'register'" x-cloak role="tabpanel" class="px-7 py-6">
                 <form
                     method="POST"
-                    action="/register"
+                    action="{{ $registerUrl }}"
                     @submit.prevent="
                         loading = true; error = '';
-                        fetch('/register', {
+                        fetch('{{ $registerUrl }}', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                            },
+                            credentials: 'same-origin',
                             body: JSON.stringify({ name: $refs.regName.value, email: $refs.regEmail.value, password: $refs.regPassword.value, password_confirmation: $refs.regConfirm.value })
                         })
-                        .then(r => r.json())
+                        .then(async r => {
+                            const text = await r.text();
+                            try { return JSON.parse(text); }
+                            catch { return { success: false, message: r.status + ' ' + r.statusText }; }
+                        })
                         .then(d => {
                             if(d.success) {
                                 close();
@@ -207,100 +291,141 @@
                         })
                         .catch(() => { error = 'Something went wrong. Please try again.'; loading = false; });
                     "
-                    class="space-y-5"
+                    class="space-y-4"
                 >
+                    {{-- Name --}}
                     <div>
-                        <label class="block text-sm font-semibold text-navy mb-2" for="reg-name">Full name</label>
-                        <div class="relative">
-                            <x-heroicon-o-user class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                        <label for="reg-name" class="bp-spec block mb-2 text-ink">§ Full name</label>
+                        <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                                <x-heroicon-o-user class="w-4 h-4" />
+                            </span>
                             <input
                                 id="reg-name"
+                                name="name"
                                 type="text"
                                 autocomplete="name"
                                 x-ref="regName"
                                 required
-                                class="w-full rounded-xl border-2 border-gray-200 pl-12 pr-4 py-2.5 text-sm focus:outline-none focus:ring-0 focus:border-amber transition-all"
+                                class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
                                 placeholder="John Smith"
                             >
                         </div>
                     </div>
+
+                    {{-- Email --}}
                     <div>
-                        <label class="block text-sm font-semibold text-navy mb-2" for="reg-email">Email address</label>
-                        <div class="relative">
-                            <x-heroicon-o-envelope class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                        <label for="reg-email" class="bp-spec block mb-2 text-ink">§ Email address</label>
+                        <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                                <x-heroicon-o-envelope class="w-4 h-4" />
+                            </span>
                             <input
                                 id="reg-email"
+                                name="email"
                                 type="email"
                                 inputmode="email"
                                 autocomplete="email"
                                 x-ref="regEmail"
                                 required
-                                class="w-full rounded-xl border-2 border-gray-200 pl-12 pr-4 py-2.5 text-sm focus:outline-none focus:ring-0 focus:border-amber transition-all"
+                                class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
                                 placeholder="you@example.com"
                             >
                         </div>
                     </div>
+
+                    {{-- Password --}}
                     <div>
-                        <label class="block text-sm font-semibold text-navy mb-2" for="reg-password">Password</label>
-                        <div class="relative">
-                            <x-heroicon-o-lock-closed class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                        <label for="reg-password" class="bp-spec block mb-2 text-ink">§ Password · min {{ $pwMin }} chars</label>
+                        <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                                <x-heroicon-o-lock-closed class="w-4 h-4" />
+                            </span>
                             <input
                                 id="reg-password"
-                                type="password"
+                                name="password"
+                                :type="showPw ? 'text' : 'password'"
                                 autocomplete="new-password"
                                 x-ref="regPassword"
                                 required
-                                minlength="{{ settings('auth.customer_password_min', 8) }}"
-                                class="w-full rounded-xl border-2 border-gray-200 pl-12 pr-4 py-2.5 text-sm focus:outline-none focus:ring-0 focus:border-amber transition-all"
-                                placeholder="Min {{ settings('auth.customer_password_min', 8) }} characters"
+                                minlength="{{ $pwMin }}"
+                                class="w-full pl-10 pr-11 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
+                                :placeholder="'Min {{ $pwMin }} characters'"
+                                placeholder="Min {{ $pwMin }} characters"
                             >
+                            <button type="button" @click="showPw = !showPw"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-ivory-alt transition-colors"
+                                    :aria-label="showPw ? 'Hide' : 'Show'">
+                                <x-heroicon-o-eye class="w-4 h-4" x-show="!showPw" />
+                                <x-heroicon-o-eye-slash class="w-4 h-4" x-show="showPw" x-cloak />
+                            </button>
                         </div>
                     </div>
+
+                    {{-- Confirm password --}}
                     <div>
-                        <label class="block text-sm font-semibold text-navy mb-2" for="reg-confirm">Confirm password</label>
-                        <div class="relative">
-                            <x-heroicon-o-lock-closed class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted" />
+                        <label for="reg-confirm" class="bp-spec block mb-2 text-ink">§ Confirm password</label>
+                        <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                                <x-heroicon-o-lock-closed class="w-4 h-4" />
+                            </span>
                             <input
                                 id="reg-confirm"
-                                type="password"
+                                name="password_confirmation"
+                                :type="showPw2 ? 'text' : 'password'"
                                 autocomplete="new-password"
                                 x-ref="regConfirm"
                                 required
-                                class="w-full rounded-xl border-2 border-gray-200 pl-12 pr-4 py-2.5 text-sm focus:outline-none focus:ring-0 focus:border-amber transition-all"
+                                class="w-full pl-10 pr-11 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
                                 placeholder="••••••••"
                             >
+                            <button type="button" @click="showPw2 = !showPw2"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-ivory-alt transition-colors">
+                                <x-heroicon-o-eye class="w-4 h-4" x-show="!showPw2" />
+                                <x-heroicon-o-eye-slash class="w-4 h-4" x-show="showPw2" x-cloak />
+                            </button>
                         </div>
                     </div>
 
                     {{-- Honeypot --}}
                     <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
 
-                    <button
-                        type="submit"
-                        :disabled="loading"
-                        class="w-full flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber to-orange-500 text-navy text-sm font-bold rounded-xl hover:shadow-lg hover:shadow-amber/30 hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100 transition-all duration-300"
-                    >
-                        <svg x-show="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    {{-- Submit --}}
+                    <button type="submit" :disabled="loading"
+                            class="bp-btn-primary w-full justify-center py-3.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg x-show="loading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
                         </svg>
+                        <x-heroicon-s-user-plus class="w-4 h-4" x-show="!loading" />
                         <span x-text="loading ? 'Creating account…' : 'Create account'"></span>
+                        <x-heroicon-s-arrow-long-right class="w-4 h-4" x-show="!loading" />
                     </button>
                 </form>
 
-                <p class="mt-6 text-center text-sm text-muted">
-                    Already have an account?
-                    <button @click="tab = 'login'" class="text-amber-text font-semibold hover:underline">Sign in</button>
-                </p>
+                {{-- Sign in swap --}}
+                <div class="mt-6 flex items-center gap-3">
+                    <span class="flex-1 h-px bg-rule"></span>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-ink-muted">Existing member?</span>
+                    <span class="flex-1 h-px bg-rule"></span>
+                </div>
+                <button @click="tab = 'login'; error = ''"
+                        class="bp-btn-outline w-full justify-center mt-4 py-3 text-sm">
+                    <x-heroicon-s-arrow-long-left class="w-4 h-4" />
+                    Sign in
+                </button>
             </div>
 
-            {{-- Footer --}}
-            <div class="px-8 pb-6 pt-2 text-center text-xs text-muted relative z-10">
-                By continuing, you agree to our
-                <a href="/{{ app()->getLocale() }}/terms-of-service" class="text-amber-text hover:underline font-medium">Terms</a>
-                and
-                <a href="/{{ app()->getLocale() }}/privacy-policy" class="text-amber-text hover:underline font-medium">Privacy Policy</a>.
+            {{-- ═══ Footer ═══ --}}
+            <div class="px-7 py-4 border-t border-rule bg-ivory-alt">
+                <p class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-muted text-center leading-relaxed">
+                    By continuing you agree to our
+                    <a href="{{ url('/'.app()->getLocale().'/terms-of-service') }}" class="text-amber-ink hover:text-ink border-b border-amber-ink/30 hover:border-ink transition-colors">Terms</a>
+                    and
+                    <a href="{{ url('/'.app()->getLocale().'/privacy-policy') }}" class="text-amber-ink hover:text-ink border-b border-amber-ink/30 hover:border-ink transition-colors">Privacy</a>
+                </p>
             </div>
+        </div>
         </div>
     </div>
 </div>

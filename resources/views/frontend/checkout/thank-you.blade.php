@@ -4,7 +4,6 @@
 
 @section('content')
 @php
-    // Get order from session or use fallback for demo
     $order = session('checkout.order');
     if (!$order) {
         $orderData = [
@@ -23,168 +22,223 @@
             'payment_status' => $order->payment_status,
         ];
     }
+    $isPaid = $orderData['payment_status'] === 'paid';
 @endphp
 
-<div class="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-12 px-4">
-    <div class="max-w-3xl mx-auto">
+<div class="relative min-h-screen bg-ivory text-ink">
+    <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
 
-        {{-- ── Success Icon ─────────────────────────────────────────── --}}
-        <div class="relative inline-flex items-center justify-center w-28 h-28 mx-auto mb-8">
-            <div class="absolute inset-0 bg-emerald-200 rounded-full animate-ping opacity-20"></div>
-            <div class="absolute inset-2 bg-emerald-100 rounded-full animate-pulse opacity-50"></div>
-            <div class="relative w-28 h-28 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600
-                        flex items-center justify-center shadow-2xl shadow-emerald-500/40">
-                <x-heroicon-s-check-circle class="w-16 h-16 text-white" />
-            </div>
-        </div>
+    {{-- ── Dark doc header ── --}}
+    <div class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
+        <div class="absolute inset-0 bg-grid-navy bg-grid-lg opacity-60 pointer-events-none" aria-hidden="true"></div>
+        <div class="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-8">
 
-        {{-- ── Thank You Message ────────────────────────────────────── --}}
-        <div class="text-center mb-10">
-            <h1 class="font-display text-4xl md:text-5xl font-extrabold text-navy mb-3">
-                Thank You!
-            </h1>
-            <p class="text-lg text-muted max-w-md mx-auto">
-                Your order has been placed successfully. We're preparing it for shipment.
-            </p>
-        </div>
-
-        {{-- ── Order Details Card ───────────────────────────────────── --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xl p-8 mb-8">
-            <div class="mb-6 pb-6 border-b border-gray-100">
-                <p class="text-sm text-muted mb-2 flex items-center gap-2">
-                    <x-heroicon-o-document-text class="w-4 h-4 text-amber" />
-                    Order Number
-                </p>
-                <p class="font-mono font-extrabold text-3xl text-navy">{{ $orderData['order_number'] }}</p>
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
+                <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
+                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <span class="text-ivory/30">/</span>
+                    <span class="text-ivory">Order confirmed</span>
+                </nav>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
+                    DOC · CONFIRMATION · 001
+                </span>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-6 mb-6 pb-6 border-b border-gray-100">
-                <div>
-                    <p class="text-xs text-muted font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <x-heroicon-o-envelope class="w-3.5 h-3.5 text-amber" />
-                        Email
+            <div class="grid grid-cols-12 gap-6 items-center">
+                <div class="col-span-12 md:col-span-8">
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ Status · Order placed</span>
+                    </div>
+                    <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
+                        Thank you<span class="text-amber">.</span>
+                    </h1>
+                    <p class="mt-5 max-w-xl text-ivory/80 text-base md:text-lg leading-relaxed">
+                        Your order has been filed. We are preparing it for shipment and will email a full receipt shortly.
                     </p>
-                    <p class="text-navy font-mono font-bold text-sm truncate">{{ $orderData['email'] }}</p>
                 </div>
-                <div>
-                    <p class="text-xs text-muted font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <x-heroicon-o-calendar class="w-3.5 h-3.5 text-amber" />
-                        Date
-                    </p>
-                    <p class="text-navy font-mono font-bold text-sm">{{ $orderData['created_at']->format('M j, Y') }}</p>
+
+                {{-- Confirmation stamp --}}
+                <div class="col-span-12 md:col-span-4 flex md:justify-end">
+                    <div class="relative border-2 border-amber bg-amber/10 px-6 py-5 inline-flex items-center gap-4">
+                        <span class="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-amber"></span>
+                        <span class="absolute -top-1 -right-1 w-3 h-3 border-r-2 border-t-2 border-amber"></span>
+                        <span class="absolute -bottom-1 -left-1 w-3 h-3 border-l-2 border-b-2 border-amber"></span>
+                        <span class="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-amber"></span>
+
+                        <div class="w-10 h-10 border-2 border-amber bg-ink flex items-center justify-center shrink-0">
+                            <x-heroicon-s-check class="w-5 h-5 text-amber" />
+                        </div>
+                        <div>
+                            <p class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">§ Filed</p>
+                            <p class="font-display text-xl font-extrabold text-ivory tracking-[-0.02em]">Confirmed</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-xs text-muted font-semibold uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                        <x-heroicon-o-credit-card class="w-3.5 h-3.5 text-amber" />
-                        Payment
+            </div>
+        </div>
+    </div>
+
+    <div class="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 py-10 space-y-6">
+
+        {{-- Order details --}}
+        <section class="border border-ink bg-paper relative">
+            <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
+                <span class="bp-spec text-amber-ink flex items-center gap-2">
+                    <x-heroicon-o-document-text class="w-3.5 h-3.5" />
+                    § Order details
+                </span>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Reference</span>
+            </header>
+
+            <div class="relative p-6 sm:p-8">
+                <span class="absolute -top-px left-2 w-3 h-3 border-l-2 border-t-2 border-amber" aria-hidden="true"></span>
+                <span class="absolute -top-px right-2 w-3 h-3 border-r-2 border-t-2 border-amber" aria-hidden="true"></span>
+
+                {{-- Order number --}}
+                <div class="pb-6 mb-6 border-b border-rule">
+                    <p class="bp-spec text-ink-muted mb-2">§ Order number</p>
+                    <p class="font-mono font-medium text-3xl md:text-4xl text-ink tabular-nums tracking-tight">
+                        {{ $orderData['order_number'] }}
                     </p>
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold
-                                 {{ $orderData['payment_status'] === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber/15 text-amber-text' }}">
-                        @if($orderData['payment_status'] === 'paid')
-                            <x-heroicon-s-check-circle class="w-3 h-3" />
+                </div>
+
+                {{-- Meta grid --}}
+                <div class="grid sm:grid-cols-3 gap-6 pb-6 mb-6 border-b border-rule">
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
+                            <x-heroicon-s-envelope class="w-3 h-3 text-amber-ink" />
+                            § Email
+                        </p>
+                        <p class="font-mono text-sm font-bold text-ink truncate">{{ $orderData['email'] }}</p>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
+                            <x-heroicon-s-calendar class="w-3 h-3 text-amber-ink" />
+                            § Date
+                        </p>
+                        <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $orderData['created_at']->format('M j, Y') }}</p>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
+                            <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
+                            § Payment
+                        </p>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 border font-mono text-[10px] font-bold uppercase tracking-[0.22em]
+                                     {{ $isPaid ? 'border-amber bg-paper text-amber-ink' : 'border-ink bg-ivory-alt text-ink' }}">
+                            @if($isPaid)
+                                <x-heroicon-s-check class="w-3 h-3" />
+                            @else
+                                <x-heroicon-s-clock class="w-3 h-3" />
+                            @endif
+                            {{ ucfirst($orderData['payment_status']) }}
+                        </span>
+                    </div>
+                </div>
+
+                {{-- Total --}}
+                <div class="flex items-end justify-between gap-3">
+                    <div>
+                        <p class="bp-spec text-ink mb-1">§ Order total · EUR</p>
+                        <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">Including all taxes</p>
+                    </div>
+                    <p class="font-mono text-4xl md:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
+                        €{{ number_format($orderData['grand_total'], 2) }}
+                    </p>
+                </div>
+
+                <span class="absolute -bottom-px left-2 w-3 h-3 border-l-2 border-b-2 border-amber" aria-hidden="true"></span>
+                <span class="absolute -bottom-px right-2 w-3 h-3 border-r-2 border-b-2 border-amber" aria-hidden="true"></span>
+            </div>
+        </section>
+
+        {{-- What's next ledger --}}
+        <section class="border border-ink bg-paper">
+            <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
+                <span class="bp-spec text-amber-ink flex items-center gap-2">
+                    <x-heroicon-o-map class="w-3.5 h-3.5" />
+                    § What happens next · Protocol
+                </span>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">03 steps</span>
+            </header>
+            <ul class="divide-y divide-rule">
+                @foreach([
+                    ['num' => '01', 'title' => 'Confirmation email', 'desc' => 'Check your inbox for detailed order confirmation and receipt.', 'icon' => 'envelope'],
+                    ['num' => '02', 'title' => 'Processing', 'desc' => 'We prepare and pack your order within 24 hours.', 'icon' => 'cog'],
+                    ['num' => '03', 'title' => 'Tracking updates', 'desc' => 'Receive real-time tracking updates by email once shipped.', 'icon' => 'truck'],
+                ] as $step)
+                <li class="flex items-start gap-5 p-5">
+                    <span class="font-mono text-2xl font-medium text-ink-muted tabular-nums tracking-tight w-14 shrink-0">{{ $step['num'] }}</span>
+                    <div class="w-10 h-10 border border-ink bg-ivory-alt flex items-center justify-center shrink-0">
+                        @if($step['icon'] === 'envelope')
+                            <x-heroicon-o-envelope class="w-5 h-5 text-ink" />
+                        @elseif($step['icon'] === 'cog')
+                            <x-heroicon-o-cog-6-tooth class="w-5 h-5 text-ink" />
                         @else
-                            <x-heroicon-o-clock class="w-3 h-3" />
+                            <x-heroicon-o-truck class="w-5 h-5 text-ink" />
                         @endif
-                        {{ ucfirst($orderData['payment_status']) }}
-                    </span>
-                </div>
-            </div>
-
-            <div class="p-6 bg-gradient-to-br from-navy/5 to-blue-50 rounded-xl border border-navy/10">
-                <p class="text-sm text-muted mb-1">Order Total</p>
-                <p class="text-4xl font-extrabold text-amber">€{{ number_format($orderData['grand_total'], 2) }}</p>
-            </div>
-        </div>
-
-        {{-- ── What's Next? ─────────────────────────────────────────── --}}
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 mb-8">
-            <h3 class="font-display text-lg font-bold text-navy mb-6 flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-amber/10 flex items-center justify-center">
-                    <x-heroicon-o-light-bulb class="w-4 h-4 text-amber" />
-                </div>
-                What's Next?
-            </h3>
-
-            <div class="space-y-4">
-                <div class="flex items-start gap-4">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber to-orange-500 flex items-center justify-center shrink-0 shadow-md">
-                        <span class="text-white font-bold text-sm">1</span>
                     </div>
-                    <div class="flex-1">
-                        <p class="font-bold text-navy">Confirmation Email</p>
-                        <p class="text-sm text-muted mt-0.5">Check your inbox for detailed order confirmation and receipt</p>
+                    <div class="flex-1 pt-1">
+                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ $step['title'] }}</p>
+                        <p class="mt-1 text-sm text-body leading-relaxed">{{ $step['desc'] }}</p>
+                        <span class="inline-block mt-2 w-6 h-[2px] bg-amber"></span>
                     </div>
-                </div>
+                </li>
+                @endforeach
+            </ul>
+        </section>
 
-                <div class="flex items-start gap-4">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber to-orange-500 flex items-center justify-center shrink-0 shadow-md">
-                        <span class="text-white font-bold text-sm">2</span>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-bold text-navy">Processing</p>
-                        <p class="text-sm text-muted mt-0.5">We'll prepare and pack your order within 24 hours</p>
-                    </div>
-                </div>
-
-                <div class="flex items-start gap-4">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-amber to-orange-500 flex items-center justify-center shrink-0 shadow-md">
-                        <span class="text-white font-bold text-sm">3</span>
-                    </div>
-                    <div class="flex-1">
-                        <p class="font-bold text-navy">Tracking Updates</p>
-                        <p class="text-sm text-muted mt-0.5">Receive real-time tracking updates via email once shipped</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- ── Action Buttons ───────────────────────────────────────── --}}
-        <div class="grid sm:grid-cols-2 gap-4 mb-8">
-            <a href="{{ route('frontend.account.orders', ['lang' => app()->getLocale()]) }}"
-               class="inline-flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-r from-amber to-orange-500 text-navy font-bold rounded-xl
-                      shadow-lg shadow-amber/30 hover:shadow-amber/50 hover:from-amber/90 hover:to-orange-400
-                      transition-all duration-200">
+        {{-- Action buttons --}}
+        <div class="grid sm:grid-cols-2 gap-4">
+            <a href="{{ route('frontend.account.orders', ['lang' => app()->getLocale()]) }}" class="bp-btn-primary justify-center py-4">
                 <x-heroicon-o-list-bullet class="w-5 h-5" />
-                View All Orders
+                View all orders
             </a>
-            <a href="{{ route('frontend.home', ['lang' => app()->getLocale()]) }}"
-               class="inline-flex items-center justify-center gap-2 px-6 py-4 border-2 border-navy text-navy font-bold rounded-xl
-                      hover:bg-navy/5 hover:border-navy/80 transition-all duration-200">
-                <x-heroicon-o-arrow-left class="w-5 h-5" />
-                Continue Shopping
+            <a href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}" class="bp-btn-outline justify-center py-4">
+                <x-heroicon-o-magnifying-glass class="w-5 h-5" />
+                Continue shopping
             </a>
         </div>
 
-        {{-- ── Continue Shopping CTA ────────────────────────────────── --}}
-        <div class="relative overflow-hidden bg-gradient-to-br from-navy via-navy to-blue-900 rounded-2xl p-8 text-white mb-8">
-            <div class="absolute top-0 right-0 w-48 h-48 bg-amber/10 rounded-full filter blur-3xl pointer-events-none"></div>
-            <div class="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/10 rounded-full filter blur-2xl pointer-events-none"></div>
-
-            <div class="relative z-10 flex flex-col sm:flex-row items-center gap-6">
-                <div class="flex-1 text-center sm:text-left">
-                    <h3 class="font-display font-bold text-xl mb-2">Need More Parts?</h3>
-                    <p class="text-white/70 text-sm">Continue shopping and discover more genuine OEM parts for your vehicle</p>
-                </div>
-                <a href="{{ route('frontend.home', ['lang' => app()->getLocale()]) }}"
-                   class="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-amber to-orange-500 text-navy font-bold rounded-xl
-                          shadow-lg shadow-amber/30 hover:shadow-amber/50 hover:scale-105
-                          transition-all duration-200">
-                    <x-heroicon-o-magnifying-glass class="w-5 h-5" />
-                    Search OEM Parts
-                </a>
+        {{-- Need more parts CTA --}}
+        <section class="relative bg-ink text-ivory border border-ink overflow-hidden">
+            <div class="absolute inset-0 bg-grid-navy bg-grid-md opacity-60 pointer-events-none" aria-hidden="true"></div>
+            <div class="absolute top-0 left-0 right-0 h-1 flex" aria-hidden="true">
+                @for ($i = 0; $i < 40; $i++)
+                    <span class="flex-1 h-full {{ $i % 2 === 0 ? 'bg-amber' : 'bg-transparent' }}"></span>
+                @endfor
             </div>
-        </div>
 
-        {{-- ── Support Link ─────────────────────────────────────────── --}}
-        <div class="text-center pt-6 border-t border-gray-200">
-            <p class="text-sm text-muted mb-3">Need help? We're here for you</p>
+            <div class="relative p-8 md:p-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div class="md:col-span-8">
+                    <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber mb-3">§ Continue · Shop</p>
+                    <h3 class="font-display text-2xl md:text-3xl font-extrabold text-ivory tracking-[-0.02em] leading-tight">
+                        Need more parts<span class="text-amber">?</span>
+                    </h3>
+                    <p class="mt-3 text-ivory/80 text-sm md:text-base">
+                        Continue shopping and discover more genuine OEM parts for your vehicle.
+                    </p>
+                </div>
+                <div class="md:col-span-4 flex md:justify-end">
+                    <a href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}"
+                       class="bp-btn-amber">
+                        <x-heroicon-o-magnifying-glass class="w-5 h-5" />
+                        Search OEM parts
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        {{-- Support --}}
+        <div class="text-center pt-6 border-t border-rule">
+            <p class="bp-spec text-ink-muted mb-3">§ Need help</p>
             <a href="{{ route('frontend.contact.show', ['lang' => app()->getLocale()]) }}"
-               class="inline-flex items-center gap-2 text-amber-text hover:text-amber font-bold transition-colors">
+               class="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
                 <x-heroicon-o-chat-bubble-left-right class="w-4 h-4" />
-                Contact Support
+                Contact support
+                <x-heroicon-s-arrow-long-right class="w-4 h-4" />
             </a>
         </div>
-
     </div>
 </div>
 @endsection

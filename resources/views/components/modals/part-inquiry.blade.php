@@ -5,7 +5,7 @@
     $inquiryHours = (int) settings('part_inquiry.response_hours', 24);
 @endphp
 
-{{-- Part Inquiry Modal — Redesigned with floating labels, enhanced UX, confetti --}}
+{{-- Part Inquiry Modal — Industrial Blueprint --}}
 <div
     x-data="{
         open: false,
@@ -40,6 +40,15 @@
         },
         get hasVehicleOrNotes() {
             return this.form.manufacturer || this.form.car_model || this.form.year || this.form.vin_number || this.form.notes || this.form.quantity > 1 || this.form.urgency !== 'normal';
+        },
+        get emailValid() {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(this.form.email);
+        },
+        clearError(field) {
+            if (this.errors[field]) {
+                delete this.errors[field];
+                this.errors = { ...this.errors };
+            }
         },
         resetForm() {
             this.step = 1;
@@ -87,7 +96,6 @@
                 if (data.success) {
                     this.state = 'success';
                     this.successMsg = data.message;
-                    // Trigger confetti
                     this.$nextTick(() => this.launchConfetti());
                 } else if (res.status === 422 && data.errors) {
                     this.errors = data.errors;
@@ -105,7 +113,8 @@
             }
         },
         launchConfetti() {
-            const colors = ['#F59E0B', '#0B3A68', '#10B981', '#F97316', '#3B82F6', '#EF4444'];
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const colors = ['#F59E0B', '#0B1A29', '#B8862B', '#F97316', '#FFFFFF'];
             const container = this.$refs.confettiContainer;
             if (!container) return;
             for (let i = 0; i < 50; i++) {
@@ -117,7 +126,7 @@
                 particle.style.animationDelay = Math.random() * 0.5 + 's';
                 particle.style.width = (Math.random() * 6 + 4) + 'px';
                 particle.style.height = (Math.random() * 6 + 4) + 'px';
-                particle.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                particle.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
                 container.appendChild(particle);
                 setTimeout(() => particle.remove(), 4000);
             }
@@ -136,8 +145,8 @@
     {{-- Confetti container --}}
     <div x-ref="confettiContainer" class="pointer-events-none fixed inset-0 z-[60]"></div>
 
-    {{-- Backdrop --}}
-    <div class="absolute inset-0 bg-navy/70 backdrop-blur-sm motion-reduce:transition-none"
+    {{-- Backdrop — ink wash with grid texture --}}
+    <div class="absolute inset-0 bg-ink/85 bg-grid-navy bg-grid-md motion-reduce:transition-none"
          @click="open = false"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0"
@@ -147,11 +156,13 @@
          x-transition:leave-end="opacity-0"
     ></div>
 
-    {{-- Panel --}}
-    <div class="relative w-full max-w-xl bg-white rounded-3xl shadow-2xl shadow-navy/25 border border-gray-100 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh] motion-reduce:transition-none"
+    {{-- Panel — flat document with offset amber shadow --}}
+    <div class="relative w-full max-w-xl bg-paper border border-ink flex flex-col max-h-[92vh] sm:max-h-[90vh]
+                shadow-[8px_8px_0_0_theme(colors.amber.DEFAULT)] motion-reduce:transition-none"
          role="dialog"
          aria-modal="true"
          aria-labelledby="part-inquiry-modal-title"
+         x-trap.noscroll="open"
          x-transition:enter="transition ease-out duration-300 motion-reduce:duration-0"
          x-transition:enter-start="opacity-0 translate-y-8 sm:scale-95 motion-reduce:translate-y-0 motion-reduce:scale-100"
          x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
@@ -159,142 +170,181 @@
          x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
          x-transition:leave-end="opacity-0 translate-y-8 sm:scale-95 motion-reduce:translate-y-0"
     >
-        {{-- Top accent gradient --}}
-        <div class="h-1.5 bg-gradient-to-r from-amber via-orange-400 to-amber shrink-0 animate-gradient" aria-hidden="true"></div>
+        {{-- Amber tick strip --}}
+        <div class="h-1 bg-amber shrink-0" aria-hidden="true"></div>
 
-        {{-- Header with geometric pattern --}}
-        <div class="relative shrink-0 overflow-hidden bg-gradient-to-br from-navy via-navy to-blue-900 px-5 sm:px-7 py-5 sm:py-6">
-            {{-- Geometric grid pattern --}}
-            <div class="pointer-events-none absolute inset-0 grid-pattern opacity-40"></div>
+        {{-- ═══════════ INK DOCUMENT HEADER ═══════════ --}}
+        <div class="relative shrink-0 bg-ink text-ivory px-5 sm:px-7 py-5 sm:py-6 border-b border-ink">
+            {{-- Subtle grid texture --}}
+            <div class="pointer-events-none absolute inset-0 bg-grid-navy bg-grid-md opacity-50"></div>
 
-            {{-- Soft gradient blobs --}}
-            <div class="pointer-events-none absolute inset-0 overflow-hidden">
-                <div class="absolute -right-10 -top-14 h-44 w-44 rounded-full bg-amber/20 blur-3xl animate-blob"></div>
-                <div class="absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-blue-500/25 blur-3xl animate-blob animation-delay-2000"></div>
-                <div class="absolute right-1/3 top-1/2 h-28 w-28 rounded-full bg-orange-400/15 blur-3xl animate-blob animation-delay-4000"></div>
-            </div>
+            {{-- Corner register marks (amber) --}}
+            <span class="pointer-events-none absolute top-2 left-2 w-3 h-3 border-l border-t border-amber" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute top-2 right-2 w-3 h-3 border-r border-t border-amber" aria-hidden="true"></span>
 
             <div class="relative z-10 flex items-start justify-between gap-4">
-                <div class="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
-                    {{-- Animated icon badge --}}
-                    <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber/30 to-orange-500/25 ring-1 ring-white/25
-                                transition-transform duration-300 hover:scale-110 hover:rotate-6">
+                <div class="flex min-w-0 flex-1 items-start gap-4">
+                    {{-- Doc mark: squared icon tile --}}
+                    <div class="flex h-12 w-12 shrink-0 items-center justify-center border border-amber/60 bg-ink">
                         <x-heroicon-o-paper-airplane class="h-6 w-6 text-amber" />
                     </div>
-                    <div class="min-w-0">
-                        <span class="inline-flex items-center gap-2 px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded-full
-                                     bg-gradient-to-r from-amber/20 to-orange-500/15 border border-amber/30 text-amber backdrop-blur-sm">
-                            <span class="h-1.5 w-1.5 rounded-full bg-amber animate-pulse"></span>
-                            {{ __('part_inquiry.badge_expert') }}
-                        </span>
-                        <h2 id="part-inquiry-modal-title" class="font-display mt-2.5 text-lg font-black leading-tight text-white sm:text-xl">
-                            {{ __('part_inquiry.heading') }}
+                    <div class="min-w-0 flex-1">
+                        {{-- Doc ID strip --}}
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="inline-block w-6 h-[2px] bg-amber"></span>
+                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber">
+                                § PART · INQUIRY · FORM-01
+                            </span>
+                        </div>
+                        <h2 id="part-inquiry-modal-title" class="font-display text-lg sm:text-xl font-black leading-[1.05] tracking-tight text-ivory">
+                            {{ __('part_inquiry.heading') }}<span class="text-amber">.</span>
                         </h2>
-                        <p class="mt-1 text-sm text-white/70">
+                        <p class="mt-1.5 text-xs text-ivory/70 leading-relaxed">
                             {{ __('part_inquiry.header_reply', ['hours' => $inquiryHours]) }}
                         </p>
                     </div>
                 </div>
                 <button type="button"
                         @click="open = false"
-                        class="shrink-0 rounded-xl p-2 text-white/50 transition-all hover:bg-white/10 hover:text-white hover:scale-110 focus:outline-none focus:ring-2 focus:ring-amber/50"
+                        class="shrink-0 w-9 h-9 border border-ivory/20 text-ivory/70 hover:text-ink hover:bg-amber hover:border-amber
+                               flex items-center justify-center transition-colors
+                               focus:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
                         aria-label="{{ __('part_inquiry.close') }}">
-                    <x-heroicon-o-x-mark class="h-6 w-6" />
+                    <x-heroicon-o-x-mark class="h-5 w-5" />
                 </button>
             </div>
 
-            {{-- Enhanced step indicator with progress line --}}
+            {{-- Ledger step indicator --}}
             <div class="relative z-10 mt-5 flex items-center gap-3" x-show="state !== 'success'">
-                {{-- Step 1 --}}
-                <div class="flex items-center gap-2.5">
-                    <span class="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300 ring-2"
+                {{-- Step 01 --}}
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="flex h-7 w-7 items-center justify-center text-[11px] font-mono font-bold border transition-all"
                           :class="step === 1
-                              ? 'bg-amber text-navy ring-amber shadow-lg shadow-amber/30 scale-110'
-                              : 'bg-white/20 text-white/60 ring-white/20'">
+                              ? 'bg-amber text-ink border-amber'
+                              : (step > 1 ? 'bg-ink text-amber border-amber' : 'bg-ink text-ivory/50 border-ivory/25')">
                         <template x-if="step > 1">
                             <x-heroicon-s-check class="h-3.5 w-3.5" />
                         </template>
-                        <span x-show="step === 1">1</span>
+                        <span x-show="step === 1">01</span>
+                        <span x-show="step < 1">01</span>
                     </span>
-                    <span class="text-xs font-semibold transition-colors"
-                          :class="step === 1 ? 'text-white' : 'text-white/50'">{{ __('part_inquiry.step1') }}</span>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase transition-colors"
+                          :class="step === 1 ? 'text-ivory' : 'text-ivory/50'">{{ __('part_inquiry.step1') }}</span>
                 </div>
 
-                {{-- Progress line --}}
-                <div class="flex-1 h-1.5 rounded-full bg-white/15 overflow-hidden">
-                    <div class="h-full rounded-full bg-gradient-to-r from-amber to-orange-400 transition-all duration-500 ease-out"
+                {{-- Connector: dotted leader --}}
+                <div class="flex-1 h-px bg-ivory/20 relative overflow-hidden">
+                    <div class="absolute inset-y-0 left-0 bg-amber transition-all duration-500"
                          :class="step === 1 ? 'w-0' : 'w-full'"></div>
                 </div>
 
-                {{-- Step 2 --}}
-                <div class="flex items-center gap-2.5">
-                    <span class="text-xs font-semibold transition-colors"
-                          :class="step === 2 ? 'text-white' : 'text-white/50'">{{ __('part_inquiry.step2') }}</span>
-                    <span class="flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-bold transition-all duration-300 ring-2"
+                {{-- Step 02 --}}
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase transition-colors"
+                          :class="step === 2 ? 'text-ivory' : 'text-ivory/50'">{{ __('part_inquiry.step2') }}</span>
+                    <span class="flex h-7 w-7 items-center justify-center text-[11px] font-mono font-bold border transition-all"
                           :class="step === 2
-                              ? 'bg-amber text-navy ring-amber shadow-lg shadow-amber/30 scale-110'
-                              : 'bg-white/20 text-white/60 ring-white/20'">2</span>
+                              ? 'bg-amber text-ink border-amber'
+                              : 'bg-ink text-ivory/50 border-ivory/25'">02</span>
                 </div>
             </div>
         </div>
 
-        {{-- Success state with confetti --}}
+        {{-- ═══════════ SUCCESS STATE ═══════════ --}}
         <div x-show="state === 'success'"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100"
-             class="overflow-y-auto px-5 py-10 text-center sm:px-8">
-            {{-- Success icon --}}
-            <div class="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100/50 shadow-xl shadow-emerald-500/15">
-                <x-heroicon-s-check-circle class="h-12 w-12 text-emerald-500 animate-bounce" />
-            </div>
-            <h3 class="font-display text-2xl font-black text-navy sm:text-3xl">{{ __('part_inquiry.success_title') }}</h3>
-            <p class="mx-auto mt-3 max-w-md text-sm text-body" x-text="successMsg || successFallback"></p>
+             class="overflow-y-auto px-5 py-10 text-center sm:px-8 bg-paper relative">
 
-            {{-- Response time badge --}}
-            <div class="mx-auto mt-6 max-w-md rounded-2xl border border-amber/25 bg-gradient-to-br from-amber/5 to-orange-50/50 px-5 py-4 shadow-sm">
-                <p class="flex items-center justify-center gap-2 text-sm font-bold text-amber-text">
-                    <x-heroicon-o-clock class="h-5 w-5 shrink-0 animate-pulse" />
-                    {{ __('part_inquiry.success_expected', ['hours' => $inquiryHours]) }}
-                </p>
+            {{-- Corner marks --}}
+            <span class="pointer-events-none absolute top-3 left-3 w-3 h-3 border-l border-t border-amber" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute top-3 right-3 w-3 h-3 border-r border-t border-amber" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute bottom-3 left-3 w-3 h-3 border-l border-b border-amber" aria-hidden="true"></span>
+            <span class="pointer-events-none absolute bottom-3 right-3 w-3 h-3 border-r border-b border-amber" aria-hidden="true"></span>
+
+            {{-- Success stamp --}}
+            <div class="mx-auto mb-6 w-20 h-20 border-2 border-ink flex items-center justify-center bg-ivory-alt">
+                <x-heroicon-s-check class="h-10 w-10 text-ink" />
+            </div>
+
+            {{-- Doc tag --}}
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <span class="inline-block w-6 h-[2px] bg-amber"></span>
+                <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber-ink">
+                    § STATUS · TRANSMITTED
+                </span>
+                <span class="inline-block w-6 h-[2px] bg-amber"></span>
+            </div>
+
+            <h3 class="font-display text-2xl sm:text-3xl font-black text-ink leading-tight tracking-tight">
+                {{ __('part_inquiry.success_title') }}<span class="text-amber">.</span>
+            </h3>
+            <p class="mx-auto mt-3 max-w-md text-sm text-body leading-relaxed" x-text="successMsg || successFallback"></p>
+
+            {{-- Response time ledger --}}
+            <div class="mx-auto mt-6 max-w-md border border-ink bg-ivory-alt">
+                <div class="flex items-center justify-between px-4 py-2.5 border-b border-rule">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
+                        § Est. Response
+                    </span>
+                    <x-heroicon-o-clock class="h-4 w-4 text-amber-ink" />
+                </div>
+                <div class="px-4 py-4">
+                    <p class="font-display text-xl font-black text-ink leading-none">
+                        {{ $inquiryHours }}<span class="text-amber">h</span>
+                    </p>
+                    <p class="mt-1 text-xs text-body">
+                        {{ __('part_inquiry.success_expected', ['hours' => $inquiryHours]) }}
+                    </p>
+                </div>
             </div>
 
             {{-- Confirmation checklist --}}
-            <div class="mx-auto mt-6 max-w-sm space-y-2 text-left">
-                <div class="flex items-center gap-2 text-xs text-emerald-700">
-                    <x-heroicon-s-check-circle class="h-4 w-4" />
-                    <span>{{ __('part_inquiry.success_check_email') }}</span>
+            <div class="mx-auto mt-6 max-w-sm text-left border border-rule bg-paper">
+                <div class="px-4 py-2 border-b border-rule bg-ivory-alt">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
+                        § Next Protocol
+                    </span>
                 </div>
-                <div class="flex items-center gap-2 text-xs text-emerald-700">
-                    <x-heroicon-s-check-circle class="h-4 w-4" />
-                    <span>{{ __('part_inquiry.success_check_team') }}</span>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-emerald-700">
-                    <x-heroicon-s-check-circle class="h-4 w-4" />
-                    <span>{{ __('part_inquiry.success_check_queue') }}</span>
-                </div>
+                <ol class="divide-y divide-rule">
+                    <li class="flex items-center gap-3 px-4 py-2.5">
+                        <span class="font-mono text-[10px] font-bold text-amber-ink w-6 shrink-0">01</span>
+                        <x-heroicon-s-check class="h-4 w-4 text-ink shrink-0" />
+                        <span class="text-xs text-body">{{ __('part_inquiry.success_check_email') }}</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-4 py-2.5">
+                        <span class="font-mono text-[10px] font-bold text-amber-ink w-6 shrink-0">02</span>
+                        <x-heroicon-s-check class="h-4 w-4 text-ink shrink-0" />
+                        <span class="text-xs text-body">{{ __('part_inquiry.success_check_team') }}</span>
+                    </li>
+                    <li class="flex items-center gap-3 px-4 py-2.5">
+                        <span class="font-mono text-[10px] font-bold text-amber-ink w-6 shrink-0">03</span>
+                        <x-heroicon-s-check class="h-4 w-4 text-ink shrink-0" />
+                        <span class="text-xs text-body">{{ __('part_inquiry.success_check_queue') }}</span>
+                    </li>
+                </ol>
             </div>
 
             <button type="button"
                     @click="open = false"
-                    class="btn-primary mt-8 w-full max-w-xs py-3.5 text-sm font-bold">
-                {{ __('part_inquiry.close') }}
+                    class="bp-btn-primary mt-8 w-full max-w-xs mx-auto inline-flex items-center justify-center gap-2 py-3.5 text-sm font-bold">
+                <span>{{ __('part_inquiry.close') }}</span>
+                <x-heroicon-s-arrow-long-right class="h-4 w-4" />
             </button>
         </div>
 
-        {{-- Form --}}
-        <div x-show="state !== 'success'" class="flex min-h-0 flex-1 flex-col">
+        {{-- ═══════════ FORM ═══════════ --}}
+        <form x-show="state !== 'success'" @submit.prevent="submit" class="flex min-h-0 flex-1 flex-col">
             <input type="text" name="website" x-model="form.website" class="hidden" tabindex="-1" autocomplete="off">
 
-            <div x-ref="scrollArea" class="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-                <div class="relative bg-gradient-to-b from-bg-page/80 via-white to-amber-50/30 px-5 py-6 sm:px-7 sm:py-7">
-                    {{-- Dot pattern overlay --}}
-                    <div class="pointer-events-none absolute inset-0 dot-pattern opacity-40"></div>
+            <div x-ref="scrollArea" class="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-paper">
+                <div class="relative px-5 py-6 sm:px-7 sm:py-7">
 
                     <div class="relative z-10 space-y-5">
-                        {{-- ═══════════════════════════════════════════════
-                             STEP 1 — Part & Contact (Floating Labels)
-                             ═══════════════════════════════════════════════ --}}
+                        {{-- ═════════════════════════════════
+                             STEP 1 — Part + Contact
+                             ═════════════════════════════════ --}}
                         <div x-show="step === 1"
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 translate-x-4"
@@ -302,107 +352,112 @@
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-x-0"
                              x-transition:leave-end="opacity-0 -translate-x-4">
-                            <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-lg shadow-amber/5 sm:p-6">
-                                {{-- Section header with gradient --}}
-                                <div class="mb-5 flex items-center gap-3">
-                                    <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber/20 to-orange-100 text-amber shadow-sm">
+
+                            {{-- Block card --}}
+                            <div class="relative border border-ink bg-paper">
+                                {{-- Corner register marks --}}
+                                <span class="pointer-events-none absolute top-1.5 left-1.5 w-2.5 h-2.5 border-l border-t border-rule-strong" aria-hidden="true"></span>
+                                <span class="pointer-events-none absolute top-1.5 right-1.5 w-2.5 h-2.5 border-r border-t border-rule-strong" aria-hidden="true"></span>
+                                <span class="pointer-events-none absolute bottom-1.5 left-1.5 w-2.5 h-2.5 border-l border-b border-rule-strong" aria-hidden="true"></span>
+                                <span class="pointer-events-none absolute bottom-1.5 right-1.5 w-2.5 h-2.5 border-r border-b border-rule-strong" aria-hidden="true"></span>
+
+                                {{-- Section header strip --}}
+                                <div class="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-ink bg-ivory-alt">
+                                    <span class="flex h-9 w-9 items-center justify-center border border-ink bg-paper text-ink">
                                         <x-heroicon-o-identification class="h-5 w-5" />
                                     </span>
-                                    <div>
-                                        <p class="text-sm font-bold text-navy">{{ __('part_inquiry.section_part_title') }}</p>
-                                        <p class="text-xs text-muted">{{ __('part_inquiry.section_part_subtitle') }}</p>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 01</span>
+                                            <p class="text-sm font-bold text-ink leading-tight">{{ __('part_inquiry.section_part_title') }}</p>
+                                        </div>
+                                        <p class="text-xs text-body mt-0.5">{{ __('part_inquiry.section_part_subtitle') }}</p>
                                     </div>
                                 </div>
 
-                                <div class="space-y-5">
-                                    {{-- OEM Number with floating label --}}
+                                <div class="p-5 sm:p-6 space-y-4">
+                                    {{-- OEM Number --}}
                                     <div>
+                                        <label for="inquiry-oem" class="flex items-center justify-between mb-1.5">
+                                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_oem') }} <span class="text-amber-ink">*</span>
+                                            </span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">REQUIRED</span>
+                                        </label>
                                         <div class="relative">
+                                            <div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                                                <x-heroicon-o-cube class="h-4 w-4 text-ink-muted" />
+                                            </div>
                                             <input type="text"
                                                    x-ref="focusOem"
                                                    x-model="form.oem_number"
-                                                   @input="form.oem_number = formatOEM(form.oem_number)"
+                                                   @input="form.oem_number = formatOEM(form.oem_number); clearError('oem_number')"
                                                    id="inquiry-oem"
                                                    inputmode="text"
                                                    autocapitalize="characters"
-                                                   placeholder=" "
-                                                   class="peer w-full rounded-xl border-2 border-gray-200 bg-gray-50/50 py-3.5 pl-12 pr-4 pt-5 pb-2 text-sm font-mono font-bold uppercase text-navy placeholder:normal-case placeholder:font-sans placeholder:font-normal placeholder:text-transparent focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200"
-                                                   :class="errors.oem_number ? '!border-red-400 !ring-4 !ring-red-100 !bg-red-50/30' : ''">
-                                            <div class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200
-                                                        peer-focus:text-navy peer-[:not(:placeholder-shown)]:text-navy"
-                                                 :class="errors.oem_number ? '!text-red-400' : 'text-gray-400'">
-                                                <x-heroicon-o-cube class="h-5 w-5" />
-                                            </div>
-                                            {{-- Floating label --}}
-                                            <label for="inquiry-oem"
-                                                   class="pointer-events-none absolute left-12 top-3.5 text-sm text-gray-400 transition-all duration-200
-                                                          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-navy peer-focus:font-semibold
-                                                          peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-navy peer-[:not(:placeholder-shown)]:font-semibold">
-                                                {{ __('part_inquiry.label_oem') }} <span class="text-red-500">*</span>
-                                            </label>
-                                            {{-- Valid state indicator --}}
+                                                   placeholder="e.g. 06K103495BK"
+                                                   class="bp-input w-full pl-9 pr-10 py-3 text-sm font-mono font-bold uppercase text-ink placeholder:normal-case placeholder:font-sans placeholder:font-normal placeholder:text-ink-muted/60"
+                                                   :class="errors.oem_number ? '!border-red-500 !bg-red-50/40' : ''">
                                             <div x-show="form.oem_number.length >= 3 && !errors.oem_number"
                                                  x-transition:enter="transition ease-out duration-200"
                                                  x-transition:enter-start="opacity-0 scale-50"
                                                  x-transition:enter-end="opacity-100 scale-100"
-                                                 class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2">
-                                                <x-heroicon-s-check-circle class="h-5 w-5 text-emerald-500" />
+                                                 class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                                                <x-heroicon-s-check class="h-4 w-4 text-amber-ink" />
                                             </div>
                                         </div>
-                                        <p x-show="errors.oem_number" x-text="errors.oem_number?.[0]" class="mt-1.5 text-xs font-medium text-red-600"></p>
+                                        <p x-show="errors.oem_number" x-text="errors.oem_number?.[0]" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600"></p>
                                     </div>
 
-                                    {{-- Email with floating label --}}
+                                    {{-- Email --}}
                                     <div>
+                                        <label for="inquiry-email" class="flex items-center justify-between mb-1.5">
+                                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_email') }} <span class="text-amber-ink">*</span>
+                                            </span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">REQUIRED</span>
+                                        </label>
                                         <div class="relative">
+                                            <div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                                                <x-heroicon-o-at-symbol class="h-4 w-4 text-ink-muted" />
+                                            </div>
                                             <input type="email"
                                                    x-model="form.email"
+                                                   @input="clearError('email')"
                                                    id="inquiry-email"
                                                    inputmode="email"
-                                                   placeholder=" "
-                                                   class="peer w-full rounded-xl border-2 border-gray-200 bg-gray-50/50 py-3.5 pl-12 pr-4 pt-5 pb-2 text-sm text-navy placeholder:text-transparent focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200"
-                                                   :class="errors.email ? '!border-red-400 !ring-4 !ring-red-100 !bg-red-50/30' : ''">
-                                            <div class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200
-                                                        peer-focus:text-navy peer-[:not(:placeholder-shown)]:text-navy"
-                                                 :class="errors.email ? '!text-red-400' : 'text-gray-400'">
-                                                <x-heroicon-o-at-symbol class="h-5 w-5" />
-                                            </div>
-                                            <label for="inquiry-email"
-                                                   class="pointer-events-none absolute left-12 top-3.5 text-sm text-gray-400 transition-all duration-200
-                                                          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-navy peer-focus:font-semibold
-                                                          peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-navy peer-[:not(:placeholder-shown)]:font-semibold">
-                                                {{ __('part_inquiry.label_email') }} <span class="text-red-500">*</span>
-                                            </label>
-                                            <div x-show="form.email.includes('@') && form.email.includes('.') && !errors.email"
+                                                   placeholder="you@company.com"
+                                                   class="bp-input w-full pl-9 pr-10 py-3 text-sm text-ink placeholder:text-ink-muted/60"
+                                                   :class="errors.email ? '!border-red-500 !bg-red-50/40' : ''">
+                                            <div x-show="emailValid && !errors.email"
                                                  x-transition:enter="transition ease-out duration-200"
                                                  x-transition:enter-start="opacity-0 scale-50"
                                                  x-transition:enter-end="opacity-100 scale-100"
-                                                 class="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2">
-                                                <x-heroicon-s-check-circle class="h-5 w-5 text-emerald-500" />
+                                                 class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                                                <x-heroicon-s-check class="h-4 w-4 text-amber-ink" />
                                             </div>
                                         </div>
-                                        <p x-show="errors.email" x-text="errors.email?.[0]" class="mt-1.5 text-xs font-medium text-red-600"></p>
+                                        <p x-show="errors.email" x-text="errors.email?.[0]" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600"></p>
                                     </div>
 
-                                    {{-- Phone with floating label --}}
+                                    {{-- Phone --}}
                                     <div>
+                                        <label for="inquiry-phone" class="flex items-center justify-between mb-1.5">
+                                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_phone') }}
+                                            </span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">{{ __('part_inquiry.optional') }}</span>
+                                        </label>
                                         <div class="relative">
+                                            <div class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 z-10">
+                                                <x-heroicon-o-phone class="h-4 w-4 text-ink-muted" />
+                                            </div>
                                             <input type="tel"
                                                    x-model="form.phone"
                                                    id="inquiry-phone"
                                                    inputmode="tel"
-                                                   placeholder=" "
-                                                   class="peer w-full rounded-xl border-2 border-gray-200 bg-gray-50/50 py-3.5 pl-12 pr-4 pt-5 pb-2 text-sm text-navy placeholder:text-transparent focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200">
-                                            <div class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 transition-colors duration-200
-                                                        peer-focus:text-navy peer-[:not(:placeholder-shown)]:text-navy text-gray-400">
-                                                <x-heroicon-o-phone class="h-5 w-5" />
-                                            </div>
-                                            <label for="inquiry-phone"
-                                                   class="pointer-events-none absolute left-12 top-3.5 text-sm text-gray-400 transition-all duration-200
-                                                          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-navy peer-focus:font-semibold
-                                                          peer-[:not(:placeholder-shown)]:top-1.5 peer-[:not(:placeholder-shown)]:text-xs peer-[:not(:placeholder-shown)]:text-navy peer-[:not(:placeholder-shown)]:font-semibold">
-                                                {{ __('part_inquiry.label_phone') }} <span class="text-xs font-normal text-muted">{{ __('part_inquiry.optional') }}</span>
-                                            </label>
+                                                   placeholder="+1 555 0100"
+                                                   class="bp-input w-full pl-9 pr-3 py-3 text-sm text-ink placeholder:text-ink-muted/60">
                                         </div>
                                     </div>
                                 </div>
@@ -411,77 +466,99 @@
                             {{-- Expand to step 2 --}}
                             <button type="button"
                                     @click="expandDetails()"
-                                    class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-white/60 py-4 text-sm font-semibold text-navy
-                                           transition-all duration-200 hover:border-amber/50 hover:bg-amber/5 hover:text-amber-text hover:shadow-md focus:outline-none focus:ring-2 focus:ring-amber/30">
-                                <x-heroicon-o-plus-circle class="h-5 w-5 text-amber transition-transform duration-200 hover:scale-110" />
-                                <span>{{ __('part_inquiry.button_add_vehicle') }}</span>
-                                <span class="text-xs text-muted">{{ __('part_inquiry.optional') }}</span>
+                                    class="mt-3 group flex w-full items-center justify-between gap-3 px-5 py-4 border border-dashed border-rule-strong bg-paper
+                                           text-left hover:border-amber hover:bg-amber/5 transition-colors
+                                           focus:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <span class="flex h-9 w-9 items-center justify-center border border-ink bg-ivory-alt text-ink group-hover:bg-amber group-hover:border-amber transition-colors">
+                                        <x-heroicon-o-plus class="h-4 w-4" />
+                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 02 · OPTIONAL</p>
+                                        <p class="text-sm font-bold text-ink mt-0.5">{{ __('part_inquiry.button_add_vehicle') }}</p>
+                                    </div>
+                                </div>
+                                <x-heroicon-s-arrow-long-right class="h-5 w-5 text-ink-muted group-hover:text-amber-ink transition-colors shrink-0" />
                             </button>
                         </div>
 
-                        {{-- ═══════════════════════════════════════════════
+                        {{-- ═════════════════════════════════
                              STEP 2 — Vehicle Details & Notes
-                             ═══════════════════════════════════════════════ --}}
+                             ═════════════════════════════════ --}}
                         <div x-show="step === 2"
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 translate-x-4"
                              x-transition:enter-end="opacity-100 translate-x-0"
                              x-transition:leave="transition ease-in duration-150"
                              x-transition:leave-start="opacity-100 translate-x-0"
-                             x-transition:leave-end="opacity-0 -translate-x-4">
+                             x-transition:leave-end="opacity-0 -translate-x-4"
+                             class="space-y-4">
 
-                            {{-- Vehicle details --}}
-                            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white/90 shadow-md shadow-blue-500/5">
+                            {{-- Vehicle details accordion --}}
+                            <div class="border border-ink bg-paper">
                                 <button type="button"
                                         @click="expandedVehicle = !expandedVehicle"
-                                        class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-all hover:bg-gray-50/80 sm:px-6">
-                                    <div class="flex items-center gap-3">
-                                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/15 to-blue-600/10 text-blue-700 shadow-sm">
+                                        class="flex w-full items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left transition-colors hover:bg-ivory-alt">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <span class="flex h-9 w-9 items-center justify-center border border-ink bg-paper text-ink">
                                             <x-heroicon-o-truck class="h-5 w-5" />
                                         </span>
-                                        <div>
-                                            <p class="text-sm font-bold text-navy">{{ __('part_inquiry.vehicle_title') }}</p>
-                                            <p class="text-xs text-muted">{{ __('part_inquiry.vehicle_subtitle') }}</p>
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 02A</span>
+                                                <p class="text-sm font-bold text-ink leading-tight">{{ __('part_inquiry.vehicle_title') }}</p>
+                                            </div>
+                                            <p class="text-xs text-body mt-0.5">{{ __('part_inquiry.vehicle_subtitle') }}</p>
                                         </div>
                                     </div>
-                                    <x-heroicon-o-chevron-down class="h-5 w-5 shrink-0 text-gray-400 transition-all duration-200"
-                                        x-bind:class="expandedVehicle ? 'rotate-180 text-amber-text' : ''" />
+                                    <span class="w-7 h-7 border border-ink flex items-center justify-center text-ink shrink-0 transition-transform"
+                                          x-bind:class="expandedVehicle ? 'bg-amber border-amber rotate-180' : 'bg-paper'">
+                                        <x-heroicon-s-chevron-down class="h-4 w-4" />
+                                    </span>
                                 </button>
-                                <div x-show="expandedVehicle" x-collapse class="border-t border-gray-100 px-5 pb-5 pt-2 sm:px-6">
+                                <div x-show="expandedVehicle" x-collapse class="border-t border-ink px-5 sm:px-6 pt-5 pb-5 bg-ivory-alt/40">
                                     <div class="grid grid-cols-2 gap-3 sm:gap-4">
                                         <div>
-                                            <label class="mb-1.5 text-sm font-semibold text-navy">{{ __('part_inquiry.label_brand') }}</label>
+                                            <label class="block mb-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_brand') }}
+                                            </label>
                                             <input type="text" x-model="form.manufacturer" placeholder="{{ __('part_inquiry.placeholder_brand') }}"
-                                                   class="w-full rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-navy placeholder:text-gray-400 focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200">
+                                                   class="bp-input w-full px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted/60">
                                         </div>
                                         <div>
-                                            <label class="mb-1.5 text-sm font-semibold text-navy">{{ __('part_inquiry.label_model') }}</label>
+                                            <label class="block mb-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_model') }}
+                                            </label>
                                             <input type="text" x-model="form.car_model" placeholder="{{ __('part_inquiry.placeholder_model') }}"
-                                                   class="w-full rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-navy placeholder:text-gray-400 focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200">
+                                                   class="bp-input w-full px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted/60">
                                         </div>
                                         <div>
-                                            <label class="mb-1.5 text-sm font-semibold text-navy">{{ __('part_inquiry.label_year') }}</label>
+                                            <label class="block mb-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_year') }}
+                                            </label>
                                             <input type="text" x-model="form.year" inputmode="numeric" placeholder="{{ __('part_inquiry.placeholder_year') }}"
-                                                   class="w-full rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-navy placeholder:text-gray-400 focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200">
+                                                   class="bp-input w-full px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted/60 font-mono">
                                         </div>
                                         <div>
-                                            <label class="mb-1.5 text-sm font-semibold text-navy">{{ __('part_inquiry.label_vin') }}</label>
+                                            <label class="block mb-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_vin') }}
+                                            </label>
                                             <input type="text" x-model="form.vin_number" inputmode="text" autocapitalize="characters" placeholder="{{ __('part_inquiry.placeholder_vin') }}" maxlength="17"
-                                                   class="w-full rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 py-3 font-mono text-sm uppercase text-navy placeholder:normal-case placeholder:font-sans placeholder:text-gray-400 focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200">
-                                            {{-- VIN progress bar --}}
+                                                   class="bp-input w-full px-3 py-2.5 font-mono text-sm uppercase text-ink placeholder:normal-case placeholder:font-sans placeholder:text-ink-muted/60">
+                                            {{-- VIN progress: dotted leader --}}
                                             <div x-show="form.vin_number.length > 0"
                                                  x-transition:enter="transition ease-out duration-200"
                                                  x-transition:enter-start="opacity-0"
                                                  x-transition:enter-end="opacity-100"
                                                  class="mt-2">
                                                 <div class="flex items-center justify-between gap-2">
-                                                    <div class="flex-1 h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                                                        <div class="h-full rounded-full transition-all duration-300"
-                                                             :class="vinProgress >= 17 ? 'bg-emerald-500' : vinProgress >= 10 ? 'bg-amber' : 'bg-gray-300'"
+                                                    <div class="flex-1 h-1 bg-rule overflow-hidden">
+                                                        <div class="h-full transition-all duration-300"
+                                                             :class="vinProgress >= 17 ? 'bg-amber' : vinProgress >= 10 ? 'bg-amber-ink' : 'bg-ink-muted'"
                                                              :style="'width: ' + (vinProgress / 17 * 100) + '%'"></div>
                                                     </div>
-                                                    <span class="text-[10px] font-bold"
-                                                          :class="vinProgress >= 17 ? 'text-emerald-600' : 'text-muted'"
+                                                    <span class="font-mono text-[10px] font-bold tracking-[0.15em]"
+                                                          :class="vinProgress >= 17 ? 'text-amber-ink' : 'text-ink-muted'"
                                                           x-text="vinProgress + '/17'"></span>
                                                 </div>
                                             </div>
@@ -490,103 +567,118 @@
                                 </div>
                             </div>
 
-                            {{-- Timing & notes --}}
-                            <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white/90 shadow-md shadow-amber/5">
+                            {{-- Timing & notes accordion --}}
+                            <div class="border border-ink bg-paper">
                                 <button type="button"
                                         @click="expandedMore = !expandedMore"
-                                        class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition-all hover:bg-gray-50/80 sm:px-6">
-                                    <div class="flex items-center gap-3">
-                                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-amber/20 to-orange-100 text-amber shadow-sm">
+                                        class="flex w-full items-center justify-between gap-3 px-5 sm:px-6 py-4 text-left transition-colors hover:bg-ivory-alt">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <span class="flex h-9 w-9 items-center justify-center border border-ink bg-paper text-ink">
                                             <x-heroicon-o-clipboard-document-list class="h-5 w-5" />
                                         </span>
-                                        <div>
-                                            <p class="text-sm font-bold text-navy">{{ __('part_inquiry.timing_title') }}</p>
-                                            <p class="text-xs text-muted">{{ __('part_inquiry.timing_subtitle') }}</p>
+                                        <div class="min-w-0">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 02B</span>
+                                                <p class="text-sm font-bold text-ink leading-tight">{{ __('part_inquiry.timing_title') }}</p>
+                                            </div>
+                                            <p class="text-xs text-body mt-0.5">{{ __('part_inquiry.timing_subtitle') }}</p>
                                         </div>
                                     </div>
-                                    <x-heroicon-o-chevron-down class="h-5 w-5 shrink-0 text-gray-400 transition-all duration-200"
-                                        x-bind:class="expandedMore ? 'rotate-180 text-amber-text' : ''" />
+                                    <span class="w-7 h-7 border border-ink flex items-center justify-center text-ink shrink-0 transition-transform"
+                                          x-bind:class="expandedMore ? 'bg-amber border-amber rotate-180' : 'bg-paper'">
+                                        <x-heroicon-s-chevron-down class="h-4 w-4" />
+                                    </span>
                                 </button>
-                                <div x-show="expandedMore" x-collapse class="border-t border-gray-100 px-5 pb-5 pt-2 sm:px-6">
+                                <div x-show="expandedMore" x-collapse class="border-t border-ink px-5 sm:px-6 pt-5 pb-5 bg-ivory-alt/40">
                                     <div class="space-y-5">
-                                        {{-- Urgency with emoji icons --}}
+                                        {{-- Urgency --}}
                                         <div>
-                                            <label class="mb-2.5 text-sm font-semibold text-navy">{{ __('part_inquiry.label_urgency') }}</label>
-                                            <div class="grid grid-cols-3 gap-2.5">
-                                                <label class="group relative cursor-pointer">
+                                            <label class="block mb-2 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_urgency') }}
+                                            </label>
+                                            <div class="grid grid-cols-3 gap-0 border border-ink bg-paper">
+                                                <label class="group relative cursor-pointer border-r border-ink last:border-r-0">
                                                     <input type="radio" x-model="form.urgency" value="normal" class="peer sr-only">
-                                                    <div class="flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-gray-50/50 py-3.5 px-2 text-center
-                                                                transition-all duration-200
-                                                                peer-checked:border-emerald-400 peer-checked:bg-emerald-50 peer-checked:shadow-lg peer-checked:shadow-emerald-100
-                                                                group-hover:border-emerald-200 group-hover:bg-emerald-50/30">
-                                                        <span class="text-xl mb-1">🟢</span>
-                                                        <span class="text-xs font-bold text-navy peer-checked:text-emerald-800">{{ __('part_inquiry.urgency_normal') }}</span>
-                                                        <span class="mt-0.5 text-[10px] leading-tight text-muted peer-checked:text-emerald-700/90">{{ __('part_inquiry.urgency_normal_hint') }}</span>
+                                                    <div class="flex flex-col items-center justify-center py-4 px-2 text-center transition-colors
+                                                                peer-checked:bg-ink peer-checked:text-ivory
+                                                                peer-focus-visible:ring-2 peer-focus-visible:ring-amber peer-focus-visible:ring-inset
+                                                                group-hover:bg-ivory-alt peer-checked:group-hover:bg-ink">
+                                                        <x-heroicon-o-check-circle class="h-5 w-5 mb-1.5 transition-colors text-ink peer-checked:group-[]:text-amber" />
+                                                        <span class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">{{ __('part_inquiry.urgency_normal') }}</span>
+                                                        <span class="mt-0.5 text-[10px] leading-tight opacity-70">{{ __('part_inquiry.urgency_normal_hint') }}</span>
                                                     </div>
                                                 </label>
-                                                <label class="group relative cursor-pointer">
+                                                <label class="group relative cursor-pointer border-r border-ink last:border-r-0">
                                                     <input type="radio" x-model="form.urgency" value="soon" class="peer sr-only">
-                                                    <div class="flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-gray-50/50 py-3.5 px-2 text-center
-                                                                transition-all duration-200
-                                                                peer-checked:border-amber/50 peer-checked:bg-amber/10 peer-checked:shadow-lg peer-checked:shadow-amber/10
-                                                                group-hover:border-amber/30 group-hover:bg-amber/5">
-                                                        <span class="text-xl mb-1">🟡</span>
-                                                        <span class="text-xs font-bold text-navy peer-checked:text-amber-text">{{ __('part_inquiry.urgency_soon') }}</span>
-                                                        <span class="mt-0.5 text-[10px] leading-tight text-muted peer-checked:text-amber-text/90">{{ __('part_inquiry.urgency_soon_hint') }}</span>
+                                                    <div class="flex flex-col items-center justify-center py-4 px-2 text-center transition-colors
+                                                                peer-checked:bg-ink peer-checked:text-ivory
+                                                                peer-focus-visible:ring-2 peer-focus-visible:ring-amber peer-focus-visible:ring-inset
+                                                                group-hover:bg-ivory-alt peer-checked:group-hover:bg-ink">
+                                                        <x-heroicon-o-clock class="h-5 w-5 mb-1.5 transition-colors text-ink peer-checked:group-[]:text-amber" />
+                                                        <span class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">{{ __('part_inquiry.urgency_soon') }}</span>
+                                                        <span class="mt-0.5 text-[10px] leading-tight opacity-70">{{ __('part_inquiry.urgency_soon_hint') }}</span>
                                                     </div>
                                                 </label>
                                                 <label class="group relative cursor-pointer">
                                                     <input type="radio" x-model="form.urgency" value="urgent" class="peer sr-only">
-                                                    <div class="flex flex-col items-center justify-center rounded-xl border-2 border-gray-200 bg-gray-50/50 py-3.5 px-2 text-center
-                                                                transition-all duration-200
-                                                                peer-checked:border-red-400 peer-checked:bg-red-50 peer-checked:shadow-lg peer-checked:shadow-red-100
-                                                                group-hover:border-red-200 group-hover:bg-red-50/30">
-                                                        <span class="text-xl mb-1">🔴</span>
-                                                        <span class="text-xs font-bold text-navy peer-checked:text-red-800">{{ __('part_inquiry.urgency_urgent') }}</span>
-                                                        <span class="mt-0.5 text-[10px] leading-tight text-muted peer-checked:text-red-700/90">{{ __('part_inquiry.urgency_urgent_hint') }}</span>
+                                                    <div class="flex flex-col items-center justify-center py-4 px-2 text-center transition-colors
+                                                                peer-checked:bg-amber peer-checked:text-ink
+                                                                peer-focus-visible:ring-2 peer-focus-visible:ring-ink peer-focus-visible:ring-inset
+                                                                group-hover:bg-ivory-alt peer-checked:group-hover:bg-amber">
+                                                        <x-heroicon-o-bolt class="h-5 w-5 mb-1.5 text-ink" />
+                                                        <span class="font-mono text-[10px] font-bold tracking-[0.15em] uppercase">{{ __('part_inquiry.urgency_urgent') }}</span>
+                                                        <span class="mt-0.5 text-[10px] leading-tight opacity-70">{{ __('part_inquiry.urgency_urgent_hint') }}</span>
                                                     </div>
                                                 </label>
                                             </div>
                                         </div>
 
-                                        {{-- Quantity stepper with animation --}}
+                                        {{-- Quantity stepper --}}
                                         <div>
-                                            <label class="mb-2.5 text-sm font-semibold text-navy">{{ __('part_inquiry.label_quantity') }}</label>
-                                            <div class="inline-flex h-12 max-w-[220px] items-stretch overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-50/50 shadow-sm">
+                                            <label class="block mb-2 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                {{ __('part_inquiry.label_quantity') }}
+                                            </label>
+                                            <div class="inline-flex h-11 items-stretch border border-ink bg-paper">
                                                 <button type="button"
                                                         @click="form.quantity = Math.max(1, form.quantity - 1)"
-                                                        class="flex w-12 items-center justify-center text-navy transition-all hover:bg-gray-200 active:scale-90"
-                                                        :class="form.quantity <= 1 ? 'cursor-not-allowed opacity-30' : ''">
-                                                    <x-heroicon-o-minus class="h-5 w-5" />
+                                                        class="flex w-11 items-center justify-center text-ink hover:bg-ink hover:text-amber transition-colors border-r border-ink
+                                                               focus:outline-none focus-visible:bg-amber"
+                                                        :class="form.quantity <= 1 ? 'cursor-not-allowed opacity-30' : ''"
+                                                        aria-label="Decrease">
+                                                    <x-heroicon-o-minus class="h-4 w-4" />
                                                 </button>
                                                 <input type="text" inputmode="numeric"
                                                        :value="form.quantity"
                                                        @change="form.quantity = Math.max(1, Math.min(99, parseInt($event.target.value) || 1)); $event.target.value = form.quantity"
-                                                       class="relative z-10 w-16 border-x-2 border-gray-200 bg-white text-center text-base font-bold text-navy focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all">
+                                                       class="w-16 bg-ivory-alt text-center font-mono text-base font-bold text-ink focus:outline-none focus:bg-paper focus:ring-2 focus:ring-amber focus:ring-inset">
                                                 <button type="button"
                                                         @click="form.quantity = Math.min(99, form.quantity + 1)"
-                                                        class="flex w-12 items-center justify-center text-navy transition-all hover:bg-gray-200 active:scale-90"
-                                                        :class="form.quantity >= 99 ? 'cursor-not-allowed opacity-30' : ''">
-                                                    <x-heroicon-o-plus class="h-5 w-5" />
+                                                        class="flex w-11 items-center justify-center text-ink hover:bg-ink hover:text-amber transition-colors border-l border-ink
+                                                               focus:outline-none focus-visible:bg-amber"
+                                                        :class="form.quantity >= 99 ? 'cursor-not-allowed opacity-30' : ''"
+                                                        aria-label="Increase">
+                                                    <x-heroicon-o-plus class="h-4 w-4" />
                                                 </button>
                                             </div>
                                         </div>
 
-                                        {{-- Notes with character counter --}}
+                                        {{-- Notes --}}
                                         <div>
-                                            <label class="mb-2 flex items-center justify-between text-sm font-semibold text-navy">
-                                                <span>{{ __('part_inquiry.label_notes') }}</span>
-                                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                                      :class="notesLength >= 450 ? 'bg-red-100 text-red-700' : notesLength >= 350 ? 'bg-amber/15 text-amber-text' : 'bg-gray-100 text-muted'"
+                                            <label class="flex items-center justify-between mb-2">
+                                                <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
+                                                    {{ __('part_inquiry.label_notes') }}
+                                                </span>
+                                                <span class="font-mono text-[10px] font-bold tracking-[0.15em] px-2 py-0.5 border"
+                                                      :class="notesLength >= 450 ? 'border-red-500 text-red-600 bg-red-50' : notesLength >= 350 ? 'border-amber text-amber-ink bg-amber/10' : 'border-rule text-ink-muted bg-paper'"
                                                       x-text="notesLength + '/500'"></span>
                                             </label>
                                             <textarea x-model="form.notes" rows="3" maxlength="500" placeholder="{{ __('part_inquiry.notes_placeholder') }}"
-                                                      class="w-full resize-none rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 py-3 text-sm text-navy placeholder:text-gray-400 focus:border-navy focus:bg-white focus:outline-none focus:ring-4 focus:ring-navy/10 transition-all duration-200"></textarea>
-                                            {{-- Character progress bar --}}
+                                                      class="bp-input w-full resize-none px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted/60"></textarea>
+                                            {{-- Progress bar --}}
                                             <div x-show="notesLength > 0"
-                                                 class="mt-2 h-1 rounded-full bg-gray-100 overflow-hidden">
-                                                <div class="h-full rounded-full transition-all duration-300"
-                                                     :class="notesLength >= 450 ? 'bg-red-500' : notesLength >= 350 ? 'bg-amber' : 'bg-emerald-500'"
+                                                 class="mt-1.5 h-px bg-rule overflow-hidden">
+                                                <div class="h-full transition-all duration-300"
+                                                     :class="notesLength >= 450 ? 'bg-red-500' : notesLength >= 350 ? 'bg-amber' : 'bg-amber-ink'"
                                                      :style="'width: ' + (notesLength / 500 * 100) + '%'"></div>
                                             </div>
                                         </div>
@@ -597,9 +689,11 @@
                             {{-- Back to step 1 --}}
                             <button type="button"
                                     @click="collapseDetails()"
-                                    class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 bg-white/60 py-4 text-sm font-semibold text-navy
-                                           transition-all duration-200 hover:border-navy/50 hover:bg-navy/5 focus:outline-none focus:ring-2 focus:ring-navy/30">
-                                <x-heroicon-o-arrow-left class="h-5 w-5 transition-transform duration-200 hover:-translate-x-0.5" />
+                                    class="group flex w-full items-center justify-center gap-2 px-5 py-3.5 border border-dashed border-rule-strong bg-paper
+                                           font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ink
+                                           hover:border-ink hover:bg-ivory-alt transition-colors
+                                           focus:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2">
+                                <x-heroicon-s-arrow-long-left class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
                                 <span>{{ __('part_inquiry.back_step1') }}</span>
                             </button>
                         </div>
@@ -609,66 +703,70 @@
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 -translate-y-2"
                              x-transition:enter-end="opacity-100 translate-y-0"
-                             class="flex items-start gap-2.5 rounded-2xl border border-red-200 bg-red-50/80 p-4 text-sm text-red-700 shadow-sm">
-                            <x-heroicon-o-exclamation-circle class="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
-                            <span x-text="Object.values(errors)[0]?.[0] ?? validationFallback"></span>
+                             class="flex items-start gap-3 px-4 py-3 border border-red-500 bg-red-50">
+                            <x-heroicon-o-exclamation-triangle class="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
+                            <div class="flex-1 min-w-0">
+                                <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-red-700 mb-0.5">§ Error · Validation</p>
+                                <p class="text-sm text-red-800" x-text="Object.values(errors)[0]?.[0] ?? validationFallback"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Footer with trust badges and progress bar --}}
-            <div class="shrink-0 border-t border-gray-100 bg-gradient-to-b from-white to-bg-page/50 px-5 py-4 sm:px-7">
+            {{-- ═══════════ FOOTER ═══════════ --}}
+            <div class="shrink-0 border-t border-ink bg-ivory-alt px-5 sm:px-7 py-4">
                 {{-- Submit progress bar --}}
                 <div x-show="state === 'loading'"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0"
                      x-transition:enter-end="opacity-100"
-                     class="mb-3 h-1 overflow-hidden rounded-full bg-gray-100">
-                    <div class="h-full animate-shimmer shimmer-progress rounded-full bg-gradient-to-r from-amber via-orange-400 to-amber"></div>
+                     class="mb-3 h-0.5 overflow-hidden bg-rule">
+                    <div class="h-full animate-shimmer shimmer-progress bg-gradient-to-r from-amber via-amber-ink to-amber"></div>
                 </div>
 
-                <button type="button" @click="submit" :disabled="state === 'loading'"
-                        class="btn-primary w-full py-4 text-sm font-bold disabled:cursor-wait disabled:opacity-60 disabled:hover:scale-100
-                               transition-all duration-200 active:scale-95">
+                <button type="submit" :disabled="state === 'loading'"
+                        class="bp-btn-primary w-full inline-flex items-center justify-center gap-2 py-3.5 text-sm font-bold
+                               disabled:cursor-wait disabled:opacity-60 transition-all">
                     <span x-show="state !== 'loading'" class="flex items-center justify-center gap-2">
-                        <x-heroicon-o-paper-airplane class="h-5 w-5" />
-                        {{ __('part_inquiry.submit') }}
+                        <x-heroicon-o-paper-airplane class="h-4 w-4" />
+                        <span>{{ __('part_inquiry.submit') }}</span>
+                        <x-heroicon-s-arrow-long-right class="h-4 w-4" />
                     </span>
                     <span x-show="state === 'loading'" class="flex items-center justify-center gap-2">
-                        <svg class="h-5 w-5 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <svg class="h-4 w-4 animate-spin motion-reduce:animate-none" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
-                        {{ __('part_inquiry.submitting') }}
+                        <span>{{ __('part_inquiry.submitting') }}</span>
                     </span>
                 </button>
 
-                {{-- Trust badges row --}}
-                <div class="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 text-[10px] text-muted">
-                    <span class="inline-flex items-center gap-1">
-                        <x-heroicon-s-lock-closed class="h-3 w-3 text-amber" />
+                {{-- Trust ledger --}}
+                <div class="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ink-muted">
+                    <span class="inline-flex items-center gap-1.5">
+                        <x-heroicon-s-lock-closed class="h-3 w-3 text-amber-ink" />
                         {{ __('part_inquiry.trust_ssl') }}
                     </span>
-                    <span class="text-gray-300">·</span>
-                    <span class="inline-flex items-center gap-1">
-                        <x-heroicon-s-clock class="h-3 w-3 text-emerald-600" />
+                    <span class="text-rule-strong">·</span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <x-heroicon-s-clock class="h-3 w-3 text-amber-ink" />
                         {{ __('part_inquiry.trust_response', ['hours' => $inquiryHours]) }}
                     </span>
-                    <span class="text-gray-300">·</span>
-                    <span class="inline-flex items-center gap-1">
-                        <x-heroicon-s-check-badge class="h-3 w-3 text-blue-600" />
+                    <span class="text-rule-strong">·</span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <x-heroicon-s-check-badge class="h-3 w-3 text-amber-ink" />
                         {{ __('part_inquiry.trust_nospam') }}
                     </span>
                 </div>
 
                 {{-- Keyboard hint --}}
-                <p class="mt-2 hidden sm:block text-center text-[10px] text-muted">
+                <p class="mt-2 hidden sm:block text-center font-mono text-[9px] tracking-[0.15em] uppercase text-ink-muted/80">
                     {!! __('part_inquiry.keyboard_hint_html', [
-                        'kbd' => '<kbd class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs font-semibold">'.e(__('part_inquiry.keyboard_key')).'</kbd>',
+                        'kbd' => '<kbd class="inline-block border border-rule-strong bg-paper px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">'.e(__('part_inquiry.keyboard_key')).'</kbd>',
                     ]) !!}
                 </p>
             </div>
-        </div>
+        </form>
     </div>
 </div>

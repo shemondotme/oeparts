@@ -1,47 +1,71 @@
-{{-- Section: stats_counter
-     content: eyebrow(ml), headline(ml), subheadline(ml), items[] — each: key (settings key in stats_counter group),
-              suffix, label(ml), cta_text(ml), cta_url
-     Design: Clean white cards with amber numbers, subtle icons, soft shadows
+{{-- Section: stats_counter (Industrial Blueprint)
+     content: eyebrow(ml), headline(ml), subheadline(ml), items[] — each: key, suffix, label(ml), cta_text(ml), cta_url
 --}}
 @if(settings('stats_counter.show_section', true))
-@php $items = $section->content['items'] ?? []; @endphp
+@php
+    $items = $section->content['items'] ?? [];
+    $eyebrow = trans_field($section->content['eyebrow'] ?? null);
+    $headline = trans_field($section->content['headline'] ?? null);
+    $subheadline = trans_field($section->content['subheadline'] ?? null);
+    $ctaText = trans_field($section->content['cta_text'] ?? null);
+    $ctaUrl = $section->content['cta_url'] ?? null;
 
-<section class="bg-[#FAFAF8] py-14 md:py-20 px-4 relative overflow-hidden">
+    $iconMap = [
+        'customers_count' => 'users',
+        'parts_count'     => 'cube',
+        'countries_count' => 'globe-europe-africa',
+        'rating'          => 'star',
+        'orders_count'    => 'shopping-cart',
+        'brands_count'    => 'building-office',
+        'categories_count'=> 'rectangle-stack',
+    ];
+    $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+@endphp
 
-    {{-- Decorative background blobs --}}
-    <div class="absolute inset-0 opacity-10 pointer-events-none" aria-hidden="true">
-        <div class="absolute top-10 right-10 w-96 h-96 bg-amber rounded-full filter blur-3xl"></div>
-        <div class="absolute bottom-10 left-10 w-72 h-72 bg-blue-500 rounded-full filter blur-3xl"></div>
-    </div>
+<section class="relative bg-ivory text-ink border-b border-rule overflow-hidden">
+    <div class="absolute inset-0 bg-grid-ivory-fine bg-grid-md opacity-60 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="max-w-6xl mx-auto relative z-10">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
 
-        {{-- Section Heading Component --}}
-        @if(!empty($section->content['headline']))
-        <x-section-heading
-            :eyebrow="trans_field($section->content['eyebrow'] ?? null)"
-            :headline="trans_field($section->content['headline'] ?? null)"
-            :subheadline="trans_field($section->content['subheadline'] ?? null)"
-            :accentBar="true"
-            class="mb-12"
-        />
+        {{-- Section header --}}
+        @if($headline || $eyebrow)
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 border-b border-ink mb-0">
+            <div class="col-span-12 md:col-span-8">
+                @if($eyebrow)
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                </div>
+                @endif
+                @if($headline)
+                <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
+                    {{ $headline }}<span class="text-amber">.</span>
+                </h2>
+                @endif
+            </div>
+            @if($subheadline)
+            <div class="col-span-12 md:col-span-4 mt-6 md:mt-0">
+                <p class="text-base text-body leading-relaxed max-w-sm md:ml-auto">
+                    {{ $subheadline }}
+                </p>
+            </div>
+            @endif
+        </div>
         @endif
 
-        {{-- Stats Grid - 2 cols mobile, 4 cols desktop --}}
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+        {{-- Stats grid: flat borders, monospace numbers --}}
+        <div class="grid grid-cols-2 lg:grid-cols-4 border-x border-b border-ink bg-paper">
             @foreach($items as $index => $item)
             @php
                 $rawValue = settings('stats_counter.' . ($item['key'] ?? ''), 0);
                 $key      = $item['key'] ?? '';
                 $suffix   = $item['suffix'] ?? '';
-                $delay    = $index * 100;
 
-                // Handle Rating separately to preserve decimals (4.9★)
                 if ($key === 'rating') {
                     $displayValue = $rawValue . $suffix;
                 } else {
                     $numValue = (int) $rawValue;
-                    // Format numbers for clean UI (1M+, 2.5K+, etc.)
                     if ($numValue >= 1000000) {
                         $displayValue = '1M+';
                     } elseif ($numValue >= 1000) {
@@ -50,103 +74,67 @@
                         $displayValue = $numValue . $suffix;
                     }
                 }
-
-                // Icon mapping
-                $iconMap = [
-                    'customers_count' => 'users',
-                    'parts_count'     => 'cube',
-                    'countries_count' => 'globe-europe-africa',
-                    'rating'          => 'star',
-                    'orders_count'    => 'shopping-cart',
-                    'brands_count'    => 'building-office',
-                    'categories_count'=> 'rectangle-stack',
-                ];
-                $iconName = $iconMap[$item['key'] ?? ''] ?? 'chart-bar';
+                $iconName = $iconMap[$key] ?? 'chart-bar';
+                $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
             @endphp
 
-            <div
-                x-data="{ shown: false }"
-                x-init="
-                    const observer = new IntersectionObserver(
-                        (entries) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    setTimeout(() => shown = true, {{ $delay }});
-                                    observer.unobserve(entry.target);
-                                }
-                            });
-                        },
-                        { threshold: 0.2 }
-                    );
-                    observer.observe($el);
-                "
-            >
-                <div
-                    class="group relative bg-white rounded-2xl p-4 md:p-8 h-full
-                           border-2 border-gray-100
-                           shadow-md shadow-amber/5 hover:shadow-2xl hover:shadow-amber/15
-                           transform transition-all duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none
-                           hover:-translate-y-2 hover:border-amber/30
-                           :class='shown ? \"opacity-100 translate-y-0\" : \"opacity-0 translate-y-6\"'"
-                >
-                {{-- Faded icon in background (top-right) --}}
-                <div class="absolute top-2 right-3 md:top-4 md:right-5 opacity-10 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none">
-                    @switch($iconName)
-                        @case('cube')
-                            <x-heroicon-s-cube class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                            @break
-                        @case('building-office')
-                            <x-heroicon-s-building-office class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                            @break
-                        @case('rectangle-stack')
-                            <x-heroicon-s-rectangle-stack class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                            @break
-                        @case('globe-europe-africa')
-                            <x-heroicon-s-globe-europe-africa class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                            @break
-                        @case('users')
-                            <x-heroicon-s-users class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                            @break
-                        @case('star')
-                            <x-heroicon-s-star class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                            @break
-                        @case('shopping-cart')
-                            <x-heroicon-s-shopping-cart class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                            @break
-                        @default
-                            <x-heroicon-s-chart-bar class="w-8 h-8 md:w-14 md:h-14 text-amber" />
-                    @endswitch
-                </div>
+            <div class="relative p-6 sm:p-8 lg:p-10
+                        {{ $index !== count($items) - 1 ? 'border-r border-rule' : '' }}
+                        {{ $index < count($items) - 2 ? 'border-b border-rule lg:border-b-0' : '' }}
+                        {{ $index % 2 === 1 ? 'border-r-0 lg:border-r' : '' }}">
 
-                {{-- Content --}}
-                <div class="relative z-10">
-                    {{-- Static formatted value --}}
-                    <div class="relative mb-1 md:mb-2">
-                        <div class="font-display text-2xl md:text-4xl font-black text-amber-text tracking-tight">
-                            {{ $displayValue }}
-                        </div>
+                {{-- Header row: label + row number + icon --}}
+                <div class="flex items-start justify-between mb-6">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-ink-muted">{{ $num }}</span>
+                        <span class="w-6 h-px bg-rule-strong"></span>
                     </div>
-
-                    {{-- Label --}}
-                    <div class="text-navy font-bold text-xs md:text-sm uppercase tracking-wide">
-                        {{ trans_field($item['label'] ?? null) }}
+                    <div class="w-8 h-8 border border-rule flex items-center justify-center shrink-0 opacity-70">
+                        @switch($iconName)
+                            @case('cube')                <x-heroicon-o-cube class="w-4 h-4 text-ink" /> @break
+                            @case('building-office')     <x-heroicon-o-building-office class="w-4 h-4 text-ink" /> @break
+                            @case('rectangle-stack')     <x-heroicon-o-rectangle-stack class="w-4 h-4 text-ink" /> @break
+                            @case('globe-europe-africa') <x-heroicon-o-globe-europe-africa class="w-4 h-4 text-ink" /> @break
+                            @case('users')               <x-heroicon-o-users class="w-4 h-4 text-ink" /> @break
+                            @case('star')                <x-heroicon-o-star class="w-4 h-4 text-ink" /> @break
+                            @case('shopping-cart')       <x-heroicon-o-shopping-cart class="w-4 h-4 text-ink" /> @break
+                            @default                     <x-heroicon-o-chart-bar class="w-4 h-4 text-ink" />
+                        @endswitch
                     </div>
                 </div>
-            </div>
+
+                {{-- Massive mono number --}}
+                <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight
+                          text-5xl sm:text-6xl lg:text-[5rem]">
+                    {{ $displayValue }}
+                </p>
+
+                {{-- Label --}}
+                <p class="mt-4 bp-spec text-ink-muted">
+                    {{ trans_field($item['label'] ?? null) }}
+                </p>
+
+                {{-- Amber tick accent --}}
+                <div class="mt-5 flex items-center gap-2">
+                    <span class="h-px w-8 bg-amber"></span>
+                    <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-amber-ink">Live</span>
+                </div>
             </div>
             @endforeach
         </div>
 
-        {{-- CTA Button --}}
-        @if(!empty($section->content['cta_text']) && !empty($section->content['cta_url']))
-        <div class="mt-12 text-center">
-            <x-button variant="secondary" href="{{ $section->content['cta_url'] }}" size="lg">
-                {{ trans_field($section->content['cta_text']) }}
-                <x-heroicon-o-arrow-right class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-            </x-button>
+        {{-- Optional CTA --}}
+        @if($ctaText && $ctaUrl)
+        <div class="mt-10 flex items-center justify-between pt-6 border-t border-rule">
+            <span class="hidden sm:inline font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                Source · Verified · EU
+            </span>
+            <a href="{{ $ctaUrl }}" class="bp-btn-outline">
+                {{ $ctaText }}
+                <x-heroicon-s-arrow-long-right class="w-5 h-5" />
+            </a>
         </div>
         @endif
-
     </div>
 </section>
 @endif
