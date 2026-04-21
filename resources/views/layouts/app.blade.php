@@ -45,8 +45,14 @@
     {{-- JSON-LD structured data --}}
     @yield('json_ld')
 
-    {{-- Favicon --}}
+    {{-- Favicon · Industrial Blueprint mark --}}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+    <link rel="mask-icon" href="/favicon.svg" color="#0B1A29">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#0B1A29">
+    <meta name="msapplication-TileColor" content="#0B1A29">
 
     {{-- Vite: frontend CSS + JS --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -69,8 +75,331 @@
 
     {{-- Per-page extra styles --}}
     @stack('styles')
+
+    {{-- ─────────────────────────────────────────────────────────────
+         INDUSTRIAL BLUEPRINT · PRELOADER
+         Inlined so it paints before Vite CSS (no FOUC). Hidden via JS
+         on window `load`; hard safety timeout at 6 s. Honours
+         prefers-reduced-motion. Falls back to hidden with no JS.
+    ───────────────────────────────────────────────────────────────── --}}
+    <style>
+        html.bp-preloading, html.bp-preloading body { overflow: hidden; }
+
+        #bp-preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: #F7F3E7;
+            color: #0A1228;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+            transition: opacity .45s ease, visibility .45s ease;
+        }
+        #bp-preloader.is-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #bp-preloader::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(10,18,40,.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(10,18,40,.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        /* drafting-frame corner ticks */
+        .bp-pre-corner {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border: 0 solid #0A1228;
+        }
+        .bp-pre-corner--tl { top: 24px;    left: 24px;    border-top-width: 2px; border-left-width: 2px; }
+        .bp-pre-corner--tr { top: 24px;    right: 24px;   border-top-width: 2px; border-right-width: 2px; }
+        .bp-pre-corner--bl { bottom: 24px; left: 24px;    border-bottom-width: 2px; border-left-width: 2px; }
+        .bp-pre-corner--br { bottom: 24px; right: 24px;   border-bottom-width: 2px; border-right-width: 2px; }
+
+        .bp-pre-inner {
+            position: relative;
+            text-align: center;
+            padding: 0 24px;
+            max-width: 520px;
+            width: 100%;
+        }
+
+        .bp-pre-spec {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .24em;
+            text-transform: uppercase;
+            color: rgba(10,18,40,.55);
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .bp-pre-spec i {
+            display: inline-block;
+            width: 6px; height: 6px;
+            background: #F59E0B;
+            animation: bpPulse 1.1s ease-in-out infinite;
+        }
+
+        .bp-pre-mark {
+            font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+            font-weight: 800;
+            font-size: clamp(40px, 7vw, 64px);
+            letter-spacing: -.02em;
+            line-height: 1;
+            color: #0A1228;
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: .14em;
+        }
+        .bp-pre-mark b { font-weight: 800; }
+        .bp-pre-mark .dot,
+        .bp-pre-mark .end { color: #F59E0B; font-weight: 800; }
+        .bp-pre-mark .end { margin-left: .04em; }
+
+        .bp-pre-sub {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .28em;
+            text-transform: uppercase;
+            color: #0A1228;
+            margin-top: 12px;
+            margin-bottom: 40px;
+        }
+
+        .bp-pre-bar {
+            position: relative;
+            height: 10px;
+            width: 100%;
+            max-width: 360px;
+            margin: 0 auto;
+            border: 1.5px solid #0A1228;
+            background: #FFFFFF;
+            overflow: hidden;
+        }
+        .bp-pre-bar::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: repeating-linear-gradient(
+                -45deg,
+                transparent 0 6px,
+                rgba(10,18,40,.07) 6px 7px
+            );
+        }
+        .bp-pre-bar-fill {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 0%;
+            background: #0A1228;
+            transition: width .25s ease-out;
+        }
+        .bp-pre-bar-fill::after {
+            content: "";
+            position: absolute;
+            top: 0; bottom: 0; right: 0;
+            width: 2px;
+            background: #F59E0B;
+        }
+
+        .bp-pre-status {
+            margin-top: 18px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .22em;
+            text-transform: uppercase;
+            color: rgba(10,18,40,.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-variant-numeric: tabular-nums;
+        }
+        .bp-pre-dots { display: inline-flex; gap: 3px; }
+        .bp-pre-dots i {
+            width: 3px; height: 3px; background: #0A1228;
+            display: inline-block;
+            opacity: .25;
+            animation: bpDots 1.2s ease-in-out infinite;
+        }
+        .bp-pre-dots i:nth-child(2) { animation-delay: .15s; }
+        .bp-pre-dots i:nth-child(3) { animation-delay: .30s; }
+
+        .bp-pre-pct {
+            color: #0A1228;
+            font-size: 11px;
+            padding-left: 10px;
+            border-left: 1px solid rgba(10,18,40,.25);
+        }
+        .bp-pre-pct .sym { color: #F59E0B; margin-left: 2px; }
+
+        .bp-pre-foot {
+            position: absolute;
+            left: 24px; right: 24px; bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .24em;
+            text-transform: uppercase;
+            color: rgba(10,18,40,.45);
+            pointer-events: none;
+        }
+
+        @keyframes bpPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: .30; transform: scale(.80); }
+        }
+        @keyframes bpDots {
+            0%, 100% { opacity: .20; transform: translateY(0); }
+            50%      { opacity: 1;   transform: translateY(-1px); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .bp-pre-spec i, .bp-pre-dots i { animation: none; }
+            #bp-preloader { transition: opacity .2s linear, visibility .2s linear; }
+            .bp-pre-bar-fill { transition: none; }
+        }
+
+        @media (max-width: 480px) {
+            .bp-pre-corner { width: 20px; height: 20px; }
+            .bp-pre-corner--tl, .bp-pre-corner--tr { top: 16px; }
+            .bp-pre-corner--bl, .bp-pre-corner--br { bottom: 16px; }
+            .bp-pre-corner--tl, .bp-pre-corner--bl { left: 16px; }
+            .bp-pre-corner--tr, .bp-pre-corner--br { right: 16px; }
+            .bp-pre-foot { left: 16px; right: 16px; bottom: 12px; font-size: 8px; }
+        }
+    </style>
+    <noscript><style>#bp-preloader{display:none!important;}html.bp-preloading,html.bp-preloading body{overflow:auto!important;}</style></noscript>
+    <script>document.documentElement.classList.add('bp-preloading');</script>
 </head>
 <body class="font-sans text-body bg-bg-page antialiased">
+
+    {{-- ─── Industrial Blueprint · Preloader ───────────────────────── --}}
+    <div id="bp-preloader" role="status" aria-live="polite" aria-label="Loading OEMHub">
+        <span class="bp-pre-corner bp-pre-corner--tl" aria-hidden="true"></span>
+        <span class="bp-pre-corner bp-pre-corner--tr" aria-hidden="true"></span>
+        <span class="bp-pre-corner bp-pre-corner--bl" aria-hidden="true"></span>
+        <span class="bp-pre-corner bp-pre-corner--br" aria-hidden="true"></span>
+
+        <div class="bp-pre-inner">
+            <div class="bp-pre-spec"><i></i><span>§ SYS · INIT · 2026 / EU</span></div>
+
+            <div class="bp-pre-mark">
+                <b>OEM</b><span class="dot">·</span><b>HUB</b><span class="end">.</span>
+            </div>
+
+            <div class="bp-pre-sub">Genuine Parts Index</div>
+
+            <div class="bp-pre-bar" aria-hidden="true">
+                <span class="bp-pre-bar-fill" id="bp-pre-fill"></span>
+            </div>
+
+            <div class="bp-pre-status">
+                <span>Calibrating Index</span>
+                <span class="bp-pre-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="bp-pre-pct"><span id="bp-pre-pct">00</span><span class="sym">%</span></span>
+            </div>
+        </div>
+
+        <div class="bp-pre-foot">
+            <span>OEMHUB · EU</span>
+            <span>REV 2026.04</span>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var el    = document.getElementById('bp-preloader');
+            var pct   = document.getElementById('bp-pre-pct');
+            var fill  = document.getElementById('bp-pre-fill');
+            var root  = document.documentElement;
+            if (!el) return;
+
+            var start       = Date.now();
+            var minDuration = 450;   // min time the splash stays visible
+            var maxDuration = 6000;  // hard safety — never hang the UI
+            var progress    = 0;
+            var ready       = false;
+            var finished    = false;
+
+            // Design-review mode: add ?preview_loader=1 to freeze the splash.
+            if (/[?&]preview_loader=1\b/.test(window.location.search)) {
+                return;
+            }
+
+            var timer = setInterval(function () {
+                if (!ready) {
+                    // accelerate to ~88% while assets are still loading
+                    var inc = Math.max(1, (90 - progress) * 0.08);
+                    progress = Math.min(progress + inc, 88);
+                } else {
+                    progress = Math.min(progress + 6, 100);
+                }
+                var n = Math.round(progress);
+                if (pct)  pct.textContent  = (n < 10 ? '0' : '') + n;
+                if (fill) fill.style.width = n + '%';
+                if (ready && progress >= 100) {
+                    clearInterval(timer);
+                    finish();
+                }
+            }, 70);
+
+            function markReady() { ready = true; }
+
+            function finish() {
+                if (finished) return;
+                finished = true;
+                var elapsed = Date.now() - start;
+                var delay   = Math.max(0, minDuration - elapsed);
+                setTimeout(function () {
+                    el.classList.add('is-hidden');
+                    root.classList.remove('bp-preloading');
+                    setTimeout(function () {
+                        if (el && el.parentNode) el.parentNode.removeChild(el);
+                    }, 500);
+                }, delay);
+            }
+
+            if (document.readyState === 'complete') {
+                markReady();
+            } else {
+                window.addEventListener('load', markReady, { once: true });
+            }
+
+            // Hard safety — if `load` never fires (slow asset, error), finish anyway.
+            setTimeout(function () {
+                markReady();
+                if (!finished) {
+                    clearInterval(timer);
+                    progress = 100;
+                    if (pct)  pct.textContent = '100';
+                    if (fill) fill.style.width = '100%';
+                    finish();
+                }
+            }, maxDuration);
+
+            // Restore instantly if page is shown from bfcache (back/forward nav).
+            window.addEventListener('pageshow', function (e) {
+                if (e.persisted) {
+                    clearInterval(timer);
+                    if (el) el.classList.add('is-hidden');
+                    root.classList.remove('bp-preloading');
+                }
+            });
+        })();
+    </script>
 
     {{-- Skip navigation — keyboard / screen-reader accessibility --}}
     <a href="#main-content"

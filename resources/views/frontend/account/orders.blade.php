@@ -1,170 +1,200 @@
 @extends('layouts.app')
 
-@section('title', 'My Orders')
+@section('title', __('My Orders') . ' — ' . settings('general.site_name', 'OEMHub'))
+
+@php $lang = app()->getLocale(); @endphp
 
 @section('content')
-@php
-    $lang = app()->getLocale();
-@endphp
+<x-account.shell
+    active="orders"
+    eyebrow="§ 02 · Orders · Ledger"
+    title="Orders"
+    :subtitle="__('Track every procurement transaction — from submission through shipment and refund.')"
+    docId="DOC · ORDER-INDEX · {{ now()->format('Y.m.d') }}"
+    :breadcrumb="[['label' => 'Orders']]"
+>
+    <x-slot name="actions">
+        <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
+           class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber text-ink border border-amber
+                  font-mono text-[11px] font-bold tracking-[0.22em] uppercase
+                  hover:bg-paper hover:text-ink transition-colors">
+            <x-heroicon-s-plus class="w-4 h-4" />
+            New order
+        </a>
+    </x-slot>
 
-{{-- ── Breadcrumb ──────────────────────────────────────────────────────── --}}
-<div class="bg-gray-50 border-b border-gray-100 py-3 px-4">
-    <div class="max-w-6xl mx-auto">
-        <ol class="flex flex-wrap items-center gap-1.5 text-xs text-muted">
-            <li>
-                <a href="/{{ $lang }}/" class="hover:text-amber-text transition-colors font-medium">Home</a>
-            </li>
-            <li class="text-gray-300"><x-heroicon-o-chevron-right class="w-3 h-3 inline" /></li>
-            <li>
-                <a href="{{ route('frontend.account.dashboard', ['lang' => $lang]) }}" class="hover:text-amber-text transition-colors font-medium">My Account</a>
-            </li>
-            <li class="text-gray-300"><x-heroicon-o-chevron-right class="w-3 h-3 inline" /></li>
-            <li class="text-navy font-semibold">Orders</li>
-        </ol>
-    </div>
-</div>
-
-{{-- ── Page Header ─────────────────────────────────────────────────────── --}}
-<div class="bg-gradient-to-r from-navy via-navy to-blue-900 text-white py-8 px-4">
-    <div class="max-w-6xl mx-auto">
-        <h1 class="font-display text-3xl md:text-4xl font-bold mb-2">My Orders</h1>
-        <p class="text-white/70">Track and manage all your OEM part orders in one place.</p>
-    </div>
-</div>
-
-{{-- ── Main Content ────────────────────────────────────────────────────── --}}
-<div class="bg-bg-page min-h-screen">
-    <div class="max-w-6xl mx-auto px-4 py-8">
-        <div class="grid lg:grid-cols-4 gap-8">
-
-            {{-- ── Sidebar ─────────────────────────────────────────────── --}}
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sticky top-8 h-fit">
-                    <nav class="space-y-1.5">
-                        <a href="{{ route('frontend.account.dashboard', ['lang' => $lang]) }}"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-navy hover:bg-gray-50 font-semibold transition-colors">
-                            <x-heroicon-o-squares-2x2 class="w-5 h-5" />
-                            Dashboard
-                        </a>
-                        <a href="{{ route('frontend.account.orders', ['lang' => $lang]) }}"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber/10 text-amber font-semibold transition-colors hover:bg-amber/20">
-                            <x-heroicon-o-shopping-bag class="w-5 h-5" />
-                            Orders
-                        </a>
-                        <a href="{{ route('frontend.account.refunds', ['lang' => $lang]) }}"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-navy hover:bg-gray-50 font-semibold transition-colors">
-                            <x-heroicon-o-arrow-path class="w-5 h-5" />
-                            Refunds
-                        </a>
-                        <a href="{{ route('frontend.account.addresses', ['lang' => $lang]) }}"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-navy hover:bg-gray-50 font-semibold transition-colors">
-                            <x-heroicon-o-map-pin class="w-5 h-5" />
-                            Addresses
-                        </a>
-                        <a href="{{ route('frontend.account.settings', ['lang' => $lang]) }}"
-                           class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-navy hover:bg-gray-50 font-semibold transition-colors">
-                            <x-heroicon-o-cog-6-tooth class="w-5 h-5" />
-                            Settings
-                        </a>
-                    </nav>
-                </div>
+    @if($orders->isEmpty())
+        <div class="border border-ink bg-paper p-16 text-center" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+            <div class="inline-flex items-center justify-center w-16 h-16 border border-ink bg-ivory-alt mb-6">
+                <x-heroicon-o-shopping-bag class="w-7 h-7 text-ink-muted" />
             </div>
-
-            {{-- ── Main Column ─────────────────────────────────────────── --}}
-            <div class="lg:col-span-3">
-
-                @if($orders->isEmpty())
-                {{-- ── Empty State ─────────────────────────────────────── --}}
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-                    <div class="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-6">
-                        <x-heroicon-o-shopping-bag class="w-8 h-8 text-muted" />
-                    </div>
-                    <h3 class="font-display text-xl font-bold text-navy mb-2">No Orders Yet</h3>
-                    <p class="text-sm text-muted max-w-md mx-auto mb-6">
-                        You haven't placed any orders yet. Start searching for OEM parts and place your first order today.
-                    </p>
-                    <a href="/{{ $lang }}/"
-                       class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber to-orange-500 text-navy text-sm font-bold shadow-lg shadow-amber/30 hover:from-amber/90 hover:to-orange-400 transition-all duration-200">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                        Search OEM Parts
-                    </a>
-                </div>
-                @else
-                {{-- ── Orders Table ────────────────────────────────────── --}}
-                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div class="overflow-x-auto">
-                        <table class="w-full">
-                            <thead class="bg-gray-50 border-b border-gray-100">
-                                <tr>
-                                    <th class="px-6 py-4 text-left text-sm font-bold text-navy">Order #</th>
-                                    <th class="px-6 py-4 text-left text-sm font-bold text-navy">Date</th>
-                                    <th class="px-6 py-4 text-left text-sm font-bold text-navy">Items</th>
-                                    <th class="px-6 py-4 text-left text-sm font-bold text-navy">Total</th>
-                                    <th class="px-6 py-4 text-left text-sm font-bold text-navy">Status</th>
-                                    <th class="px-6 py-4 text-left text-sm font-bold text-navy">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @foreach($orders as $order)
-                                @php
-                                    $statusConfig = match($order->status) {
-                                        \App\Enums\OrderStatus::Delivered       => ['bg' => 'bg-emerald-100', 'text' => 'text-emerald-700', 'icon' => 'heroicon-o-check-circle'],
-                                        \App\Enums\OrderStatus::Shipped        => ['bg' => 'bg-blue-100',    'text' => 'text-blue-700',    'icon' => 'heroicon-o-truck'],
-                                        \App\Enums\OrderStatus::Processing     => ['bg' => 'bg-amber/15',    'text' => 'text-amber-text',  'icon' => 'heroicon-o-cog-6-tooth'],
-                                        \App\Enums\OrderStatus::Paid           => ['bg' => 'bg-purple-100',  'text' => 'text-purple-700',  'icon' => 'heroicon-o-credit-card'],
-                                        \App\Enums\OrderStatus::Pending        => ['bg' => 'bg-gray-100',    'text' => 'text-gray-600',    'icon' => 'heroicon-o-clock'],
-                                        \App\Enums\OrderStatus::Cancelled      => ['bg' => 'bg-red-100',     'text' => 'text-red-700',     'icon' => 'heroicon-o-x-circle'],
-                                        \App\Enums\OrderStatus::RefundRequested => ['bg' => 'bg-orange-100', 'text' => 'text-orange-700',  'icon' => 'heroicon-o-arrow-path'],
-                                        \App\Enums\OrderStatus::Refunded       => ['bg' => 'bg-yellow-100',  'text' => 'text-yellow-700',  'icon' => 'heroicon-o-banknotes'],
-                                        default                                => ['bg' => 'bg-gray-100',    'text' => 'text-gray-600',    'icon' => 'heroicon-o-question-mark-circle'],
-                                    };
-                                @endphp
-                                <tr class="hover:bg-gray-50/50 transition-colors">
-                                    <td class="px-6 py-4">
-                                        <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order]) }}"
-                                           class="font-mono font-bold text-navy text-sm hover:text-amber transition-colors">
-                                            {{ $order->order_number }}
-                                        </a>
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-muted">
-                                        {{ $order->created_at->format('M d, Y') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-sm text-navy">
-                                        {{ $order->items->count() }}
-                                    </td>
-                                    <td class="px-6 py-4 font-bold text-navy font-mono text-sm">
-                                        €{{ number_format($order->grand_total, 2) }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold {{ $statusConfig['bg'] }} {{ $statusConfig['text'] }}">
-                                            <x-dynamic-component :component="$statusConfig['icon']" class="w-3.5 h-3.5" />
-                                            {{ $order->status->label() }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order]) }}"
-                                           class="inline-flex items-center gap-1 text-sm text-amber font-semibold hover:text-amber/80 transition-colors">
-                                            View
-                                            <x-heroicon-o-arrow-right class="w-3.5 h-3.5" />
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {{-- ── Pagination ──────────────────────────────────── --}}
-                    @if($orders->hasPages())
-                    <div class="px-6 py-4 border-t border-gray-100">
-                        {{ $orders->links() }}
-                    </div>
-                    @endif
-                </div>
-                @endif
-
+            <h3 class="font-display text-3xl font-extrabold text-ink tracking-[-0.02em]">
+                No orders yet<span class="text-amber">.</span>
+            </h3>
+            <p class="mt-3 text-sm text-ink-muted max-w-md mx-auto leading-relaxed">
+                You haven't placed any orders yet. Start searching for OEM parts and place your first B2B procurement order today.
+            </p>
+            <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="bp-btn-primary mt-8">
+                <x-heroicon-s-magnifying-glass class="w-5 h-5" />
+                Search OEM parts
+            </a>
+        </div>
+    @else
+        {{-- Summary strip --}}
+        <div class="mb-6 border border-ink bg-paper grid grid-cols-3 divide-x divide-rule"
+             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="px-5 py-4">
+                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Total records</p>
+                <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
+                    {{ str_pad((string) $orders->total(), 3, '0', STR_PAD_LEFT) }}
+                </p>
+            </div>
+            <div class="px-5 py-4">
+                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Page</p>
+                <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
+                    {{ $orders->currentPage() }} / {{ max(1, $orders->lastPage()) }}
+                </p>
+            </div>
+            <div class="px-5 py-4">
+                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Showing</p>
+                <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
+                    {{ $orders->count() }}
+                </p>
             </div>
         </div>
-    </div>
-</div>
+
+        {{-- Orders table (desktop) --}}
+        <div class="hidden md:block border border-ink bg-paper overflow-hidden"
+             style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+            <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
+                <span class="bp-spec text-amber-ink">§ Orders · List</span>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">EUR · VAT included</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-ink-tint border-b border-ink">
+                        <tr>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted w-12">#</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Order No.</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Date</th>
+                            <th class="px-5 py-3 text-center font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Items</th>
+                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Total</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Status</th>
+                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-rule">
+                        @foreach($orders as $idx => $order)
+                            @php
+                                $statusBar = match($order->status) {
+                                    \App\Enums\OrderStatus::Delivered        => 'bg-emerald-600',
+                                    \App\Enums\OrderStatus::Shipped          => 'bg-blue-600',
+                                    \App\Enums\OrderStatus::Processing       => 'bg-amber',
+                                    \App\Enums\OrderStatus::Paid             => 'bg-ink',
+                                    \App\Enums\OrderStatus::Pending          => 'bg-ink-muted',
+                                    \App\Enums\OrderStatus::Cancelled        => 'bg-red-600',
+                                    \App\Enums\OrderStatus::RefundRequested  => 'bg-orange-600',
+                                    \App\Enums\OrderStatus::Refunded         => 'bg-amber-ink',
+                                    default                                  => 'bg-ink-muted',
+                                };
+                                $rowNum = ($orders->firstItem() ?? 1) + $idx;
+                            @endphp
+                            <tr class="hover:bg-ivory-alt transition-colors">
+                                <td class="px-5 py-4 font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted">
+                                    {{ str_pad((string) $rowNum, 3, '0', STR_PAD_LEFT) }}
+                                </td>
+                                <td class="px-5 py-4">
+                                    <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order]) }}"
+                                       class="font-mono text-sm font-bold text-ink tabular-nums hover:text-amber-ink transition-colors">
+                                        {{ $order->order_number }}
+                                    </a>
+                                </td>
+                                <td class="px-5 py-4 font-mono text-xs text-ink-muted tabular-nums">
+                                    {{ $order->created_at->format('Y-m-d') }}
+                                </td>
+                                <td class="px-5 py-4 text-center font-mono text-sm text-ink tabular-nums">
+                                    {{ $order->items->count() }}
+                                </td>
+                                <td class="px-5 py-4 text-right font-mono text-sm font-bold text-ink tabular-nums">
+                                    €{{ number_format((float) $order->grand_total, 2) }}
+                                </td>
+                                <td class="px-5 py-4">
+                                    <span class="inline-flex items-center gap-2">
+                                        <span class="inline-block w-1.5 h-3 {{ $statusBar }}"></span>
+                                        <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink">
+                                            {{ $order->status->label() }}
+                                        </span>
+                                    </span>
+                                </td>
+                                <td class="px-5 py-4 text-right">
+                                    <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order]) }}"
+                                       class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
+                                              border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
+                                        View
+                                        <x-heroicon-s-arrow-long-right class="w-3 h-3" />
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            @if($orders->hasPages())
+                <div class="px-5 py-4 border-t border-ink bg-ivory-alt">
+                    {{ $orders->links() }}
+                </div>
+            @endif
+        </div>
+
+        {{-- Orders cards (mobile) --}}
+        <div class="md:hidden space-y-4">
+            @foreach($orders as $order)
+                @php
+                    $statusBar = match($order->status) {
+                        \App\Enums\OrderStatus::Delivered        => 'bg-emerald-600',
+                        \App\Enums\OrderStatus::Shipped          => 'bg-blue-600',
+                        \App\Enums\OrderStatus::Processing       => 'bg-amber',
+                        \App\Enums\OrderStatus::Paid             => 'bg-ink',
+                        \App\Enums\OrderStatus::Pending          => 'bg-ink-muted',
+                        \App\Enums\OrderStatus::Cancelled        => 'bg-red-600',
+                        \App\Enums\OrderStatus::RefundRequested  => 'bg-orange-600',
+                        \App\Enums\OrderStatus::Refunded         => 'bg-amber-ink',
+                        default                                  => 'bg-ink-muted',
+                    };
+                @endphp
+                <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order]) }}"
+                   class="block border border-ink bg-paper p-5 hover:bg-ivory-alt transition-colors"
+                   style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                            <p class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</p>
+                            <p class="mt-1 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
+                                {{ $order->created_at->format('Y-m-d') }}
+                            </p>
+                        </div>
+                        <span class="inline-flex items-center gap-2 shrink-0">
+                            <span class="inline-block w-1.5 h-3 {{ $statusBar }}"></span>
+                            <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink">
+                                {{ $order->status->label() }}
+                            </span>
+                        </span>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-3 pt-3 border-t border-rule">
+                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                            {{ $order->items->count() }} items
+                        </span>
+                        <span class="font-mono text-lg font-medium text-ink tabular-nums">
+                            €{{ number_format((float) $order->grand_total, 2) }}
+                        </span>
+                    </div>
+                </a>
+            @endforeach
+
+            @if($orders->hasPages())
+                <div class="pt-2">{{ $orders->links() }}</div>
+            @endif
+        </div>
+    @endif
+</x-account.shell>
 @endsection

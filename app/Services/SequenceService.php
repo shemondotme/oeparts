@@ -48,6 +48,16 @@ class SequenceService
     private function next(SequenceType $type): string
     {
         return DB::transaction(function () use ($type) {
+            // Ensure a row exists the first time this sequence type is used.
+            Sequence::firstOrCreate(
+                ['type' => $type],
+                [
+                    'current_value'    => 0,
+                    'resets_monthly'   => $type !== SequenceType::Rma,
+                    'last_reset_month' => null,
+                ]
+            );
+
             /** @var Sequence $sequence */
             $sequence = Sequence::where('type', $type)->lockForUpdate()->firstOrFail();
 

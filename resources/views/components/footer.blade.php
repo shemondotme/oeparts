@@ -1,17 +1,18 @@
 @php
-    $lang      = app()->getLocale();
-    $siteName  = settings('general.site_name', 'OEMHub');
-    $tagline   = settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe. Fast search, fair prices, verified sellers.');
-    $phone     = settings('contact.phone', '');
-    $email     = settings('contact.email', '');
-    $facebook  = settings('contact.facebook_url', '');
-    $linkedin  = settings('contact.linkedin_url', '');
-    $year      = date('Y');
-    // Language switch URL — preserves current page
+    $lang     = app()->getLocale();
+    $siteName = settings('general.site_name', 'OEMHub');
+    $tagline  = settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.');
+    $phone    = settings('contact.phone', '');
+    $email    = settings('contact.email', '');
+    $hours    = settings('contact.business_hours', 'MON–FRI · 09:00–18:00 CET');
+    $facebook = settings('contact.facebook_url', '');
+    $linkedin = settings('contact.linkedin_url', '');
+    $year     = date('Y');
+
     $langSwitchUrl = function($code) {
         $route = request()->route();
         if (!$route || !$route->getName()) {
-            return "/{$code}/";
+            return url('/'.$code.'/');
         }
         $params = $route->parameters();
         $params['lang'] = $code;
@@ -20,213 +21,298 @@
         } catch (\Exception $e) {
             $path = request()->path();
             $newPath = preg_replace('#^(en|de|lt|fr|es)(/|$)#', $code . '$2', $path);
-            return '/' . $newPath;
+            return url('/'.$newPath);
         }
     };
 @endphp
 
-<footer class="relative bg-gradient-to-b from-navy via-navy to-blue-950 text-white mt-16 overflow-hidden">
+{{-- ══════════════════════════════════════════════════════════════════════
+     INDUSTRIAL BLUEPRINT FOOTER
+     Document colophon — technical, authoritative, spec-sheet closing page
+     ══════════════════════════════════════════════════════════════════ --}}
+<footer x-data class="relative bg-ink text-ivory overflow-hidden" role="contentinfo">
 
-    {{-- Decorative background elements --}}
-    <div class="absolute inset-0 opacity-20 pointer-events-none">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-amber/10 rounded-full filter blur-3xl"></div>
-        <div class="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full filter blur-3xl"></div>
-    </div>
+    {{-- Blueprint grid texture --}}
+    <div class="absolute inset-0 bg-grid-navy bg-grid-md opacity-60 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16">
+    <div class="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6">
 
-        {{-- Main Footer Grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+        {{-- ═══ Colophon header strip ═══ --}}
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-10 py-12 border-b border-white/15">
 
-            {{-- Brand column --}}
-            <div>
-                {{-- Text Logo --}}
-                <a href="/{{ $lang }}/" class="flex items-center gap-2.5 mb-5 group w-fit">
-                    <div class="shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br from-amber to-orange-500 flex items-center justify-center shadow-lg shadow-amber/20 group-hover:shadow-amber/40 group-hover:scale-105 transition-all duration-300">
-                        <x-heroicon-s-wrench-screwdriver class="w-4 h-4 text-navy" />
-                    </div>
-                    <p class="font-display font-extrabold text-2xl tracking-tight leading-none">
-                        <span class="text-amber">OEM</span><span class="text-white">Hub</span>
+            {{-- Brand monogram + tagline --}}
+            <div class="flex items-start gap-6 max-w-2xl">
+                {{-- Monogram mark --}}
+                <div class="relative shrink-0 hidden sm:block">
+                    <svg viewBox="0 0 60 60" class="w-16 h-16" aria-hidden="true">
+                        <path d="M30 3 L53 16 L53 44 L30 57 L7 44 L7 16 Z" fill="#F59E0B"/>
+                        <path d="M30 13 L44.5 21.5 L44.5 38.5 L30 47 L15.5 38.5 L15.5 21.5 Z" fill="#0B1A29"/>
+                        <path d="M30 18 L30 42 M18 30 L42 30" stroke="#F4EFE1" stroke-width="2.5" stroke-linecap="square"/>
+                        <circle cx="30" cy="30" r="3.2" fill="#F59E0B"/>
+                    </svg>
+                    <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-ivory"></span>
+                </div>
+
+                <div class="min-w-0">
+                    <p class="bp-spec-light mb-3">§ 99 · COLOPHON · OEMHUB/EU</p>
+                    <h2 class="font-display text-4xl sm:text-5xl font-extrabold tracking-[-0.03em] leading-[0.95]">
+                        {{ $siteName }}<span class="text-amber">.</span>
+                    </h2>
+                    <p class="mt-4 text-[14px] text-white/70 leading-relaxed">
+                        {{ $tagline }}
                     </p>
-                </a>
-                <p class="text-sm text-white/60 leading-relaxed mb-6 max-w-sm">
-                    The central hub for genuine OEM auto parts in Europe. Fast search, fair prices, verified sellers.
-                </p>
-
-                {{-- Payment Methods --}}
-                <div>
-                    <p class="text-xs font-semibold text-white/40 uppercase tracking-wider mb-3">WE ACCEPT</p>
-                    <div class="flex flex-wrap gap-2">
-                        <div class="px-3 py-1.5 bg-white/10 rounded-md border border-white/10">
-                            <span class="text-xs font-bold text-white/80">VISA</span>
-                        </div>
-                        <div class="px-3 py-1.5 bg-white/10 rounded-md border border-white/10">
-                            <span class="text-xs font-bold text-white/80">Mastercard</span>
-                        </div>
-                        <div class="px-3 py-1.5 bg-white/10 rounded-md border border-white/10">
-                            <span class="text-xs font-bold text-white/80">PayPal</span>
-                        </div>
-                        <div class="px-3 py-1.5 bg-white/10 rounded-md border border-white/10">
-                            <span class="text-xs font-bold text-white/80">Apple Pay</span>
-                        </div>
-                    </div>
+                    <p class="mt-4 inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.24em] uppercase text-ivory/50">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 inline-block"></span>
+                        Operational · {{ preg_replace('/\s+·\s+/', ' ', $hours) }}
+                    </p>
                 </div>
             </div>
 
-            {{-- Quick Links column --}}
-            <div>
-                <h3 class="text-xs font-bold text-amber uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span class="w-0.5 h-4 bg-amber"></span>
-                    QUICK LINKS
-                </h3>
-                <ul class="space-y-2 text-sm">
-                    <li><a href="/{{ $lang }}/" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        Search OEM Parts
-                    </a></li>
-                    <li><a href="/{{ $lang }}/brand/" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        Browse by Brand
-                    </a></li>
-                    <li><a href="/{{ $lang }}/blog/" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        Blog
-                    </a></li>
-                    <li><a href="/{{ $lang }}/contact" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        Contact Us
-                    </a></li>
+            {{-- Inline stats — spec ledger --}}
+            <dl class="grid grid-cols-3 gap-0 border-l border-white/15 divide-x divide-white/15 shrink-0">
+                <div class="px-5 py-2">
+                    <dt class="bp-spec-light">Parts</dt>
+                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">1M<span class="text-base align-top">+</span></dd>
+                </div>
+                <div class="px-5 py-2">
+                    <dt class="bp-spec-light">Countries</dt>
+                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">27</dd>
+                </div>
+                <div class="px-5 py-2">
+                    <dt class="bp-spec-light">Languages</dt>
+                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">05</dd>
+                </div>
+            </dl>
+        </div>
+
+        {{-- ═══ Main 4-column grid ═══ --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 border-b border-white/15">
+
+            {{-- Column 1 — Catalogue --}}
+            <div class="sm:border-r border-white/15 py-10 sm:pr-8 lg:pr-10">
+                <div class="flex items-baseline gap-3 mb-5">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§01</span>
+                    <h3 class="bp-spec-light">Catalogue</h3>
+                </div>
+                <ul class="space-y-3">
+                    @foreach([
+                        [route('frontend.search.console', ['lang' => $lang]), 'Search by OEM'],
+                        [url('/'.$lang.'/brands'),  'Browse Brands'],
+                        [url('/'.$lang.'/blog'),    'Journal'],
+                        [url('/'.$lang.'/contact'), 'Contact'],
+                    ] as [$href, $label])
+                        <li>
+                            <a href="{{ $href }}"
+                               class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
+                                <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
+                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ $label }}</span>
+                            </a>
+                        </li>
+                    @endforeach
                 </ul>
             </div>
 
-            {{-- Account column --}}
-            <div>
-                <h3 class="text-xs font-bold text-amber uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span class="w-0.5 h-4 bg-amber"></span>
-                    MY ACCOUNT
-                </h3>
-                <ul class="space-y-2 text-sm">
+            {{-- Column 2 — Account --}}
+            <div class="lg:border-r border-white/15 py-10 sm:pl-8 lg:pr-10 lg:pl-10 border-t sm:border-t-0">
+                <div class="flex items-baseline gap-3 mb-5">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§02</span>
+                    <h3 class="bp-spec-light">Account</h3>
+                </div>
+                <ul class="space-y-3">
                     @auth
-                    <li><a href="/{{ $lang }}/account/dashboard" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        My Account
-                    </a></li>
-                    <li><a href="/{{ $lang }}/account/orders" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        My Orders
-                    </a></li>
-                    <li><a href="/{{ $lang }}/account/addresses" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        My Addresses
-                    </a></li>
+                        @foreach([
+                            [url('/'.$lang.'/account/dashboard'), 'Dashboard'],
+                            [url('/'.$lang.'/account/orders'),    'Orders'],
+                            [url('/'.$lang.'/account/addresses'), 'Addresses'],
+                            [url('/'.$lang.'/account/refunds'),   'Refunds'],
+                        ] as [$href, $label])
+                            <li>
+                                <a href="{{ $href }}" class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
+                                    <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
+                                    <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ $label }}</span>
+                                </a>
+                            </li>
+                        @endforeach
                     @else
-                    <li>
-                        <button @click="$dispatch('open-auth-modal')" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                            <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                            Sign In
-                        </button>
-                    </li>
-                    <li>
-                        <button @click="$dispatch('open-auth-modal', { tab: 'register' })" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                            <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                            Create Account
-                        </button>
-                    </li>
+                        <li>
+                            <a href="{{ url('/'.$lang.'/?auth=signin') }}#signin"
+                               @click.prevent="$dispatch('open-auth-modal')"
+                               class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
+                                <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
+                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">Sign in</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ url('/'.$lang.'/?auth=register') }}#register"
+                               @click.prevent="$dispatch('open-auth-modal', { tab: 'register' })"
+                               class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
+                                <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
+                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">Register</span>
+                            </a>
+                        </li>
                     @endauth
-                    <li><a href="/{{ $lang }}/cart" class="text-white/60 hover:text-amber transition-colors duration-200 flex items-center gap-2">
-                        <span class="w-1 h-1 rounded-full bg-white/40"></span>
-                        Shopping Cart
-                    </a></li>
+                    <li>
+                        <a href="{{ url('/'.$lang.'/cart') }}" class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
+                            <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
+                            <span class="border-b border-transparent group-hover:border-amber pb-[1px]">Basket</span>
+                        </a>
+                    </li>
                 </ul>
             </div>
 
-            {{-- Contact column --}}
-            <div>
-                <h3 class="text-xs font-bold text-amber uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <span class="w-0.5 h-4 bg-amber"></span>
-                    GET IN TOUCH
-                </h3>
-                <ul class="space-y-4 text-sm">
-                    <li>
-                        <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}" class="group flex items-start gap-3">
-                            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                                <x-heroicon-o-phone class="w-4 h-4 text-amber" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-white/40 uppercase font-semibold mb-0.5">CALL US</p>
-                                <p class="text-white/80 font-mono">{{ $phone ?: '+370 600 00000' }}</p>
-                            </div>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="mailto:{{ $email }}" class="group flex items-start gap-3">
-                            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
-                                <x-heroicon-o-envelope class="w-4 h-4 text-amber" />
-                            </div>
-                            <div>
-                                <p class="text-xs text-white/40 uppercase font-semibold mb-0.5">EMAIL US</p>
-                                <p class="text-white/80">{{ $email ?: 'info@oemhub.eu' }}</p>
-                            </div>
-                        </a>
-                    </li>
-                </ul>
+            {{-- Column 3 — Contact spec-sheet --}}
+            <div class="sm:border-r border-white/15 py-10 sm:pr-8 lg:pr-10 lg:pl-10 border-t lg:border-t-0">
+                <div class="flex items-baseline gap-3 mb-5">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§03</span>
+                    <h3 class="bp-spec-light">Contact</h3>
+                </div>
 
-                {{-- Language links with improved styling --}}
-                <div class="mt-8">
-                    <h3 class="text-xs font-bold text-white/40 uppercase tracking-wider mb-4">LANGUAGE</h3>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach(['en' => 'EN', 'de' => 'DE', 'lt' => 'LT', 'fr' => 'FR', 'es' => 'ES'] as $code => $label)
-                        <a
-                            href="{{ $langSwitchUrl($code) }}"
-                            class="text-xs px-4 py-2.5 min-h-[44px] rounded-xl font-bold transition-all duration-300
-                                   {{ $code === $lang
-                                      ? 'bg-gradient-to-r from-amber to-orange-500 text-navy shadow-lg shadow-amber/30 scale-105'
-                                      : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white hover:scale-105' }}"
-                        >
+                <dl class="space-y-4 text-sm">
+                    <div>
+                        <dt class="bp-spec-light text-[9px]">Phone</dt>
+                        <dd class="mt-1">
+                            <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
+                               class="font-mono text-ivory hover:text-amber transition-colors tabular-nums">
+                                {{ $phone ?: '+370 600 00000' }}
+                            </a>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="bp-spec-light text-[9px]">Email</dt>
+                        <dd class="mt-1">
+                            <a href="mailto:{{ $email }}"
+                               class="text-ivory hover:text-amber transition-colors">
+                                {{ $email ?: 'info@oemhub.eu' }}
+                            </a>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt class="bp-spec-light text-[9px]">Hours</dt>
+                        <dd class="mt-1 font-mono text-ivory/80 text-[13px]">{{ $hours }}</dd>
+                    </div>
+                </dl>
+
+                @if($facebook || $linkedin)
+                <div class="mt-6 flex gap-2">
+                    @if($facebook)
+                    <a href="{{ $facebook }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center w-9 h-9 border border-white/30 hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       aria-label="Facebook">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+                    </a>
+                    @endif
+                    @if($linkedin)
+                    <a href="{{ $linkedin }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center w-9 h-9 border border-white/30 hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       aria-label="LinkedIn">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/></svg>
+                    </a>
+                    @endif
+                </div>
+                @endif
+            </div>
+
+            {{-- Column 4 — Languages + payments --}}
+            <div class="py-10 sm:pl-8 lg:pl-10 border-t sm:border-t-0">
+                <div class="flex items-baseline gap-3 mb-5">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§04</span>
+                    <h3 class="bp-spec-light">Languages</h3>
+                </div>
+
+                <div class="grid grid-cols-5 gap-1 mb-8">
+                    @foreach(['en' => 'EN', 'de' => 'DE', 'lt' => 'LT', 'fr' => 'FR', 'es' => 'ES'] as $code => $label)
+                        <a href="{{ $langSwitchUrl($code) }}"
+                           class="inline-flex items-center justify-center h-10 font-mono text-[11px] font-bold tracking-[0.14em]
+                                  border transition-colors
+                                  {{ $code === $lang
+                                      ? 'bg-amber text-ink border-amber'
+                                      : 'bg-transparent text-ivory/70 border-white/20 hover:border-amber hover:text-amber' }}">
                             {{ $label }}
                         </a>
-                        @endforeach
-                    </div>
+                    @endforeach
+                </div>
+
+                <p class="bp-spec-light mb-3">Payments</p>
+                <div class="flex flex-wrap gap-1.5">
+                    @foreach(['VISA', 'MASTERCARD', 'STRIPE', 'APPLE PAY', 'GOOGLE PAY', 'SEPA'] as $method)
+                        <span class="inline-flex items-center h-8 px-3 border border-white/25 font-mono text-[10px] font-bold tracking-[0.16em] text-ivory/80 whitespace-nowrap">
+                            {{ $method }}
+                        </span>
+                    @endforeach
                 </div>
             </div>
         </div>
 
-        {{-- Trust signals row --}}
-        <div class="border-t border-white/10 py-8 flex flex-wrap items-center justify-center gap-6">
-            <span class="flex items-center gap-2.5 text-sm text-white/60">
-                <div class="w-8 h-8 rounded bg-amber/20 flex items-center justify-center">
-                    <x-heroicon-s-lock-closed class="w-4 h-4 text-amber" />
+        {{-- ═══ Trust row — technical badges ═══ --}}
+        <div class="grid grid-cols-2 md:grid-cols-4 border-b border-white/15 divide-x divide-white/15">
+            <div class="flex items-start gap-3 p-5">
+                <div class="w-8 h-8 border border-amber/60 flex items-center justify-center shrink-0 mt-0.5">
+                    <x-heroicon-s-lock-closed class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
-                Secure Checkout
-            </span>
-            <span class="flex items-center gap-2.5 text-sm text-white/60">
-                <div class="w-8 h-8 rounded bg-amber/20 flex items-center justify-center">
-                    <x-heroicon-o-truck class="w-4 h-4 text-amber" />
+                <div class="min-w-0">
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">SSL Encrypted</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">TLS 1.3</p>
                 </div>
-                EU-Wide Shipping
-            </span>
-            <span class="flex items-center gap-2.5 text-sm text-white/60">
-                <div class="w-8 h-8 rounded bg-amber/20 flex items-center justify-center">
-                    <x-heroicon-o-arrow-path class="w-4 h-4 text-amber" />
+            </div>
+            <div class="flex items-start gap-3 p-5">
+                <div class="w-8 h-8 border border-amber/60 flex items-center justify-center shrink-0 mt-0.5">
+                    <x-heroicon-o-truck class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
-                14-Day Returns
-            </span>
-            <span class="flex items-center gap-2.5 text-sm text-white/60">
-                <div class="w-8 h-8 rounded bg-amber/20 flex items-center justify-center">
-                    <x-heroicon-s-shield-check class="w-4 h-4 text-amber" />
+                <div class="min-w-0">
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">EU-Wide Despatch</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">DHL · DPD · GLS</p>
                 </div>
-                Genuine OEM Only
-            </span>
+            </div>
+            <div class="flex items-start gap-3 p-5">
+                <div class="w-8 h-8 border border-amber/60 flex items-center justify-center shrink-0 mt-0.5">
+                    <x-heroicon-o-arrow-path class="w-4 h-4 text-amber" aria-hidden="true" />
+                </div>
+                <div class="min-w-0">
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">Return Window</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">14 Days</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3 p-5">
+                <div class="w-8 h-8 border border-amber/60 flex items-center justify-center shrink-0 mt-0.5">
+                    <x-heroicon-s-shield-check class="w-4 h-4 text-amber" aria-hidden="true" />
+                </div>
+                <div class="min-w-0">
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">Genuine OEM</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">Verified Source</p>
+                </div>
+            </div>
         </div>
 
-        {{-- Bottom bar --}}
-        <div class="border-t border-white/10 pt-8 flex flex-col lg:flex-row items-center justify-between gap-4 text-xs text-white/40">
-            <p>© {{ $year }} {{ $siteName }}. All rights reserved.</p>
-            <div class="flex flex-wrap gap-6">
-                <a href="/{{ $lang }}/privacy-policy" class="hover:text-amber transition-colors duration-200">Privacy Policy</a>
-                <a href="/{{ $lang }}/terms-of-service" class="hover:text-amber transition-colors duration-200">Terms of Service</a>
-                <a href="/{{ $lang }}/cookie-policy" class="hover:text-amber transition-colors duration-200">Cookies</a>
+        {{-- ═══ Oversize wordmark stamp ═══ --}}
+        <div class="relative py-10 overflow-hidden border-b border-white/15">
+            <p aria-hidden="true"
+               class="select-none pointer-events-none font-display font-extrabold tracking-[-0.05em] leading-[0.78]
+                      text-[clamp(3.5rem,13vw,11rem)] text-ivory/[0.06]">
+                OEMHUB<span class="text-amber/20">.</span>
+            </p>
+            {{-- Floating meta --}}
+            <div class="absolute inset-0 flex items-center justify-between px-0 pointer-events-none">
+                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ivory/60">§100 · SIGN-OFF</span>
+                <span class="hidden md:inline font-mono text-[10px] tracking-[0.28em] uppercase text-ivory/60">
+                    GENUINE OEM · EU-WIDE
+                </span>
             </div>
+        </div>
+
+        {{-- ═══ Colophon footer ═══ --}}
+        <div class="py-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">©</span>
+                <span class="font-mono text-[11px] text-ivory/50 tracking-[0.12em] uppercase tabular-nums">
+                    {{ $year }} · {{ strtoupper($siteName) }} · ALL RIGHTS RESERVED
+                </span>
+            </div>
+            <nav class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.18em]" aria-label="Legal">
+                <a href="{{ url('/'.$lang.'/privacy-policy') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Privacy</a>
+                <a href="{{ url('/'.$lang.'/terms-of-service') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Terms</a>
+                <a href="{{ url('/'.$lang.'/cookie-policy') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Cookies</a>
+                <a href="{{ route('frontend.sitemap', ['lang' => $lang]) }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Sitemap</a>
+            </nav>
         </div>
     </div>
 </footer>

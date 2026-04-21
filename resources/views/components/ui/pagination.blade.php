@@ -1,101 +1,140 @@
 @if ($paginator->hasPages())
-    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}" class="flex items-center justify-between">
-        {{-- Mobile pagination --}}
-        <div class="flex justify-between flex-1 sm:hidden">
+    {{-- ══════════════════════════════════════════════════════════════
+         INDUSTRIAL BLUEPRINT — Pagination Ledger
+         ══════════════════════════════════════════════════════════════ --}}
+    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}"
+         class="border border-ink bg-paper">
+
+        {{-- ─── Mobile ─── --}}
+        <div class="flex items-center sm:hidden">
             @if ($paginator->onFirstPage())
-                <span class="relative inline-flex items-center px-4 py-2.5 text-sm font-semibold text-slate-400 bg-white border border-slate-200 cursor-default rounded-xl">
+                <span class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-r border-rule
+                             font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-ink-muted/50 bg-ivory-alt cursor-not-allowed">
+                    <x-heroicon-s-arrow-long-left class="w-4 h-4" />
                     {!! __('pagination.previous') !!}
                 </span>
             @else
-                <a href="{{ $paginator->previousPageUrl() }}" class="relative inline-flex items-center px-4 py-2.5 text-sm font-semibold text-navy bg-white border border-slate-200 hover:bg-navy/5 hover:border-navy/30 rounded-xl transition-all duration-200">
+                <a href="{{ $paginator->previousPageUrl() }}"
+                   class="flex-1 flex items-center justify-center gap-2 px-4 py-3 border-r border-rule
+                          font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-ink
+                          hover:bg-ink hover:text-ivory transition-colors">
+                    <x-heroicon-s-arrow-long-left class="w-4 h-4" />
                     {!! __('pagination.previous') !!}
                 </a>
             @endif
 
+            <span class="px-4 py-3 font-mono text-[11px] font-bold tabular-nums tracking-[0.18em] uppercase text-ink border-r border-rule bg-ivory-alt">
+                {{ $paginator->currentPage() }} <span class="text-ink-muted">/ {{ $paginator->lastPage() }}</span>
+            </span>
+
             @if ($paginator->hasMorePages())
-                <a href="{{ $paginator->nextPageUrl() }}" class="relative inline-flex items-center px-4 py-2.5 ml-3 text-sm font-semibold text-navy bg-white border border-slate-200 hover:bg-navy/5 hover:border-navy/30 rounded-xl transition-all duration-200">
+                <a href="{{ $paginator->nextPageUrl() }}"
+                   class="flex-1 flex items-center justify-center gap-2 px-4 py-3
+                          font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-ink
+                          hover:bg-ink hover:text-ivory transition-colors">
                     {!! __('pagination.next') !!}
+                    <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                 </a>
             @else
-                <span class="relative inline-flex items-center px-4 py-2.5 ml-3 text-sm font-semibold text-slate-400 bg-white border border-slate-200 cursor-default rounded-xl">
+                <span class="flex-1 flex items-center justify-center gap-2 px-4 py-3
+                             font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-ink-muted/50 bg-ivory-alt cursor-not-allowed">
                     {!! __('pagination.next') !!}
+                    <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                 </span>
             @endif
         </div>
 
-        {{-- Desktop pagination --}}
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
-                <p class="text-sm text-muted">
-                    {!! __('Showing') !!}
+        {{-- ─── Desktop ─── --}}
+        <div class="hidden sm:flex items-stretch justify-between">
+
+            {{-- Range readout --}}
+            <div class="flex items-center gap-4 px-5 border-r border-rule bg-ivory-alt min-w-[260px]">
+                <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber-ink">§ Range</span>
+                <p class="font-mono text-[11px] tabular-nums tracking-[0.08em] uppercase text-ink-muted">
                     @if ($paginator->firstItem())
-                        <span class="font-bold text-navy">{{ $paginator->firstItem() }}</span>
-                        {!! __('to') !!}
-                        <span class="font-bold text-navy">{{ $paginator->lastItem() }}</span>
+                        <span class="text-ink font-bold">{{ str_pad($paginator->firstItem(), 3, '0', STR_PAD_LEFT) }}</span>
+                        <span class="text-ink-muted/60">—</span>
+                        <span class="text-ink font-bold">{{ str_pad($paginator->lastItem(), 3, '0', STR_PAD_LEFT) }}</span>
+                        <span class="text-ink-muted/60 mx-1">/</span>
+                        <span class="text-ink font-bold">{{ $paginator->total() }}</span>
                     @else
-                        {{ $paginator->count() }}
+                        <span class="text-ink font-bold">{{ $paginator->count() }}</span>
                     @endif
-                    {!! __('of') !!}
-                    <span class="font-bold text-navy">{{ $paginator->total() }}</span>
-                    {!! __('results') !!}
                 </p>
             </div>
 
-            <div>
-                <span class="relative z-0 inline-flex items-center gap-1.5 rounded-xl">
-                    {{-- Previous Page Link --}}
-                    @if ($paginator->onFirstPage())
-                        <span aria-disabled="true" aria-label="{{ __('pagination.previous') }}">
-                            <span class="relative inline-flex items-center px-3 py-2.5 text-sm font-medium text-slate-400 bg-white border border-slate-200 cursor-default rounded-xl" aria-hidden="true">
-                                <x-heroicon-o-chevron-left class="w-5 h-5" />
-                            </span>
-                        </span>
-                    @else
-                        <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="relative inline-flex items-center px-3 py-2.5 text-sm font-medium text-navy bg-white border border-slate-200 hover:bg-navy/5 hover:border-navy/30 rounded-xl transition-all duration-200" aria-label="{{ __('pagination.previous') }}">
-                            <x-heroicon-o-chevron-left class="w-5 h-5" />
-                        </a>
-                    @endif
+            {{-- Page tiles --}}
+            <div class="flex items-stretch">
 
-                    {{-- Pagination Elements --}}
-                    @foreach ($elements as $element)
-                        {{-- "Three Dots" Separator --}}
-                        @if (is_string($element))
-                            <span aria-disabled="true">
-                                <span class="relative inline-flex items-center px-2 py-2.5 text-sm font-medium text-slate-400 bg-white border border-slate-200 cursor-default">{{ $element }}</span>
-                            </span>
-                        @endif
+                {{-- Previous --}}
+                @if ($paginator->onFirstPage())
+                    <span aria-disabled="true" aria-label="{{ __('pagination.previous') }}"
+                          class="inline-flex items-center justify-center w-12 border-l border-rule
+                                 font-mono text-[11px] text-ink-muted/40 bg-ivory-alt cursor-not-allowed">
+                        <x-heroicon-s-chevron-left class="w-4 h-4" />
+                    </span>
+                @else
+                    <a href="{{ $paginator->previousPageUrl() }}" rel="prev"
+                       class="inline-flex items-center justify-center w-12 border-l border-rule
+                              font-mono text-[11px] text-ink bg-paper
+                              hover:bg-ink hover:text-ivory transition-colors"
+                       aria-label="{{ __('pagination.previous') }}">
+                        <x-heroicon-s-chevron-left class="w-4 h-4" />
+                    </a>
+                @endif
 
-                        {{-- Array Of Links --}}
-                        @if (is_array($element))
-                            @foreach ($element as $page => $url)
-                                @if ($page == $paginator->currentPage())
-                                    <span aria-current="page">
-                                        <span class="relative inline-flex items-center px-4 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-navy to-blue-900 border border-navy cursor-default rounded-xl">
-                                            {{ $page }}
-                                        </span>
-                                    </span>
-                                @else
-                                    <a href="{{ $url }}" class="relative inline-flex items-center px-4 py-2.5 text-sm font-semibold text-navy bg-white border border-slate-200 hover:bg-navy/5 hover:border-navy/30 rounded-xl transition-all duration-200" aria-label="{{ __('Go to page :page', ['page' => $page]) }}">
-                                        {{ $page }}
-                                    </a>
-                                @endif
-                            @endforeach
-                        @endif
-                    @endforeach
-
-                    {{-- Next Page Link --}}
-                    @if ($paginator->hasMorePages())
-                        <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="relative inline-flex items-center px-3 py-2.5 text-sm font-medium text-navy bg-white border border-slate-200 hover:bg-navy/5 hover:border-navy/30 rounded-xl transition-all duration-200" aria-label="{{ __('pagination.next') }}">
-                            <x-heroicon-o-chevron-right class="w-5 h-5" />
-                        </a>
-                    @else
-                        <span aria-disabled="true" aria-label="{{ __('pagination.next') }}">
-                            <span class="relative inline-flex items-center px-3 py-2.5 text-sm font-medium text-slate-400 bg-white border border-slate-200 cursor-default rounded-xl" aria-hidden="true">
-                                <x-heroicon-o-chevron-right class="w-5 h-5" />
-                            </span>
+                {{-- Page number elements --}}
+                @foreach ($elements as $element)
+                    @if (is_string($element))
+                        <span aria-disabled="true"
+                              class="inline-flex items-center justify-center w-10 border-l border-rule
+                                     font-mono text-[11px] font-bold tabular-nums text-ink-muted/60 bg-paper cursor-default">
+                            {{ $element }}
                         </span>
                     @endif
-                </span>
+
+                    @if (is_array($element))
+                        @foreach ($element as $page => $url)
+                            @php
+                                $pageLabel = str_pad((string) $page, 2, '0', STR_PAD_LEFT);
+                                $isCurrent = $page == $paginator->currentPage();
+                            @endphp
+                            @if ($isCurrent)
+                                <span aria-current="page"
+                                      class="relative inline-flex items-center justify-center w-12 border-l border-ink
+                                             font-mono text-[13px] font-bold tabular-nums text-ivory bg-ink cursor-default">
+                                    {{ $pageLabel }}
+                                    <span class="absolute -top-[2px] left-1/2 -translate-x-1/2 w-6 h-[2px] bg-amber" aria-hidden="true"></span>
+                                </span>
+                            @else
+                                <a href="{{ $url }}"
+                                   class="inline-flex items-center justify-center w-12 border-l border-rule
+                                          font-mono text-[13px] font-bold tabular-nums text-ink bg-paper
+                                          hover:bg-ink hover:text-ivory transition-colors"
+                                   aria-label="{{ __('Go to page :page', ['page' => $page]) }}">
+                                    {{ $pageLabel }}
+                                </a>
+                            @endif
+                        @endforeach
+                    @endif
+                @endforeach
+
+                {{-- Next --}}
+                @if ($paginator->hasMorePages())
+                    <a href="{{ $paginator->nextPageUrl() }}" rel="next"
+                       class="inline-flex items-center justify-center w-12 border-l border-rule
+                              font-mono text-[11px] text-ink bg-paper
+                              hover:bg-ink hover:text-ivory transition-colors"
+                       aria-label="{{ __('pagination.next') }}">
+                        <x-heroicon-s-chevron-right class="w-4 h-4" />
+                    </a>
+                @else
+                    <span aria-disabled="true" aria-label="{{ __('pagination.next') }}"
+                          class="inline-flex items-center justify-center w-12 border-l border-rule
+                                 font-mono text-[11px] text-ink-muted/40 bg-ivory-alt cursor-not-allowed">
+                        <x-heroicon-s-chevron-right class="w-4 h-4" />
+                    </span>
+                @endif
             </div>
         </div>
     </nav>

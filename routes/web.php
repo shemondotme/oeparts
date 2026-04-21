@@ -30,6 +30,7 @@ use App\Http\Controllers\Frontend\ResetPasswordController;
 use App\Http\Controllers\Frontend\AccountController;
 use App\Http\Controllers\Frontend\BlogController;
 use App\Http\Controllers\Frontend\ContactController;
+use App\Http\Controllers\Frontend\SitemapController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\WebhookController;
 use App\Http\Controllers\RobotsController;
@@ -62,6 +63,32 @@ Route::get('/robots.txt', [RobotsController::class, 'index'])
 // Public health check (unauthenticated, for uptime monitoring)
 Route::get('/health', HealthController::class)
     ->name('health');
+
+/*
+|--------------------------------------------------------------------------
+| DEV-ONLY · Design preview routes for error pages
+|--------------------------------------------------------------------------
+| Only registered when APP_DEBUG=true. Lets designers/devs preview the
+| rendered 429 and 503 (maintenance) views without triggering the real
+| throttle or enabling maintenance mode globally. Safe to remove later.
+*/
+if (config('app.debug')) {
+    Route::get('/_preview/429', function () {
+        throw new \Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException(
+            45,
+            'Preview of the 429 throttle page — dev mode only.'
+        );
+    });
+
+    Route::get('/_preview/maintenance', function () {
+        return response()->view('errors.maintenance', [
+            'message'           => settings('maintenance.message', ['en' => "We're performing scheduled maintenance. We'll be back shortly."]),
+            'estimatedBackAt'   => settings('maintenance.estimated_back_at', now()->addHours(2)->toDateTimeString()),
+            'showEstimatedTime' => true,
+            'contactEmail'      => settings('maintenance.contact_email', settings('general.contact_email', 'support@oemhub.eu')),
+        ], 503);
+    });
+}
 
 // Installer routes (Sprint 18)
 require __DIR__.'/installer.php';
@@ -111,6 +138,10 @@ Route::prefix('{lang}')
             Route::delete('/account', [AccountController::class, 'destroy'])->name('frontend.account.delete');
         });
 
+        // Search Console — empty-state landing / browse-parts entry point
+        Route::get('/parts', [SearchController::class, 'console'])
+            ->name('frontend.search.console');
+
         // OEM Search (with OEM normalization middleware)
         Route::get('/parts/{oem}', [SearchController::class, 'results'])
             ->where('oem', '[A-Z0-9\-\.\s]+')
@@ -120,6 +151,10 @@ Route::prefix('{lang}')
         // Autocomplete endpoint
         Route::get('/search/autocomplete', [SearchController::class, 'autocomplete'])
             ->name('frontend.search.autocomplete');
+
+        // Human-readable HTML sitemap (the machine-readable /sitemap.xml lives at root)
+        Route::get('/sitemap', [SitemapController::class, 'index'])
+            ->name('frontend.sitemap');
 
         // Manufacturers
         Route::get('/brands', [ManufacturerController::class, 'index'])

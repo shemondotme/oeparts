@@ -1,229 +1,343 @@
 @extends('layouts.app')
 
-@section('title', __('Checkout') . ' - ' . settings('general.site_name', 'OEMHub'))
+@section('title', __('Secure Checkout') . ' — ' . settings('general.site_name', 'OEMHub'))
 
 @section('content')
-<div class="min-h-screen bg-gray-50">
-    {{-- Header --}}
-    <div class="bg-gradient-to-r from-navy to-blue-900 text-white py-8 px-4">
-        <div class="max-w-5xl mx-auto">
-            <h1 class="font-display text-3xl md:text-4xl font-bold">Secure Checkout</h1>
-            <p class="text-white/70 mt-2">Complete your order in 5 simple steps</p>
+@php
+    $steps = [
+        1 => 'Contact',
+        2 => 'Address',
+        3 => 'Shipping',
+        4 => 'Review',
+        5 => 'Payment',
+    ];
+    $currentStep = $step ?? 1;
+@endphp
+
+<div class="relative min-h-screen bg-ivory text-ink">
+    <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
+
+    {{-- ── Dark Doc Header ── --}}
+    <div class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
+        <div class="absolute inset-0 bg-grid-navy bg-grid-lg opacity-60 pointer-events-none" aria-hidden="true"></div>
+        <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-6">
+
+            {{-- Breadcrumb --}}
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
+                <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
+                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <span class="text-ivory/30">/</span>
+                    <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}" class="hover:text-amber transition-colors">Cart</a>
+                    <span class="text-ivory/30">/</span>
+                    <span class="text-ivory">Checkout</span>
+                </nav>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
+                    DOC · CHECKOUT-SHEET · STEP {{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} of 05
+                </span>
+            </div>
+
+            <div class="flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ {{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · Secure checkout</span>
+                    </div>
+                    <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
+                        Secure Checkout<span class="text-amber">.</span>
+                    </h1>
+                    <p class="mt-4 inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
+                        <x-heroicon-s-lock-closed class="w-3 h-3 text-amber" />
+                        TLS 1.3 · 256-bit SSL · Protected by Airwallex
+                    </p>
+                </div>
+                <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}"
+                   class="hidden md:inline-flex items-center gap-2 px-4 py-2.5 border border-ivory/20 text-ivory
+                          font-mono text-[11px] font-bold uppercase tracking-[0.22em]
+                          hover:border-amber hover:text-amber transition-colors">
+                    <x-heroicon-s-arrow-long-left class="w-4 h-4" />
+                    Back to Cart
+                </a>
+            </div>
         </div>
     </div>
 
-    {{-- Progress Indicator --}}
-    <div class="bg-white border-b border-gray-100 py-8 px-4 sticky top-0 z-30">
-        <div class="max-w-5xl mx-auto">
-            @php
-                $steps = [
-                    1 => 'Contact Info',
-                    2 => 'Shipping Address',
-                    3 => 'Shipping Method',
-                    4 => 'Review Order',
-                    5 => 'Payment',
-                ];
-                $currentStep = $step ?? 1;
-            @endphp
+    {{-- ── Step Progress Band (sticky) ── --}}
+    <div class="bg-paper border-b border-ink sticky top-0 z-30">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-4">
+            <div class="flex items-center justify-between">
+                @foreach($steps as $num => $label)
+                    @php
+                        $numPad = str_pad($num, 2, '0', STR_PAD_LEFT);
+                        $isDone = $num < $currentStep;
+                        $isCurrent = $num === $currentStep;
+                    @endphp
+                    <div class="flex items-center {{ !$loop->last ? 'flex-1' : '' }}">
 
-            <div class="flex justify-between items-start mb-4">
-                @foreach($steps as $number => $label)
-                    <div class="flex flex-col items-center flex-1">
-                        {{-- Step Circle --}}
-                        <div class="relative w-full mb-3">
-                            {{-- Connector line before (except first) --}}
-                            @if($number > 1)
-                                <div class="absolute left-0 top-5 -translate-x-1/2 w-full h-1 -ml-1/2"
-                                     :class="'{{ $number <= $currentStep ? 'bg-gradient-to-r from-amber to-orange-500' : 'bg-gray-200' }}'"></div>
-                            @endif
-
-                            {{-- Circle --}}
-                            <div class="relative w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold text-sm
-                                        {{ $number == $currentStep ? 'border-amber bg-amber/10 text-amber font-extrabold' : ($number < $currentStep ? 'border-amber bg-amber text-white' : 'border-gray-300 bg-white text-gray-400') }}"
-                                 style="margin: 0 auto;">
-                                @if($number < $currentStep)
-                                    <x-heroicon-s-check class="w-5 h-5" />
+                        <div class="flex flex-col items-center shrink-0">
+                            <div class="w-9 h-9 flex items-center justify-center font-mono text-sm font-bold tabular-nums transition-colors
+                                        @if($isDone) bg-amber border border-amber text-ink
+                                        @elseif($isCurrent) bg-ink border border-ink text-ivory
+                                        @else bg-paper border border-rule-strong text-ink-muted
+                                        @endif">
+                                @if($isDone)
+                                    <x-heroicon-s-check class="w-4 h-4" />
                                 @else
-                                    <span>{{ $number }}</span>
+                                    {{ $numPad }}
                                 @endif
                             </div>
-
-                            {{-- Connector line after (except last) --}}
-                            @if($number < count($steps))
-                                <div class="absolute right-0 top-5 translate-x-1/2 w-full h-1 mr-1/2"
-                                     :class="'{{ $number < $currentStep ? 'bg-gradient-to-r from-amber to-orange-500' : 'bg-gray-200' }}'"></div>
-                            @endif
+                            <span class="mt-2 font-mono text-[9px] font-bold uppercase tracking-[0.2em] hidden sm:block
+                                         @if($isCurrent) text-ink
+                                         @elseif($isDone) text-amber-ink
+                                         @else text-ink-muted
+                                         @endif">
+                                {{ $label }}
+                            </span>
                         </div>
 
-                        {{-- Label --}}
-                        <span class="text-xs font-semibold text-center whitespace-nowrap
-                                    {{ $number == $currentStep ? 'text-amber' : ($number < $currentStep ? 'text-navy' : 'text-muted') }}">
-                            {{ $label }}
-                        </span>
+                        @if(!$loop->last)
+                            <div class="flex-1 h-px mx-2 sm:mx-3 {{ $isDone ? 'bg-amber' : 'bg-rule-strong' }}"></div>
+                        @endif
                     </div>
                 @endforeach
             </div>
-
-            {{-- Step Indicator Text --}}
-            <p class="text-center text-sm font-semibold text-navy">
-                Step {{ $currentStep }} of {{ count($steps) }}
-            </p>
         </div>
     </div>
 
-    {{-- Main Content --}}
-    <div class="max-w-5xl mx-auto px-4 py-8">
+    {{-- ── Main content ── --}}
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
-        {{-- Flash Messages --}}
-        @if(session('error'))
-            <div class="mb-6 p-5 rounded-xl bg-red-50 border-2 border-red-200 text-red-700 flex items-start gap-3">
-                <x-heroicon-s-exclamation-circle class="w-5 h-5 mt-0.5 shrink-0" />
-                <div>
-                    <p class="font-bold">Error</p>
-                    <p class="text-sm mt-1">{{ session('error') }}</p>
-                </div>
-            </div>
-        @endif
+        <form method="POST"
+              action="{{ route('frontend.checkout.store', ['lang' => app()->getLocale()]) }}"
+              id="checkout-form">
+            @csrf
+            <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
 
-        @if(session('success'))
-            <div class="mb-6 p-5 rounded-xl bg-emerald-50 border-2 border-emerald-200 text-emerald-700 flex items-start gap-3">
-                <x-heroicon-s-check-circle class="w-5 h-5 mt-0.5 shrink-0" />
-                <div>
-                    <p class="font-bold">Success</p>
-                    <p class="text-sm mt-1">{{ session('success') }}</p>
-                </div>
-            </div>
-        @endif
+            <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 items-start">
 
-        {{-- Form Layout --}}
-        <div class="grid lg:grid-cols-3 gap-8">
+                {{-- Left: Step Form --}}
+                <div class="col-span-12 lg:col-span-8">
 
-            {{-- Left: Form (2 columns) --}}
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl border border-gray-100 p-8">
-                    @yield('checkout_content')
-                </div>
+                    {{-- Step card --}}
+                    <div class="border border-ink bg-paper">
+                        {{-- Step header bar --}}
+                        <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
+                            <span class="bp-spec text-amber-ink">§ {{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · {{ $steps[$currentStep] ?? '' }}</span>
+                            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                                Step {{ $currentStep }}/5
+                            </span>
+                        </div>
+                        <div class="p-6 sm:p-8">
+                            @yield('checkout_content')
+                        </div>
+                    </div>
 
-                {{-- Navigation Buttons --}}
-                <div class="mt-6 flex flex-col sm:flex-row justify-between gap-4">
-                    @if($currentStep > 1)
-                        <a href="{{ route('frontend.checkout.show', ['lang' => app()->getLocale()]) }}"
-                           class="inline-flex items-center justify-center gap-2 px-6 py-3
-                                  bg-white border-2 border-gray-200 text-navy font-bold rounded-xl
-                                  hover:border-amber hover:text-amber transition-all duration-200">
-                            <x-heroicon-o-arrow-left class="w-4 h-4" />
-                            Back
-                        </a>
-                    @else
-                        <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}"
-                           class="inline-flex items-center justify-center gap-2 px-6 py-3
-                                  bg-white border-2 border-gray-200 text-navy font-bold rounded-xl
-                                  hover:border-amber hover:text-amber transition-all duration-200">
-                            <x-heroicon-o-arrow-left class="w-4 h-4" />
-                            Return to Cart
-                        </a>
-                    @endif
+                    {{-- Navigation --}}
+                    <div class="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+                        @if($currentStep > 1)
+                            <a href="{{ route('frontend.checkout', ['lang' => app()->getLocale()]) }}?_back=1"
+                               class="bp-btn-outline justify-center sm:justify-start">
+                                <x-heroicon-s-arrow-long-left class="w-5 h-5" />
+                                Back
+                            </a>
+                        @else
+                            <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}"
+                               class="bp-btn-outline justify-center sm:justify-start">
+                                <x-heroicon-s-arrow-long-left class="w-5 h-5" />
+                                Return to Cart
+                            </a>
+                        @endif
 
-                    <form method="POST" action="{{ route('frontend.checkout.store', ['lang' => app()->getLocale()]) }}" class="flex-1 sm:flex-none">
-                        @csrf
-                        <button type="submit"
-                                class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3
-                                       bg-gradient-to-r from-amber to-orange-500 text-navy font-bold rounded-xl
-                                       shadow-lg shadow-amber/30 hover:shadow-amber/50 hover:from-amber/90 hover:to-orange-400
-                                       transition-all duration-200">
-                            @if($currentStep == 5)
-                                <x-heroicon-o-credit-card class="w-4 h-4" />
+                        <button type="submit" form="checkout-form" class="bp-btn-primary justify-center sm:min-w-[240px]">
+                            @if($currentStep === 5)
+                                <x-heroicon-s-lock-closed class="w-5 h-5" />
                                 Place Order
                             @else
-                                {{ __('Continue') }}
-                                <x-heroicon-o-arrow-right class="w-4 h-4" />
+                                Continue
+                                <x-heroicon-s-arrow-long-right class="w-5 h-5" />
                             @endif
                         </button>
-                    </form>
+                    </div>
                 </div>
-            </div>
 
-            {{-- Right: Order Summary --}}
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl border border-gray-100 p-6 sticky top-32 h-fit">
-                    <h3 class="font-display text-lg font-bold text-navy mb-5 flex items-center gap-2">
-                        <x-heroicon-s-shopping-cart class="w-5 h-5 text-amber" />
-                        Order Summary
-                    </h3>
+                {{-- Right: Order Summary --}}
+                <aside class="col-span-12 lg:col-span-4 lg:sticky lg:top-24 lg:h-fit mt-8 lg:mt-0">
 
                     @php
-                        $cartService = app(\App\Services\CartService::class);
-                        $user = auth()->user();
-                        $guestToken = request()->cookie('guest_token');
-                        $cart = $cartService->getOrCreateCart($user, $guestToken);
-                        $summary = $cart ? $cartService->getSummary($cart) : null;
+                        $summaryCart = $checkoutCart ?? null;
+                        $summaryData = $checkoutSummary ?? null;
+                        $summarySidebar = $sidebarSummary ?? [];
                     @endphp
 
-                    @if($summary && $cart->items->isNotEmpty())
-                        {{-- Items --}}
-                        <div class="space-y-2 mb-5 pb-5 border-b border-gray-100 max-h-48 overflow-y-auto">
-                            @foreach($cart->items as $item)
-                                <div class="flex items-start justify-between gap-2 text-sm">
-                                    <div class="min-w-0">
-                                        <p class="font-mono font-bold text-navy truncate">{{ $item->product->oem_number }}</p>
-                                        <p class="text-xs text-muted">Qty: {{ $item->quantity }}</p>
+                    <div class="border border-ink bg-paper">
+                        <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
+                            <span class="bp-spec text-amber-ink">§ Order summary</span>
+                            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">EUR</span>
+                        </div>
+
+                        <div class="relative p-5">
+                            <span class="absolute -top-px left-2 w-3 h-3 border-l-2 border-t-2 border-amber" aria-hidden="true"></span>
+                            <span class="absolute -top-px right-2 w-3 h-3 border-r-2 border-t-2 border-amber" aria-hidden="true"></span>
+
+                            @if($summaryData && $summaryCart && $summaryCart->items->isNotEmpty())
+
+                                {{-- Items --}}
+                                <ul class="divide-y divide-rule border-y border-rule mb-5 max-h-52 overflow-y-auto">
+                                    @foreach($summaryCart->items as $item)
+                                    <li class="flex items-center justify-between gap-3 py-3">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <div class="w-9 h-9 border border-rule flex items-center justify-center shrink-0 bg-ivory-alt">
+                                                <x-heroicon-o-cube class="w-4 h-4 text-ink" />
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="font-mono text-sm font-bold tabular-nums text-ink truncate">
+                                                    {{ $item->product->oem_number }}
+                                                </p>
+                                                <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
+                                                    Qty · {{ $item->quantity }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">
+                                            €{{ number_format((float) bcmul((string) $item->price_at_add, (string) $item->quantity, 2), 2) }}
+                                        </span>
+                                    </li>
+                                    @endforeach
+                                </ul>
+
+                                {{-- Totals --}}
+                                <dl class="space-y-0">
+                                    @if(!empty($summaryData['coupon_code']))
+                                    <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
+                                        <dt class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">
+                                            <x-heroicon-s-ticket class="w-3 h-3" />
+                                            {{ $summaryData['coupon_code'] }}
+                                        </dt>
+                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dd class="font-mono text-sm font-bold tabular-nums text-amber-ink">
+                                            -€{{ number_format($summaryData['coupon_discount'] ?? 0, 2) }}
+                                        </dd>
                                     </div>
-                                    <span class="font-bold text-navy shrink-0">€{{ number_format($item->price_at_add * $item->quantity, 2) }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        {{-- Totals --}}
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-muted">Subtotal</span>
-                                <span class="font-bold text-navy">€{{ number_format($summary['subtotal'], 2) }}</span>
-                            </div>
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-muted">Shipping</span>
-                                <span class="text-amber font-semibold">
-                                    @if($currentStep >= 3)
-                                        Calculated
-                                    @else
-                                        TBD
                                     @endif
-                                </span>
-                            </div>
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-muted">VAT</span>
-                                <span class="text-amber font-semibold">
-                                    @if($currentStep >= 4)
-                                        Calculated
-                                    @else
-                                        TBD
-                                    @endif
-                                </span>
-                            </div>
+                                    <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
+                                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Subtotal</dt>
+                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dd class="font-mono text-sm font-bold tabular-nums text-ink">
+                                            €{{ number_format((float) ($summarySidebar['subtotal'] ?? 0), 2) }}
+                                        </dd>
+                                    </div>
+                                    <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
+                                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Shipping</dt>
+                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dd class="font-mono text-sm font-bold tabular-nums text-ink">
+                                            @if(($summarySidebar['shipping_cost'] ?? null) !== null)
+                                                @if(($summarySidebar['shipping_cost'] ?? null) === '0.00')
+                                                    <span class="text-amber-ink uppercase tracking-[0.22em] text-[10px]">FREE</span>
+                                                @else
+                                                    €{{ number_format((float) ($summarySidebar['shipping_cost'] ?? 0), 2) }}
+                                                @endif
+                                            @else
+                                                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">Next step</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                    <div class="flex items-baseline justify-between gap-3 py-2">
+                                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                                            VAT · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? 21) }}%
+                                        </dt>
+                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dd class="font-mono text-sm font-bold tabular-nums text-ink">
+                                            @if($currentStep >= 2)
+                                                €{{ number_format((float) ($summarySidebar['vat_amount'] ?? 0), 2) }}
+                                            @else
+                                                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">TBD</span>
+                                            @endif
+                                        </dd>
+                                    </div>
+                                </dl>
 
-                            <div class="pt-3 border-t-2 border-amber/20">
-                                <div class="flex items-center justify-between">
-                                    <span class="font-bold text-navy">Estimated Total</span>
-                                    <span class="text-2xl font-bold text-amber">€{{ number_format($summary['subtotal'], 2) }}</span>
+                                {{-- Grand total --}}
+                                <div class="mt-4 pt-4 border-t-2 border-ink">
+                                    <div class="flex items-end justify-between gap-3">
+                                        <div>
+                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Total · EUR</p>
+                                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">Incl. all taxes</p>
+                                        </div>
+                                        <p class="font-mono text-3xl sm:text-4xl font-medium text-ink tabular-nums leading-none tracking-tight">
+                                            €{{ number_format((float) ($summarySidebar['grand_total'] ?? 0), 2) }}
+                                        </p>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
 
-                        {{-- Security Info --}}
-                        <div class="mt-6 pt-6 border-t border-gray-100">
-                            <p class="text-xs text-muted text-center flex items-center justify-center gap-1.5">
-                                <x-heroicon-s-lock-closed class="w-3.5 h-3.5 text-amber" />
-                                256-bit SSL Secure
-                            </p>
+                                {{-- Trust badges --}}
+                                <div class="mt-5 pt-4 border-t border-rule flex items-center justify-between gap-3">
+                                    <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                                        <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
+                                        SSL · TLS 1.3
+                                    </span>
+                                    <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                                        <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
+                                        Airwallex
+                                    </span>
+                                </div>
+                            @else
+                                <div class="text-center py-10">
+                                    <x-heroicon-o-shopping-bag class="w-10 h-10 text-rule-strong mx-auto mb-3" />
+                                    <p class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">Your cart is empty</p>
+                                </div>
+                            @endif
+
+                            <span class="absolute -bottom-px left-2 w-3 h-3 border-l-2 border-b-2 border-amber" aria-hidden="true"></span>
+                            <span class="absolute -bottom-px right-2 w-3 h-3 border-r-2 border-b-2 border-amber" aria-hidden="true"></span>
                         </div>
-                    @else
-                        <div class="text-center py-8">
-                            <x-heroicon-o-shopping-cart class="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                            <p class="text-muted text-sm">Your cart is empty</p>
+                    </div>
+
+                    {{-- Support card --}}
+                    <div class="mt-4 border border-rule bg-paper p-4 flex items-start gap-3">
+                        <div class="w-8 h-8 border border-ink flex items-center justify-center shrink-0 bg-paper">
+                            <x-heroicon-o-chat-bubble-left-ellipsis class="w-4 h-4 text-ink" />
                         </div>
-                    @endif
-                </div>
+                        <div class="flex-1">
+                            <p class="bp-spec text-amber-ink mb-1">§ Need help?</p>
+                            <p class="text-xs text-body mb-2">Mon-Fri 09:00-18:00 CET. Our team is ready.</p>
+                            <a href="{{ url('/'.app()->getLocale().'/contact') }}"
+                               class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
+                                Contact support
+                                <x-heroicon-s-arrow-long-right class="w-3 h-3" />
+                            </a>
+                        </div>
+                    </div>
+                </aside>
             </div>
-        </div>
+        </form>
     </div>
 </div>
+
+{{-- Flash → Toast events --}}
+@if(session('error'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: @json(session('error')), type: 'error', title: 'Error', duration: 6000 }
+    }));
+});
+</script>
+@endif
+@if(session('success'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: @json(session('success')), type: 'success', duration: 4000 }
+    }));
+});
+</script>
+@endif
+@if(session('warning'))
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    window.dispatchEvent(new CustomEvent('toast', {
+        detail: { message: @json(session('warning')), type: 'warning', title: 'Warning', duration: 5000 }
+    }));
+});
+</script>
+@endif
 @endsection

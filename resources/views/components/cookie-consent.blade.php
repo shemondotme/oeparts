@@ -1,4 +1,4 @@
-{{-- Cookie Consent Banner - Premium Side Card (2026) --}}
+{{-- Cookie Consent Banner — Industrial Blueprint (2026) --}}
 @props(['enabled' => true])
 
 @if($enabled)
@@ -17,112 +17,123 @@
         }
     }"
     x-show="visible"
-    x-transition:enter="transition ease-out duration-500"
-    x-transition:enter-start="translate-x-full opacity-0"
+    x-transition:enter="transition ease-out duration-400"
+    x-transition:enter-start="translate-x-6 opacity-0"
     x-transition:enter-end="translate-x-0 opacity-100"
-    x-transition:leave="transition ease-in duration-300"
+    x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="translate-x-0 opacity-100"
-    x-transition:leave-end="translate-x-full opacity-0"
-    class="fixed bottom-8 right-8 z-50"
+    x-transition:leave-end="translate-x-6 opacity-0"
+    class="fixed bottom-6 right-6 z-50"
     style="display: none;"
     role="region"
     aria-label="Cookie consent"
 >
-    {{-- Main Card --}}
-    <div class="w-[420px] max-w-[calc(100vw-4rem)] bg-navy rounded-3xl shadow-2xl shadow-navy/50 border border-white/10 overflow-hidden">
-        
-        {{-- Top Gradient Accent Line --}}
-        <div class="h-1.5 bg-gradient-to-r from-amber via-orange-500 to-amber"></div>
-        
-        <div class="p-7">
-            {{-- Badge --}}
-            <div class="inline-flex items-center gap-2 bg-amber/20 text-amber rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider mb-4 border border-amber/30 shadow-sm shadow-amber/10">
-                <x-heroicon-s-shield-check class="w-4 h-4" />
-                Cookie Policy
+    {{-- ── Banner panel ───────────────────────────────────────────── --}}
+    <div class="relative w-[420px] max-w-[calc(100vw-3rem)] bg-ink text-ivory border border-ink overflow-hidden"
+         style="box-shadow: 8px 8px 0 rgba(241,145,58,1);">
+
+        {{-- Subtle grid background --}}
+        <div class="absolute inset-0 bg-grid-navy bg-grid-md opacity-60 pointer-events-none" aria-hidden="true"></div>
+
+        {{-- Top doc strip --}}
+        <div class="relative flex items-center justify-between px-5 py-2.5 border-b border-white/15 bg-black/20">
+            <div class="flex items-center gap-2.5">
+                <span class="w-2.5 h-2.5 bg-amber"></span>
+                <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">
+                    § Consent · 01
+                </span>
             </div>
-            
-            {{-- Heading --}}
-            <h3 class="text-xl font-display font-bold text-white mb-3 leading-tight">
-                We value your privacy
+            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ivory/50">
+                GDPR · EU-{{ now()->format('Y') }}
+            </span>
+        </div>
+
+        <div class="relative p-6">
+            {{-- Title --}}
+            <h3 class="font-display text-2xl font-extrabold text-ivory leading-[1.05] tracking-[-0.02em]">
+                {{ __('Cookies on file') }}<span class="text-amber">.</span>
             </h3>
-            
+
+            {{-- Spec line --}}
+            <div class="mt-3 flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/50">
+                <span>Purpose</span>
+                <span class="flex-1 border-t border-dashed border-ivory/20"></span>
+                <span class="text-amber">Operational · Analytics</span>
+            </div>
+
             {{-- Description --}}
-            <p class="text-sm text-white/70 leading-relaxed mb-6">
-                We use cookies to enhance your browsing experience, serve personalized content, and analyze our traffic.
+            <p class="mt-4 text-sm text-ivory/75 leading-relaxed">
+                {{ __('We use cookies to keep the site secure, remember your session, and measure how pages perform. Necessary cookies are always on; everything else is opt-in.') }}
             </p>
-            
-            {{-- Action Buttons --}}
-            <div class="flex items-center gap-3 mb-4">
-                {{-- Decline Button --}}
+
+            {{-- Actions --}}
+            <div class="mt-6 grid grid-cols-2 gap-2.5">
                 <button
                     @click="decline()"
                     type="button"
-                    class="flex-1 px-5 py-3.5 text-sm font-semibold text-white
-                           bg-white/5 backdrop-blur-sm
-                           border border-white/20
-                           rounded-xl
-                           hover:bg-white/10 hover:border-white/30
-                           transition-all duration-300 hover:scale-[1.02]"
+                    class="group flex items-center justify-center gap-2 px-4 py-3 border border-ivory/25
+                           font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ivory
+                           hover:border-amber hover:text-amber transition-colors"
                     aria-label="Decline all cookies"
                 >
-                    <span class="flex items-center justify-center gap-2">
-                        <x-heroicon-o-x-mark class="w-4 h-4" />
-                        Decline
-                    </span>
+                    <x-heroicon-s-no-symbol class="w-3.5 h-3.5" />
+                    {{ __('Decline') }}
                 </button>
-                
-                {{-- Accept Button --}}
+
                 <button
                     @click="accept()"
                     type="button"
-                    class="flex-1 px-5 py-3.5 text-sm font-bold text-navy
-                           bg-gradient-to-r from-amber to-orange-500
-                           rounded-xl
-                           shadow-lg shadow-amber/30
-                           hover:shadow-xl hover:shadow-amber/40 hover:shadow-amber/20
-                           transition-all duration-300 hover:scale-[1.02]"
+                    class="group flex items-center justify-center gap-2 px-4 py-3 bg-amber border border-amber
+                           font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ink
+                           hover:bg-ivory hover:border-ivory transition-colors"
                     aria-label="Accept all cookies"
                 >
-                    <span class="flex items-center justify-center gap-2">
-                        <x-heroicon-s-check-circle class="w-4 h-4" />
-                        Accept All
-                    </span>
+                    <x-heroicon-s-check class="w-3.5 h-3.5" />
+                    {{ __('Accept all') }}
                 </button>
             </div>
-            
-            {{-- Privacy Policy Link --}}
-            <a 
-                href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'privacy-policy']) }}" 
-                class="inline-flex items-center gap-1.5 text-sm text-amber/80 hover:text-amber transition-colors duration-300 group mb-5"
-                target="_blank"
-            >
-                <x-heroicon-o-information-circle class="w-4 h-4" />
-                <span class="underline decoration-amber/50 group-hover:decoration-amber">Learn more in our Privacy Policy</span>
-            </a>
-            
-            {{-- Divider --}}
-            <div class="h-px w-full bg-gradient-to-r from-white/10 via-white/10 to-transparent mb-4"></div>
-            
-            {{-- Trust Badges --}}
-            <div class="flex items-center gap-5 text-xs text-white/60">
-                <div class="flex items-center gap-2">
-                    <x-heroicon-s-lock-closed class="w-4 h-4 text-amber" />
-                    <span class="font-medium">GDPR Compliant</span>
+
+            {{-- Secondary row --}}
+            <div class="mt-4 flex items-center justify-between gap-3 pt-4 border-t border-white/10">
+                <button
+                    type="button"
+                    @click="$dispatch('open-cookie-preferences')"
+                    class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ivory/70
+                           border-b border-dashed border-ivory/30 hover:text-amber hover:border-amber transition-colors pb-0.5"
+                >
+                    <x-heroicon-o-adjustments-horizontal class="w-3.5 h-3.5" />
+                    {{ __('Customize') }}
+                </button>
+                <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'cookie-policy']) }}"
+                   class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber
+                          hover:text-ivory transition-colors">
+                    {{ __('Policy') }}
+                    <x-heroicon-s-arrow-long-right class="w-3 h-3" />
+                </a>
+            </div>
+
+            {{-- Trust strip --}}
+            <div class="mt-5 grid grid-cols-3 gap-0 border border-white/15 divide-x divide-white/10">
+                <div class="px-2.5 py-2 flex items-center gap-1.5">
+                    <x-heroicon-s-lock-closed class="w-3 h-3 text-amber shrink-0" />
+                    <span class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ivory/65 truncate">GDPR</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <x-heroicon-s-shield-check class="w-4 h-4 text-amber" />
-                    <span class="font-medium">Secure</span>
+                <div class="px-2.5 py-2 flex items-center gap-1.5">
+                    <x-heroicon-s-shield-check class="w-3 h-3 text-amber shrink-0" />
+                    <span class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ivory/65 truncate">Secure</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <x-heroicon-o-arrow-path class="w-4 h-4 text-amber" />
-                    <span class="font-medium">Change anytime</span>
+                <div class="px-2.5 py-2 flex items-center gap-1.5">
+                    <x-heroicon-s-arrow-path class="w-3 h-3 text-amber shrink-0" />
+                    <span class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ivory/65 truncate">Revocable</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- Cookie preferences modal (optional advanced feature) --}}
+{{-- ═══════════════════════════════════════════════════════════════════
+     Cookie preferences modal — Industrial Blueprint
+═══════════════════════════════════════════════════════════════════ --}}
 <div
     x-data="{
         open: false,
@@ -137,119 +148,169 @@
             $dispatch('cookie-preferences-saved', this.preferences);
         }
     }"
+    x-on:open-cookie-preferences.window="open = true"
     x-show="open"
     x-cloak
     class="fixed inset-0 z-[60] overflow-y-auto"
-    aria-labelledby="modal-title"
+    aria-labelledby="cookie-pref-title"
     role="dialog"
     aria-modal="true"
     style="display: none;"
 >
     {{-- Backdrop --}}
-    <div class="fixed inset-0 bg-navy/80 backdrop-blur-sm transition-opacity" @click="open = false"></div>
+    <div class="fixed inset-0 bg-ink/80 backdrop-blur-sm transition-opacity" @click="open = false"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"></div>
 
-    <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
-        {{-- Spacer --}}
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+    <div class="flex items-center justify-center min-h-screen px-4 py-8">
+        {{-- Modal panel --}}
+        <div class="relative w-full max-w-xl bg-paper text-ink border border-ink overflow-hidden"
+             style="box-shadow: 10px 10px 0 rgba(20,22,29,1);"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-4"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 translate-y-4">
 
-        {{-- Modal Panel --}}
-        <div class="relative inline-block bg-white rounded-3xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            {{-- Decorative top bar --}}
-            <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-amber via-orange-500 to-amber"></div>
-
-            <div class="bg-white px-8 pt-8 pb-6">
-                {{-- Header --}}
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-12 h-12 rounded-2xl bg-amber/10 flex items-center justify-center">
-                        <x-heroicon-o-shield-check class="w-6 h-6 text-amber" />
-                    </div>
+            {{-- Doc header --}}
+            <div class="flex items-center justify-between px-6 py-4 border-b border-ink bg-ivory-alt">
+                <div class="flex items-center gap-3">
+                    <span class="w-2 h-8 bg-amber"></span>
                     <div>
-                        <h3 class="text-xl font-display font-bold text-navy" id="modal-title">
-                            Cookie Preferences
+                        <span class="bp-spec text-amber-ink">§ Consent · Detail</span>
+                        <h3 id="cookie-pref-title" class="font-display text-lg font-extrabold text-ink tracking-[-0.02em] leading-tight">
+                            {{ __('Cookie preferences') }}
                         </h3>
-                        <p class="text-sm text-muted">Customize your cookie settings</p>
                     </div>
                 </div>
-
-                {{-- Cookie Options --}}
-                <div class="space-y-4">
-                    {{-- Necessary Cookies --}}
-                    <div class="group p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-amber/30 transition-all duration-300">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <x-heroicon-s-shield-check class="w-5 h-5 text-emerald-500" />
-                                    <p class="font-bold text-navy">Necessary Cookies</p>
-                                </div>
-                                <p class="text-sm text-muted">Required for basic site functionality and security</p>
-                            </div>
-                            <div class="relative">
-                                <input 
-                                    type="checkbox" 
-                                    checked 
-                                    disabled 
-                                    class="w-5 h-5 text-emerald-500 border-gray-300 rounded-lg focus:ring-emerald-500 disabled:opacity-50 cursor-not-allowed"
-                                >
-                                <span class="absolute -bottom-5 left-1/2 -translate-x-1/2 text-xs text-emerald-600 font-semibold whitespace-nowrap">Always On</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Analytics Cookies --}}
-                    <div class="group p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-amber/30 transition-all duration-300">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <x-heroicon-o-chart-bar class="w-5 h-5 text-blue-500" />
-                                    <p class="font-bold text-navy">Analytics Cookies</p>
-                                </div>
-                                <p class="text-sm text-muted">Help us improve by collecting anonymous usage data</p>
-                            </div>
-                            <input 
-                                type="checkbox" 
-                                x-model="preferences.analytics" 
-                                class="w-5 h-5 text-blue-500 border-gray-300 rounded-lg focus:ring-blue-500 transition-all"
-                            >
-                        </div>
-                    </div>
-
-                    {{-- Marketing Cookies --}}
-                    <div class="group p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-amber/30 transition-all duration-300">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <x-heroicon-o-sparkles class="w-5 h-5 text-purple-500" />
-                                    <p class="font-bold text-navy">Marketing Cookies</p>
-                                </div>
-                                <p class="text-sm text-muted">Used to deliver relevant ads and marketing campaigns</p>
-                            </div>
-                            <input 
-                                type="checkbox" 
-                                x-model="preferences.marketing" 
-                                class="w-5 h-5 text-purple-500 border-gray-300 rounded-lg focus:ring-purple-500 transition-all"
-                            >
-                        </div>
-                    </div>
-                </div>
+                <button type="button" @click="open = false"
+                        class="w-9 h-9 flex items-center justify-center border border-ink text-ink
+                               hover:bg-ink hover:text-ivory transition-colors"
+                        aria-label="Close">
+                    <x-heroicon-s-x-mark class="w-4 h-4" />
+                </button>
             </div>
 
-            {{-- Footer Actions --}}
-            <div class="bg-gray-50 px-8 py-6 sm:flex sm:flex-row-reverse gap-3">
-                <button 
-                    type="button" 
-                    @click="save()" 
-                    class="w-full inline-flex justify-center items-center gap-2 rounded-2xl border border-transparent shadow-lg px-6 py-3.5 bg-gradient-to-r from-amber to-orange-500 text-base font-bold text-white hover:shadow-xl hover:shadow-amber/40 focus:outline-none transition-all duration-300 hover:scale-105 sm:w-auto"
-                >
-                    <x-heroicon-s-check-circle class="w-5 h-5" />
-                    Save Preferences
-                </button>
-                <button 
-                    type="button" 
-                    @click="open = false" 
-                    class="mt-3 w-full inline-flex justify-center items-center gap-2 rounded-2xl border-2 border-gray-200 shadow-sm px-6 py-3.5 bg-white text-base font-semibold text-gray-700 hover:bg-gray-100 hover:border-gray-300 focus:outline-none transition-all duration-300 sm:mt-0 sm:w-auto"
-                >
-                    Cancel
-                </button>
+            {{-- Body --}}
+            <div class="p-6 space-y-3">
+
+                <p class="text-sm text-body leading-relaxed mb-4">
+                    {{ __('Choose which categories of cookies this browser may store. Necessary cookies cannot be disabled — they keep the cart, session and basic security working.') }}
+                </p>
+
+                {{-- Necessary --}}
+                <div class="border border-ink bg-paper">
+                    <div class="flex items-stretch">
+                        <div class="w-1.5 bg-emerald-600"></div>
+                        <div class="flex-1 flex items-center gap-4 p-4">
+                            <div class="w-10 h-10 border border-ink bg-ivory-alt flex items-center justify-center shrink-0">
+                                <x-heroicon-s-shield-check class="w-4 h-4 text-emerald-700" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-display text-sm font-bold text-ink leading-tight">
+                                        {{ __('Necessary') }}
+                                    </span>
+                                    <span class="font-mono text-[9px] font-bold tracking-[0.2em] uppercase text-emerald-700 px-1.5 py-0.5 border border-emerald-600 bg-emerald-50">
+                                        {{ __('Required') }}
+                                    </span>
+                                </div>
+                                <p class="mt-1 text-xs text-ink-muted leading-relaxed">
+                                    {{ __('Session, cart, CSRF, locale & security. Always on.') }}
+                                </p>
+                            </div>
+                            <div class="shrink-0 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-emerald-700">
+                                {{ __('On') }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Analytics --}}
+                <label class="block border border-ink bg-paper cursor-pointer
+                              hover:bg-ivory-alt transition-colors"
+                       :class="preferences.analytics ? 'bg-ivory-alt' : ''">
+                    <div class="flex items-stretch">
+                        <div class="w-1.5" :class="preferences.analytics ? 'bg-amber' : 'bg-ink-muted/30'"></div>
+                        <div class="flex-1 flex items-center gap-4 p-4">
+                            <div class="w-10 h-10 border border-ink bg-ivory-alt flex items-center justify-center shrink-0">
+                                <x-heroicon-s-chart-bar class="w-4 h-4 text-ink" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="font-display text-sm font-bold text-ink leading-tight">
+                                    {{ __('Analytics') }}
+                                </span>
+                                <p class="mt-1 text-xs text-ink-muted leading-relaxed">
+                                    {{ __('Anonymous page-view and performance metrics.') }}
+                                </p>
+                            </div>
+                            {{-- Toggle --}}
+                            <div class="relative shrink-0">
+                                <input type="checkbox" x-model="preferences.analytics" class="sr-only peer" />
+                                <div class="w-11 h-6 border border-ink bg-paper peer-checked:bg-amber peer-checked:border-ink transition-colors"></div>
+                                <div class="absolute top-[2px] left-[2px] w-[18px] h-[18px] bg-ink peer-checked:translate-x-[18px] transition-transform"
+                                     :class="preferences.analytics ? 'translate-x-[18px]' : 'translate-x-0'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+
+                {{-- Marketing --}}
+                <label class="block border border-ink bg-paper cursor-pointer
+                              hover:bg-ivory-alt transition-colors"
+                       :class="preferences.marketing ? 'bg-ivory-alt' : ''">
+                    <div class="flex items-stretch">
+                        <div class="w-1.5" :class="preferences.marketing ? 'bg-amber' : 'bg-ink-muted/30'"></div>
+                        <div class="flex-1 flex items-center gap-4 p-4">
+                            <div class="w-10 h-10 border border-ink bg-ivory-alt flex items-center justify-center shrink-0">
+                                <x-heroicon-s-megaphone class="w-4 h-4 text-ink" />
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="font-display text-sm font-bold text-ink leading-tight">
+                                    {{ __('Marketing') }}
+                                </span>
+                                <p class="mt-1 text-xs text-ink-muted leading-relaxed">
+                                    {{ __('Retargeting and campaign attribution cookies.') }}
+                                </p>
+                            </div>
+                            <div class="relative shrink-0">
+                                <input type="checkbox" x-model="preferences.marketing" class="sr-only peer" />
+                                <div class="w-11 h-6 border border-ink bg-paper peer-checked:bg-amber peer-checked:border-ink transition-colors"></div>
+                                <div class="absolute top-[2px] left-[2px] w-[18px] h-[18px] bg-ink transition-transform"
+                                     :class="preferences.marketing ? 'translate-x-[18px]' : 'translate-x-0'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            {{-- Footer --}}
+            <div class="px-6 py-4 border-t border-ink bg-ivory-alt flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'cookie-policy']) }}"
+                   class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted
+                          border-b border-dashed border-ink-muted hover:text-amber-ink hover:border-amber transition-colors pb-0.5 self-start">
+                    <x-heroicon-o-document-text class="w-3.5 h-3.5" />
+                    {{ __('Read full policy') }}
+                </a>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" @click="open = false"
+                            class="px-4 py-2.5 border border-ink text-ink font-mono text-[11px] font-bold tracking-[0.22em] uppercase
+                                   hover:bg-ink hover:text-ivory transition-colors">
+                        {{ __('Cancel') }}
+                    </button>
+                    <button type="button" @click="save()"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-ink border border-ink text-ivory
+                                   font-mono text-[11px] font-bold tracking-[0.22em] uppercase
+                                   hover:bg-amber hover:text-ink hover:border-amber transition-colors">
+                        <x-heroicon-s-check class="w-3.5 h-3.5" />
+                        {{ __('Save') }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>

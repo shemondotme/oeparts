@@ -1,155 +1,112 @@
-{{-- Section: testimonials
-     content: headline(ml)
+{{-- Section: testimonials (Industrial Blueprint)
+     content: eyebrow, headline(ml), subheadline(ml)
      $sectionData['testimonials'] is injected by SectionRendererService
 --}}
-@php $testimonials = $sectionData['testimonials'] ?? collect(); @endphp
+@php
+    $testimonials = $sectionData['testimonials'] ?? collect();
+    $eyebrow = trans_field($section->content['eyebrow'] ?? null);
+    $headline = trans_field($section->content['headline'] ?? null);
+    $subheadline = trans_field($section->content['subheadline'] ?? null);
+    $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+@endphp
 
 @if($testimonials->isNotEmpty())
-<section class="bg-gradient-to-b from-amber-50/30 via-white to-amber-50/30 py-14 md:py-20 px-4 relative overflow-hidden">
+<section class="relative bg-paper text-ink border-b border-rule">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
 
-    {{-- Decorative background elements --}}
-    <div class="absolute inset-0 opacity-20 pointer-events-none">
-        <div class="absolute top-40 left-10 w-96 h-96 bg-amber/15 rounded-full filter blur-3xl"></div>
-        <div class="absolute bottom-40 right-10 w-96 h-96 bg-blue-500/15 rounded-full filter blur-3xl"></div>
-    </div>
-
-    <div class="max-w-6xl mx-auto relative z-10">
-
-        <x-section-heading
-            :eyebrow="trans_field($section->content['eyebrow'] ?? null)"
-            :headline="trans_field($section->content['headline'] ?? null)"
-            :subheadline="trans_field($section->content['subheadline'] ?? null)"
-            :accentBar="true"
-            class="mb-12"
-        />
-
-        {{-- Testimonial Cards Grid — Equal height cards via grid auto-stretch --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($testimonials as $index => $testimonial)
-            @php
-                // Generate initials from name
-                $nameParts = explode(' ', trim($testimonial->name));
-                $initials = strtoupper(substr($nameParts[0], 0, 1) . (isset($nameParts[1]) ? substr($nameParts[1], 0, 1) : ''));
-
-                // Avatar colors — solid hex colors for consistent display
-                $avatarHexColors = [
-                    '#F59E0B',  // amber-500
-                    '#1E3A8A',  // navy-800
-                    '#059669',  // emerald-600
-                    '#9333EA',  // purple-600
-                    '#E11D48',  // rose-600
-                    '#0891B2',  // cyan-600
-                ];
-                $avatarBgColor = $avatarHexColors[$index % count($avatarHexColors)];
-
-                // Stagger animation delay
-                $delay = $index * 150;
-            @endphp
-
-            <div
-                x-data="{ shown: false }"
-                x-init="
-                    const observer = new IntersectionObserver(
-                        (entries) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    setTimeout(() => shown = true, {{ $delay }});
-                                    observer.unobserve(entry.target);
-                                }
-                            });
-                        },
-                        { threshold: 0.2 }
-                    );
-                    observer.observe($el);
-                "
-                role="article"
-                :aria-label="'Testimonial from {{ addslashes($testimonial->name) }}'"
-                class="group relative bg-gradient-to-br from-white via-amber-50/30 to-white rounded-3xl p-8 h-full
-                       border-2 border-amber/10
-                       shadow-lg shadow-amber/5 hover:shadow-2xl hover:shadow-amber/20
-                       transform transition-all duration-500 ease-out motion-reduce:transition-none motion-reduce:transform-none
-                       hover:-translate-y-2
-                       :class='shown ? \"opacity-100 translate-y-0 scale-100\" : \"opacity-0 translate-y-8 scale-95\"'"
-            >
-                {{-- Gradient border glow on hover --}}
-                <div class="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none
-                            bg-gradient-to-br from-amber/20 via-transparent to-transparent"></div>
-
-                {{-- Rating Badge (Top Left) with improved design --}}
-                <div class="absolute top-6 left-6 z-20">
-                    <div class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white/95 backdrop-blur-sm rounded-xl shadow-md shadow-amber/10 border border-amber/20">
-                        <x-star-rating :rating="$testimonial->rating" size="sm" />
-                    </div>
+        {{-- Header --}}
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-ink">
+            <div class="col-span-12 md:col-span-7">
+                @if($eyebrow)
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
                 </div>
-
-                {{-- Quote Icon (Top Right) --}}
-                <div class="absolute top-6 right-6 opacity-10 group-hover:opacity-20 transition-opacity duration-500">
-                    <x-heroicon-s-chat-bubble-left-right class="w-16 h-16 text-amber" />
-                </div>
-
-                {{-- Content --}}
-                <div class="relative z-10 pt-10">
-
-                    {{-- Quote Text with decorative quotes --}}
-                    <div class="relative mb-8">
-                        {{-- Opening quote --}}
-                        <span class="absolute -top-4 -left-3 text-7xl text-amber/10 font-serif leading-none select-none">"</span>
-
-                        <p class="text-body text-base leading-relaxed pt-6 pb-4 relative z-10 line-clamp-4">
-                            {{ trans_field($testimonial->quote) }}
-                        </p>
-
-                        {{-- Closing quote --}}
-                        <span class="absolute -bottom-6 -right-3 text-7xl text-amber/10 font-serif leading-none select-none rotate-180">"</span>
-                    </div>
-
-                    {{-- Divider --}}
-                    <div class="relative mb-8">
-                        <div class="h-px w-full bg-gradient-to-r from-amber/50 via-amber/30 to-transparent"></div>
-                        <div class="absolute top-1/2 -translate-y-1/2 left-0 flex gap-1">
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber"></span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber/60"></span>
-                            <span class="w-1.5 h-1.5 rounded-full bg-amber/30"></span>
-                        </div>
-                    </div>
-
-                    {{-- Author Info --}}
-                    <div class="flex items-center gap-4">
-                        {{-- Avatar - Solid color background using CSS variables --}}
-                        <div class="relative">
-                            {{-- Avatar circle --}}
-                            <div class="relative w-14 h-14 rounded-full flex items-center justify-center shadow-lg border-2 border-white text-white font-bold text-lg tracking-wider"
-                                 style="--avatar-bg: {{ $avatarBgColor }}; background-color: var(--avatar-bg);">
-                                <span>{{ $initials }}</span>
-                            </div>
-                        </div>
-
-                        {{-- Name & Details --}}
-                        <div class="flex-1 min-w-0">
-                            <p class="font-display font-bold text-navy text-sm truncate">
-                                {{ $testimonial->name }}
-                            </p>
-                            @if($testimonial->company || $testimonial->location)
-                            <p class="text-muted text-xs mt-0.5 truncate">
-                                {{ implode(', ', array_filter([$testimonial->company, $testimonial->location])) }}
-                            </p>
-                            @endif
-                        </div>
-
-                        {{-- Verified Badge - More prominent --}}
-                        <div class="shrink-0" title="Verified Customer">
-                            <div class="relative">
-                                <div class="absolute inset-0 bg-emerald-500/20 rounded-full blur-md"></div>
-                                <x-heroicon-s-check-circle class="relative w-6 h-6 text-emerald-500 drop-shadow-sm" />
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
+                @endif
+                @if($headline)
+                <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
+                    {{ $headline }}<span class="text-amber">.</span>
+                </h2>
+                @endif
             </div>
-            @endforeach
+            @if($subheadline)
+            <div class="col-span-12 md:col-span-5 mt-6 md:mt-0 md:pl-8 md:border-l md:border-rule">
+                <p class="text-base text-body leading-relaxed">
+                    {{ $subheadline }}
+                </p>
+                <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    Log · {{ $testimonials->count() }} verified entries
+                </p>
+            </div>
+            @endif
         </div>
 
+        {{-- Testimonial cards in ledger grid --}}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-ink bg-paper">
+            @foreach($testimonials as $index => $testimonial)
+            @php
+                $nameParts = explode(' ', trim($testimonial->name));
+                $initials = strtoupper(substr($nameParts[0], 0, 1) . (isset($nameParts[1]) ? substr($nameParts[1], 0, 1) : ''));
+                $entryNum = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
+                $rating = (int) ($testimonial->rating ?? 5);
+                $meta = implode(' · ', array_filter([$testimonial->company ?? null, $testimonial->location ?? null]));
+            @endphp
+
+            <article class="relative p-6 sm:p-8 border-r border-b border-rule last:border-r-0 flex flex-col"
+                     role="article">
+
+                {{-- Top meta: entry # + rating --}}
+                <div class="flex items-center justify-between mb-6">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
+                        Entry № {{ $entryNum }}
+                    </span>
+                    <div class="flex items-center gap-0.5" aria-label="{{ $rating }} out of 5 stars">
+                        @for($i = 1; $i <= 5; $i++)
+                            <x-heroicon-s-star class="w-3.5 h-3.5 {{ $i <= $rating ? 'text-amber' : 'text-rule' }}" />
+                        @endfor
+                    </div>
+                </div>
+
+                {{-- Amber tick --}}
+                <div class="h-[2px] w-10 bg-amber mb-6"></div>
+
+                {{-- Quote --}}
+                <blockquote class="flex-1">
+                    <p class="font-display text-lg sm:text-xl text-ink leading-snug tracking-tight text-balance mb-8">
+                        &ldquo;{{ trans_field($testimonial->quote) }}&rdquo;
+                    </p>
+                </blockquote>
+
+                {{-- Author footer --}}
+                <footer class="flex items-center gap-4 pt-5 border-t border-rule">
+                    {{-- Initials tile --}}
+                    <div class="w-12 h-12 bg-ink text-ivory font-mono text-sm font-bold flex items-center justify-center tracking-wider shrink-0">
+                        {{ $initials }}
+                    </div>
+
+                    <div class="flex-1 min-w-0">
+                        <p class="font-display text-sm font-bold text-ink truncate">
+                            {{ $testimonial->name }}
+                        </p>
+                        @if($meta)
+                        <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
+                            {{ $meta }}
+                        </p>
+                        @endif
+                    </div>
+
+                    {{-- Verified tick --}}
+                    <span class="inline-flex items-center gap-1.5 border border-rule px-2 py-1
+                                 font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted"
+                          title="Verified customer">
+                        <x-heroicon-s-check-badge class="w-3 h-3 text-amber-ink" />
+                        Verified
+                    </span>
+                </footer>
+            </article>
+            @endforeach
+        </div>
     </div>
 </section>
 @endif

@@ -1,296 +1,376 @@
-@extends('frontend.checkout.layout')
+@extends('layouts.app')
 
-@section('checkout_content')
-    <h2 class="text-2xl font-bold mb-6">{{ __('Payment') }}</h2>
-    <p class="text-gray-600 mb-8">
-        {{ __('Complete your payment to finalize your order.') }}
-    </p>
+@section('title', __('Payment') . ' — ' . settings('general.site_name', 'OEMHub'))
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- Left column: Payment method selection --}}
-        <div class="lg:col-span-2 space-y-8">
-            {{-- Order summary --}}
-            <div class="bg-gray-50 rounded-xl p-6">
-                <h3 class="font-bold text-lg mb-4">{{ __('Order Summary') }}</h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">{{ __('Order Number') }}</span>
-                        <span class="font-medium">{{ $order->order_number }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600">{{ __('Grand Total') }}</span>
-                        <span class="font-bold text-lg">{{ format_money($order->grand_total) }}</span>
-                    </div>
-                </div>
+@php
+    $lang = app()->getLocale();
+@endphp
+
+@section('content')
+<div class="relative min-h-screen bg-ivory text-ink">
+    <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
+
+    {{-- ── Dark Doc Header ── --}}
+    <div class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
+        <div class="absolute inset-0 bg-grid-navy bg-grid-lg opacity-60 pointer-events-none" aria-hidden="true"></div>
+        <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-6">
+
+            {{-- Breadcrumb --}}
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
+                <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
+                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <span class="text-ivory/30">/</span>
+                    <span class="text-ivory/80">Checkout</span>
+                    <span class="text-ivory/30">/</span>
+                    <span class="text-ivory">Payment</span>
+                </nav>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
+                    DOC · PAYMENT-SHEET · {{ $order->order_number }}
+                </span>
             </div>
 
-            {{-- Payment method selection --}}
-            <div class="bg-white border border-gray-200 rounded-xl p-6">
-                <h3 class="font-bold text-lg mb-6">{{ __('Select Payment Method') }}</h3>
-                
-                <form method="POST" action="{{ route('frontend.checkout.payment.process', ['lang' => $lang, 'order' => $order->order_number]) }}" id="payment-form">
-                    @csrf
-                    {{-- Honeypot --}}
-                    <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
-                    
-                    {{-- Payment method radio buttons --}}
-                    <div class="space-y-4 mb-8">
-                        <div class="flex items-center p-4 border border-gray-300 rounded-lg hover:border-primary-500 transition cursor-pointer">
-                            <input type="radio" id="method-card" name="payment_method" value="card" 
-                                   class="h-5 w-5 text-primary-600 focus:ring-primary-500" 
-                                   {{ old('payment_method', $selectedMethod) === 'card' ? 'checked' : '' }} required>
-                            <label for="method-card" class="ml-4 flex-1 cursor-pointer">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="font-medium text-gray-900">{{ __('Credit/Debit Card') }}</span>
-                                        <p class="text-sm text-gray-600 mt-1">
-                                            {{ __('Pay securely with Visa, Mastercard, or American Express via Airwallex.') }}
-                                        </p>
-                                    </div>
-                                    <div class="flex space-x-2">
-                                        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/visa.svg" alt="Visa" class="h-8 w-8">
-                                        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/mastercard.svg" alt="Mastercard" class="h-8 w-8">
-                                        <img src="https://cdn.jsdelivr.net/npm/simple-icons@v5/icons/americanexpress.svg" alt="Amex" class="h-8 w-8">
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
-
-                        <div class="flex items-center p-4 border border-gray-300 rounded-lg hover:border-primary-500 transition cursor-pointer">
-                            <input type="radio" id="method-bank" name="payment_method" value="bank_transfer" 
-                                   class="h-5 w-5 text-primary-600 focus:ring-primary-500"
-                                   {{ old('payment_method', $selectedMethod) === 'bank_transfer' ? 'checked' : '' }}>
-                            <label for="method-bank" class="ml-4 flex-1 cursor-pointer">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <span class="font-medium text-gray-900">{{ __('Bank Transfer') }}</span>
-                                        <p class="text-sm text-gray-600 mt-1">
-                                            {{ __('Make a direct bank transfer to our account. Your order will be processed once payment is confirmed.') }}
-                                        </p>
-                                    </div>
-                                    <div class="text-primary-700">
-                                        <svg class="h-8 w-8" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 2H4v4h12V6z" clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                </div>
-                            </label>
-                        </div>
+            <div class="flex items-end justify-between gap-4 flex-wrap">
+                <div>
+                    <div class="flex items-center gap-4 mb-4">
+                        <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ 06 · Payment · Finalise</span>
                     </div>
-
-                    {{-- Card payment section (shown when card selected) --}}
-                    <div id="card-section" class="hidden">
-                        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div class="flex items-center text-blue-800">
-                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                                </svg>
-                                <span class="font-medium">{{ __('Secure Payment') }}</span>
-                            </div>
-                            <p class="text-blue-700 text-sm mt-2">
-                                {{ __('Your payment is processed securely by Airwallex. We never store your card details.') }}
-                            </p>
-                        </div>
-
-                        {{-- Airwallex iframe container --}}
-                        <div id="airwallex-dropin" class="mb-6"></div>
-
-                        {{-- Hidden fields for Airwallex --}}
-                        <input type="hidden" name="payment_intent_id" id="payment-intent-id">
-                        <input type="hidden" name="payment_method_id" id="payment-method-id">
-                        <input type="hidden" name="client_secret" id="client-secret">
-                    </div>
-
-                    {{-- Bank transfer section (shown when bank transfer selected) --}}
-                    <div id="bank-section" class="hidden">
-                        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                            <div class="flex items-center text-amber-800">
-                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                                </svg>
-                                <span class="font-medium">{{ __('Important Instructions') }}</span>
-                            </div>
-                            <p class="text-amber-700 text-sm mt-2">
-                                {{ __('Please include your order number in the payment reference. Bank transfers may take 1-2 business days to process.') }}
-                            </p>
-                        </div>
-
-                        {{-- Bank transfer details --}}
-                        <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                            <h4 class="font-bold text-lg mb-4">{{ __('Bank Transfer Details') }}</h4>
-                            <div class="space-y-4">
-                                @foreach($bankDetails as $key => $value)
-                                    <div>
-                                        <p class="text-sm text-gray-500">{{ __(ucfirst(str_replace('_', ' ', $key))) }}</p>
-                                        <div class="flex items-center mt-1">
-                                            <p class="font-mono text-lg font-medium">{{ $value }}</p>
-                                            <button type="button" 
-                                                    class="ml-3 px-3 py-1 text-sm bg-primary-100 text-primary-700 rounded hover:bg-primary-200 transition copy-btn"
-                                                    data-clipboard-text="{{ $value }}">
-                                                {{ __('Copy') }}
-                                            </button>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-
-                        {{-- Payment proof upload --}}
-                        <div class="mb-6">
-                            <label for="payment_proof" class="block text-sm font-medium text-gray-700 mb-2">
-                                {{ __('Upload Payment Proof (Optional)') }}
-                            </label>
-                            <input type="file" id="payment_proof" name="payment_proof" 
-                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
-                            <p class="mt-1 text-sm text-gray-500">
-                                {{ __('Upload a screenshot or scan of your bank transfer confirmation.') }}
-                            </p>
-                        </div>
-                    </div>
-
-                    {{-- Submit button --}}
-                    <div class="mt-8">
-                        <button type="submit" id="submit-btn" 
-                                class="w-full py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                            {{ __('Complete Payment') }} &rarr;
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        {{-- Right column: Order details --}}
-        <div class="lg:col-span-1">
-            <div class="bg-white border border-gray-200 rounded-xl p-6 sticky top-6">
-                <h3 class="font-bold text-lg mb-6">{{ __('Order Details') }}</h3>
-                
-                {{-- Shipping info --}}
-                <div class="mb-6">
-                    <h4 class="font-medium text-gray-900 mb-2">{{ __('Shipping to') }}</h4>
-                    <p class="text-gray-700">
-                        {{ $order->shipping_name }}<br>
-                        {{ $order->shipping_address_line1 }}<br>
-                        {{ $order->shipping_city }}, {{ $order->shipping_postal_code }}<br>
-                        {{ \App\Models\ShippingCountry::getName($order->shipping_country_code) ?? $order->shipping_country_code }}
-                    </p>
-                </div>
-
-                {{-- Contact info --}}
-                <div class="mb-6">
-                    <h4 class="font-medium text-gray-900 mb-2">{{ __('Contact') }}</h4>
-                    <p class="text-gray-700">{{ $order->guest_email }}</p>
-                    @if($order->company_name)
-                        <p class="text-gray-700 mt-1">{{ $order->company_name }}</p>
-                    @endif
-                </div>
-
-                {{-- Items summary --}}
-                <div class="border-t border-gray-200 pt-6">
-                    <h4 class="font-medium text-gray-900 mb-3">{{ __('Items') }}</h4>
-                    <div class="space-y-3">
-                        @foreach($order->items as $item)
-                            <div class="flex justify-between">
-                                <div class="text-sm">
-                                    <p class="font-medium">{{ $item->oem_number_snapshot }}</p>
-                                    <p class="text-gray-600">{{ $item->quantity }} × {{ format_money($item->unit_price) }}</p>
-                                </div>
-                                <div class="text-sm font-medium">
-                                    {{ format_money($item->total_price) }}
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                {{-- Need help --}}
-                <div class="mt-8 p-4 bg-gray-50 rounded-lg">
-                    <p class="text-sm text-gray-600">
-                        {{ __('Need help with payment?') }}
-                        <a href="{{ route('frontend.page', ['lang' => $lang, 'slug' => 'contact']) }}" class="text-primary-600 hover:underline">
-                            {{ __('Contact support') }}
-                        </a>
+                    <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
+                        Complete payment<span class="text-amber">.</span>
+                    </h1>
+                    <p class="mt-4 inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
+                        <x-heroicon-s-lock-closed class="w-3 h-3 text-amber" />
+                        TLS 1.3 · 256-bit SSL · Encrypted channel
                     </p>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- ── Flash error ── --}}
+    @if(session('error'))
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-6">
+        <div class="border border-red-600 bg-red-50 px-4 py-3 flex items-start gap-3" role="alert" aria-live="assertive">
+            <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <p class="text-sm text-red-800">{{ session('error') }}</p>
+        </div>
+    </div>
+    @endif
+
+    {{-- ── Inline payment error banner (driven by JS, replaces native alert) ── --}}
+    <div id="payment-error-banner"
+         class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-6 hidden"
+         role="alert" aria-live="assertive">
+        <div class="border border-red-600 bg-red-50 px-4 py-3 flex items-start gap-3">
+            <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
+            <p class="text-sm text-red-800" id="payment-error-message"></p>
+        </div>
+    </div>
+
+    {{-- ── Main content ── --}}
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
+
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 items-start">
+
+            {{-- Left: Payment form --}}
+            <div class="col-span-12 lg:col-span-8">
+
+                <div class="border border-ink bg-paper">
+                    <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
+                        <span class="bp-spec text-amber-ink">§ Payment method</span>
+                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                            Order · {{ $order->order_number }}
+                        </span>
+                    </div>
+
+                    <div class="p-6 sm:p-8 space-y-6">
+
+                        <form method="POST"
+                              action="{{ route('frontend.checkout.payment.process', ['lang' => $lang, 'order' => $order->order_number]) }}"
+                              id="payment-form"
+                              enctype="multipart/form-data"
+                              class="space-y-6">
+                            @csrf
+                            <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+
+                            {{-- Method selection --}}
+                            <div class="border border-ink bg-paper">
+                                <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors hover:bg-ivory-alt">
+                                    <div class="flex items-center gap-3 shrink-0 mt-0.5">
+                                        <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">01</span>
+                                        <input type="radio" id="method-card" name="payment_method" value="card"
+                                               class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0"
+                                               {{ old('payment_method', $selectedMethod) === 'card' ? 'checked' : '' }} required>
+                                    </div>
+                                    <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0">
+                                        <x-heroicon-o-credit-card class="w-5 h-5 text-ink" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ __('Credit/Debit Card') }}</p>
+                                        <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
+                                            Airwallex · Visa · Mastercard · Amex
+                                        </p>
+                                    </div>
+                                </label>
+
+                                <label class="flex items-start gap-4 p-5 cursor-pointer transition-colors hover:bg-ivory-alt">
+                                    <div class="flex items-center gap-3 shrink-0 mt-0.5">
+                                        <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">02</span>
+                                        <input type="radio" id="method-bank" name="payment_method" value="bank_transfer"
+                                               class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0"
+                                               {{ old('payment_method', $selectedMethod) === 'bank_transfer' ? 'checked' : '' }}>
+                                    </div>
+                                    <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0">
+                                        <x-heroicon-o-building-library class="w-5 h-5 text-ink" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ __('Bank Transfer') }}</p>
+                                        <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
+                                            SEPA · Order processed on confirmed payment
+                                        </p>
+                                    </div>
+                                </label>
+                            </div>
+
+                            {{-- Card section --}}
+                            <div id="card-section" class="hidden space-y-4">
+                                <div class="border border-rule-strong bg-ivory-alt p-5 flex items-start gap-3">
+                                    <div class="w-9 h-9 border border-ink bg-paper flex items-center justify-center shrink-0">
+                                        <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
+                                    </div>
+                                    <div>
+                                        <p class="bp-spec text-amber-ink mb-1">§ Secure payment</p>
+                                        <p class="text-sm text-body leading-relaxed">
+                                            {{ __('Your payment is processed securely by Airwallex. We never store your card details.') }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div id="airwallex-dropin" class="border border-ink bg-paper p-5 min-h-[200px]"></div>
+
+                                <input type="hidden" name="payment_intent_id" id="payment-intent-id">
+                                <input type="hidden" name="payment_method_id" id="payment-method-id">
+                                <input type="hidden" name="client_secret" id="client-secret">
+                            </div>
+
+                            {{-- Bank transfer section --}}
+                            <div id="bank-section" class="hidden space-y-4">
+                                <div class="border border-amber bg-amber/10 p-5 flex items-start gap-3">
+                                    <div class="w-9 h-9 border border-amber bg-paper flex items-center justify-center shrink-0">
+                                        <x-heroicon-s-exclamation-circle class="w-4 h-4 text-amber-ink" />
+                                    </div>
+                                    <div>
+                                        <p class="bp-spec text-amber-ink mb-1">§ Important instructions</p>
+                                        <p class="text-sm text-body leading-relaxed">
+                                            {{ __('Please include your order number in the payment reference. Bank transfers may take 1-2 business days to process.') }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <section class="border border-ink bg-paper">
+                                    <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
+                                        <span class="bp-spec text-amber-ink flex items-center gap-2">
+                                            <x-heroicon-o-building-library class="w-3.5 h-3.5" />
+                                            § {{ __('Bank Transfer Details') }}
+                                        </span>
+                                    </header>
+                                    <div class="p-5">
+                                        @if(!empty($bankDetails))
+                                            <dl class="divide-y divide-rule">
+                                                @foreach($bankDetails as $key => $value)
+                                                @if(is_scalar($value) || $value === null)
+                                                <div class="flex items-baseline justify-between gap-3 py-3">
+                                                    <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __(ucfirst(str_replace('_', ' ', $key))) }}</dt>
+                                                    <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                                    <dd class="flex items-center gap-2">
+                                                        <span class="font-mono text-sm font-bold text-ink tabular-nums">{{ $value }}</span>
+                                                        <button type="button"
+                                                                class="inline-flex items-center gap-1 px-2 py-1 border border-ink bg-paper hover:bg-ink hover:text-ivory
+                                                                       font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink transition-colors copy-btn"
+                                                                data-clipboard-text="{{ $value }}">
+                                                            <x-heroicon-o-document-duplicate class="w-3 h-3" />
+                                                            {{ __('Copy') }}
+                                                        </button>
+                                                    </dd>
+                                                </div>
+                                                @endif
+                                                @endforeach
+                                            </dl>
+                                        @else
+                                            <p class="font-mono text-xs tracking-[0.18em] uppercase text-ink-muted">{{ __('Bank transfer details will appear after the method is confirmed.') }}</p>
+                                        @endif
+                                    </div>
+                                </section>
+
+                                <div>
+                                    <label for="payment_proof" class="bp-spec block mb-2 text-ink">
+                                        § {{ __('Upload Payment Proof') }}
+                                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
+                                    </label>
+                                    <input type="file" id="payment_proof" name="payment_proof"
+                                           class="block w-full text-sm text-body font-mono
+                                                  file:mr-4 file:py-2.5 file:px-4 file:border-0 file:border-r file:border-ink
+                                                  file:bg-ink file:text-ivory file:font-mono file:text-[10px] file:font-bold file:uppercase file:tracking-[0.22em]
+                                                  file:cursor-pointer hover:file:bg-amber hover:file:text-ink transition-colors
+                                                  border border-ink bg-paper">
+                                    <p class="mt-2 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
+                                        {{ __('Upload a screenshot or scan of your bank transfer confirmation.') }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {{-- Submit --}}
+                            <button type="submit" id="submit-btn" class="bp-btn-primary w-full justify-center py-4 text-base">
+                                <x-heroicon-s-lock-closed class="w-5 h-5" />
+                                <span>{{ __('Complete Payment') }}</span>
+                                <x-heroicon-s-arrow-long-right class="w-5 h-5" />
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+
+            {{-- Right: Order summary --}}
+            <aside class="col-span-12 lg:col-span-4 lg:sticky lg:top-10 lg:h-fit mt-8 lg:mt-0">
+                <div class="border border-ink bg-paper">
+                    <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
+                        <span class="bp-spec text-amber-ink">§ Order summary</span>
+                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">EUR</span>
+                    </div>
+
+                    <div class="p-5 space-y-2">
+                        <div class="flex items-baseline justify-between gap-3">
+                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Order number</dt>
+                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</dd>
+                        </div>
+                        <div class="flex items-baseline justify-between gap-3">
+                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Items</dt>
+                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->items->count() }}</dd>
+                        </div>
+                        <div class="flex items-baseline justify-between gap-3">
+                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Subtotal</dt>
+                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">€{{ number_format((float) $order->subtotal, 2) }}</dd>
+                        </div>
+                        <div class="flex items-baseline justify-between gap-3">
+                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Shipping</dt>
+                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">€{{ number_format((float) $order->shipping_cost, 2) }}</dd>
+                        </div>
+                        <div class="flex items-baseline justify-between gap-3">
+                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">VAT</dt>
+                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">€{{ number_format((float) $order->vat_amount, 2) }}</dd>
+                        </div>
+                    </div>
+
+                    <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
+                        <div>
+                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Grand total</p>
+                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">EUR · incl. VAT</p>
+                        </div>
+                        <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
+                            €{{ number_format((float) $order->grand_total, 2) }}
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Trust strip --}}
+                <div class="mt-4 border border-rule bg-ivory-alt p-4 grid grid-cols-3 divide-x divide-rule">
+                    <div class="flex items-center justify-center gap-2 px-2">
+                        <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink shrink-0" />
+                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">SSL 256</span>
+                    </div>
+                    <div class="flex items-center justify-center gap-2 px-2">
+                        <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink shrink-0" />
+                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">Encrypted</span>
+                    </div>
+                    <div class="flex items-center justify-center gap-2 px-2">
+                        <x-heroicon-s-credit-card class="w-4 h-4 text-amber-ink shrink-0" />
+                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">Airwallex</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
-    {{-- Airwallex SDK --}}
     <script src="https://checkout.airwallex.com/assets/elements.bundle.min.js"></script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Payment method toggle
             const cardRadio = document.getElementById('method-card');
             const bankRadio = document.getElementById('method-bank');
             const cardSection = document.getElementById('card-section');
             const bankSection = document.getElementById('bank-section');
             const submitBtn = document.getElementById('submit-btn');
+            const submitLabel = submitBtn ? submitBtn.querySelector('span') : null;
+            const errorBanner = document.getElementById('payment-error-banner');
+            const errorMessage = document.getElementById('payment-error-message');
+
+            function showPaymentError(message) {
+                if (!errorBanner || !errorMessage) return;
+                errorMessage.textContent = message;
+                errorBanner.classList.remove('hidden');
+                errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            window.showPaymentError = showPaymentError;
 
             function toggleSections() {
                 if (cardRadio.checked) {
                     cardSection.classList.remove('hidden');
                     bankSection.classList.add('hidden');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = '{{ __("Pay Now") }} →';
+                    if (submitLabel) submitLabel.textContent = '{{ __("Pay Now") }}';
                     initAirwallex();
                 } else if (bankRadio.checked) {
                     cardSection.classList.add('hidden');
                     bankSection.classList.remove('hidden');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = '{{ __("Confirm Bank Transfer") }} →';
+                    if (submitLabel) submitLabel.textContent = '{{ __("Confirm Bank Transfer") }}';
                 }
             }
 
             cardRadio.addEventListener('change', toggleSections);
             bankRadio.addEventListener('change', toggleSections);
-            
-            // Initialize with current selection
             toggleSections();
 
-            // Clipboard for bank details
-            const copyButtons = document.querySelectorAll('.copy-btn');
-            copyButtons.forEach(button => {
+            document.querySelectorAll('.copy-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const text = this.getAttribute('data-clipboard-text');
                     navigator.clipboard.writeText(text).then(() => {
-                        const originalText = this.textContent;
+                        const original = this.innerHTML;
                         this.textContent = '{{ __("Copied!") }}';
-                        this.classList.add('bg-green-100', 'text-green-700');
+                        this.classList.add('bg-amber', 'border-amber', 'text-ink');
                         setTimeout(() => {
-                            this.textContent = originalText;
-                            this.classList.remove('bg-green-100', 'text-green-700');
+                            this.innerHTML = original;
+                            this.classList.remove('bg-amber', 'border-amber', 'text-ink');
                         }, 2000);
                     });
                 });
             });
 
-            // Airwallex initialization
             let airwallexInitialized = false;
-            
             function initAirwallex() {
                 if (airwallexInitialized) return;
-                
-                // Load Airwallex configuration from server
-                fetch('{{ route("frontend.checkout.payment.intent", ["lang" => $lang, "order" => $order->order_number]) }}')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.success) {
-                            console.error('Failed to create payment intent:', data.error);
-                            return;
-                        }
+                if (typeof Airwallex === 'undefined') return;
 
-                        // Set hidden fields
+                fetch('{{ route("frontend.checkout.payment.intent", ["lang" => $lang, "order" => $order->order_number]) }}')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.success) return;
                         document.getElementById('payment-intent-id').value = data.payment_intent_id;
                         document.getElementById('client-secret').value = data.client_secret;
 
-                        // Initialize Airwallex drop-in
                         Airwallex.init({
-                            env: data.env, // 'demo' or 'prod'
+                            env: data.env,
                             origin: window.location.origin,
-                            locale: '{{ app()->getLocale() }}'
+                            locale: '{{ $lang }}'
                         });
 
                         const dropin = Airwallex.createElement('dropin', {
@@ -298,31 +378,23 @@
                             currency: data.currency,
                             amount: data.amount,
                             onSuccess: (response) => {
-                                console.log('Payment successful:', response);
                                 document.getElementById('payment-method-id').value = response.id;
-                                // Submit form automatically
                                 document.getElementById('payment-form').submit();
                             },
                             onError: (error) => {
                                 console.error('Payment error:', error);
-                                alert('{{ __("Payment failed. Please try again.") }}');
+                                showPaymentError('{{ __("Payment failed. Please try again.") }}');
                             }
                         });
-
                         dropin.mount('airwallex-dropin');
                         airwallexInitialized = true;
                     })
-                    .catch(error => {
-                        console.error('Error loading payment intent:', error);
-                    });
+                    .catch(err => console.error('intent error', err));
             }
 
-            // Form submission handling
             document.getElementById('payment-form').addEventListener('submit', function(e) {
-                if (cardRadio.checked) {
-                    // For card payments, Airwallex will handle submission via onSuccess
+                if (cardRadio.checked && typeof Airwallex !== 'undefined') {
                     e.preventDefault();
-                    // Trigger Airwallex payment
                     Airwallex.confirmPaymentIntent({
                         client_secret: document.getElementById('client-secret').value,
                         element: Airwallex.getElement('dropin'),
@@ -331,7 +403,6 @@
                         }
                     });
                 }
-                // For bank transfers, form submits normally
             });
         });
     </script>

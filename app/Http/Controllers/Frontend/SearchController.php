@@ -88,6 +88,33 @@ class SearchController extends Controller
     }
 
     /**
+     * Search Console landing page — a dedicated empty-state search experience
+     * that any "Browse parts" / "Parts search" CTA across the site can link to.
+     *
+     * Route: /{lang}/parts
+     */
+    public function console(Request $request, string $lang)
+    {
+        $popularOems = $this->getPopularOems();
+
+        // Featured brands (top, active, verified OEM) for quick entry shortcuts.
+        $featuredBrands = Manufacturer::where('is_active', true)
+            ->orderByDesc('is_verified_oem')
+            ->orderBy('sort_order')
+            ->limit(8)
+            ->get(['id', 'name', 'slug']);
+
+        $minChars = (int) settings('search.min_chars', 3);
+
+        return view('frontend.search.console', [
+            'lang'           => $lang,
+            'popularOems'    => $popularOems,
+            'featuredBrands' => $featuredBrands,
+            'minChars'       => $minChars,
+        ]);
+    }
+
+    /**
      * Build the shared data array for the results view.
      */
     private function buildResultsViewData(array $result, string $lang, string $sort, ?string $condition, bool $inStockOnly, ?int $manufacturerId, ?int $carModelId): array

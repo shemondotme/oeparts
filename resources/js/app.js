@@ -1,6 +1,7 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
+import focus from '@alpinejs/focus';
 import NProgress from 'nprogress';
 import otpInput from './otp-input';
 import countup from './countup';
@@ -9,6 +10,7 @@ import clipboard from './clipboard';
 // Alpine.js — the ONLY JS interactivity layer (no Vue, React, Livewire, jQuery)
 window.Alpine = Alpine;
 Alpine.plugin(collapse);
+Alpine.plugin(focus);
 
 // Shared store: OEM search results table / compact view (syncs filter bar + listing)
 document.addEventListener('alpine:init', () => {

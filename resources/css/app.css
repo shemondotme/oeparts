@@ -237,6 +237,206 @@
     }
 
     /* =========================================
+       INDUSTRIAL BLUEPRINT — v2 design language
+       Technical draftsman aesthetic. Used by
+       redesigned frontend pages. Old btn-/card-
+       classes above remain for legacy pages.
+       ========================================= */
+
+    /* Blueprint section marker — "§01 · PROLOGUE" style */
+    .bp-marker {
+        @apply inline-flex items-baseline gap-2 font-mono text-spec-sm font-medium text-ink-muted uppercase;
+    }
+
+    .bp-marker-num {
+        @apply text-ink font-bold;
+    }
+
+    /* Blueprint micro label — small-caps spec text */
+    .bp-spec {
+        @apply text-spec-sm font-sans font-bold uppercase text-ink-muted;
+    }
+
+    .bp-spec-light {
+        @apply text-spec-sm font-sans font-bold uppercase text-white/50;
+    }
+
+    /* Hairline rules */
+    .bp-rule {
+        @apply border-t border-rule;
+    }
+
+    .bp-rule-dark {
+        @apply border-t border-white/15;
+    }
+
+    /* Blueprint card — flat, hairline border, no rounding */
+    .bp-card {
+        @apply bg-paper border border-rule;
+    }
+
+    .bp-card-ivory {
+        @apply bg-ivory border border-rule;
+    }
+
+    /* Blueprint button — flat, sharp, monospace label */
+    .bp-btn {
+        @apply inline-flex items-center justify-center gap-2.5 px-5 py-3
+               font-sans text-[13px] font-bold uppercase tracking-[0.18em]
+               border transition-colors duration-150
+               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+               focus-visible:ring-offset-ivory focus-visible:ring-ink;
+    }
+
+    .bp-btn-primary {
+        @apply bp-btn bg-ink text-ivory border-ink
+               hover:bg-amber hover:text-ink hover:border-amber
+               active:translate-y-[1px];
+    }
+
+    .bp-btn-amber {
+        @apply bp-btn bg-amber text-ink border-ink
+               hover:bg-ink hover:text-amber
+               active:translate-y-[1px];
+    }
+
+    .bp-btn-outline {
+        @apply bp-btn bg-transparent text-ink border-ink
+               hover:bg-ink hover:text-ivory
+               active:translate-y-[1px];
+    }
+
+    .bp-btn-ghost {
+        @apply bp-btn bg-transparent text-ink-muted border-transparent
+               hover:text-ink hover:border-ink;
+    }
+
+    /* Blueprint input — flat, hairline underline on focus */
+    .bp-input {
+        @apply w-full bg-transparent border border-rule
+               px-4 py-3 text-ink placeholder:text-ink-muted/70
+               font-sans text-base
+               focus:outline-none focus:border-ink
+               focus:bg-paper transition-colors duration-150;
+    }
+
+    .bp-input-mono {
+        @apply bp-input font-mono uppercase tracking-wider
+               placeholder:normal-case placeholder:tracking-normal placeholder:font-sans;
+    }
+
+    /* Register marks — corner crosshairs for technical drawing feel */
+    .bp-register::before,
+    .bp-register::after {
+        content: "";
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        border-color: theme("colors.ink");
+        border-style: solid;
+        opacity: 0.4;
+    }
+    .bp-register::before {
+        top: -1px;
+        left: -1px;
+        border-width: 1px 0 0 1px;
+    }
+    .bp-register::after {
+        bottom: -1px;
+        right: -1px;
+        border-width: 0 1px 1px 0;
+    }
+
+    /* Dotted leader row — for "LABEL ........... VALUE" spec lists */
+    .bp-leader {
+        @apply flex items-baseline gap-3;
+    }
+    .bp-leader-dots {
+        @apply flex-1 bg-dotted-leader bg-leader bg-repeat-x
+               self-end mb-[6px] opacity-70;
+    }
+
+    /* Amber underline accent — replaces gradient buttons on highlights */
+    .bp-amber-rule {
+        @apply relative;
+    }
+    .bp-amber-rule::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -4px;
+        width: 2.5rem;
+        height: 3px;
+        background: theme("colors.amber");
+    }
+
+    /* Blueprint link — inline text link with animated underline */
+    .bp-link {
+        @apply relative inline-flex items-center gap-1.5 text-ink font-semibold
+               border-b border-ink pb-[1px]
+               hover:text-amber-ink hover:border-amber-ink
+               transition-colors duration-150;
+    }
+
+    /* Blueprint number display — monospace, tabular, tight */
+    .bp-number {
+        @apply font-mono font-medium tabular-nums tracking-tight text-ink;
+    }
+
+    /* Diagonal "safety tape" divider */
+    .bp-tape {
+        background-image: repeating-linear-gradient(
+            -45deg,
+            theme("colors.ink") 0,
+            theme("colors.ink") 8px,
+            theme("colors.amber") 8px,
+            theme("colors.amber") 16px
+        );
+    }
+
+    /* Page-load entrance — subtle, singular */
+    @keyframes bp-rise {
+        0% {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .bp-rise {
+        animation: bp-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .bp-rise-delay-1 {
+        animation-delay: 80ms;
+    }
+    .bp-rise-delay-2 {
+        animation-delay: 160ms;
+    }
+    .bp-rise-delay-3 {
+        animation-delay: 240ms;
+    }
+    .bp-rise-delay-4 {
+        animation-delay: 320ms;
+    }
+
+    /* Ruler-line draw — animates border-bottom width on section headings */
+    @keyframes bp-rule-draw {
+        0% {
+            transform: scaleX(0);
+        }
+        100% {
+            transform: scaleX(1);
+        }
+    }
+    .bp-rule-draw {
+        transform-origin: left;
+        animation: bp-rule-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation-delay: 200ms;
+    }
+
+    /* =========================================
        Accessibility: prefers-reduced-motion
        ========================================= */
     @media (prefers-reduced-motion: reduce) {

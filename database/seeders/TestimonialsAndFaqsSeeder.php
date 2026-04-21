@@ -95,6 +95,21 @@ class TestimonialsAndFaqsSeeder extends Seeder
             'is_active'  => true,
             'sort_order' => 5,
         ],
+        [
+            'name'       => 'Anna Kowalska',
+            'company'    => 'AutoSerwis Kowalski',
+            'location'   => 'Warsaw, Poland',
+            'quote'      => [
+                'en' => 'Invoices arrive with full VAT details within minutes — bookkeeping used to take hours each week. Now it\'s automatic.',
+                'de' => 'Rechnungen kommen mit vollständigen USt-Angaben innerhalb von Minuten — Buchhaltung dauerte früher Stunden pro Woche. Jetzt automatisch.',
+                'lt' => 'Sąskaitos atkeliauja su pilnais PVM duomenimis per minutes — buhalterija anksčiau trukdavo valandas. Dabar automatiška.',
+                'fr' => 'Les factures arrivent avec tous les détails TVA en quelques minutes — la comptabilité prenait des heures. Maintenant c\'est automatique.',
+                'es' => 'Las facturas llegan con IVA completo en minutos — la contabilidad antes tomaba horas semanales. Ahora es automático.',
+            ],
+            'rating'     => 5,
+            'is_active'  => true,
+            'sort_order' => 6,
+        ],
     ];
 
     /**

@@ -1,65 +1,109 @@
-{{-- Section: contact_cta
-     content: headline, subheadline, button_text, phone
-     Design mockup hardcoded values:
-     - eyebrow: "GET IN TOUCH"
-     - headline: "Need Help? Talk to an Expert."
-     - subheadline: "Our parts specialists are available Monday–Friday, 9:00–18:00 CET."
+{{-- Section: contact_cta (Industrial Blueprint)
+     content: eyebrow, headline(ml), subheadline(ml), button_text(ml)
 --}}
-<section class="relative py-14 md:py-20 px-4 overflow-hidden">
+@php
+    $eyebrow = trans_field($section->content['eyebrow'] ?? null);
+    $headline = trans_field($section->content['headline'] ?? null);
+    $subheadline = trans_field($section->content['subheadline'] ?? null);
+    $buttonText = trans_field($section->content['button_text'] ?? null) ?: 'Contact Us';
+    $phone = settings('general.site_phone', '+370 600 00000');
+    $email = settings('general.site_email', 'support@oemhub.eu');
+    $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+@endphp
 
-    {{-- Solid navy background for better contrast --}}
-    <div class="absolute inset-0 bg-navy"></div>
+<section class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
+    <div class="absolute inset-0 bg-grid-navy bg-grid-lg opacity-60 pointer-events-none" aria-hidden="true"></div>
 
-    {{-- Decorative elements — subtle --}}
-    <div class="absolute inset-0 opacity-20 pointer-events-none">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-amber/10 rounded-full filter blur-3xl"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full filter blur-3xl"></div>
-    </div>
+    {{-- Amber tick strip --}}
+    <div class="relative h-[3px] bg-amber"></div>
 
-    <div class="relative z-10 max-w-4xl mx-auto text-center">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
 
-        <x-section-heading
-            :eyebrow="trans_field($section->content['eyebrow'] ?? null)"
-            :headline="trans_field($section->content['headline'] ?? null)"
-            :subheadline="trans_field($section->content['subheadline'] ?? null)"
-            :accentBar="false"
-            :dark="true"
-            class="mb-12"
-        />
+        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 gap-y-10 items-end">
+            {{-- Headline block --}}
+            <div class="col-span-12 lg:col-span-7">
+                @if($eyebrow)
+                <div class="flex items-center gap-4 mb-6">
+                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
+                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ {{ $eyebrow }}</span>
+                </div>
+                @endif
+                @if($headline)
+                <h2 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em]
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[16ch]">
+                    {{ $headline }}<span class="text-amber">.</span>
+                </h2>
+                @endif
+                @if($subheadline)
+                <p class="mt-6 text-base text-ivory/75 leading-relaxed max-w-lg">
+                    {{ $subheadline }}
+                </p>
+                @endif
+            </div>
 
-        {{-- CTA Buttons — Clean design with solid amber button --}}
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
+            {{-- Action column --}}
+            <div class="col-span-12 lg:col-span-5 lg:pl-10 lg:border-l lg:border-white/20">
+                {{-- Contact rows --}}
+                <dl class="space-y-0 border-t border-white/20">
+                    @if($email)
+                    <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
+                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
+                            Email
+                        </dt>
+                        <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
+                        <dd class="font-mono text-sm text-ivory shrink-0">
+                            <a href="mailto:{{ $email }}" class="hover:text-amber transition-colors">
+                                {{ $email }}
+                            </a>
+                        </dd>
+                    </div>
+                    @endif
+                    @if($phone)
+                    <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
+                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
+                            Phone
+                        </dt>
+                        <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
+                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">
+                            <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}" class="hover:text-amber transition-colors">
+                                {{ $phone }}
+                            </a>
+                        </dd>
+                    </div>
+                    @endif
+                    <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
+                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
+                            Hours
+                        </dt>
+                        <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
+                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">Mon-Fri · 09:00-18:00 CET</dd>
+                    </div>
+                    <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
+                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
+                            SLA
+                        </dt>
+                        <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
+                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">&lt; 24 h response</dd>
+                    </div>
+                </dl>
 
-            {{-- Email CTA --}}
-            <a
-                href="/{{ app()->getLocale() }}/contact"
-                class="group btn-primary px-8 py-4 text-base"
-            >
-                <x-heroicon-o-envelope class="w-5 h-5 transform group-hover:scale-110 transition-transform" />
-                <span>Contact Us</span>
-                <x-heroicon-o-arrow-right class="w-5 h-5 transform group-hover:translate-x-1 transition-transform" />
-            </a>
-
-            {{-- Phone CTA --}}
-            @php $phone = settings('general.site_phone', '+370 600 00000'); @endphp
-            @if($phone)
-            <a
-                href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
-                class="group btn-outline px-8 py-4 text-base"
-            >
-                <x-heroicon-o-phone class="w-5 h-5 transform group-hover:scale-110 transition-transform" />
-                <span class="font-mono text-base">{{ $phone }}</span>
-            </a>
-            @endif
+                {{-- CTAs --}}
+                <div class="mt-8 flex flex-col sm:flex-row gap-3">
+                    <a href="{{ url('/'.app()->getLocale().'/contact') }}" class="bp-btn-amber flex-1 justify-center">
+                        <x-heroicon-s-envelope class="w-5 h-5" />
+                        {{ $buttonText }}
+                    </a>
+                    @if($phone)
+                    <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
+                       class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ivory/30 text-ivory
+                              font-mono text-xs font-bold uppercase tracking-[0.22em]
+                              hover:border-amber hover:text-amber transition-colors">
+                        <x-heroicon-s-phone class="w-4 h-4" />
+                        Call now
+                    </a>
+                    @endif
+                </div>
+            </div>
         </div>
-
-        {{-- Trust text — Improved contrast --}}
-        <p class="mt-10 text-sm text-white/80 flex items-center justify-center gap-2">
-            <x-heroicon-s-clock class="w-4 h-4 text-amber" />
-            <span>Response within 24 hours</span>
-            <span class="text-white/40">•</span>
-            <x-heroicon-s-check-circle class="w-4 h-4 text-amber" />
-            <span>Expert support</span>
-        </p>
     </div>
 </section>

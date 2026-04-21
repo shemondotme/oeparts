@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Coupon;
+use App\Enums\DiscountType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -31,11 +32,13 @@ class CartService
      */
     public function getCartByCheckout(string $checkoutId): ?Cart
     {
-        $cartId = session('checkout_cart_id_' . $checkoutId);
+        $checkout = session("checkout.{$checkoutId}");
+        $cartId = $checkout['cart_id'] ?? null;
         if (!$cartId) {
             return null;
         }
-        return Cart::with('items')->find($cartId);
+
+        return Cart::with('items.product')->find($cartId);
     }
 
     /**
@@ -264,9 +267,15 @@ class CartService
                 // Check min order amount
                 $minAmount = $coupon->min_order_amount ?? 0;
                 if ($subtotal >= $minAmount) {
-                    if ($coupon->discount_type === 'fixed') {
+                    // `discount_type` is cast to the DiscountType enum; normalise to its
+                    // string value so this works whether an enum or a raw string is set.
+                    $type = $coupon->discount_type instanceof DiscountType
+                        ? $coupon->discount_type->value
+                        : (string) $coupon->discount_type;
+
+                    if ($type === DiscountType::Fixed->value) {
                         $couponDiscount = min((string)$coupon->discount_value, $subtotal); // can't discount more than subtotal
-                    } elseif ($coupon->discount_type === 'percentage') {
+                    } elseif ($type === DiscountType::Percentage->value) {
                         $discountAmt = bcmul($subtotal, bcdiv((string)$coupon->discount_value, '100', 4), 2);
                         $couponDiscount = min($discountAmt, $subtotal);
                     }

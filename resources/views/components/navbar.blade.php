@@ -1,129 +1,147 @@
 @php
-    $lang    = app()->getLocale();
-    $cartUrl = "/{$lang}/cart";
-    $homeUrl = "/{$lang}/";
+    $lang     = app()->getLocale();
+    $cartUrl  = url("/{$lang}/cart");
+    $homeUrl  = url("/{$lang}/");
     $siteName = settings('general.site_name', 'OEMHub');
 
-    // Check if this is the homepage
-    $isHomepage = request()->routeIs('frontend.home') || (request()->path() === $lang . '/' || request()->path() === $lang);
+    $isHomepage = request()->routeIs('frontend.home')
+        || (request()->path() === $lang . '/' || request()->path() === $lang);
+
+    $navLinks = [
+        ['href' => route('frontend.search.console', ['lang' => $lang]), 'label' => 'Parts Search', 'num' => '01'],
+        ['href' => url("/{$lang}/brands"),  'label' => 'Brands',       'num' => '02'],
+        ['href' => url("/{$lang}/blog/"),   'label' => 'Journal',      'num' => '03'],
+        ['href' => url("/{$lang}/about"),   'label' => 'About',        'num' => '04'],
+    ];
 @endphp
 
+{{-- ══════════════════════════════════════════════════════════════════════
+     INDUSTRIAL BLUEPRINT NAVBAR
+     Flat, hairline, numbered navigation — reads like a document header
+     ══════════════════════════════════════════════════════════════════ --}}
 <header
-    x-data="{ mobileOpen: false, langOpen: false, scrolled: false }"
-    @scroll.window="scrolled = window.pageYOffset > 50"
-    @if($isHomepage)
-        :class="scrolled ? 'bg-navy/95 backdrop-blur-xl shadow-xl border-b border-white/10' : 'bg-transparent border-transparent'"
-        class="absolute top-0 left-0 right-0 z-50 transition-all duration-500"
-    @else
-        :class="scrolled ? 'shadow-xl' : 'shadow-md'"
-        class="relative bg-gradient-to-r from-navy via-navy to-blue-900 sticky top-0 z-50 transition-all duration-300 border-b border-white/5"
-    @endif
+    x-data="{ mobileOpen: false, scrolled: false }"
+    @scroll.window="scrolled = window.pageYOffset > 8"
+    :class="scrolled ? 'bg-ivory/95 backdrop-blur-md' : 'bg-ivory'"
+    class="sticky top-0 z-50 border-b border-rule transition-colors duration-200"
     role="banner"
 >
-    @if(!$isHomepage)
-    {{-- Decorative background elements (only for non-homepage) --}}
-    <div class="absolute inset-0 opacity-10 pointer-events-none">
-        <div class="absolute top-0 right-0 w-64 h-64 bg-amber/20 rounded-full filter blur-3xl"></div>
-        <div class="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/10 rounded-full filter blur-2xl"></div>
+    {{-- Spec-sheet strip: site meta rendered as technical document header --}}
+    <div class="border-b border-rule/60 bg-ivory">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center justify-between h-8 text-[10px] font-mono uppercase tracking-[0.24em] text-ink-muted">
+            <div class="flex items-center gap-4">
+                <span class="hidden sm:inline">DOC · OEMHUB/EU</span>
+                <span class="hidden lg:inline text-rule-strong">│</span>
+                <span class="hidden lg:inline">GENUINE OEM · 5 LANGUAGES · 27 EU COUNTRIES</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <span class="hidden sm:inline-flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 bg-emerald-600"></span>
+                    SYSTEM ONLINE
+                </span>
+                <span class="uppercase">{{ strtoupper($lang) }} · EUR</span>
+            </div>
+        </div>
     </div>
 
-    {{-- Top accent bar (only for non-homepage) --}}
-    <div class="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber via-orange-400 to-amber"></div>
-    @endif
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6">
+        <div class="flex items-stretch h-[72px] gap-0">
 
-    <div class="{{ $isHomepage ? '' : 'relative z-10' }} max-w-7xl mx-auto px-4 sm:px-6">
-        <div class="flex items-center h-20 gap-4">
-
-            {{-- Logo / Site name --}}
-            <a href="{{ $homeUrl }}" class="flex items-center gap-3 shrink-0 group
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy rounded-lg"
-            >
-                {{-- Icon box --}}
-                <div class="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-amber to-orange-500 flex items-center justify-center shadow-lg shadow-amber/30 group-hover:shadow-amber/50 group-hover:scale-105 transition-all duration-300">
-                    <x-heroicon-s-wrench-screwdriver class="w-5 h-5 text-navy" />
+            {{-- ═══ Logo block ═══ --}}
+            <a href="{{ $homeUrl }}"
+               class="group flex items-center gap-3.5 pr-6 border-r border-rule shrink-0
+                      focus-visible:outline-none focus-visible:bg-ink/5"
+               aria-label="{{ $siteName }} · Home">
+                {{-- Hex bolt mark — authored SVG, inverts on hover --}}
+                <div class="relative w-11 h-11 shrink-0 transition-transform duration-300 group-hover:rotate-[30deg]">
+                    <svg viewBox="0 0 60 60" class="w-full h-full" aria-hidden="true">
+                        <path d="M30 3 L53 16 L53 44 L30 57 L7 44 L7 16 Z"
+                              class="fill-ink group-hover:fill-amber transition-colors duration-200"/>
+                        <path d="M30 13 L44.5 21.5 L44.5 38.5 L30 47 L15.5 38.5 L15.5 21.5 Z"
+                              class="fill-ivory group-hover:fill-ink transition-colors duration-200"/>
+                        <path d="M30 18 L30 42 M18 30 L42 30"
+                              class="stroke-ink group-hover:stroke-amber transition-colors duration-200"
+                              stroke-width="2.5" stroke-linecap="square"/>
+                        <circle cx="30" cy="30" r="3.2"
+                                class="fill-amber group-hover:fill-ivory transition-colors duration-200"/>
+                    </svg>
+                    <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber group-hover:bg-ink transition-colors"></span>
                 </div>
-                {{-- Text logo --}}
-                <p class="font-display font-extrabold text-2xl tracking-tight leading-none">
-                    <span class="text-amber">OEM</span><span class="text-white">Hub</span>
-                </p>
+                <div class="leading-none">
+                    <p class="font-display font-extrabold text-[22px] tracking-[-0.02em] text-ink leading-none">
+                        OEM<span class="text-amber-ink">·</span>HUB
+                    </p>
+                    <p class="mt-1.5 font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">
+                        GENUINE&nbsp;PARTS&nbsp;INDEX
+                    </p>
+                </div>
             </a>
 
-            {{-- Spacer left --}}
-            <div class="flex-1"></div>
-
-            {{-- Desktop nav links (centered) --}}
-            <nav class="hidden lg:flex items-center gap-1" aria-label="Main navigation">
-                <a href="/{{ $lang }}/" class="group px-4 py-2.5 text-sm font-semibold text-white/90 hover:text-white rounded-lg hover:bg-white/10 transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <span class="flex items-center gap-2">
-                        <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                        Parts Search
-                    </span>
-                </a>
-                <a href="/{{ $lang }}/brands" class="group px-4 py-2.5 text-sm font-semibold text-white/90 hover:text-white rounded-lg hover:bg-white/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <span class="flex items-center gap-2">
-                        <x-heroicon-o-tag class="w-4 h-4" />
-                        Brands
-                    </span>
-                </a>
-                <a href="/{{ $lang }}/blog/" class="group px-4 py-2.5 text-sm font-semibold text-white/90 hover:text-white rounded-lg hover:bg-white/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <span class="flex items-center gap-2">
-                        <x-heroicon-o-document-text class="w-4 h-4" />
-                        Blog
-                    </span>
-                </a>
-                <a href="/{{ $lang }}/about" class="group px-4 py-2.5 text-sm font-semibold text-white/90 hover:text-white rounded-lg hover:bg-white/10 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <span class="flex items-center gap-2">
-                        <x-heroicon-o-information-circle class="w-4 h-4" />
-                        About
-                    </span>
-                </a>
+            {{-- ═══ Desktop navigation — numbered ═══ --}}
+            <nav class="hidden lg:flex items-stretch flex-1" aria-label="Main navigation">
+                @foreach($navLinks as $link)
+                    <a href="{{ $link['href'] }}"
+                       class="group relative flex items-center gap-2.5 px-5 border-r border-rule/60
+                              text-ink hover:bg-ink/[0.04]
+                              transition-colors duration-150
+                              focus-visible:outline-none focus-visible:bg-ink/10">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.2em] text-ink-muted group-hover:text-amber-ink transition-colors">
+                            §{{ $link['num'] }}
+                        </span>
+                        <span class="font-sans text-[13px] font-bold uppercase tracking-[0.14em]">
+                            {{ $link['label'] }}
+                        </span>
+                        {{-- Amber tick on hover --}}
+                        <span class="absolute bottom-0 left-5 h-[3px] w-0 bg-amber transition-all duration-200 group-hover:w-[calc(100%-2.5rem)]"></span>
+                    </a>
+                @endforeach
             </nav>
 
-            {{-- Spacer right --}}
-            <div class="flex-1"></div>
+            {{-- Spacer (only on non-desktop to push right actions) --}}
+            <div class="flex-1 lg:hidden"></div>
 
-            {{-- Right actions --}}
-            <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+            {{-- ═══ Right actions ═══ --}}
+            <div class="flex items-stretch border-l border-rule">
 
-                {{-- Language switcher --}}
-                <x-language-switcher align="right" theme="dark" />
+                {{-- Language switcher (keep component) --}}
+                <div class="hidden sm:flex items-center px-3 border-r border-rule/60">
+                    <x-language-switcher align="right" theme="light" />
+                </div>
 
-                {{-- Cart icon with mini-cart dropdown --}}
-<div
-    class="relative"
-    x-data="{
-        count: 0,
-        items: [],
-        subtotal: 0,
-        hovered: false,
-        loaded: false,
-        loading: false,
-        animateBadge: false,
-        forceShowDropdown: false,
-        init() {
-            this.loadCartCount();
-            window.addEventListener('cart-updated', (event) => {
-                const prevCount = this.count;
-                this.count = event.detail.itemCount || 0;
-                this.loaded = false; // Reset loaded state to force fresh fetch
-                
-                // Trigger animation and dropdown show when item added
-                if (this.count > prevCount) {
-                    this.animateBadge = true;
-                    this.loadPreview(); // Load new items immediately
-                    this.forceShowDropdown = true;
-                    setTimeout(() => {
-                        this.animateBadge = false;
-                        this.forceShowDropdown = false;
-                    }, 5000); // Keep open a bit longer (5s) to be helpful
-                } else {
-                    this.loadPreview(); // Just load silently if removed or changed
-                }
-            });
-        },
+                {{-- ── Cart ── --}}
+                <div
+                    class="relative flex items-stretch"
+                    x-data="{
+                        count: 0,
+                        items: [],
+                        subtotal: 0,
+                        hovered: false,
+                        loaded: false,
+                        loading: false,
+                        animateBadge: false,
+                        forceShowDropdown: false,
+                        init() {
+                            this.loadCartCount();
+                            window.addEventListener('cart-updated', (event) => {
+                                const prevCount = this.count;
+                                this.count = event.detail.itemCount || 0;
+                                this.loaded = false;
+                                if (this.count > prevCount) {
+                                    this.animateBadge = true;
+                                    this.loadPreview();
+                                    this.forceShowDropdown = true;
+                                    setTimeout(() => {
+                                        this.animateBadge = false;
+                                        this.forceShowDropdown = false;
+                                    }, 5000);
+                                } else {
+                                    this.loadPreview();
+                                }
+                            });
+                        },
                         async loadCartCount() {
                             try {
-                                const res  = await fetch('/{{ $lang }}/cart/summary');
+                                const res  = await fetch('{{ route('frontend.cart.summary', ['lang' => $lang]) }}');
                                 const data = await res.json();
                                 if (data.success) this.count = data.summary.item_count || 0;
                             } catch (e) {}
@@ -132,7 +150,7 @@
                             if (this.loaded) return;
                             this.loading = true;
                             try {
-                                const res  = await fetch('/{{ $lang }}/cart/preview');
+                                const res  = await fetch('{{ route('frontend.cart.preview', ['lang' => $lang]) }}');
                                 const data = await res.json();
                                 if (data.success) {
                                     this.items    = data.items;
@@ -145,294 +163,302 @@
                         },
                         async removeItem(itemId) {
                             try {
-                                const res = await fetch(`/{{ $lang }}/cart/remove/${itemId}`, {
+                                const res = await fetch(`{{ url('/'.$lang.'/cart/remove') }}/${itemId}`, {
                                     method: 'DELETE',
                                     headers: {
                                         'Content-Type': 'application/json',
-                                        // Include CSRF somehow - usually present in layout meta
                                         'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]') ? document.querySelector('meta[name=csrf-token]').content : ''
                                     }
                                 });
                                 const data = await res.json();
                                 if (data.success) {
-                                    // Trigger global cart update to sync pages & navbar icon
                                     window.dispatchEvent(new CustomEvent('cart-updated', { detail: { itemCount: data.cart_summary.item_count } }));
-                                    // Soft refresh the dropdown state
                                     this.items = this.items.filter(i => i.id !== itemId);
-                                    if(this.items.length === 0) {
-                                        this.subtotal = 0;
-                                    } else {
-                                        this.subtotal = data.cart_summary.subtotal;
-                                    }
+                                    this.subtotal = this.items.length ? data.cart_summary.subtotal : 0;
                                 }
                             } catch (e) {}
-                        },
-                        conditionClass(condition) {
-                            const map = {
-                                new:              'bg-green-100 text-green-700',
-                                used_grade_a:     'bg-blue-100 text-blue-700',
-                                used_grade_b:     'bg-amber-100 text-amber-700',
-                                used_grade_c:     'bg-gray-100 text-gray-500',
-                                remanufactured:   'bg-purple-100 text-purple-700',
-                                aftermarket:      'bg-red-100 text-red-700',
-                                new_old_stock:    'bg-teal-100 text-teal-700',
-                            };
-                            return map[condition] || 'bg-gray-100 text-gray-500';
                         }
                     }"
                     @mouseenter="hovered = true; loadPreview()"
                     @mouseleave="hovered = false"
                 >
-                    {{-- Cart icon button --}}
                     <a
                         href="{{ $cartUrl }}"
-                        class="relative flex items-center justify-center w-12 h-12 text-white/90 hover:text-white rounded-xl hover:bg-white/10 transition-all duration-200 group
-                               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+                        class="relative flex items-center gap-2.5 px-5 min-w-[72px]
+                               text-ink hover:bg-ink hover:text-ivory
+                               transition-colors duration-150
+                               focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
                         :aria-label="'Shopping cart' + (count > 0 ? ', ' + count + ' items' : '')"
                     >
-                        <x-heroicon-o-shopping-cart class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-<span
-                    x-show="count > 0"
-                    x-text="count > 9 ? '9+' : count"
-                    :class="animateBadge ? 'animate-cart-bounce bg-emerald-500 text-white shadow-emerald-500/50' : ''"
-                    class="absolute -top-1 -right-1 min-w-[20px] h-[20px] bg-amber text-navy text-[10px] font-extrabold rounded-full flex items-center justify-center leading-none px-1 shadow-md shadow-amber/50 ring-2 ring-navy transition-colors duration-300"
-                ></span>
+                        <x-heroicon-o-shopping-cart class="w-5 h-5" aria-hidden="true" />
+                        <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase hidden sm:inline">
+                            CART
+                        </span>
+                        <span
+                            x-show="count > 0"
+                            x-text="count > 99 ? '99+' : count"
+                            :class="animateBadge ? 'bg-amber text-ink' : 'bg-ink text-ivory group-hover:bg-amber group-hover:text-ink'"
+                            class="absolute top-2 right-2 min-w-[18px] h-[18px] px-1
+                                   font-mono text-[10px] font-bold leading-none
+                                   flex items-center justify-center
+                                   bg-amber text-ink
+                                   ring-1 ring-ink"
+                        ></span>
                     </a>
 
-{{-- ── Mini-cart dropdown (has items) ── --}}
-            <div
-                x-show="(hovered || forceShowDropdown) && count > 0"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+                    {{-- ── Mini-cart dropdown (Blueprint style) ── --}}
+                    <div
+                        x-show="(hovered || forceShowDropdown) && count > 0"
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-100"
+                        x-transition:leave-start="opacity-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 translate-y-1"
                         x-cloak
-                        class="absolute top-full right-0 mt-3 w-80 sm:w-96 max-w-[90vw] overflow-hidden rounded-2xl border border-white/60 bg-white/95 shadow-2xl shadow-navy/15 backdrop-blur-xl ring-1 ring-black/5 z-50"
+                        class="absolute top-full right-0 w-[380px] max-w-[92vw] bg-paper border border-ink z-50"
                     >
-                        {{-- Arrow caret --}}
-                        <div class="absolute -top-1.5 right-5 w-3 h-3 rotate-45 bg-white border-l border-t border-white/60 rounded-tl-sm" aria-hidden="true"></div>
-
-                        {{-- Header --}}
-                        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                            <p class="text-sm font-bold text-navy">Cart</p>
-                            <span
-                                class="inline-flex items-center rounded-full bg-amber/15 px-2 py-0.5 text-[11px] font-bold text-amber-text"
-                                x-text="count + ' item' + (count !== 1 ? 's' : '')"
-                            ></span>
+                        {{-- Spec header --}}
+                        <div class="flex items-center justify-between px-5 py-3 bg-ink text-ivory">
+                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
+                                DOC · BASKET / <span class="text-amber" x-text="('0' + count).slice(-2)"></span>
+                            </p>
+                            <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/70">
+                                <span x-text="count + ' LINE' + (count !== 1 ? 'S' : '')"></span>
+                            </p>
                         </div>
 
-                        {{-- Items list --}}
-                        <div class="max-h-64 overflow-y-auto divide-y divide-gray-50">
-
-                            {{-- Skeleton loading --}}
+                        {{-- Items --}}
+                        <div class="max-h-72 overflow-y-auto divide-y divide-rule">
                             <template x-if="loading">
-                                <div class="divide-y divide-gray-50">
+                                <div class="divide-y divide-rule">
                                     <template x-for="i in 2" :key="i">
-                                        <div class="px-4 py-3 animate-pulse flex gap-3">
+                                        <div class="px-5 py-4 flex items-start gap-3 animate-pulse">
+                                            <div class="h-3 w-16 bg-rule"></div>
                                             <div class="flex-1 space-y-2">
-                                                <div class="h-3 w-24 rounded bg-gray-100"></div>
-                                                <div class="h-3 w-36 rounded bg-gray-100"></div>
-                                                <div class="flex justify-between">
-                                                    <div class="h-3 w-8 rounded bg-gray-100"></div>
-                                                    <div class="h-3 w-12 rounded bg-gray-100"></div>
-                                                </div>
+                                                <div class="h-3 w-32 bg-rule"></div>
+                                                <div class="h-3 w-20 bg-rule"></div>
                                             </div>
                                         </div>
                                     </template>
                                 </div>
                             </template>
 
-                            {{-- Real items --}}
                             <template x-if="!loading">
-                                <div class="divide-y divide-gray-50/50">
-                                    <template x-for="item in items.slice(0, 4)" :key="item.id">
-                                        <div class="group relative flex items-center gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-white hover:to-gray-50/80 transition-all duration-300">
-                                            
-                                            {{-- Mini Avatar with Texture --}}
-                                            <div class="w-12 h-12 shrink-0 rounded-xl bg-gradient-to-br from-navy to-blue-900 flex items-center justify-center shadow-inner relative overflow-hidden group-hover:shadow-md transition-shadow">
-                                                <div class="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]"></div>
-                                                <template x-if="item.product?.condition === 'new' || !item.product?.condition">
-                                                    <x-heroicon-o-sparkles class="w-5 h-5 text-white/50 group-hover:text-amber transition-colors relative z-10" />
-                                                </template>
-                                                <template x-if="item.product?.condition && item.product?.condition !== 'new'">
-                                                    <x-heroicon-o-wrench-screwdriver class="w-5 h-5 text-white/50 group-hover:text-amber transition-colors transform group-hover:-rotate-12 relative z-10" />
-                                                </template>
+                                <div class="divide-y divide-rule">
+                                    <template x-for="(item, idx) in items.slice(0, 4)" :key="item.id">
+                                        <div class="group relative flex items-start gap-3 px-5 py-3.5 hover:bg-ivory transition-colors">
+                                            {{-- Row number --}}
+                                            <span class="font-mono text-[10px] font-bold text-ink-muted pt-0.5 w-6 shrink-0"
+                                                  x-text="('0' + (idx + 1)).slice(-2)"></span>
+                                            <div class="flex-1 min-w-0 space-y-1">
+                                                <p class="font-mono text-[13px] font-bold text-ink tracking-wide truncate uppercase"
+                                                   x-text="item.oem_number"></p>
+                                                <p class="text-[11px] text-ink-muted truncate" x-text="item.name || 'Genuine OEM Part'"></p>
+                                                <p class="text-[10px] font-mono text-ink-muted uppercase tracking-[0.18em]">
+                                                    QTY <span x-text="item.quantity"></span>
+                                                </p>
                                             </div>
-
-                                            <div class="flex-1 min-w-0 flex flex-col justify-center">
-                                                {{-- OEM + condition badge --}}
-                                                <div class="flex items-center gap-1.5 flex-wrap mb-0.5">
-                                                    <span class="font-mono text-[11px] font-black text-navy truncate block" x-text="item.oem_number"></span>
-                                                    <span
-                                                        class="shrink-0 rounded px-1.5 py-[1px] text-[8px] font-black uppercase tracking-widest leading-tight"
-                                                        :class="conditionClass(item.product?.condition)"
-                                                        x-text="(item.product?.condition || 'new').replace(/_/g,' ')"
-                                                    ></span>
-                                                </div>
-                                                {{-- Part name --}}
-                                                <p class="text-[10px] font-semibold text-muted truncate mb-1" x-text="item.name || 'Genuine OEM Part'"></p>
-                                                {{-- Qty + price row --}}
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded leading-none">Qty: <span x-text="item.quantity"></span></span>
-                                                    <span class="text-xs font-black text-navy bg-amber/10 px-1.5 py-0.5 rounded text-amber-600 leading-none" x-text="'€' + item.line_total.toFixed(2)"></span>
-                                                </div>
+                                            <div class="text-right shrink-0 space-y-1">
+                                                <p class="font-mono text-[13px] font-bold text-ink tabular-nums"
+                                                   x-text="'€' + item.line_total.toFixed(2)"></p>
+                                                <button @click.stop="removeItem(item.id)"
+                                                        aria-label="Remove"
+                                                        class="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted hover:text-red-700 border-b border-transparent hover:border-red-700">
+                                                    REMOVE
+                                                </button>
                                             </div>
-
-                                            {{-- Remove Button Action --}}
-                                            <button @click.stop="removeItem(item.id)" aria-label="Remove item" class="opacity-0 group-hover:opacity-100 flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 text-red-400 hover:bg-red-500 hover:text-white transition-all transform hover:scale-105 shrink-0 shadow-sm disabled:opacity-50">
-                                                <x-heroicon-o-trash class="w-4 h-4" />
-                                            </button>
                                         </div>
                                     </template>
-
-                                    {{-- More items badge --}}
-                                    <div x-show="items.length > 4" class="px-4 py-2.5 text-center bg-gray-50/50">
-                                        <span class="text-[11px] font-semibold text-muted"
-                                              x-text="'+ ' + (items.length - 4) + ' more item' + (items.length - 4 !== 1 ? 's' : '') + ' in cart'"></span>
+                                    <div x-show="items.length > 4" class="px-5 py-2.5 bg-ivory text-center">
+                                        <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-ink-muted"
+                                              x-text="'+ ' + (items.length - 4) + ' MORE'"></span>
                                     </div>
                                 </div>
                             </template>
                         </div>
 
-                        {{-- Footer --}}
-                        <div class="px-4 pt-3 pb-4 border-t border-gray-100 bg-gray-50/50 space-y-3">
-                            <div class="flex items-baseline justify-between mb-1">
-                                <span class="text-[11px] font-black uppercase tracking-widest text-muted">Cart Subtotal</span>
-                                <span class="text-lg font-black text-navy" x-text="'€' + subtotal.toFixed(2)"></span>
+                        {{-- Footer: total + CTAs --}}
+                        <div class="border-t border-ink px-5 py-4 space-y-3 bg-ivory">
+                            <div class="bp-leader">
+                                <span class="bp-spec">SUBTOTAL</span>
+                                <span class="bp-leader-dots"></span>
+                                <span class="font-mono text-lg font-bold text-ink tabular-nums"
+                                      x-text="'€' + subtotal.toFixed(2)"></span>
                             </div>
-                            <div class="flex gap-2">
-                                <a
-                                    href="{{ $cartUrl }}"
-                                    class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white border border-gray-200 py-2.5 text-xs font-bold text-navy shadow-sm transition-all duration-200 hover:border-gray-300 hover:bg-gray-50 active:scale-[0.98]"
-                                >
-                                    View Cart
+                            <div class="grid grid-cols-2 gap-2">
+                                <a href="{{ $cartUrl }}" class="bp-btn-outline text-[11px] py-2.5">
+                                    VIEW CART
                                 </a>
-                                <a
-                                    href="{{ $cartUrl }}#checkout"
-                                    class="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber to-orange-500 py-2.5 text-xs font-black uppercase tracking-[0.05em] text-navy shadow-md shadow-amber/30 transition-all duration-200 hover:shadow-lg hover:shadow-amber/40 active:scale-[0.98] group"
-                                >
-                                    Checkout
-                                    <x-heroicon-s-arrow-right class="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                <a href="{{ $cartUrl }}#checkout" class="bp-btn-amber text-[11px] py-2.5">
+                                    CHECKOUT
+                                    <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    {{-- ── Empty cart dropdown ── --}}
+                    {{-- Empty cart dropdown --}}
                     <div
                         x-show="hovered && count === 0 && loaded"
-                        x-transition:enter="transition ease-out duration-200"
-                        x-transition:enter-start="opacity-0 scale-95 -translate-y-1"
-                        x-transition:enter-end="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="opacity-100 scale-100 translate-y-0"
-                        x-transition:leave-end="opacity-0 scale-95 -translate-y-1"
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
                         x-cloak
-                        class="absolute top-full right-0 mt-3 w-64 max-w-[90vw] overflow-hidden rounded-2xl border border-white/60 bg-white/95 shadow-2xl shadow-navy/15 backdrop-blur-xl ring-1 ring-black/5 z-50"
+                        class="absolute top-full right-0 w-72 bg-paper border border-ink z-50"
                     >
-                        <div class="absolute -top-1.5 right-5 w-3 h-3 rotate-45 bg-white border-l border-t border-white/60 rounded-tl-sm" aria-hidden="true"></div>
-                        <div class="px-5 py-7 text-center">
-                            <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                                <x-heroicon-o-shopping-cart class="w-5 h-5 text-gray-400" />
-                            </div>
-                            <p class="text-sm font-bold text-navy">Your cart is empty</p>
-                            <p class="mt-1 text-xs text-muted">Search for OEM parts to get started</p>
+                        <div class="px-5 py-3 bg-ink text-ivory">
+                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
+                                DOC · BASKET / 00
+                            </p>
+                        </div>
+                        <div class="px-5 py-6 text-center">
+                            <p class="font-display text-lg font-bold text-ink leading-tight">Empty basket</p>
+                            <p class="mt-1.5 text-xs text-ink-muted">Search an OEM number to begin.</p>
+                            <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
+                               class="mt-4 inline-flex items-center justify-center gap-2 w-full
+                                      px-4 py-2.5 bg-ink text-ivory
+                                      font-mono text-[10px] font-bold tracking-[0.22em] uppercase
+                                      hover:bg-amber hover:text-ink transition-colors">
+                                <x-heroicon-s-magnifying-glass class="w-4 h-4" />
+                                Start search
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                {{-- Account / login --}}
+                {{-- ── Account / sign-in ── --}}
                 @auth
                 <a
-                    href="/{{ $lang }}/account/dashboard"
-                    class="hidden sm:flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-200 backdrop-blur-sm border border-white/10
-                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+                    href="{{ url('/'.$lang.'/account/dashboard') }}"
+                    class="hidden sm:flex items-center gap-2 px-5 border-l border-rule
+                           text-ink hover:bg-ink hover:text-ivory
+                           transition-colors duration-150
+                           focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
                 >
-                    <x-heroicon-o-user-circle class="w-5 h-5" />
-                    <span>Account</span>
+                    <x-heroicon-o-user-circle class="w-5 h-5" aria-hidden="true" />
+                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase">ACCOUNT</span>
                 </a>
                 @else
                 <button
                     @click="$dispatch('open-auth-modal')"
-                    class="hidden sm:flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-navy bg-gradient-to-r from-amber to-orange-500 hover:from-amber/90 hover:to-orange-400 rounded-xl transition-all duration-200 shadow-lg shadow-amber/30 hover:shadow-amber/50
-                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+                    class="hidden sm:flex items-center gap-2 px-5 border-l border-rule
+                           bg-ink text-ivory hover:bg-amber hover:text-ink
+                           transition-colors duration-150
+                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-0"
                 >
-                    <x-heroicon-o-user class="w-4 h-4" />
-                    <span>Sign In</span>
+                    <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" aria-hidden="true" />
+                    <span class="font-mono text-[11px] font-bold tracking-[0.2em] uppercase">SIGN IN</span>
                 </button>
                 @endauth
 
-                {{-- Mobile menu toggle --}}
+                {{-- Mobile toggle --}}
                 <button
                     @click="mobileOpen = !mobileOpen"
                     :aria-expanded="mobileOpen"
                     aria-controls="mobile-menu"
                     aria-label="Toggle navigation menu"
-                    class="lg:hidden flex items-center justify-center w-11 h-11 text-white/90 hover:text-white rounded-xl hover:bg-white/10 transition-all duration-200
-                           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+                    class="lg:hidden flex items-center justify-center w-[56px] border-l border-rule
+                           text-ink hover:bg-ink hover:text-ivory transition-colors"
                 >
                     <x-heroicon-o-bars-3 x-show="!mobileOpen" class="w-5 h-5" aria-hidden="true" />
-                    <x-heroicon-o-x-mark x-show="mobileOpen" class="w-5 h-5" aria-hidden="true" x-cloak/>
+                    <x-heroicon-o-x-mark x-show="mobileOpen" class="w-5 h-5" aria-hidden="true" x-cloak />
                 </button>
             </div>
         </div>
+    </div>
 
-        {{-- Mobile nav --}}
-        <nav
-            id="mobile-menu"
-            x-show="mobileOpen"
-            x-cloak
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0 -translate-y-4"
-            x-transition:enter-end="opacity-100 translate-y-0"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100 translate-y-0"
-            x-transition:leave-end="opacity-0 -translate-y-4"
-            aria-label="Mobile navigation"
-            class="lg:hidden pb-6 space-y-3 @if($isHomepage) bg-navy/95 backdrop-blur-xl rounded-b-2xl px-2 @endif"
-        >
-            {{-- Mobile nav links --}}
-            <div class="flex flex-col gap-2">
-                <a href="/{{ $lang }}/" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-xl min-h-[48px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <x-heroicon-o-magnifying-glass class="w-5 h-5" />
-                    Parts Search
+    {{-- ═══ Mobile nav panel ═══ --}}
+    <nav
+        id="mobile-menu"
+        x-show="mobileOpen"
+        x-cloak
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 -translate-y-2"
+        x-transition:enter-end="opacity-100 translate-y-0"
+        aria-label="Mobile navigation"
+        class="lg:hidden bg-ivory border-t border-rule"
+    >
+        <div class="px-4 sm:px-6 py-3 divide-y divide-rule/70">
+            @foreach($navLinks as $link)
+                <a href="{{ $link['href'] }}"
+                   class="flex items-center gap-4 py-4 group">
+                    <span class="font-mono text-[10px] font-bold tracking-[0.2em] text-ink-muted group-hover:text-amber-ink w-8 shrink-0">
+                        §{{ $link['num'] }}
+                    </span>
+                    <span class="font-sans text-sm font-bold uppercase tracking-[0.16em] text-ink">
+                        {{ $link['label'] }}
+                    </span>
+                    <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted ml-auto group-hover:text-ink transition-colors" />
                 </a>
-                <a href="/{{ $lang }}/brands" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-xl min-h-[48px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <x-heroicon-o-tag class="w-5 h-5" />
-                    Brands
-                </a>
-                <a href="/{{ $lang }}/blog/" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-xl min-h-[48px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <x-heroicon-o-document-text class="w-5 h-5" />
-                    Blog
-                </a>
-                <a href="/{{ $lang }}/about" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-xl min-h-[48px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                    <x-heroicon-o-information-circle class="w-5 h-5" />
-                    About
-                </a>
+            @endforeach
+        </div>
+
+        {{-- ── Language picker (mobile) ── --}}
+        @php
+            $mobileLanguages = [
+                'en' => ['fi' => 'gb', 'native' => 'English'],
+                'de' => ['fi' => 'de', 'native' => 'Deutsch'],
+                'lt' => ['fi' => 'lt', 'native' => 'Lietuvių'],
+                'fr' => ['fi' => 'fr', 'native' => 'Français'],
+                'es' => ['fi' => 'es', 'native' => 'Español'],
+            ];
+            $mobileLangUrl = function($newLocale) {
+                $current = request()->route();
+                if (!$current || !$current->getName()) { return "/{$newLocale}/"; }
+                $params = $current->parameters();
+                $params['lang'] = $newLocale;
+                $query = request()->query();
+                unset($query['lang']);
+                try {
+                    $url = route($current->getName(), $params);
+                    return $url . (empty($query) ? '' : '?' . http_build_query($query));
+                } catch (\Exception $e) {
+                    $path = request()->path();
+                    $newPath = preg_replace('#^(en|de|lt|fr|es)(/|$)#', $newLocale . '$2', $path);
+                    return url('/' . $newPath);
+                }
+            };
+        @endphp
+        <div class="border-t border-rule px-4 sm:px-6 py-4">
+            <div class="flex items-center justify-between mb-3">
+                <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-amber-ink">§ Locale</span>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">5 options</span>
             </div>
+            <div class="grid grid-cols-5 gap-[2px] border border-ink bg-ink">
+                @foreach($mobileLanguages as $code => $data)
+                    @php $isActive = $lang === $code; @endphp
+                    <a href="{{ $mobileLangUrl($code) }}"
+                       aria-label="{{ $data['native'] }}"
+                       class="flex flex-col items-center justify-center gap-1.5 py-3 transition-colors
+                              {{ $isActive ? 'bg-amber text-ink' : 'bg-paper text-ink hover:bg-ivory-alt' }}">
+                        <img src="{{ asset('flags/' . $data['fi'] . '.svg') }}"
+                             alt="{{ $data['native'] }}"
+                             class="w-6 h-[16px] object-cover border {{ $isActive ? 'border-ink/30' : 'border-rule' }}">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase tabular-nums">
+                            {{ strtoupper($code) }}
+                        </span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
 
-            {{-- Divider --}}
-            <div class="border-t border-white/10 pt-4 mt-2"></div>
-
+        <div class="border-t border-rule px-4 sm:px-6 py-4 space-y-3">
             @guest
             <button
                 @click="$dispatch('open-auth-modal'); mobileOpen = false"
-                class="w-full flex items-center justify-center gap-2 px-4 py-3.5 text-sm font-bold text-navy bg-gradient-to-r from-amber to-orange-500 rounded-xl min-h-[48px] shadow-lg shadow-amber/30
-                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy"
+                class="w-full bp-btn-primary"
             >
-                <x-heroicon-o-user class="w-5 h-5" aria-hidden="true" />
-                Sign In / Register
+                <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
+                SIGN IN · REGISTER
             </button>
             @endguest
             @auth
-            <a href="/{{ $lang }}/account/dashboard" class="flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-white hover:bg-white/10 rounded-xl min-h-[48px] transition-all duration-200
-                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/70 focus-visible:ring-offset-2 focus-visible:ring-offset-navy">
-                <x-heroicon-o-user-circle class="w-6 h-6" aria-hidden="true" />
-                My Account
+            <a href="{{ url('/'.$lang.'/account/dashboard') }}" class="w-full bp-btn-outline">
+                <x-heroicon-o-user-circle class="w-5 h-5" />
+                MY ACCOUNT
             </a>
             @endauth
-        </nav>
-    </div>
+        </div>
+    </nav>
 </header>

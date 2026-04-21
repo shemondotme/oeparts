@@ -26,6 +26,59 @@ class ViesService
     ];
 
     /**
+     * EU country code => English display name. Also includes a few
+     * commonly-shipped European countries outside the EU for UX parity
+     * with the rest of the checkout/country selectors.
+     */
+    private const EU_COUNTRY_NAMES = [
+        'AT' => 'Austria',
+        'BE' => 'Belgium',
+        'BG' => 'Bulgaria',
+        'HR' => 'Croatia',
+        'CY' => 'Cyprus',
+        'CZ' => 'Czech Republic',
+        'DK' => 'Denmark',
+        'EE' => 'Estonia',
+        'FI' => 'Finland',
+        'FR' => 'France',
+        'DE' => 'Germany',
+        'GR' => 'Greece',
+        'HU' => 'Hungary',
+        'IE' => 'Ireland',
+        'IT' => 'Italy',
+        'LV' => 'Latvia',
+        'LT' => 'Lithuania',
+        'LU' => 'Luxembourg',
+        'MT' => 'Malta',
+        'NL' => 'Netherlands',
+        'PL' => 'Poland',
+        'PT' => 'Portugal',
+        'RO' => 'Romania',
+        'SK' => 'Slovakia',
+        'SI' => 'Slovenia',
+        'ES' => 'Spain',
+        'SE' => 'Sweden',
+        'NO' => 'Norway',
+        'CH' => 'Switzerland',
+        'GB' => 'United Kingdom',
+        'IS' => 'Iceland',
+        'LI' => 'Liechtenstein',
+    ];
+
+    /**
+     * Return EU (+ near-Europe) countries keyed by ISO-3166-1 alpha-2 code,
+     * sorted alphabetically by English display name.
+     *
+     * @return array<string,string>  ['DE' => 'Germany', ...]
+     */
+    public static function getEuCountries(): array
+    {
+        $list = self::EU_COUNTRY_NAMES;
+        asort($list, SORT_NATURAL | SORT_FLAG_CASE);
+        return $list;
+    }
+
+    /**
      * Validate a VAT number via VIES.
      *
      * @param  string  $countryCode  2-letter ISO country code (e.g. 'DE')
