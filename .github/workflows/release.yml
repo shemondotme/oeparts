@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    name: Build release zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          extensions: mbstring, bcmath, pdo, xml, zip
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Composer dependencies (production)
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Install npm dependencies and build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Update version.json release date
+        run: |
+          jq --arg ver "${{ steps.version.outputs.VERSION }}" \
+             --arg date "$(date -u +%Y-%m-%d)" \
+             '.version = $ver | .released_at = $date' \
+             version.json > version.json.tmp && mv version.json.tmp version.json
+
+      - name: Create release archive
+        run: |
+          zip -r oemhub-${{ steps.version.outputs.VERSION }}.zip . \
+            --exclude "*.git*" \
+            --exclude "node_modules/*" \
+            --exclude "tests/*" \
+            --exclude ".env" \
+            --exclude ".env.testing" \
+            --exclude "*.log" \
+            --exclude "storage/logs/*" \
+            --exclude "storage/framework/cache/*" \
+            --exclude "storage/framework/sessions/*" \
+            --exclude "storage/framework/views/*"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "OEMHub v${{ steps.version.outputs.VERSION }}"
+          body_path: CHANGELOG.md
+          files: oemhub-${{ steps.version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

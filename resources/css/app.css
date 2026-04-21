@@ -1,0 +1,474 @@
+/* OEMHub — Frontend CSS entry point */
+
+/* Fonts (loaded via @fontsource — no Google CDN) */
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/plus-jakarta-sans/600.css";
+@import "@fontsource/plus-jakarta-sans/700.css";
+@import "@fontsource/plus-jakarta-sans/800.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+/* NProgress — page loading bar */
+@import "nprogress/nprogress.css";
+
+/* Tailwind */
+/* x-cloak: hide Alpine elements until JS initializes (prevents FOUC) */
+[x-cloak] {
+    display: none !important;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply font-sans text-body bg-bg-page;
+    }
+
+    h1,
+    h2,
+    h3 {
+        @apply font-display;
+    }
+
+    /* OEM numbers MUST always use font-mono */
+    .oem-number {
+        @apply font-mono;
+    }
+
+    /* Visible focus ring for all interactive elements (WCAG 2.4.7) */
+    *:focus-visible {
+        @apply outline-2 outline-offset-2 outline-navy;
+    }
+}
+
+@layer components {
+    /* NProgress bar color — amber accent */
+    #nprogress .bar {
+        @apply bg-amber;
+    }
+
+    #nprogress .peg {
+        box-shadow:
+            0 0 10px theme("colors.amber"),
+            0 0 5px theme("colors.amber");
+    }
+
+    #nprogress .spinner-icon {
+        border-top-color: theme("colors.amber");
+        border-left-color: theme("colors.amber");
+    }
+
+    /* Animation delays for staggered animations */
+    .animation-delay-2000 {
+        animation-delay: 2s;
+    }
+
+    .animation-delay-4000 {
+        animation-delay: 4s;
+    }
+
+    /* Animation delays for blob animations */
+    .animation-delay-1000 {
+        animation-delay: 1s;
+    }
+
+    .animation-delay-3000 {
+        animation-delay: 3s;
+    }
+
+    /* =========================================
+       Section Utilities — Design Consistency
+       ========================================= */
+
+    /* Section spacing - Standardized vertical rhythm */
+    .section {
+        @apply py-24 md:py-28;
+    }
+
+    /* Section heading with solid text color - Enhanced hierarchy */
+    .section-heading {
+        @apply font-display text-3xl md:text-4xl lg:text-5xl font-black text-center text-navy leading-tight tracking-tight;
+    }
+
+    /* Section subheading - Better contrast */
+    .section-subheading {
+        @apply text-center text-body font-medium mt-3 mb-8 max-w-2xl mx-auto leading-relaxed;
+    }
+
+    /* Section badge/eyebrow - Standardized */
+    .section-badge {
+        @apply inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest uppercase rounded-full;
+        @apply bg-gradient-to-r from-amber/15 to-orange-50/15 border border-amber/25 backdrop-blur-sm text-amber-text;
+        @apply shadow-sm hover:shadow-md transition-shadow duration-300;
+    }
+
+    /* Section accent bar */
+    .section-accent-bar {
+        @apply relative mb-6 mx-auto;
+    }
+
+    .section-accent-bar-main {
+        @apply w-16 h-1.5 bg-gradient-to-r from-amber via-orange-500 to-amber rounded-full;
+    }
+
+    /* Section cards grid */
+    .section-cards {
+        @apply mt-10 grid gap-6 md:gap-8;
+    }
+
+    .section-content {
+        @apply mt-8;
+    }
+
+    /* Button variants - Standardized for consistency */
+    .btn-primary {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
+        @apply bg-gradient-to-r from-amber to-orange-500 text-white shadow-lg shadow-amber/30;
+        @apply transition-all duration-300 transform hover:scale-105 hover:from-amber/90 hover:to-orange-500/90 hover:shadow-xl hover:shadow-amber/40;
+    }
+
+    .btn-secondary {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
+        @apply bg-gradient-to-r from-navy to-navy/90 text-white shadow-lg shadow-navy/30;
+        @apply transition-all duration-300 transform hover:scale-105 hover:from-navy/90 hover:to-navy hover:shadow-xl;
+    }
+
+    .btn-outline {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
+        @apply bg-transparent border-2 border-amber text-amber;
+        @apply transition-all duration-300 hover:bg-amber/5 hover:scale-105;
+    }
+
+    .btn-ghost {
+        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
+        @apply bg-transparent hover:bg-gray-100 text-gray-700;
+        @apply transition-all duration-300 hover:scale-105;
+    }
+
+    /* Button sizes - Standardized */
+    .btn-sm {
+        @apply px-4 py-2 text-sm rounded-2xl;
+    }
+
+    .btn-md {
+        @apply px-6 py-3 text-sm rounded-2xl;
+    }
+
+    .btn-lg {
+        @apply px-8 py-4 text-base rounded-2xl;
+    }
+
+    /* Icon wrapper variants */
+    .icon-wrapper {
+        @apply rounded-2xl flex items-center justify-center flex-shrink-0;
+    }
+
+    .icon-wrapper-gradient {
+        @apply icon-wrapper bg-gradient-to-br from-amber/10 to-orange-100 text-amber;
+    }
+
+    .icon-wrapper-solid {
+        @apply icon-wrapper bg-amber text-white;
+    }
+
+    .icon-wrapper-outline {
+        @apply icon-wrapper border-2 border-amber text-amber bg-transparent;
+    }
+
+    /* Icon sizes */
+    .icon-sm {
+        @apply w-8 h-8;
+    }
+
+    .icon-md {
+        @apply w-12 h-12;
+    }
+
+    .icon-lg {
+        @apply w-16 h-16;
+    }
+
+    .icon-inner-sm {
+        @apply w-4 h-4;
+    }
+
+    .icon-inner-md {
+        @apply w-6 h-6;
+    }
+
+    .icon-inner-lg {
+        @apply w-8 h-8;
+    }
+
+    /* =========================================
+       Card Shadows - Standardized
+       ========================================= */
+    .card-shadow-sm {
+        @apply shadow-sm hover:shadow-lg transition-shadow duration-300;
+    }
+
+    .card-shadow-md {
+        @apply shadow-md hover:shadow-xl transition-shadow duration-300;
+    }
+
+    .card-shadow-lg {
+        @apply shadow-lg hover:shadow-2xl transition-shadow duration-300;
+    }
+
+    /* Consistent border radius for cards */
+    .card-radius {
+        @apply rounded-2xl;
+    }
+
+    .card-radius-lg {
+        @apply rounded-3xl;
+    }
+
+    /* Line clamp utility for text truncation */
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* =========================================
+       Accessibility: prefers-reduced-motion
+       ========================================= */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+        .animate-blob {
+            animation: none !important;
+        }
+        .animate-marquee {
+            animation: none !important;
+        }
+        .animate-ping {
+            animation: none !important;
+        }
+    }
+
+    /* =========================================
+       Shared keyframe animations
+       ========================================= */
+    @keyframes scaleIn {
+        0% {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+
+    /* Floating particles animation */
+    @keyframes float {
+        0% {
+            transform: translateY(0) scale(1);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        90% {
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-100vh) scale(0);
+            opacity: 0;
+        }
+    }
+
+    .animate-float {
+        animation: float linear infinite;
+        bottom: -10px;
+    }
+
+    /* Animated gradient shift for CTA cards */
+    @keyframes gradient-shift {
+        0%,
+        100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+
+    .animate-gradient {
+        background-size: 200% 200%;
+        animation: gradient-shift 8s ease infinite;
+    }
+
+    /* Pulse glow effect for badges/icons */
+    @keyframes pulse-glow {
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+        }
+    }
+
+    .animate-pulse-glow {
+        animation: pulse-glow 2s ease-in-out infinite;
+    }
+
+    /* Subtle scale bounce for button clicks */
+    @keyframes scale-bounce {
+        0% {
+            transform: scale(1);
+        }
+        30% {
+            transform: scale(0.95);
+        }
+        60% {
+            transform: scale(1.02);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+
+.animate-scale-bounce {
+  animation: scale-bounce 0.3s ease-out;
+}
+
+/* Cart badge bounce animation - triggered when item added */
+@keyframes cart-bounce {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.4);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  75% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-cart-bounce {
+  animation: cart-bounce 0.5s ease-out;
+}
+
+/* Slide in animation for cart drawer */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+/* Confetti particle animation */
+    @keyframes confetti-fall {
+        0% {
+            transform: translateY(-100%) rotate(0deg);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+
+    .confetti-particle {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 8px;
+        height: 8px;
+        animation: confetti-fall 3s ease-out forwards;
+        pointer-events: none;
+        z-index: 100;
+    }
+
+    /* Shimmer effect for loading states */
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    .animate-shimmer {
+        background: linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(255, 255, 255, 0.4) 50%,
+            transparent 100%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+
+    /* Shimmer progress bar — needs background-size for animation */
+    .shimmer-progress {
+        background-size: 200% 100%;
+    }
+
+    /* Dot pattern overlay */
+    .dot-pattern {
+        background-image: radial-gradient(
+            circle,
+            rgba(11, 58, 104, 0.03) 1px,
+            transparent 1px
+        );
+        background-size: 20px 20px;
+    }
+
+    /* Grid pattern overlay */
+    .grid-pattern {
+        background-image:
+            linear-gradient(rgba(11, 58, 104, 0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(11, 58, 104, 0.02) 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+
+    /* Modern scroll indicator animation */
+    @keyframes scroll-down {
+        0% {
+            opacity: 0;
+            transform: translateY(0);
+        }
+        30% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+    }
+
+    .animate-scroll-down {
+        animation: scroll-down 1.5s ease-in-out infinite;
+    }
+}

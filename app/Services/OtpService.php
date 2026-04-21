@@ -1,0 +1,163 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\OtpPurpose;
+use App\Models\Otp;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * OtpService — generate and verify one-time passcodes.
+ *
+ * Settings consumed (never hardcoded):
+ *   auth.otp_length         (default 6)
+ *   auth.otp_expiry_minutes (default 10)
+ *   auth.otp_max_attempts   (default 3)
+ *   auth.otp_resend_cooldown (default 60 seconds)
+ */
+class OtpService
+{
+    /**
+     * Result codes returned by verify().
+     */
+    const RESULT_OK           = 'ok';
+    const RESULT_INVALID      = 'invalid';
+    const RESULT_EXPIRED      = 'expired';
+    const RESULT_MAX_ATTEMPTS = 'max_attempts';
+    const RESULT_ALREADY_USED = 'already_used';
+
+    /**
+     * Generate a new OTP for the given email + purpose.
+     * Any previous unverified OTP for the same email+purpose is replaced.
+     *
+     * @throws \RuntimeException if a resend cooldown is active
+     */
+    public function generate(string $email, OtpPurpose $purpose, ?string $ipAddress = null): Otp
+    {
+        $cooldown = (int) settings('auth.otp_resend_cooldown', 60);
+
+        // Enforce resend cooldown
+        $existing = Otp::where('email', $email)
+            ->where('purpose', $purpose)
+            ->whereNull('verified_at')
+            ->latest('expires_at')
+            ->first();
+
+        if ($existing) {
+            $sentAt   = $existing->expires_at->subMinutes((int) settings('auth.otp_expiry_minutes', 10));
+            $cooldownEnd = $sentAt->addSeconds($cooldown);
+
+            if (now()->lt($cooldownEnd)) {
+                $wait = (int) ceil(now()->diffInSeconds($cooldownEnd, false));
+                throw new \RuntimeException("Please wait {$wait} seconds before requesting a new code.");
+            }
+
+            // Invalidate old OTPs
+            Otp::where('email', $email)
+                ->where('purpose', $purpose)
+                ->whereNull('verified_at')
+                ->delete();
+        }
+
+        $length  = (int) settings('auth.otp_length', 6);
+        $expiry  = (int) settings('auth.otp_expiry_minutes', 10);
+        $code    = $this->generateCode($length);
+
+        $otp = Otp::create([
+            'email'      => $email,
+            'otp_code'   => $code,
+            'purpose'    => $purpose,
+            'expires_at' => now()->addMinutes($expiry),
+            'attempts'   => 0,
+            'ip_address' => $ipAddress,
+        ]);
+
+        Log::info('OTP generated', ['email' => $email, 'purpose' => $purpose->value]);
+
+        return $otp;
+    }
+
+    /**
+     * Verify a submitted OTP code.
+     *
+     * Returns one of the RESULT_* constants.
+     * On success, marks the OTP as verified.
+     */
+    public function verify(string $email, string $code, OtpPurpose $purpose): string
+    {
+        $maxAttempts = (int) settings('auth.otp_max_attempts', 3);
+
+        $otp = Otp::where('email', $email)
+            ->where('purpose', $purpose)
+            ->whereNull('verified_at')
+            ->latest('expires_at')
+            ->first();
+
+        if (! $otp) {
+            return self::RESULT_INVALID;
+        }
+
+        if ($otp->isVerified()) {
+            return self::RESULT_ALREADY_USED;
+        }
+
+        if ($otp->isExpired()) {
+            return self::RESULT_EXPIRED;
+        }
+
+        if ($otp->attempts >= $maxAttempts) {
+            return self::RESULT_MAX_ATTEMPTS;
+        }
+
+        // Increment attempt count
+        $otp->increment('attempts');
+
+        if (! hash_equals($otp->otp_code, $code)) {
+            return self::RESULT_INVALID;
+        }
+
+        $otp->update(['verified_at' => now()]);
+
+        Log::info('OTP verified', ['email' => $email, 'purpose' => $purpose->value]);
+
+        return self::RESULT_OK;
+    }
+
+    /**
+     * Check if there is a valid (unexpired, unverified) OTP for the given email+purpose.
+     */
+    public function hasPending(string $email, OtpPurpose $purpose): bool
+    {
+        return Otp::where('email', $email)
+            ->where('purpose', $purpose)
+            ->whereNull('verified_at')
+            ->where('expires_at', '>', now())
+            ->exists();
+    }
+
+    /**
+     * Get the human-readable message for a verification result code.
+     */
+    public function message(string $result): string
+    {
+        return match ($result) {
+            self::RESULT_OK           => 'Code verified successfully.',
+            self::RESULT_INVALID      => 'Invalid verification code.',
+            self::RESULT_EXPIRED      => 'This code has expired. Please request a new one.',
+            self::RESULT_MAX_ATTEMPTS => 'Too many incorrect attempts. Please request a new code.',
+            self::RESULT_ALREADY_USED => 'This code has already been used.',
+            default                   => 'Verification failed.',
+        };
+    }
+
+    /**
+     * Generate a numeric OTP code of given length.
+     */
+    private function generateCode(int $length): string
+    {
+        $min = (int) str_pad('1', $length, '0');
+        $max = (int) str_repeat('9', $length);
+
+        return str_pad((string) random_int($min, $max), $length, '0', STR_PAD_LEFT);
+    }
+}

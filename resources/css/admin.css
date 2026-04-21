@@ -1,0 +1,48 @@
+/* OEMHub — Admin CSS entry point */
+
+/* Fonts */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+
+/* NProgress */
+@import 'nprogress/nprogress.css';
+
+/* Tailwind */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply font-sans text-body bg-slate-100;
+    }
+}
+
+@layer components {
+    #nprogress .bar {
+        @apply bg-amber;
+    }
+
+    /* Sidebar nav scrollbar — matches the white/opacity design language */
+    .sidebar-nav::-webkit-scrollbar {
+        width: 3px;
+    }
+    .sidebar-nav::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+    }
+    .sidebar-nav::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Firefox */
+    .sidebar-nav {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    }
+}

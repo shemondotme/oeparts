@@ -1,0 +1,171 @@
+<?php
+
+return [
+    'page_title' => 'OEM :oem — :count :result_word — :site',
+    'result_word_single' => 'Result',
+    'result_word_plural' => 'Results',
+    'meta_description' => 'Found :count genuine OEM parts matching :oem. Compare prices, check stock and order from verified EU sellers.',
+
+    'breadcrumb_home' => 'Home',
+    'breadcrumb_brands' => 'Brands',
+
+    'mini_search_placeholder' => 'Search another OEM number…',
+    'mini_search_button' => 'Search',
+
+    'heading_results_for' => 'Results for',
+    'parts_found_sentence' => ':count :parts_word found',
+    'part' => 'part',
+    'parts' => 'parts',
+    'found' => 'found',
+    'page_indicator' => 'Page :current of :last',
+    'showing_range' => 'Showing :from–:to',
+    'filters_active_choice' => '{1} :count filter active|[2,*] :count filters active',
+
+    'price_range_label' => 'Price range:',
+    'price_single' => 'Price',
+    'price_from' => 'From',
+    'price_to' => 'To',
+    'price_avg' => 'Avg',
+    'listings_choice' => '{1} :count listing|[2,*] :count listings',
+
+    'notice_cross_title' => 'Cross-Reference Results',
+    'notice_cross_body' => 'These parts are compatible alternatives or OEM equivalents for :oem.',
+
+    'notice_partial_title' => 'Partial Match Results',
+    'notice_partial_body' => 'Showing parts that partially match :oem. For best results, enter the full OEM number.',
+
+    'updating_results' => 'Updating results…',
+
+    'sort_label' => 'Sort:',
+    'sort_relevance' => 'Relevance',
+    'sort_price' => 'Price',
+    'view_table' => 'Table view',
+    'view_cards' => 'Card view',
+    'filters' => 'Filters',
+    'condition' => 'Condition',
+    'in_stock' => 'In Stock',
+    'in_stock_only' => 'In Stock Only',
+    'brand' => 'Brand',
+    'apply_filters' => 'Apply Filters',
+    'filter_drawer_close' => 'Close',
+
+    'active_filters' => 'Active:',
+    'sort_chip_price_asc' => 'Price ↑',
+    'sort_chip_price_desc' => 'Price ↓',
+    'condition_chip' => 'Condition: :condition',
+    'clear_all' => 'Clear all',
+
+    'model_chip' => 'Model: :name',
+    'model_unknown' => 'Model',
+
+    'cart_add_failed' => 'Could not add to cart. Please try again.',
+
+    'error_429_title' => 'Too many requests',
+    'error_429_message' => 'You searched too quickly. Please wait a moment and try again.',
+    'error_429_back' => 'Go back',
+
+    'filtered_empty_title' => 'No results match your filters',
+    'filtered_empty_lead' => 'There',
+    'filtered_empty_is' => 'is',
+    'filtered_empty_are' => 'are',
+    'filtered_empty_for_oem' => 'for',
+    'filtered_empty_without_filters' => 'without filters.',
+    'filtered_empty_paragraph' => '{1} There is one result for :oem without filters.|[2,*] There are :count results for :oem without filters.',
+    'clear_filters_cta' => 'Clear filters — Show all :total results',
+
+    'price_vs_avg' => ':arrow :percent% vs avg',
+    'excl_vat_short' => 'excl. VAT',
+    'btn_add_to_cart' => 'Add to Cart',
+    'btn_added' => 'Added!',
+    'request_this_part' => 'Request This Part',
+
+    'aria_decrease_qty' => 'Decrease quantity',
+    'aria_increase_qty' => 'Increase quantity',
+    'aria_quantity' => 'Quantity',
+
+    'table_caption' => 'OEM search results for :oem',
+    'th_oem_brand' => 'OEM Number / Brand',
+    'th_condition' => 'Condition',
+    'th_stock' => 'Stock',
+    'th_price' => 'Price',
+    'th_action' => 'Action',
+
+    'stock_in' => 'In Stock',
+    'stock_out' => 'Out',
+    'stock_out_long' => 'Out of Stock',
+
+    'btn_add' => 'Add to Cart',
+    'btn_request' => 'Request Quote',
+
+    'delivery' => 'Delivery',
+    'condition_detail' => 'Condition',
+    'incl_vat' => 'Incl. :rate% VAT',
+
+    'more_details' => 'More details',
+    'hide_details' => 'Hide details',
+    'no_results' => 'No results found.',
+
+    'best_match' => 'Best Match',
+
+    'cross_refs_title' => 'Cross-References',
+    'cross_refs_hint' => '— Compatible OEM numbers',
+    'cross_refs_view_all' => 'View all :count equivalents',
+    'cross_refs_show_less' => 'Show less',
+
+    'inquiry_title' => 'Can\'t find what you need?',
+    'inquiry_subtitle' => 'Submit a part inquiry and our sourcing team will respond within :hours hours.',
+    'inquiry_submit' => 'Submit inquiry',
+    'inquiry_trust_suppliers' => 'Verified Suppliers',
+    'inquiry_trust_warehouse' => 'EU Warehouse',
+    'inquiry_trust_quality' => 'Quality Guaranteed',
+
+    'scroll_to_top' => 'Back to top',
+
+    'match_exact' => 'Exact Match',
+    'match_cross' => 'Cross-Reference Match',
+    'match_partial' => 'Partial Match',
+    'match_default' => 'Match',
+
+    'condition_filter_new' => 'New',
+    'condition_filter_used' => 'Used',
+
+    'condition_label_new' => 'New',
+    'condition_label_used' => 'Used',
+    'condition_label_used_a' => 'Used Grade A',
+    'condition_label_used_b' => 'Used Grade B',
+    'condition_label_used_c' => 'Used Grade C',
+    'condition_label_remanufactured' => 'Remanufactured',
+    'condition_label_aftermarket' => 'Aftermarket',
+    'condition_label_new_old_stock' => 'New Old Stock',
+    'condition_unknown' => 'Unknown',
+
+    'unknown_brand' => 'Unknown Brand',
+
+    // Zero-results page (/{lang}/parts/{oem} when no matches)
+    'zero_page_title' => 'No results for :oem — :site',
+    'zero_meta_description' => 'No OEM parts found for :oem. Submit a part inquiry and our specialists will help you find the right part.',
+    'zero_og_title' => 'No results for :oem',
+    'zero_og_description' => 'No OEM parts found for :oem. Submit a part inquiry for assistance.',
+    'zero_heading' => 'No results for',
+    'zero_lead' => 'We couldn\'t find any genuine OEM parts matching this number in our catalogue.',
+    'zero_tips_heading' => 'Search tips',
+    'zero_tip_1' => 'Remove spaces, dashes, or dots — enter the number without separators.',
+    'zero_tip_2' => 'Double-check the number on the old part or in the vehicle documentation.',
+    'zero_tip_3' => 'Try only the first 8–10 characters if you want a partial match.',
+    'zero_tip_4' => 'OEM numbers are case-insensitive — we normalise them automatically.',
+    'zero_popular_heading' => 'Try a popular search',
+    'zero_cta_title' => 'Still can\'t find it? We\'ll source it for you.',
+    'zero_cta_subtitle' => 'Submit a part inquiry with your OEM number and vehicle details. Our specialists respond within :hours hours.',
+    'zero_back' => 'Back to home',
+    'zero_jsonld_name' => 'No results for :oem',
+    'zero_jsonld_description' => 'No OEM parts found for :oem. Submit a part inquiry for assistance.',
+    'zero_eyebrow' => 'Not in our catalogue',
+    'zero_heading_new' => 'We couldn\'t find this part',
+    'zero_searched_for' => 'Searched for',
+    'zero_step_1_title' => 'Tell us the details',
+    'zero_step_1_body' => 'OEM number + car make, model, year.',
+    'zero_step_2_title' => 'We ping our suppliers',
+    'zero_step_2_body' => '12+ partners across Europe get notified.',
+    'zero_step_3_title' => 'You get a quote',
+    'zero_step_3_body' => 'Within :hours h by email.',
+];

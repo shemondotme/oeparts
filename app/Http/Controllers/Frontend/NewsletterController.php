@@ -1,0 +1,97 @@
+<?php
+
+namespace App\Http\Controllers\Frontend;
+
+use App\Http\Controllers\Controller;
+use App\Models\NewsletterSubscriber;
+use App\Jobs\SendNewsletterConfirmation;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+
+class NewsletterController extends Controller
+{
+    /**
+     * Subscribe to newsletter.
+     */
+    public function subscribe(Request $request, string $lang)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'lang' => 'nullable|in:en,de,lt,fr,es',
+        ]);
+
+        // Rate limit: max 3 subscriptions per hour per IP
+        if (!RateLimiter::attempt("newsletter:{$request->ip()}", 3, function () {
+            return true;
+        }, 3600)) {
+            throw new TooManyRequestsHttpException(3600, 'Too many subscription attempts. Please try again later.');
+        }
+
+        $email = $validated['email'];
+        $locale = $validated['lang'] ?? $lang;
+
+        // Check if already subscribed
+        $existing = NewsletterSubscriber::where('email', $email)->first();
+
+        if ($existing && $existing->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => __('You are already subscribed to our newsletter.'),
+            ], 422);
+        }
+
+        if ($existing) {
+            // Reactivate subscription
+            $existing->update([
+                'is_active' => true,
+                'lang' => $locale,
+                'subscribed_at' => now(),
+                'unsubscribed_at' => null,
+                'ip_address' => $request->ip(),
+            ]);
+
+            $subscriber = $existing;
+        } else {
+            // Create new subscription (requires confirmation)
+            $subscriber = NewsletterSubscriber::create([
+                'email' => $email,
+                'lang' => $locale,
+                'is_active' => false,
+                'subscribed_at' => now(),
+                'ip_address' => $request->ip(),
+            ]);
+
+            // Send confirmation email
+            dispatch(new SendNewsletterConfirmation($subscriber));
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $subscriber->is_active
+                ? __('Thank you for subscribing to our newsletter!')
+                : __('Please check your email to confirm your subscription.'),
+        ]);
+    }
+
+    /**
+     * Unsubscribe from newsletter.
+     */
+    public function unsubscribe(Request $request, string $lang, string $token)
+    {
+        $subscriber = NewsletterSubscriber::where('email', $token)->first();
+
+        if (!$subscriber) {
+            return redirect()->route('frontend.home', compact('lang'))
+                ->with('error', __('Invalid unsubscribe link.'));
+        }
+
+        $subscriber->update([
+            'is_active' => false,
+            'unsubscribed_at' => now(),
+        ]);
+
+        return redirect()->route('frontend.home', compact('lang'))
+            ->with('success', __('You have been unsubscribed from our newsletter.'));
+    }
+}

@@ -1,0 +1,65 @@
+name: Feature Request
+description: Propose a new feature or enhancement for OEMHub
+labels: ["enhancement", "triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: search existing issues and the PRD to see if this is already planned.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area does this affect?
+      options:
+        - OEM Search
+        - Cart
+        - Checkout
+        - Payments
+        - Customer Account
+        - Admin Panel
+        - Installer
+        - Email / Queue
+        - SEO / Sitemap
+        - CMS
+        - Performance
+        - New module
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the use case or pain point
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How do you envision this working?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider and why did you rule them out?
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints acknowledged
+      description: This project has hard rules. Please confirm your proposal respects them.
+      options:
+        - label: "Monetary values use bcmath only (no float arithmetic)"
+          required: true
+        - label: "No new Node.js dependencies required on the production server"
+          required: true
+        - label: "No Vue.js / React / Livewire — Alpine.js only for interactivity"
+          required: true
