@@ -1,0 +1,79 @@
+name: Bug Report
+description: Report a reproducible bug in OEMHub
+labels: ["bug", "triage"]
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: search existing issues to avoid duplicates.
+        For **security vulnerabilities**, use GitHub Security Advisories instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: OEMHub version
+      description: "Found in version.json or the admin footer"
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: php_version
+    attributes:
+      label: PHP version
+      placeholder: "8.2.x"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - OEM Search
+        - Cart
+        - Checkout
+        - Payments / Webhooks
+        - Customer Account
+        - Admin Panel
+        - Installer
+        - Email / Queue
+        - SEO / Sitemap
+        - CMS
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or errors
+      description: Paste from storage/logs/laravel.log or browser console
+      render: text

@@ -1,0 +1,416 @@
+<?php
+
+namespace App\Http\Controllers\Frontend;
+
+use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\UserAddress;
+use App\Services\InvoiceService;
+use App\Enums\OrderStatus;
+use App\Models\RefundRequest;
+use App\Jobs\SendRefundStatusEmail;
+use App\Jobs\SendOrderStatusEmail;
+use App\Models\OrderStatusHistory;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+
+class AccountController extends Controller
+{
+    /**
+     * Show the account dashboard.
+     */
+    public function cancelOrder(Request $request, string $lang, Order $order)
+    {
+        $user = Auth::guard('web')->user();
+        if ($order->user_id !== $user->id) {
+            abort(404);
+        }
+        if (!$order->status->canBeCancelled()) {
+            return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
+                ->with('error', 'This order cannot be cancelled.');
+        }
+
+        $oldStatus = $order->status;  // capture BEFORE update
+        $order->update(['status' => OrderStatus::Cancelled]);
+
+        OrderStatusHistory::create([
+            'order_id'   => $order->id,
+            'admin_id'   => null,
+            'old_status' => $oldStatus,
+            'new_status' => OrderStatus::Cancelled,
+            'note'       => 'Cancelled by customer.',
+        ]);
+
+        dispatch(new SendOrderStatusEmail($order, OrderStatus::Cancelled))->onQueue('default');
+
+        return redirect()->route('frontend.account.orders', ['lang' => $lang])
+            ->with('success', 'Your order has been cancelled.');
+    }
+
+    public function dashboard(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+        $recentOrders = Order::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return view('frontend.account.dashboard', compact('user', 'recentOrders'));
+    }
+
+    /**
+     * List all orders.
+     */
+    public function orders(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+        $orders = Order::where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return view('frontend.account.orders', compact('orders'));
+    }
+
+    /**
+     * Show a single order.
+     */
+    public function orderDetail(Request $request, string $lang, Order $order)
+    {
+        $user = Auth::guard('web')->user();
+        if ($order->user_id !== $user->id) {
+            abort(404);
+        }
+
+        return view('frontend.account.order-detail', compact('order'));
+    }
+
+    /**
+     * Download invoice PDF for an order.
+     */
+    public function downloadInvoice(Request $request, string $lang, Order $order)
+    {
+        $user = Auth::guard('web')->user();
+        if ($order->user_id !== $user->id) {
+            abort(404);
+        }
+
+        return app(InvoiceService::class)->generate($order, true);
+    }
+
+    /**
+     * List user addresses.
+     */
+    public function addresses(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+        $addresses = $user->addresses()->orderBy('is_default', 'desc')->get();
+
+        return view('frontend.account.addresses', compact('addresses'));
+    }
+
+    /**
+     * Show form to create/edit address.
+     */
+    public function addressForm(Request $request, string $lang, ?UserAddress $address = null)
+    {
+        $user = Auth::guard('web')->user();
+        if ($address && $address->user_id !== $user->id) {
+            abort(404);
+        }
+
+        return view('frontend.account.address-form', compact('address'));
+    }
+
+    /**
+     * Save address.
+     */
+    public function saveAddress(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+
+        $validated = $request->validate([
+            'id'               => 'nullable|exists:user_addresses,id,user_id,' . $user->id,
+            'first_name'       => 'required|string|max:100',
+            'last_name'        => 'required|string|max:100',
+            'company'          => 'nullable|string|max:200',
+            'address_line_1'   => 'required|string|max:200',
+            'address_line_2'   => 'nullable|string|max:200',
+            'city'             => 'required|string|max:100',
+            'state'            => 'required|string|max:100',
+            'postal_code'      => 'required|string|max:20',
+            'country_code'     => 'required|string|size:2',
+            'phone'            => 'nullable|string|max:30',
+            'is_default'       => 'boolean',
+        ]);
+
+        if (isset($validated['id'])) {
+            $address = UserAddress::where('user_id', $user->id)->findOrFail($validated['id']);
+            $address->update($validated);
+        } else {
+            $address = new UserAddress($validated);
+            $address->user_id = $user->id;
+            $address->save();
+        }
+
+        // If this address is set as default, unset others
+        if ($address->is_default) {
+            UserAddress::where('user_id', $user->id)
+                ->where('id', '!=', $address->id)
+                ->update(['is_default' => false]);
+        }
+
+        return redirect()->route('frontend.account.addresses', ['lang' => $lang])
+            ->with('success', __('Address saved successfully.'));
+    }
+
+    /**
+     * Delete address.
+     */
+    public function deleteAddress(Request $request, string $lang, UserAddress $address)
+    {
+        $user = Auth::guard('web')->user();
+        if ($address->user_id !== $user->id) {
+            abort(404);
+        }
+
+        $address->delete();
+
+        return redirect()->route('frontend.account.addresses', ['lang' => $lang])
+            ->with('success', __('Address deleted.'));
+    }
+
+    /**
+     * Show account settings.
+     */
+    public function settings(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+        return view('frontend.account.settings', compact('user'));
+    }
+
+    /**
+     * Update account settings.
+     */
+    public function updateSettings(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+
+        $validated = $request->validate([
+            'name'  => 'required|string|max:200',
+            'phone' => 'nullable|string|max:30',
+            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'current_password' => 'nullable|string|min:8',
+            'new_password'     => 'nullable|string|min:8|confirmed',
+        ]);
+
+        // Update basic info
+        $user->name = $validated['name'];
+        $user->phone = $validated['phone'];
+        $user->email = $validated['email'];
+
+        // Change password if provided
+        if (!empty($validated['current_password']) && !empty($validated['new_password'])) {
+            if (!\Hash::check($validated['current_password'], $user->password)) {
+                return back()->withErrors(['current_password' => __('Current password is incorrect.')]);
+            }
+            $user->password = \Hash::make($validated['new_password']);
+        }
+
+        $user->save();
+
+        return redirect()->route('frontend.account.settings', ['lang' => $lang])
+            ->with('success', __('Settings updated successfully.'));
+    }
+
+    /**
+     * Update password only (separate form from profile fields).
+     */
+    public function updatePassword(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required|string|min:8',
+            'new_password'     => 'required|string|min:8|confirmed',
+        ]);
+
+        if (! \Hash::check($validated['current_password'], $user->password)) {
+            return back()->withErrors(['current_password' => __('Current password is incorrect.')]);
+        }
+
+        $user->password = \Hash::make($validated['new_password']);
+        $user->save();
+
+        return redirect()->route('frontend.account.settings', ['lang' => $lang])
+            ->with('success', __('Password updated successfully.'));
+    }
+
+    /**
+     * Update notification toggles.
+     */
+    public function updateNotifications(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+
+        $request->validate([
+            'notifications' => 'nullable|array',
+        ]);
+
+        $user->prefers_order_notifications = $request->boolean('notifications.order_updates');
+        $user->prefers_email_notifications = $request->boolean('notifications.email_notifications');
+        $user->prefers_promotional_emails = $request->boolean('notifications.promotional_emails');
+        $user->save();
+
+        return redirect()->route('frontend.account.settings', ['lang' => $lang])
+            ->with('success', __('Notification preferences updated.'));
+    }
+
+    /**
+     * Update preferred language and timezone.
+     */
+    public function updateLanguage(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+
+        $validated = $request->validate([
+            'language' => 'required|string|in:en,de,lt,fr,es',
+            'timezone' => 'nullable|string|max:100',
+        ]);
+
+        $user->preferred_locale = $validated['language'];
+        $user->timezone = $validated['timezone'] ?? null;
+        $user->save();
+
+        return redirect()->route('frontend.account.settings', ['lang' => $validated['language']])
+            ->with('success', __('Language preferences updated.'));
+    }
+
+    /**
+     * Soft-delete account and anonymize PII (GDPR-style).
+     */
+    public function destroy(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+
+        $user->email = 'deleted_'.$user->id.'@oemhub.invalid';
+        $user->name = 'Deleted User';
+        $user->phone = null;
+        $user->save();
+        $user->delete();
+
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('frontend.home', ['lang' => $lang])
+            ->with('success', __('Your account has been deleted.'));
+    }
+
+    /**
+     * Show refund request form.
+     */
+    public function refundForm(Request $request, string $lang, Order $order)
+    {
+        $user = Auth::guard('web')->user();
+        if ($order->user_id !== $user->id) {
+            abort(404);
+        }
+        if ($order->status !== OrderStatus::Delivered) {
+            return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
+                ->with('error', 'Only delivered orders can be refunded.');
+        }
+        $windowDays = settings('refund.refund_window_days', 14);
+        if (Carbon::parse($order->updated_at)->diffInDays(now()) > $windowDays) {
+            return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
+                ->with('error', "Refund window of {$windowDays} days has passed.");
+        }
+        if ($order->refundRequest()->exists()) {
+            return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
+                ->with('error', 'A refund request has already been submitted for this order.');
+        }
+        return view('frontend.account.refund-form', compact('order'));
+    }
+
+    /**
+     * Submit refund request.
+     */
+    public function requestRefund(Request $request, string $lang, Order $order)
+    {
+        $user = Auth::guard('web')->user();
+        if ($order->user_id !== $user->id) {
+            abort(404);
+        }
+        if ($order->status !== OrderStatus::Delivered) {
+            abort(403);
+        }
+        $windowDays = settings('refund.refund_window_days', 14);
+        if (Carbon::parse($order->updated_at)->diffInDays(now()) > $windowDays) {
+            abort(403);
+        }
+        if ($order->refundRequest()->exists()) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'reason'        => 'required|string|min:20|max:2000',
+            'return_images' => 'nullable|array|max:5',
+            'return_images.*' => 'image|mimes:jpeg,png|max:2048',
+            'website'       => 'size:0',  // honeypot
+        ]);
+
+        // Store uploaded images
+        $imagePaths = [];
+        if ($request->hasFile('return_images')) {
+            foreach ($request->file('return_images') as $file) {
+                $imagePaths[] = $file->store('refund-images', 'public');
+            }
+        }
+
+        $oldStatus = $order->status;  // capture BEFORE update
+        $order->update(['status' => OrderStatus::RefundRequested]);
+
+        \App\Models\OrderStatusHistory::create([
+            'order_id'   => $order->id,
+            'admin_id'   => null,
+            'old_status' => $oldStatus,
+            'new_status' => OrderStatus::RefundRequested,
+            'note'       => 'Customer submitted refund request.',
+        ]);
+
+        $refund = RefundRequest::create([
+            'order_id'         => $order->id,
+            'user_id'          => $user->id,
+            'reason'           => $validated['reason'],
+            'return_images'    => $imagePaths ?: null,
+            'amount_requested' => $order->grand_total,
+            'status'           => \App\Enums\RefundStatus::Pending,
+        ]);
+
+        dispatch(new SendRefundStatusEmail(
+            $refund,
+            \App\Enums\RefundStatus::Pending,
+            \App\Enums\RefundStatus::Pending
+        ))->onQueue('critical');
+
+        return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
+            ->with('success', 'Your refund request has been submitted.');
+    }
+
+    /**
+     * Show all refund requests for the authenticated user.
+     */
+    public function refunds(Request $request, string $lang)
+    {
+        $user = Auth::guard('web')->user();
+        $refunds = RefundRequest::whereHas('order', function ($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })
+        ->with('order')
+        ->orderByDesc('created_at')
+        ->paginate(10);
+
+        return view('frontend.account.refunds', compact('refunds'));
+    }
+}

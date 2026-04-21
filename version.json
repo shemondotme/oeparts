@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "codename": "Atlas",
+  "release_date": "2026-03-30",
+  "minimum_php": "8.2",
+  "minimum_mysql": "8.0.16",
+  "requires_update_from": null,
+  "changelog_url": "https://raw.githubusercontent.com/oemhub/oemhub/main/CHANGELOG.md",
+  "update_check_url": "https://raw.githubusercontent.com/oemhub/oemhub/main/version.json",
+  "download_url": "https://github.com/oemhub/oemhub/releases/latest/download/oemhub.zip"
+}
