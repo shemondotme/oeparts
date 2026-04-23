@@ -34,7 +34,9 @@ class SendAbandonedCartEmail implements ShouldQueue
     public function __construct(
         public string $email,
         public array $cartSnapshot
-    ) {}
+    ) {
+        $this->onQueue('default');
+    }
 
     /**
      * Execute the job.

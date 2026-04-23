@@ -17,8 +17,10 @@ class AbandonedCartReminder extends Mailable
      */
     public function __construct(
         public readonly array $cartSnapshot,
-        public readonly string $locale = 'en',
-    ) {}
+        string $locale = 'en',
+    ) {
+        $this->locale = $locale;
+    }
 
     public function envelope(): Envelope
     {
