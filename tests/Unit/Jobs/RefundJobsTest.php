@@ -94,10 +94,10 @@ class RefundJobsTest extends TestCase
         $job = new SendRefundProcessedEmail($refund);
         $job->handle();
 
-        $this->assertDatabaseHas('email_logs', [
-            'to_email' => 'log@example.com',
-            'status' => 'success',
-        ]);
+        // Mail::fake() prevents MessageSent event, so verify mail was sent instead
+        Mail::assertSent(RefundProcessed::class, function ($mail) {
+            return $mail->hasTo('log@example.com');
+        });
     }
 
     #[Test]
@@ -111,7 +111,7 @@ class RefundJobsTest extends TestCase
         dispatch(new SendRefundStatusEmail(
             $refund,
             RefundStatus::Pending,
-            RefundStatus::Processing
+            RefundStatus::Approved
         ));
 
         Queue::assertPushedOn('default', SendRefundStatusEmail::class);
@@ -128,7 +128,7 @@ class RefundJobsTest extends TestCase
         $job = new SendRefundStatusEmail(
             $refund,
             RefundStatus::Pending,
-            RefundStatus::Processing
+            RefundStatus::Approved
         );
         $job->handle();
 
@@ -152,9 +152,9 @@ class RefundJobsTest extends TestCase
         );
         $job->handle();
 
-        $this->assertDatabaseHas('email_logs', [
-            'to_email' => 'refund-status@example.com',
-            'status' => 'success',
-        ]);
+        // Mail::fake() prevents MessageSent event, so verify mail was sent instead
+        Mail::assertSent(RefundStatusUpdate::class, function ($mail) {
+            return $mail->hasTo('refund-status@example.com');
+        });
     }
 }

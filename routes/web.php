@@ -240,6 +240,7 @@ Route::prefix('{lang}')
     use App\Http\Controllers\Admin\BlogController as AdminBlogController;
     use App\Http\Controllers\Admin\PageController as AdminPageController;
     use App\Http\Controllers\Admin\MediaController;
+    use App\Http\Controllers\Admin\MediaPickerController;
     use App\Http\Controllers\Admin\MenuController;
     use App\Http\Controllers\Admin\TestimonialController;
     use App\Http\Controllers\Admin\FaqController;
@@ -348,6 +349,15 @@ Route::prefix('{lang}')
                     Route::put('/{section}', [SectionController::class, 'update'])->name('update');
                     Route::delete('/{section}', [SectionController::class, 'destroy'])->name('destroy');
                     Route::post('/reorder', [SectionController::class, 'reorder'])->name('reorder');
+                    Route::post('/{section}/restore/{version}', [SectionController::class, 'restoreVersion'])->name('restore-version');
+                    Route::post('/{section}/preview', [SectionController::class, 'preview'])->name('preview');
+                });
+
+                // Media Picker
+                Route::prefix('media-picker')->name('media-picker.')->group(function () {
+                    Route::get('/', [MediaPickerController::class, 'index'])->name('index');
+                    Route::post('/upload', [MediaPickerController::class, 'upload'])->name('upload');
+                    Route::delete('/{media}', [MediaPickerController::class, 'destroy'])->name('destroy');
                 });
 
                 // Blog
@@ -466,6 +476,10 @@ Route::prefix('{lang}')
                     Route::get('/{group}/edit', [\App\Http\Controllers\Admin\SettingsController::class, 'edit'])->name('edit');
                     Route::put('/{group}', [\App\Http\Controllers\Admin\SettingsController::class, 'update'])->name('update');
                     Route::delete('/{group}/{key}', [\App\Http\Controllers\Admin\SettingsController::class, 'destroy'])->name('destroy');
+                    
+                    // Preloader Settings (dedicated UI)
+                    Route::get('/preloader/config', [\App\Http\Controllers\Admin\PreloaderSettingsController::class, 'show'])->name('preloader');
+                    Route::put('/preloader/config', [\App\Http\Controllers\Admin\PreloaderSettingsController::class, 'update'])->name('preloader.update');
                 });
 
                 // Reports Management (Sprint 15)
@@ -561,6 +575,12 @@ Route::prefix('{lang}')
                     Route::get('/', [\App\Http\Controllers\Admin\CustomerController::class, 'index'])->name('index');
                     Route::get('/{user}', [\App\Http\Controllers\Admin\CustomerController::class, 'show'])->name('show');
                     Route::patch('/{user}/toggle-active', [\App\Http\Controllers\Admin\CustomerController::class, 'toggleActive'])->name('toggle-active');
+                });
+
+                // Editor API routes (for rich text editor, media uploads, previews)
+                Route::prefix('editor-api')->name('editor.')->middleware('auth:admin')->group(function () {
+                    Route::post('/upload-image', [\App\Http\Controllers\Admin\EditorController::class, 'uploadImage'])->name('upload-image');
+                    Route::post('/preview-html', [\App\Http\Controllers\Admin\EditorController::class, 'previewHtml'])->name('preview-html');
                 });
 
             // Additional admin routes will be added in later sprints

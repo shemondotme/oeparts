@@ -10,6 +10,8 @@ return [
     'breadcrumb_brands' => 'Marken',
 
     'mini_search_placeholder' => 'Weitere OEM-Nummer suchen…',
+    'mini_search_label' => 'Suche anpassen',
+    'mini_search_aria' => 'Suche nach OEM-Teilenummer',
     'mini_search_button' => 'Suchen',
 
     'heading_results_for' => 'Ergebnisse für',

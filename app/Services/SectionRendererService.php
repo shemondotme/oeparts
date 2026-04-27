@@ -29,11 +29,13 @@ class SectionRendererService
     /**
      * Return active sections for the given location, in sort order.
      * Result is cached; use CacheService::forgetSections() to invalidate.
+     * Now filters by published status.
      */
     public function getSections(string $location): Collection
     {
         return $this->cache->rememberSection($location, function () use ($location) {
             return Section::where('location', $location)
+                ->published()  // Only published sections
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->get();

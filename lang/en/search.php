@@ -10,6 +10,8 @@ return [
     'breadcrumb_brands' => 'Brands',
 
     'mini_search_placeholder' => 'Search another OEM number…',
+    'mini_search_label' => 'Re-submit query',
+    'mini_search_aria' => 'Search by OEM part number',
     'mini_search_button' => 'Search',
 
     'heading_results_for' => 'Results for',

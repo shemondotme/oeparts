@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,7 +35,7 @@ class AdminAuthTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertViewIs('admin.auth.login');
-        $response->assertSee('Sign in to your account');
+        $response->assertSee('Enter your credentials to access the technical dashboard.');
     }
 
     #[Test]
@@ -112,7 +113,7 @@ class AdminAuthTest extends TestCase
     public function customer_cannot_access_admin_dashboard(): void
     {
         // Create a regular user (customer)
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
 
         $this->actingAs($user, 'web');
 
@@ -125,7 +126,7 @@ class AdminAuthTest extends TestCase
     public function admin_guard_isolation_customer_cannot_impersonate_admin(): void
     {
         // Customer authenticated on web guard
-        $user = \App\Models\User::factory()->create();
+        $user = User::factory()->create();
         $this->actingAs($user, 'web');
 
         // Should not be authenticated on admin guard

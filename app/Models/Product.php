@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductCondition;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'manufacturer_id', 'oem_number', 'normalized_oem',
@@ -20,12 +21,12 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'name'        => 'array',
+        'name' => 'array',
         'description' => 'array',
-        'condition'   => ProductCondition::class,
-        'price'       => 'decimal:2',
+        'condition' => ProductCondition::class,
+        'price' => 'decimal:2',
         'is_in_stock' => 'boolean',
-        'is_active'   => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function manufacturer(): BelongsTo

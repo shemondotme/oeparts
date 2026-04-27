@@ -79,6 +79,11 @@
         <div class="mt-10 bg-white rounded-xl border border-slate-200 p-6">
             <h3 class="font-semibold text-slate-900 mb-4">Quick Actions</h3>
             <div class="flex flex-wrap gap-4">
+                <a href="{{ route('admin.settings.preloader') }}" 
+                   class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-navy to-navy/80 hover:from-navy/90 hover:to-navy rounded-lg transition-colors">
+                    <x-heroicon-o-ellipsis-horizontal-circle class="w-4 h-4 mr-2" />
+                    Preloader Settings
+                </a>
                 <a href="{{ route('admin.settings.edit', 'general') }}" 
                    class="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors">
                     <x-heroicon-o-globe-alt class="w-4 h-4 mr-2" />
