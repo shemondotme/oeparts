@@ -124,7 +124,9 @@ class CheckoutService
 
         switch ($step) {
             case 1:
-                // Testing bypass — see CHECKOUT_SKIP_OTP in .env.
+                // Email OTP verification for guest checkout.
+                // PRODUCTION: otp_verified must be true (OTP code verified).
+                // Local testing can skip via CHECKOUT_SKIP_OTP=true.
                 $skipOtp = (bool) config('app.checkout_skip_otp');
                 return !empty($data['contact_email'])
                     && ($skipOtp || $data['otp_verified'] === true || auth()->check());

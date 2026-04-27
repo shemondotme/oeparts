@@ -86,12 +86,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Checkout — Skip Email OTP (testing only)
+    | Checkout — Email OTP Verification (PRODUCTION: must be false)
     |--------------------------------------------------------------------------
     |
-    | When CHECKOUT_SKIP_OTP=true in .env, guest checkout will bypass the
-    | 6-digit email verification step. Use this only for local testing.
-    | ALWAYS keep this false in production.
+    | When CHECKOUT_SKIP_OTP=true, guest checkout bypasses email OTP.
+    | This should ONLY be used in local development/testing.
+    | PRODUCTION: Must be false to require guest email verification.
+    |
+    | Migration path:
+    | - Local dev: true (for faster testing)
+    | - Staging: false (test real flow)
+    | - Production: false (enforce security)
     |
     */
 

@@ -83,15 +83,22 @@
 
     @php $skipOtp = (bool) config('app.checkout_skip_otp'); @endphp
 
-    {{-- Testing notice when OTP is bypassed --}}
+    {{-- Development notice when OTP is bypassed --}}
     @if($skipOtp)
-    <div class="border border-amber-ink bg-amber/10 px-5 py-4 flex items-start gap-3">
-        <div class="w-8 h-8 border border-amber-ink bg-paper flex items-center justify-center shrink-0">
-            <x-heroicon-s-beaker class="w-4 h-4 text-amber-ink" />
+    <div class="border-2 border-red-600 bg-red-50 px-5 py-4 flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0">
+            <x-heroicon-s-exclamation-triangle class="w-4 h-4" />
         </div>
         <div class="flex-1">
-            <p class="bp-spec text-amber-ink">§ TEST · OTP · BYPASSED</p>
-            <p class="text-xs text-body mt-1">Email verification is temporarily disabled (<code class="font-mono text-[11px]">CHECKOUT_SKIP_OTP=true</code>). Re-enable in <code class="font-mono text-[11px]">.env</code> before going live.</p>
+            <p class="bp-spec text-red-700 font-bold">⚠️ DEVELOPMENT MODE - OTP VERIFICATION DISABLED</p>
+            <p class="text-xs text-red-600 mt-2">
+                Email verification is <strong>disabled for faster local testing</strong> 
+                (<code class="font-mono text-[11px] bg-red-200 px-1 py-0.5">CHECKOUT_SKIP_OTP=true</code> in <code class="font-mono text-[11px] bg-red-200 px-1 py-0.5">.env</code>).
+                <br><br>
+                <strong>🚨 FOR PRODUCTION:</strong> Change to 
+                <code class="font-mono text-[11px] bg-red-200 px-1 py-0.5">CHECKOUT_SKIP_OTP=false</code> 
+                to enforce guest email verification.
+            </p>
         </div>
     </div>
     @endif
