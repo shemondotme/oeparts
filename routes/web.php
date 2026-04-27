@@ -108,6 +108,11 @@ Route::prefix('{lang}')
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('frontend.auth.verify-otp');
         Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->name('frontend.auth.resend-otp');
 
+        // 🧪 Test routes (for debugging OTP modal)
+        Route::get('/test/otp-modal', function () {
+            return view('test.otp-modal-test');
+        })->name('test.otp-modal');
+
         // Password reset routes
         Route::get('/reset-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('frontend.password.request');
         Route::post('/reset-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('frontend.password.email');
