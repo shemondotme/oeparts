@@ -114,10 +114,7 @@
                             role="tab"
                             :aria-selected="tab === 'login'"
                         >
-                            <span class="inline-flex items-center gap-2">
-                                <span class="font-mono text-[10px] opacity-60">01</span>
-                                Sign in
-                            </span>
+                            Sign in
                         </button>
                         <button
                             @click="tab = 'register'; error = ''"
@@ -126,10 +123,7 @@
                             role="tab"
                             :aria-selected="tab === 'register'"
                         >
-                            <span class="inline-flex items-center gap-2">
-                                <span class="font-mono text-[10px] opacity-60">02</span>
-                                Register
-                            </span>
+                            Register
                         </button>
                     </div>
                 </div>
@@ -389,6 +383,14 @@
 
                     {{-- Honeypot --}}
                     <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+
+                    {{-- Email verification info --}}
+                    <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2">
+                        <p class="font-mono text-[10px] tracking-[0.06em] text-blue-700 flex items-center gap-2">
+                            <x-heroicon-s-envelope class="w-3.5 h-3.5 shrink-0" />
+                            <span>Email verification required after registration</span>
+                        </p>
+                    </div>
 
                     {{-- Submit --}}
                     <button type="submit" :disabled="loading"
