@@ -126,8 +126,9 @@ class CheckoutController extends Controller
         $otpValue = $request->input('otp');
         $otpVerified = !$isGuest || $request->boolean('otp_verified');
 
-        // Testing bypass — see CHECKOUT_SKIP_OTP in .env.
-        // When enabled, guest email verification is treated as passed.
+        // Email OTP verification for guest checkout.
+        // PRODUCTION: OTP is required and must be verified before proceeding.
+        // Local dev can skip via CHECKOUT_SKIP_OTP=true in .env for faster testing.
         $skipOtp = (bool) config('app.checkout_skip_otp');
 
         if ($isGuest && $otpValue && !$skipOtp) {
