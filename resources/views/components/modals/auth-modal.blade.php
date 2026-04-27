@@ -276,14 +276,31 @@
                         })
                         .then(d => {
                             if(d.success) {
+                                console.log('✓ Registration success:', d);
+                                console.log('📧 Email:', $refs.regEmail.value);
+                                
+                                // Close auth modal first
                                 close();
-                                $dispatch('open-otp-modal', { email: $refs.regEmail.value, purpose: 'email_verify' });
+                                
+                                // Then dispatch OTP modal after a small delay to ensure modal is closed
+                                setTimeout(() => {
+                                    console.log('📋 Dispatching OTP modal...');
+                                    $dispatch('open-otp-modal', { 
+                                        email: $refs.regEmail.value, 
+                                        purpose: 'email_verify' 
+                                    });
+                                }, 300);
                             } else {
+                                console.error('✗ Registration failed:', d);
                                 error = d.message || Object.values(d.errors || {})[0]?.[0] || 'Registration failed';
                                 loading = false;
                             }
                         })
-                        .catch(() => { error = 'Something went wrong. Please try again.'; loading = false; });
+                        .catch(e => { 
+                            console.error('✗ Network error:', e);
+                            error = 'Something went wrong. Please try again.'; 
+                            loading = false; 
+                        });
                     "
                     class="space-y-4"
                 >
@@ -383,6 +400,21 @@
 
                     {{-- Honeypot --}}
                     <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+
+                    {{-- Terms agreement checkbox --}}
+                    <div class="flex items-start gap-3">
+                        <input
+                            id="reg-terms"
+                            name="agree_terms"
+                            type="checkbox"
+                            value="1"
+                            required
+                            class="mt-1.5 w-4 h-4 border border-ink accent-amber"
+                        >
+                        <label for="reg-terms" class="text-sm font-sans text-ink flex-1">
+                            I agree to the <a href="{{ url('/'.app()->getLocale().'/terms-of-service') }}" class="text-amber-ink hover:text-ink border-b border-amber-ink/30 hover:border-ink transition-colors" target="_blank">Terms of Service</a> and <a href="{{ url('/'.app()->getLocale().'/privacy-policy') }}" class="text-amber-ink hover:text-ink border-b border-amber-ink/30 hover:border-ink transition-colors" target="_blank">Privacy Policy</a>
+                        </label>
+                    </div>
 
                     {{-- Email verification info --}}
                     <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2">
