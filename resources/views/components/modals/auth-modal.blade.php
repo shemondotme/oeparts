@@ -28,7 +28,10 @@
             this.tab = tab;
             this.show = true;
             this.error = '';
-            this.$nextTick(() => this.$refs.firstInput?.focus());
+            this.$nextTick(() => {
+                const ref = tab === 'login' ? this.$refs.loginEmail : this.$refs.regName;
+                ref?.focus();
+            });
         },
         close() {
             this.show = false;
@@ -250,7 +253,6 @@
                                     inputmode="email"
                                     autocomplete="email"
                                     x-ref="loginEmail"
-                                    x-ref="firstInput"
                                     required
                                     class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
                                     placeholder="you@example.com"
@@ -358,7 +360,7 @@
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-user class="w-4 h-4" />
                                 </span>
-                                <input type="text" id="reg-name" name="name" x-ref="regName" x-ref="firstInput" required placeholder="John Smith"
+                                <input type="text" id="reg-name" name="name" x-ref="regName" required placeholder="John Smith"
                                        class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
                             </div>
                         </div>
@@ -408,16 +410,16 @@
 
                         {{-- OTP Input Fields (Appears when code sent) --}}
                         <template x-if="regOtpSent && !regEmailVerified">
-                            <div class="bg-amber/5 border border-amber/30 rounded-lg p-4 space-y-3">
+                            <div class="bg-amber/5 border border-amber/30 p-4 space-y-3">
                                 <p class="font-mono text-[11px] tracking-[0.1em] uppercase text-ink">6-digit code</p>
-                                <div class="flex gap-1.5" id="reg-otp-inputs">
+                                <div class="grid grid-cols-6 gap-1.5" id="reg-otp-inputs">
                                     <template x-for="i in 6" :key="i">
                                         <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code"
                                                :value="regOtpDigits[i - 1] || ''"
                                                @input="regHandleOtpInput($event, i - 1)"
                                                @paste="regHandleOtpPaste($event)"
                                                @keydown.backspace="regHandleOtpBackspace($event, i - 1)"
-                                               class="flex-1 h-11 text-center text-lg font-mono font-bold tabular-nums border border-ink bg-paper focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20 transition-colors rounded">
+                                               class="w-full min-w-0 h-11 text-center text-base font-mono font-bold tabular-nums border border-ink bg-paper focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20 transition-colors">
                                     </template>
                                 </div>
 
@@ -425,7 +427,7 @@
                                 <button type="button"
                                         @click="regVerifyOtp()"
                                         :disabled="regOtpDigits.join('').length < 6 || regOtpVerifying"
-                                        class="w-full py-2.5 bg-amber text-ink font-mono text-xs font-bold uppercase tracking-[0.1em] hover:bg-amber/90 disabled:opacity-40 transition-colors rounded">
+                                        class="w-full py-2.5 bg-amber text-ink font-mono text-xs font-bold uppercase tracking-[0.1em] hover:bg-amber/90 disabled:opacity-40 transition-colors">
                                     <span x-show="!regOtpVerifying" class="flex items-center justify-center gap-1.5">
                                         <x-heroicon-s-shield-check class="w-3 h-3" />
                                         Verify code
