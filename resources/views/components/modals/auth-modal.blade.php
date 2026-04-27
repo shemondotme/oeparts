@@ -18,6 +18,7 @@
         error: '',
         showPw: false,
         showPw2: false,
+        regEmail: '',
         regEmailVerified: false,
         regOtpSent: false,
         regOtpLoading: false,
@@ -38,14 +39,13 @@
             this.regOtpDigits = ['', '', '', '', '', ''];
         },
         async regSendOtp() {
-            const email = this.$refs.regEmail.value;
-            if (!email) return;
+            if (!this.regEmail) return;
             this.regOtpLoading = true;
             try {
                 const res = await fetch('{{ route('frontend.auth.resend-otp', ['lang' => app()->getLocale()]) }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify({ email: email, purpose: 'email_verify' })
+                    body: JSON.stringify({ email: this.regEmail, purpose: 'email_verify' })
                 });
                 if (res.ok) this.regOtpSent = true;
             } finally {
@@ -89,7 +89,7 @@
                 const res = await fetch('{{ route('frontend.auth.verify-otp', ['lang' => app()->getLocale()]) }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify({ email: this.$refs.regEmail.value, otp: this.regOtpDigits.join(''), purpose: 'email_verify' })
+                    body: JSON.stringify({ email: this.regEmail, otp: this.regOtpDigits.join(''), purpose: 'email_verify' })
                 });
                 if (res.ok) {
                     this.regEmailVerified = true;
@@ -371,7 +371,7 @@
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                         <x-heroicon-o-envelope class="w-4 h-4" />
                                     </span>
-                                    <input type="email" id="reg-email" name="email" x-ref="regEmail" required placeholder="you@example.com"
+                                    <input type="email" id="reg-email" name="email" x-ref="regEmail" x-model="regEmail" required placeholder="you@example.com"
                                            :disabled="regEmailVerified"
                                            class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none disabled:opacity-60">
                                 </div>
@@ -380,7 +380,7 @@
                                 <template x-if="!regEmailVerified">
                                     <button type="button"
                                             @click="regSendOtp()"
-                                            :disabled="regOtpLoading || !$refs.regEmail.value"
+                                            :disabled="regOtpLoading || !regEmail"
                                             class="px-4 py-3 border border-amber bg-amber/10 text-amber-ink font-mono text-xs font-bold uppercase tracking-[0.1em] hover:bg-amber/20 disabled:opacity-40 transition-colors whitespace-nowrap">
                                         <span x-show="!regOtpLoading" class="flex items-center gap-1.5">
                                             <x-heroicon-o-paper-airplane class="w-3 h-3" />
