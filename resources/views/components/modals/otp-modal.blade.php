@@ -23,6 +23,7 @@
         cooldown: 0,
         cooldownTimer: null,
         open(detail) {
+            console.log('🔓 OTP Modal opening with detail:', detail);
             this.email   = detail.email || '';
             this.purpose = detail.purpose || 'email_verify';
             this.show    = true;
@@ -30,6 +31,16 @@
             this.success = '';
             this.loading = false;
             this.startCooldown();
+            console.log('✓ OTP Modal opened. Email:', this.email, 'Purpose:', this.purpose);
+            
+            // Focus first OTP input after modal renders
+            this.$nextTick(() => {
+                const firstInput = document.getElementById('otp-0');
+                if (firstInput) {
+                    firstInput.focus();
+                    console.log('✓ Focus set to first OTP input');
+                }
+            });
         },
         close() {
             this.show    = false;
@@ -51,6 +62,7 @@
             if (code.length !== {{ $otpLen }}) return;
             this.loading = true;
             this.error   = '';
+            console.log('🔐 Verifying OTP:', code, 'Email:', this.email);
             try {
                 const r = await fetch('{{ route('frontend.auth.verify-otp', ['lang' => app()->getLocale()]) }}', {
                     method:  'POST',
@@ -58,16 +70,20 @@
                     body:    JSON.stringify({ email: this.email, otp: code, purpose: this.purpose }),
                 });
                 const d = await r.json();
+                console.log('✓ Verification response:', d);
                 if (d.success) {
                     this.success = 'Email verified successfully.';
+                    console.log('✓ OTP verified! Email:', this.email);
                     this.$dispatch('otp-verified', { email: this.email, purpose: this.purpose, token: d.token });
                     setTimeout(() => this.close(), 900);
                 } else {
                     this.error = d.message || 'Invalid code. Please try again.';
+                    console.error('✗ Verification failed:', d.message);
                     this.$dispatch('otp-reset');
                     this.loading = false;
                 }
-            } catch {
+            } catch (e) {
+                console.error('✗ Network error:', e);
                 this.error   = 'Something went wrong. Please try again.';
                 this.loading = false;
             }
@@ -76,6 +92,7 @@
             if (this.cooldown > 0 || this.resending) return;
             this.resending = true;
             this.error     = '';
+            console.log('📨 Resending OTP to:', this.email);
             try {
                 const r = await fetch('{{ route('frontend.auth.resend-otp', ['lang' => app()->getLocale()]) }}', {
                     method:  'POST',
@@ -83,13 +100,17 @@
                     body:    JSON.stringify({ email: this.email, purpose: this.purpose }),
                 });
                 const d = await r.json();
+                console.log('✓ Resend response:', d);
                 if (d.success) {
+                    console.log('✓ OTP resent successfully');
                     this.$dispatch('otp-reset');
                     this.startCooldown();
                 } else {
                     this.error = d.message || 'Could not resend code.';
+                    console.error('✗ Resend failed:', d.message);
                 }
-            } catch {
+            } catch (e) {
+                console.error('✗ Resend error:', e);
                 this.error = 'Something went wrong. Please try again.';
             } finally {
                 this.resending = false;
