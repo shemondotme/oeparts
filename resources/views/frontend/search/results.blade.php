@@ -15,10 +15,10 @@
             $titleTpl
         );
     } else {
-        $searchResultsPageTitle = __('search.page_title', [
+        $searchResultsPageTitle = ui_copy('search_page_title', 'search.page_title', [
             'oem' => $oemForSeo,
             'count' => $countForSeo,
-            'result_word' => ($total ?? 0) === 1 ? __('search.result_word_single') : __('search.result_word_plural'),
+            'result_word' => ($total ?? 0) === 1 ? ui_copy('search_result_word_single', 'search.result_word_single') : ui_copy('search_result_word_plural', 'search.result_word_plural'),
             'site' => $siteName,
         ]);
     }
@@ -30,7 +30,7 @@
             $metaTpl
         );
     } else {
-        $searchResultsMetaDescription = __('search.meta_description', ['count' => $countForSeo, 'oem' => $oemForSeo]);
+        $searchResultsMetaDescription = ui_copy('search_meta_description', 'search.meta_description', ['count' => $countForSeo, 'oem' => $oemForSeo]);
     }
     $searchResultsOgDescription = \Illuminate\Support\Str::limit(strip_tags($searchResultsMetaDescription), 300, '');
 @endphp
@@ -71,7 +71,7 @@
                 '@type' => 'Product',
                 'name' => $product->oem_number,
                 'sku' => $product->oem_number,
-                'brand' => ['@type' => 'Brand', 'name' => $product->manufacturer ? trans_field($product->manufacturer->name) : __('search.unknown_brand')],
+                'brand' => ['@type' => 'Brand', 'name' => $product->manufacturer ? trans_field($product->manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand')],
                 'offers' => [
                     '@type' => 'Offer',
                     'price' => (string) $product->price,
@@ -103,10 +103,10 @@
     $car_model_filter_label = $car_model_filter_label ?? null;
 
     $matchBadge = match($search_type) {
-        'exact'           => ['label' => __('search.match_exact'),   'icon' => 'check-circle',        'code' => 'EXACT'],
-        'cross_reference' => ['label' => __('search.match_cross'),   'icon' => 'arrow-path',          'code' => 'CROSS-REF'],
-        'partial'         => ['label' => __('search.match_partial'), 'icon' => 'magnifying-glass',    'code' => 'PARTIAL'],
-        default           => ['label' => __('search.match_default'), 'icon' => 'check-circle',        'code' => 'MATCH'],
+        'exact'           => ['label' => ui_copy('search_match_exact', 'search.match_exact'),   'icon' => 'check-circle',        'code' => 'EXACT'],
+        'cross_reference' => ['label' => ui_copy('search_match_cross', 'search.match_cross'),   'icon' => 'arrow-path',          'code' => 'CROSS-REF'],
+        'partial'         => ['label' => ui_copy('search_match_partial', 'search.match_partial'), 'icon' => 'magnifying-glass',    'code' => 'PARTIAL'],
+        default           => ['label' => ui_copy('search_match_default', 'search.match_default'), 'icon' => 'check-circle',        'code' => 'MATCH'],
     };
 
     $vatMultiplier = bcadd('1', bcdiv((string) $vat_rate, '100', 4), 4);
@@ -117,17 +117,17 @@
                        + ($manufacturer_filter ? 1 : 0)
                        + ($car_model_filter ? 1 : 0);
 
-    $conditionLabels = ['new' => __('search.condition_filter_new'), 'used' => __('search.condition_filter_used')];
+    $conditionLabels = ['new' => ui_copy('search_condition_filter_new', 'search.condition_filter_new'), 'used' => ui_copy('search_condition_filter_used', 'search.condition_filter_used')];
 
     $conditionLabelMap = [
-        'new'             => __('search.condition_label_new'),
-        'used'            => __('search.condition_label_used'),
-        'used_a'          => __('search.condition_label_used_a'),
-        'used_b'          => __('search.condition_label_used_b'),
-        'used_c'          => __('search.condition_label_used_c'),
-        'remanufactured'  => __('search.condition_label_remanufactured'),
-        'aftermarket'     => __('search.condition_label_aftermarket'),
-        'new_old_stock'   => __('search.condition_label_new_old_stock'),
+        'new'             => ui_copy('search_condition_label_new', 'search.condition_label_new'),
+        'used'            => ui_copy('search_condition_label_used', 'search.condition_label_used'),
+        'used_a'          => ui_copy('search_condition_label_used_a', 'search.condition_label_used_a'),
+        'used_b'          => ui_copy('search_condition_label_used_b', 'search.condition_label_used_b'),
+        'used_c'          => ui_copy('search_condition_label_used_c', 'search.condition_label_used_c'),
+        'remanufactured'  => ui_copy('search_condition_label_remanufactured', 'search.condition_label_remanufactured'),
+        'aftermarket'     => ui_copy('search_condition_label_aftermarket', 'search.condition_label_aftermarket'),
+        'new_old_stock'   => ui_copy('search_condition_label_new_old_stock', 'search.condition_label_new_old_stock'),
     ];
 @endphp
 
@@ -166,7 +166,7 @@
                 <div class="col-span-12 md:col-span-7">
                     <div class="flex items-center gap-4 mb-6">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="bp-spec text-amber-ink">§ 01 · {{ __('search.heading_results_for') }}</span>
+                        <span class="bp-spec text-amber-ink">§ 01 · {{ ui_copy('search_heading_results_for', 'search.heading_results_for') }}</span>
                     </div>
 
                     <h1 class="font-display font-extrabold text-ink leading-[0.9] tracking-[-0.03em]
@@ -175,9 +175,9 @@
                     </h1>
 
                     <p class="mt-6 font-mono text-base tabular-nums text-body">
-                        {{ __('search.parts_found_sentence', [
+                        {{ ui_copy('search_parts_found_sentence', 'search.parts_found_sentence', [
                             'count' => number_format($total),
-                            'parts_word' => $total === 1 ? __('search.part') : __('search.parts'),
+                            'parts_word' => $total === 1 ? ui_copy('search_part', 'search.part') : ui_copy('search_parts', 'search.parts'),
                         ]) }}
                     </p>
                 </div>
@@ -241,7 +241,7 @@
                          }
                      }">
                 <div class="flex items-end justify-between pb-3 border-b border-ink">
-                    <span class="bp-spec text-ink">§ 02 · {{ __('search.mini_search_label') ?: 'Re-submit query' }}</span>
+                    <span class="bp-spec text-ink">§ 02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</span>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         min {{ settings('search.min_chars', 3) }} chars · alphanumeric
                     </span>
@@ -253,8 +253,8 @@
                         <x-heroicon-o-magnifying-glass class="w-5 h-5 text-ink shrink-0" aria-hidden="true" />
                         <input type="text"
                                x-model="q"
-                               placeholder="{{ __('search.mini_search_placeholder') }}"
-                               aria-label="{{ __('search.mini_search_label') ?: 'Search by OEM part number' }}"
+                               placeholder="{{ ui_copy('search_mini_search_placeholder', 'search.mini_search_placeholder') }}"
+                               aria-label="{{ ui_copy('search_mini_search_aria', 'search.mini_search_aria') }}"
                                autocomplete="off"
                                autocapitalize="characters"
                                inputmode="text"
@@ -276,7 +276,7 @@
                                    bg-ink text-ivory font-sans text-[12px] font-bold uppercase tracking-[0.22em]
                                    border-t sm:border-t-0 sm:border-l border-ink
                                    hover:bg-amber hover:text-ink transition-colors duration-150">
-                        {{ __('search.mini_search_button') }}
+                        {{ ui_copy('search_mini_search_button', 'search.mini_search_button') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4 transform transition-transform group-hover:translate-x-1" aria-hidden="true" />
                     </button>
                 </form>
@@ -287,9 +287,9 @@
             @php $priceMinMaxSame = (string) $price_stats['min'] === (string) $price_stats['max']; @endphp
             <div class="grid grid-cols-3 border border-ink bg-paper mb-8">
                 @foreach([
-                    ['label' => __('search.price_from'), 'value' => '€' . $price_stats['min'], 'em' => false],
-                    ['label' => __('search.price_avg'),  'value' => '€' . ($priceMinMaxSame ? $price_stats['min'] : $price_stats['avg']), 'em' => true],
-                    ['label' => __('search.price_to'),   'value' => '€' . $price_stats['max'], 'em' => false],
+                    ['label' => ui_copy('search_price_from', 'search.price_from'), 'value' => '€' . $price_stats['min'], 'em' => false],
+                    ['label' => ui_copy('search_price_avg', 'search.price_avg'),  'value' => '€' . ($priceMinMaxSame ? $price_stats['min'] : $price_stats['avg']), 'em' => true],
+                    ['label' => ui_copy('search_price_to', 'search.price_to'),   'value' => '€' . $price_stats['max'], 'em' => false],
                 ] as $idx => $stat)
                 <div class="p-5 sm:p-6 {{ !$loop->last ? 'border-r border-rule' : '' }}">
                     <p class="bp-spec text-ink-muted mb-3">{{ $stat['label'] }}</p>
@@ -314,8 +314,8 @@
                 </div>
                 <div>
                     <p class="bp-spec text-amber-ink mb-1">§ Notice · Cross-Reference</p>
-                    <p class="font-display text-base font-bold text-ink mb-1">{{ __('search.notice_cross_title') }}</p>
-                    <p class="text-sm text-body leading-relaxed">{{ __('search.notice_cross_body', ['oem' => $normalized_query]) }}</p>
+                    <p class="font-display text-base font-bold text-ink mb-1">{{ ui_copy('search_notice_cross_title', 'search.notice_cross_title') }}</p>
+                    <p class="text-sm text-body leading-relaxed">{{ ui_copy('search_notice_cross_body', 'search.notice_cross_body', ['oem' => $normalized_query]) }}</p>
                 </div>
             </div>
             @endif
@@ -327,8 +327,8 @@
                 </div>
                 <div>
                     <p class="bp-spec text-amber-ink mb-1">§ Notice · Partial Match</p>
-                    <p class="font-display text-base font-bold text-ink mb-1">{{ __('search.notice_partial_title') }}</p>
-                    <p class="text-sm text-body leading-relaxed">{{ __('search.notice_partial_body', ['oem' => $normalized_query]) }}</p>
+                    <p class="font-display text-base font-bold text-ink mb-1">{{ ui_copy('search_notice_partial_title', 'search.notice_partial_title') }}</p>
+                    <p class="text-sm text-body leading-relaxed">{{ ui_copy('search_notice_partial_body', 'search.notice_partial_body', ['oem' => $normalized_query]) }}</p>
                 </div>
             </div>
             @endif
@@ -365,7 +365,7 @@
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
-                            <span class="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">{{ __('search.updating_results') }}</span>
+                            <span class="font-mono text-[11px] font-bold uppercase tracking-[0.22em]">{{ ui_copy('search_updating_results', 'search.updating_results') }}</span>
                         </div>
                     </div>
 
@@ -375,7 +375,7 @@
                         @if($activeFilterCount > 0)
                         <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $normalized_query]) }}"
                            class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted hover:text-red-600 transition-colors">
-                            {{ __('search.clear_all') }}
+                            {{ ui_copy('search_clear_all', 'search.clear_all') }}
                             <x-heroicon-s-x-mark class="w-3 h-3 inline-block" />
                         </a>
                         @endif
@@ -390,7 +390,7 @@
                                         :class="sort === 'default' ? 'bg-ink text-ivory' : 'bg-paper text-ink hover:bg-ivory'"
                                         class="px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] transition-colors"
                                         :aria-pressed="sort === 'default'">
-                                    {{ __('search.sort_relevance') }}
+                                    {{ ui_copy('search_sort_relevance', 'search.sort_relevance') }}
                                 </button>
                                 <button type="button" @click="sort = 'price_asc'; apply()"
                                         :class="sort === 'price_asc' ? 'bg-ink text-ivory' : 'bg-paper text-ink hover:bg-ivory'"
@@ -437,7 +437,7 @@
                                       :class="inStock ? 'bg-ink' : 'bg-paper'">
                                     <x-heroicon-s-check class="w-3 h-3 text-ivory" x-show="inStock" />
                                 </span>
-                                <span class="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-ink">{{ __('search.in_stock') }}</span>
+                                <span class="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-ink">{{ ui_copy('search_in_stock', 'search.in_stock') }}</span>
                             </label>
                         </div>
 
@@ -447,7 +447,7 @@
                                 class="sm:hidden ml-auto inline-flex items-center gap-2 px-3 py-1.5 border border-ink bg-paper
                                        font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-ink">
                             <x-heroicon-o-funnel class="w-3 h-3" />
-                            {{ __('search.filters') }}
+                            {{ ui_copy('search_filters', 'search.filters') }}
                             @if($activeFilterCount > 0)
                             <span class="font-mono text-[9px] tabular-nums px-1 bg-amber text-ink">{{ $activeFilterCount }}</span>
                             @endif
@@ -462,7 +462,7 @@
                          class="sm:hidden border-t border-rule px-4 py-4 space-y-5">
 
                         <div>
-                            <p class="bp-spec text-ink-muted mb-2">{{ __('search.condition') }}</p>
+                            <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_condition', 'search.condition') }}</p>
                             <div class="flex gap-1.5 flex-wrap">
                                 @foreach($conditionLabels as $val => $label)
                                 @php $cnt = $condition_counts[$val] ?? 0; @endphp
@@ -484,12 +484,12 @@
                                   :class="inStock ? 'bg-ink' : 'bg-paper'">
                                 <x-heroicon-s-check class="w-3 h-3 text-ivory" x-show="inStock" />
                             </span>
-                            <span class="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-ink">{{ __('search.in_stock') }}</span>
+                            <span class="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-ink">{{ ui_copy('search_in_stock', 'search.in_stock') }}</span>
                         </label>
 
                         @if(count($manufacturer_filter_options) > 1)
                         <div>
-                            <p class="bp-spec text-ink-muted mb-2">{{ __('search.brand') }}</p>
+                            <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_brand', 'search.brand') }}</p>
                             <div class="flex gap-1.5 flex-wrap">
                                 @foreach($manufacturer_filter_options as $mfr)
                                 <button type="button"
@@ -507,7 +507,7 @@
                     {{-- Manufacturer (desktop) --}}
                     @if(count($manufacturer_filter_options) > 1)
                     <div class="hidden sm:flex flex-wrap items-center gap-2 px-4 py-3 border-t border-rule">
-                        <span class="bp-spec text-ink-muted shrink-0">{{ __('search.brand') }}</span>
+                        <span class="bp-spec text-ink-muted shrink-0">{{ ui_copy('search_brand', 'search.brand') }}</span>
                         @foreach($manufacturer_filter_options as $mfr)
                         <button type="button"
                                 @click="manufacturer = (manufacturer == '{{ $mfr['id'] }}' ? '' : '{{ $mfr['id'] }}'); carModel = ''; apply()"
@@ -518,6 +518,54 @@
                             <span class="font-mono text-[9px] tabular-nums opacity-70">({{ $mfr['count'] }})</span>
                         </button>
                         @endforeach
+                    </div>
+                    @endif
+
+                    {{-- Active filter chips (sort, condition, stock, brand, car model) --}}
+                    @if($activeFilterCount > 0)
+                    <div class="px-4 py-3 border-t border-rule bg-ivory-alt/60">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted shrink-0">{{ ui_copy('search_active_filters', 'search.active_filters') }}</span>
+                            @if($sort !== 'default')
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => null, 'page' => null]) }}"
+                               class="inline-flex items-center gap-1.5 px-2.5 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink hover:bg-ivory transition-colors">
+                                {{ ui_copy('search_sort_label', 'search.sort_label') }} {{ $sort === 'price_asc' ? ui_copy('search_sort_chip_price_asc', 'search.sort_chip_price_asc') : ui_copy('search_sort_chip_price_desc', 'search.sort_chip_price_desc') }}
+                                <x-heroicon-s-x-mark class="w-3 h-3 shrink-0" />
+                            </a>
+                            @endif
+                            @if($condition_filter)
+                            <a href="{{ request()->fullUrlWithQuery(['condition' => null, 'page' => null]) }}"
+                               class="inline-flex items-center gap-1.5 px-2.5 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink hover:bg-ivory transition-colors">
+                                {{ ui_copy('search_condition_chip', 'search.condition_chip', ['condition' => ucfirst($condition_filter)]) }}
+                                <x-heroicon-s-x-mark class="w-3 h-3 shrink-0" />
+                            </a>
+                            @endif
+                            @if($in_stock_only)
+                            <a href="{{ request()->fullUrlWithQuery(['in_stock' => null, 'page' => null]) }}"
+                               class="inline-flex items-center gap-1.5 px-2.5 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink hover:bg-ivory transition-colors">
+                                {{ ui_copy('search_in_stock_only', 'search.in_stock_only') }}
+                                <x-heroicon-s-x-mark class="w-3 h-3 shrink-0" />
+                            </a>
+                            @endif
+                            @if($manufacturer_filter)
+                            @php
+                                $mfrRow = collect($manufacturer_filter_options)->first(fn ($m) => (string) $m['id'] === (string) $manufacturer_filter);
+                                $mfrLabel = $mfrRow['name'] ?? ui_copy('search_brand', 'search.brand');
+                            @endphp
+                            <a href="{{ request()->fullUrlWithQuery(['manufacturer' => null, 'model' => null, 'page' => null]) }}"
+                               class="inline-flex items-center gap-1.5 px-2.5 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink hover:bg-ivory transition-colors">
+                                {{ $mfrLabel }}
+                                <x-heroicon-s-x-mark class="w-3 h-3 shrink-0" />
+                            </a>
+                            @endif
+                            @if($car_model_filter)
+                            <a href="{{ request()->fullUrlWithQuery(['model' => null, 'page' => null]) }}"
+                               class="inline-flex items-center gap-1.5 px-2.5 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink hover:bg-ivory transition-colors">
+                                {{ ui_copy('search_model_chip', 'search.model_chip', ['name' => $car_model_filter_label ?? ui_copy('search_model_unknown', 'search.model_unknown')]) }}
+                                <x-heroicon-s-x-mark class="w-3 h-3 shrink-0" />
+                            </a>
+                            @endif
+                        </div>
                     </div>
                     @endif
                 </div>
@@ -533,15 +581,15 @@
                     <x-heroicon-o-funnel class="w-6 h-6 text-ink" />
                 </div>
                 <h2 class="font-display text-3xl font-extrabold text-ink tracking-tight mb-4 text-balance">
-                    {{ __('search.filtered_empty_title') }}<span class="text-amber">.</span>
+                    {{ ui_copy('search_filtered_empty_title', 'search.filtered_empty_title') }}<span class="text-amber">.</span>
                 </h2>
                 <p class="text-body max-w-md mx-auto mb-8">
-                    {{ trans_choice('search.filtered_empty_paragraph', $unfiltered_total, ['oem' => $normalized_query, 'count' => $unfiltered_total]) }}
+                    {{ ui_trans_choice('search_filtered_empty_paragraph', 'search.filtered_empty_paragraph', $unfiltered_total, ['oem' => $normalized_query, 'count' => $unfiltered_total]) }}
                 </p>
                 <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $normalized_query]) }}"
                    class="bp-btn-primary">
                     <x-heroicon-s-x-mark class="w-5 h-5" />
-                    {{ __('search.clear_filters_cta', ['total' => $unfiltered_total]) }}
+                    {{ ui_copy('search_clear_filters_cta', 'search.clear_filters_cta', ['total' => $unfiltered_total]) }}
                 </a>
             </div>
             @endif
@@ -557,7 +605,7 @@
                     <div class="border border-ink bg-paper overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full min-w-[900px] table-auto border-collapse text-sm" role="table">
-                                <caption class="sr-only">{{ __('search.table_caption', ['oem' => $normalized_query]) }}</caption>
+                                <caption class="sr-only">{{ ui_copy('search_table_caption', 'search.table_caption', ['oem' => $normalized_query]) }}</caption>
                                 <thead>
                                     <tr class="bg-ivory-alt border-b border-ink">
                                         <th class="text-left px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle" scope="col">
@@ -582,7 +630,7 @@
                                         $condKey = $cCond instanceof \BackedEnum
                                             ? $cCond->value
                                             : (is_scalar($cCond) ? (string) $cCond : (string) \Illuminate\Support\enum_value($cCond, 'new'));
-                                        $condLabel = $conditionLabelMap[$condKey] ?? __('search.condition_unknown');
+                                        $condLabel = $conditionLabelMap[$condKey] ?? ui_copy('search_condition_unknown', 'search.condition_unknown');
                                         $rowNum = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
                                         if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator) {
                                             $rowNum = str_pad(($products->firstItem() + $index), 3, '0', STR_PAD_LEFT);
@@ -591,7 +639,7 @@
 
                                 <tbody
                                     class="border-b border-rule transition-colors {{ $index === 0 && $sort === 'default' ? 'bg-amber/5' : '' }} hover:bg-ivory-alt/50"
-                                    x-data="searchProductRow({ productId: {{ $product->id }}, oemNumber: '{{ $product->oem_number }}', manufacturerName: '{{ $manufacturer ? trans_field($manufacturer->name) : __('search.unknown_brand') }}' })">
+                                    x-data="searchProductRow({ productId: {{ $product->id }}, oemNumber: '{{ $product->oem_number }}', manufacturerName: '{{ $manufacturer ? trans_field($manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand') }}' })">
 
                                     @if($index === 0 && $sort === 'default')
                                     <tr>
@@ -628,7 +676,7 @@
                                                         {{ $product->oem_number }}
                                                     </p>
                                                     <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
-                                                        {{ $manufacturer ? trans_field($manufacturer->name) : __('search.unknown_brand') }}
+                                                        {{ $manufacturer ? trans_field($manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand') }}
                                                     </p>
                                                 </div>
                                             </div>
@@ -647,12 +695,12 @@
                                             @if($product->is_in_stock)
                                             <span class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink">
                                                 <span class="w-2 h-2 bg-amber"></span>
-                                                {{ __('search.stock_in') }}
+                                                {{ ui_copy('search_stock_in', 'search.stock_in') }}
                                             </span>
                                             @else
                                             <span class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink-muted">
                                                 <span class="w-2 h-2 border border-rule-strong"></span>
-                                                {{ __('search.stock_out') }}
+                                                {{ ui_copy('search_stock_out', 'search.stock_out') }}
                                             </span>
                                             @endif
                                         </td>
@@ -674,7 +722,7 @@
                                                             @click="quantity = Math.max(1, quantity - 1)"
                                                             class="w-7 h-7 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors"
                                                             :disabled="quantity <= 1"
-                                                            aria-label="{{ __('search.aria_decrease_qty') }}">
+                                                            aria-label="{{ ui_copy('search_aria_decrease_qty', 'search.aria_decrease_qty') }}">
                                                         <x-heroicon-s-minus class="w-3 h-3" />
                                                     </button>
                                                     <input type="text"
@@ -683,12 +731,12 @@
                                                            @keydown.up.prevent="quantity = Math.min(99, quantity + 1)"
                                                            @keydown.down.prevent="quantity = Math.max(1, quantity - 1)"
                                                            class="w-9 h-7 text-center font-mono text-xs font-bold text-ink bg-paper border-0 border-x border-ink focus:ring-0 focus:outline-none p-0"
-                                                           aria-label="{{ __('search.aria_quantity') }}">
+                                                           aria-label="{{ ui_copy('search_aria_quantity', 'search.aria_quantity') }}">
                                                     <button type="button"
                                                             @click="quantity = Math.min(99, quantity + 1)"
                                                             class="w-7 h-7 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors"
                                                             :disabled="quantity >= 99"
-                                                            aria-label="{{ __('search.aria_increase_qty') }}">
+                                                            aria-label="{{ ui_copy('search_aria_increase_qty', 'search.aria_increase_qty') }}">
                                                         <x-heroicon-s-plus class="w-3 h-3" />
                                                     </button>
                                                 </div>
@@ -704,7 +752,7 @@
                                                         }">
                                                     <span x-show="cartState === 'idle'" class="inline-flex items-center gap-1.5">
                                                         <x-heroicon-s-plus class="w-3 h-3" />
-                                                        {{ __('search.btn_add') }}
+                                                        {{ ui_copy('search_btn_add', 'search.btn_add') }}
                                                     </span>
                                                     <span x-show="cartState === 'loading'" x-cloak>
                                                         <svg class="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
@@ -726,7 +774,7 @@
                                                            font-mono text-[11px] font-bold uppercase tracking-[0.18em]
                                                            hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                                                 <x-heroicon-s-paper-airplane class="w-3 h-3" />
-                                                {{ __('search.btn_request') }}
+                                                {{ ui_copy('search_btn_request', 'search.btn_request') }}
                                             </button>
                                             @endif
                                         </td>
@@ -747,7 +795,7 @@
                                                     <p class="font-mono text-sm font-bold text-ink">{{ $condLabel }}</p>
                                                 </div>
                                                 <div class="p-4">
-                                                    <p class="bp-spec text-ink-muted mb-2">{{ __('search.incl_vat', ['rate' => $vat_rate]) }}</p>
+                                                    <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
                                                     <p class="font-mono text-sm font-bold tabular-nums text-ink">€{{ number_format($priceWithVat, 2) }}</p>
                                                 </div>
                                             </div>
@@ -774,8 +822,8 @@
                                                     <button type="button" @click="crossRefsOpen = !crossRefsOpen"
                                                             class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-dashed border-rule-strong
                                                                    font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-ink-muted hover:text-ink hover:border-ink transition-colors">
-                                                        <span x-show="!crossRefsOpen">{{ __('search.cross_refs_view_all', ['count' => $totalRefs]) }}</span>
-                                                        <span x-show="crossRefsOpen" x-cloak>{{ __('search.cross_refs_show_less') }}</span>
+                                                        <span x-show="!crossRefsOpen">{{ ui_copy('search_cross_refs_view_all', 'search.cross_refs_view_all', ['count' => $totalRefs]) }}</span>
+                                                        <span x-show="crossRefsOpen" x-cloak>{{ ui_copy('search_cross_refs_show_less', 'search.cross_refs_show_less') }}</span>
                                                     </button>
                                                     @endif
                                                 </div>
@@ -786,7 +834,7 @@
                                                 <button @click="detailsOpen = false"
                                                         class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink-muted hover:text-ink transition-colors">
                                                     <x-heroicon-s-chevron-up class="w-3 h-3" />
-                                                    {{ __('search.hide_details') }}
+                                                    {{ ui_copy('search_hide_details', 'search.hide_details') }}
                                                 </button>
                                             </div>
                                         </td>
@@ -798,7 +846,7 @@
                                             <button @click="detailsOpen = true"
                                                     class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink-muted hover:text-ink transition-colors">
                                                 <x-heroicon-s-chevron-down class="w-3 h-3" />
-                                                {{ __('search.more_details') }}
+                                                {{ ui_copy('search_more_details', 'search.more_details') }}
                                             </button>
                                         </td>
                                     </tr>
@@ -820,7 +868,7 @@
                         $condKey = $cCond instanceof \BackedEnum
                             ? $cCond->value
                             : (is_scalar($cCond) ? (string) $cCond : (string) \Illuminate\Support\enum_value($cCond, 'new'));
-                        $condLabel = $conditionLabelMap[$condKey] ?? __('search.condition_unknown');
+                        $condLabel = $conditionLabelMap[$condKey] ?? ui_copy('search_condition_unknown', 'search.condition_unknown');
                         $crossRefs = $product->crossReferences ?? collect();
                         $rowNum = str_pad($loop->index + 1, 3, '0', STR_PAD_LEFT);
                         if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator) {
@@ -828,7 +876,7 @@
                         }
                     @endphp
 
-                    <div x-data="searchProductRow({ productId: {{ $product->id }}, oemNumber: '{{ $product->oem_number }}', manufacturerName: '{{ $manufacturer ? trans_field($manufacturer->name) : __('search.unknown_brand') }}' })"
+                    <div x-data="searchProductRow({ productId: {{ $product->id }}, oemNumber: '{{ $product->oem_number }}', manufacturerName: '{{ $manufacturer ? trans_field($manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand') }}' })"
                          class="border border-ink bg-paper {{ $loop->index === 0 && $sort === 'default' ? 'ring-1 ring-amber ring-offset-0' : '' }}">
 
                         @if($loop->index === 0 && $sort === 'default')
@@ -875,12 +923,12 @@
                                 @if($product->is_in_stock)
                                 <span class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink">
                                     <span class="w-2 h-2 bg-amber"></span>
-                                    {{ __('search.stock_in') }}
+                                    {{ ui_copy('search_stock_in', 'search.stock_in') }}
                                 </span>
                                 @else
                                 <span class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink-muted">
                                     <span class="w-2 h-2 border border-rule-strong"></span>
-                                    {{ __('search.stock_out_long') }}
+                                    {{ ui_copy('search_stock_out_long', 'search.stock_out_long') }}
                                 </span>
                                 @endif
 
@@ -889,7 +937,7 @@
                                         €{{ number_format($product->price, 2) }}
                                     </p>
                                     <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">
-                                        {{ __('search.excl_vat_short') }}
+                                        {{ ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}
                                     </p>
                                 </div>
                             </div>
@@ -901,16 +949,16 @@
                                     <button type="button" @click="quantity = Math.max(1, quantity - 1)"
                                             class="w-9 h-9 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors"
                                             :disabled="quantity <= 1"
-                                            aria-label="{{ __('search.aria_decrease_qty') }}">
+                                            aria-label="{{ ui_copy('search_aria_decrease_qty', 'search.aria_decrease_qty') }}">
                                         <x-heroicon-s-minus class="w-3.5 h-3.5" />
                                     </button>
                                     <input type="text" inputmode="numeric" x-model.number="quantity"
                                            class="w-11 h-9 text-center font-mono text-sm font-bold text-ink bg-paper border-0 border-x border-ink focus:ring-0 focus:outline-none p-0"
-                                           aria-label="{{ __('search.aria_quantity') }}">
+                                           aria-label="{{ ui_copy('search_aria_quantity', 'search.aria_quantity') }}">
                                     <button type="button" @click="quantity = Math.min(99, quantity + 1)"
                                             class="w-9 h-9 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors"
                                             :disabled="quantity >= 99"
-                                            aria-label="{{ __('search.aria_increase_qty') }}">
+                                            aria-label="{{ ui_copy('search_aria_increase_qty', 'search.aria_increase_qty') }}">
                                         <x-heroicon-s-plus class="w-3.5 h-3.5" />
                                     </button>
                                 </div>
@@ -926,7 +974,7 @@
                                         }">
                                     <span x-show="cartState === 'idle'" class="inline-flex items-center gap-2">
                                         <x-heroicon-s-plus class="w-3.5 h-3.5" />
-                                        {{ __('search.btn_add_to_cart') }}
+                                        {{ ui_copy('search_btn_add_to_cart', 'search.btn_add_to_cart') }}
                                     </span>
                                     <span x-show="cartState === 'loading'" x-cloak>
                                         <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
@@ -936,7 +984,7 @@
                                     </span>
                                     <span x-show="cartState === 'added'" x-cloak class="inline-flex items-center gap-2">
                                         <x-heroicon-s-check class="w-3.5 h-3.5" />
-                                        {{ __('search.btn_added') }}
+                                        {{ ui_copy('search_btn_added', 'search.btn_added') }}
                                     </span>
                                 </button>
                             </div>
@@ -948,7 +996,7 @@
                                            font-mono text-xs font-bold uppercase tracking-[0.22em]
                                            hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                                 <x-heroicon-s-paper-airplane class="w-3.5 h-3.5" />
-                                {{ __('search.request_this_part') }}
+                                {{ ui_copy('search_request_this_part', 'search.request_this_part') }}
                             </button>
                             @endif
 
@@ -957,8 +1005,8 @@
                                     class="mt-4 w-full inline-flex items-center justify-center gap-1.5 py-2 border-t border-rule
                                            font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink-muted hover:text-ink transition-colors">
                                 <x-heroicon-s-chevron-down class="w-3 h-3 transition-transform" x-bind:class="detailsOpen ? 'rotate-180' : ''" />
-                                <span x-show="!detailsOpen">{{ __('search.more_details') }}</span>
-                                <span x-show="detailsOpen" x-cloak>{{ __('search.hide_details') }}</span>
+                                <span x-show="!detailsOpen">{{ ui_copy('search_more_details', 'search.more_details') }}</span>
+                                <span x-show="detailsOpen" x-cloak>{{ ui_copy('search_hide_details', 'search.hide_details') }}</span>
                             </button>
                         </div>
 
@@ -977,7 +1025,7 @@
                                 </div>
                                 @endif
                                 <div class="p-3 {{ !$product->delivery_time ? 'col-span-2' : '' }}">
-                                    <p class="bp-spec text-ink-muted mb-1">{{ __('search.incl_vat', ['rate' => $vat_rate]) }}</p>
+                                    <p class="bp-spec text-ink-muted mb-1">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
                                     <p class="font-mono text-xs font-bold tabular-nums text-ink">€{{ number_format($priceWithVat, 2) }}</p>
                                 </div>
                             </div>
@@ -997,8 +1045,8 @@
                                     @if($totalRefs > $refLimit)
                                     <button type="button" @click="crossRefsOpen = !crossRefsOpen"
                                             class="inline-flex items-center gap-1 px-2 py-1 border border-dashed border-rule-strong font-mono text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                                        <span x-show="!crossRefsOpen">{{ __('search.cross_refs_view_all', ['count' => $totalRefs]) }}</span>
-                                        <span x-show="crossRefsOpen" x-cloak>{{ __('search.cross_refs_show_less') }}</span>
+                                        <span x-show="!crossRefsOpen">{{ ui_copy('search_cross_refs_view_all', 'search.cross_refs_view_all', ['count' => $totalRefs]) }}</span>
+                                        <span x-show="crossRefsOpen" x-cloak>{{ ui_copy('search_cross_refs_show_less', 'search.cross_refs_show_less') }}</span>
                                     </button>
                                     @endif
                                 </div>
@@ -1022,7 +1070,7 @@
             {{-- ── Inquiry CTA ─────────────────────────────────────────── --}}
             <div class="mt-12 border border-ink bg-paper">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-rule bg-ivory-alt">
-                    <span class="bp-spec text-amber-ink">§ 99 · {{ __('search.inquiry_title') }}</span>
+                    <span class="bp-spec text-amber-ink">§ 99 · {{ ui_copy('search_inquiry_title', 'search.inquiry_title') }}</span>
                     <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
                         SLA · {{ (int) settings('part_inquiry.response_hours', 24) }} h
                     </span>
@@ -1034,21 +1082,21 @@
                             Can't find it? Ask our team<span class="text-amber">.</span>
                         </h2>
                         <p class="text-base text-body leading-relaxed">
-                            {{ __('search.inquiry_subtitle', ['hours' => (int) settings('part_inquiry.response_hours', 24)]) }}
+                            {{ ui_copy('search_inquiry_subtitle', 'search.inquiry_subtitle', ['hours' => (int) settings('part_inquiry.response_hours', 24)]) }}
                         </p>
 
                         <dl class="mt-6 space-y-0 border-t border-rule">
                             <div class="flex items-center gap-3 py-3 border-b border-rule">
                                 <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink shrink-0" />
-                                <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ __('search.inquiry_trust_suppliers') }}</span>
+                                <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ ui_copy('search_inquiry_trust_suppliers', 'search.inquiry_trust_suppliers') }}</span>
                             </div>
                             <div class="flex items-center gap-3 py-3 border-b border-rule">
                                 <x-heroicon-s-building-storefront class="w-4 h-4 text-amber-ink shrink-0" />
-                                <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ __('search.inquiry_trust_warehouse') }}</span>
+                                <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ ui_copy('search_inquiry_trust_warehouse', 'search.inquiry_trust_warehouse') }}</span>
                             </div>
                             <div class="flex items-center gap-3 py-3">
                                 <x-heroicon-s-trophy class="w-4 h-4 text-amber-ink shrink-0" />
-                                <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ __('search.inquiry_trust_quality') }}</span>
+                                <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ ui_copy('search_inquiry_trust_quality', 'search.inquiry_trust_quality') }}</span>
                             </div>
                         </dl>
                     </div>
@@ -1058,7 +1106,7 @@
                                 onclick="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
                                 class="bp-btn-primary w-full justify-center">
                             <x-heroicon-s-paper-airplane class="w-5 h-5" />
-                            {{ __('search.inquiry_submit') }}
+                            {{ ui_copy('search_inquiry_submit', 'search.inquiry_submit') }}
                         </button>
                         <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted text-center">
                             Secure · TLS 1.3 · Response within {{ (int) settings('part_inquiry.response_hours', 24) }} h
@@ -1083,8 +1131,8 @@
     <button @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
             class="w-10 h-10 bg-ink border border-ink text-ivory flex items-center justify-center
                    hover:bg-amber hover:text-ink transition-colors"
-            title="{{ __('search.scroll_to_top') }}"
-            aria-label="{{ __('search.scroll_to_top') }}">
+            title="{{ ui_copy('search_scroll_to_top', 'search.scroll_to_top') }}"
+            aria-label="{{ ui_copy('search_scroll_to_top', 'search.scroll_to_top') }}">
         <x-heroicon-s-arrow-up class="w-4 h-4" />
     </button>
 </div>
@@ -1096,7 +1144,7 @@
 function searchProductRow(config) {
     const lang = '{{ app()->getLocale() }}';
     const cartAddUrl = @json(route('frontend.cart.add', ['lang' => app()->getLocale()]));
-    const failMsg = @json(__('search.cart_add_failed'));
+    const failMsg = @json(ui_copy('search_cart_add_failed', 'search.cart_add_failed'));
 
     return {
         detailsOpen: false,

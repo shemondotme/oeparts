@@ -9,6 +9,29 @@
     $buttonText = trans_field($section->content['button_text'] ?? null) ?: 'DISPATCH QUERY';
     $popularOems = $section->content['popular_oem'] ?? ['1K0698151E', '3C0615301B', 'WHT005549A', '06H103405A'];
     $minChars = (int) settings('search.min_chars', 3);
+    $heroIndexBadge = settings_trans('ui.hero_index_badge', '§ INDEX');
+    $heroLive = settings_trans('ui.hero_live_status', 'CATALOGUE LIVE');
+    $heroEyebrow = settings_trans('ui.hero_eyebrow', 'Genuine OEM Parts Index · 1,000,000+');
+    $heroDefaultSub = settings_trans('ui.hero_subtext_default', 'Enter any OEM number. We return matches, cross-references, and verified suppliers across the European Union — or open a concierge inquiry if the part is rare.');
+    $heroSpecTitle = settings_trans('ui.hero_spec_title', 'Specification');
+    $heroR1l = settings_trans('ui.hero_spec_r1_label', 'Catalogue');
+    $catCount = number_format((int) settings('stats_counter.parts_count', 1000000));
+    $heroR2l = settings_trans('ui.hero_spec_r2_label', 'Manufacturers');
+    $heroR2v = settings_trans('ui.hero_spec_r2_value', '214');
+    $heroR3l = settings_trans('ui.hero_spec_r3_label', 'Cross-refs');
+    $heroR3v = settings_trans('ui.hero_spec_r3_value', '3.2M');
+    $heroR4l = settings_trans('ui.hero_spec_r4_label', 'Avg. despatch');
+    $heroR4v = settings_trans('ui.hero_spec_r4_value', '24h');
+    $heroR5l = settings_trans('ui.hero_spec_r5_label', 'Languages');
+    $heroR5v = settings_trans('ui.hero_spec_r5_value', 'EN·DE·LT·FR·ES');
+    $heroSrcL = settings_trans('ui.hero_source_label', 'Source');
+    $heroSrcB = settings_trans('ui.hero_source_badge', 'VERIFIED · EU');
+    $heroSearchStrip = settings_trans('ui.hero_search_strip', '§ ENTER OEM NUMBER');
+    $heroSearchMeta = str_replace(':min', (string) $minChars, settings_trans('ui.hero_search_meta_hint', 'min :min chars · uppercase alphanumeric'));
+    $heroIndexedLbl = settings_trans('ui.hero_indexed_label', 'Indexed:');
+    $heroFoot1 = settings_trans('ui.hero_footer_pill_1', 'Verified Suppliers');
+    $heroFoot2 = settings_trans('ui.hero_footer_pill_2', 'TLS 1.3 · SSL');
+    $heroFoot3 = settings_trans('ui.hero_footer_pill_3', '27 EU Countries');
 @endphp
 
 {{-- ══════════════════════════════════════════════════════════════════════
@@ -30,12 +53,12 @@
         <div class="flex items-center justify-between mb-12 md:mb-16 pb-5 border-b border-rule">
             <div class="flex items-center gap-6 sm:gap-8">
                 <span class="font-mono text-spec-sm font-bold text-ink-muted tracking-[0.22em] uppercase">
-                    § INDEX
+                    {{ $heroIndexBadge }}
                 </span>
             </div>
             <div class="flex items-center gap-2 font-mono text-[10px] text-ink-muted tracking-[0.2em] uppercase">
                 <span class="w-1.5 h-1.5 bg-emerald-600 animate-pulse motion-reduce:animate-none"></span>
-                <span class="hidden sm:inline">CATALOGUE LIVE</span>
+                <span class="hidden sm:inline">{{ $heroLive }}</span>
             </div>
         </div>
 
@@ -47,7 +70,7 @@
                 {{-- Eyebrow marker --}}
                 <div class="bp-rise flex items-center gap-4 mb-8">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">Genuine OEM Parts Index · 1,000,000+</span>
+                    <span class="bp-spec text-amber-ink">{{ $heroEyebrow }}</span>
                 </div>
 
                 {{-- Headline — huge display --}}
@@ -66,7 +89,7 @@
                     </p>
                 @else
                     <p class="bp-rise bp-rise-delay-2 max-w-xl text-lg text-body leading-relaxed">
-                        Enter any OEM number. We return matches, cross-references, and verified suppliers across the European Union — or open a concierge inquiry if the part is rare.
+                        {{ $heroDefaultSub }}
                     </p>
                 @endif
             </div>
@@ -74,39 +97,39 @@
             {{-- Right: spec panel (4 cols) — data as image --}}
             <aside class="col-span-12 lg:col-span-4 bp-rise bp-rise-delay-3">
                 <div class="relative border border-ink p-6 sm:p-7 bg-paper bp-register">
-                    <p class="bp-spec text-ink-muted mb-4">Specification</p>
+                    <p class="bp-spec text-ink-muted mb-4">{{ $heroSpecTitle }}</p>
                     <dl class="space-y-3 text-sm">
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">Catalogue</dt>
+                            <dt class="text-ink-muted">{{ $heroR1l }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono font-bold text-ink tabular-nums">1,024,837</dd>
+                            <dd class="font-mono font-bold text-ink tabular-nums">{{ $catCount }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">Manufacturers</dt>
+                            <dt class="text-ink-muted">{{ $heroR2l }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono font-bold text-ink tabular-nums">214</dd>
+                            <dd class="font-mono font-bold text-ink tabular-nums">{{ $heroR2v }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">Cross-refs</dt>
+                            <dt class="text-ink-muted">{{ $heroR3l }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono font-bold text-ink tabular-nums">3.2M</dd>
+                            <dd class="font-mono font-bold text-ink tabular-nums">{{ $heroR3v }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">Avg. despatch</dt>
+                            <dt class="text-ink-muted">{{ $heroR4l }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono font-bold text-ink">24h</dd>
+                            <dd class="font-mono font-bold text-ink">{{ $heroR4v }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">Languages</dt>
+                            <dt class="text-ink-muted">{{ $heroR5l }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono font-bold text-ink">EN·DE·LT·FR·ES</dd>
+                            <dd class="font-mono font-bold text-ink">{{ $heroR5v }}</dd>
                         </div>
                     </dl>
 
                     {{-- Bottom amber tick --}}
                     <div class="mt-6 pt-4 border-t border-rule flex items-center justify-between">
-                        <span class="bp-spec text-ink-muted">Source</span>
-                        <span class="font-mono text-[11px] font-bold text-amber-ink tracking-[0.16em] uppercase">VERIFIED · EU</span>
+                        <span class="bp-spec text-ink-muted">{{ $heroSrcL }}</span>
+                        <span class="font-mono text-[11px] font-bold text-amber-ink tracking-[0.16em] uppercase">{{ $heroSrcB }}</span>
                     </div>
                 </div>
             </aside>
@@ -143,10 +166,10 @@
                 {{-- Form label strip --}}
                 <div class="flex items-end justify-between pb-3 border-b border-ink">
                     <div class="flex items-center gap-3">
-                        <span class="bp-spec text-ink">§ ENTER OEM NUMBER</span>
+                        <span class="bp-spec text-ink">{{ $heroSearchStrip }}</span>
                     </div>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        min {{ $minChars }} chars · uppercase alphanumeric
+                        {{ $heroSearchMeta }}
                     </span>
                 </div>
 
@@ -202,7 +225,7 @@
                 {{-- Popular OEMs row --}}
                 @if(!empty($popularOems))
                 <div class="mt-6 flex flex-wrap items-center gap-x-3 gap-y-2">
-                    <span class="bp-spec text-ink-muted mr-1">Indexed:</span>
+                    <span class="bp-spec text-ink-muted mr-1">{{ $heroIndexedLbl }}</span>
                     @foreach($popularOems as $oem)
                         <a href="{{ url('/'.$lang.'/parts/'.$oem) }}"
                            class="group inline-flex items-center gap-2 py-1.5 px-3
@@ -224,17 +247,17 @@
             <div class="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] tracking-[0.16em] uppercase text-ink-muted">
                 <span class="flex items-center gap-2">
                     <x-heroicon-s-check-badge class="w-4 h-4 text-amber-ink" />
-                    Verified Suppliers
+                    {{ $heroFoot1 }}
                 </span>
                 <span class="text-rule">│</span>
                 <span class="flex items-center gap-2">
                     <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
-                    TLS 1.3 · SSL
+                    {{ $heroFoot2 }}
                 </span>
                 <span class="text-rule">│</span>
                 <span class="flex items-center gap-2">
                     <x-heroicon-o-truck class="w-4 h-4 text-amber-ink" />
-                    27 EU Countries
+                    {{ $heroFoot3 }}
                 </span>
             </div>
             <a href="#how-it-works"

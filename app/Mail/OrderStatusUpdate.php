@@ -28,11 +28,11 @@ class OrderStatusUpdate extends Mailable
         return new Envelope(
             subject: trans('emails.order_status.subject', [
                 'order_number' => $this->order->order_number,
-                'status'       => $this->newStatus->value,
+                'status' => $this->newStatus->value,
             ], $this->locale),
             tags: ['order-status'],
             metadata: [
-                'order_id'      => $this->order->id,
+                'order_id' => $this->order->id,
                 'template_type' => 'order_status',
             ],
         );
@@ -44,10 +44,11 @@ class OrderStatusUpdate extends Mailable
             view: 'emails.order-status-update',
             text: 'emails.order-status-update-text',
             with: [
-                'order'     => $this->order,
+                'order' => $this->order,
                 'oldStatus' => $this->oldStatus,
                 'newStatus' => $this->newStatus,
-                'locale'    => $this->locale,
+                'locale' => $this->locale,
+                'supportMessage' => null,
             ],
         );
     }

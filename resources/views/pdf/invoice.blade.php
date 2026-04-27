@@ -110,7 +110,7 @@
         </div>
         <div class="invoice-info">
             <h2>INVOICE</h2>
-            <div><strong>Invoice #:</strong> {{ $order->order_number }}</div>
+            <div><strong>Invoice #:</strong> {{ $order->invoice_number ?? $order->order_number }}</div>
             <div><strong>Date:</strong> {{ $order->created_at->format('d/m/Y') }}</div>
             <div><strong>Due Date:</strong> {{ $order->created_at->addDays(30)->format('d/m/Y') }}</div>
         </div>
@@ -169,12 +169,18 @@
             <tbody>
                 @foreach($items as $item)
                 <tr>
-                    <td>{{ $item->product->name ?? $item->product_name }}</td>
-                    <td>{{ $item->oem_number }}</td>
-                    <td>{{ $item->condition ?? 'New' }}</td>
+                    <td>
+                        @if($item->product)
+                            {{ trans_field($item->product->name) }}
+                        @else
+                            {{ trim(($item->manufacturer_snapshot ?? '') . ' ' . ($item->oem_number_snapshot ?? '')) }}
+                        @endif
+                    </td>
+                    <td>{{ $item->oem_number_snapshot ?? '—' }}</td>
+                    <td>{{ $item->condition_snapshot ?? '—' }}</td>
                     <td class="text-right">{{ $item->quantity }}</td>
                     <td class="text-right">{{ format_price($item->unit_price) }}</td>
-                    <td class="text-right">{{ format_price($item->total) }}</td>
+                    <td class="text-right">{{ format_price($item->total_price) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -198,15 +204,15 @@
             <span>-{{ format_price($order->discount_amount) }}</span>
         </div>
         @endif
-        @if($order->tax_amount > 0)
+        @if(isset($order->vat_amount) && bccomp((string) $order->vat_amount, '0', 2) > 0)
         <div class="totals-row">
             <span>Tax (VAT):</span>
-            <span>{{ format_price($order->tax_amount) }}</span>
+            <span>{{ format_price($order->vat_amount) }}</span>
         </div>
         @endif
         <div class="totals-row total">
             <span>Total:</span>
-            <span>{{ format_price($order->total) }}</span>
+            <span>{{ format_price($order->grand_total) }}</span>
         </div>
     </div>
 

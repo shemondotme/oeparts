@@ -3,32 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\SectionLocation;
+use App\Enums\SectionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Section;
+use App\Models\SectionVersion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class SectionController extends Controller
 {
-    /**
-     * Display a paginated list of sections with filters.
-     */
     public function index(Request $request)
     {
         $query = Section::latest('sort_order');
 
-        // Filter by location
         if ($request->filled('location')) {
             $query->where('location', $request->location);
         }
-
-        // Filter by type
         if ($request->filled('type')) {
             $query->where('type', 'like', '%' . $request->type . '%');
         }
-
-        // Filter by active status
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
         if ($request->filled('is_active') && $request->is_active !== 'all') {
             $query->where('is_active', $request->is_active === 'active');
         }
@@ -36,108 +33,103 @@ class SectionController extends Controller
         $sections = $query->paginate(20)->withQueryString();
 
         return view('admin.cms.sections.index', [
-            'sections' => $sections,
+            'sections'  => $sections,
             'locations' => SectionLocation::cases(),
+            'statuses'  => SectionStatus::cases(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new section.
-     */
     public function create()
     {
         return view('admin.cms.sections.create', [
             'locations' => SectionLocation::cases(),
+            'statuses'  => SectionStatus::cases(),
         ]);
     }
 
-    /**
-     * Store a newly created section in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'type' => ['required', 'string', 'max:100'],
-            'location' => ['required', Rule::enum(SectionLocation::class)],
-            'title' => ['required', 'array'],
-            'title.*' => ['nullable', 'string', 'max:255'],
-            'content' => ['required', 'array'],
-            'is_active' => ['boolean'],
+            'type'       => ['required', 'string', 'max:100'],
+            'location'   => ['required', Rule::enum(SectionLocation::class)],
+            'title'      => ['required', 'array'],
+            'title.*'    => ['nullable', 'string', 'max:255'],
+            'content'    => ['required', 'array'],
+            'status'     => ['required', Rule::enum(SectionStatus::class)],
+            'publish_at' => ['nullable', 'date_format:Y-m-d H:i'],
+            'is_active'  => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
         ]);
 
-        // 'content' is handled by the 'array' cast on the Section model — no manual encoding needed
-        // 'title' is cast to 'array' via Section model cast — no manual encoding needed
+        if (($validated['status'] ?? '') === SectionStatus::Published->value) {
+            $validated['published_by'] = auth('admin')->id();
+        }
 
-        Section::create($validated);
+        $section = Section::create($validated);
+        $section->saveVersion('created', auth('admin')->id(), 'Initial creation');
 
         return redirect()->route('admin.cms.sections.index')
-            ->with('success', __('Section created successfully.'));
+            ->with('success', 'Section created successfully.');
     }
 
-    /**
-     * Display the specified section.
-     */
     public function show(Section $section)
     {
         return view('admin.cms.sections.show', [
-            'section' => $section,
+            'section'  => $section,
+            'versions' => $section->versions()->limit(20)->get(),
         ]);
     }
 
-    /**
-     * Show the form for editing the specified section.
-     */
     public function edit(Section $section)
     {
         return view('admin.cms.sections.edit', [
-            'section' => $section,
+            'section'   => $section,
             'locations' => SectionLocation::cases(),
+            'statuses'  => SectionStatus::cases(),
+            'versions'  => $section->versions()->limit(10)->get(),
         ]);
     }
 
-    /**
-     * Update the specified section in storage.
-     */
     public function update(Request $request, Section $section)
     {
         $validated = $request->validate([
-            'type' => ['required', 'string', 'max:100'],
-            'location' => ['required', Rule::enum(SectionLocation::class)],
-            'title' => ['required', 'array'],
-            'title.*' => ['nullable', 'string', 'max:255'],
-            'content' => ['required', 'array'],
-            'is_active' => ['boolean'],
+            'location'   => ['required', Rule::enum(SectionLocation::class)],
+            'title'      => ['required', 'array'],
+            'title.*'    => ['nullable', 'string', 'max:255'],
+            'content'    => ['required', 'array'],
+            'status'     => ['required', Rule::enum(SectionStatus::class)],
+            'publish_at' => ['nullable', 'date_format:Y-m-d H:i'],
+            'is_active'  => ['boolean'],
             'sort_order' => ['integer', 'min:0'],
         ]);
 
-        // 'content' is handled by the 'array' cast on the Section model — no manual encoding needed
-        // 'title' is cast to 'array' via Section model cast — no manual encoding needed
+        $validated['updated_by'] = auth('admin')->id();
+
+        if (($validated['status'] ?? '') === SectionStatus::Published->value && !$section->published_by) {
+            $validated['published_by'] = auth('admin')->id();
+        }
+
+        // Save version BEFORE updating
+        $section->saveVersion('updated', auth('admin')->id(), $request->input('change_summary'));
 
         $section->update($validated);
 
-        return redirect()->route('admin.cms.sections.index')
-            ->with('success', __('Section updated successfully.'));
+        return redirect()->route('admin.cms.sections.edit', $section)
+            ->with('success', 'Section updated successfully.');
     }
 
-    /**
-     * Remove the specified section from storage.
-     */
     public function destroy(Section $section)
     {
         $section->delete();
 
         return redirect()->route('admin.cms.sections.index')
-            ->with('success', __('Section deleted successfully.'));
+            ->with('success', 'Section deleted successfully.');
     }
 
-    /**
-     * Reorder sections via AJAX.
-     */
     public function reorder(Request $request)
     {
         $request->validate([
-            'order' => ['required', 'array'],
+            'order'   => ['required', 'array'],
             'order.*' => ['integer', 'exists:sections,id'],
         ]);
 
@@ -148,5 +140,49 @@ class SectionController extends Controller
         });
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Restore a section to a specific version.
+     */
+    public function restoreVersion(Section $section, SectionVersion $version)
+    {
+        abort_unless($version->section_id === $section->id, 403);
+
+        // Save current state before restoring
+        $section->saveVersion('updated', auth('admin')->id(), 'Auto-saved before restore');
+
+        $section->restoreFromVersion($version);
+        $section->saveVersion('restored', auth('admin')->id(), "Restored to version #{$version->id}");
+
+        return redirect()->route('admin.cms.sections.edit', $section)
+            ->with('success', "Section restored to version #{$version->id}.");
+    }
+
+    /**
+     * Live preview of section HTML (AJAX).
+     */
+    public function preview(Request $request, Section $section)
+    {
+        $content = $request->input('content', []);
+        $lang    = $request->input('lang', app()->getLocale());
+
+        try {
+            $html = view('admin.cms.sections.preview-fragment', [
+                'section' => $section,
+                'content' => $content[$lang] ?? [],
+                'lang'    => $lang,
+            ])->render();
+
+            return response()->json([
+                'success' => true,
+                'html'    => $html,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }

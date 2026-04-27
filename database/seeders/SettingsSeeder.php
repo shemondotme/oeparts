@@ -16,8 +16,8 @@ class SettingsSeeder extends Seeder
             Setting::updateOrCreate(
                 ['group' => $row['group'], 'key' => $row['key']],
                 [
-                    'value'        => $row['value'],
-                    'type'         => $row['type'],
+                    'value' => $row['value'],
+                    'type' => $row['type'],
                     'is_encrypted' => $row['encrypted'] ?? false,
                 ]
             );
@@ -35,7 +35,7 @@ class SettingsSeeder extends Seeder
         $langs = ['en', 'de', 'lt', 'fr', 'es'];
 
         // Helper: build a multilang JSON string with the same value for all locales
-        $ml = fn(string $text) => json_encode(array_fill_keys($langs, $text));
+        $ml = fn (string $text) => json_encode(array_fill_keys($langs, $text));
 
         return [
             // ── GENERAL ──────────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'announcement', 'key' => 'text',       'value' => $ml(''),       'type' => $j],
             ['group' => 'announcement', 'key' => 'color',      'value' => '#F59E0B',    'type' => $s],
             ['group' => 'announcement', 'key' => 'text_color', 'value' => '#1E293B',    'type' => $s],
-            ['group' => 'announcement', 'key' => 'dismissable','value' => '1',          'type' => $b],
+            ['group' => 'announcement', 'key' => 'dismissable', 'value' => '1',          'type' => $b],
             ['group' => 'announcement', 'key' => 'url',        'value' => '',            'type' => $s],
 
             // ── APPEARANCE ───────────────────────────────────────────────────────
@@ -81,7 +81,7 @@ class SettingsSeeder extends Seeder
 
             // ── TAX ──────────────────────────────────────────────────────────────
             ['group' => 'tax', 'key' => 'default_vat_rate',  'value' => '21',            'type' => $i],
-            ['group' => 'tax', 'key' => 'company_vat_number','value' => '',               'type' => $s],
+            ['group' => 'tax', 'key' => 'company_vat_number', 'value' => '',               'type' => $s],
             ['group' => 'tax', 'key' => 'price_display',     'value' => 'inc_vat',        'type' => $s],
             ['group' => 'tax', 'key' => 'vat_rates', 'value' => json_encode([
                 'AT' => 20, 'BE' => 21, 'BG' => 20, 'HR' => 25, 'CY' => 19,
@@ -101,7 +101,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'shipping', 'key' => 'nudge_text',              'value' => $ml('Add €{amount} more for free shipping!'), 'type' => $j],
             ['group' => 'shipping', 'key' => 'cutoff_time',             'value' => '15:00',                     'type' => $s],
             ['group' => 'shipping', 'key' => 'cutoff_timezone',         'value' => 'Europe/Vilnius',            'type' => $s],
-            ['group' => 'shipping', 'key' => 'business_days',           'value' => json_encode([1,2,3,4,5]),    'type' => $j],
+            ['group' => 'shipping', 'key' => 'business_days',           'value' => json_encode([1, 2, 3, 4, 5]),    'type' => $j],
             ['group' => 'shipping', 'key' => 'default_origin_country',  'value' => 'LT',                        'type' => $s],
             ['group' => 'shipping', 'key' => 'handling_fee',            'value' => '0.00',                      'type' => $s],
 
@@ -110,7 +110,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'orders', 'key' => 'customer_cancel_window_hours',  'value' => '2',   'type' => $i],
             ['group' => 'orders', 'key' => 'refund_window_days',            'value' => '14',  'type' => $i],
             ['group' => 'orders', 'key' => 'urgent_processing_enabled',     'value' => '0',   'type' => $b],
-            ['group' => 'orders', 'key' => 'urgent_processing_fee',         'value' => '5.00','type' => $s],
+            ['group' => 'orders', 'key' => 'urgent_processing_fee',         'value' => '5.00', 'type' => $s],
             ['group' => 'orders', 'key' => 'minimum_order_amount',          'value' => '0',   'type' => $s],
             ['group' => 'orders', 'key' => 'order_number_prefix',           'value' => 'ORD', 'type' => $s],
             ['group' => 'orders', 'key' => 'invoice_number_prefix',         'value' => 'INV', 'type' => $s],
@@ -144,25 +144,25 @@ class SettingsSeeder extends Seeder
 
             // ── EMAIL ────────────────────────────────────────────────────────────
             ['group' => 'email', 'key' => 'from_name',      'value' => 'OEMHub',          'type' => $s],
-            ['group' => 'email', 'key' => 'from_address',   'value' => 'no-reply@oemhub.eu','type' => $s],
+            ['group' => 'email', 'key' => 'from_address',   'value' => 'no-reply@oemhub.eu', 'type' => $s],
             ['group' => 'email', 'key' => 'reply_to',       'value' => 'info@oemhub.eu',  'type' => $s],
-            ['group' => 'email', 'key' => 'smtp_host',      'value' => 'smtp.mailtrap.io','type' => $s],
+            ['group' => 'email', 'key' => 'smtp_host',      'value' => 'smtp.mailtrap.io', 'type' => $s],
             ['group' => 'email', 'key' => 'smtp_port',      'value' => '587',             'type' => $i],
-            ['group' => 'email', 'key' => 'smtp_encryption','value' => 'tls',             'type' => $s],
+            ['group' => 'email', 'key' => 'smtp_encryption', 'value' => 'tls',             'type' => $s],
             ['group' => 'email', 'key' => 'smtp_username',  'value' => '',                'type' => $e, 'encrypted' => true],
             ['group' => 'email', 'key' => 'smtp_password',  'value' => '',                'type' => $e, 'encrypted' => true],
             ['group' => 'email', 'key' => 'admin_notify_new_order',  'value' => '1',      'type' => $b],
-            ['group' => 'email', 'key' => 'admin_notify_new_inquiry','value' => '1',      'type' => $b],
+            ['group' => 'email', 'key' => 'admin_notify_new_inquiry', 'value' => '1',      'type' => $b],
             ['group' => 'email', 'key' => 'admin_notify_email',      'value' => '',       'type' => $s],
 
             // ── SEARCH ───────────────────────────────────────────────────────────
             ['group' => 'search', 'key' => 'min_chars',            'value' => '3',  'type' => $i],
             ['group' => 'search', 'key' => 'autocomplete_count',   'value' => '5',  'type' => $i],
-            ['group' => 'search', 'key' => 'rate_limit_per_minute','value' => '30', 'type' => $i],
+            ['group' => 'search', 'key' => 'rate_limit_per_minute', 'value' => '30', 'type' => $i],
             ['group' => 'search', 'key' => 'log_searches',         'value' => '1',  'type' => $b],
             ['group' => 'search', 'key' => 'log_retention_days',   'value' => '90', 'type' => $i],
             ['group' => 'search', 'key' => 'cross_ref_enabled',    'value' => '1',  'type' => $b],
-            ['group' => 'search', 'key' => 'partial_match_enabled','value' => '1',  'type' => $b],
+            ['group' => 'search', 'key' => 'partial_match_enabled', 'value' => '1',  'type' => $b],
             ['group' => 'search', 'key' => 'partial_match_min_length', 'value' => '4', 'type' => $i],
 
             // ── CART ─────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ class SettingsSeeder extends Seeder
             // ── INTEGRATIONS ─────────────────────────────────────────────────────
             ['group' => 'integrations', 'key' => 'gtm_id',           'value' => '', 'type' => $s],
             ['group' => 'integrations', 'key' => 'gsc_verification', 'value' => '', 'type' => $s],
-            ['group' => 'integrations', 'key' => 'ga4_measurement_id','value' => '','type' => $s],
+            ['group' => 'integrations', 'key' => 'ga4_measurement_id', 'value' => '', 'type' => $s],
             ['group' => 'integrations', 'key' => 'fb_pixel_id',      'value' => '', 'type' => $s],
             ['group' => 'integrations', 'key' => 'crisp_website_id', 'value' => '', 'type' => $s],
 
@@ -213,36 +213,36 @@ class SettingsSeeder extends Seeder
             // ── SEO ──────────────────────────────────────────────────────────────
             // Homepage title: primary keyword first, brand last, ≤60 chars
             ['group' => 'seo', 'key' => 'home_title',
-             'value' => 'Buy Genuine OEM Auto Parts Online | OEMHub',
-             'type' => $s],
+                'value' => 'Buy Genuine OEM Auto Parts Online | OEMHub',
+                'type' => $s],
 
             // Homepage meta description: 145-155 chars, primary keyword + USPs + CTA
             ['group' => 'seo', 'key' => 'home_description',
-             'value' => 'Search 500,000+ genuine OEM auto parts by part number. Compare verified prices from EU sellers. Fast delivery to all 27 EU countries. B2B invoicing available.',
-             'type' => $s],
+                'value' => 'Search 500,000+ genuine OEM auto parts by part number. Compare verified prices from EU sellers. Fast delivery to all 27 EU countries. B2B invoicing available.',
+                'type' => $s],
 
             // OEM part page title: keyword intent "buy {oem}" + price anchor + brand
             ['group' => 'seo', 'key' => 'oem_title_template',
-             'value' => 'Buy OEM Part {oem} — From €{min} | Genuine {manufacturer} | OEMHub',
-             'type' => $s],
+                'value' => 'Buy OEM Part {oem} — From €{min} | Genuine {manufacturer} | OEMHub',
+                'type' => $s],
 
             // OEM part page description: specific, answers search intent, ≤155 chars
             ['group' => 'seo', 'key' => 'oem_description_template',
-             'value' => 'Genuine {manufacturer} OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured delivery in 1–5 days to all 27 EU countries. VAT invoice included.',
-             'type' => $s],
+                'value' => 'Genuine {manufacturer} OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured delivery in 1–5 days to all 27 EU countries. VAT invoice included.',
+                'type' => $s],
 
             // OEM search results list (/{lang}/parts/{oem}) — empty = use lang files
             ['group' => 'seo', 'key' => 'search_results_title_template',
-             'value' => '',
-             'type' => $s],
+                'value' => '',
+                'type' => $s],
             ['group' => 'seo', 'key' => 'search_results_meta_template',
-             'value' => '',
-             'type' => $s],
+                'value' => '',
+                'type' => $s],
 
             // Brand page title: brand + OEM keyword + platform
             ['group' => 'seo', 'key' => 'brand_title_template',
-             'value' => 'Genuine {brand} OEM Parts — Buy Online | OEMHub',
-             'type' => $s],
+                'value' => 'Genuine {brand} OEM Parts — Buy Online | OEMHub',
+                'type' => $s],
 
             ['group' => 'seo', 'key' => 'sitemap_search_log_days',  'value' => '90',           'type' => $i],
             ['group' => 'seo', 'key' => 'google_ping_enabled',      'value' => '1',            'type' => $b],
@@ -254,8 +254,47 @@ class SettingsSeeder extends Seeder
             // Announcement bar — high-intent visitors get a conversion nudge
             // (set enabled=1 in admin when ready to activate)
             ['group' => 'announcement', 'key' => 'cta_text',
-             'value' => $ml('Free tracked EU shipping on orders over €150. 500,000+ genuine OEM parts in stock.'),
-             'type' => $j],
+                'value' => $ml('Free tracked EU shipping on orders over €150. 500,000+ genuine OEM parts in stock.'),
+                'type' => $j],
+
+            // ── PRELOADER (full-page splash) ───────────────────────────────────
+            // enabled default off; path_mode include + locale slugs = homepage only; use * for all routes in a language (e.g. en*).
+            ['group' => 'preloader', 'key' => 'enabled',         'value' => '0',   'type' => $b],
+            ['group' => 'preloader', 'key' => 'path_mode',       'value' => 'include', 'type' => $s],
+            ['group' => 'preloader', 'key' => 'path_patterns',   'value' => json_encode(['en', 'de', 'lt', 'fr', 'es']), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'min_display_ms',  'value' => '450',  'type' => $i],
+            ['group' => 'preloader', 'key' => 'max_display_ms',  'value' => '6000', 'type' => $i],
+            ['group' => 'preloader', 'key' => 'headline',        'value' => $ml('OEM·HUB.'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'spec_line',       'value' => $ml('§ SYS · INIT / EU'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'subline',         'value' => $ml('Genuine Parts Index'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'status_line',     'value' => $ml('Calibrating Index'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'foot_left',       'value' => $ml('OEMHUB · EU'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'foot_right',      'value' => $ml('LIVE CATALOGUE'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'aria_label',      'value' => $ml('Loading'), 'type' => $j],
+
+            // ── UI (headlines / chrome editable without code — Admin → ui) ───────
+            ['group' => 'ui', 'key' => 'hero_index_badge',       'value' => $ml('§ INDEX'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_live_status',     'value' => $ml('CATALOGUE LIVE'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_eyebrow',           'value' => $ml('Genuine OEM Parts Index · 1,000,000+'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_subtext_default',  'value' => $ml('Enter any OEM number. We return matches, cross-references, and verified suppliers across the European Union — or open a concierge inquiry if the part is rare.'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_title',       'value' => $ml('Specification'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_source_label',     'value' => $ml('Source'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_source_badge',     'value' => $ml('VERIFIED · EU'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_search_strip',      'value' => $ml('§ ENTER OEM NUMBER'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_search_meta_hint',  'value' => $ml('min :min chars · uppercase alphanumeric'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_indexed_label',     'value' => $ml('Indexed:'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_footer_pill_1',     'value' => $ml('Verified Suppliers'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_footer_pill_2',     'value' => $ml('TLS 1.3 · SSL'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_footer_pill_3',     'value' => $ml('27 EU Countries'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r1_label',     'value' => $ml('Catalogue'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r2_label',     'value' => $ml('Manufacturers'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r2_value',     'value' => $ml('214'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r3_label',     'value' => $ml('Cross-refs'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r3_value',     'value' => $ml('3.2M'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r4_label',     'value' => $ml('Avg. despatch'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r4_value',     'value' => $ml('24h'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r5_label',     'value' => $ml('Languages'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r5_value',     'value' => $ml('EN·DE·LT·FR·ES'), 'type' => $j],
 
             // ── MAINTENANCE ──────────────────────────────────────────────────────
             ['group' => 'maintenance', 'key' => 'enabled',             'value' => '0',                        'type' => $b],

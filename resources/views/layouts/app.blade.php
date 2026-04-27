@@ -4,6 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+@php
+    $preloaderService = app(\App\Services\PreloaderService::class);
+    $showPreloader = $preloaderService->shouldRender();
+    $preloaderTiming = $preloaderService->timingConfig();
+    $plMin = $preloaderTiming['min_ms'];
+    $plMax = $preloaderTiming['max_ms'];
+@endphp
 
     {{-- Title --}}
     <title>@yield('title', settings('general.site_name', 'OEMHub'))</title>
@@ -76,11 +83,9 @@
     {{-- Per-page extra styles --}}
     @stack('styles')
 
+    @if($showPreloader)
     {{-- ─────────────────────────────────────────────────────────────
-         INDUSTRIAL BLUEPRINT · PRELOADER
-         Inlined so it paints before Vite CSS (no FOUC). Hidden via JS
-         on window `load`; hard safety timeout at 6 s. Honours
-         prefers-reduced-motion. Falls back to hidden with no JS.
+         INDUSTRIAL BLUEPRINT · PRELOADER (Admin → Settings → preloader)
     ───────────────────────────────────────────────────────────────── --}}
     <style>
         html.bp-preloading, html.bp-preloading body { overflow: hidden; }
@@ -284,39 +289,39 @@
     </style>
     <noscript><style>#bp-preloader{display:none!important;}html.bp-preloading,html.bp-preloading body{overflow:auto!important;}</style></noscript>
     <script>document.documentElement.classList.add('bp-preloading');</script>
+    @endif
 </head>
 <body class="font-sans text-body bg-bg-page antialiased">
 
-    {{-- ─── Industrial Blueprint · Preloader ───────────────────────── --}}
-    <div id="bp-preloader" role="status" aria-live="polite" aria-label="Loading OEMHub">
+    @if($showPreloader)
+    {{-- ─── Industrial Blueprint · Preloader (copy from settings) ─── --}}
+    <div id="bp-preloader" role="status" aria-live="polite" aria-label="{{ e(settings_trans('preloader.aria_label', 'Loading')) }}">
         <span class="bp-pre-corner bp-pre-corner--tl" aria-hidden="true"></span>
         <span class="bp-pre-corner bp-pre-corner--tr" aria-hidden="true"></span>
         <span class="bp-pre-corner bp-pre-corner--bl" aria-hidden="true"></span>
         <span class="bp-pre-corner bp-pre-corner--br" aria-hidden="true"></span>
 
         <div class="bp-pre-inner">
-            <div class="bp-pre-spec"><i></i><span>§ SYS · INIT · 2026 / EU</span></div>
+            <div class="bp-pre-spec"><i></i><span>{{ e(settings_trans('preloader.spec_line', '§ SYS · INIT / EU')) }}</span></div>
 
-            <div class="bp-pre-mark">
-                <b>OEM</b><span class="dot">·</span><b>HUB</b><span class="end">.</span>
-            </div>
+            <div class="bp-pre-mark">{{ e(settings_trans('preloader.headline', 'OEM·HUB.')) }}</div>
 
-            <div class="bp-pre-sub">Genuine Parts Index</div>
+            <div class="bp-pre-sub">{{ e(settings_trans('preloader.subline', 'Genuine Parts Index')) }}</div>
 
             <div class="bp-pre-bar" aria-hidden="true">
                 <span class="bp-pre-bar-fill" id="bp-pre-fill"></span>
             </div>
 
             <div class="bp-pre-status">
-                <span>Calibrating Index</span>
+                <span>{{ e(settings_trans('preloader.status_line', 'Calibrating Index')) }}</span>
                 <span class="bp-pre-dots" aria-hidden="true"><i></i><i></i><i></i></span>
                 <span class="bp-pre-pct"><span id="bp-pre-pct">00</span><span class="sym">%</span></span>
             </div>
         </div>
 
         <div class="bp-pre-foot">
-            <span>OEMHUB · EU</span>
-            <span>REV 2026.04</span>
+            <span>{{ e(settings_trans('preloader.foot_left', 'OEMHUB · EU')) }}</span>
+            <span>{{ e(settings_trans('preloader.foot_right', 'LIVE CATALOGUE')) }}</span>
         </div>
     </div>
     <script>
@@ -328,8 +333,8 @@
             if (!el) return;
 
             var start       = Date.now();
-            var minDuration = 450;   // min time the splash stays visible
-            var maxDuration = 6000;  // hard safety — never hang the UI
+            var minDuration = {{ (int) $plMin }};
+            var maxDuration = {{ (int) $plMax }};
             var progress    = 0;
             var ready       = false;
             var finished    = false;
@@ -400,6 +405,7 @@
             });
         })();
     </script>
+    @endif
 
     {{-- Skip navigation — keyboard / screen-reader accessibility --}}
     <a href="#main-content"

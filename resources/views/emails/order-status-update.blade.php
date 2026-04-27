@@ -39,7 +39,11 @@
 
                                         {{-- Dynamic Status Chip based on status string --}}
                                         @php
-                                            $status = strtolower($order->status ?? 'pending');
+                                            $status = strtolower(
+                                                $order->status instanceof \BackedEnum
+                                                    ? $order->status->value
+                                                    : (string) ($order->status ?? 'pending')
+                                            );
                                             $chipBg = '#F1F5F9'; // default gray
                                             $chipText = '#64748B';
 
@@ -55,7 +59,7 @@
                                         @endphp
 
                                         <span style="display: inline-block; padding: 6px 12px; background-color: {{ $chipBg }}; color: {{ $chipText }}; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 2px;">
-                                            {{ strtoupper($order->status ?? 'Unknown') }}
+                                            {{ strtoupper($order->status instanceof \BackedEnum ? $order->status->value : (string) ($order->status ?? 'Unknown')) }}
                                         </span>
                                     </td>
                                 </tr>
@@ -77,14 +81,14 @@
         </tr>
 
         {{-- ═══ CONTEXT / MESSAGE ═══ --}}
-        @if(isset($message) && !empty($message))
+        @if(filled($supportMessage ?? null))
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
                     § NOTE FROM SUPPORT
                 </p>
                 <div style="background-color: #FFFFFF; border-left: 4px solid #F59E0B; padding: 16px; font-size: 14px; line-height: 22px; color: #0A1228;">
-                    {!! nl2br(e($message)) !!}
+                    {!! nl2br(e($supportMessage)) !!}
                 </div>
             </td>
         </tr>

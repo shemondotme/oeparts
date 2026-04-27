@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('cart.title'))
+@section('title', ui_copy('cart_title', 'cart.title'))
 
 @section('content')
 <div x-data="cartData()" class="relative min-h-screen bg-ivory text-ink pt-10 pb-28">
@@ -50,7 +50,7 @@
             <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
                 <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber-ink transition-colors">Home</a>
                 <span class="text-rule-strong">/</span>
-                <span class="text-ink">{{ __('cart.title') }}</span>
+                <span class="text-ink">{{ ui_copy('cart_title', 'cart.title') }}</span>
             </nav>
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
                 DOC · ORDER-WORKSHEET · CART
@@ -66,7 +66,7 @@
                 </div>
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl">
-                    {{ __('cart.title') }}<span class="text-amber">.</span>
+                    {{ ui_copy('cart_title', 'cart.title') }}<span class="text-amber">.</span>
                 </h1>
                 <template x-if="summary.item_count > 0">
                     <p class="mt-6 font-mono text-sm tabular-nums text-body">
@@ -83,15 +83,15 @@
                     <div class="grid grid-cols-3 text-center">
                         <div class="px-3 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-amber mb-1">Step 01</p>
-                            <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ __('cart.step_cart') }}</p>
+                            <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ ui_copy('cart_step_cart', 'cart.step_cart') }}</p>
                         </div>
                         <div class="px-3 py-3 border-l border-ink bg-paper text-ink-muted">
                             <p class="font-mono text-[9px] tracking-[0.2em] uppercase mb-1">Step 02</p>
-                            <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ __('cart.step_shipping') }}</p>
+                            <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ ui_copy('cart_step_shipping', 'cart.step_shipping') }}</p>
                         </div>
                         <div class="px-3 py-3 border-l border-ink bg-paper text-ink-muted">
                             <p class="font-mono text-[9px] tracking-[0.2em] uppercase mb-1">Step 03</p>
-                            <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ __('cart.step_payment') }}</p>
+                            <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ ui_copy('cart_step_payment', 'cart.step_payment') }}</p>
                         </div>
                     </div>
                 </div>
@@ -109,12 +109,12 @@
                 <x-heroicon-o-shopping-bag class="w-7 h-7 text-ink" />
             </div>
             <h2 class="font-display text-4xl md:text-5xl font-extrabold text-ink tracking-tight mb-4 text-balance">
-                {{ __('cart.empty_title') }}<span class="text-amber">.</span>
+                {{ ui_copy('cart_empty_title', 'cart.empty_title') }}<span class="text-amber">.</span>
             </h2>
-            <p class="text-body max-w-lg mx-auto mb-10">{{ __('cart.empty_subtitle') }}</p>
+            <p class="text-body max-w-lg mx-auto mb-10">{{ ui_copy('cart_empty_subtitle', 'cart.empty_subtitle') }}</p>
             <a href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}" class="bp-btn-primary">
                 <x-heroicon-s-magnifying-glass class="w-5 h-5" />
-                {{ __('cart.empty_browse_btn') }}
+                {{ ui_copy('cart_empty_browse_btn', 'cart.empty_browse_btn') }}
             </a>
 
             <div class="mt-14 pt-8 border-t border-rule">
@@ -155,7 +155,7 @@
                     <button @click="confirmOpen = true"
                             class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink-muted hover:text-red-600 transition-colors">
                         <x-heroicon-s-trash class="w-3 h-3" />
-                        {{ __('cart.clear_cart') }}
+                        {{ ui_copy('cart_clear_cart', 'cart.clear_cart') }}
                     </button>
                 </div>
 

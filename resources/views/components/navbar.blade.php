@@ -8,10 +8,10 @@
         || (request()->path() === $lang . '/' || request()->path() === $lang);
 
     $navLinks = [
-        ['href' => route('frontend.search.console', ['lang' => $lang]), 'label' => 'Parts Search', 'num' => '01'],
-        ['href' => url("/{$lang}/brands"),  'label' => 'Brands',       'num' => '02'],
-        ['href' => url("/{$lang}/blog/"),   'label' => 'Journal',      'num' => '03'],
-        ['href' => url("/{$lang}/about"),   'label' => 'About',        'num' => '04'],
+        ['href' => route('frontend.search.console', ['lang' => $lang]), 'label' => ui_copy('nav_label_parts', 'navbar.label_parts'), 'num' => '01'],
+        ['href' => url("/{$lang}/brands"),  'label' => ui_copy('nav_label_brands', 'navbar.label_brands'), 'num' => '02'],
+        ['href' => url("/{$lang}/blog/"),   'label' => ui_copy('nav_label_journal', 'navbar.label_journal'), 'num' => '03'],
+        ['href' => url("/{$lang}/about"),   'label' => ui_copy('nav_label_about', 'navbar.label_about'), 'num' => '04'],
     ];
 @endphp
 
@@ -30,14 +30,14 @@
     <div class="border-b border-rule/60 bg-ivory">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center justify-between h-8 text-[10px] font-mono uppercase tracking-[0.24em] text-ink-muted">
             <div class="flex items-center gap-4">
-                <span class="hidden sm:inline">DOC · OEMHUB/EU</span>
+                <span class="hidden sm:inline">{{ ui_copy('nav_strip_doc', 'navbar.strip_doc') }}</span>
                 <span class="hidden lg:inline text-rule-strong">│</span>
-                <span class="hidden lg:inline">GENUINE OEM · 5 LANGUAGES · 27 EU COUNTRIES</span>
+                <span class="hidden lg:inline">{{ ui_copy('nav_strip_genuine', 'navbar.strip_genuine') }}</span>
             </div>
             <div class="flex items-center gap-4">
                 <span class="hidden sm:inline-flex items-center gap-1.5">
                     <span class="w-1.5 h-1.5 bg-emerald-600"></span>
-                    SYSTEM ONLINE
+                    {{ ui_copy('nav_strip_status', 'navbar.strip_status') }}
                 </span>
                 <span class="uppercase">{{ strtoupper($lang) }} · EUR</span>
             </div>
@@ -72,7 +72,7 @@
                         OEM<span class="text-amber-ink">·</span>HUB
                     </p>
                     <p class="mt-1.5 font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">
-                        GENUINE&nbsp;PARTS&nbsp;INDEX
+                        {!! str_replace(' ', '&#160;', e(ui_copy('nav_logo_subline', 'navbar.logo_subline'))) !!}
                     </p>
                 </div>
             </a>

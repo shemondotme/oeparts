@@ -10,6 +10,8 @@ return [
     'breadcrumb_brands' => 'Prekės ženklai',
 
     'mini_search_placeholder' => 'Ieškoti kito OEM numerio…',
+    'mini_search_label' => 'Patikslinti paiešką',
+    'mini_search_aria' => 'Paieška pagal OEM dalies numerį',
     'mini_search_button' => 'Ieškoti',
 
     'heading_results_for' => 'Rezultatai pagal',
