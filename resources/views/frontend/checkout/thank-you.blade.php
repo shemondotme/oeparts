@@ -2,6 +2,8 @@
 
 @section('title', 'Order Confirmed - ' . settings('general.site_name', 'OEMHub'))
 
+@section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
+
 @section('content')
 @php
     $order = session('checkout.order');

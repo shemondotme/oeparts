@@ -2,6 +2,8 @@
 
 @section('title', __('My Account') . ' — ' . settings('general.site_name', 'OEMHub'))
 
+@section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
+
 @php
     $lang = app()->getLocale();
     $totalOrders    = $user->orders()->count();
@@ -307,8 +309,4 @@
                         </p>
                     </div>
                 </a>
-            @endforeach
-        </div>
-    </section>
-</x-account.shell>
-@endsection
+ 

@@ -2,6 +2,8 @@
 
 @section('title', __('Secure Checkout') . ' — ' . settings('general.site_name', 'OEMHub'))
 
+@section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
+
 @section('content')
 @php
     $steps = [
@@ -335,9 +337,4 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     window.dispatchEvent(new CustomEvent('toast', {
-        detail: { message: @json(session('warning')), type: 'warning', title: 'Warning', duration: 5000 }
-    }));
-});
-</script>
-@endif
-@endsection
+        detail: { message: @json(session('warning')), type: 'war

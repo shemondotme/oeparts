@@ -2,6 +2,8 @@
 
 @section('title', __('My Orders') . ' — ' . settings('general.site_name', 'OEMHub'))
 
+@section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
+
 @php $lang = app()->getLocale(); @endphp
 
 @section('content')

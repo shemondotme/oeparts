@@ -169,7 +169,7 @@
                                           onsubmit="return confirm('Delete this car model?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="bp-btn-ghost text-red-600 hover:text-red-700 gap-1 text-[10px]">
+                                        <button type="submit" class="bp-btn-ghost text-red-600 hover:text-red-700 gap-1 text-[10px]" aria-label="Delete">
                                             <x-heroicon-o-trash class="w-3.5 h-3.5" />
                                         </button>
                                     </form>
