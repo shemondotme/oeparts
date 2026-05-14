@@ -30,4 +30,12 @@ enum ProductCondition: string
             self::Used => '#1D4ED8',
         };
     }
+
+    public function color(): string
+    {
+        return match($this) {
+            self::New  => 'bg-emerald-100 text-emerald-800',
+            self::Used => 'bg-blue-100 text-blue-800',
+        };
+    }
 }

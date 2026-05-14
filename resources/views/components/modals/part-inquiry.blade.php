@@ -158,7 +158,7 @@
 
     {{-- Panel — flat document with offset amber shadow --}}
     <div class="relative w-full max-w-xl bg-paper border border-ink flex flex-col max-h-[92vh] sm:max-h-[90vh]
-                shadow-[8px_8px_0_0_theme(colors.amber.DEFAULT)] motion-reduce:transition-none"
+                shadow-[8px_8px_0_0_#F59E0B] motion-reduce:transition-none"
          role="dialog"
          aria-modal="true"
          aria-labelledby="part-inquiry-modal-title"

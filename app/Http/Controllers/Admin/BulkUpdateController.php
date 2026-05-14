@@ -131,6 +131,7 @@ class BulkUpdateController extends Controller
                 'affected_rows_count' => $updatedCount,
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
+                'created_at' => now(),
             ]);
 
             DB::commit();

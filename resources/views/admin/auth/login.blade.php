@@ -21,50 +21,6 @@
             border: 1px solid #D8CFB6; /* Rule */
             box-shadow: 4px 4px 0 rgba(20,22,29,1); /* Blueprint Stamp */
         }
-        .bp-input {
-            width: 100%;
-            background-color: transparent;
-            border: 1px solid #D8CFB6;
-            padding: 0.75rem 1rem;
-            color: #0A1228;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.875rem;
-            transition: all 0.15s ease-in-out;
-        }
-        .bp-input:focus {
-            outline: none;
-            border-color: #0A1228;
-            background-color: #FFFFFF;
-        }
-        .bp-btn-primary {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 0.75rem 1.5rem;
-            background-color: #0A1228; /* Ink */
-            color: #F7F3E7; /* Ivory */
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.875rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            border: 1px solid #0A1228;
-            transition: all 0.15s ease-in-out;
-            cursor: pointer;
-        }
-        .bp-btn-primary:hover {
-            background-color: #F59E0B; /* Amber */
-            color: #0A1228; /* Ink */
-            border-color: #F59E0B;
-        }
-        .bp-spec {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: #4E5A74; /* Muted */
-        }
         .bg-grid-pattern {
             background-color: #F7F3E7;
             background-image:
@@ -150,7 +106,7 @@
                     <label for="email" class="block bp-spec mb-2">§ Email Address</label>
                     <input id="email" name="email" type="email" autocomplete="email" required
                            value="{{ old('email') }}"
-                           class="bp-input"
+                           class="bp-input bp-input-mono"
                            placeholder="admin@oemhub.eu">
                 </div>
 
@@ -181,7 +137,7 @@
 
                 {{-- Submit Button --}}
                 <div>
-                    <button type="submit" class="bp-btn-primary">
+                    <button type="submit" class="bp-btn-primary w-full">
                         Authenticate →
                     </button>
                 </div>

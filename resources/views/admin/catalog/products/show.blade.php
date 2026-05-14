@@ -1,310 +1,311 @@
 @extends('layouts.admin')
 
-@section('title', 'Product Details')
+@section('title', 'Product — ' . $product->oem_number)
+@section('page_title', 'Product Details')
+
+@section('header_actions')
+    <a href="{{ route('admin.catalog.products.edit', $product) }}" class="bp-btn-outline gap-1">
+        <x-heroicon-o-pencil-square class="w-4 h-4" />
+        Edit
+    </a>
+    <a href="{{ route('admin.catalog.products.index') }}" class="bp-btn-ghost gap-1">
+        <x-heroicon-o-arrow-left class="w-4 h-4" />
+        Back
+    </a>
+@endsection
 
 @section('content')
-<div class="px-6 py-8">
-    {{-- Header --}}
-    <div class="mb-8">
-        <div class="flex justify-between items-start">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Product Details</h1>
-                <p class="text-gray-600 mt-1">View complete information for {{ $product->oem_number }}.</p>
-            </div>
-            <div class="flex space-x-3">
-                <a href="{{ route('admin.catalog.products.edit', $product) }}" 
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber">
-                    <x-heroicon-o-pencil class="w-4 h-4 mr-2" />
-                    Edit
-                </a>
-                <a href="{{ route('admin.catalog.products.index') }}" 
-                   class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber">
-                    <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
-                    Back to Products
-                </a>
-            </div>
+<div class="space-y-6">
+
+    {{-- Header strip --}}
+    <div class="bp-card p-5 flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <p class="bp-spec text-ink-muted">§ Product</p>
+            <h2 class="font-mono text-2xl font-bold text-amber-ink tracking-wider">
+                {{ $product->oem_number }}
+            </h2>
+            @if($product->name && ($product->name['en'] ?? null))
+                <p class="text-sm text-ink mt-0.5">{{ $product->name['en'] }}</p>
+            @endif
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+            @php
+                $conditionClasses = [
+                    'new'            => 'border-green-600/30 bg-green-50 text-green-700',
+                    'used_grade_a'   => 'border-blue-600/30 bg-blue-50 text-blue-700',
+                    'used_grade_b'   => 'border-amber/30 bg-amber-50 text-amber-700',
+                    'used_grade_c'   => 'border-rule bg-ivory-alt text-ink-muted',
+                    'remanufactured' => 'border-purple-600/30 bg-purple-50 text-purple-700',
+                    'aftermarket'    => 'border-red-600/30 bg-red-50 text-red-700',
+                    'new_old_stock'  => 'border-teal-600/30 bg-teal-50 text-teal-700',
+                ];
+                $condClass = $conditionClasses[$product->condition?->value ?? ''] ?? 'border-rule bg-ivory-alt text-ink-muted';
+            @endphp
+            <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider {{ $condClass }}">
+                {{ $product->condition?->label() ?? '—' }}
+            </span>
+            @if($product->is_active)
+                <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-green-600/30 bg-green-50 text-green-700">Active</span>
+            @else
+                <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-rule bg-ivory-alt text-ink-muted">Inactive</span>
+            @endif
+            @if($product->is_in_stock)
+                <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-emerald-600/30 bg-emerald-50 text-emerald-700">In Stock</span>
+            @else
+                <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-red-600/30 bg-red-50 text-red-700">Out of Stock</span>
+            @endif
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {{-- Left Column: Product Details --}}
-        <div class="lg:col-span-2 space-y-8">
-            {{-- Basic Information Card --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Basic Information</h2>
-                </div>
-                <div class="p-6">
-                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">OEM Number</dt>
-                            <dd class="mt-1 text-sm text-gray-900 font-mono">{{ $product->oem_number }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Normalized OEM</dt>
-                            <dd class="mt-1 text-sm text-gray-900 font-mono">{{ $product->normalized_oem }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Manufacturer</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                <a href="{{ route('admin.catalog.manufacturers.show', $product->manufacturer) }}"
-                                   class="text-amber hover:text-amber/80">
-                                    {{ trans_field($product->manufacturer->name) }}
-                                </a>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Condition</dt>
-                            <dd class="mt-1">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $product->condition->color() }}">
-                                    {{ $product->condition->label() }}
-                                </span>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Price</dt>
-                            <dd class="mt-1 text-sm text-gray-900 font-medium">{{ format_price($product->price) }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Delivery Time</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $product->delivery_time ?? 'Not specified' }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
 
-            {{-- Multilingual Content Card --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Multilingual Content</h2>
-                </div>
-                <div class="p-6">
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 mb-2">Name</h3>
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <pre class="text-sm text-gray-800 whitespace-pre-wrap">{{ json_encode($product->name, JSON_PRETTY_PRINT) }}</pre>
-                            </div>
-                        </div>
-                        @if($product->description)
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 mb-2">Description</h3>
-                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                                <pre class="text-sm text-gray-800 whitespace-pre-wrap">{{ json_encode($product->description, JSON_PRETTY_PRINT) }}</pre>
-                            </div>
-                        </div>
-                        @endif
+        {{-- Left: Details --}}
+        <div class="lg:col-span-2 space-y-6">
+
+            {{-- Basic Information --}}
+            <section class="bp-card overflow-hidden">
+                <header class="bp-card-header">
+                    <p class="bp-spec text-ink-muted">§ Basic · Information</p>
+                </header>
+                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ OEM Number</p>
+                        <p class="font-mono text-sm font-bold text-amber-ink tracking-wider">{{ $product->oem_number }}</p>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Normalized OEM</p>
+                        <p class="font-mono text-sm text-ink">{{ $product->normalized_oem }}</p>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Manufacturer</p>
+                        <a href="{{ route('admin.catalog.manufacturers.show', $product->manufacturer) }}"
+                           class="text-sm text-amber-ink hover:underline font-bold">
+                            {{ trans_field($product->manufacturer->name) }}
+                        </a>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Condition</p>
+                        <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider {{ $condClass }}">
+                            {{ $product->condition?->label() ?? '—' }}
+                        </span>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Price (ex. VAT)</p>
+                        <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_money($product->price) }}</p>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Delivery Time</p>
+                        <p class="text-sm text-ink">{{ $product->delivery_time ?? '—' }}</p>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Min. Order Qty</p>
+                        <p class="font-mono text-sm tabular-nums text-ink">{{ $product->moq }}</p>
+                    </div>
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Created</p>
+                        <p class="font-mono text-xs tabular-nums text-ink">{{ $product->created_at->format('Y-m-d H:i') }}</p>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            {{-- Inventory & Status Card --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Inventory & Status</h2>
-                </div>
-                <div class="p-6">
-                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Minimum Order Quantity</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $product->moq }}</dd>
-                        </div>
-                    </dl>
-
-                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="flex items-center">
-                            <div class="h-3 w-3 rounded-full {{ $product->is_active ? 'bg-green-500' : 'bg-red-500' }} mr-2"></div>
-                            <span class="text-sm {{ $product->is_active ? 'text-green-700' : 'text-red-700' }}">
-                                {{ $product->is_active ? 'Active' : 'Inactive' }}
-                            </span>
-                        </div>
-                        <div class="flex items-center">
-                            <div class="h-3 w-3 rounded-full {{ $product->is_in_stock ? 'bg-green-500' : 'bg-red-500' }} mr-2"></div>
-                            <span class="text-sm {{ $product->is_in_stock ? 'text-green-700' : 'text-red-700' }}">
-                                {{ $product->is_in_stock ? 'In Stock' : 'Out of Stock' }}
-                            </span>
+            {{-- Multilingual Content --}}
+            <section class="bp-card overflow-hidden">
+                <header class="bp-card-header">
+                    <p class="bp-spec text-ink-muted">§ Multilingual · Content</p>
+                </header>
+                <div class="p-5 space-y-4">
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-2">§ Name (JSON)</p>
+                        <div class="bg-ivory-alt border border-rule p-3">
+                            <pre class="font-mono text-xs text-ink whitespace-pre-wrap">{{ json_encode($product->name, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                         </div>
                     </div>
+                    @if($product->description)
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-2">§ Description (JSON)</p>
+                        <div class="bg-ivory-alt border border-rule p-3">
+                            <pre class="font-mono text-xs text-ink whitespace-pre-wrap">{{ json_encode($product->description, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
+                        </div>
+                    </div>
+                    @endif
                 </div>
-            </div>
+            </section>
 
-            {{-- Compatible Car Models Card --}}
+            {{-- Compatible Car Models --}}
             @if($product->carModels->count() > 0)
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Compatible Car Models</h2>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        @foreach($product->carModels as $carModel)
-                        <div class="flex items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">{{ trans_field($carModel->manufacturer->name) }} {{ $carModel->name }}</p>
-                                @if($carModel->year_from)
-                                <p class="text-xs text-gray-500">{{ $carModel->year_from }}–{{ $carModel->year_to ?? 'present' }}</p>
+            <section class="bp-card overflow-hidden">
+                <header class="bp-card-header flex items-center justify-between gap-4">
+                    <p class="bp-spec text-ink-muted">§ Compatible · Car Models</p>
+                    <span class="font-mono text-xs text-ink-muted">{{ $product->carModels->count() }} models</span>
+                </header>
+                <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    @foreach($product->carModels as $carModel)
+                    <div class="flex items-center justify-between p-3 bg-ivory-alt border border-rule">
+                        <div>
+                            <p class="text-sm font-bold text-ink">{{ trans_field($carModel->manufacturer->name) }} {{ $carModel->name }}</p>
+                            @if($carModel->year_from)
+                                <p class="font-mono text-xs text-ink-muted tabular-nums mt-0.5">{{ $carModel->year_from }}–{{ $carModel->year_to ?? 'present' }}</p>
                             @endif
-                            </div>
-                            <a href="{{ route('admin.catalog.car-models.show', $carModel) }}"
-                               class="ml-2 text-amber hover:text-amber/80">
-                                <x-heroicon-o-arrow-top-right-on-square class="w-4 h-4" />
-                            </a>
                         </div>
-                        @endforeach
+                        <a href="{{ route('admin.catalog.car-models.show', $carModel) }}"
+                           class="text-amber-ink hover:text-ink ml-2 flex-shrink-0">
+                            <x-heroicon-o-arrow-top-right-on-square class="w-4 h-4" />
+                        </a>
                     </div>
+                    @endforeach
                 </div>
-            </div>
+            </section>
             @endif
 
             {{-- Inventory History --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Inventory History</h2>
-                </div>
+            <section class="bp-card overflow-hidden">
+                <header class="bp-card-header">
+                    <p class="bp-spec text-ink-muted">§ Inventory · History</p>
+                </header>
                 @if($product->inventoryLogs->count() > 0)
                     <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                        <table class="bp-table">
+                            <thead>
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Change Type</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Old Status</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New Status</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Note</th>
+                                    <th>Date</th>
+                                    <th>Change Type</th>
+                                    <th>Old Status</th>
+                                    <th>New Status</th>
+                                    <th>Admin</th>
+                                    <th>Note</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody>
                                 @foreach($product->inventoryLogs as $log)
                                 @php
-                                    $typeColors = [
-                                        'csv_import'  => 'bg-blue-100 text-blue-700',
-                                        'manual'      => 'bg-amber-100 text-amber-700',
-                                        'bulk_update' => 'bg-purple-100 text-purple-700',
-                                        'system'      => 'bg-gray-100 text-gray-600',
-                                    ];
-                                    $typeVal   = $log->change_type->value ?? 'system';
-                                    $typeColor = $typeColors[$typeVal] ?? 'bg-gray-100 text-gray-600';
+                                    $typeVal = $log->change_type->value ?? 'system';
+                                    $typeBadge = match($typeVal) {
+                                        'csv_import'  => 'border-blue-600/30 bg-blue-50 text-blue-700',
+                                        'manual'      => 'border-amber/30 bg-amber-50 text-amber-700',
+                                        'bulk_update' => 'border-purple-600/30 bg-purple-50 text-purple-700',
+                                        default       => 'border-rule bg-ivory-alt text-ink-muted',
+                                    };
                                     $typeLabel = ucwords(str_replace('_', ' ', $typeVal));
                                 @endphp
                                 <tr>
-                                    <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-500">
-                                        {{ \Carbon\Carbon::parse($log->created_at)->format('d M Y, H:i') }}
+                                    <td>
+                                        <p class="font-mono text-xs tabular-nums text-ink whitespace-nowrap">
+                                            {{ \Carbon\Carbon::parse($log->created_at)->format('Y-m-d H:i') }}
+                                        </p>
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $typeColor }}">
+                                    <td>
+                                        <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider {{ $typeBadge }}">
                                             {{ $typeLabel }}
                                         </span>
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-xs">
+                                    <td>
                                         @if($log->old_status)
-                                            <span class="text-green-700 font-medium">✓ In Stock</span>
+                                            <span class="font-mono text-[10px] font-bold text-emerald-600">IN STOCK</span>
                                         @else
-                                            <span class="text-red-600 font-medium">✗ Out of Stock</span>
+                                            <span class="font-mono text-[10px] font-bold text-red-600">OUT</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-xs">
+                                    <td>
                                         @if($log->new_status)
-                                            <span class="text-green-700 font-medium">✓ In Stock</span>
+                                            <span class="font-mono text-[10px] font-bold text-emerald-600">IN STOCK</span>
                                         @else
-                                            <span class="text-red-600 font-medium">✗ Out of Stock</span>
+                                            <span class="font-mono text-[10px] font-bold text-red-600">OUT</span>
                                         @endif
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-xs text-gray-700">
-                                        {{ $log->admin?->name ?? '—' }}
-                                    </td>
-                                    <td class="px-4 py-3 text-xs text-gray-500">
-                                        {{ $log->note ?? '—' }}
-                                    </td>
+                                    <td class="text-sm text-ink">{{ $log->admin?->name ?? '—' }}</td>
+                                    <td class="text-xs text-ink-muted">{{ $log->note ?? '—' }}</td>
                                 </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                 @else
-                    <div class="px-6 py-8 text-center text-gray-400 text-sm">
-                        No inventory changes recorded yet.
+                    <div class="px-5 py-10 text-center">
+                        <x-heroicon-o-clock class="w-8 h-8 mx-auto text-ink/20 mb-2" />
+                        <p class="text-sm text-ink-muted">No inventory changes recorded yet.</p>
                     </div>
                 @endif
-            </div>
+            </section>
 
         </div>
 
-        {{-- Right Column: Stats & Actions --}}
-        <div class="space-y-8">
-            {{-- Status Card --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
+        {{-- Right: Actions + Meta + Cross Refs --}}
+        <div class="space-y-6">
+
+            <section class="bp-card overflow-hidden">
+                <header class="bp-card-header">
+                    <p class="bp-spec text-ink-muted">§ Quick · Actions</p>
+                </header>
+                <div class="p-5 space-y-2">
+                    <a href="{{ route('admin.catalog.products.edit', $product) }}"
+                       class="bp-btn-outline w-full justify-center gap-1">
+                        <x-heroicon-o-pencil-square class="w-4 h-4" />
+                        Edit Product
+                    </a>
+                    <a href="{{ route('admin.catalog.products.index') }}"
+                       class="bp-btn-ghost w-full justify-center gap-1">
+                        <x-heroicon-o-arrow-left class="w-4 h-4" />
+                        Back to Products
+                    </a>
+                    <button type="button"
+                            onclick="navigator.clipboard.writeText('{{ $product->oem_number }}').then(() => { this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy OEM', 2000); })"
+                            class="bp-btn-ghost w-full justify-center gap-1">
+                        <x-heroicon-o-clipboard-document class="w-4 h-4" />
+                        Copy OEM
+                    </button>
+                    <button type="button"
+                            onclick="if(confirm('Delete this product?')) { document.getElementById('delete-form').submit(); }"
+                            class="bp-btn-ghost text-red-600 hover:text-red-700 w-full justify-center gap-1">
+                        <x-heroicon-o-trash class="w-4 h-4" />
+                        Delete Product
+                    </button>
                 </div>
-                <div class="p-6">
-                    <div class="space-y-3">
-                        <a href="{{ route('admin.catalog.products.edit', $product) }}" 
-                           class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber transition-colors">
-                            <x-heroicon-o-pencil class="w-4 h-4 mr-2" />
-                            Edit Product
-                        </a>
-                        <button type="button" 
-                                onclick="if(confirm('Are you sure you want to delete this product? This action cannot be undone.')) { document.getElementById('delete-form').submit(); }"
-                                class="w-full flex items-center justify-center px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red transition-colors">
-                            <x-heroicon-o-trash class="w-4 h-4 mr-2" />
-                            Delete Product
-                        </button>
-                        <a href="{{ route('admin.catalog.products.index') }}" 
-                           class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber transition-colors">
-                            <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
-                            Back to List
-                        </a>
+            </section>
+
+            <section class="bp-card overflow-hidden">
+                <header class="bp-card-header">
+                    <p class="bp-spec text-ink-muted">§ Metadata</p>
+                </header>
+                <div class="p-5 space-y-3">
+                    <div>
+                        <p class="bp-spec text-ink-muted mb-1">§ Created</p>
+                        <p class="font-mono text-xs tabular-nums text-ink">{{ $product->created_at->format('Y-m-d H:i') }}</p>
                     </div>
+                    <div class="border-t border-rule pt-3">
+                        <p class="bp-spec text-ink-muted mb-1">§ Updated</p>
+                        <p class="font-mono text-xs tabular-nums text-ink">{{ $product->updated_at->format('Y-m-d H:i') }}</p>
+                    </div>
+                    @if($product->deleted_at)
+                    <div class="border-t border-rule pt-3">
+                        <p class="bp-spec text-red-600 mb-1">§ Deleted</p>
+                        <p class="font-mono text-xs tabular-nums text-red-600">{{ $product->deleted_at->format('Y-m-d H:i') }}</p>
+                    </div>
+                    @endif
                 </div>
-            </div>
+            </section>
 
-            {{-- Metadata Card --}}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Metadata</h2>
-                </div>
-                <div class="p-6">
-                    <dl class="space-y-3">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Created</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $product->created_at->format('M d, Y H:i') }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $product->updated_at->format('M d, Y H:i') }}</dd>
-                        </div>
-                        @if($product->deleted_at)
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Deleted</dt>
-                            <dd class="mt-1 text-sm text-red-600">{{ $product->deleted_at->format('M d, Y H:i') }}</dd>
-                        </div>
-                        @endif
-                    </dl>
-                </div>
-            </div>
-
-            {{-- Cross References Card --}}
             @if($product->crossReferences->count() > 0)
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200">
-                    <h2 class="text-lg font-semibold text-gray-900">Cross References</h2>
-                </div>
-                <div class="p-6">
-                    <div class="space-y-2">
+            <section class="bp-card overflow-hidden">
+                <header class="bp-card-header">
+                    <p class="bp-spec text-ink-muted">§ Cross · References</p>
+                </header>
+                <div class="p-5">
+                    <div class="flex flex-wrap gap-2">
                         @foreach($product->crossReferences as $crossRef)
-                        <div class="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded">
-                            <span class="text-sm font-mono text-gray-900">{{ $crossRef->cross_oem_number }}</span>
-                        </div>
+                            <span class="inline-flex items-center border border-rule bg-ivory-alt px-2 py-0.5 font-mono text-[11px] text-amber-ink tracking-wider">
+                                {{ $crossRef->cross_oem_number }}
+                            </span>
                         @endforeach
                     </div>
                 </div>
-            </div>
+            </section>
             @endif
+
         </div>
     </div>
+
 </div>
 
-{{-- Delete Form --}}
 <form id="delete-form" action="{{ route('admin.catalog.products.destroy', $product) }}" method="POST" class="hidden">
     @csrf
     @method('DELETE')

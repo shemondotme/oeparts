@@ -27,7 +27,7 @@
         @endif
 
         {{-- Filters --}}
-        <form method="GET" action="{{ route('admin.settings.ip-blocklist') }}" class="mb-6">
+        <form method="GET" action="{{ route('admin.settings.ip-blocklist.index') }}" class="mb-6">
             <div class="flex gap-4">
                 <input type="text" name="search" value="{{ request('search') }}"
                        placeholder="Search IP address..."

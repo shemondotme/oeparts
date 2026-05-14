@@ -14,15 +14,13 @@ use App\Models\PartInquiry;
 use App\Models\ContactMessage;
 use App\Models\NewsletterSubscriber;
 use App\Models\ActivityLog;
-use App\Models\LoginLog;
 use App\Models\CronLog;
 use App\Models\FailedSearchLog;
 use App\Models\IpBlocklist;
 use App\Models\LanguageString;
-use App\Models\HealthCheck;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class DashboardController extends Controller
 {
@@ -50,6 +48,10 @@ class DashboardController extends Controller
     {
         $validated = $request->validate([
             'preferences' => 'required|array',
+            'preferences.*.id' => ['required', 'string', Rule::in($this->availableWidgetIds())],
+            'preferences.*.visible' => ['required', 'boolean'],
+            'preferences.*.col_span' => ['required', 'integer', 'min:1', 'max:4'],
+            'preferences.*.row_span' => ['required', 'integer', 'min:1', 'max:3'],
         ]);
 
         $admin = auth('admin')->user();
@@ -100,6 +102,11 @@ class DashboardController extends Controller
             ['id' => 'checkout_dropoff', 'visible' => true, 'col_span' => 1, 'row_span' => 1],
             ['id' => 'vat_compliance', 'visible' => true, 'col_span' => 1, 'row_span' => 1],
         ];
+    }
+
+    private function availableWidgetIds(): array
+    {
+        return array_column($this->defaultWidgetPreferences(), 'id');
     }
 
     /**
@@ -153,10 +160,23 @@ class DashboardController extends Controller
             OrderStatus::Shipped->value,
             OrderStatus::Delivered->value,
         ])->sum('grand_total');
-        $change = 12.5; // placeholder
+        $current = (string) Order::whereIn('status', [
+            OrderStatus::Paid->value,
+            OrderStatus::Processing->value,
+            OrderStatus::Shipped->value,
+            OrderStatus::Delivered->value,
+        ])->where('created_at', '>=', now()->subDays(30))->sum('grand_total');
+        $previous = (string) Order::whereIn('status', [
+            OrderStatus::Paid->value,
+            OrderStatus::Processing->value,
+            OrderStatus::Shipped->value,
+            OrderStatus::Delivered->value,
+        ])->whereBetween('created_at', [now()->subDays(60), now()->subDays(30)])->sum('grand_total');
+        $change = $this->getDecimalPercentageChange($current, $previous);
+
         return [
             'title' => 'Total Revenue',
-            'value' => '€' . number_format((float) $revenue, 2),
+            'value' => format_money($revenue),
             'change' => $change,
             'icon' => 'currency-euro',
             'color' => 'green',
@@ -282,12 +302,12 @@ class DashboardController extends Controller
     private function widgetHealthStrip(): array
     {
         $checks = [
-            ['label' => 'Database', 'status' => 'healthy'],
-            ['label' => 'Redis', 'status' => 'healthy'],
-            ['label' => 'Queue', 'status' => 'warning'],
-            ['label' => 'Storage', 'status' => 'healthy'],
-            ['label' => 'PHP', 'status' => 'healthy'],
-            ['label' => 'SSL', 'status' => 'healthy'],
+            ['label' => 'Database', 'status' => $this->databaseIsReachable() ? 'healthy' : 'danger'],
+            ['label' => 'Cache', 'status' => config('cache.default') ? 'healthy' : 'warning'],
+            ['label' => 'Queue', 'status' => config('queue.default') === 'sync' ? 'warning' : 'healthy'],
+            ['label' => 'Storage', 'status' => is_writable(storage_path()) ? 'healthy' : 'danger'],
+            ['label' => 'PHP', 'status' => version_compare(PHP_VERSION, '8.2.0', '>=') ? 'healthy' : 'warning'],
+            ['label' => 'Views', 'status' => is_dir(storage_path('framework/views')) ? 'healthy' : 'danger'],
         ];
 
         return [
@@ -388,10 +408,11 @@ class DashboardController extends Controller
 
     private function widgetCartAbandonment(): array
     {
-        // placeholder
         return [
             'title' => 'Cart Abandonment',
-            'value' => '24%',
+            'value' => 'Not tracked yet',
+            'subtitle' => 'Enable cart analytics to populate this widget',
+            'status' => 'neutral',
         ];
     }
 
@@ -437,10 +458,11 @@ class DashboardController extends Controller
 
     private function widgetCheckoutDropoff(): array
     {
-        // placeholder
         return [
             'title' => 'Checkout Drop‑off',
-            'value' => '18%',
+            'value' => 'Not tracked yet',
+            'subtitle' => 'Enable checkout funnel events to populate this widget',
+            'status' => 'neutral',
         ];
     }
 
@@ -468,5 +490,28 @@ class DashboardController extends Controller
         }
 
         return round((($current - $previous) / $previous) * 100, 1);
+    }
+
+    private function getDecimalPercentageChange(string $current, string $previous): float
+    {
+        if (bccomp($previous, '0', 2) === 0) {
+            return bccomp($current, '0', 2) === 1 ? 100.0 : 0.0;
+        }
+
+        $difference = bcsub($current, $previous, 4);
+        $ratio = bcdiv($difference, $previous, 4);
+
+        return round((float) bcmul($ratio, '100', 4), 1);
+    }
+
+    private function databaseIsReachable(): bool
+    {
+        try {
+            DB::select('select 1');
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }
