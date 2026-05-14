@@ -15,7 +15,7 @@ class IpBlocklistController extends Controller
      */
     public function index(Request $request)
     {
-        $query = IpBlocklistModel::with('blockedBy')->orderBy('created_at', 'desc');
+        $query = IpBlocklistModel::with('blocker')->orderBy('created_at', 'desc');
 
         if ($request->filled('search')) {
             $query->where('ip_address', 'like', '%' . $request->search . '%');
@@ -55,9 +55,10 @@ class IpBlocklistController extends Controller
             'expires_at' => $validated['expires_at'] ?? null,
             'blocked_by' => Auth::guard('admin')->id(),
             'is_active' => true,
+            'created_at' => now(),
         ]);
 
-        return redirect()->route('admin.settings.ip-blocklist')
+        return redirect()->route('admin.settings.ip-blocklist.index')
             ->with('success', 'IP address blocked successfully.');
     }
 

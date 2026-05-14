@@ -54,7 +54,7 @@
             </div>
 
             <div class="mt-8 flex justify-end gap-3">
-                <a href="{{ route('admin.settings.ip-blocklist') }}"
+                <a href="{{ route('admin.settings.ip-blocklist.index') }}"
                    class="px-5 py-2.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50">
                     Cancel
                 </a>

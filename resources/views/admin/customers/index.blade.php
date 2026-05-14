@@ -1,98 +1,116 @@
 @extends('layouts.admin')
 
 @section('title', 'Customers')
+@section('page_title', 'Customer Management')
 
 @section('content')
-<div class="px-6 py-8">
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Customers</h1>
-            <p class="text-gray-600 mt-1">View and manage registered customers</p>
-        </div>
-    </div>
-
-    @if(session('success'))
-        <div class="mb-6 flex items-center gap-3 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg text-sm">
-            <x-heroicon-o-check-circle class="w-5 h-5 shrink-0" />
-            {{ session('success') }}
-        </div>
-    @endif
+<div class="space-y-6">
 
     {{-- Filters --}}
-    <div class="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-        <form method="GET" action="{{ route('admin.customers.index') }}" class="flex flex-wrap gap-4 items-end">
+    <section class="bp-card">
+        <header class="bp-card-header">
+            <p class="bp-spec text-ink-muted">§ Filter · Customers</p>
+        </header>
+        <form method="GET" action="{{ route('admin.customers.index') }}"
+              class="p-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1">Search</label>
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Name or email..."
-                       class="rounded-lg border-gray-300 text-sm">
+                <label for="search" class="block bp-spec mb-2">§ Search</label>
+                <input type="text" id="search" name="search" value="{{ request('search') }}"
+                       placeholder="Name or email..."
+                       class="bp-input">
             </div>
             <div>
-                <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
-                <select name="is_active" class="rounded-lg border-gray-300 text-sm">
+                <label for="is_active" class="block bp-spec mb-2">§ Status</label>
+                <select id="is_active" name="is_active" class="bp-select">
                     <option value="all">All</option>
-                    <option value="active" {{ request('is_active') === 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="active"   {{ request('is_active') === 'active'   ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('is_active') === 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
             </div>
-            <div class="flex gap-2">
-                <a href="{{ route('admin.customers.index') }}"
-                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 bg-white hover:bg-gray-50">Reset</a>
-                <button type="submit" class="px-3 py-2 bg-[#0B3A68] text-white rounded-lg text-sm hover:bg-blue-900">Filter</button>
+            <div class="md:col-span-2 xl:col-span-2 flex items-center justify-end gap-4 pt-2 border-t border-rule md:border-0 md:pt-0 self-end">
+                <a href="{{ route('admin.customers.index') }}" class="bp-btn-ghost">Reset</a>
+                <button type="submit" class="bp-btn-primary">Apply</button>
             </div>
         </form>
-    </div>
+    </section>
 
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    {{-- Flash message --}}
+    @if(session('success'))
+    <div class="flex items-center gap-3 border border-green-600/30 bg-green-50 px-4 py-3">
+        <x-heroicon-o-check-circle class="w-5 h-5 text-green-600 flex-shrink-0" />
+        <p class="text-sm text-green-700">{{ session('success') }}</p>
+    </div>
+    @endif
+
+    {{-- Table --}}
+    <section class="bp-card overflow-hidden">
+        <header class="bp-card-header flex items-center justify-between gap-4">
+            <div>
+                <p class="bp-spec text-amber-ink">§ Customers · Registry</p>
+                <h2 class="mt-1 font-display text-xl font-bold text-ink tracking-[-0.02em]">
+                    All Customers<span class="text-amber">.</span>
+                </h2>
+            </div>
+            <p class="font-mono text-xs text-ink-muted tabular-nums">
+                {{ number_format($customers->total()) }} records
+            </p>
+        </header>
+
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="bp-table">
+                <thead>
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        <th>Customer</th>
+                        <th>Phone</th>
+                        <th>Registered</th>
+                        <th>Status</th>
+                        <th class="text-right pr-5">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @forelse($customers as $customer)
-                        <tr class="hover:bg-gray-50 {{ $customer->trashed() ? 'opacity-60' : '' }}">
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-medium text-gray-900">{{ $customer->name }}</div>
-                                <div class="text-xs text-gray-500">{{ $customer->email }}</div>
+                        <tr class="{{ $customer->trashed() ? 'opacity-60' : '' }} cursor-pointer"
+                            data-href="{{ route('admin.customers.show', $customer) }}"
+                            onclick="if(!event.target.closest('a,button,form')) window.location.href=this.dataset.href">
+                            <td>
+                                <p class="text-sm font-bold text-ink">{{ $customer->name }}</p>
+                                <p class="font-mono text-xs text-ink-muted mt-0.5">{{ $customer->email }}</p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $customer->phone ?? '—' }}
+                            <td>
+                                <p class="font-mono text-xs tabular-nums text-ink">{{ $customer->phone ?? '—' }}</p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $customer->created_at->format('M d, Y') }}
+                            <td>
+                                <p class="font-mono text-xs tabular-nums text-ink">{{ $customer->created_at->format('Y-m-d') }}</p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td>
                                 @if($customer->trashed())
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Deleted</span>
+                                    <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-red-600/30 bg-red-50 text-red-700">Deleted</span>
                                 @elseif($customer->is_active)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                                    <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-green-600/30 bg-green-50 text-green-700">Active</span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500">Inactive</span>
+                                    <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-rule bg-ivory-alt text-ink-muted">Inactive</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <div class="flex items-center gap-3">
+                            <td class="text-right pr-5">
+                                <div class="flex items-center justify-end gap-1">
                                     <a href="{{ route('admin.customers.show', $customer) }}"
-                                       class="text-gray-500 hover:text-gray-900" title="View">
-                                        <x-heroicon-o-eye class="w-4 h-4" />
+                                       class="bp-btn-ghost gap-1 text-[10px]">
+                                        <x-heroicon-o-eye class="w-3.5 h-3.5" />
+                                        View
                                     </a>
                                     @if(!$customer->trashed())
                                         <form action="{{ route('admin.customers.toggle-active', $customer) }}" method="POST" class="inline">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
-                                                    class="{{ $customer->is_active ? 'text-amber-500 hover:text-amber-700' : 'text-green-500 hover:text-green-700' }}"
+                                                    class="bp-btn-ghost gap-1 text-[10px] {{ $customer->is_active ? 'text-amber-700' : 'text-green-700' }}"
                                                     title="{{ $customer->is_active ? 'Deactivate' : 'Activate' }}">
                                                 @if($customer->is_active)
-                                                    <x-heroicon-o-lock-closed class="w-4 h-4" />
+                                                    <x-heroicon-o-lock-closed class="w-3.5 h-3.5" />
+                                                    Lock
                                                 @else
-                                                    <x-heroicon-o-lock-open class="w-4 h-4" />
+                                                    <x-heroicon-o-lock-open class="w-3.5 h-3.5" />
+                                                    Unlock
                                                 @endif
                                             </button>
                                         </form>
@@ -102,20 +120,23 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-12 text-center">
-                                <x-heroicon-o-users class="w-12 h-12 mx-auto text-gray-300 mb-3" />
-                                <p class="text-sm font-medium text-gray-900">No customers found</p>
+                            <td colspan="5" class="px-5 py-16 text-center">
+                                <x-heroicon-o-users class="w-10 h-10 mx-auto text-ink/20 mb-3" />
+                                <p class="font-display font-bold text-ink">No customers found</p>
+                                <p class="mt-1 text-sm text-ink-muted">Try adjusting your filters.</p>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
+
         @if($customers->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
+            <div class="px-5 py-4 border-t border-rule">
                 {{ $customers->withQueryString()->links() }}
             </div>
         @endif
-    </div>
+    </section>
+
 </div>
 @endsection

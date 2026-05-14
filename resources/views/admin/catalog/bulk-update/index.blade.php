@@ -1,214 +1,275 @@
 @extends('layouts.admin')
 
-@section('title', __('Bulk Update Products'))
+@section('title', 'Bulk Update')
+@section('page_title', 'Bulk Update')
+
+@section('header_actions')
+    <div class="flex gap-2">
+        <a href="{{ route('admin.catalog.bulk-update.logs') }}" class="bp-btn-outline">
+            <x-heroicon-o-clock class="w-4 h-4" />
+            Logs
+        </a>
+        <a href="{{ route('admin.catalog.products.index') }}" class="bp-btn-ghost">
+            <x-heroicon-o-arrow-left class="w-4 h-4" />
+            Products
+        </a>
+    </div>
+@endsection
 
 @section('content')
-<div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">{{ __('Bulk Update Products') }}</h1>
-        <div class="d-flex gap-2">
-            <a href="{{ route('admin.catalog.bulk-update.logs') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-history me-1"></i> {{ __('View Logs') }}
-            </a>
-            <a href="{{ route('admin.catalog.products.index') }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i> {{ __('Back to Products') }}
-            </a>
-        </div>
-    </div>
+<div
+    class="grid grid-cols-1 gap-6 lg:grid-cols-3"
+    x-data="bulkUpdateConsole()"
+>
+    <section class="bp-card lg:col-span-2">
+        <header class="bp-card-header">
+            <p class="bp-spec text-amber-ink">§ Catalog · Controlled Write</p>
+            <h2 class="mt-1 font-display text-xl font-bold tracking-[-0.02em] text-ink">
+                Bulk update workspace<span class="text-amber">.</span>
+            </h2>
+            <p class="mt-2 text-sm text-ink-muted">
+                Preview every matched record before execution. Confirmation requires typing <span class="font-mono text-ink">CONFIRM</span>.
+            </p>
+        </header>
 
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{{ __('Step 1: Select Filters & Action') }}</h6>
-                </div>
-                <div class="card-body">
-                    <form method="GET" action="{{ route('admin.catalog.bulk-update.preview') }}" id="bulkUpdateForm">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="action_type" class="form-label">{{ __('Action Type') }} *</label>
-                                    <select class="form-select" id="action_type" name="action_type" required>
-                                        <option value="">{{ __('Select an action') }}</option>
-                                        @foreach($actionTypes as $action)
-                                        <option value="{{ $action->value }}">{{ __(str_replace('_', ' ', ucfirst($action->value))) }}</option>
-                                        @endforeach
-                                    </select>
-                                    <div class="form-text">{{ __('Choose what you want to update') }}</div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="manufacturer_id" class="form-label">{{ __('Manufacturer') }}</label>
-                                    <select class="form-select" id="manufacturer_id" name="manufacturer_id">
-                                        <option value="">{{ __('All Manufacturers') }}</option>
-                                        @foreach($manufacturers as $manufacturer)
-                                        <option value="{{ $manufacturer->id }}">{{ trans_field($manufacturer->name) }}</option>
-                                        @endforeach
-                                    </select>
-                                    <div class="form-text">{{ __('Filter by specific manufacturer') }}</div>
-                                </div>
-                            </div>
-                        </div>
+        <form class="space-y-6 p-5" @submit.prevent="preview">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <x-admin.form-field label="Entity Type" name="entity_type">
+                    <select id="entity_type" x-model="entityType" class="bp-select">
+                        <option value="products">Products</option>
+                        <option value="manufacturers">Manufacturers</option>
+                        <option value="car_models">Car Models</option>
+                    </select>
+                </x-admin.form-field>
 
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="condition" class="form-label">{{ __('Condition') }}</label>
-                                    <select class="form-select" id="condition" name="condition">
-                                        <option value="">{{ __('All Conditions') }}</option>
-                                        <option value="new">{{ __('New') }}</option>
-                                        <option value="used">{{ __('Used') }}</option>
-                                        <option value="refurbished">{{ __('Refurbished') }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="stock_status" class="form-label">{{ __('Stock Status') }}</label>
-                                    <select class="form-select" id="stock_status" name="stock_status">
-                                        <option value="">{{ __('All Stock Status') }}</option>
-                                        <option value="in_stock">{{ __('In Stock') }}</option>
-                                        <option value="out_of_stock">{{ __('Out of Stock') }}</option>
-                                        <option value="low_stock">{{ __('Low Stock (< 10)') }}</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="apply_value" class="form-label">{{ __('Apply Value') }} *</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="apply_value" name="apply_value" 
-                                               step="0.01" min="0.01" required>
-                                        <span class="input-group-text" id="value_unit">-</span>
-                                    </div>
-                                    <div class="form-text" id="value_help">{{ __('Enter the value to apply') }}</div>
-                                </div>
-                            </div>
-                        </div>
+                <x-admin.form-field label="Manufacturer" name="manufacturer_id">
+                    <select id="manufacturer_id" x-model="filters.manufacturer_id" class="bp-select">
+                        <option value="">All manufacturers</option>
+                        @foreach($manufacturers as $manufacturer)
+                            <option value="{{ $manufacturer->id }}">{{ trans_field($manufacturer->name) }}</option>
+                        @endforeach
+                    </select>
+                </x-admin.form-field>
+            </div>
 
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="price_min" class="form-label">{{ __('Minimum Price') }}</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">{{ settings('currency_symbol') }}</span>
-                                        <input type="number" class="form-control" id="price_min" name="price_min" 
-                                               step="0.01" min="0">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="price_max" class="form-label">{{ __('Maximum Price') }}</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">{{ settings('currency_symbol') }}</span>
-                                        <input type="number" class="form-control" id="price_max" name="price_max" 
-                                               step="0.01" min="0">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3" x-show="entityType === 'products'">
+                <x-admin.form-field label="OEM Number" name="oem_number">
+                    <input id="oem_number" x-model="filters.oem_number" type="text" class="bp-input-mono" placeholder="A000000">
+                </x-admin.form-field>
 
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="apply_percentage" name="apply_percentage" value="1">
-                                <label class="form-check-label" for="apply_percentage">
-                                    {{ __('Apply as percentage (%)') }}
-                                </label>
-                            </div>
-                            <div class="form-text" id="percentage_help">{{ __('Check to apply value as percentage instead of fixed amount') }}</div>
-                        </div>
+                <x-admin.form-field label="Condition" name="condition">
+                    <select id="condition" x-model="filters.condition" class="bp-select">
+                        <option value="">Any condition</option>
+                        @foreach($conditions as $condition)
+                            <option value="{{ $condition->value }}">{{ $condition->label() }}</option>
+                        @endforeach
+                    </select>
+                </x-admin.form-field>
 
-                        <div class="d-flex justify-content-between">
-                            <button type="reset" class="btn btn-secondary">{{ __('Reset Form') }}</button>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-eye me-1"></i> {{ __('Preview Changes') }}
-                            </button>
+                <x-admin.form-field label="Stock Status" name="stock_status">
+                    <select id="stock_status" x-model="filters.stock_status" class="bp-select">
+                        <option value="">Any stock status</option>
+                        <option value="in_stock">In stock</option>
+                        <option value="out_of_stock">Out of stock</option>
+                    </select>
+                </x-admin.form-field>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <x-admin.form-field label="Active State" name="filter_is_active">
+                    <select id="filter_is_active" x-model="filters.is_active" class="bp-select">
+                        <option value="">Any state</option>
+                        <option value="1">Active</option>
+                        <option value="0">Inactive</option>
+                    </select>
+                </x-admin.form-field>
+
+                <x-admin.form-field label="Name Contains" name="name">
+                    <input id="name" x-model="filters.name" type="text" class="bp-input" placeholder="Manufacturer or model name">
+                </x-admin.form-field>
+
+                <x-admin.form-field label="Country Code" name="country_code">
+                    <input id="country_code" x-model="filters.country_code" type="text" maxlength="2" class="bp-input-mono" placeholder="DE">
+                </x-admin.form-field>
+            </div>
+
+            <div class="border border-rule bg-ivory-alt p-4">
+                <p class="bp-spec text-amber-ink">Updates</p>
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <x-admin.form-field label="Price" name="price">
+                        <input id="price" x-model="updates.price" type="number" step="0.01" min="0" class="bp-input" placeholder="149.99">
+                    </x-admin.form-field>
+
+                    <x-admin.form-field label="Stock" name="is_in_stock">
+                        <select id="is_in_stock" x-model="updates.is_in_stock" class="bp-select">
+                            <option value="">No change</option>
+                            <option value="1">In stock</option>
+                            <option value="0">Out of stock</option>
+                        </select>
+                    </x-admin.form-field>
+
+                    <x-admin.form-field label="Active" name="is_active">
+                        <select id="is_active" x-model="updates.is_active" class="bp-select">
+                            <option value="">No change</option>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                    </x-admin.form-field>
+
+                    <x-admin.form-field label="Condition" name="update_condition">
+                        <select id="update_condition" x-model="updates.condition" class="bp-select">
+                            <option value="">No change</option>
+                            @foreach($conditions as $condition)
+                                <option value="{{ $condition->value }}">{{ $condition->label() }}</option>
+                            @endforeach
+                        </select>
+                    </x-admin.form-field>
+
+                    <x-admin.form-field label="Verified OEM" name="is_verified_oem">
+                        <select id="is_verified_oem" x-model="updates.is_verified_oem" class="bp-select">
+                            <option value="">No change</option>
+                            <option value="1">Verified</option>
+                            <option value="0">Not verified</option>
+                        </select>
+                    </x-admin.form-field>
+
+                    <x-admin.form-field label="Year Range" name="year_from">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input x-model="updates.year_from" type="number" class="bp-input" placeholder="From">
+                            <input x-model="updates.year_to" type="number" class="bp-input" placeholder="To">
                         </div>
-                    </form>
+                    </x-admin.form-field>
                 </div>
             </div>
-        </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{{ __('Available Actions') }}</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <h6 class="text-primary">{{ __('Price Actions') }}</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-arrow-up text-success me-2"></i> <strong>{{ __('Price Increase') }}</strong> – {{ __('Increase prices by fixed amount or percentage') }}</li>
-                            <li><i class="fas fa-arrow-down text-danger me-2"></i> <strong>{{ __('Price Decrease') }}</strong> – {{ __('Decrease prices by fixed amount or percentage') }}</li>
-                        </ul>
-                    </div>
-                    <div class="mb-3">
-                        <h6 class="text-primary">{{ __('Stock Actions') }}</h6>
-                        <ul class="list-unstyled">
-                            <li><i class="fas fa-plus-circle text-success me-2"></i> <strong>{{ __('Stock In') }}</strong> – {{ __('Add stock quantity to products') }}</li>
-                            <li><i class="fas fa-minus-circle text-danger me-2"></i> <strong>{{ __('Stock Out') }}</strong> – {{ __('Remove stock quantity from products') }}</li>
-                        </ul>
-                    </div>
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>{{ __('Workflow') }}</strong><br>
-                        1. {{ __('Select filters and action') }}<br>
-                        2. {{ __('Preview affected products') }}<br>
-                        3. {{ __('Confirm and execute') }}<br>
-                        4. {{ __('Log created automatically') }}
-                    </div>
-                </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <button type="button" class="bp-btn-outline" @click="resetForm">Reset</button>
+                <button type="submit" class="bp-btn-primary" :disabled="loading">
+                    <x-heroicon-o-eye class="w-4 h-4" />
+                    Preview Changes
+                </button>
             </div>
-        </div>
-    </div>
+        </form>
+    </section>
+
+    <aside class="space-y-6">
+        <section class="bp-card">
+            <header class="bp-card-header">
+                <p class="bp-spec text-amber-ink">§ Workflow</p>
+            </header>
+            <ol class="space-y-3 p-5 text-sm text-ink-muted">
+                <li><span class="font-mono text-ink">01</span> Select entity and filters.</li>
+                <li><span class="font-mono text-ink">02</span> Choose the fields to update.</li>
+                <li><span class="font-mono text-ink">03</span> Preview affected rows.</li>
+                <li><span class="font-mono text-ink">04</span> Type CONFIRM and execute.</li>
+            </ol>
+        </section>
+
+        <section class="bp-card" x-show="previewResult">
+            <header class="bp-card-header">
+                <p class="bp-spec text-amber-ink">§ Preview</p>
+            </header>
+            <div class="space-y-4 p-5">
+                <p class="font-mono text-3xl font-bold text-ink" x-text="previewResult?.total_count ?? 0"></p>
+                <p class="text-sm text-ink-muted" x-text="previewResult?.preview_summary"></p>
+                <input x-model="confirmation" class="bp-input-mono" placeholder="Type CONFIRM">
+                <button type="button" class="bp-btn-amber w-full" @click="execute" :disabled="confirmation !== 'CONFIRM' || loading">
+                    Execute Update
+                </button>
+            </div>
+        </section>
+
+        <section class="bp-card" x-show="message">
+            <div class="p-5">
+                <p class="font-mono text-sm text-ink" x-text="message"></p>
+            </div>
+        </section>
+    </aside>
 </div>
 @endsection
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const actionTypeSelect = document.getElementById('action_type');
-    const valueUnit = document.getElementById('value_unit');
-    const valueHelp = document.getElementById('value_help');
-    const percentageHelp = document.getElementById('percentage_help');
-    const applyPercentage = document.getElementById('apply_percentage');
+function bulkUpdateConsole() {
+    return {
+        entityType: '{{ $entityType }}',
+        filters: {},
+        updates: {},
+        previewResult: null,
+        confirmation: '',
+        loading: false,
+        message: '',
+        clean(object) {
+            return Object.fromEntries(Object.entries(object).filter(([, value]) => value !== '' && value !== null && value !== undefined));
+        },
+        params(payload) {
+            const params = new URLSearchParams();
+            Object.entries(payload).forEach(([key, value]) => {
+                if (value && typeof value === 'object' && !Array.isArray(value)) {
+                    Object.entries(value).forEach(([childKey, childValue]) => params.append(`${key}[${childKey}]`, childValue));
+                } else {
+                    params.append(key, value);
+                }
+            });
+            return params;
+        },
+        async preview() {
+            this.loading = true;
+            this.message = '';
+            this.previewResult = null;
 
-    function updateActionDetails() {
-        const action = actionTypeSelect.value;
-        const isPercentage = applyPercentage.checked;
-        
-        switch(action) {
-            case 'price_increase':
-            case 'price_decrease':
-                valueUnit.textContent = isPercentage ? '%' : '{{ settings('currency_symbol') }}';
-                valueHelp.textContent = isPercentage 
-                    ? '{{ __('Enter percentage to increase/decrease prices') }}'
-                    : '{{ __('Enter fixed amount to increase/decrease prices') }}';
-                percentageHelp.textContent = '{{ __('Check to apply as percentage of current price') }}';
-                break;
-            case 'stock_in':
-            case 'stock_out':
-                valueUnit.textContent = '{{ __('units') }}';
-                valueHelp.textContent = '{{ __('Enter quantity to add/remove from stock') }}';
-                percentageHelp.textContent = '{{ __('Percentage not applicable for stock actions') }}';
-                applyPercentage.disabled = true;
-                applyPercentage.checked = false;
-                break;
-            default:
-                valueUnit.textContent = '-';
-                valueHelp.textContent = '{{ __('Enter the value to apply') }}';
-                percentageHelp.textContent = '{{ __('Check to apply value as percentage instead of fixed amount') }}';
-                applyPercentage.disabled = false;
-        }
-    }
+            const response = await fetch(`{{ route('admin.catalog.bulk-update.preview') }}?${this.params({
+                entity_type: this.entityType,
+                filters: this.clean(this.filters),
+                updates: this.clean(this.updates),
+            })}`, { headers: { Accept: 'application/json' } });
 
-    actionTypeSelect.addEventListener('change', updateActionDetails);
-    applyPercentage.addEventListener('change', updateActionDetails);
-    
-    // Initial update
-    updateActionDetails();
-});
+            const data = await response.json();
+            this.loading = false;
+
+            if (!response.ok || !data.success) {
+                this.message = data.message || 'Preview failed. Check selected filters and updates.';
+                return;
+            }
+
+            this.previewResult = data;
+        },
+        async execute() {
+            this.loading = true;
+            this.message = '';
+
+            const response = await fetch('{{ route('admin.catalog.bulk-update.execute') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    entity_type: this.entityType,
+                    filters: this.clean(this.filters),
+                    updates: this.clean(this.updates),
+                    confirmation: this.confirmation,
+                }),
+            });
+
+            const data = await response.json();
+            this.loading = false;
+            this.message = data.message || (response.ok ? 'Bulk update completed.' : 'Bulk update failed.');
+
+            if (response.ok && data.success) {
+                this.previewResult = null;
+                this.confirmation = '';
+            }
+        },
+        resetForm() {
+            this.filters = {};
+            this.updates = {};
+            this.previewResult = null;
+            this.confirmation = '';
+            this.message = '';
+        },
+    };
+}
 </script>
 @endpush

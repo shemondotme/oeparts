@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BulkUpdateLog extends Model
 {
+    public $timestamps = false;
+
     protected $fillable = [
         'admin_id',
         'action_type',

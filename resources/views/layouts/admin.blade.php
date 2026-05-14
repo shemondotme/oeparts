@@ -104,7 +104,7 @@
         </div>
 
         {{-- Navigation Scroll Area --}}
-        <nav class="flex-1 overflow-y-auto py-6 px-3 space-y-6 custom-scrollbar">
+        <nav class="sidebar-nav flex-1 overflow-y-auto py-6 px-3 space-y-6 custom-scrollbar">
 
             {{-- Dashboard --}}
             <div>
@@ -133,6 +133,11 @@
                        class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.catalog.car-models*') ? 'active' : '' }}">
                         <x-heroicon-o-truck class="w-4 h-4 shrink-0 opacity-80" />
                         <span>Car Models</span>
+                    </a>
+                    <a href="{{ route('admin.catalog.bulk-update.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.catalog.bulk-update*') ? 'active' : '' }}">
+                        <x-heroicon-o-arrow-path class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>Bulk Update</span>
                     </a>
                 </div>
             </div>
@@ -181,6 +186,23 @@
                 </div>
             </div>
 
+            {{-- Marketing Section --}}
+            <div>
+                <div class="admin-section-label px-3 mb-2">§ Marketing</div>
+                <div class="space-y-0.5">
+                    <a href="{{ route('admin.marketing.abandoned-carts.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.marketing.abandoned-carts*') ? 'active' : '' }}">
+                        <x-heroicon-o-shopping-cart class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>Abandoned Carts</span>
+                    </a>
+                    <a href="{{ route('admin.cms.newsletter.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.cms.newsletter*') ? 'active' : '' }}">
+                        <x-heroicon-o-megaphone class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>Newsletter</span>
+                    </a>
+                </div>
+            </div>
+
             {{-- Content Section --}}
             <div>
                 <div class="admin-section-label px-3 mb-2">§ Content</div>
@@ -210,6 +232,16 @@
                         <x-heroicon-o-photo class="w-4 h-4 shrink-0 opacity-80" />
                         <span>Media</span>
                     </a>
+                    <a href="{{ route('admin.cms.testimonials.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.cms.testimonials*') ? 'active' : '' }}">
+                        <x-heroicon-o-chat-bubble-left-right class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>Testimonials</span>
+                    </a>
+                    <a href="{{ route('admin.cms.faqs.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.cms.faqs*') ? 'active' : '' }}">
+                        <x-heroicon-o-question-mark-circle class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>FAQs</span>
+                    </a>
                 </div>
             </div>
 
@@ -221,6 +253,11 @@
                        class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
                         <x-heroicon-o-cog-6-tooth class="w-4 h-4 shrink-0 opacity-80" />
                         <span>Settings</span>
+                    </a>
+                    <a href="{{ route('admin.reports.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.reports*') ? 'active' : '' }}">
+                        <x-heroicon-o-chart-bar-square class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>Reports</span>
                     </a>
                     <a href="{{ route('admin.translations.index') }}"
                        class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.translations*') ? 'active' : '' }}">
@@ -236,6 +273,16 @@
                        class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.logs*') ? 'active' : '' }}">
                         <x-heroicon-o-clipboard-document-list class="w-4 h-4 shrink-0 opacity-80" />
                         <span>Logs</span>
+                    </a>
+                    <a href="{{ route('admin.settings.redirects.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.settings.redirects*') ? 'active' : '' }}">
+                        <x-heroicon-o-arrow-right-circle class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>Redirects</span>
+                    </a>
+                    <a href="{{ route('admin.settings.ip-blocklist.index') }}"
+                       class="admin-nav-item flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/70 transition-colors rounded-none {{ request()->routeIs('admin.settings.ip-blocklist*') ? 'active' : '' }}">
+                        <x-heroicon-o-shield-exclamation class="w-4 h-4 shrink-0 opacity-80" />
+                        <span>IP Blocklist</span>
                     </a>
                 </div>
             </div>

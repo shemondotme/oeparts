@@ -1,179 +1,128 @@
 @extends('layouts.admin')
 
-@section('title', 'Edit Car Model')
+@section('title', 'Edit Car Model — ' . $carModel->name)
+@section('page_title', 'Edit Car Model')
+
+@section('header_actions')
+    <a href="{{ route('admin.catalog.car-models.index') }}" class="bp-btn-ghost gap-1">
+        <x-heroicon-o-arrow-left class="w-4 h-4" />
+        Back to Car Models
+    </a>
+@endsection
 
 @section('content')
-<div class="px-6 py-8">
-    {{-- Header --}}
-    <div class="mb-8">
-        <div class="flex justify-between items-start">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-900">Edit Car Model</h1>
-                <p class="text-gray-600 mt-1">{{ trans_field($carModel->manufacturer->name) }} — {{ $carModel->name }}</p>
-            </div>
-            <a href="{{ route('admin.catalog.car-models.index') }}"
-               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber">
-                <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
-                Back to Car Models
-            </a>
-        </div>
-    </div>
+<div class="max-w-3xl space-y-6">
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <section class="bp-card overflow-hidden">
+        <header class="bp-card-header">
+            <p class="bp-spec text-amber-ink">§ Catalog · Edit Car Model</p>
+            <h2 class="mt-1 font-display text-xl font-bold text-ink tracking-[-0.02em]">
+                {{ trans_field($carModel->manufacturer->name) }} — {{ $carModel->name }}<span class="text-amber">.</span>
+            </h2>
+        </header>
+
         <form action="{{ route('admin.catalog.car-models.update', $carModel) }}" method="POST">
             @csrf
             @method('PUT')
-
-            <div class="p-6 space-y-8">
+            <div class="divide-y divide-rule">
 
                 {{-- Details --}}
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-amber pl-3">Details</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-5 space-y-4">
+                    <p class="bp-spec text-ink-muted">§ Details</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-                    {{-- Manufacturer --}}
-                    <div>
-                        <label for="manufacturer_id" class="block text-sm font-medium text-gray-700 mb-1">
-                            Manufacturer <span class="text-red-500">*</span>
-                        </label>
-                        <select name="manufacturer_id"
-                                id="manufacturer_id"
-                                required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber focus:border-amber transition-colors">
-                            <option value="">Select Manufacturer</option>
-                            @foreach($manufacturers as $manufacturer)
-                                <option value="{{ $manufacturer->id }}" {{ old('manufacturer_id', $carModel->manufacturer_id) == $manufacturer->id ? 'selected' : '' }}>
-                                    {{ trans_field($manufacturer->name) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('manufacturer_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <div>
+                            <label for="manufacturer_id" class="block bp-spec mb-2">§ Manufacturer <span class="text-red-500">*</span></label>
+                            <select name="manufacturer_id" id="manufacturer_id" required class="bp-select">
+                                <option value="">Select Manufacturer</option>
+                                @foreach($manufacturers as $manufacturer)
+                                    <option value="{{ $manufacturer->id }}" {{ old('manufacturer_id', $carModel->manufacturer_id) == $manufacturer->id ? 'selected' : '' }}>
+                                        {{ trans_field($manufacturer->name) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('manufacturer_id')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    {{-- Model Name --}}
-                    <div>
-                        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">
-                            Model Name <span class="text-red-500">*</span>
-                        </label>
-                        <input type="text"
-                               name="name"
-                               id="name"
-                               value="{{ old('name', $carModel->name) }}"
-                               required
-                               placeholder="e.g. Golf VII, E90 3 Series, Audi A4 B8"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber focus:border-amber transition-colors">
-                        @error('name')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <div>
+                            <label for="name" class="block bp-spec mb-2">§ Model Name <span class="text-red-500">*</span></label>
+                            <input type="text" name="name" id="name"
+                                   value="{{ old('name', $carModel->name) }}" required
+                                   placeholder="e.g. Golf VII, E90 3 Series"
+                                   class="bp-input w-full">
+                            @error('name')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    {{-- Slug --}}
-                    <div>
-                        <label for="slug" class="block text-sm font-medium text-gray-700 mb-1">
-                            Slug
-                            <span class="text-xs text-gray-400 ml-1">Auto-generated — change with care</span>
-                        </label>
-                        <input type="text"
-                               name="slug"
-                               id="slug"
-                               value="{{ old('slug', $carModel->slug) }}"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm focus:ring-2 focus:ring-amber focus:border-amber transition-colors">
-                        @error('slug')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <div>
+                            <label for="slug" class="block bp-spec mb-2">§ Slug <span class="text-ink-muted font-normal normal-case">(auto-generated — change with care)</span></label>
+                            <input type="text" name="slug" id="slug"
+                                   value="{{ old('slug', $carModel->slug) }}"
+                                   class="bp-input-mono w-full">
+                            @error('slug')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    {{-- Year From --}}
-                    <div>
-                        <label for="year_from" class="block text-sm font-medium text-gray-700 mb-1">Year From</label>
-                        <input type="number"
-                               name="year_from"
-                               id="year_from"
-                               value="{{ old('year_from', $carModel->year_from) }}"
-                               min="1900"
-                               max="2100"
-                               placeholder="e.g. 2012"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber focus:border-amber transition-colors">
-                        @error('year_from')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <div>
+                            <label for="year_from" class="block bp-spec mb-2">§ Year From</label>
+                            <input type="number" name="year_from" id="year_from"
+                                   value="{{ old('year_from', $carModel->year_from) }}" min="1900" max="2100"
+                                   placeholder="e.g. 2012" class="bp-input w-full">
+                            @error('year_from')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    {{-- Year To --}}
-                    <div>
-                        <label for="year_to" class="block text-sm font-medium text-gray-700 mb-1">
-                            Year To
-                            <span class="text-xs text-gray-400 ml-1">Leave empty if still in production</span>
-                        </label>
-                        <input type="number"
-                               name="year_to"
-                               id="year_to"
-                               value="{{ old('year_to', $carModel->year_to) }}"
-                               min="1900"
-                               max="2100"
-                               placeholder="e.g. 2020"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber focus:border-amber transition-colors">
-                        @error('year_to')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <div>
+                            <label for="year_to" class="block bp-spec mb-2">§ Year To <span class="text-ink-muted font-normal normal-case">(empty = in production)</span></label>
+                            <input type="number" name="year_to" id="year_to"
+                                   value="{{ old('year_to', $carModel->year_to) }}" min="1900" max="2100"
+                                   placeholder="e.g. 2020" class="bp-input w-full">
+                            @error('year_to')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                    {{-- Sort Order --}}
-                    <div>
-                        <label for="sort_order" class="block text-sm font-medium text-gray-700 mb-1">
-                            Sort Order
-                            <span class="text-xs text-gray-400 ml-1">Higher = shown first</span>
-                        </label>
-                        <input type="number"
-                               name="sort_order"
-                               id="sort_order"
-                               value="{{ old('sort_order', $carModel->sort_order) }}"
-                               min="0"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber focus:border-amber transition-colors">
-                        @error('sort_order')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                        <div>
+                            <label for="sort_order" class="block bp-spec mb-2">§ Sort Order <span class="text-ink-muted font-normal normal-case">(higher = first)</span></label>
+                            <input type="number" name="sort_order" id="sort_order"
+                                   value="{{ old('sort_order', $carModel->sort_order) }}" min="0"
+                                   class="bp-input w-full">
+                            @error('sort_order')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
 
                     </div>
                 </div>
 
                 {{-- Status --}}
-                <div>
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4 border-l-4 border-amber pl-3">Status</h2>
-                    <div class="flex items-center">
-                        <input type="checkbox"
-                               name="is_active"
-                               id="is_active"
-                               value="1"
+                <div class="p-5 space-y-3">
+                    <p class="bp-spec text-ink-muted">§ Status</p>
+                    <label class="flex items-center gap-2 text-sm text-ink cursor-pointer">
+                        <input type="checkbox" name="is_active" id="is_active" value="1"
                                {{ old('is_active', $carModel->is_active) ? 'checked' : '' }}
-                               class="h-4 w-4 text-amber focus:ring-amber border-gray-300 rounded">
-                        <label for="is_active" class="ml-2 text-sm text-gray-700">
-                            Active — visible to customers
-                        </label>
-                    </div>
+                               class="rounded-none border-rule">
+                        Active — visible to customers
+                    </label>
                 </div>
 
             </div>
 
-            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+            <div class="px-5 py-4 bg-ivory-alt border-t border-rule flex items-center justify-between">
                 <button type="button"
                         onclick="if(confirm('Delete this car model? This cannot be undone.')) { document.getElementById('delete-form').submit(); }"
-                        class="px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors">
-                    <x-heroicon-o-trash class="w-4 h-4 mr-1 inline" />
+                        class="bp-btn-ghost text-red-600 hover:text-red-700 gap-1">
+                    <x-heroicon-o-trash class="w-4 h-4" />
                     Delete
                 </button>
-                <div class="flex space-x-3">
-                    <a href="{{ route('admin.catalog.car-models.index') }}"
-                       class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        Cancel
-                    </a>
-                    <button type="submit"
-                            class="px-4 py-2 border border-transparent rounded-lg text-sm font-medium text-white bg-amber hover:bg-amber/90 transition-colors">
-                        Update Car Model
-                    </button>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('admin.catalog.car-models.index') }}" class="bp-btn-ghost">Cancel</a>
+                    <button type="submit" class="bp-btn-primary">Update Car Model</button>
                 </div>
             </div>
         </form>
@@ -182,6 +131,7 @@
             @csrf
             @method('DELETE')
         </form>
-    </div>
+    </section>
+
 </div>
 @endsection

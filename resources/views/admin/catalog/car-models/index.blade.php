@@ -1,29 +1,28 @@
 @extends('layouts.admin')
 
-@section('title', 'Car Model Management')
+@section('title', 'Car Models')
+@section('page_title', 'Car Model Management')
+
+@section('header_actions')
+    <a href="{{ route('admin.catalog.car-models.create') }}" class="bp-btn-primary">
+        <x-heroicon-o-plus class="w-4 h-4" />
+        Add Car Model
+    </a>
+@endsection
 
 @section('content')
-<div class="px-6 py-8">
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Car Model Management</h1>
-            <p class="text-gray-600 mt-1">Manage car models and their associations</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.catalog.car-models.create') }}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-navy border border-transparent rounded-lg text-sm font-medium text-white hover:bg-navy/90">
-                <x-heroicon-o-plus class="w-4 h-4" />
-                Add Car Model
-            </a>
-        </div>
-    </div>
+<div class="space-y-6" x-data="{ checked: [] }">
 
     {{-- Filters --}}
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <form method="GET" action="{{ route('admin.catalog.car-models.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <section class="bp-card">
+        <header class="bp-card-header">
+            <p class="bp-spec text-ink-muted">§ Filter · Car Models</p>
+        </header>
+        <form method="GET" action="{{ route('admin.catalog.car-models.index') }}"
+              class="p-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
-                <label for="manufacturer_id" class="block text-sm font-medium text-gray-700 mb-1">Manufacturer</label>
-                <select id="manufacturer_id" name="manufacturer_id" class="w-full rounded-lg border-gray-300 text-sm">
+                <label for="manufacturer_id" class="block bp-spec mb-2">§ Manufacturer</label>
+                <select id="manufacturer_id" name="manufacturer_id" class="bp-select">
                     <option value="">All Manufacturers</option>
                     @foreach($manufacturers as $manufacturer)
                         <option value="{{ $manufacturer->id }}" {{ request('manufacturer_id') == $manufacturer->id ? 'selected' : '' }}>
@@ -32,155 +31,146 @@
                     @endforeach
                 </select>
             </div>
-
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Model Name</label>
+                <label for="name" class="block bp-spec mb-2">§ Model Name</label>
                 <input type="text" id="name" name="name" value="{{ request('name') }}"
-                       placeholder="e.g. Golf VII, 3 Series, Audi A4"
-                       class="w-full rounded-lg border-gray-300 text-sm">
+                       placeholder="e.g. Golf VII, 3 Series"
+                       class="bp-input">
             </div>
-
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <label for="year_from" class="block text-sm font-medium text-gray-700 mb-1">Year From</label>
+                    <label for="year_from" class="block bp-spec mb-2">§ Year From</label>
                     <input type="number" id="year_from" name="year_from" value="{{ request('year_from') }}"
-                           placeholder="1990"
-                           class="w-full rounded-lg border-gray-300 text-sm">
+                           placeholder="1990" class="bp-input">
                 </div>
                 <div>
-                    <label for="year_to" class="block text-sm font-medium text-gray-700 mb-1">Year To</label>
+                    <label for="year_to" class="block bp-spec mb-2">§ Year To</label>
                     <input type="number" id="year_to" name="year_to" value="{{ request('year_to') }}"
-                           placeholder="2025"
-                           class="w-full rounded-lg border-gray-300 text-sm">
+                           placeholder="2025" class="bp-input">
                 </div>
             </div>
-
             <div>
-                <label for="active_status" class="block text-sm font-medium text-gray-700 mb-1">Active</label>
-                <select id="active_status" name="active_status" class="w-full rounded-lg border-gray-300 text-sm">
+                <label for="active_status" class="block bp-spec mb-2">§ Status</label>
+                <select id="active_status" name="active_status" class="bp-select">
                     <option value="">All</option>
                     <option value="active" {{ request('active_status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('active_status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
             </div>
-
-            <div class="md:col-span-4 flex justify-end gap-3 mt-2">
-                <a href="{{ route('admin.catalog.car-models.index') }}"
-                   class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    Reset
-                </a>
-                <button type="submit"
-                        class="px-4 py-2 bg-navy border border-transparent rounded-lg text-sm font-medium text-white hover:bg-navy/90">
-                    Apply Filters
-                </button>
+            <div class="md:col-span-2 xl:col-span-4 flex items-center justify-end gap-4 pt-2 border-t border-rule">
+                <a href="{{ route('admin.catalog.car-models.index') }}" class="bp-btn-ghost">Reset</a>
+                <button type="submit" class="bp-btn-primary">Apply</button>
             </div>
         </form>
-    </div>
+    </section>
 
-    {{-- Bulk actions bar --}}
-    <div id="bulk-actions-bar" class="hidden items-center gap-4 bg-navy/5 border border-navy/20 rounded-xl px-6 py-3 mb-4">
-        <span id="selected-count" class="text-sm font-medium text-gray-700">0 items selected</span>
-        <div class="flex items-center gap-2">
-            <button id="bulk-activate-btn" type="button"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-800 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors">
-                <x-heroicon-o-check-circle class="w-4 h-4" />
+    {{-- Bulk Actions Bar --}}
+    <div x-show="checked.length > 0" x-cloak
+         class="flex items-center gap-3 px-5 py-3 bg-ink/5 border border-rule">
+        <span class="font-mono text-xs text-ink"
+              x-text="checked.length + ' model' + (checked.length > 1 ? 's' : '') + ' selected'"></span>
+        <div class="flex items-center gap-2 ml-auto">
+            <button type="button"
+                    @click="submitBulkForm('{{ route('admin.catalog.car-models.bulk-activate') }}')"
+                    class="inline-flex items-center gap-1 border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-green-600/30 bg-green-50 text-green-700 hover:bg-green-100">
+                <x-heroicon-o-check-circle class="w-3.5 h-3.5" />
                 Activate
             </button>
-            <button id="bulk-deactivate-btn" type="button"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">
-                <x-heroicon-o-x-circle class="w-4 h-4" />
+            <button type="button"
+                    @click="submitBulkForm('{{ route('admin.catalog.car-models.bulk-deactivate') }}')"
+                    class="inline-flex items-center gap-1 border px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider border-rule bg-ivory-alt text-ink hover:bg-rule">
+                <x-heroicon-o-x-circle class="w-3.5 h-3.5" />
                 Deactivate
             </button>
+            <button type="button" @click="checked = []"
+                    class="font-mono text-[10px] text-ink-muted hover:text-ink ml-2">Clear</button>
         </div>
-        <button id="clear-selection" type="button" class="ml-auto text-sm text-gray-500 hover:text-gray-700">
-            Clear selection
-        </button>
     </div>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <section class="bp-card overflow-hidden">
+        <header class="bp-card-header flex items-center justify-between gap-4">
+            <div>
+                <p class="bp-spec text-amber-ink">§ Catalog · Car Models</p>
+                <h2 class="mt-1 font-display text-xl font-bold text-ink tracking-[-0.02em]">
+                    Car Model Registry<span class="text-amber">.</span>
+                </h2>
+            </div>
+            <p class="font-mono text-xs text-ink-muted tabular-nums">
+                {{ number_format($carModels->total()) }} records
+            </p>
+        </header>
+
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="bp-table">
+                <thead>
                     <tr>
-                        <th scope="col" class="px-6 py-3 w-12">
-                            <input type="checkbox" id="select-all-models"
-                                   class="rounded border-gray-300 text-navy focus:ring-navy"
-                                   title="Select all">
+                        <th class="w-10">
+                            <input type="checkbox" class="rounded-none border-rule"
+                                   x-on:change="checked = $event.target.checked
+                                       ? {{ json_encode($carModels->pluck('id')->toArray()) }} : []"
+                                   :checked="checked.length === {{ $carModels->count() }} && {{ $carModels->count() }} > 0">
                         </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Model
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Manufacturer
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Years
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Products
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
+                        <th>Model</th>
+                        <th>Manufacturer</th>
+                        <th>Years</th>
+                        <th>Status</th>
+                        <th>Products</th>
+                        <th class="text-right pr-5">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @forelse($carModels as $carModel)
-                        <tr class="cursor-pointer hover:bg-gray-50 transition-colors"
-                            data-edit-url="{{ route('admin.catalog.car-models.edit', $carModel) }}">
-                            <td class="px-6 py-4 whitespace-nowrap no-row-click">
+                        <tr class="cursor-pointer" data-edit-url="{{ route('admin.catalog.car-models.edit', $carModel) }}">
+                            <td class="no-row-click">
                                 <input type="checkbox" name="selected_ids[]"
                                        value="{{ $carModel->id }}"
-                                       class="model-checkbox rounded border-gray-300 text-navy focus:ring-navy">
+                                       class="rounded-none border-rule"
+                                       x-model="checked">
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {{ $carModel->name }}
+                            <td>
+                                <p class="text-sm font-bold text-ink">{{ $carModel->name }}</p>
                                 @if($carModel->slug)
-                                    <div class="text-xs text-gray-500">{{ $carModel->slug }}</div>
+                                    <p class="font-mono text-xs text-ink-muted mt-0.5">{{ $carModel->slug }}</p>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $carModel->manufacturer ? trans_field($carModel->manufacturer->name) : '—' }}
+                            <td>
+                                <p class="text-sm text-ink">{{ $carModel->manufacturer ? trans_field($carModel->manufacturer->name) : '—' }}</p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                @if($carModel->year_from)
-                                    {{ $carModel->year_from }}–{{ $carModel->year_to ?? 'present' }}
-                                @else
-                                    —
-                                @endif
+                            <td>
+                                <p class="font-mono text-xs tabular-nums text-ink">
+                                    @if($carModel->year_from)
+                                        {{ $carModel->year_from }}–{{ $carModel->year_to ?? 'now' }}
+                                    @else
+                                        —
+                                    @endif
+                                </p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <td>
                                 @if($carModel->is_active)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        Active
-                                    </span>
+                                    <span class="font-mono text-xs text-emerald-600 font-bold">ACTIVE</span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        Inactive
-                                    </span>
+                                    <span class="font-mono text-xs text-ink-muted font-bold">INACTIVE</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $carModel->products_count ?? $carModel->products()->count() }}
+                            <td>
+                                <p class="font-mono text-sm tabular-nums text-ink">
+                                    {{ number_format($carModel->products_count ?? $carModel->products()->count()) }}
+                                </p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium no-row-click">
-                                <div class="flex items-center gap-2">
+                            <td class="text-right pr-5 no-row-click">
+                                <div class="flex items-center justify-end gap-1">
                                     <a href="{{ route('admin.catalog.car-models.edit', $carModel) }}"
-                                       class="text-gray-600 hover:text-gray-900"
-                                       title="Edit">
-                                        <x-heroicon-o-pencil-square class="w-4 h-4" />
+                                       class="bp-btn-ghost gap-1 text-[10px]">
+                                        <x-heroicon-o-pencil-square class="w-3.5 h-3.5" />
+                                        Edit
                                     </a>
                                     <form action="{{ route('admin.catalog.car-models.destroy', $carModel) }}" method="POST"
-                                          class="inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this car model?');">
+                                          onsubmit="return confirm('Delete this car model?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900" title="Delete">
-                                            <x-heroicon-o-trash class="w-4 h-4" />
+                                        <button type="submit" class="bp-btn-ghost text-red-600 hover:text-red-700 gap-1 text-[10px]">
+                                            <x-heroicon-o-trash class="w-3.5 h-3.5" />
                                         </button>
                                     </form>
                                 </div>
@@ -188,13 +178,13 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                                <x-heroicon-o-inbox class="w-12 h-12 mx-auto text-gray-400" />
-                                <p class="mt-2 text-sm">No car models found.</p>
-                                <a href="{{ route('admin.catalog.car-models.create') }}"
-                                   class="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    <x-heroicon-o-plus class="w-4 h-4 mr-1" />
-                                    Add your first car model
+                            <td colspan="7" class="px-5 py-16 text-center">
+                                <x-heroicon-o-inbox class="w-10 h-10 mx-auto text-ink/20 mb-3" />
+                                <p class="font-display font-bold text-ink">No car models found</p>
+                                <p class="mt-1 text-sm text-ink-muted">Try adjusting your filters or add one.</p>
+                                <a href="{{ route('admin.catalog.car-models.create') }}" class="bp-btn-primary mt-5 inline-flex">
+                                    <x-heroicon-o-plus class="w-4 h-4" />
+                                    Add First Car Model
                                 </a>
                             </td>
                         </tr>
@@ -202,124 +192,48 @@
                 </tbody>
             </table>
         </div>
+
         @if($carModels->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
+            <div class="px-5 py-4 border-t border-rule">
                 {{ $carModels->withQueryString()->links() }}
             </div>
         @endif
-    </div>
+    </section>
+
 </div>
 @endsection
 
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Row click navigation
         document.querySelectorAll('tr[data-edit-url]').forEach(row => {
             row.addEventListener('click', function (e) {
                 if (e.target.closest('a, button, form, .no-row-click')) return;
                 window.location.href = this.dataset.editUrl;
             });
         });
-
-        // Bulk actions
-        const selectAllCheckbox = document.getElementById('select-all-models');
-        const itemCheckboxes = document.querySelectorAll('.model-checkbox');
-        const bulkActionsBar = document.getElementById('bulk-actions-bar');
-        const selectedCount = document.getElementById('selected-count');
-        const clearSelectionBtn = document.getElementById('clear-selection');
-        const bulkActivateBtn = document.getElementById('bulk-activate-btn');
-        const bulkDeactivateBtn = document.getElementById('bulk-deactivate-btn');
-
-        function updateBulkActions() {
-            const checked = document.querySelectorAll('.model-checkbox:checked');
-            const count = checked.length;
-
-            selectedCount.textContent = `${count} item${count !== 1 ? 's' : ''} selected`;
-
-            if (count > 0) {
-                bulkActionsBar.classList.remove('hidden');
-                bulkActionsBar.classList.add('flex');
-            } else {
-                bulkActionsBar.classList.add('hidden');
-                bulkActionsBar.classList.remove('flex');
-            }
-
-            if (count === itemCheckboxes.length && count > 0) {
-                selectAllCheckbox.checked = true;
-                selectAllCheckbox.indeterminate = false;
-            } else if (count > 0) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true;
-            } else {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-            }
-        }
-
-        if (selectAllCheckbox) {
-            selectAllCheckbox.addEventListener('change', function () {
-                itemCheckboxes.forEach(cb => { cb.checked = this.checked; });
-                updateBulkActions();
-            });
-        }
-
-        itemCheckboxes.forEach(cb => {
-            cb.addEventListener('change', updateBulkActions);
-        });
-
-        if (clearSelectionBtn) {
-            clearSelectionBtn.addEventListener('click', function () {
-                itemCheckboxes.forEach(cb => { cb.checked = false; });
-                updateBulkActions();
-            });
-        }
-
-        function submitBulkForm(action) {
-            const checked = document.querySelectorAll('.model-checkbox:checked');
-            if (checked.length === 0) return;
-
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = action;
-
-            const csrf = document.createElement('input');
-            csrf.type = 'hidden';
-            csrf.name = '_token';
-            csrf.value = '{{ csrf_token() }}';
-            form.appendChild(csrf);
-
-            checked.forEach(cb => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'ids[]';
-                input.value = cb.value;
-                form.appendChild(input);
-            });
-
-            document.body.appendChild(form);
-            form.submit();
-        }
-
-        if (bulkActivateBtn) {
-            bulkActivateBtn.addEventListener('click', function () {
-                const count = document.querySelectorAll('.model-checkbox:checked').length;
-                if (confirm(`Activate ${count} selected car model${count !== 1 ? 's' : ''}?`)) {
-                    submitBulkForm('{{ route("admin.catalog.car-models.bulk-activate") }}');
-                }
-            });
-        }
-
-        if (bulkDeactivateBtn) {
-            bulkDeactivateBtn.addEventListener('click', function () {
-                const count = document.querySelectorAll('.model-checkbox:checked').length;
-                if (confirm(`Deactivate ${count} selected car model${count !== 1 ? 's' : ''}?`)) {
-                    submitBulkForm('{{ route("admin.catalog.car-models.bulk-deactivate") }}');
-                }
-            });
-        }
-
-        updateBulkActions();
     });
+
+    function submitBulkForm(action) {
+        const checked = document.querySelectorAll('input[name="selected_ids[]"]:checked');
+        if (!checked.length) return;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = action;
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_token';
+        csrf.value = '{{ csrf_token() }}';
+        form.appendChild(csrf);
+        checked.forEach(cb => {
+            const inp = document.createElement('input');
+            inp.type = 'hidden';
+            inp.name = 'ids[]';
+            inp.value = cb.value;
+            form.appendChild(inp);
+        });
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
 @endpush

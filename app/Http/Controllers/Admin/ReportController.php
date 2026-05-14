@@ -19,6 +19,17 @@ class ReportController extends Controller
      */
     public function index()
     {
+        $startDate = now()->subDays(30)->startOfDay();
+        $endDate = now()->endOfDay();
+        $successfulSearches = SearchLog::query()
+            ->where('result_count', '>', 0)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        $failedSearches = FailedSearchLog::query()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+        $totalSearches = $successfulSearches + $failedSearches;
+
         return view('admin.reports.index', [
             'reportTypes' => [
                 'sales' => 'Sales Reports',
@@ -27,6 +38,20 @@ class ReportController extends Controller
                 'checkout' => 'Checkout Drop-off',
             ],
             'dateRanges' => $this->getDateRanges(),
+            'quickStats' => [
+                'revenue' => Order::query()
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->sum('grand_total'),
+                'orders' => Order::query()
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->count(),
+                'customers' => User::query()
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->count(),
+                'search_success_rate' => $totalSearches > 0
+                    ? round(($successfulSearches / $totalSearches) * 100, 2)
+                    : 0,
+            ],
         ]);
     }
 
@@ -321,13 +346,143 @@ class ReportController extends Controller
      */
     public function export(Request $request)
     {
-        $type = $request->input('type');
-        $format = $request->input('format', 'csv');
-        $dateRange = $request->input('date_range', 'last_30_days');
+        $validated = $request->validate([
+            'type' => 'required|string|in:sales,customers,search,checkout',
+            'format' => 'nullable|string|in:csv',
+            'date_range' => 'nullable|string',
+        ]);
 
-        // This would generate and return a file download
-        // For now, we'll just redirect back with a message
-        return redirect()->back()->with('success', "{$type} report exported successfully as {$format}");
+        $type = $validated['type'];
+        $dateRange = $request->input('date_range', 'last_30_days');
+        $range = $this->parseDateRange($dateRange);
+        $filename = sprintf('%s-report-%s.csv', $type, now()->format('Ymd-His'));
+
+        return response()->streamDownload(function () use ($type, $range) {
+            $handle = fopen('php://output', 'w');
+            fwrite($handle, "\xEF\xBB\xBF");
+
+            foreach ($this->exportRows($type, $range['start'], $range['end']) as $row) {
+                fputcsv($handle, $row);
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
+    }
+
+    private function exportRows(string $type, Carbon $startDate, Carbon $endDate): array
+    {
+        return match ($type) {
+            'sales' => $this->salesExportRows($startDate, $endDate),
+            'customers' => $this->customerExportRows($startDate, $endDate),
+            'search' => $this->searchExportRows($startDate, $endDate),
+            'checkout' => $this->checkoutExportRows($startDate, $endDate),
+        };
+    }
+
+    private function salesExportRows(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = [[
+            'order_number',
+            'status',
+            'payment_status',
+            'subtotal',
+            'shipping_cost',
+            'vat_amount',
+            'grand_total',
+            'created_at',
+        ]];
+
+        Order::query()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at')
+            ->chunk(200, function ($orders) use (&$rows) {
+                foreach ($orders as $order) {
+                    $rows[] = [
+                        $order->order_number,
+                        $order->status instanceof \BackedEnum ? $order->status->value : $order->status,
+                        $order->payment_status instanceof \BackedEnum ? $order->payment_status->value : $order->payment_status,
+                        $order->subtotal,
+                        $order->shipping_cost,
+                        $order->vat_amount,
+                        $order->grand_total,
+                        optional($order->created_at)->toDateTimeString(),
+                    ];
+                }
+            });
+
+        return $rows;
+    }
+
+    private function customerExportRows(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = [['email', 'name', 'is_active', 'created_at']];
+
+        User::query()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at')
+            ->chunk(200, function ($users) use (&$rows) {
+                foreach ($users as $user) {
+                    $rows[] = [
+                        $user->email,
+                        $user->name,
+                        $user->is_active ? 'active' : 'inactive',
+                        optional($user->created_at)->toDateTimeString(),
+                    ];
+                }
+            });
+
+        return $rows;
+    }
+
+    private function searchExportRows(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = [['search_query', 'normalized_query', 'result_count', 'lang', 'created_at']];
+
+        SearchLog::query()
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at')
+            ->chunk(200, function ($searches) use (&$rows) {
+                foreach ($searches as $search) {
+                    $rows[] = [
+                        $search->search_query,
+                        $search->normalized_query,
+                        $search->result_count,
+                        $search->lang,
+                        optional($search->created_at)->toDateTimeString(),
+                    ];
+                }
+            });
+
+        return $rows;
+    }
+
+    private function checkoutExportRows(Carbon $startDate, Carbon $endDate): array
+    {
+        $rows = [['date', 'total_carts', 'completed_orders']];
+        $carts = Cart::query()
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as total_carts')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get();
+
+        $orders = Order::query()
+            ->selectRaw('DATE(created_at) as date, COUNT(*) as completed_orders')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->groupBy('date')
+            ->pluck('completed_orders', 'date');
+
+        foreach ($carts as $cart) {
+            $rows[] = [
+                $cart->date,
+                $cart->total_carts,
+                $orders[$cart->date] ?? 0,
+            ];
+        }
+
+        return $rows;
     }
 
     /**

@@ -1,36 +1,34 @@
 @extends('layouts.admin')
 
-@section('title', 'Manufacturer Management')
+@section('title', 'Manufacturers')
+@section('page_title', 'Manufacturer Management')
+
+@section('header_actions')
+    <a href="{{ route('admin.catalog.manufacturers.create') }}" class="bp-btn-primary">
+        <x-heroicon-o-plus class="w-4 h-4" />
+        Add Manufacturer
+    </a>
+@endsection
 
 @section('content')
-<div class="px-6 py-8">
-    <div class="flex items-center justify-between mb-8">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900">Manufacturer Management</h1>
-            <p class="text-gray-600 mt-1">Manage OEM manufacturers and brands</p>
-        </div>
-        <div class="flex items-center gap-3">
-            <a href="{{ route('admin.catalog.manufacturers.create') }}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-navy border border-transparent rounded-lg text-sm font-medium text-white hover:bg-navy/90">
-                <x-heroicon-o-plus class="w-4 h-4" />
-                Add Manufacturer
-            </a>
-        </div>
-    </div>
+<div class="space-y-6">
 
     {{-- Filters --}}
-    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <form method="GET" action="{{ route('admin.catalog.manufacturers.index') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <section class="bp-card">
+        <header class="bp-card-header">
+            <p class="bp-spec text-ink-muted">§ Filter · Manufacturers</p>
+        </header>
+        <form method="GET" action="{{ route('admin.catalog.manufacturers.index') }}"
+              class="p-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label for="name" class="block bp-spec mb-2">§ Name</label>
                 <input type="text" id="name" name="name" value="{{ request('name') }}"
                        placeholder="e.g. Bosch, Valeo, Continental"
-                       class="w-full rounded-lg border-gray-300 text-sm">
+                       class="bp-input">
             </div>
-
             <div>
-                <label for="country_code" class="block text-sm font-medium text-gray-700 mb-1">Country</label>
-                <select id="country_code" name="country_code" class="w-full rounded-lg border-gray-300 text-sm">
+                <label for="country_code" class="block bp-spec mb-2">§ Country</label>
+                <select id="country_code" name="country_code" class="bp-select">
                     <option value="">All Countries</option>
                     @foreach($countries as $code => $name)
                         <option value="{{ $code }}" {{ request('country_code') == $code ? 'selected' : '' }}>
@@ -39,130 +37,115 @@
                     @endforeach
                 </select>
             </div>
-
             <div>
-                <label for="active_status" class="block text-sm font-medium text-gray-700 mb-1">Active</label>
-                <select id="active_status" name="active_status" class="w-full rounded-lg border-gray-300 text-sm">
+                <label for="active_status" class="block bp-spec mb-2">§ Status</label>
+                <select id="active_status" name="active_status" class="bp-select">
                     <option value="">All</option>
                     <option value="active" {{ request('active_status') == 'active' ? 'selected' : '' }}>Active</option>
                     <option value="inactive" {{ request('active_status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                 </select>
             </div>
-
             <div>
-                <label for="oem_verified" class="block text-sm font-medium text-gray-700 mb-1">OEM Verified</label>
-                <select id="oem_verified" name="oem_verified" class="w-full rounded-lg border-gray-300 text-sm">
+                <label for="oem_verified" class="block bp-spec mb-2">§ OEM Verified</label>
+                <select id="oem_verified" name="oem_verified" class="bp-select">
                     <option value="">All</option>
                     <option value="verified" {{ request('oem_verified') == 'verified' ? 'selected' : '' }}>Verified</option>
                     <option value="not_verified" {{ request('oem_verified') == 'not_verified' ? 'selected' : '' }}>Not Verified</option>
                 </select>
             </div>
-
-            <div class="md:col-span-4 flex justify-end gap-3 mt-2">
-                <a href="{{ route('admin.catalog.manufacturers.index') }}"
-                   class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
-                    Reset
-                </a>
-                <button type="submit"
-                        class="px-4 py-2 bg-navy border border-transparent rounded-lg text-sm font-medium text-white hover:bg-navy/90">
-                    Apply Filters
-                </button>
+            <div class="md:col-span-2 xl:col-span-4 flex items-center justify-end gap-4 pt-2 border-t border-rule">
+                <a href="{{ route('admin.catalog.manufacturers.index') }}" class="bp-btn-ghost">Reset</a>
+                <button type="submit" class="bp-btn-primary">Apply</button>
             </div>
         </form>
-    </div>
+    </section>
 
     {{-- Table --}}
-    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <section class="bp-card overflow-hidden">
+        <header class="bp-card-header flex items-center justify-between gap-4">
+            <div>
+                <p class="bp-spec text-amber-ink">§ Catalog · Manufacturers</p>
+                <h2 class="mt-1 font-display text-xl font-bold text-ink tracking-[-0.02em]">
+                    Manufacturer Registry<span class="text-amber">.</span>
+                </h2>
+            </div>
+            <p class="font-mono text-xs text-ink-muted tabular-nums">
+                {{ number_format($manufacturers->total()) }} records
+            </p>
+        </header>
+
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+            <table class="bp-table">
+                <thead>
                     <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Logo
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Name
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Country
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            OEM Verified
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Products
-                        </th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Actions
-                        </th>
+                        <th class="w-12">Logo</th>
+                        <th>Name</th>
+                        <th>Country</th>
+                        <th>OEM</th>
+                        <th>Status</th>
+                        <th>Products</th>
+                        <th class="text-right pr-5">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody>
                     @forelse($manufacturers as $manufacturer)
-                        <tr class="cursor-pointer hover:bg-gray-50 transition-colors"
-                            data-edit-url="{{ route('admin.catalog.manufacturers.edit', $manufacturer) }}">
-                            <td class="px-6 py-4 whitespace-nowrap">
+                        <tr class="cursor-pointer" data-edit-url="{{ route('admin.catalog.manufacturers.edit', $manufacturer) }}">
+                            <td>
                                 @if($manufacturer->logo)
                                     <img src="{{ $manufacturer->logo->file_url }}"
                                          alt="{{ trans_field($manufacturer->name) }}"
-                                         class="h-8 w-8 object-contain rounded border border-gray-200 bg-white p-0.5">
+                                         class="h-8 w-8 object-contain border border-rule bg-paper p-0.5">
                                 @else
-                                    <span class="text-gray-300">
-                                        <x-heroicon-o-photo class="w-6 h-6" />
-                                    </span>
+                                    <div class="h-8 w-8 bg-ivory-alt border border-rule flex items-center justify-center">
+                                        <x-heroicon-o-photo class="w-4 h-4 text-ink-muted" />
+                                    </div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {{ trans_field($manufacturer->name) }}
+                            <td>
+                                <p class="text-sm font-bold text-ink">{{ trans_field($manufacturer->name) }}</p>
                                 @if($manufacturer->slug)
-                                    <div class="text-xs text-gray-500">{{ $manufacturer->slug }}</div>
+                                    <p class="font-mono text-xs text-ink-muted mt-0.5">{{ $manufacturer->slug }}</p>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $countries[$manufacturer->country_code] ?? $manufacturer->country_code }}
+                            <td>
+                                <p class="text-sm text-ink">{{ $countries[$manufacturer->country_code] ?? $manufacturer->country_code ?? '—' }}</p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <td>
                                 @if($manufacturer->is_verified_oem)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-green-600/30 bg-green-50 text-green-700">
                                         Verified
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    <span class="inline-flex items-center border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider border-rule bg-ivory-alt text-ink-muted">
                                         Not Verified
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <td>
                                 @if($manufacturer->is_active)
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        Active
-                                    </span>
+                                    <span class="font-mono text-xs text-emerald-600 font-bold">ACTIVE</span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        Inactive
-                                    </span>
+                                    <span class="font-mono text-xs text-ink-muted font-bold">INACTIVE</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $manufacturer->products_count ?? $manufacturer->products()->count() }}
+                            <td>
+                                <p class="font-mono text-sm tabular-nums text-ink">
+                                    {{ number_format($manufacturer->products_count ?? $manufacturer->products()->count()) }}
+                                </p>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium no-row-click">
-                                <div class="flex items-center gap-2">
+                            <td class="text-right pr-5 no-row-click">
+                                <div class="flex items-center justify-end gap-1">
                                     <a href="{{ route('admin.catalog.manufacturers.edit', $manufacturer) }}"
-                                       class="text-gray-600 hover:text-gray-900"
-                                       title="Edit">
-                                        <x-heroicon-o-pencil-square class="w-4 h-4" />
+                                       class="bp-btn-ghost gap-1 text-[10px]">
+                                        <x-heroicon-o-pencil-square class="w-3.5 h-3.5" />
+                                        Edit
                                     </a>
                                     <form action="{{ route('admin.catalog.manufacturers.destroy', $manufacturer) }}" method="POST"
-                                          class="inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this manufacturer?');">
+                                          onsubmit="return confirm('Delete this manufacturer?');">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-900" title="Delete">
-                                            <x-heroicon-o-trash class="w-4 h-4" />
+                                        <button type="submit" class="bp-btn-ghost text-red-600 hover:text-red-700 gap-1 text-[10px]">
+                                            <x-heroicon-o-trash class="w-3.5 h-3.5" />
                                         </button>
                                     </form>
                                 </div>
@@ -170,13 +153,13 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                                <x-heroicon-o-inbox class="w-12 h-12 mx-auto text-gray-400" />
-                                <p class="mt-2 text-sm">No manufacturers found.</p>
-                                <a href="{{ route('admin.catalog.manufacturers.create') }}"
-                                   class="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                    <x-heroicon-o-plus class="w-4 h-4 mr-1" />
-                                    Add your first manufacturer
+                            <td colspan="7" class="px-5 py-16 text-center">
+                                <x-heroicon-o-inbox class="w-10 h-10 mx-auto text-ink/20 mb-3" />
+                                <p class="font-display font-bold text-ink">No manufacturers found</p>
+                                <p class="mt-1 text-sm text-ink-muted">Try adjusting your filters or add one.</p>
+                                <a href="{{ route('admin.catalog.manufacturers.create') }}" class="bp-btn-primary mt-5 inline-flex">
+                                    <x-heroicon-o-plus class="w-4 h-4" />
+                                    Add First Manufacturer
                                 </a>
                             </td>
                         </tr>
@@ -184,12 +167,14 @@
                 </tbody>
             </table>
         </div>
+
         @if($manufacturers->hasPages())
-            <div class="px-6 py-4 border-t border-gray-200">
+            <div class="px-5 py-4 border-t border-rule">
                 {{ $manufacturers->withQueryString()->links() }}
             </div>
         @endif
-    </div>
+    </section>
+
 </div>
 @endsection
 
