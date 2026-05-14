@@ -2,6 +2,8 @@
 
 @section('title', ui_copy('cart_title', 'cart.title'))
 
+@section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
+
 @section('content')
 <div x-data="cartData()" class="relative min-h-screen bg-ivory text-ink pt-10 pb-28">
     <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
@@ -617,9 +619,4 @@ function cartData() {
         },
 
         hasBlockedItems() {
-            return this.cart.items.some(i => i.priceBlocked);
-        }
-    };
-}
-</script>
-@endsection
+            return 

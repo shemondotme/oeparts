@@ -10,7 +10,17 @@
 @endphp
 
 @section('title'){{ $contactTitle }} · {{ $siteName }}@endsection
-@section('description'){{ $contactDescr }}@endsection
+@section('meta_description'){{ $contactDescr }}@endsection
+@section('og_title'){{ $contactTitle }} · {{ $siteName }}@endsection
+@section('canonical')
+    <link rel="canonical" href="{{ url('/' . $lang . '/contact') }}">
+@endsection
+@section('hreflang')
+    @foreach(['en','de','lt','fr','es'] as $hLang)
+        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ url('/' . $hLang . '/contact') }}">
+    @endforeach
+    <link rel="alternate" hreflang="x-default" href="{{ url('/en/contact') }}">
+@endsection
 
 {{-- ══════════════════════════════════════════════════════════════════════
      INDUSTRIAL BLUEPRINT — CONTACT
@@ -641,17 +651,4 @@ function contactForm() {
                     this.codeSent = false;
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: this.successMsg, type: 'success' } }));
                 } else {
-                    if (data.errors) { this.fieldErrors = Object.fromEntries(Object.entries(data.errors).map(([k,v]) => [k, Array.isArray(v) ? v[0] : v])); }
-                    this.errorMsg = data.message || @json(trans('contact.sent_failed'));
-                }
-            } catch (e) {
-                this.errorMsg = 'Network error. Please try again.';
-            } finally {
-                this.submitting = false;
-            }
-        },
-    };
-}
-</script>
-@endpush
-@endsection
+                    if (data.er
