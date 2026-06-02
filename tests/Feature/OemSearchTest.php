@@ -227,7 +227,7 @@ class OemSearchTest extends TestCase
         $response = $this->get('/en/search/autocomplete?q=06L9');
         $response->assertStatus(200);
         $response->assertJsonStructure([[
-            'oem', 'normalized_oem', 'manufacturer', 'price', 'condition', 'url'
+            'id', 'oem', 'normalized_oem', 'manufacturer', 'price', 'condition', 'url',
         ]]);
     }
 

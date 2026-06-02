@@ -2,7 +2,7 @@
 
 @php
     $lang = app()->getLocale();
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
     $inquiryHours = (int) settings('part_inquiry.response_hours', 24);
     $minChars = (int) settings('search.min_chars', 3);
     $zeroJsonLd = [
@@ -22,6 +22,8 @@
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
+@section('meta_robots')<meta name="robots" content="noindex,follow">@endsection
+
 @section('title')
     {{ __('search.zero_page_title', ['oem' => $normalized_query, 'site' => $siteName]) }}
 @endsection

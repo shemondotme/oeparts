@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'strip_doc' => 'DOC · OEMHUB/EU',
+    'strip_doc' => 'DOC · OEPARTS/EU',
     'strip_genuine' => 'ORIGINAL-OEM · 5 SPRACHEN · 27 EU-LÄNDER',
     'strip_status' => 'SYSTEM ONLINE',
     'label_parts' => 'Teilesuche',

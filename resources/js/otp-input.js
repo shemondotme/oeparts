@@ -1,5 +1,5 @@
 /**
- * OEMHub — OTP Input Alpine.js module
+ * OeParts — OTP Input Alpine.js module
  *
  * Usage in Blade:
  *   <div x-data="otpInput(6)" @otp-verify.window="handleVerify($event.detail)">

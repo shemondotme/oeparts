@@ -43,12 +43,12 @@ jobs:
         run: |
           jq --arg ver "${{ steps.version.outputs.VERSION }}" \
              --arg date "$(date -u +%Y-%m-%d)" \
-             '.version = $ver | .released_at = $date' \
+             '.version = $ver | .release_date = $date' \
              version.json > version.json.tmp && mv version.json.tmp version.json
 
       - name: Create release archive
         run: |
-          zip -r oemhub-${{ steps.version.outputs.VERSION }}.zip . \
+          zip -r oeparts-${{ steps.version.outputs.VERSION }}.zip . \
             --exclude "*.git*" \
             --exclude "node_modules/*" \
             --exclude "tests/*" \
@@ -58,14 +58,15 @@ jobs:
             --exclude "storage/logs/*" \
             --exclude "storage/framework/cache/*" \
             --exclude "storage/framework/sessions/*" \
-            --exclude "storage/framework/views/*"
+            --exclude "storage/framework/views/*" \
+            --exclude "storage/installed.lock"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "OEMHub v${{ steps.version.outputs.VERSION }}"
+          name: "OeParts v${{ steps.version.outputs.VERSION }}"
           body_path: CHANGELOG.md
-          files: oemhub-${{ steps.version.outputs.VERSION }}.zip
+          files: oeparts-${{ steps.version.outputs.VERSION }}.zip
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
         env:

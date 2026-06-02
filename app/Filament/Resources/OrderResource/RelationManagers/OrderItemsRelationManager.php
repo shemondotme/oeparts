@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Filament\Resources\OrderResource\RelationManagers;
+
+use Filament\Forms;
+use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Schema;
+use Filament\Tables;
+use Filament\Tables\Table;
+
+class OrderItemsRelationManager extends RelationManager
+{
+    protected static string $relationship = 'items';
+
+    protected static ?string $recordTitleAttribute = 'oem_number_snapshot';
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Forms\Components\TextInput::make('oem_number_snapshot')
+                    ->label('OEM Number')
+                    ->required()
+                    ->maxLength(100),
+                Forms\Components\TextInput::make('manufacturer_snapshot')
+                    ->label('Manufacturer')
+                    ->required()
+                    ->maxLength(100),
+                Forms\Components\TextInput::make('condition_snapshot')
+                    ->label('Condition')
+                    ->required()
+                    ->maxLength(50),
+                Forms\Components\TextInput::make('quantity')
+                    ->label('Quantity')
+                    ->required()
+                    ->numeric(),
+                Forms\Components\TextInput::make('unit_price')
+                    ->label('Unit Price')
+                    ->required()
+                    ->numeric()
+                    ->prefix('€'),
+                Forms\Components\TextInput::make('total_price')
+                    ->label('Total Price')
+                    ->required()
+                    ->numeric()
+                    ->prefix('€'),
+            ]);
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('oem_number_snapshot')
+            ->columns([
+                Tables\Columns\TextColumn::make('oem_number_snapshot')
+                    ->label('OEM Number')
+                    ->extraAttributes(['class' => 'oem-number']),
+                Tables\Columns\TextColumn::make('manufacturer_snapshot')
+                    ->label('Manufacturer'),
+                Tables\Columns\TextColumn::make('condition_snapshot')
+                    ->label('Condition')
+                    ->badge(),
+                Tables\Columns\TextColumn::make('quantity')
+                    ->label('Qty')
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('unit_price')
+                    ->label('Unit Price')
+                    ->getStateUsing(fn ($record): string => format_money($record->unit_price)),
+                Tables\Columns\TextColumn::make('total_price')
+                    ->label('Total')
+                    ->getStateUsing(fn ($record): string => format_money($record->total_price)),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make(),
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ]);
+    }
+}

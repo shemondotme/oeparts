@@ -9,22 +9,23 @@ class ReorderHomepageSectionsSeeder extends Seeder
 {
     public function run(): void
     {
-        // Swapped positions 2 and 14 (Stats Counter ↔ Trust Bar)
+        // 3 light → DARK → 3 light → DARK → 3 light → DARK → 2 light
+        // Dark (bg-ink) sections at positions 4, 8, 12 — never consecutive
         $desiredOrder = [
-            'hero',              // Navy - Above fold
-            'trust_bar',         // Amber - Trust signals at top
-            'how_it_works',      // White - Explain process
-            'featured_brands',   // White/Amber - Show brands
-            'popular_searches',  // White/Orange - Quick access
-            'banner',            // Navy - Pattern break, highlight
-            'part_inquiry',      // Amber - Lead capture
-            'testimonials',      // White/Amber - Reviews
-            'shipping_info',     // White/Blue - Delivery trust
-            'blog_preview',      // Light blue - Content
-            'faqs',              // White/Blue - Address concerns
-            'contact_cta',       // Navy - Final conversion push
-            'newsletter',        // Amber - Email capture
-            'stats_counter',     // Off-white - Stats at bottom
+            'hero',              // Light - Above fold search
+            'trust_bar',         // Light - Trust signals
+            'stats_counter',     // Light - Credibility numbers
+            'part_inquiry',      // 🔵 DARK - Can't find part?
+            'how_it_works',      // Light - Process
+            'featured_brands',   // Light - Brand showcase
+            'popular_searches',  // Light - Trending numbers
+            'banner',            // 🔵 DARK - Workshop promo
+            'testimonials',      // Light - Reviews
+            'shipping_info',     // Light - EU delivery
+            'faqs',              // Light - Objections
+            'contact_cta',       // 🔵 DARK - Final contact
+            'newsletter',        // Light - Email capture
+            'blog_preview',      // Light - Content footer
         ];
 
         // Get all active homepage sections

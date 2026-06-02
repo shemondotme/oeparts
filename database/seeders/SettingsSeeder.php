@@ -39,9 +39,9 @@ class SettingsSeeder extends Seeder
 
         return [
             // ── GENERAL ──────────────────────────────────────────────────────────
-            ['group' => 'general', 'key' => 'site_name',       'value' => 'OEMHub',                  'type' => $s],
+            ['group' => 'general', 'key' => 'site_name',       'value' => 'OeParts',                  'type' => $s],
             ['group' => 'general', 'key' => 'site_url',        'value' => 'http://localhost',         'type' => $s],
-            ['group' => 'general', 'key' => 'site_email',      'value' => 'info@oemhub.eu',           'type' => $s],
+            ['group' => 'general', 'key' => 'site_email',      'value' => 'info@oeparts.lt',           'type' => $s],
             ['group' => 'general', 'key' => 'site_phone',      'value' => '+370 600 00000',           'type' => $s],
             ['group' => 'general', 'key' => 'site_address',    'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'logo_id',         'value' => '',                         'type' => $s],
@@ -57,7 +57,7 @@ class SettingsSeeder extends Seeder
 
             // ── CONTACT ──────────────────────────────────────────────────────────
             ['group' => 'contact', 'key' => 'phone',        'value' => '+370 600 00000',    'type' => $s],
-            ['group' => 'contact', 'key' => 'email',        'value' => 'info@oemhub.eu',    'type' => $s],
+            ['group' => 'contact', 'key' => 'email',        'value' => 'info@oeparts.lt',    'type' => $s],
             ['group' => 'contact', 'key' => 'address',      'value' => '',                  'type' => $s],
             ['group' => 'contact', 'key' => 'whatsapp',     'value' => '',                  'type' => $s],
             ['group' => 'contact', 'key' => 'viber',        'value' => '',                  'type' => $s],
@@ -122,7 +122,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'payment', 'key' => 'bank_name',             'value' => 'Demo Bank EU',           'type' => $s],
             ['group' => 'payment', 'key' => 'bank_iban',             'value' => 'DE89 3704 0044 0532 0130 00', 'type' => $s],
             ['group' => 'payment', 'key' => 'bank_bic',              'value' => 'COBADEFFXXX',            'type' => $s],
-            ['group' => 'payment', 'key' => 'bank_account_holder',   'value' => 'OEMHub EU GmbH',         'type' => $s],
+            ['group' => 'payment', 'key' => 'bank_account_holder',   'value' => 'OeParts UAB',         'type' => $s],
             ['group' => 'payment', 'key' => 'bank_reference_prefix', 'value' => 'OEM',     'type' => $s],
             ['group' => 'payment', 'key' => 'airwallex_environment', 'value' => 'sandbox', 'type' => $s],
             ['group' => 'payment', 'key' => 'airwallex_api_key',     'value' => '',        'type' => $e, 'encrypted' => true],
@@ -143,9 +143,9 @@ class SettingsSeeder extends Seeder
             ['group' => 'auth', 'key' => 'registration_enabled',      'value' => '1',   'type' => $b],
 
             // ── EMAIL ────────────────────────────────────────────────────────────
-            ['group' => 'email', 'key' => 'from_name',      'value' => 'OEMHub',          'type' => $s],
-            ['group' => 'email', 'key' => 'from_address',   'value' => 'no-reply@oemhub.eu', 'type' => $s],
-            ['group' => 'email', 'key' => 'reply_to',       'value' => 'info@oemhub.eu',  'type' => $s],
+            ['group' => 'email', 'key' => 'from_name',      'value' => 'OeParts',          'type' => $s],
+            ['group' => 'email', 'key' => 'from_address',   'value' => 'no-reply@oeparts.lt', 'type' => $s],
+            ['group' => 'email', 'key' => 'reply_to',       'value' => 'info@oeparts.lt',  'type' => $s],
             ['group' => 'email', 'key' => 'smtp_host',      'value' => 'smtp.mailtrap.io', 'type' => $s],
             ['group' => 'email', 'key' => 'smtp_port',      'value' => '587',             'type' => $i],
             ['group' => 'email', 'key' => 'smtp_encryption', 'value' => 'tls',             'type' => $s],
@@ -213,7 +213,7 @@ class SettingsSeeder extends Seeder
             // ── SEO ──────────────────────────────────────────────────────────────
             // Homepage title: primary keyword first, brand last, ≤60 chars
             ['group' => 'seo', 'key' => 'home_title',
-                'value' => 'Buy Genuine OEM Auto Parts Online | OEMHub',
+                'value' => 'Buy Genuine OEM Auto Parts Online | OeParts',
                 'type' => $s],
 
             // Homepage meta description: 145-155 chars, primary keyword + USPs + CTA
@@ -223,7 +223,7 @@ class SettingsSeeder extends Seeder
 
             // OEM part page title: keyword intent "buy {oem}" + price anchor + brand
             ['group' => 'seo', 'key' => 'oem_title_template',
-                'value' => 'Buy OEM Part {oem} — From €{min} | Genuine {manufacturer} | OEMHub',
+                'value' => 'Buy OEM Part {oem} — From €{min} | Genuine {manufacturer} | OeParts',
                 'type' => $s],
 
             // OEM part page description: specific, answers search intent, ≤155 chars
@@ -241,7 +241,7 @@ class SettingsSeeder extends Seeder
 
             // Brand page title: brand + OEM keyword + platform
             ['group' => 'seo', 'key' => 'brand_title_template',
-                'value' => 'Genuine {brand} OEM Parts — Buy Online | OEMHub',
+                'value' => 'Genuine {brand} OEM Parts — Buy Online | OeParts',
                 'type' => $s],
 
             ['group' => 'seo', 'key' => 'sitemap_search_log_days',  'value' => '90',           'type' => $i],
@@ -264,11 +264,11 @@ class SettingsSeeder extends Seeder
             ['group' => 'preloader', 'key' => 'path_patterns',   'value' => json_encode(['en', 'de', 'lt', 'fr', 'es']), 'type' => $j],
             ['group' => 'preloader', 'key' => 'min_display_ms',  'value' => '450',  'type' => $i],
             ['group' => 'preloader', 'key' => 'max_display_ms',  'value' => '6000', 'type' => $i],
-            ['group' => 'preloader', 'key' => 'headline',        'value' => $ml('OEM·HUB.'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'headline',        'value' => $ml('Oe·Parts.'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'spec_line',       'value' => $ml('§ SYS · INIT / EU'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'subline',         'value' => $ml('Genuine Parts Index'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'status_line',     'value' => $ml('Calibrating Index'), 'type' => $j],
-            ['group' => 'preloader', 'key' => 'foot_left',       'value' => $ml('OEMHUB · EU'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'foot_left',       'value' => $ml('OeParts · EU'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'foot_right',      'value' => $ml('LIVE CATALOGUE'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'aria_label',      'value' => $ml('Loading'), 'type' => $j],
 

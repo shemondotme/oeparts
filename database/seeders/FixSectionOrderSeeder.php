@@ -8,39 +8,43 @@ use Illuminate\Database\Seeder;
 /**
  * Fix section sort_order to match the intended homepage order.
  *
- * Intended order based on actual page design:
- * 1.  Hero            — Main search & hero content
- * 2.  Stats Counter   — Numbers showcase (right after hero)
- * 3.  How It Works    — 3-step process
- * 4.  Featured Brands — Brand showcase
- * 5.  Popular Searches — Trending OEM numbers
- * 6.  Part Inquiry    — Can't find your part form
- * 7.  Banner          — Promotional banner
- * 8.  Testimonials    — Customer reviews
- * 9.  Shipping Info   — EU delivery info
- * 10. Blog Preview    — Latest blog posts
- * 11. FAQs            — Frequently asked questions
- * 12. Contact CTA     — Dark contact section
- * 13. Newsletter      — Email subscription
- * 14. Trust Bar       — Trust badges before footer
+ * The 3 dark (bg-ink) sections — part_inquiry, banner, contact_cta —
+ * are spaced at positions 4, 8, 12 so they are NEVER consecutive.
+ * Visual rhythm: 3 light → dark → 3 light → dark → 3 light → dark → 2 light
+ *
+ * Intended order:
+ *  1. hero          (light)
+ *  2. trust_bar     (light)
+ *  3. stats_counter (light)
+ *  4. part_inquiry  🔵 DARK
+ *  5. how_it_works  (light)
+ *  6. featured_brands (light)
+ *  7. popular_searches (light)
+ *  8. banner        🔵 DARK
+ *  9. testimonials  (light)
+ * 10. shipping_info (light)
+ * 11. faqs          (light)
+ * 12. contact_cta   🔵 DARK
+ * 13. newsletter    (light)
+ * 14. blog_preview  (light)
  */
 class FixSectionOrderSeeder extends Seeder
 {
     private const ORDERED_TYPES = [
         'hero',
+        'trust_bar',
         'stats_counter',
+        'part_inquiry',
         'how_it_works',
         'featured_brands',
         'popular_searches',
-        'part_inquiry',
         'banner',
         'testimonials',
         'shipping_info',
-        'blog_preview',
         'faqs',
         'contact_cta',
         'newsletter',
-        'trust_bar',
+        'blog_preview',
     ];
 
     public function run(): void

@@ -20,17 +20,16 @@ class SendOrderStatusEmail implements ShouldQueue
         public readonly Order $order,
         public readonly OrderStatus $oldStatus,
         public readonly OrderStatus $newStatus,
+        public readonly string $locale = 'en',
     ) {
         $this->onQueue('default');
     }
 
     public function handle(): void
     {
-        $locale = app()->getLocale();
-
         $toEmail = $this->order->user?->email ?? $this->order->guest_email;
 
         Mail::to($toEmail)
-            ->send(new OrderStatusUpdate($this->order, $this->oldStatus, $this->newStatus, $locale));
+            ->send(new OrderStatusUpdate($this->order, $this->oldStatus, $this->newStatus, $this->locale));
     }
 }

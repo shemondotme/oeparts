@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', ($address ? __('Edit Address') : __('Add Address')) . ' — ' . settings('general.site_name', 'OEMHub'))
+@section('title', ($address ? __('Edit Address') : __('Add Address')) . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 

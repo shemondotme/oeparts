@@ -82,9 +82,6 @@
                 @if(!empty($addr))
                 <address class="not-italic font-mono text-sm text-ink leading-relaxed">
                     <strong class="font-bold">{{ trim(($addr['first_name'] ?? '') . ' ' . ($addr['last_name'] ?? '')) }}</strong><br>
-                    @if(!empty($checkoutData['company_name']))
-                        <span class="text-ink-muted">{{ $checkoutData['company_name'] }}</span><br>
-                    @endif
                     {{ $addr['street'] ?? '' }}<br>
                     <span class="tabular-nums">{{ $addr['postal_code'] ?? '' }}</span> {{ $addr['city'] ?? '' }}<br>
                     <span class="inline-flex items-center gap-1.5 mt-1 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber-ink">
@@ -108,7 +105,7 @@
             </header>
             <div class="flex items-center justify-between px-4 py-4">
                 <p class="font-display text-sm font-bold text-ink">
-                    {{ $shippingMethod ? trans_field($shippingMethod->name) : 'Standard Delivery' }}
+                    {{ $shippingMethod ? $shippingMethod->name : 'Standard Delivery' }}
                 </p>
                 <p class="font-mono text-base font-bold tabular-nums {{ $shippingCost === '0.00' ? 'text-amber-ink' : 'text-ink' }}">
                     @if($shippingCost === '0.00')

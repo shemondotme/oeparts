@@ -14,35 +14,27 @@ class SendAbandonedCartEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
     public int $tries = 3;
 
-    /**
-     * The number of seconds to wait before retrying the job.
-     *
-     * @var array<int>
-     */
     public array $backoff = [60, 300, 600];
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         public string $email,
-        public array $cartSnapshot
+        public array $cartSnapshot,
+        public ?string $customerName = null,
+        public string $locale = 'en',
     ) {
         $this->onQueue('default');
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
-        Mail::to($this->email)->send(new AbandonedCartReminder($this->cartSnapshot));
+        $mailable = new AbandonedCartReminder(
+            $this->cartSnapshot,
+            $this->locale,
+            $this->customerName,
+        );
+
+        Mail::to($this->email)->send($mailable);
     }
 }

@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a reproducible bug in OEMHub
+description: Report a reproducible bug in OeParts
 labels: ["bug", "triage"]
 
 body:
@@ -12,7 +12,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: OEMHub version
+      label: OeParts version
       description: "Found in version.json or the admin footer"
       placeholder: "1.0.0"
     validations:

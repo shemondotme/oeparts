@@ -20,7 +20,7 @@
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.contact_reply.greeting', ['name' => $contact->name ?? 'Customer'], $locale) }}
                     <br>
-                    {{ trans('emails.contact_reply.intro', [], $locale) ?: 'Thank you for contacting OEMHub support. Please find our response below.' }}
+                    {{ trans('emails.contact_reply.intro', [], $locale) ?: 'Thank you for contacting OeParts support. Please find our response below.' }}
                 </p>
             </td>
         </tr>

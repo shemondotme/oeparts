@@ -6,6 +6,7 @@ use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -29,7 +30,7 @@ class OrderConfirmation extends Mailable
      */
     public function envelope(): Envelope
     {
-        $siteName = config('app.name', 'OEMHub');
+        $siteName = config('app.name', 'OeParts');
         $subject = trans('emails.order_confirmation.subject', [
             'order_number' => $this->order->order_number,
         ], $this->locale);
@@ -69,7 +70,7 @@ class OrderConfirmation extends Mailable
     /**
      * Get the attachments for the message.
      *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
+     * @return array<int, Attachment>
      */
     public function attachments(): array
     {

@@ -1,5 +1,5 @@
 /**
- * OEMHub — Countup Alpine.js module
+ * OeParts — Countup Alpine.js module
  *
  * Animates a number from 0 to `target` when element scrolls into view.
  * Used in the stats section on the homepage.

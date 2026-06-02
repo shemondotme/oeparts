@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @php
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
     $inquiryHours = (int) settings('part_inquiry.response_hours', 24);
 @endphp
 

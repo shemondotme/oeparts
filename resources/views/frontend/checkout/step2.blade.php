@@ -3,18 +3,53 @@
 @section('checkout_content')
 @php
     $addr = $checkoutData['shipping_address'] ?? [];
-    $isB2b = (bool) ($checkoutData['is_b2b'] ?? false);
 
-    // Load all active shipping countries, grouped by zone, so the <select>
-    // shows a <optgroup> per zone and only countries we actually ship to.
-    $countriesByZone = \App\Models\ShippingZone::where('is_active', true)
-        ->with(['countries' => fn($q) => $q->orderBy('country_name')])
-        ->orderBy('sort_order')
-        ->get()
-        ->mapWithKeys(fn($zone) => [
-            $zone->name => $zone->countries->pluck('country_name', 'country_code')->toArray(),
-        ])
-        ->filter(fn($countries) => !empty($countries));
+    $europeanCountries = [
+        'AT' => 'Austria',
+        'BE' => 'Belgium',
+        'BG' => 'Bulgaria',
+        'HR' => 'Croatia',
+        'CY' => 'Cyprus',
+        'CZ' => 'Czech Republic',
+        'DK' => 'Denmark',
+        'EE' => 'Estonia',
+        'FI' => 'Finland',
+        'FR' => 'France',
+        'DE' => 'Germany',
+        'GR' => 'Greece',
+        'HU' => 'Hungary',
+        'IE' => 'Ireland',
+        'IT' => 'Italy',
+        'LV' => 'Latvia',
+        'LT' => 'Lithuania',
+        'LU' => 'Luxembourg',
+        'MT' => 'Malta',
+        'NL' => 'Netherlands',
+        'PL' => 'Poland',
+        'PT' => 'Portugal',
+        'RO' => 'Romania',
+        'SK' => 'Slovakia',
+        'SI' => 'Slovenia',
+        'ES' => 'Spain',
+        'SE' => 'Sweden',
+        'GB' => 'United Kingdom',
+        'CH' => 'Switzerland',
+        'NO' => 'Norway',
+        'IS' => 'Iceland',
+        'LI' => 'Liechtenstein',
+        'MC' => 'Monaco',
+        'AD' => 'Andorra',
+        'SM' => 'San Marino',
+        'VA' => 'Vatican City',
+        'AL' => 'Albania',
+        'BA' => 'Bosnia and Herzegovina',
+        'ME' => 'Montenegro',
+        'MK' => 'North Macedonia',
+        'RS' => 'Serbia',
+        'XK' => 'Kosovo',
+        'MD' => 'Moldova',
+        'UA' => 'Ukraine',
+    ];
 @endphp
 
 <div class="space-y-6">
@@ -60,48 +95,6 @@
             @enderror
         </div>
     </div>
-
-    {{-- B2B: Company + VAT --}}
-    @if($isB2b)
-    <div class="border border-ink bg-ivory-alt p-5">
-        <p class="bp-spec text-amber-ink mb-4 flex items-center gap-1.5">
-            <x-heroicon-s-building-office class="w-3 h-3" />
-            § Business · B2B details
-        </p>
-        <div class="grid sm:grid-cols-2 gap-4">
-            <div>
-                <label class="bp-spec block mb-2 text-ink">
-                    § Company <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
-                </label>
-                <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('company') border-red-600 @enderror">
-                    <input type="text" name="company"
-                           value="{{ old('company', $checkoutData['company_name'] ?? '') }}"
-                           required autocomplete="organization"
-                           class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none">
-                </div>
-                @error('company')
-                    <p class="mt-2 font-mono text-[10px] tracking-[0.18em] uppercase text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-            <div>
-                <label class="bp-spec block mb-2 text-ink">
-                    § VAT number <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
-                </label>
-                <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('vat_number') border-red-600 @enderror">
-                    <input type="text" name="vat_number"
-                           value="{{ old('vat_number', $checkoutData['vat_number'] ?? '') }}"
-                           placeholder="DE123456789"
-                           required autocomplete="off"
-                           class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink uppercase tracking-wider placeholder:text-ink-muted/60 placeholder:normal-case placeholder:tracking-normal focus:outline-none">
-                </div>
-                <p class="mt-2 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">Format · country code + number</p>
-                @error('vat_number')
-                    <p class="mt-1 font-mono text-[10px] tracking-[0.18em] uppercase text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
-        </div>
-    </div>
-    @endif
 
     {{-- Street --}}
     <div>
@@ -162,14 +155,10 @@
                     required autocomplete="country"
                     class="w-full px-4 py-3 pr-10 bg-transparent font-mono text-sm text-ink focus:outline-none appearance-none cursor-pointer">
                 <option value="">— Select country —</option>
-                @foreach($countriesByZone as $zoneName => $zoneCountries)
-                    <optgroup label="{{ $zoneName }}">
-                        @foreach($zoneCountries as $code => $name)
-                            <option value="{{ $code }}" {{ old('country_code', $addr['country_code'] ?? '') === $code ? 'selected' : '' }}>
-                                {{ $code }} · {{ $name }}
-                            </option>
-                        @endforeach
-                    </optgroup>
+                @foreach($europeanCountries as $code => $name)
+                    <option value="{{ $code }}" {{ old('country_code', $addr['country_code'] ?? '') === $code ? 'selected' : '' }}>
+                        {{ $code }} · {{ $name }}
+                    </option>
                 @endforeach
             </select>
             <div class="absolute inset-y-0 right-3 flex items-center pointer-events-none">
@@ -189,7 +178,7 @@
         <div>
             <p class="bp-spec text-amber-ink mb-1">§ Pan-European delivery</p>
             <p class="text-xs text-body">
-                {{ $countriesByZone->flatten()->count() }} countries across {{ $countriesByZone->count() }} zones — EU27, UK &amp; Switzerland (DDP), Nordics, Balkans &amp; microstates. Shipping cost and speed are calculated in the next step.
+                Express, Standard and Economy shipping available across all listed European countries.
             </p>
         </div>
     </div>

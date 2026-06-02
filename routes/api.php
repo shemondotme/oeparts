@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes — OEMHub
+| API Routes — OeParts
 |--------------------------------------------------------------------------
 |
 | These routes are stateless JSON endpoints.

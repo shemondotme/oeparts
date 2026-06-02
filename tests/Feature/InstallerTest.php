@@ -3,8 +3,9 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -80,6 +81,11 @@ class InstallerTest extends TestCase
     #[Test]
     public function installer_validates_database_connection()
     {
+        DB::shouldReceive('purge')->with('mysql')->andReturnNull();
+        DB::shouldReceive('reconnect')->with('mysql')->andThrow(new \PDOException('Connection refused'));
+        DB::shouldReceive('connection')->with('mysql')->andReturnSelf();
+        DB::shouldReceive('getPdo')->andThrow(new \PDOException('Connection refused'));
+
         $response = $this->post('/install/database', [
             'db_host' => 'invalid-host',
             'db_port' => '3306',

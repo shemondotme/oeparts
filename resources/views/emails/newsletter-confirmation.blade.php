@@ -18,7 +18,7 @@
                     Confirm your subscription<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
-                    {{ trans('emails.newsletter_confirmation.greeting', [], $locale) ?: 'You are one step away from joining the OEMHub Journal.' }}
+                    {{ trans('emails.newsletter_confirmation.greeting', [], $locale) ?: 'You are one step away from joining the OeParts Journal.' }}
                 </p>
             </td>
         </tr>
@@ -38,7 +38,7 @@
         {{-- ═══ CTA BUTTON ═══ --}}
         <tr>
             <td align="center" style="padding: 24px 0; border-top: 1px solid #D8CFB6; border-bottom: 1px solid #D8CFB6;">
-                <a href="{{ $confirmationUrl }}"
+                <a href="{{ $confirmUrl }}"
                    class="btn-primary"
                    style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
                     CONFIRM SUBSCRIPTION →

@@ -7,7 +7,7 @@
     $subheadline = trans_field($section->content['subheadline'] ?? null);
     $buttonText = trans_field($section->content['button_text'] ?? null) ?: 'Contact Us';
     $phone = settings('general.site_phone', '+370 600 00000');
-    $email = settings('general.site_email', 'support@oemhub.eu');
+    $email = settings('general.site_email', 'info@oeparts.lt');
     $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
 @endphp
 

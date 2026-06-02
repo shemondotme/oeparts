@@ -15,6 +15,9 @@ class DemoDataSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(DemoManufacturersAndPartsSeeder::class);
+        $this->call([
+            DemoManufacturersAndPartsSeeder::class,
+            BlogPostsSeeder::class,
+        ]);
     }
 }

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('Reset Password') . ' — ' . settings('general.site_name', 'OEMHub'))
+@section('title', __('Reset Password') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('content')
 @php

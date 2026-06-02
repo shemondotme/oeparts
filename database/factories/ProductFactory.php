@@ -33,7 +33,7 @@ class ProductFactory extends Factory
                 'en' => fake()->sentence(),
                 'de' => fake()->sentence(),
             ],
-            'condition' => fake()->randomElement(ProductCondition::cases()),
+            'condition' => fake()->randomElement([ProductCondition::New, ProductCondition::Used]),
             'price' => fake()->numerify('###.##'),
             'delivery_time' => fake()->numerify('# days'),
             'moq' => fake()->numberBetween(1, 10),

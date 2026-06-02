@@ -17,17 +17,15 @@ class SendOrderConfirmationEmail implements ShouldQueue
 
     public function __construct(
         public readonly Order $order,
+        public readonly string $locale = 'en',
     ) {
         $this->onQueue('critical');
     }
 
     public function handle(): void
     {
-        // preferred_lang is not a User column; fall back to app locale
-        $locale = app()->getLocale();
-
         $toEmail = $this->order->user?->email ?? $this->order->guest_email;
 
-        Mail::to($toEmail)->send(new OrderConfirmation($this->order, $locale));
+        Mail::to($toEmail)->send(new OrderConfirmation($this->order, $this->locale));
     }
 }

@@ -3,59 +3,49 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\App;
 
 class RobotsController extends Controller
 {
     /**
      * Generate dynamic robots.txt content.
      *
-     * Rules:
-     * - Production: allow all crawlers, link to sitemap
-     * - Staging/development: disallow all
-     * - Admin area always disallowed
-     * - Check settings for additional disallow rules
+     * Production rules per PRD § Module 8 — Global SEO Engine:
+     *   Disallow: /admin/, /*?sort=, /*?condition=, /*?manufacturer=, /*?page=
+     * Non-production: disallow everything.
      */
     public function index(Request $request)
     {
-        $lines = [];
+        $lines = ['User-agent: *'];
 
-        // User-agent rules
-        $lines[] = 'User-agent: *';
-
-        // Disallow admin area for all crawlers
-        $lines[] = 'Disallow: /admin/';
-        $lines[] = 'Disallow: /login';
-        $lines[] = 'Disallow: /reset-password';
-        $lines[] = 'Disallow: /account/';
-
-        // Allow or disallow based on environment
         if (app()->environment('production')) {
-            $lines[] = 'Allow: /';
-            $lines[] = 'Allow: /parts/';
-            $lines[] = 'Allow: /manufacturers/';
-            $lines[] = 'Allow: /blog/';
-            $lines[] = 'Allow: /pages/';
+            // Admin and account areas — never crawl
+            $lines[] = 'Disallow: /admin/';
+            $lines[] = 'Disallow: /*/account/';
+            $lines[] = 'Disallow: /*/checkout/';
+            $lines[] = 'Disallow: /*/cart/';
+            $lines[] = 'Disallow: /*/reset-password/';
+            $lines[] = 'Disallow: /install/';
 
-            // Disallow checkout and cart pages (sensitive)
-            $lines[] = 'Disallow: /checkout/';
-            $lines[] = 'Disallow: /cart/';
+            // Faceted / filter URLs — prevent duplicate-content crawling
+            $lines[] = 'Disallow: /*?sort=';
+            $lines[] = 'Disallow: /*?condition=';
+            $lines[] = 'Disallow: /*?manufacturer=';
+            $lines[] = 'Disallow: /*?page=';
+            $lines[] = 'Disallow: /*?in_stock=';
+            $lines[] = 'Disallow: /*?model=';
+
+            $lines[] = 'Allow: /';
         } else {
-            // Non-production environments: block everything
+            // Staging / development — block all crawlers completely
             $lines[] = 'Disallow: /';
         }
 
-        // Add sitemap reference
         $lines[] = '';
-        $lines[] = 'Sitemap: ' . url('sitemap.xml');
+        $lines[] = 'Sitemap: '.url('sitemap.xml');
 
-        // Add host directive (optional)
-        $lines[] = '# Host: ' . $request->getHttpHost();
-
-        $content = implode("\n", $lines);
-
-        return response($content, 200, [
+        return response(implode("\n", $lines), 200, [
             'Content-Type' => 'text/plain; charset=UTF-8',
+            'Cache-Control' => 'public, max-age=3600',
         ]);
     }
 }

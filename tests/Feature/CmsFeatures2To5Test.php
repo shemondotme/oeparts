@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Section;
 use App\Models\SectionVersion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class CmsFeatures2To5Test extends TestCase
@@ -24,7 +25,7 @@ class CmsFeatures2To5Test extends TestCase
 
     // ============= FEATURE 2: WYSIWYG RICH TEXT EDITOR =============
 
-    /** @test */
+    #[Test]
     public function feature_2_rich_editor_uploads_images()
     {
         $this->post(route('admin.editor.upload-image'), [
@@ -33,7 +34,7 @@ class CmsFeatures2To5Test extends TestCase
          ->assertJsonStructure(['success', 'location']);
     }
 
-    /** @test */
+    #[Test]
     public function feature_2_rich_editor_validates_image_type()
     {
         $this->post(route('admin.editor.upload-image'), [
@@ -41,7 +42,7 @@ class CmsFeatures2To5Test extends TestCase
         ])->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function feature_2_rich_editor_enforces_file_size_limit()
     {
         $this->post(route('admin.editor.upload-image'), [
@@ -49,7 +50,7 @@ class CmsFeatures2To5Test extends TestCase
         ])->assertStatus(422);
     }
 
-    /** @test */
+    #[Test]
     public function feature_2_rich_editor_generates_html_preview()
     {
         $html = '<h1>Test</h1><p>Content</p>';
@@ -62,7 +63,7 @@ class CmsFeatures2To5Test extends TestCase
 
     // ============= FEATURE 3: LIVE PREVIEW =============
 
-    /** @test */
+    #[Test]
     public function feature_3_live_preview_returns_rendered_content()
     {
         $section = Section::factory()->create([
@@ -78,7 +79,7 @@ class CmsFeatures2To5Test extends TestCase
          ->assertJsonStructure(['html']);
     }
 
-    /** @test */
+    #[Test]
     public function feature_3_live_preview_respects_language()
     {
         $section = Section::factory()->create([
@@ -98,7 +99,7 @@ class CmsFeatures2To5Test extends TestCase
 
     // ============= FEATURE 4: AUDIT TRAIL & VERSION HISTORY =============
 
-    /** @test */
+    #[Test]
     public function feature_4_creates_version_on_section_creation()
     {
         $section = Section::factory()->create([
@@ -114,7 +115,7 @@ class CmsFeatures2To5Test extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function feature_4_creates_version_on_section_update()
     {
         $section = Section::factory()->create();
@@ -127,7 +128,7 @@ class CmsFeatures2To5Test extends TestCase
         $this->assertEquals('updated', $section->versions()->first()->action);
     }
 
-    /** @test */
+    #[Test]
     public function feature_4_restores_section_from_version()
     {
         $section = Section::factory()->create([
@@ -144,7 +145,7 @@ class CmsFeatures2To5Test extends TestCase
         $this->assertEquals('Original', $section->fresh()->title['en']);
     }
 
-    /** @test */
+    #[Test]
     public function feature_4_version_history_shows_all_changes()
     {
         $section = Section::factory()->create();
@@ -160,7 +161,7 @@ class CmsFeatures2To5Test extends TestCase
         $this->assertDatabaseHas('section_versions', ['action' => 'archived']);
     }
 
-    /** @test */
+    #[Test]
     public function feature_4_version_stores_complete_snapshot()
     {
         $data = [
@@ -177,7 +178,7 @@ class CmsFeatures2To5Test extends TestCase
         $this->assertEquals('Test Section', $version->snapshot['title']['en']);
     }
 
-    /** @test */
+    #[Test]
     public function feature_4_restore_version_page_requires_auth()
     {
         auth('admin')->logout();
@@ -185,12 +186,12 @@ class CmsFeatures2To5Test extends TestCase
         $version = SectionVersion::factory()->create(['section_id' => $section->id]);
 
         $this->post(route('admin.cms.sections.restore-version', [$section, $version]))
-            ->assertRedirect(route('admin.login'));
+            ->assertRedirect(route('filament.admin.auth.login'));
     }
 
     // ============= FEATURE 5: MEDIA INTEGRATION =============
 
-    /** @test */
+    #[Test]
     public function feature_5_media_picker_lists_uploaded_files()
     {
         $this->post(route('admin.cms.media-picker.upload'), [
@@ -204,7 +205,7 @@ class CmsFeatures2To5Test extends TestCase
         $this->assertGreaterThan(0, $response->json('total'));
     }
 
-    /** @test */
+    #[Test]
     public function feature_5_media_upload_stores_file_metadata()
     {
         $response = $this->post(route('admin.cms.media-picker.upload'), [
@@ -218,7 +219,7 @@ class CmsFeatures2To5Test extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function feature_5_media_picker_searches_files()
     {
         $this->post(route('admin.cms.media-picker.upload'), [
@@ -232,7 +233,7 @@ class CmsFeatures2To5Test extends TestCase
         $this->assertGreaterThan(0, $response->json('total'));
     }
 
-    /** @test */
+    #[Test]
     public function feature_5_media_deletion_removes_file()
     {
         $response = $this->post(route('admin.cms.media-picker.upload'), [
@@ -249,7 +250,7 @@ class CmsFeatures2To5Test extends TestCase
 
     // ============= INTEGRATION TESTS =============
 
-    /** @test */
+    #[Test]
     public function all_features_work_together_in_section_edit()
     {
         $section = Section::factory()->create([

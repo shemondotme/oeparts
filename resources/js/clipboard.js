@@ -1,5 +1,5 @@
 /**
- * OEMHub — Clipboard Alpine.js module
+ * OeParts — Clipboard Alpine.js module
  *
  * Copies text to clipboard with visual feedback.
  * Used on bank transfer payment page (IBAN, BIC, reference).

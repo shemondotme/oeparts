@@ -17,16 +17,15 @@ class SendTrackingUpdateEmail implements ShouldQueue
 
     public function __construct(
         public readonly Order $order,
+        public readonly string $locale = 'en',
     ) {
         $this->onQueue('default');
     }
 
     public function handle(): void
     {
-        $locale = app()->getLocale();
-
         $toEmail = $this->order->user?->email ?? $this->order->guest_email;
 
-        Mail::to($toEmail)->send(new OrderShipped($this->order, $locale));
+        Mail::to($toEmail)->send(new OrderShipped($this->order, $this->locale));
     }
 }

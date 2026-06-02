@@ -14,6 +14,13 @@ class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Clear login rate limiter between tests
+        app(\Illuminate\Cache\RateLimiter::class)->clear('login:127.0.0.1');
+    }
+
     // ── Registration ───────────────────────────────────────────────────────────
 
     #[Test]
@@ -224,7 +231,7 @@ class AuthTest extends TestCase
             'purpose' => OtpPurpose::EmailVerify->value,
         ]);
 
-        $response->assertStatus(400)
+        $response->assertStatus(422)
             ->assertJson([
                 'success' => false,
                 'message' => 'Invalid verification code.',

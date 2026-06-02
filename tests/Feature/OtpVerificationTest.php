@@ -2,85 +2,101 @@
 
 namespace Tests\Feature;
 
-use App\Models\EmailVerification;
+use App\Enums\OtpPurpose;
+use App\Models\Otp;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class OtpVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_otp_can_be_sent_for_email_verification()
+    #[Test]
+    public function otp_can_be_sent_for_email_verification(): void
     {
         $response = $this->postJson(route('frontend.auth.resend-otp', ['lang' => 'en']), [
-            'email' => 'test@example.com',
+            'email'   => 'test@example.com',
             'purpose' => 'email_verify',
-        ], [
-            'X-CSRF-TOKEN' => csrf_token(),
         ]);
 
         $response->assertOk();
-        $this->assertDatabaseHas('email_verifications', [
-            'email' => 'test@example.com',
+        $this->assertDatabaseHas('otps', [
+            'email'   => 'test@example.com',
             'purpose' => 'email_verify',
         ]);
     }
 
-    public function test_otp_can_be_verified()
+    #[Test]
+    public function otp_can_be_verified(): void
     {
-        $verification = EmailVerification::factory()->create([
-            'email' => 'test@example.com',
-            'purpose' => 'email_verify',
+        $otp = Otp::create([
+            'email'      => 'test@example.com',
+            'otp_code'   => '123456',
+            'purpose'    => OtpPurpose::EmailVerify->value,
+            'expires_at' => now()->addMinutes(10),
+            'ip_address' => '127.0.0.1',
         ]);
 
         $response = $this->postJson(route('frontend.auth.verify-otp', ['lang' => 'en']), [
-            'email' => 'test@example.com',
-            'otp' => $verification->code,
+            'email'   => 'test@example.com',
+            'otp'     => '123456',
             'purpose' => 'email_verify',
-        ], [
-            'X-CSRF-TOKEN' => csrf_token(),
         ]);
 
         $response->assertOk();
-        $this->assertTrue($verification->fresh()->is_verified);
+        $this->assertNotNull($otp->fresh()->verified_at);
     }
 
-    public function test_otp_verification_fails_with_wrong_code()
+    #[Test]
+    public function otp_verification_fails_with_wrong_code(): void
     {
-        EmailVerification::factory()->create([
-            'email' => 'test@example.com',
-            'purpose' => 'email_verify',
+        Otp::create([
+            'email'      => 'test@example.com',
+            'otp_code'   => '999999',
+            'purpose'    => OtpPurpose::EmailVerify->value,
+            'expires_at' => now()->addMinutes(10),
+            'ip_address' => '127.0.0.1',
         ]);
 
         $response = $this->postJson(route('frontend.auth.verify-otp', ['lang' => 'en']), [
-            'email' => 'test@example.com',
-            'otp' => '000000',
+            'email'   => 'test@example.com',
+            'otp'     => '000000',
             'purpose' => 'email_verify',
-        ], [
-            'X-CSRF-TOKEN' => csrf_token(),
         ]);
 
         $response->assertStatus(422);
     }
 
-    public function test_otp_code_is_six_digits()
+    #[Test]
+    public function otp_code_is_six_digits(): void
     {
-        $verification = EmailVerification::factory()->create();
-        $this->assertMatchesRegularExpression('/^\d{6}$/', $verification->code);
+        $otp = Otp::create([
+            'email'      => 'test@example.com',
+            'otp_code'   => '654321',
+            'purpose'    => OtpPurpose::EmailVerify->value,
+            'expires_at' => now()->addMinutes(10),
+            'ip_address' => '127.0.0.1',
+        ]);
+
+        $this->assertMatchesRegularExpression('/^\d{6}$/', $otp->otp_code);
     }
 
-    public function test_otp_expires_after_ten_minutes()
+    #[Test]
+    public function otp_expires_after_ten_minutes(): void
     {
-        $verification = EmailVerification::factory()->create([
-            'created_at' => now()->subMinutes(11),
+        $otp = Otp::create([
+            'email'      => 'expired@example.com',
+            'otp_code'   => '111111',
+            'purpose'    => OtpPurpose::EmailVerify->value,
+            'expires_at' => now()->subMinutes(11),
+            'ip_address' => '127.0.0.1',
         ]);
 
         $response = $this->postJson(route('frontend.auth.verify-otp', ['lang' => 'en']), [
-            'email' => $verification->email,
-            'otp' => $verification->code,
-            'purpose' => $verification->purpose,
-        ], [
-            'X-CSRF-TOKEN' => csrf_token(),
+            'email'   => $otp->email,
+            'otp'     => $otp->otp_code,
+            'purpose' => $otp->purpose->value,
         ]);
 
         $response->assertStatus(422);

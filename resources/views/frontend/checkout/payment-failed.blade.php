@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('Payment failed') . ' — ' . settings('general.site_name', 'OEMHub'))
+@section('title', __('Payment failed') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('content')
 <div class="relative min-h-screen bg-ivory text-ink">

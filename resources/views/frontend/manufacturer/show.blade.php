@@ -2,7 +2,7 @@
 
 @php
     $lang        = app()->getLocale();
-    $siteName    = settings('general.site_name', 'OEMHub');
+    $siteName    = settings('general.site_name', 'OeParts');
     $brandName   = trans_field($manufacturer->name) ?: $manufacturer->slug;
     $totalParts  = $products->total();
     $modelCount  = $carModels->count();
@@ -12,9 +12,44 @@
 @section('title'){{ $brandName }} · {{ __('Genuine OEM Parts') }} · {{ $siteName }}@endsection
 @section('meta_description'){{ __(':brand genuine OEM parts — cross-reference every part number, verify fitment, and ship across the EU.', ['brand' => $brandName]) }}@endsection
 @section('og_title'){{ $brandName }} · {{ __('OEM Parts Catalogue') }}@endsection
-@section('og_description'){{ __(':count verified :brand parts indexed in the OEMHub catalogue.', ['count' => $totalParts, 'brand' => $brandName]) }}@endsection
+@section('og_description'){{ __(':count verified :brand parts indexed in the OeParts catalogue.', ['count' => $totalParts, 'brand' => $brandName]) }}@endsection
 @section('canonical')
     <link rel="canonical" href="{{ route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}">
+@endsection
+
+@section('hreflang')
+    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
+        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.manufacturer.show', ['lang' => $hLang, 'manufacturer' => $manufacturer->slug]) }}">
+    @endforeach
+    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.manufacturer.show', ['lang' => 'en', 'manufacturer' => $manufacturer->slug]) }}">
+@endsection
+
+@section('json_ld')
+<script type="application/ld+json">
+{!! json_encode([
+    '@context' => 'https://schema.org',
+    '@type'    => 'Organization',
+    'name'     => $brandName,
+    'url'      => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]),
+    'brand'    => [
+        '@type' => 'Brand',
+        'name'  => $brandName,
+    ],
+    'numberOfEmployees' => null,
+    'description' => __(':brand genuine OEM parts — cross-reference every part number, verify fitment, and ship across the EU.', ['brand' => $brandName]),
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+</script>
+<script type="application/ld+json">
+{!! json_encode([
+    '@context'        => 'https://schema.org',
+    '@type'           => 'BreadcrumbList',
+    'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'),   'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => __('Brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
+        ['@type' => 'ListItem', 'position' => 3, 'name' => $brandName,   'item' => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
+    ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
 @endsection
 
 {{-- ══════════════════════════════════════════════════════════════════════

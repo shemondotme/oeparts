@@ -28,10 +28,10 @@ class InvoiceService
             'billingAddress' => $snapshotAddress,
             'shippingAddress' => $snapshotAddress,
             'settings' => [
-                'company_name' => settings('company.name', 'OEMHub'),
+                'company_name' => settings('company.name', 'OeParts'),
                 'company_address' => settings('company.address', ''),
                 'company_vat' => settings('company.vat_number', ''),
-                'company_email' => settings('company.email', 'support@oemhub.com'),
+                'company_email' => settings('company.email', 'info@oeparts.lt'),
                 'company_phone' => settings('company.phone', ''),
             ],
         ];

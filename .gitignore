@@ -61,3 +61,8 @@ Thumbs.db
 .phpunit.result.cache
 node_modules
 
+# Compiled Vite assets MUST be committed (production server has no Node.js).
+# The generic `build/` rule above otherwise ignores public/build — re-include it here.
+!public/build/
+!public/build/**
+

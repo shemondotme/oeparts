@@ -30,10 +30,20 @@ class SettingsService
         $cacheKey = "settings.{$group}";
 
         $groupSettings = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($group) {
-            // Guard: DB may not exist yet during installer
             try {
                 return \App\Models\Setting::where('group', $group)
-                    ->pluck('value', 'key')
+                    ->get()
+                    ->keyBy('key')
+                    ->map(function ($setting) {
+                        $value = $setting->value;
+                        if ($setting->is_encrypted && $value) {
+                            try {
+                                $value = \Illuminate\Support\Facades\Crypt::decryptString($value);
+                            } catch (\Exception $e) {
+                            }
+                        }
+                        return $value;
+                    })
                     ->toArray();
             } catch (\Exception) {
                 return [];

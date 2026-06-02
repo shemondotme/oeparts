@@ -119,7 +119,8 @@ class SectionRendererService
     {
         try {
             return app(CacheService::class)->rememberManufacturers(function () {
-                return Manufacturer::where('is_active', true)
+                return Manufacturer::with('logo')
+                    ->where('is_active', true)
                     ->orderBy('sort_order')
                     ->limit(12)
                     ->get();

@@ -12,12 +12,14 @@ class DatabaseSeeder extends Seeder
             SettingsSeeder::class,
             LanguagesSeeder::class,
             RolesSeeder::class,
+            AdminSeeder::class,
             SequencesSeeder::class,
             CarriersSeeder::class,
             SectionsSeeder::class,
             ShippingZonesAndMethodsSeeder::class,
             DemoManufacturersAndPartsSeeder::class,
             DemoDataSeeder::class,
+            CmsFooterPagesSeeder::class,
         ]);
     }
 }

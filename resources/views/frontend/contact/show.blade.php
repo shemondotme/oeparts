@@ -2,7 +2,7 @@
 
 @php
     $lang     = app()->getLocale();
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
     $phone    = settings('contact.phone', '');
     $email    = settings('contact.email', config('mail.from.address'));
     $contactTitle = trans('contact.title', [], $lang);
@@ -39,7 +39,7 @@
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
                 <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
                 <span class="text-rule-strong">/</span>
-                <span class="text-ink">{{ __('Contact') }}</span>
+                <span class="text-ink">{{ __('Contact Us') }}</span>
             </nav>
             <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
                 DOC · CONTACT · ENQUIRY-FORM
@@ -113,9 +113,6 @@
             <section class="col-span-12 lg:col-span-8">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
                     <span class="bp-spec text-ink">§ 01 · {{ __('Enquiry · Form') }}</span>
-                    <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        {{ __('OTP-verified') }}
-                    </span>
                 </div>
 
                 <div x-data="contactForm()"
@@ -124,8 +121,8 @@
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
                         <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">ENQ-FORM · REV.02</span>
                         <span class="flex items-center gap-1.5 font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/70">
-                            <span class="w-1.5 h-1.5" :class="verified ? 'bg-amber' : 'bg-emerald-500'"></span>
-                            <span x-text="verified ? '{{ trans('contact.email_verified') }}' : '{{ __('Operational') }}'"></span>
+                            <span class="w-1.5 h-1.5 bg-emerald-500"></span>
+                            <span>{{ __('Operational') }}</span>
                         </span>
                     </div>
 
@@ -164,102 +161,15 @@
                                 <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.name" x-text="fieldErrors.name"></p>
                             </div>
 
-                            {{-- ─── Email + verification (3 states) ─── --}}
                             <div>
                                 <label for="email" class="flex items-center justify-between mb-2">
                                     <span class="bp-spec text-ink">{{ trans('contact.email') }} <span class="text-red-600">*</span></span>
                                     <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.02</span>
                                 </label>
-
-                                {{-- State A: unverified + send-code action --}}
-                                <template x-if="!codeSent && !verified">
-                                    <div>
-                                        <div class="flex flex-col sm:flex-row gap-0">
-                                            <input type="email" id="email" x-model="form.email" required
-                                                   class="w-full sm:flex-1 px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
-                                                          focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted
-                                                          sm:border-r-0"
-                                                   placeholder="{{ trans('contact.email_placeholder') }}">
-                                            <button type="button" @click="sendOtp" :disabled="sending"
-                                                    class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ink bg-ink text-ivory
-                                                           font-mono text-[11px] font-bold tracking-[0.22em] uppercase
-                                                           hover:bg-amber hover:text-ink hover:border-amber transition-colors
-                                                           whitespace-nowrap disabled:opacity-60 disabled:cursor-wait">
-                                                <x-heroicon-o-paper-airplane class="w-3.5 h-3.5" />
-                                                <span x-text="sending ? '{{ trans('contact.sending') }}…' : '{{ trans('contact.verify_email') }}'"></span>
-                                            </button>
-                                        </div>
-                                        <p class="mt-1.5 font-mono text-[10px] tracking-[0.06em] text-ink-muted">
-                                            {{ trans('contact.email_verification_note') }}
-                                        </p>
-                                    </div>
-                                </template>
-
-                                {{-- State B: code sent → OTP entry --}}
-                                <template x-if="codeSent && !verified">
-                                    <div class="border border-amber bg-amber/10">
-                                        <div class="px-4 py-2 bg-amber/20 border-b border-amber/40 flex items-center justify-between">
-                                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink flex items-center gap-2">
-                                                <x-heroicon-s-envelope-open class="w-3.5 h-3.5" />
-                                                <span x-text="form.email"></span>
-                                            </span>
-                                            <button type="button" @click="changeEmail"
-                                                    class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink-muted hover:text-ink underline underline-offset-2">
-                                                {{ trans('contact.change_email') }}
-                                            </button>
-                                        </div>
-                                        <div class="p-4">
-                                            <div class="flex items-center justify-between mb-2">
-                                                <span class="bp-spec text-amber-ink">{{ trans('contact.verification_code') }} <span class="text-red-600">*</span></span>
-                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">6 · DIGITS</span>
-                                            </div>
-                                            <div class="flex flex-col sm:flex-row gap-0">
-                                                <input type="tel" x-model="form.otp" maxlength="6" inputmode="numeric"
-                                                       @input="form.otp = form.otp.replace(/\D/g,'').slice(0,6)"
-                                                       @keydown.enter.prevent="verifyOtp"
-                                                       class="w-full sm:flex-1 px-4 py-3 border border-ink bg-ivory font-mono text-lg font-bold text-ink
-                                                              focus:outline-none focus:bg-paper focus:border-amber
-                                                              tracking-[0.6em] text-center tabular-nums sm:border-r-0"
-                                                       placeholder="······">
-                                                <button type="button" @click="verifyOtp" :disabled="verifying || form.otp.length !== 6"
-                                                        class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ink bg-ink text-ivory
-                                                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
-                                                               hover:bg-amber hover:text-ink hover:border-amber transition-colors
-                                                               whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">
-                                                    <x-heroicon-s-check class="w-3.5 h-3.5" />
-                                                    <span x-text="verifying ? '{{ trans('contact.verifying') }}…' : '{{ trans('contact.verify') }}'"></span>
-                                                </button>
-                                            </div>
-                                            <div class="mt-3 flex items-center justify-between">
-                                                <p class="font-mono text-[11px] text-red-600" x-show="fieldErrors.otp" x-text="fieldErrors.otp"></p>
-                                                <button type="button" @click="sendOtp" :disabled="sending"
-                                                        class="ml-auto font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink hover:text-ink underline underline-offset-2 disabled:opacity-50">
-                                                    <span x-text="sending ? '{{ trans('contact.sending') }}…' : '{{ trans('contact.resend_code') }}'"></span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-
-                                {{-- State C: verified --}}
-                                <template x-if="verified">
-                                    <div class="border border-emerald-600 bg-emerald-50 flex items-center gap-3 px-4 py-3">
-                                        <div class="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                                            <x-heroicon-s-check class="w-5 h-5" />
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-emerald-700">
-                                                {{ trans('contact.email_verified') }}
-                                            </p>
-                                            <p class="mt-0.5 font-mono text-sm font-bold text-ink truncate" x-text="form.email"></p>
-                                        </div>
-                                        <button type="button" @click="changeEmail"
-                                                class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink-muted hover:text-ink underline underline-offset-2">
-                                            {{ trans('contact.change_email') }}
-                                        </button>
-                                    </div>
-                                </template>
-
+                                <input type="email" id="email" x-model="form.email" required
+                                       class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
+                                              focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
+                                       placeholder="{{ trans('contact.email_placeholder') }}">
                                 <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.email" x-text="fieldErrors.email"></p>
                             </div>
 
@@ -515,8 +425,6 @@
 @push('scripts')
 <script>
 function contactForm() {
-    const sendOtpUrl   = @json(route('frontend.contact.send-otp', ['lang' => $lang]));
-    const verifyOtpUrl = @json(route('frontend.contact.verify-otp', ['lang' => $lang]));
     const submitUrl    = @json(route('frontend.contact.submit', ['lang' => $lang]));
     const csrfToken    = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
@@ -524,7 +432,6 @@ function contactForm() {
         form: {
             name: '',
             email: '',
-            otp: '',
             subject_type: '',
             order_number: '',
             oem_number: '',
@@ -535,11 +442,7 @@ function contactForm() {
             message: '',
             website: '',
         },
-        sending: false,
-        verifying: false,
         submitting: false,
-        codeSent: false,
-        verified: false,
         successMsg: '',
         errorMsg: '',
         fieldErrors: {},
@@ -554,84 +457,8 @@ function contactForm() {
             this.fieldErrors = {};
         },
 
-        changeEmail() {
-            this.codeSent = false;
-            this.verified = false;
-            this.form.otp = '';
-            this.resetMsgs();
-        },
-
-        async sendOtp() {
-            this.resetMsgs();
-            if (!this.form.email || !this.form.email.includes('@')) {
-                this.fieldErrors = { email: 'Please enter a valid email address.' };
-                return;
-            }
-            this.sending = true;
-            try {
-                const res = await fetch(sendOtpUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                    body: JSON.stringify({ email: this.form.email }),
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    this.codeSent = true;
-                    this.successMsg = data.message || @json(trans('contact.otp_sent'));
-                } else {
-                    this.errorMsg = data.message || 'Failed to send verification code.';
-                }
-            } catch (e) {
-                this.errorMsg = 'Network error. Please try again.';
-            } finally {
-                this.sending = false;
-            }
-            // Non-critical UX: focus the OTP input if it now exists. Keep outside
-            // the try/catch above so a focus failure can never surface as a
-            // misleading "Network error." banner alongside the success message.
-            if (this.codeSent) {
-                await this.$nextTick();
-                try {
-                    const otpInput = (this.$root || document).querySelector('input[inputmode="numeric"]');
-                    otpInput?.focus();
-                } catch (_) { /* ignore */ }
-            }
-        },
-
-        async verifyOtp() {
-            this.resetMsgs();
-            if (this.form.otp.length !== 6) {
-                this.fieldErrors = { otp: 'Enter the 6-digit code from your email.' };
-                return;
-            }
-            this.verifying = true;
-            try {
-                const res = await fetch(verifyOtpUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                    body: JSON.stringify({ email: this.form.email, otp: this.form.otp }),
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    this.verified = true;
-                    this.codeSent = false;
-                    this.successMsg = data.message || @json(trans('contact.email_verified'));
-                } else {
-                    this.fieldErrors = { otp: data.message || @json(trans('contact.otp_invalid')) };
-                }
-            } catch (e) {
-                this.errorMsg = 'Network error. Please try again.';
-            } finally {
-                this.verifying = false;
-            }
-        },
-
         async submitForm() {
             this.resetMsgs();
-            if (!this.verified) {
-                this.errorMsg = 'Please verify your email first.';
-                return;
-            }
             this.submitting = true;
             try {
                 const res = await fetch(submitUrl, {
@@ -643,12 +470,23 @@ function contactForm() {
                 if (res.ok && data.success) {
                     this.successMsg = data.message || @json(trans('contact.sent_success'));
                     this.form = {
-                        name: '', email: '', otp: '', subject_type: '',
+                        name: '', email: '', subject_type: '',
                         order_number: '', oem_number: '', manufacturer: '',
                         car_model: '', year: '', vin_number: '', message: '', website: '',
                     };
-                    this.verified = false;
-                    this.codeSent = false;
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: this.successMsg, type: 'success' } }));
                 } else {
-                    if (data.er
+                    if (data.errors) { this.fieldErrors = Object.fromEntries(Object.entries(data.errors).map(([k,v]) => [k, Array.isArray(v) ? v[0] : v])); }
+                    this.errorMsg = data.message || @json(trans('contact.sent_failed'));
+                }
+            } catch (e) {
+                this.errorMsg = 'Network error. Please try again.';
+            } finally {
+                this.submitting = false;
+            }
+        },
+    };
+}
+</script>
+@endpush
+@endsection

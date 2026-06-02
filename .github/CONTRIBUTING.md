@@ -1,4 +1,4 @@
-# Contributing to OEMHub
+# Contributing to OeParts
 
 Thank you for taking the time to contribute.
 
@@ -11,8 +11,8 @@ Thank you for taking the time to contribute.
 ## Development Setup
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/oemhub.git
-cd oemhub
+git clone https://github.com/YOUR_USERNAME/oeparts.git
+cd oeparts
 composer install
 cp .env.testing .env
 php artisan key:generate

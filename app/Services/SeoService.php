@@ -2,11 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\SeoMeta;
-use App\Models\Product;
-use App\Models\Manufacturer;
-use App\Models\Page;
 use App\Models\BlogPost;
+use App\Models\Page;
+use App\Models\Product;
+use App\Models\SeoMeta;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\URL;
 
@@ -31,8 +30,8 @@ class SeoService
     /**
      * Generate JSON‑LD structured data for the current page.
      *
-     * @param string $type 'website', 'product', 'article', 'organization'
-     * @param mixed $entity Product, Page, BlogPost, or null
+     * @param  string  $type  'website', 'product', 'article', 'organization'
+     * @param  mixed  $entity  Product, Page, BlogPost, or null
      * @return string JSON‑LD script tag (empty string if nothing to output)
      */
     public function jsonLd(string $type = 'website', $entity = null): string
@@ -62,7 +61,7 @@ class SeoService
             return '';
         }
 
-        return '<script type="application/ld+json">' . json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</script>';
+        return '<script type="application/ld+json">'.json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'</script>';
     }
 
     /**
@@ -70,7 +69,7 @@ class SeoService
      */
     private function websiteJsonLd(): array
     {
-        $siteName = $this->settings->get('general.site_name', 'OEMHub');
+        $siteName = $this->settings->get('general.site_name', 'OeParts');
         $siteUrl = URL::to('/');
 
         return [
@@ -80,7 +79,7 @@ class SeoService
             'url' => $siteUrl,
             'potentialAction' => [
                 '@type' => 'SearchAction',
-                'target' => $siteUrl . '/{lang}/parts/{search_term_string}',
+                'target' => $siteUrl.'/{lang}/parts/{search_term_string}',
                 'query-input' => 'required name=search_term_string',
             ],
         ];
@@ -135,20 +134,20 @@ class SeoService
             'dateModified' => $post->updated_at->toIso8601String(),
             'author' => [
                 '@type' => 'Person',
-                'name' => $post->author?->name ?? 'OEMHub',
+                'name' => $post->author?->name ?? 'OeParts',
             ],
             'publisher' => $this->organizationJsonLd(),
         ];
     }
 
     /**
-     * JSON‑LD for the organization (OEMHub).
+     * JSON‑LD for the organization (OeParts).
      */
     private function organizationJsonLd(): array
     {
         return [
             '@type' => 'Organization',
-            'name' => $this->settings->get('general.site_name', 'OEMHub'),
+            'name' => $this->settings->get('general.site_name', 'OeParts'),
             'url' => URL::to('/'),
             'logo' => $this->settings->get('general.logo_url') ? URL::asset($this->settings->get('general.logo_url')) : null,
         ];
@@ -157,13 +156,13 @@ class SeoService
     /**
      * Generate hreflang link tags for the current route in all supported locales.
      *
-     * @param string|null $canonicalUrl If provided, used as the x‑default href
+     * @param  string|null  $canonicalUrl  If provided, used as the x‑default href
      * @return string HTML link tags
      */
     public function hreflang(?string $canonicalUrl = null): string
     {
         $currentRoute = request()->route();
-        if (!$currentRoute) {
+        if (! $currentRoute) {
             return '';
         }
 
@@ -210,12 +209,12 @@ class SeoService
     /**
      * Retrieve SEO meta for a morphable entity (Product, Page, etc.).
      *
-     * @param mixed $entity
+     * @param  mixed  $entity
      * @return array{meta_title: ?string, meta_description: ?string, canonical_url: ?string, og_title: ?string, og_description: ?string, og_image_id: ?int, robots: ?string}
      */
     public function getMetaFor($entity): array
     {
-        if (!$entity) {
+        if (! $entity) {
             return $this->defaultMeta();
         }
 
@@ -223,7 +222,7 @@ class SeoService
             ->where('metable_id', $entity->id)
             ->first();
 
-        if (!$meta) {
+        if (! $meta) {
             return $this->defaultMeta();
         }
 
@@ -258,15 +257,14 @@ class SeoService
      * Generate canonical URL for the current page.
      * Respects language prefix and any canonical override stored in SeoMeta.
      *
-     * @param mixed $entity
-     * @return string|null
+     * @param  mixed  $entity
      */
     public function canonicalUrl($entity = null): ?string
     {
         // If entity has a canonical_url in SeoMeta, use that
         if ($entity) {
             $meta = $this->getMetaFor($entity);
-            if (!empty($meta['canonical_url'])) {
+            if (! empty($meta['canonical_url'])) {
                 return $meta['canonical_url'];
             }
         }
@@ -278,16 +276,17 @@ class SeoService
     /**
      * Generate Open Graph image tag if an image is available.
      *
-     * @param int|null $ogImageId MediaFile ID
+     * @param  int|null  $ogImageId  MediaFile ID
      * @return string HTML meta tag or empty string
      */
     public function ogImageTag(?int $ogImageId): string
     {
-        if (!$ogImageId) {
+        if (! $ogImageId) {
             $defaultImage = $this->settings->get('seo.default_og_image');
             if ($defaultImage) {
                 return sprintf('<meta property="og:image" content="%s">', URL::asset($defaultImage));
             }
+
             return '';
         }
 
@@ -296,6 +295,7 @@ class SeoService
         if ($defaultImage) {
             return sprintf('<meta property="og:image" content="%s">', URL::asset($defaultImage));
         }
+
         return '';
     }
 }

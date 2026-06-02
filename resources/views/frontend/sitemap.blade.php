@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @php
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
     $pageTitle = __('sitemap.page_title');
 
     $languageNames = [

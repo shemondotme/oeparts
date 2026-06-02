@@ -1,12 +1,14 @@
-/* OEMHub — Frontend CSS entry point */
+/* OeParts — Frontend CSS entry point */
 
 /* Fonts (loaded via @fontsource — no Google CDN) */
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
 @import "@fontsource/plus-jakarta-sans/600.css";
 @import "@fontsource/plus-jakarta-sans/700.css";
 @import "@fontsource/plus-jakarta-sans/800.css";
+@import "@fontsource/geist-mono/400.css";
+@import "@fontsource/geist-mono/500.css";
 @import "@fontsource/jetbrains-mono/400.css";
 @import "@fontsource/jetbrains-mono/500.css";
 
@@ -101,9 +103,9 @@
 
     /* Section badge/eyebrow - Standardized */
     .section-badge {
-        @apply inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest uppercase rounded-full;
-        @apply bg-gradient-to-r from-amber/15 to-orange-50/15 border border-amber/25 backdrop-blur-sm text-amber-text;
-        @apply shadow-sm hover:shadow-md transition-shadow duration-300;
+        @apply inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest uppercase rounded-none;
+        @apply bg-amber/10 border border-amber/25 text-amber-text;
+        @apply transition-colors duration-150;
     }
 
     /* Section accent bar */
@@ -112,7 +114,7 @@
     }
 
     .section-accent-bar-main {
-        @apply w-16 h-1.5 bg-gradient-to-r from-amber via-orange-500 to-amber rounded-full;
+        @apply w-16 h-[3px] bg-amber rounded-none;
     }
 
     /* Section cards grid */
@@ -124,7 +126,9 @@
         @apply mt-8;
     }
 
-    /* Button variants - Standardized for consistency */
+    /* Button variants - Standardized for consistency
+       WARNING: Do not delete legacy .btn-* classes. The web installer wizard
+       loads app.css and currently depends on these legacy button styles. */
     .btn-primary {
         @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
         @apply bg-gradient-to-r from-amber to-orange-500 text-white shadow-lg shadow-amber/30;

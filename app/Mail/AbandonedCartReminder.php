@@ -12,12 +12,10 @@ class AbandonedCartReminder extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         public readonly array $cartSnapshot,
         string $locale = 'en',
+        public readonly ?string $customerName = null,
     ) {
         $this->locale = $locale;
     }
@@ -33,14 +31,19 @@ class AbandonedCartReminder extends Mailable
 
     public function content(): Content
     {
+        $items = $this->cartSnapshot['items'] ?? [];
+        $total = $this->cartSnapshot['total'] ?? '0.00';
+        $name = $this->customerName ?? $this->cartSnapshot['customer_name'] ?? 'Customer';
+
         return new Content(
             view: 'emails.abandoned-cart',
             text: 'emails.abandoned-cart-text',
             with: [
                 'cartSnapshot' => $this->cartSnapshot,
                 'locale' => $this->locale,
-                'items' => $this->cartSnapshot['items'] ?? [],
-                'total' => $this->cartSnapshot['total'] ?? 0,
+                'items' => $items,
+                'total' => $total,
+                'customerName' => $name,
             ],
         );
     }

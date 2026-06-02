@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\SettingType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
@@ -27,6 +28,19 @@ class Setting extends Model
 
         $setting = static::where('group', $group)->where('key', $key)->first();
 
-        return $setting ? $setting->value : $default;
+        if (! $setting) {
+            return $default;
+        }
+
+        $value = $setting->value;
+
+        if ($setting->is_encrypted && $value) {
+            try {
+                $value = Crypt::decryptString($value);
+            } catch (\Exception $e) {
+            }
+        }
+
+        return $value;
     }
 }

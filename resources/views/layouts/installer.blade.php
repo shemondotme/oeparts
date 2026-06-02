@@ -6,7 +6,7 @@
     <meta name="robots" content="noindex,nofollow">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Installation') — OEMHub</title>
+    <title>@yield('title', 'Installation') — OeParts</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -17,7 +17,7 @@
     {{-- Installer header --}}
     <header class="bg-navy py-4 px-6 shadow-sm">
         <div class="max-w-3xl mx-auto flex items-center gap-3">
-            <span class="font-display font-bold text-xl text-white">OEMHub</span>
+            <span class="font-display font-bold text-xl text-white">OeParts</span>
             <span class="text-xs text-amber font-medium uppercase tracking-widest">Installer</span>
         </div>
     </header>
@@ -82,7 +82,7 @@
     </main>
 
     <footer class="py-4 text-center text-xs text-muted">
-        OEMHub — Open Source OEM Parts Platform
+        OeParts — Open Source OEM Parts Platform
     </footer>
 </div>
 

@@ -2,7 +2,7 @@
 
 @php
     $lang       = app()->getLocale();
-    $siteName   = settings('general.site_name', 'OEMHub');
+    $siteName   = settings('general.site_name', 'OeParts');
     $metaTitle  = trans_field($post->meta_title) ?: trans_field($post->title);
     $metaDescr  = trans_field($post->meta_description) ?: Str::limit(strip_tags(trans_field($post->content)), 160);
     $wordCount  = str_word_count(strip_tags(trans_field($post->content)));
@@ -58,7 +58,7 @@
         'name'  => $siteName,
         'logo'  => [
             '@type' => 'ImageObject',
-            'url'   => settings('general.site_url', url('/')) . '/logo.png',
+            'url'   => settings('general.site_url', url('/')) . '/logo.svg',
         ],
     ],
     'datePublished' => $publishedAt->toIso8601String(),
@@ -286,7 +286,7 @@
                                 {{ $post->author->name ?? trans('blog.anonymous') }}
                             </p>
                             <p class="mt-1 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                                {{ __('Contributor') }} · OEMHUB/EU
+                                {{ __('Contributor') }} · OEPARTS/EU
                             </p>
                         </div>
                     </div>

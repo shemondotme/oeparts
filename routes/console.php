@@ -10,10 +10,10 @@ Artisan::command('inspire', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Scheduled Commands — OEMHub
+| Scheduled Commands — OeParts
 |--------------------------------------------------------------------------
 |
-| All scheduled commands for OEMHub. These run via the Laravel scheduler
+| All scheduled commands for OeParts. These run via the Laravel scheduler
 | which should be triggered by a system cron job every minute:
 |
 |   * * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1

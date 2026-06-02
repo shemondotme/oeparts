@@ -25,11 +25,11 @@ return new class extends Migration
             ['group' => 'preloader', 'key' => 'path_patterns', 'value' => json_encode($pathList), 'type' => $j],
             ['group' => 'preloader', 'key' => 'min_display_ms', 'value' => '450', 'type' => $i],
             ['group' => 'preloader', 'key' => 'max_display_ms', 'value' => '6000', 'type' => $i],
-            ['group' => 'preloader', 'key' => 'headline', 'value' => $ml('OEM·HUB.'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'headline', 'value' => $ml('Oe·Parts.'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'spec_line', 'value' => $ml('§ SYS · INIT / EU'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'subline', 'value' => $ml('Genuine Parts Index'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'status_line', 'value' => $ml('Calibrating Index'), 'type' => $j],
-            ['group' => 'preloader', 'key' => 'foot_left', 'value' => $ml('OEMHUB · EU'), 'type' => $j],
+            ['group' => 'preloader', 'key' => 'foot_left', 'value' => $ml('OeParts · EU'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'foot_right', 'value' => $ml('LIVE CATALOGUE'), 'type' => $j],
             ['group' => 'preloader', 'key' => 'aria_label', 'value' => $ml('Loading'), 'type' => $j],
 

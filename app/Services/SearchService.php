@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use App\Models\FailedSearchLog;
+use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
-use App\Models\Manufacturer;
-use App\Models\CarModel;
 use App\Models\SearchLog;
-use App\Models\FailedSearchLog;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 /**
  * OEM Search Engine — handles OEM number search with normalization.
@@ -30,11 +31,11 @@ class SearchService
     /**
      * Main search entry point.
      *
-     * @param string $query Raw OEM query from user
-     * @param int|null $manufacturerId Optional manufacturer filter
-     * @param int|null $carModelId Optional car model filter
-     * @param array $options Additional options (limit, paginate, per_page, sort, condition, in_stock_only)
-     * @return array{products: \Illuminate\Database\Eloquent\Collection|\Illuminate\Pagination\LengthAwarePaginator, total: int, search_type: string, normalized_query: string, search_log_id: int|null, condition_counts: array}
+     * @param  string  $query  Raw OEM query from user
+     * @param  int|null  $manufacturerId  Optional manufacturer filter
+     * @param  int|null  $carModelId  Optional car model filter
+     * @param  array  $options  Additional options (limit, paginate, per_page, sort, condition, in_stock_only)
+     * @return array{products: Collection|LengthAwarePaginator, total: int, search_type: string, normalized_query: string, search_log_id: int|null, condition_counts: array}
      */
     public function search(
         string $query,
@@ -57,6 +58,7 @@ class SearchService
         $exactResult = $this->exactMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
         if ($exactResult['total'] > 0) {
             $logId = $this->logSearch($query, $normalized, $lang, $exactResult['total'], $manufacturerId, $carModelId);
+
             return $this->buildResult('exact', $exactResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
         }
         // Filters removed all exact results — surface filtered-empty instead of falling through
@@ -68,6 +70,7 @@ class SearchService
         $crossResult = $this->crossReferenceMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
         if ($crossResult['total'] > 0) {
             $logId = $this->logSearch($query, $normalized, $lang, $crossResult['total'], $manufacturerId, $carModelId);
+
             return $this->buildResult('cross_reference', $crossResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
         }
         if ($hasActiveFilters && $this->unfilteredCount('cross_reference', $normalized, $manufacturerId, $carModelId) > 0) {
@@ -85,6 +88,7 @@ class SearchService
             $partialResult = $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
             if ($partialResult['total'] > 0) {
                 $logId = $this->logSearch($query, $normalized, $lang, $partialResult['total'], $manufacturerId, $carModelId);
+
                 return $this->buildResult('partial', $partialResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
             }
             if ($hasActiveFilters && $this->unfilteredCount('partial', $normalized, $manufacturerId, $carModelId) > 0) {
@@ -94,41 +98,43 @@ class SearchService
 
         // Zero results
         $logId = $this->logFailedSearch($query, $normalized, $lang, $manufacturerId, $carModelId);
+
         return [
-            'products'            => collect(),
-            'total'               => 0,
-            'search_type'         => 'none',
-            'normalized_query'    => $normalized,
-            'search_log_id'       => $logId,
-            'condition_counts'    => [],
+            'products' => collect(),
+            'total' => 0,
+            'search_type' => 'none',
+            'normalized_query' => $normalized,
+            'search_log_id' => $logId,
+            'condition_counts' => [],
             'manufacturer_counts' => [],
-            'price_stats'         => ['min' => null, 'max' => null, 'avg' => null],
-            'filtered_empty'      => false,
-            'unfiltered_total'    => 0,
+            'price_stats' => ['min' => null, 'max' => null, 'avg' => null],
+            'filtered_empty' => false,
+            'unfiltered_total' => 0,
         ];
     }
 
     /**
      * Apply sort ordering to a query builder.
      */
-    private function applySort(\Illuminate\Database\Eloquent\Builder $query, string $sort): \Illuminate\Database\Eloquent\Builder
+    private function applySort(Builder $query, string $sort): Builder
     {
-        return match($sort) {
-            'price_asc'  => $query->orderBy('price', 'asc'),
+        return match ($sort) {
+            'price_asc' => $query->orderBy('price', 'asc'),
             'price_desc' => $query->orderBy('price', 'desc'),
-            default      => $query->orderByDesc('is_in_stock')->orderBy('price', 'asc'),
+            default => $query->orderByDesc('is_in_stock')->orderBy('price', 'asc'),
         };
     }
 
     /**
      * Build a base query for a given match type — shared by aggregation helpers.
      */
-    private function buildMatchQuery(string $matchType, string $normalized): \Illuminate\Database\Eloquent\Builder
+    private function buildMatchQuery(string $matchType, string $normalized): Builder
     {
-        return match($matchType) {
+        return match ($matchType) {
             'exact' => Product::query()->where('normalized_oem', $normalized),
             'cross_reference' => (function () use ($normalized) {
                 $ids = ProductCrossReference::where('normalized_cross_oem', $normalized)->pluck('product_id');
+
                 return Product::query()->whereIn('id', $ids);
             })(),
             default => Product::query()->where('normalized_oem', 'LIKE', "%{$normalized}%"),
@@ -142,8 +148,13 @@ class SearchService
     public function unfilteredCount(string $matchType, string $normalized, ?int $manufacturerId, ?int $carModelId): int
     {
         $q = $this->buildMatchQuery($matchType, $normalized)->where('is_active', true);
-        if ($manufacturerId) $q->where('manufacturer_id', $manufacturerId);
-        if ($carModelId)     $q->whereHas('carModels', fn($q2) => $q2->where('car_model_id', $carModelId));
+        if ($manufacturerId) {
+            $q->where('manufacturer_id', $manufacturerId);
+        }
+        if ($carModelId) {
+            $q->whereHas('carModels', fn ($q2) => $q2->where('car_model_id', $carModelId));
+        }
+
         return $q->count();
     }
 
@@ -153,9 +164,16 @@ class SearchService
     private function getConditionCounts(string $matchType, string $normalized, ?int $manufacturerId, ?int $carModelId, bool $inStockOnly): array
     {
         $q = $this->buildMatchQuery($matchType, $normalized)->where('is_active', true);
-        if ($manufacturerId) $q->where('manufacturer_id', $manufacturerId);
-        if ($carModelId)     $q->whereHas('carModels', fn($q2) => $q2->where('car_model_id', $carModelId));
-        if ($inStockOnly)    $q->where('is_in_stock', true);
+        if ($manufacturerId) {
+            $q->where('manufacturer_id', $manufacturerId);
+        }
+        if ($carModelId) {
+            $q->whereHas('carModels', fn ($q2) => $q2->where('car_model_id', $carModelId));
+        }
+        if ($inStockOnly) {
+            $q->where('is_in_stock', true);
+        }
+
         return $q->selectRaw('`condition`, COUNT(*) as cnt')->groupBy('condition')->pluck('cnt', 'condition')->toArray();
     }
 
@@ -165,9 +183,16 @@ class SearchService
     public function getManufacturerCounts(string $matchType, string $normalized, ?int $carModelId, bool $inStockOnly, ?string $condition): array
     {
         $q = $this->buildMatchQuery($matchType, $normalized)->where('is_active', true);
-        if ($carModelId)  $q->whereHas('carModels', fn($q2) => $q2->where('car_model_id', $carModelId));
-        if ($inStockOnly) $q->where('is_in_stock', true);
-        if ($condition)   $q->where('condition', $condition);
+        if ($carModelId) {
+            $q->whereHas('carModels', fn ($q2) => $q2->where('car_model_id', $carModelId));
+        }
+        if ($inStockOnly) {
+            $q->where('is_in_stock', true);
+        }
+        if ($condition) {
+            $q->where('condition', $condition);
+        }
+
         return $q->selectRaw('manufacturer_id, COUNT(*) as cnt')->groupBy('manufacturer_id')->pluck('cnt', 'manufacturer_id')->toArray();
     }
 
@@ -177,20 +202,28 @@ class SearchService
     public function getPriceStats(string $matchType, string $normalized, ?int $manufacturerId, ?int $carModelId, bool $inStockOnly, ?string $condition): array
     {
         $q = $this->buildMatchQuery($matchType, $normalized)->where('is_active', true);
-        if ($manufacturerId) $q->where('manufacturer_id', $manufacturerId);
-        if ($carModelId)     $q->whereHas('carModels', fn($q2) => $q2->where('car_model_id', $carModelId));
-        if ($inStockOnly)    $q->where('is_in_stock', true);
-        if ($condition)      $q->where('condition', $condition);
+        if ($manufacturerId) {
+            $q->where('manufacturer_id', $manufacturerId);
+        }
+        if ($carModelId) {
+            $q->whereHas('carModels', fn ($q2) => $q2->where('car_model_id', $carModelId));
+        }
+        if ($inStockOnly) {
+            $q->where('is_in_stock', true);
+        }
+        if ($condition) {
+            $q->where('condition', $condition);
+        }
         $stats = $q->selectRaw('MIN(price) as min_price, MAX(price) as max_price, AVG(price) as avg_price')->first();
         $avgNumeric = null;
         if ($stats->avg_price !== null) {
-            $avgNumeric = number_format((float) $stats->avg_price, 6, '.', '');
+            $avgNumeric = bcadd((string) $stats->avg_price, '0', 6);
         }
 
         return [
-            'min' => $stats->min_price !== null ? number_format((float) $stats->min_price, 2) : null,
-            'max' => $stats->max_price !== null ? number_format((float) $stats->max_price, 2) : null,
-            'avg' => $stats->avg_price !== null ? number_format((float) $stats->avg_price, 2) : null,
+            'min' => $stats->min_price !== null ? bcadd((string) $stats->min_price, '0', 2) : null,
+            'max' => $stats->max_price !== null ? bcadd((string) $stats->max_price, '0', 2) : null,
+            'avg' => $stats->avg_price !== null ? bcadd((string) $stats->avg_price, '0', 2) : null,
             'avg_numeric' => $avgNumeric,
         ];
     }
@@ -201,16 +234,16 @@ class SearchService
     private function buildResult(string $matchType, array $matchResult, string $normalized, ?int $logId, ?int $manufacturerId, ?int $carModelId, bool $inStockOnly, ?string $condition): array
     {
         return [
-            'products'            => $matchResult['products'],
-            'total'               => $matchResult['total'],
-            'search_type'         => $matchType,
-            'normalized_query'    => $normalized,
-            'search_log_id'       => $logId,
-            'condition_counts'    => $this->getConditionCounts($matchType, $normalized, $manufacturerId, $carModelId, $inStockOnly),
+            'products' => $matchResult['products'],
+            'total' => $matchResult['total'],
+            'search_type' => $matchType,
+            'normalized_query' => $normalized,
+            'search_log_id' => $logId,
+            'condition_counts' => $this->getConditionCounts($matchType, $normalized, $manufacturerId, $carModelId, $inStockOnly),
             'manufacturer_counts' => $this->getManufacturerCounts($matchType, $normalized, $carModelId, $inStockOnly, $condition),
-            'price_stats'         => $this->getPriceStats($matchType, $normalized, $manufacturerId, $carModelId, $inStockOnly, $condition),
-            'filtered_empty'      => false,
-            'unfiltered_total'    => 0,
+            'price_stats' => $this->getPriceStats($matchType, $normalized, $manufacturerId, $carModelId, $inStockOnly, $condition),
+            'filtered_empty' => false,
+            'unfiltered_total' => 0,
         ];
     }
 
@@ -220,17 +253,18 @@ class SearchService
     private function filteredEmptyResult(string $normalized, string $matchType, ?int $manufacturerId, ?int $carModelId, bool $inStockOnly, ?string $condition): array
     {
         $unfilteredTotal = $this->unfilteredCount($matchType, $normalized, $manufacturerId, $carModelId);
+
         return [
-            'products'            => collect(),
-            'total'               => 0,
-            'search_type'         => $matchType,
-            'normalized_query'    => $normalized,
-            'search_log_id'       => null,
-            'condition_counts'    => $this->getConditionCounts($matchType, $normalized, $manufacturerId, $carModelId, false),
+            'products' => collect(),
+            'total' => 0,
+            'search_type' => $matchType,
+            'normalized_query' => $normalized,
+            'search_log_id' => null,
+            'condition_counts' => $this->getConditionCounts($matchType, $normalized, $manufacturerId, $carModelId, false),
             'manufacturer_counts' => $this->getManufacturerCounts($matchType, $normalized, $carModelId, false, null),
-            'price_stats'         => $this->getPriceStats($matchType, $normalized, $manufacturerId, $carModelId, false, null),
-            'filtered_empty'      => true,
-            'unfiltered_total'    => $unfilteredTotal,
+            'price_stats' => $this->getPriceStats($matchType, $normalized, $manufacturerId, $carModelId, false, null),
+            'filtered_empty' => true,
+            'unfiltered_total' => $unfilteredTotal,
         ];
     }
 
@@ -257,7 +291,7 @@ class SearchService
             $query->where('manufacturer_id', $manufacturerId);
         }
         if ($carModelId) {
-            $query->whereHas('carModels', fn($q) => $q->where('car_model_id', $carModelId));
+            $query->whereHas('carModels', fn ($q) => $q->where('car_model_id', $carModelId));
         }
         if ($condition) {
             $query->where('condition', $condition);
@@ -270,10 +304,12 @@ class SearchService
 
         if ($paginate) {
             $paginator = $query->paginate($perPage);
+
             return ['products' => $paginator, 'total' => $paginator->total()];
         }
 
         $collection = $query->limit($limit)->get();
+
         return ['products' => $collection, 'total' => $collection->count()];
     }
 
@@ -308,7 +344,7 @@ class SearchService
             $query->where('manufacturer_id', $manufacturerId);
         }
         if ($carModelId) {
-            $query->whereHas('carModels', fn($q) => $q->where('car_model_id', $carModelId));
+            $query->whereHas('carModels', fn ($q) => $q->where('car_model_id', $carModelId));
         }
         if ($condition) {
             $query->where('condition', $condition);
@@ -321,10 +357,12 @@ class SearchService
 
         if ($paginate) {
             $paginator = $query->paginate($perPage);
+
             return ['products' => $paginator, 'total' => $paginator->total()];
         }
 
         $collection = $query->limit($limit)->get();
+
         return ['products' => $collection, 'total' => $collection->count()];
     }
 
@@ -351,7 +389,7 @@ class SearchService
             $query->where('manufacturer_id', $manufacturerId);
         }
         if ($carModelId) {
-            $query->whereHas('carModels', fn($q) => $q->where('car_model_id', $carModelId));
+            $query->whereHas('carModels', fn ($q) => $q->where('car_model_id', $carModelId));
         }
         if ($condition) {
             $query->where('condition', $condition);
@@ -364,20 +402,19 @@ class SearchService
 
         if ($paginate) {
             $paginator = $query->paginate($perPage);
+
             return ['products' => $paginator, 'total' => $paginator->total()];
         }
 
         $collection = $query->limit($limit)->get();
+
         return ['products' => $collection, 'total' => $collection->count()];
     }
 
     /**
      * Autocomplete search for AJAX dropdown.
      *
-     * @param string $query
-     * @param string $lang Language code (e.g., 'en', 'de')
-     * @param int $limit
-     * @return array
+     * @param  string  $lang  Language code (e.g., 'en', 'de')
      */
     public function autocomplete(string $query, string $lang, int $limit = 5): array
     {
@@ -395,12 +432,18 @@ class SearchService
             ->get();
 
         return $products->map(function (Product $product) use ($lang) {
+            $name = is_array($product->name) ? trans_field($product->name, $lang) : null;
+
             return [
+                'id' => $product->id,
                 'oem' => $product->oem_number,
                 'normalized_oem' => $product->normalized_oem,
                 'manufacturer' => $product->manufacturer ? trans_field($product->manufacturer->name, $lang) : null,
-                'price' => $product->price,
+                'title' => filled($name) ? $name : null,
+                'price' => bcadd((string) $product->price, '0', 2),
                 'condition' => $product->condition->value,
+                'condition_label' => $product->condition->label(),
+                'in_stock' => (bool) $product->is_in_stock,
                 'url' => route('frontend.search.results', ['lang' => $lang, 'oem' => $product->normalized_oem]),
             ];
         })->toArray();
@@ -428,6 +471,7 @@ class SearchService
                 'ip_address' => request()->ip() ?? '127.0.0.1',
                 'user_id' => auth()->id(),
             ]);
+
             return $log->id;
         } catch (\Exception $e) {
             // Silently fail logging — search should not break because of logs
@@ -456,6 +500,7 @@ class SearchService
                 'user_id' => auth()->id(),
                 'inquiry_submitted' => false,
             ]);
+
             return $log->id;
         } catch (\Exception $e) {
             // Silently fail

@@ -619,4 +619,9 @@ function cartData() {
         },
 
         hasBlockedItems() {
-            return 
+            return this.cart.items.some(i => i.priceBlocked);
+        }
+    };
+}
+</script>
+@endsection

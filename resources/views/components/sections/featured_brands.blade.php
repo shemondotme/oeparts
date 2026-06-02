@@ -140,7 +140,7 @@
                         return strtoupper(substr(trans_field($brand->name), 0, 1)) === $letter;
                     });
                 @endphp
-                <a href="{{ url('/'.$lang.'/brand').'?letter='.$letter }}"
+                <a href="{{ url('/'.$lang.'/brands').'?letter='.$letter }}"
                    class="w-10 h-10 font-mono text-sm font-bold inline-flex items-center justify-center
                           border border-rule tabular-nums
                           {{ $hasBrands
@@ -152,7 +152,7 @@
                     {{ $letter }}
                 </a>
                 @endforeach
-                <a href="{{ url('/'.$lang.'/brand') }}"
+                <a href="{{ url('/'.$lang.'/brands') }}"
                    class="h-10 px-4 font-mono text-xs font-bold inline-flex items-center gap-2
                           border border-ink bg-ink text-ivory hover:bg-amber hover:border-amber hover:text-ink
                           transition-colors uppercase tracking-[0.22em]">
@@ -165,7 +165,7 @@
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
                     Source · OEM manufacturer catalogues · EU
                 </span>
-                <a href="{{ url('/'.$lang.'/brand/') }}" class="bp-btn-primary">
+                <a href="{{ url('/'.$lang.'/brands') }}" class="bp-btn-primary">
                     {{ $viewAllText }}
                     <x-heroicon-s-arrow-long-right class="w-5 h-5" />
                 </a>
