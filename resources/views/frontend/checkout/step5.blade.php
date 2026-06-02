@@ -100,7 +100,7 @@
                       name="customer_note"
                       rows="3"
                       placeholder="Any delivery or order notes"
-                      class="w-full px-4 py-3 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none resize-y">{{ old('customer_note', $checkoutData['customer_note'] ?? '') }}</textarea>
+                       class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs placeholder:tracking-normal focus:outline-none resize-y">{{ old('customer_note', $checkoutData['customer_note'] ?? '') }}</textarea>
         </div>
     </div>
 

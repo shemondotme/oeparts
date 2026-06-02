@@ -118,9 +118,9 @@
                 <label for="mail_from_name" class="block text-sm font-medium text-slate-700 mb-1">
                     From Name
                 </label>
-                <input type="text" id="mail_from_name" name="mail_from_name" value="{{ old('mail_from_name', 'OEMHub') }}"
+                <input type="text" id="mail_from_name" name="mail_from_name" value="{{ old('mail_from_name', 'OeParts') }}"
                     class="form-input w-full @error('mail_from_name') border-red-300 @enderror"
-                    placeholder="OEMHub" required>
+                    placeholder="OeParts" required>
                 @error('mail_from_name')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror

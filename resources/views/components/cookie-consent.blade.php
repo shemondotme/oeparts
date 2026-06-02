@@ -16,6 +16,7 @@
             $dispatch('cookie-consent-declined');
         }
     }"
+    x-on:open-cookie-consent.window="visible = true"
     x-show="visible"
     x-transition:enter="transition ease-out duration-400"
     x-transition:enter-start="translate-x-6 opacity-0"

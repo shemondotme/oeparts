@@ -294,7 +294,7 @@ class AccountController extends Controller
     {
         $user = Auth::guard('web')->user();
 
-        $user->email = 'deleted_'.$user->id.'@oemhub.invalid';
+        $user->email = 'deleted_'.$user->id.'@oeparts.invalid';
         $user->name = 'Deleted User';
         $user->phone = null;
         $user->save();

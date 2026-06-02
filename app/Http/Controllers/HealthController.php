@@ -38,11 +38,11 @@ class HealthController extends Controller
     private function checkCache(): string
     {
         try {
-            $key = 'health_probe_' . time();
-            Cache::put($key, 1, 5);
+            $key = 'health_ping_' . uniqid();
+            Cache::put($key, 'ok', 5);
             $result = Cache::get($key);
             Cache::forget($key);
-            return $result === 1 ? 'ok' : 'fail';
+            return $result === 'ok' ? 'ok' : 'fail';
         } catch (\Throwable) {
             return 'fail';
         }

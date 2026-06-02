@@ -1,4 +1,4 @@
-<h1 align="center">OEMHub</h1>
+<h1 align="center">OeParts</h1>
 
 <p align="center">
   Open-source Laravel e-commerce platform for genuine OEM auto parts in Europe.
@@ -7,11 +7,11 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/oemhub/oemhub/actions/workflows/tests.yml">
-    <img src="https://github.com/oemhub/oemhub/actions/workflows/tests.yml/badge.svg" alt="Tests">
+  <a href="https://github.com/oeparts/oeparts/actions/workflows/tests.yml">
+    <img src="https://github.com/oeparts/oeparts/actions/workflows/tests.yml/badge.svg" alt="Tests">
   </a>
-  <a href="https://github.com/oemhub/oemhub/releases/latest">
-    <img src="https://img.shields.io/github/v/release/oemhub/oemhub" alt="Latest Release">
+  <a href="https://github.com/oeparts/oeparts/releases/latest">
+    <img src="https://img.shields.io/github/v/release/oeparts/oeparts" alt="Latest Release">
   </a>
   <img src="https://img.shields.io/badge/PHP-8.2%2B-blue" alt="PHP 8.2+">
   <img src="https://img.shields.io/badge/Laravel-11-red" alt="Laravel 11">
@@ -20,9 +20,9 @@
 
 ---
 
-## What is OEMHub?
+## What is OeParts?
 
-OEMHub is a production-ready e-commerce platform built specifically for **genuine OEM auto parts** dealers in Europe. It is designed around the reality of the parts business: customers search by OEM number, not by category — so the search engine is the product.
+OeParts is a production-ready e-commerce platform built specifically for **genuine OEM auto parts** dealers in Europe. It is designed around the reality of the parts business: customers search by OEM number, not by category — so the search engine is the product.
 
 **Key design decisions:**
 - OEM numbers are normalized before indexing and searching (strips dashes/spaces, uppercases) so `1K0-407-271-E` and `1K0407271E` are the same part
@@ -70,8 +70,8 @@ OEMHub is a production-ready e-commerce platform built specifically for **genuin
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/oemhub/oemhub.git
-cd oemhub
+git clone https://github.com/oeparts/oeparts.git
+cd oeparts
 composer install
 cp .env.example .env
 php artisan key:generate
@@ -81,7 +81,7 @@ php artisan key:generate
 
 ```env
 DB_HOST=127.0.0.1
-DB_DATABASE=oemhub
+DB_DATABASE=oeparts
 DB_USERNAME=root
 DB_PASSWORD=
 
@@ -116,7 +116,7 @@ php artisan queue:work redis --queue=critical,default
 
 Add to crontab:
 ```cron
-* * * * * cd /path/to/oemhub && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /path/to/oeparts && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ---

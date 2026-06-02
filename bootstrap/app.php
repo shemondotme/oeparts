@@ -1,8 +1,17 @@
 <?php
 
+use App\Http\Middleware\HandleRedirects;
+use App\Http\Middleware\InstallerMiddleware;
+use App\Http\Middleware\IpBlocklist;
+use App\Http\Middleware\MaintenanceMode;
+use App\Http\Middleware\NormalizeOemUrl;
+use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\TrackUtm;
+use App\Providers\EventServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -13,23 +22,31 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Disable CSRF verification in the test environment so HTTP test
+        // client requests don't require a real session token. Real forms
+        // always include @csrf; this only affects the PHPUnit HTTP client.
+        // $_SERVER['APP_ENV'] is set by phpunit.xml <server> before bootstrap runs.
+        if (($_SERVER['APP_ENV'] ?? null) === 'testing') {
+            $middleware->validateCsrfTokens(except: ['*']);
+        }
+
         $middleware->alias([
-            'set.locale'     => \App\Http\Middleware\SetLocale::class,
-            'admin.auth'     => \App\Http\Middleware\AdminAuthenticated::class,
-            'normalize.oem'  => \App\Http\Middleware\NormalizeOemUrl::class,
-            'maintenance'    => \App\Http\Middleware\MaintenanceMode::class,
-            'ip.blocklist'   => \App\Http\Middleware\IpBlocklist::class,
-            'installer'      => \App\Http\Middleware\InstallerMiddleware::class,
-            'track.utm'      => \App\Http\Middleware\TrackUtm::class,
-            'handle.redirects' => \App\Http\Middleware\HandleRedirects::class,
+            'set.locale' => SetLocale::class,
+            'normalize.oem' => NormalizeOemUrl::class,
+            'maintenance' => MaintenanceMode::class,
+            'ip.blocklist' => IpBlocklist::class,
+            'installer' => InstallerMiddleware::class,
+            'track.utm' => TrackUtm::class,
+            'handle.redirects' => HandleRedirects::class,
+            'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
         ]);
     })
     ->withProviders([
-        \App\Providers\EventServiceProvider::class,
+        EventServiceProvider::class,
     ])
     ->withEvents(false)
     ->withExceptions(function (Exceptions $exceptions) {
-        $exceptions->renderable(function (TooManyRequestsHttpException $e, \Illuminate\Http\Request $request) {
+        $exceptions->renderable(function (TooManyRequestsHttpException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => __('search.error_429_message'),
@@ -40,4 +57,5 @@ return Application::configure(basePath: dirname(__DIR__))
                 'message' => $e->getMessage() ?: __('search.error_429_message'),
             ], 429, $e->getHeaders());
         });
+
     })->create();

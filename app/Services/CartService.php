@@ -223,14 +223,14 @@ class CartService
 
             $diff = bcsub((string) $currentPrice, (string) $oldPrice, 4);
             $absDiff = ltrim($diff, '-');
-            $changePercent = (float) bcmul(bcdiv($absDiff, (string) $oldPrice, 6), '100', 2);
+            $changePercent = bcmul(bcdiv($absDiff, (string) $oldPrice, 6), '100', 2);
 
             if ($changePercent >= $threshold) {
                 $changes[] = [
                     'item' => $item,
-                    'old_price' => $oldPrice,
-                    'current_price' => $currentPrice,
-                    'change_percent' => $changePercent,
+                    'old_price' => (float) $oldPrice,
+                    'current_price' => (float) $currentPrice,
+                    'change_percent' => (float) $changePercent,
                     'block_checkout' => $changePercent >= $threshold,
                 ];
             }
@@ -274,13 +274,12 @@ class CartService
                         : (string) $coupon->discount_type;
 
                     if ($type === DiscountType::Fixed->value) {
-                        $couponDiscount = min((string)$coupon->discount_value, $subtotal); // can't discount more than subtotal
+                        $couponDiscount = bccomp((string)$coupon->discount_value, $subtotal, 2) > 0 ? $subtotal : (string)$coupon->discount_value;
                     } elseif ($type === DiscountType::Percentage->value) {
                         $discountAmt = bcmul($subtotal, bcdiv((string)$coupon->discount_value, '100', 4), 2);
-                        $couponDiscount = min($discountAmt, $subtotal);
+                        $couponDiscount = bccomp($discountAmt, $subtotal, 2) > 0 ? $subtotal : $discountAmt;
                     }
-                    // Format to exactly 2 decimals
-                    $couponDiscount = number_format((float)$couponDiscount, 2, '.', '');
+                    $couponDiscount = bcadd($couponDiscount, '0', 2);
                     $appliedCoupon = $couponCode;
                 } else {
                     // Invalidated by min order amount, optionally remove from cart
@@ -306,7 +305,7 @@ class CartService
 
         return [
             'item_count' => $itemCount,
-            'subtotal' => (float) $subtotal, // Subtotal BEFORE discount
+            'subtotal' => (float) $subtotal,
             'subtotal_excl_vat' => (float) $subtotal,
             'vat_rate' => (float) $vatRate,
             'vat_amount' => (float) $vatAmount,

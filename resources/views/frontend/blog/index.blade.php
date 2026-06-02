@@ -2,7 +2,7 @@
 
 @php
     $lang     = app()->getLocale();
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
     $pageTitle   = trans('blog.title', [], $lang);
     $pageDescr   = trans('blog.description', [], $lang);
     $activeCat   = request('category');
@@ -42,7 +42,7 @@
         "name": @json($siteName),
         "logo": {
             "@type": "ImageObject",
-            "url": "{{ settings('general.site_url', url('/')) }}/logo.png"
+            "url": "{{ settings('general.site_url', url('/')) }}/logo.svg"
         }
     },
     "inLanguage": "{{ $lang }}"

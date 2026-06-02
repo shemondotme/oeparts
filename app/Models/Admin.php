@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Permission\Traits\HasRoles;
 
-class Admin extends Authenticatable
+class Admin extends Authenticatable implements FilamentUser
 {
     use HasFactory, HasRoles, Notifiable;
 
@@ -27,9 +29,9 @@ class Admin extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password'              => 'hashed',
-            'is_active'             => 'boolean',
-            'last_login_at'         => 'datetime',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+            'last_login_at' => 'datetime',
             'dashboard_preferences' => 'array',
         ];
     }
@@ -52,5 +54,10 @@ class Admin extends Authenticatable
     public function blockedIps(): HasMany
     {
         return $this->hasMany(IpBlocklist::class, 'blocked_by');
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return (bool) $this->is_active;
     }
 }

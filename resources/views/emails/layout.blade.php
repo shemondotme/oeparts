@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>{{ $subject ?? 'OEMHub Notification' }}</title>
+    <title>{{ $subject ?? 'OeParts Notification' }}</title>
     <style type="text/css">
         /* =========================================
            INDUSTRIAL BLUEPRINT EMAIL RESET
@@ -109,7 +109,7 @@
 
     <!-- Preheader (Hidden) -->
     <div style="display:none;font-size:1px;color:#F7F3E7;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        {{ $preheader ?? 'OEMHub Notification' }}
+        {{ $preheader ?? 'OeParts Notification' }}
     </div>
 
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -132,12 +132,12 @@
                                     <td>
                                         <!-- Eyebrow / Spec Label -->
                                         <p class="spec-label" style="margin: 0 0 12px 0;">
-                                            § OEMHUB · NOTIFICATION
+                                            § OEPARTS · NOTIFICATION
                                         </p>
 
                                         <!-- Logo / Brand Name -->
                                         <h1 class="font-display" style="margin: 0; font-size: 28px; line-height: 32px; color: #F7F3E7;">
-                                            OEM<span class="text-amber">·</span>HUB
+                                            Oe<span class="text-amber">·</span>Parts
                                         </h1>
 
                                         <!-- Tagline -->
@@ -167,7 +167,7 @@
                                             § COLOPHON
                                         </p>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #F7F3E7;">
-                                            <strong>OEMHub Europe</strong><br>
+                                            <strong>OeParts Europe</strong><br>
                                             Genuine Parts Distribution Network
                                         </p>
                                     </td>
@@ -178,7 +178,7 @@
                                             <tr>
                                                 <td style="font-size: 12px; line-height: 18px; color: #F7F3E7; opacity: 0.6;">
                                                     <p style="margin: 0 0 8px 0;">
-                                                        {{ trans('emails.layout.footer_line1', [], $locale ?? 'en') ?: 'You are receiving this email because you have an account or placed an order with OEMHub.' }}
+                                                        {{ trans('emails.layout.footer_line1', [], $locale ?? 'en') ?: 'You are receiving this email because you have an account or placed an order with OeParts.' }}
                                                     </p>
                                                     <p style="margin: 0;">
                                                         <a href="{{ config('app.url') }}" style="color: #F59E0B; text-decoration: underline;">{{ config('app.url') }}</a>

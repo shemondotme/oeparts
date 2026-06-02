@@ -4,89 +4,72 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MediaFile;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class MediaPickerController extends Controller
 {
-    /**
-     * Get paginated media files (AJAX).
-     */
-    public function index(Request $request)
+    public function upload(Request $request): JsonResponse
     {
-        $query = MediaFile::latest('id');
+        $validator = Validator::make($request->all(), [
+            'file' => 'required|image|mimes:jpeg,png,gif,webp|max:5120',
+            'alt_text' => 'nullable|string|max:255',
+        ]);
 
-        if ($request->filled('search')) {
-            $query->where('file_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('alt_text', 'like', '%' . $request->search . '%');
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        if ($request->filled('type')) {
-            $query->where('mime_type', 'like', $request->type . '%');
-        }
+        $file = $request->file('file');
+        $path = $file->store('media', 'public');
 
-        $media = $query->paginate(12);
+        $media = MediaFile::create([
+            'uploaded_by' => Auth::guard('admin')->id(),
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $path,
+            'file_url' => Storage::url($path),
+            'mime_type' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            'alt_text' => $request->input('alt_text'),
+        ]);
 
         return response()->json([
             'success' => true,
-            'data'    => $media->items(),
-            'total'   => $media->total(),
-            'links'   => $media->render(),
+            'file' => $media->toArray(),
         ]);
     }
 
-    /**
-     * Upload single media file with drag-drop support.
-     */
-    public function upload(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'file'     => ['required', 'file', 'mimes:jpeg,png,gif,webp,mp4,pdf', 'max:20480'],
-            'alt_text' => ['nullable', 'string', 'max:255'],
-        ]);
+        $query = MediaFile::query();
 
-        try {
-            $file = $request->file('file');
-            $path = $file->store('uploads', 'public');
-            $url  = asset('storage/' . $path);
-
-            $media = MediaFile::create([
-                'uploaded_by' => auth('admin')->id(),
-                'file_name'   => $file->getClientOriginalName(),
-                'file_path'   => $path,
-                'file_url'    => $url,
-                'mime_type'   => $file->getMimeType(),
-                'size'        => $file->getSize(),
-                'alt_text'    => $validated['alt_text'] ?? '',
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'file'    => $media,
-                'message' => 'File uploaded successfully',
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Upload failed: ' . $e->getMessage(),
-            ], 500);
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('file_name', 'like', "%{$search}%")
+                  ->orWhere('alt_text', 'like', "%{$search}%");
+            });
         }
+
+        $files = $query->orderBy('id', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $files->toArray(),
+            'total' => $files->count(),
+        ]);
     }
 
-    /**
-     * Delete media file.
-     */
-    public function destroy(MediaFile $media)
+    public function destroy(MediaFile $media): JsonResponse
     {
-        try {
-            $path = storage_path('app/public/' . $media->file_path);
-            if (file_exists($path)) {
-                unlink($path);
-            }
-            $media->delete();
-
-            return response()->json(['success' => true, 'message' => 'File deleted']);
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        if ($media->file_path) {
+            Storage::disk('public')->delete($media->file_path);
         }
+
+        $media->delete();
+
+        return response()->json(['success' => true]);
     }
 }

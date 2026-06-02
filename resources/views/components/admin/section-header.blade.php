@@ -6,12 +6,12 @@
 
 <div {{ $attributes->merge(['class' => 'mb-6']) }}>
     @if($eyebrow)
-        <p class="bp-spec text-amber-ink">{{ $eyebrow }}</p>
+        <p class="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-600">{{ $eyebrow }}</p>
     @endif
-    <h2 class="mt-1 font-display text-xl font-bold tracking-[-0.02em] text-ink">
-        {{ $title }}<span class="text-amber">.</span>
+    <h2 class="mt-1.5 font-display text-xl font-bold tracking-tight text-slate-900">
+        {{ $title }}
     </h2>
     @if($description)
-        <p class="mt-2 text-sm text-ink-muted">{{ $description }}</p>
+        <p class="mt-2 text-admin-sm leading-relaxed text-slate-600">{{ $description }}</p>
     @endif
 </div>

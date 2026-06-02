@@ -121,8 +121,8 @@ function detectBrowserLanguage(Request $request): string
 
 /**
  * Format a price value with currency symbol and proper decimal places.
- * Uses bcmath for safe formatting (bcscale(2) is set globally in AppServiceProvider).
- * Uses NumberFormatter for locale-aware formatting.
+ * Numbers are stored as DECIMAL strings in the database and processed with bcmath.
+ * The (float) cast is used only as the final step for NumberFormatter.
  *
  * Examples:
  *   EN: €1,234.56
@@ -141,21 +141,16 @@ function format_price($price, ?string $currencyCode = null, ?string $locale = nu
     // Ensure price is a string for bcmath operations
     $price = (string) $price;
 
-    // Get current locale if not provided
     $locale = $locale ?? app()->getLocale();
-
-    // Get currency settings
     $currencyCode = $currencyCode ?? settings('general.currency', 'EUR');
 
-    // Use NumberFormatter for locale-aware formatting
     $formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
 
-    // Set currency code if different from default
     if ($currencyCode !== 'EUR') {
         $formatter->setTextAttribute(NumberFormatter::CURRENCY_CODE, $currencyCode);
     }
 
-    // Format the price
+    // NumberFormatter requires a float; this is the only acceptable float conversion in the system
     return $formatter->formatCurrency((float) $price, $currencyCode);
 }
 

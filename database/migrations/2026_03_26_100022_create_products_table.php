@@ -16,7 +16,7 @@ return new class extends Migration
             $table->json('name')->nullable();
             $table->json('description')->nullable();
             $table->enum('condition', [
-                'new', 'used_grade_a', 'used_grade_b',
+                'new', 'used', 'used_grade_a', 'used_grade_b',
                 'used_grade_c', 'remanufactured', 'aftermarket', 'new_old_stock',
             ]);
             $table->decimal('price', 10, 2);

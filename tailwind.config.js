@@ -12,16 +12,36 @@ export default {
     theme: {
         extend: {
             colors: {
-                // OEMHub design tokens — always use these, never raw hex in templates
+                // OeParts design tokens — always use these, never raw hex in templates
                 navy: "#0B3A68", // Primary: headings, buttons, sidebar, hero bg
                 amber: "#F59E0B", // Accent: CTAs, active states, progress bars, badge bg
                 "amber-text": "#B45309", // Amber text on white/light bg — WCAG AA (never use amber on white)
+
+                // Admin UI accent — indigo family (premium SaaS; use via bp-* / layout tokens)
+                brand: {
+                    50: "#eef2ff",
+                    100: "#e0e7ff",
+                    200: "#c7d2fe",
+                    300: "#a5b4fc",
+                    400: "#818cf8",
+                    500: "#6366f1",
+                    600: "#4f46e5",
+                    700: "#4338ca",
+                    800: "#3730a3",
+                    900: "#312e81",
+                },
 
                 // Semantic grays
                 body: "#334155", // Primary body text
                 muted: "#64748B", // Secondary text, labels
                 "bg-page": "#F8FAFC", // Page background
                 "section-alt": "#EEF4FF", // Alternating section bg — navy 6% tint
+
+                // Admin shell surfaces (cool neutral — executive dashboard canvas)
+                "admin-canvas": "#f1f4f9",
+                "admin-surface": "#ffffff",
+                "admin-border": "rgba(15, 23, 42, 0.08)",
+                "admin-muted": "#64748b",
 
                 // ── Industrial Blueprint tokens ───────────────────────
                 // Deep ink for primary text on ivory — more contrast than navy
@@ -59,18 +79,23 @@ export default {
             },
 
             fontFamily: {
-                // Plus Jakarta Sans for display (H1-H3, logo, hero text)
+                // Plus Jakarta Sans — display / marketing headings (secondary to UI sans)
                 display: [
                     '"Plus Jakarta Sans"',
+                    '"Geist Sans"',
                     ...defaultTheme.fontFamily.sans,
                 ],
-                // Inter for body, labels, nav, descriptions
-                sans: ["Inter", ...defaultTheme.fontFamily.sans],
-                // JetBrains Mono for OEM numbers AND all numeric content (Blueprint)
-                mono: ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
+                // Geist Sans — primary UI (navigation, body, forms) — 2026 SaaS standard
+                sans: ['"Geist Sans"', 'ui-sans-serif', 'system-ui', ...defaultTheme.fontFamily.sans],
+                // Geist Mono — metrics, tables, codes; JetBrains fallback for glyph coverage
+                mono: ['"Geist Mono"', '"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
             },
 
             fontSize: {
+                // Admin type scale — scan-friendly hierarchy
+                "admin-xs": ["0.6875rem", { lineHeight: "1rem", letterSpacing: "0.02em" }],
+                "admin-sm": ["0.8125rem", { lineHeight: "1.25rem", letterSpacing: "0.01em" }],
+                "admin-base": ["0.9375rem", { lineHeight: "1.5rem", letterSpacing: "0" }],
                 // Industrial Blueprint display scale — tight, confident, technical
                 "blueprint-xl": [
                     "clamp(3rem, 11vw, 9.5rem)",
@@ -110,6 +135,15 @@ export default {
                 "grid-lg": "48px 48px",
                 "grid-xl": "96px 96px",
                 leader: "6px 1px",
+            },
+
+            boxShadow: {
+                "admin-card":
+                    "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 40px -16px rgb(15 23 42 / 0.1), inset 0 1px 0 0 rgb(255 255 255 / 0.75)",
+                "admin-card-hover":
+                    "0 4px 12px -2px rgb(15 23 42 / 0.08), 0 20px 48px -20px rgb(79 70 229 / 0.12)",
+                "admin-inset-highlight": "inset 0 1px 0 0 rgb(255 255 255 / 0.06)",
+                "admin-sidebar": "8px 0 48px -16px rgb(0 0 0 / 0.4)",
             },
 
             animation: {

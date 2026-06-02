@@ -2,12 +2,12 @@
 
 @php
     $lang     = app()->getLocale();
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
 @section('title'){{ __('Browse Brands') }} · {{ $siteName }}@endsection
-@section('meta_description'){{ __('Browse all verified OEM manufacturers in the OEMHub catalogue — from Alfa Romeo to Volvo, sourced directly from genuine European parts suppliers.') }}@endsection
+@section('meta_description'){{ __('Browse all verified OEM manufacturers in the OeParts catalogue — from Alfa Romeo to Volvo, sourced directly from genuine European parts suppliers.') }}@endsection
 @section('og_title'){{ __('Browse Brands') }} · {{ $siteName }}@endsection
 @section('og_description'){{ __('Every verified OEM manufacturer we carry, indexed and ready for cross-reference search.') }}@endsection
 @section('canonical')

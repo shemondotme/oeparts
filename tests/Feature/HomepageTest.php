@@ -6,12 +6,21 @@ use App\Models\Section;
 use App\Services\CacheService;
 use App\Services\SectionRendererService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class HomepageTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Cache::forget('sections.homepage');
+        Cache::forget('sections.landing');
+        Cache::forget('settings.performance');
+    }
 
     // ── Route & response ──────────────────────────────────────────────────────
 
@@ -35,7 +44,7 @@ class HomepageTest extends TestCase
     #[Test]
     public function homepage_uses_frontend_layout(): void
     {
-        $this->get('/en/')->assertSeeText('OEMHub');
+        $this->get('/en/')->assertSeeText('OeParts');
     }
 
     // ── Sections rendering ────────────────────────────────────────────────────
@@ -49,6 +58,7 @@ class HomepageTest extends TestCase
             'title'      => 'Hero',
             'content'    => ['headline' => ['en' => 'Test Hero', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']],
             'is_active'  => true,
+            'status'     => \App\Enums\SectionStatus::Published,
             'sort_order' => 10,
         ]);
 
@@ -58,6 +68,7 @@ class HomepageTest extends TestCase
             'title'      => 'Trust',
             'content'    => ['items' => []],
             'is_active'  => false, // inactive — should NOT render
+            'status'     => \App\Enums\SectionStatus::Published,
             'sort_order' => 20,
         ]);
 
@@ -82,6 +93,7 @@ class HomepageTest extends TestCase
             'title'      => 'Stats',
             'content'    => ['headline' => ['en' => 'First Section', 'de' => '', 'lt' => '', 'fr' => '', 'es' => ''], 'items' => []],
             'is_active'  => true,
+            'status'     => \App\Enums\SectionStatus::Published,
             'sort_order' => 5,
         ]);
 
@@ -91,6 +103,7 @@ class HomepageTest extends TestCase
             'title'      => 'Hero',
             'content'    => ['headline' => ['en' => 'Second Section', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']],
             'is_active'  => true,
+            'status'     => \App\Enums\SectionStatus::Published,
             'sort_order' => 10,
         ]);
 
@@ -109,11 +122,11 @@ class HomepageTest extends TestCase
     {
         Section::create([
             'type' => 'hero', 'location' => 'homepage', 'title' => 'A',
-            'content' => ['headline' => ['en' => '']], 'is_active' => true, 'sort_order' => 1,
+            'content' => ['headline' => ['en' => '']], 'is_active' => true, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 1,
         ]);
         Section::create([
             'type' => 'banner', 'location' => 'homepage', 'title' => 'B',
-            'content' => [], 'is_active' => false, 'sort_order' => 2,
+            'content' => [], 'is_active' => false, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 2,
         ]);
 
         $renderer = app(SectionRendererService::class);
@@ -128,11 +141,11 @@ class HomepageTest extends TestCase
     {
         Section::create([
             'type' => 'hero', 'location' => 'homepage', 'title' => 'H',
-            'content' => [], 'is_active' => true, 'sort_order' => 1,
+            'content' => [], 'is_active' => true, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 1,
         ]);
         Section::create([
             'type' => 'banner', 'location' => 'landing', 'title' => 'L',
-            'content' => [], 'is_active' => true, 'sort_order' => 1,
+            'content' => [], 'is_active' => true, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 1,
         ]);
 
         $renderer = app(SectionRendererService::class);

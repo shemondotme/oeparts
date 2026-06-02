@@ -1,4 +1,4 @@
-# OEMHub — Development Plan
+# OeParts - Development Plan
 ## Version 1.0 | 20 Sprint Order
 
 ---
@@ -50,7 +50,7 @@ Tests: OemNormalizerTest, SequenceServiceTest, BcmathPriceTest
 
 ## SPRINT 4 — Design System & Layouts
 ```
-CSS design tokens (DESIGN_SYSTEM.md) → Tailwind components →
+CSS design tokens (Tailwind + admin Slate theme) → Tailwind components →
 Alpine.js modules (otp-input, countup, clipboard) →
 Frontend layout (app.blade.php) → Admin layout →
 All Blade UI components →
@@ -136,59 +136,91 @@ Tests: AuthTest, invoice download
 
 ---
 
-## SPRINT 11 — Admin Auth & Dashboard
+## SPRINT 11 — FilamentPHP Admin Panel (Navigation & Clusters)
 ```
-Admin auth (separate guard, /admin/login) →
-AdminAuthenticated middleware →
-DashboardController (26 widgets) →
-Admin dashboard view (KPI, alerts, charts, health strip) →
-Widget customization saved to dashboard_preferences
+FilamentPHP 5.6.5 install & config →
+AdminPanelProvider with 4 Clusters:
+  Settings, System, Content, Reports →
+8 Navigation Groups (Commerce, Catalog, Customers, Marketing,
+  Content, Reports, System, Settings) →
+SPA mode enabled →
+All Resources registered with proper navigation →
+AdminResource + RoleResource (custom, no FilamentShield) →
+Clusters use getNavigationIcon() methods (PHP 8.2 compat)
 
-Tests: admin login, dashboard loads, guard isolation
-```
-
----
-
-## SPRINT 12 — Admin Order Management
-```
-Admin OrderController (list, detail, status, tracking) →
-Admin RefundController →
-Order management views
-
-Tests: AdminOrderTest (status change, history logged, email sent)
+Tests: config:cache, route:list, view:cache all pass
 ```
 
 ---
 
-## SPRINT 13 — Admin Catalog Management
+## SPRINT 12 — Filament Resources (Commerce & Catalog)
 ```
-Admin ProductController (list, CRUD, inline edit, CSV import) →
-Admin ManufacturerController →
-Admin CarModelController →
-BulkUpdate (filter → preview → execute → log) →
-Catalog views
+OrderResource (list, view, status management) →
+RefundRequestResource →
+ProductResource (CRUD, inline edit, CSV import) →
+ManufacturerResource →
+CarModelResource →
+CategoryResource →
+PartInquiryResource →
+All with Filament tables, filters, actions
+
+Tests: Resources render, CRUD operations work
 ```
 
 ---
 
-## SPRINT 14 — Admin CMS & Content
+## SPRINT 13 — Filament Resources (Customers & Marketing)
 ```
-SectionController (reorder, edit content multilang) →
-BlogController, PageController, MediaController →
-MenuController (drag-drop) →
-TestimonialController, FaqController →
-NewsletterController, ContactMessageController →
-InquiryController (Kanban)
+CustomerResource (list, view, address management) →
+CouponResource (CRUD, usage tracking) →
+AbandonedCartResource →
+EmailLogResource →
+SearchLogResource →
+All with Filament tables, filters, actions
 ```
 
 ---
 
-## SPRINT 15 — Admin Settings & Reports
+## SPRINT 14 — Filament Resources (Content & System)
 ```
-SettingsController (all 16 groups, encrypted) →
-ReportController (sales, customers, search, checkout drop-off) →
-HealthController (full check page) →
-TranslationController
+SectionResource (reorder, edit multilang content) →
+BlogPostResource →
+PageResource →
+MediaFileResource →
+MenuResource (drag-drop ordering) →
+RedirectResource →
+TestimonialResource →
+FaqResource →
+NewsletterSubscriberResource →
+ContactMessageResource →
+ActivityLogResource →
+CronLogResource →
+TranslationResource →
+LoginLogResource →
+IpBlocklistResource →
+HealthCheckResource →
+All with Filament tables, filters, actions
+```
+
+---
+
+## SPRINT 15 — Filament Settings Pages (25 pages)
+```
+SettingsPage (abstract base with save/fillForm) →
+GeneralSettings → AppearanceSettings → ContactSettings →
+TaxSettings → ShippingSettings → PaymentSettings →
+EmailSettings → AuthSecuritySettings → SearchSettings →
+CartSettings → OrdersSettings → PerformanceSettings →
+SecuritySettings → IntegrationsSettings →
+AnnouncementSettings → StatsCounterSettings →
+SeoSettings → MaintenanceSettings → AboutLicenseSettings →
+CacheManagementSettings → DatabaseSettings →
+LogViewerSettings → SchedulerSettings →
+MenuSettings → SocialLinkSettings
+
+Settings cluster: all 25 pages under Settings cluster
+Reports cluster: Sales, Customers, Search, Checkout reports
+System cluster: SetupAssistant, Health dashboard
 ```
 
 ---

@@ -8,9 +8,7 @@ use App\Enums\PaymentStatus;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
-use App\Models\ShippingMethod;
 use App\Models\User;
-use App\Models\UserAddress;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -20,11 +18,11 @@ use Carbon\Carbon;
  * CheckoutService — orchestrates the 5‑step checkout flow.
  *
  * Steps:
- *   1. Guest email + OTP verification (OtpService)
- *   2. B2B VAT validation (ViesService)
- *   3. Shipping address
- *   4. Shipping method selection
- *   5. Review & place order (creates Order, empties Cart)
+ *   1. Contact email + phone
+ *   2. Shipping address
+ *   3. Shipping method selection
+ *   4. Review & accept terms
+ *   5. Payment method & place order (creates Order, empties Cart)
  *
  * All checkout state is stored in the session under the key `checkout`.
  * The session data is validated and transformed into an Order at step 5.
@@ -32,8 +30,6 @@ use Carbon\Carbon;
 class CheckoutService
 {
     public function __construct(
-        private OtpService $otpService,
-        private ViesService $viesService,
         private SequenceService $sequenceService,
         private SettingsService $settings,
         private CartService $cartService
@@ -55,15 +51,10 @@ class CheckoutService
                 'contact_phone' => null,
                 'guest_email' => null,
                 'otp_verified' => false,
-                'vat_number' => null,
-                'vat_exempt' => false,
-                'company_name' => null,
-                'is_b2b' => false,
                 'shipping_address' => null,
                 'shipping_method_id' => null,
                 'payment_method' => 'card',
                 'customer_note' => null,
-                'urgent_processing' => false,
             ],
             'created_at' => now()->toIso8601String(),
             'expires_at' => now()->addMinutes(
@@ -124,22 +115,9 @@ class CheckoutService
 
         switch ($step) {
             case 1:
-                // Email OTP verification for guest checkout.
-                // PRODUCTION: otp_verified must be true (OTP code verified).
-                // Local testing can skip via CHECKOUT_SKIP_OTP=true.
-                $skipOtp = (bool) config('app.checkout_skip_otp');
-                return !empty($data['contact_email'])
-                    && ($skipOtp || $data['otp_verified'] === true || auth()->check());
+                return !empty($data['contact_email']);
             case 2:
-                if (empty($data['shipping_address'])) {
-                    return false;
-                }
-
-                if ($data['is_b2b'] ?? false) {
-                    return !empty($data['company_name']) && !empty($data['vat_number']);
-                }
-
-                return true;
+                return !empty($data['shipping_address']);
             case 3:
                 return !empty($data['shipping_method_id']);
             case 4:
@@ -207,20 +185,17 @@ class CheckoutService
     }
 
     /**
-     * Validate VAT number using VIES and update session.
+     * Return a hardcoded shipping method object by ID, or null.
      */
-    public function validateVat(string $checkoutId, string $vatNumber, ?string $countryCode = null): array
+    private function getShippingMethod(?int $id): ?object
     {
-        $result = $this->viesService->validate($vatNumber, $countryCode);
+        $methods = [
+            1 => (object) ['id' => 1, 'name' => 'Express Shipping', 'flat_rate' => '75.00', 'estimated_days_min' => 3, 'estimated_days_max' => 5],
+            2 => (object) ['id' => 2, 'name' => 'Standard Shipping', 'flat_rate' => '40.00', 'estimated_days_min' => 5, 'estimated_days_max' => 7],
+            3 => (object) ['id' => 3, 'name' => 'Economy Shipping', 'flat_rate' => '30.00', 'estimated_days_min' => null, 'estimated_days_max' => 15],
+        ];
 
-        $this->update($checkoutId, [
-            'vat_number' => $vatNumber,
-            'vat_exempt' => $result['valid'] ?? false,
-            'company_name' => $result['name'] ?? null,
-            'is_b2b' => true,
-        ]);
-
-        return $result;
+        return $methods[$id] ?? null;
     }
 
     /**
@@ -245,10 +220,10 @@ class CheckoutService
 
             // Calculate totals using CartService
             $cartSummary = $this->cartService->getSummary($cart);
-            $subtotal = number_format((float) $cartSummary['subtotal'], 2, '.', '');
+            $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
             $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id']);
             $taxableBase = bcadd((string) $subtotal, (string) $shippingCost, 2);
-            $vatAmount = $data['vat_exempt'] ? '0.00' : $this->calculateVat($taxableBase);
+            $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase);
             $grandTotal = bcadd($taxableBase, $vatAmount, 2);
 
             // --- Coupon application ---
@@ -282,9 +257,7 @@ class CheckoutService
             }
 
             $shippingAddress = $data['shipping_address'] ?? [];
-            $shippingMethod = !empty($data['shipping_method_id'])
-                ? ShippingMethod::find($data['shipping_method_id'])
-                : null;
+            $shippingMethod = $this->getShippingMethod($data['shipping_method_id'] ?? null);
             $shippingName = trim(implode(' ', array_filter([
                 $shippingAddress['first_name'] ?? null,
                 $shippingAddress['last_name'] ?? null,
@@ -305,7 +278,7 @@ class CheckoutService
                 'coupon_id'       => $couponId,
                 'discount_amount' => $discountAmount,
                 'shipping_method_id' => $data['shipping_method_id'],
-                'shipping_method_name_snapshot' => $shippingMethod ? trans_field($shippingMethod->name) : null,
+                'shipping_method_name_snapshot' => $shippingMethod?->name,
                 'shipping_estimated_days_min' => $shippingMethod?->estimated_days_min,
                 'shipping_estimated_days_max' => $shippingMethod?->estimated_days_max,
                 'shipping_name' => $shippingName,
@@ -313,12 +286,7 @@ class CheckoutService
                 'shipping_city' => $shippingAddress['city'] ?? null,
                 'shipping_postal_code' => $shippingAddress['postal_code'] ?? null,
                 'shipping_country_code' => $shippingAddress['country_code'] ?? null,
-                'is_b2b' => $data['is_b2b'] ?? false,
-                'company_name' => $data['company_name'],
-                'vat_number' => $data['vat_number'],
-                'vat_exempt' => $data['vat_exempt'] ?? false,
                 'customer_note' => $data['customer_note'],
-                'urgent_processing' => $data['urgent_processing'] ?? false,
                 'ip_address' => request()->ip(),
                 // UTM parameters from session
                 'utm_source' => session('utm_source'),
@@ -380,36 +348,9 @@ class CheckoutService
      */
     public function calculateShippingCost(Cart $cart, ?int $shippingMethodId): string
     {
-        if (!$shippingMethodId) {
-            return '0.00';
-        }
+        $prices = [1 => '75.00', 2 => '40.00', 3 => '30.00'];
 
-        $shippingMethod = ShippingMethod::find($shippingMethodId);
-        if (!$shippingMethod || !$shippingMethod->is_active) {
-            return '0.00';
-        }
-
-        $subtotal = '0.00';
-        foreach ($cart->items as $item) {
-            $subtotal = bcadd(
-                $subtotal,
-                bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
-                2
-            );
-        }
-
-        $freeShippingThreshold = $shippingMethod->free_shipping_threshold !== null
-            ? (string) $shippingMethod->free_shipping_threshold
-            : (string) settings('shipping.free_threshold', 0);
-
-        if (
-            bccomp($freeShippingThreshold, '0.00', 2) === 1
-            && bccomp($subtotal, $freeShippingThreshold, 2) >= 0
-        ) {
-            return '0.00';
-        }
-
-        return number_format((float) $shippingMethod->flat_rate, 2, '.', '');
+        return $prices[$shippingMethodId] ?? '0.00';
     }
 
     /**

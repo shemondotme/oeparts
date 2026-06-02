@@ -55,9 +55,11 @@ class ProcessAbandonedCarts extends Command
                 continue; // Already sent recovery email in the last 7 days
             }
 
-            // Get cart items for snapshot
+            // Get cart items for snapshot with product data
             $items = DB::table('cart_items')
-                ->where('cart_id', $cart->id)
+                ->leftJoin('products', 'cart_items.product_id', '=', 'products.id')
+                ->where('cart_items.cart_id', $cart->id)
+                ->select('cart_items.*', 'products.oem_number')
                 ->get();
 
             if ($items->isEmpty()) {
@@ -67,12 +69,14 @@ class ProcessAbandonedCarts extends Command
             // Determine email recipient
             $email = null;
             $userId = null;
+            $customerName = null;
 
             if ($cart->user_id) {
                 $user = User::find($cart->user_id);
                 if ($user) {
                     $email = $user->email;
                     $userId = $user->id;
+                    $customerName = $user->name;
                 }
             } elseif ($cart->guest_email) {
                 $email = $cart->guest_email;
@@ -82,20 +86,44 @@ class ProcessAbandonedCarts extends Command
                 continue;
             }
 
+            // Build snapshot with enriched item data
+            $snapshotItems = $items->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'cart_id' => $item->cart_id,
+                    'product_id' => $item->product_id,
+                    'oem_number' => $item->oem_number ?? null,
+                    'oem_number_snapshot' => $item->oem_number ?? null,
+                    'quantity' => $item->quantity,
+                    'price_at_add' => $item->price_at_add,
+                    'total_price' => bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
+                ];
+            })->toArray();
+
+            $total = array_reduce($snapshotItems, function ($carry, $item) {
+                return bcadd($carry, $item['total_price'], 2);
+            }, '0.00');
+
             // Create abandoned cart record
             $abandonedCart = AbandonedCart::create([
                 'user_id' => $userId,
                 'guest_email' => $cart->guest_email,
                 'cart_snapshot' => [
-                    'items' => $items->toArray(),
-                    'total' => $items->sum(fn($item) => $item->price_at_add * $item->quantity),
+                    'items' => $snapshotItems,
+                    'total' => $total,
+                    'customer_name' => $customerName,
                 ],
                 'last_active_at' => $cart->updated_at,
                 'recovery_email_sent' => false,
             ]);
 
             // Dispatch recovery email job
-            dispatch(new SendAbandonedCartEmail($email, $abandonedCart->cart_snapshot));
+            dispatch(new SendAbandonedCartEmail(
+                $email,
+                $abandonedCart->cart_snapshot,
+                $customerName,
+                $user?->locale ?? 'en',
+            ));
             
             // Mark as sent
             $abandonedCart->update(['recovery_email_sent' => true]);

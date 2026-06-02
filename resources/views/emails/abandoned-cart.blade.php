@@ -1,11 +1,6 @@
 @extends('emails.layout')
 
 @section('content')
-    {{-- ══════════════════════════════════════════════════════════════════════
-         ABANDONED CART — INDUSTRIAL BLUEPRINT RECOVERY
-         Focus: Urgency, product manifest, single clear CTA.
-         ══════════════════════════════════════════════════════════════════ --}}
-
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 
         {{-- ═══ DOC HEADER: Recovery Notice ═══ --}}
@@ -18,14 +13,14 @@
                     Complete your order<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
-                    {{ trans('emails.abandoned_cart.greeting', ['name' => $user->name ?? 'Customer'], $locale) }}
+                    {{ trans('emails.abandoned_cart.greeting', ['name' => $customerName], $locale) }}
                     <br>
-                    You left some genuine OEM parts in your cart. Inventory is not reserved until checkout is complete.
+                    {{ trans('emails.abandoned_cart.body', [], $locale) }}
                 </p>
             </td>
         </tr>
 
-        {{-- ═══ URGENCY STRIP (Safety Tape Pattern) ═══ --}}
+        {{-- ═══ URGENCY STRIP ═══ --}}
         <tr>
             <td style="padding: 16px 0;">
                 <div style="background-color: #F59E0B; padding: 12px 16px; border-left: 4px solid #0A1228;">
@@ -44,7 +39,6 @@
                 </p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; border-collapse: collapse;">
-                    {{-- Table Header --}}
                     <thead>
                         <tr style="background-color: #EFE9D6; border-bottom: 1px solid #D8CFB6;">
                             <th align="left" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
@@ -59,23 +53,22 @@
                         </tr>
                     </thead>
 
-                    {{-- Table Body --}}
                     <tbody>
-                        @foreach($cartItems as $item)
+                        @foreach($items as $item)
                             <tr style="border-bottom: 1px solid #D8CFB6;">
                                 <td style="padding: 12px; font-size: 14px; color: #0A1228; vertical-align: top;">
                                     <strong style="display: block; margin-bottom: 4px;">
-                                        {{ $item->product ? trans_field($item->product->name) : $item->oem_number_snapshot }}
+                                        {{ $item['oem_number'] ?? $item['oem_number_snapshot'] ?? 'Part' }}
                                     </strong>
                                     <span class="font-mono" style="font-size: 12px; color: #4E5A74;">
-                                        {{ $item->oem_number_snapshot }}
+                                        {{ $item['oem_number'] ?? $item['oem_number_snapshot'] ?? '' }}
                                     </span>
                                 </td>
                                 <td align="center" style="padding: 12px; font-size: 14px; color: #0A1228; vertical-align: top;">
-                                    <span class="font-mono">{{ $item->quantity }}</span>
+                                    <span class="font-mono">{{ $item['quantity'] }}</span>
                                 </td>
                                 <td align="right" style="padding: 12px; font-size: 14px; color: #0A1228; vertical-align: top;">
-                                    <span class="font-mono" style="font-weight: bold;">{{ number_format($item->total_price, 2) }} €</span>
+                                    <span class="font-mono" style="font-weight: bold;">{{ number_format((float) ($item['total_price'] ?? $item['price_at_add'] * $item['quantity']), 2) }} €</span>
                                 </td>
                             </tr>
                         @endforeach
@@ -84,7 +77,7 @@
             </td>
         </tr>
 
-        {{-- ═══ SUBTOTAL SUMMARY ═══ --}}
+        {{-- ═══ TOTAL SUMMARY ═══ --}}
         <tr>
             <td style="padding-bottom: 32px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -98,7 +91,7 @@
                                     </td>
                                     <td align="right" style="padding: 6px 0; border-top: 2px solid #0A1228;">
                                         <span class="font-mono" style="font-size: 18px; color: #0A1228; font-weight: bold;">
-                                            {{ number_format($cartTotal, 2) }} €
+                                            {{ number_format((float) $total, 2) }} €
                                         </span>
                                     </td>
                                 </tr>
@@ -113,7 +106,7 @@
         <tr>
             <td align="center" style="padding: 24px 0; border-top: 1px solid #D8CFB6;">
                 <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    Secure your parts now. Checkout takes less than 2 minutes.
+                    {{ trans('emails.abandoned_cart.cta', [], $locale) }}
                 </p>
                 <a href="{{ route('frontend.cart.index', ['lang' => $locale]) }}"
                    class="btn-primary"

@@ -10,6 +10,7 @@ use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -92,6 +93,11 @@ class WebhookTest extends TestCase
         ]);
 
         $this->paymentService = app(PaymentService::class);
+
+        // CACHE_STORE=array persists across tests — clear webhook idempotency keys
+        foreach (['evt_123456789', 'evt_duplicate_123', 'evt_success_123', 'evt_failed_123'] as $id) {
+            Cache::forget("airwallex_webhook_{$id}");
+        }
     }
 
     #[Test]

@@ -12,7 +12,7 @@
 
     <h1 class="text-3xl font-bold text-navy mb-3">Installation Complete!</h1>
     <p class="text-lg text-muted mb-6 max-w-2xl mx-auto">
-        OEMHub has been successfully installed and configured. You can now access your website and admin panel.
+        OeParts has been successfully installed and configured. You can now access your website and admin panel.
     </p>
 
     <div class="grid md:grid-cols-2 gap-6 mb-8 max-w-2xl mx-auto">
@@ -34,7 +34,7 @@
             </div>
             <h3 class="font-semibold text-slate-800 mb-2">Admin Dashboard</h3>
             <p class="text-sm text-muted mb-3">Manage your site, products, and orders.</p>
-            <a href="{{ route('admin.login') }}" target="_blank" class="btn-primary w-full">
+            <a href="{{ route('filament.admin.auth.login') }}" target="_blank" class="btn-primary w-full">
                 Go to Admin
                 <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
             </a>
@@ -78,8 +78,8 @@
 
     <div class="pt-6 border-t border-slate-200">
         <p class="text-sm text-muted">
-            Thank you for choosing OEMHub. Need help? Check out our
-            <a href="https://github.com/oemhub/docs" target="_blank" class="text-navy hover:underline font-medium">documentation</a>.
+            Thank you for choosing OeParts. Need help? Check out our
+            <a href="https://github.com/oeparts/docs" target="_blank" class="text-navy hover:underline font-medium">documentation</a>.
         </p>
     </div>
 </div>

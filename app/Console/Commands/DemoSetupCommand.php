@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Admin;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 class DemoSetupCommand extends Command
@@ -23,7 +25,7 @@ class DemoSetupCommand extends Command
      *
      * @var string
      */
-    protected $description = 'Set up a demo instance of OEMHub with sample data';
+    protected $description = 'Set up a demo instance of OeParts with sample data';
 
     /**
      * Execute the console command.
@@ -31,14 +33,15 @@ class DemoSetupCommand extends Command
     public function handle(): int
     {
         $this->info('╔══════════════════════════════════════════════════════════╗');
-        $this->info('║                OEMHub Demo Setup                         ║');
+        $this->info('║                OeParts Demo Setup                         ║');
         $this->info('╚══════════════════════════════════════════════════════════╝');
 
         // Check if already installed
-        if (file_exists(storage_path('installed.lock')) && !$this->option('fresh')) {
+        if (file_exists(storage_path('installed.lock')) && ! $this->option('fresh')) {
             $this->warn('The application appears to be already installed.');
-            if (!$this->option('yes') && !$this->confirm('Do you want to reset everything? This will delete all existing data.', false)) {
+            if (! $this->option('yes') && ! $this->confirm('Do you want to reset everything? This will delete all existing data.', false)) {
                 $this->info('Demo setup cancelled.');
+
                 return 0;
             }
         }
@@ -70,15 +73,16 @@ class DemoSetupCommand extends Command
         // 3. Create admin user
         $this->step('Creating admin user...');
         if (Schema::hasTable('admins')) {
-            DB::table('admins')->insertOrIgnore([
-                'name' => 'Demo Admin',
-                'email' => 'admin@example.com',
-                'password' => bcrypt('password'),
-                'role' => 'super_admin',
-                'email_verified_at' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            $admin = Admin::updateOrCreate(
+                ['email' => 'admin@example.com'],
+                [
+                    'name' => 'Demo Admin',
+                    'password' => Hash::make('password'),
+                    'email_verified_at' => now(),
+                    'is_active' => true,
+                ]
+            );
+            $admin->assignRole('super_admin');
             $this->line('  <info>✓</info> Admin user created (admin@example.com / password).');
         }
 
@@ -92,7 +96,7 @@ class DemoSetupCommand extends Command
 
         // 5. Create installed.lock and clear compiled views
         $this->step('Finalizing setup...');
-        file_put_contents(storage_path('installed.lock'), 'Demo instance created at ' . now()->toDateTimeString());
+        file_put_contents(storage_path('installed.lock'), 'Demo instance created at '.now()->toDateTimeString());
         $this->call('view:clear');
         $this->line('  <info>✓</info> Setup finalized.');
 
@@ -105,7 +109,7 @@ class DemoSetupCommand extends Command
 
         $this->table(['Access', 'URL / Credentials'], [
             ['Frontend', url('/')],
-            ['Admin Panel', route('admin.login')],
+            ['Admin Panel', route('filament.admin.auth.login')],
             ['Admin Login', 'admin@example.com / password'],
             ['Demo Customer', 'customer@example.com / password'],
             ['Demo Manager', 'manager@example.com / password'],

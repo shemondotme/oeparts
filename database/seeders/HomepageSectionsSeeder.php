@@ -30,10 +30,10 @@ class HomepageSectionsSeeder extends Seeder
         [
             'type'  => 'hero',
             'title' => [
-                'en' => 'Find Genuine OEM Auto Parts by Part Number — OEMHub',
-                'de' => 'Originale OEM-Autoteile nach Teilenummer finden — OEMHub',
+                'en' => 'Find Genuine OEM Auto Parts by Part Number — OeParts',
+                'de' => 'Originale OEM-Autoteile nach Teilenummer finden — OeParts',
                 'lt' => 'Raskite originalias OEM automobilių dalis pagal dalies numerį',
-                'fr' => 'Trouvez des pièces auto OEM d\'origine par numéro — OEMHub',
+                'fr' => 'Trouvez des pièces auto OEM d\'origine par numéro — OeParts',
                 'es' => 'Encuentre piezas de auto OEM genuinas por número de pieza',
             ],
             'content' => [
@@ -86,11 +86,11 @@ class HomepageSectionsSeeder extends Seeder
         [
             'type'  => 'trust_bar',
             'title' => [
-                'en' => 'Why Buyers Choose OEMHub',
-                'de' => 'Warum Käufer OEMHub wählen',
-                'lt' => 'Kodėl pirkėjai renkasi OEMHub',
-                'fr' => 'Pourquoi les acheteurs choisissent OEMHub',
-                'es' => 'Por qué los compradores eligen OEMHub',
+                'en' => 'Why Buyers Choose OeParts',
+                'de' => 'Warum Käufer OeParts wählen',
+                'lt' => 'Kodėl pirkėjai renkasi OeParts',
+                'fr' => 'Pourquoi les acheteurs choisissent OeParts',
+                'es' => 'Por qué los compradores eligen OeParts',
             ],
             'content' => [
                 'items' => [
@@ -148,11 +148,11 @@ class HomepageSectionsSeeder extends Seeder
         [
             'type'  => 'stats_counter',
             'title' => [
-                'en' => 'OEMHub by the Numbers',
-                'de' => 'OEMHub in Zahlen',
-                'lt' => 'OEMHub skaičiais',
-                'fr' => 'OEMHub en chiffres',
-                'es' => 'OEMHub en cifras',
+                'en' => 'OeParts by the Numbers',
+                'de' => 'OeParts in Zahlen',
+                'lt' => 'OeParts skaičiais',
+                'fr' => 'OeParts en chiffres',
+                'es' => 'OeParts en cifras',
             ],
             'content' => [
                 'items' => [
@@ -215,11 +215,11 @@ class HomepageSectionsSeeder extends Seeder
         [
             'type'  => 'how_it_works',
             'title' => [
-                'en' => 'How to Order Genuine OEM Parts on OEMHub',
-                'de' => 'So bestellen Sie originale OEM-Teile bei OEMHub',
-                'lt' => 'Kaip užsakyti originalias OEM dalis OEMHub',
-                'fr' => 'Comment commander des pièces OEM d\'origine sur OEMHub',
-                'es' => 'Cómo pedir piezas OEM genuinas en OEMHub',
+                'en' => 'How to Order Genuine OEM Parts on OeParts',
+                'de' => 'So bestellen Sie originale OEM-Teile bei OeParts',
+                'lt' => 'Kaip užsakyti originalias OEM dalis OeParts',
+                'fr' => 'Comment commander des pièces OEM d\'origine sur OeParts',
+                'es' => 'Cómo pedir piezas OEM genuinas en OeParts',
             ],
             'content' => [
                 'eyebrow' => [
@@ -454,11 +454,11 @@ class HomepageSectionsSeeder extends Seeder
         [
             'type'  => 'testimonials',
             'title' => [
-                'en' => 'What Car Owners Across Europe Say About OEMHub',
-                'de' => 'Was Kfz-Profis aus ganz Europa über OEMHub sagen',
-                'lt' => 'Ką automobilių remonto profesionalai visoje Europoje sako apie OEMHub',
-                'fr' => 'Ce que les professionnels de l\'auto à travers l\'Europe disent d\'OEMHub',
-                'es' => 'Lo que los profesionales del automóvil en Europa dicen sobre OEMHub',
+                'en' => 'What Car Owners Across Europe Say About OeParts',
+                'de' => 'Was Kfz-Profis aus ganz Europa über OeParts sagen',
+                'lt' => 'Ką automobilių remonto profesionalai visoje Europoje sako apie OeParts',
+                'fr' => 'Ce que les professionnels de l\'auto à travers l\'Europe disent d\'OeParts',
+                'es' => 'Lo que los profesionales del automóvil en Europa dicen sobre OeParts',
             ],
             'content' => [
                 'eyebrow' => [

@@ -14,9 +14,9 @@
             <label for="site_name" class="block text-sm font-medium text-slate-700 mb-1">
                 Site Name
             </label>
-            <input type="text" id="site_name" name="site_name" value="{{ old('site_name', 'OEMHub') }}"
+            <input type="text" id="site_name" name="site_name" value="{{ old('site_name', 'OeParts') }}"
                 class="form-input w-full @error('site_name') border-red-300 @enderror"
-                placeholder="OEMHub" required>
+                placeholder="OeParts" required>
             @error('site_name')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
@@ -44,10 +44,10 @@
                 <select id="default_locale" name="default_locale"
                     class="form-select w-full @error('default_locale') border-red-300 @enderror" required>
                     <option value="en" {{ old('default_locale', 'en') == 'en' ? 'selected' : '' }}>English</option>
-                    <option value="es" {{ old('default_locale') == 'es' ? 'selected' : '' }}>Spanish</option>
-                    <option value="fr" {{ old('default_locale') == 'fr' ? 'selected' : '' }}>French</option>
                     <option value="de" {{ old('default_locale') == 'de' ? 'selected' : '' }}>German</option>
-                    <option value="it" {{ old('default_locale') == 'it' ? 'selected' : '' }}>Italian</option>
+                    <option value="lt" {{ old('default_locale') == 'lt' ? 'selected' : '' }}>Lithuanian</option>
+                    <option value="fr" {{ old('default_locale') == 'fr' ? 'selected' : '' }}>French</option>
+                    <option value="es" {{ old('default_locale') == 'es' ? 'selected' : '' }}>Spanish</option>
                 </select>
                 @error('default_locale')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

@@ -2,7 +2,7 @@
     $lang     = app()->getLocale();
     $cartUrl  = url("/{$lang}/cart");
     $homeUrl  = url("/{$lang}/");
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
 
     $isHomepage = request()->routeIs('frontend.home')
         || (request()->path() === $lang . '/' || request()->path() === $lang);
@@ -69,7 +69,7 @@
                 </div>
                 <div class="leading-none">
                     <p class="font-display font-extrabold text-[22px] tracking-[-0.02em] text-ink leading-none">
-                        OEM<span class="text-amber-ink">·</span>HUB
+                        OeParts
                     </p>
                     <p class="mt-1.5 font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">
                         {!! str_replace(' ', '&#160;', e(ui_copy('nav_logo_subline', 'navbar.logo_subline'))) !!}

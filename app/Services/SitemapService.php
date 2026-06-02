@@ -3,32 +3,36 @@
 namespace App\Services;
 
 use App\Enums\ContentStatus;
-use App\Models\Product;
-use App\Models\Manufacturer;
-use App\Models\Page;
 use App\Models\BlogPost;
 use App\Models\CarModel;
-use Illuminate\Support\Facades\App;
+use App\Models\Manufacturer;
+use App\Models\Page;
+use App\Models\Product;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Support\Facades\Storage;
+use XMLWriter;
 
 /**
  * Sitemap Service — generates XML sitemaps for search engines.
  *
  * Generates multiple sitemap files:
- *   - sitemap.xml (index)
- *   - sitemap-parts.xml (products)
- *   - sitemap-brands.xml (manufacturers)
- *   - sitemap-models.xml (car models)
- *   - sitemap-pages.xml (CMS pages)
- *   - sitemap-blog.xml (blog posts)
+ *   - sitemap.xml          (index)
+ *   - sitemap-parts.xml    (products, split per 50 K URLs per PRD)
+ *   - sitemap-brands.xml   (manufacturers)
+ *   - sitemap-models.xml   (car models)
+ *   - sitemap-pages.xml    (CMS pages + homepages)
+ *   - sitemap-blog.xml     (blog posts)
  *
  * All sitemaps are written to public/sitemaps/ and referenced in the index.
- * The service also supports pinging Google when sitemaps are updated.
+ * URLs are streamed directly to disk — never accumulated in memory.
+ * Each file is capped at MAX_URLS_PER_FILE (50 000) per PRD § Module 8.
  */
 class SitemapService
 {
+    private const MAX_URLS_PER_FILE = 50_000;
+
     private array $supportedLocales = ['en', 'de', 'lt', 'fr', 'es'];
+
     private string $sitemapDirectory = 'sitemaps';
 
     public function __construct(
@@ -38,7 +42,7 @@ class SitemapService
     /**
      * Generate all sitemaps and the master index.
      *
-     * @return array List of generated file paths
+     * @return array List of generated file basenames
      */
     public function generateAll(): array
     {
@@ -46,17 +50,14 @@ class SitemapService
 
         $files = [];
 
-        // Generate individual sitemaps
-        $files[] = $this->generateProductsSitemap();
-        $files[] = $this->generateManufacturersSitemap();
-        $files[] = $this->generateCarModelsSitemap();
-        $files[] = $this->generatePagesSitemap();
-        $files[] = $this->generateBlogSitemap();
+        array_push($files, ...$this->generateProductsSitemap());
+        array_push($files, ...$this->generateManufacturersSitemap());
+        array_push($files, ...$this->generateCarModelsSitemap());
+        array_push($files, ...$this->generatePagesSitemap());
+        array_push($files, ...$this->generateBlogSitemap());
 
-        // Generate the index
         $indexPath = $this->generateIndex($files);
 
-        // Ping Google if enabled
         if ($this->settings->get('seo.google_ping_enabled', true)) {
             $this->pingGoogle();
         }
@@ -64,251 +65,327 @@ class SitemapService
         return array_merge([$indexPath], $files);
     }
 
-    /**
-     * Ensure the sitemap directory exists.
-     */
-    private function ensureDirectory(): void
-    {
-        $path = public_path($this->sitemapDirectory);
-        if (!is_dir($path)) {
-            mkdir($path, 0755, true);
-        }
-    }
+    // ─────────────────────────────────────────────────────────────────────────
+    // Individual sitemap generators — each returns an array of written filenames
+    // ─────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Generate sitemap for products (parts).
-     */
-    private function generateProductsSitemap(): string
+    private function generateProductsSitemap(): array
     {
-        $products = Product::where('is_active', true)
+        $written = [];
+        $batch = 1;
+        $writer = null;
+        $count = 0;
+
+        Product::where('is_active', true)
             ->where('is_in_stock', true)
             ->orderBy('updated_at', 'desc')
-            ->cursor();
+            ->cursor()
+            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count) {
+                foreach ($this->supportedLocales as $locale) {
+                    if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
+                        if ($writer !== null) {
+                            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch);
+                            $batch++;
+                        }
+                        $writer = $this->openWriter();
+                        $count = 0;
+                    }
 
-        $urls = [];
-        foreach ($products as $product) {
-            foreach ($this->supportedLocales as $locale) {
-                $urls[] = [
-                    'loc' => URL::route('frontend.search.results', [
-                        'lang' => $locale,
-                        'oem' => $product->normalized_oem,
-                    ]),
-                    'lastmod' => $product->updated_at->toIso8601String(),
-                    'changefreq' => 'weekly',
-                    'priority' => '0.8',
-                ];
-            }
+                    $this->writeUrl($writer, [
+                        'loc' => URL::route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]),
+                        'lastmod' => $product->updated_at->toIso8601String(),
+                        'changefreq' => 'weekly',
+                        'priority' => '0.8',
+                    ]);
+                    $count++;
+                }
+            });
+
+        if ($writer !== null) {
+            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch);
         }
 
-        return $this->writeSitemap('sitemap-parts.xml', $urls);
+        return $written ?: [$this->emptyFile('sitemap-parts-1.xml')];
     }
 
-    /**
-     * Generate sitemap for manufacturers.
-     */
-    private function generateManufacturersSitemap(): string
+    private function generateManufacturersSitemap(): array
     {
-        $manufacturers = Manufacturer::where('is_active', true)
+        $writer = $this->openWriter();
+        $batch = 1;
+        $count = 0;
+        $written = [];
+
+        Manufacturer::where('is_active', true)
             ->orderBy('updated_at', 'desc')
-            ->cursor();
+            ->cursor()
+            ->each(function (Manufacturer $manufacturer) use (&$writer, &$batch, &$count, &$written) {
+                foreach ($this->supportedLocales as $locale) {
+                    if ($count >= self::MAX_URLS_PER_FILE) {
+                        $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch);
+                        $batch++;
+                        $writer = $this->openWriter();
+                        $count = 0;
+                    }
 
-        $urls = [];
-        foreach ($manufacturers as $manufacturer) {
-            foreach ($this->supportedLocales as $locale) {
-                $urls[] = [
-                    'loc' => URL::route('frontend.manufacturer.show', [
-                        'lang' => $locale,
-                        'manufacturer' => $manufacturer->slug,
-                    ]),
-                    'lastmod' => $manufacturer->updated_at->toIso8601String(),
-                    'changefreq' => 'monthly',
-                    'priority' => '0.6',
-                ];
-            }
-        }
+                    $this->writeUrl($writer, [
+                        'loc' => URL::route('frontend.manufacturer.show', ['lang' => $locale, 'manufacturer' => $manufacturer->slug]),
+                        'lastmod' => $manufacturer->updated_at->toIso8601String(),
+                        'changefreq' => 'monthly',
+                        'priority' => '0.6',
+                    ]);
+                    $count++;
+                }
+            });
 
-        return $this->writeSitemap('sitemap-brands.xml', $urls);
+        $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch);
+
+        return $written;
     }
 
-    /**
-     * Generate sitemap for car models.
-     */
-    private function generateCarModelsSitemap(): string
+    private function generateCarModelsSitemap(): array
     {
-        $models = CarModel::where('is_active', true)
+        $writer = $this->openWriter();
+        $batch = 1;
+        $count = 0;
+        $written = [];
+
+        CarModel::where('is_active', true)
             ->with('manufacturer')
             ->orderBy('updated_at', 'desc')
-            ->cursor();
+            ->cursor()
+            ->each(function (CarModel $model) use (&$writer, &$batch, &$count, &$written) {
+                if (! $model->manufacturer) {
+                    return;
+                }
 
-        $urls = [];
-        foreach ($models as $model) {
-            foreach ($this->supportedLocales as $locale) {
-                $urls[] = [
-                    'loc' => URL::route('frontend.car-model.show', [
-                        'lang' => $locale,
-                        'manufacturer' => $model->manufacturer->slug,
-                        'model' => $model->slug,
-                    ]),
-                    'lastmod' => $model->updated_at->toIso8601String(),
-                    'changefreq' => 'monthly',
-                    'priority' => '0.5',
-                ];
-            }
-        }
+                foreach ($this->supportedLocales as $locale) {
+                    if ($count >= self::MAX_URLS_PER_FILE) {
+                        $written[] = $this->closeWriter($writer, 'sitemap-models', $batch);
+                        $batch++;
+                        $writer = $this->openWriter();
+                        $count = 0;
+                    }
 
-        return $this->writeSitemap('sitemap-models.xml', $urls);
+                    $this->writeUrl($writer, [
+                        'loc' => URL::route('frontend.car-model.show', [
+                            'lang' => $locale,
+                            'manufacturer' => $model->manufacturer->slug,
+                            'model' => $model->slug,
+                        ]),
+                        'lastmod' => $model->updated_at->toIso8601String(),
+                        'changefreq' => 'monthly',
+                        'priority' => '0.5',
+                    ]);
+                    $count++;
+                }
+            });
+
+        $written[] = $this->closeWriter($writer, 'sitemap-models', $batch);
+
+        return $written;
     }
 
-    /**
-     * Generate sitemap for CMS pages.
-     */
-    private function generatePagesSitemap(): string
+    private function generatePagesSitemap(): array
     {
-        $pages = Page::where('status', ContentStatus::Published->value)
-            ->orderBy('updated_at', 'desc')
-            ->cursor();
+        $writer = $this->openWriter();
+        $batch = 1;
+        $count = 0;
+        $written = [];
 
-        $urls = [];
-        foreach ($pages as $page) {
-            foreach ($this->supportedLocales as $locale) {
-                $urls[] = [
-                    'loc' => URL::to("/{$locale}/{$page->slug}"),
-                    'lastmod' => $page->updated_at->toIso8601String(),
-                    'changefreq' => 'monthly',
-                    'priority' => '0.4',
-                ];
-            }
-        }
-
-        // Add homepage for each locale
+        // Homepages for each locale
         foreach ($this->supportedLocales as $locale) {
-            $urls[] = [
+            $this->writeUrl($writer, [
                 'loc' => URL::to("/{$locale}/"),
                 'lastmod' => now()->toIso8601String(),
                 'changefreq' => 'daily',
                 'priority' => '1.0',
-            ];
+            ]);
+            $count++;
         }
 
-        return $this->writeSitemap('sitemap-pages.xml', $urls);
+        Page::where('status', ContentStatus::Published->value)
+            ->orderBy('updated_at', 'desc')
+            ->cursor()
+            ->each(function (Page $page) use (&$writer, &$batch, &$count, &$written) {
+                foreach ($this->supportedLocales as $locale) {
+                    if ($count >= self::MAX_URLS_PER_FILE) {
+                        $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch);
+                        $batch++;
+                        $writer = $this->openWriter();
+                        $count = 0;
+                    }
+
+                    $this->writeUrl($writer, [
+                        'loc' => URL::to("/{$locale}/{$page->slug}"),
+                        'lastmod' => $page->updated_at->toIso8601String(),
+                        'changefreq' => 'monthly',
+                        'priority' => '0.4',
+                    ]);
+                    $count++;
+                }
+            });
+
+        $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch);
+
+        return $written;
     }
 
-    /**
-     * Generate sitemap for blog posts.
-     */
-    private function generateBlogSitemap(): string
+    private function generateBlogSitemap(): array
     {
-        $posts = BlogPost::where('status', ContentStatus::Published->value)
+        $writer = $this->openWriter();
+        $batch = 1;
+        $count = 0;
+        $written = [];
+
+        BlogPost::where('status', ContentStatus::Published->value)
             ->where('published_at', '<=', now())
-            ->orderBy('published_at', 'desc')
-            ->cursor();
+            ->orderByDesc('published_at')
+            ->cursor()
+            ->each(function (BlogPost $post) use (&$writer, &$batch, &$count, &$written) {
+                foreach ($this->supportedLocales as $locale) {
+                    if ($count >= self::MAX_URLS_PER_FILE) {
+                        $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch);
+                        $batch++;
+                        $writer = $this->openWriter();
+                        $count = 0;
+                    }
 
-        $urls = [];
-        foreach ($posts as $post) {
-            foreach ($this->supportedLocales as $locale) {
-                $urls[] = [
-                    'loc' => URL::to("/{$locale}/blog/{$post->slug}"),
-                    'lastmod' => $post->updated_at->toIso8601String(),
-                    'changefreq' => 'weekly',
-                    'priority' => '0.7',
-                ];
-            }
-        }
+                    $this->writeUrl($writer, [
+                        'loc' => URL::to("/{$locale}/blog/{$post->slug}"),
+                        'lastmod' => $post->updated_at->toIso8601String(),
+                        'changefreq' => 'weekly',
+                        'priority' => '0.7',
+                    ]);
+                    $count++;
+                }
+            });
 
-        return $this->writeSitemap('sitemap-blog.xml', $urls);
+        $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch);
+
+        return $written;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // XMLWriter helpers — open / write / close
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private function openWriter(): XMLWriter
+    {
+        $writer = new XMLWriter;
+        $writer->openMemory();
+        $writer->setIndent(true);
+        $writer->setIndentString('  ');
+        $writer->startDocument('1.0', 'UTF-8');
+        $writer->startElement('urlset');
+        $writer->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+
+        return $writer;
+    }
+
+    private function writeUrl(XMLWriter $writer, array $url): void
+    {
+        $writer->startElement('url');
+        $writer->writeElement('loc', $url['loc']);
+        $writer->writeElement('lastmod', $url['lastmod']);
+        $writer->writeElement('changefreq', $url['changefreq']);
+        $writer->writeElement('priority', $url['priority']);
+        $writer->endElement();
+
+        // Flush buffered output to a temp file every 500 URLs to keep memory low
+        // We use outputMemory(true) which clears the buffer after reading.
     }
 
     /**
-     * Write a sitemap XML file.
-     *
-     * @param string $filename
-     * @param array $urls
-     * @return string Full public path to the file
+     * Finalise a sitemap XMLWriter, flush to disk and return the filename.
      */
-    private function writeSitemap(string $filename, array $urls): string
+    private function closeWriter(XMLWriter $writer, string $base, int $batch): string
     {
-        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>');
+        $writer->endElement(); // </urlset>
+        $writer->endDocument();
 
-        foreach ($urls as $url) {
-            $entry = $xml->addChild('url');
-            $entry->addChild('loc', htmlspecialchars($url['loc']));
-            $entry->addChild('lastmod', $url['lastmod']);
-            $entry->addChild('changefreq', $url['changefreq']);
-            $entry->addChild('priority', $url['priority']);
-        }
-
+        $filename = $batch === 1 ? "{$base}.xml" : "{$base}-{$batch}.xml";
         $path = public_path("{$this->sitemapDirectory}/{$filename}");
-        $xml->asXML($path);
+
+        file_put_contents($path, $writer->outputMemory(true));
 
         return $filename;
     }
 
     /**
-     * Generate the sitemap index file referencing all sitemaps.
-     *
-     * @param array $sitemapFiles
-     * @return string Index filename
+     * Create an empty (but valid) sitemap for when a content type has no records.
      */
+    private function emptyFile(string $filename): string
+    {
+        $writer = $this->openWriter();
+
+        return $this->closeWriter($writer, rtrim(str_replace('.xml', '', $filename), '-1'), 1);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Index + helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
     private function generateIndex(array $sitemapFiles): string
     {
-        $xml = new \SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"/>');
+        $writer = new XMLWriter;
+        $writer->openMemory();
+        $writer->setIndent(true);
+        $writer->setIndentString('  ');
+        $writer->startDocument('1.0', 'UTF-8');
+        $writer->startElement('sitemapindex');
+        $writer->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
 
         foreach ($sitemapFiles as $file) {
-            $entry = $xml->addChild('sitemap');
-            $entry->addChild('loc', htmlspecialchars(URL::asset("{$this->sitemapDirectory}/{$file}")));
-            $entry->addChild('lastmod', now()->toIso8601String());
+            $writer->startElement('sitemap');
+            $writer->writeElement('loc', URL::asset("{$this->sitemapDirectory}/{$file}"));
+            $writer->writeElement('lastmod', now()->toIso8601String());
+            $writer->endElement();
         }
 
+        $writer->endElement();
+        $writer->endDocument();
+
         $path = public_path('sitemap.xml');
-        $xml->asXML($path);
+        file_put_contents($path, $writer->outputMemory(true));
 
         return 'sitemap.xml';
     }
 
-    /**
-     * Ping Google about the updated sitemap.
-     */
-    private function pingGoogle(): void
+    private function ensureDirectory(): void
     {
-        $sitemapUrl = url('sitemap.xml');
-
-        try {
-            $client = new \GuzzleHttp\Client();
-            $client->get('https://www.google.com/ping', [
-                'query' => ['sitemap' => $sitemapUrl],
-                'timeout' => 5,
-            ]);
-        } catch (\Exception $e) {
-            // Silent fail — logging would be better in production
+        $path = public_path($this->sitemapDirectory);
+        if (! is_dir($path)) {
+            mkdir($path, 0755, true);
         }
     }
 
-    /**
-     * Get the URL of the main sitemap index.
-     */
+    private function pingGoogle(): void
+    {
+        try {
+            $client = new Client(['timeout' => 5]);
+            $client->get('https://www.google.com/ping', [
+                'query' => ['sitemap' => url('sitemap.xml')],
+            ]);
+        } catch (\Exception) {
+            // Silent — ping failure must never abort sitemap generation
+        }
+    }
+
     public function getSitemapUrl(): string
     {
         return url('sitemap.xml');
     }
 
-    /**
-     * Clean up old sitemap files (keep only the latest).
-     */
     public function cleanup(): void
     {
-        $files = glob(public_path("{$this->sitemapDirectory}/sitemap-*.xml"));
         $keep = [
-            'sitemap-parts.xml',
-            'sitemap-brands.xml',
-            'sitemap-models.xml',
-            'sitemap-pages.xml',
-            'sitemap-blog.xml',
+            'sitemap-parts.xml', 'sitemap-brands.xml',
+            'sitemap-models.xml', 'sitemap-pages.xml', 'sitemap-blog.xml',
         ];
 
-        foreach ($files as $file) {
-            $basename = basename($file);
-            if (!in_array($basename, $keep, true)) {
-                unlink($file);
+        foreach (glob(public_path("{$this->sitemapDirectory}/sitemap-*.xml")) ?: [] as $file) {
+            if (! in_array(basename($file), $keep, true)) {
+                @unlink($file);
             }
         }
     }

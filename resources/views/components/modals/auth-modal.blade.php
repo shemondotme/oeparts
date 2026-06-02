@@ -18,12 +18,6 @@
         error: '',
         showPw: false,
         showPw2: false,
-        regEmail: '',
-        regEmailVerified: false,
-        regOtpSent: false,
-        regOtpLoading: false,
-        regOtpVerifying: false,
-        regOtpDigits: ['', '', '', '', '', ''],
         open(tab = 'login') {
             this.tab = tab;
             this.show = true;
@@ -37,71 +31,6 @@
             this.show = false;
             this.error = '';
             this.loading = false;
-            this.regEmailVerified = false;
-            this.regOtpSent = false;
-            this.regOtpDigits = ['', '', '', '', '', ''];
-        },
-        async regSendOtp() {
-            if (!this.regEmail) return;
-            this.regOtpLoading = true;
-            try {
-                const res = await fetch('{{ route('frontend.auth.resend-otp', ['lang' => app()->getLocale()]) }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify({ email: this.regEmail, purpose: 'email_verify' })
-                });
-                if (res.ok) this.regOtpSent = true;
-            } finally {
-                this.regOtpLoading = false;
-            }
-        },
-        regHandleOtpInput(e, index) {
-            const val = e.target.value.replace(/\D/g, '').slice(0, 1);
-            e.target.value = val;
-            const next = [...this.regOtpDigits];
-            next[index] = val;
-            this.regOtpDigits = next;
-            if (val && index < 5) {
-                const inputs = document.querySelectorAll('#reg-otp-inputs input');
-                inputs[index + 1]?.focus();
-            }
-        },
-        regHandleOtpBackspace(e, index) {
-            if (!e.target.value && index > 0) {
-                const inputs = document.querySelectorAll('#reg-otp-inputs input');
-                inputs[index - 1]?.focus();
-            }
-        },
-        regHandleOtpPaste(e) {
-            const raw = (e.clipboardData || window.clipboardData).getData('text') || '';
-            const digits = raw.replace(/\D/g, '').slice(0, 6).split('');
-            if (digits.length === 0) return;
-            e.preventDefault();
-            const filled = [...this.regOtpDigits];
-            for (let i = 0; i < 6; i++) filled[i] = digits[i] || '';
-            this.regOtpDigits = filled;
-            this.$nextTick(() => {
-                const inputs = document.querySelectorAll('#reg-otp-inputs input');
-                inputs.forEach((el, i) => { el.value = filled[i] || ''; });
-                (inputs[Math.min(digits.length, 5)] || inputs[5])?.focus();
-            });
-        },
-        async regVerifyOtp() {
-            this.regOtpVerifying = true;
-            try {
-                const res = await fetch('{{ route('frontend.auth.verify-otp', ['lang' => app()->getLocale()]) }}', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content },
-                    body: JSON.stringify({ email: this.regEmail, otp: this.regOtpDigits.join(''), purpose: 'email_verify' })
-                });
-                if (res.ok) {
-                    this.regEmailVerified = true;
-                    this.regOtpSent = false;
-                    this.regOtpDigits = ['', '', '', '', '', ''];
-                }
-            } finally {
-                this.regOtpVerifying = false;
-            }
         },
     }"
     @open-auth-modal.window="open($event.detail?.tab ?? 'login')"
@@ -317,10 +246,6 @@
                         method="POST"
                         action="{{ $registerUrl }}"
                         @submit.prevent="
-                            if (!regEmailVerified) {
-                                error = 'Please verify your email first';
-                                return;
-                            }
                             loading = true; error = '';
                             fetch('{{ $registerUrl }}', {
                                 method: 'POST',
@@ -353,7 +278,6 @@
                         "
                         class="space-y-4"
                     >
-                        {{-- Name --}}
                         <div>
                             <label for="reg-name" class="bp-spec block mb-2 text-ink">§ Full name</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
@@ -365,85 +289,17 @@
                             </div>
                         </div>
 
-                        {{-- Email with Send Code Button (Modern Inline) --}}
                         <div>
                             <label for="reg-email" class="bp-spec block mb-2 text-ink">§ Email address</label>
-                            <div class="flex gap-2">
-                                <div class="relative flex-1 border border-ink bg-paper focus-within:border-amber transition-colors">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
-                                        <x-heroicon-o-envelope class="w-4 h-4" />
-                                    </span>
-                                    <input type="email" id="reg-email" name="email" x-ref="regEmail" x-model="regEmail" required placeholder="you@example.com"
-                                           :disabled="regEmailVerified"
-                                           class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none disabled:opacity-60">
-                                </div>
-
-                                {{-- Send Code Button --}}
-                                <template x-if="!regEmailVerified">
-                                    <button type="button"
-                                            @click="regSendOtp()"
-                                            :disabled="regOtpLoading || !regEmail"
-                                            class="px-4 py-3 border border-amber bg-amber/10 text-amber-ink font-mono text-xs font-bold uppercase tracking-[0.1em] hover:bg-amber/20 disabled:opacity-40 transition-colors whitespace-nowrap">
-                                        <span x-show="!regOtpLoading" class="flex items-center gap-1.5">
-                                            <x-heroicon-o-paper-airplane class="w-3 h-3" />
-                                            Send code
-                                        </span>
-                                        <span x-show="regOtpLoading" class="flex items-center gap-1.5">
-                                            <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
-                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                                            </svg>
-                                            Sending
-                                        </span>
-                                    </button>
-                                </template>
-
-                                {{-- Verified Badge --}}
-                                <template x-if="regEmailVerified">
-                                    <div class="flex items-center gap-2 px-4 py-3 border border-green-400 bg-green-50">
-                                        <x-heroicon-s-check class="w-4 h-4 text-green-600" />
-                                        <span class="font-mono text-xs font-bold text-green-700 uppercase tracking-[0.08em]">Verified</span>
-                                    </div>
-                                </template>
+                            <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
+                                    <x-heroicon-o-envelope class="w-4 h-4" />
+                                </span>
+                                <input type="email" id="reg-email" name="email" x-ref="regEmail" required placeholder="you@example.com"
+                                       class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
                             </div>
                         </div>
 
-                        {{-- OTP Input Fields (Appears when code sent) --}}
-                        <template x-if="regOtpSent && !regEmailVerified">
-                            <div class="bg-amber/5 border border-amber/30 p-4 space-y-3">
-                                <p class="font-mono text-[11px] tracking-[0.1em] uppercase text-ink">6-digit code</p>
-                                <div class="grid grid-cols-6 gap-1.5" id="reg-otp-inputs">
-                                    <template x-for="i in 6" :key="i">
-                                        <input type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code"
-                                               :value="regOtpDigits[i - 1] || ''"
-                                               @input="regHandleOtpInput($event, i - 1)"
-                                               @paste="regHandleOtpPaste($event)"
-                                               @keydown.backspace="regHandleOtpBackspace($event, i - 1)"
-                                               class="w-full min-w-0 h-11 text-center text-base font-mono font-bold tabular-nums border border-ink bg-paper focus:outline-none focus:border-amber focus:ring-2 focus:ring-amber/20 transition-colors">
-                                    </template>
-                                </div>
-
-                                {{-- Verify Button --}}
-                                <button type="button"
-                                        @click="regVerifyOtp()"
-                                        :disabled="regOtpDigits.join('').length < 6 || regOtpVerifying"
-                                        class="w-full py-2.5 bg-amber text-ink font-mono text-xs font-bold uppercase tracking-[0.1em] hover:bg-amber/90 disabled:opacity-40 transition-colors">
-                                    <span x-show="!regOtpVerifying" class="flex items-center justify-center gap-1.5">
-                                        <x-heroicon-s-shield-check class="w-3 h-3" />
-                                        Verify code
-                                    </span>
-                                    <span x-show="regOtpVerifying" class="flex items-center justify-center gap-1.5">
-                                        <svg class="animate-spin w-3 h-3" fill="none" viewBox="0 0 24 24">
-                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                                        </svg>
-                                        Verifying
-                                    </span>
-                                </button>
-                            </div>
-                        </template>
-
-                        {{-- Password --}}
                         <div>
                             <label for="reg-password" class="bp-spec block mb-2 text-ink">§ Password · min {{ $pwMin }} chars</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
@@ -455,7 +311,6 @@
                             </div>
                         </div>
 
-                        {{-- Confirm Password --}}
                         <div>
                             <label for="reg-confirm" class="bp-spec block mb-2 text-ink">§ Confirm password</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
@@ -467,10 +322,8 @@
                             </div>
                         </div>
 
-                        {{-- Honeypot --}}
                         <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
 
-                        {{-- Terms --}}
                         <div class="flex items-start gap-3">
                             <input type="checkbox" id="reg-terms" name="agree_terms" value="1" required
                                    class="mt-1.5 w-4 h-4 border border-ink accent-amber">
@@ -479,8 +332,7 @@
                             </label>
                         </div>
 
-                        {{-- Submit --}}
-                        <button type="submit" :disabled="loading || !regEmailVerified"
+                        <button type="submit" :disabled="loading"
                                 class="bp-btn-primary w-full justify-center py-3.5 text-sm disabled:opacity-50">
                             <svg x-show="loading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

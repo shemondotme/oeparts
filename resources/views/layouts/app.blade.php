@@ -13,7 +13,7 @@
 @endphp
 
     {{-- Title --}}
-    <title>@yield('title', settings('general.site_name', 'OEMHub'))</title>
+    <title>@yield('title', settings('general.site_name', 'OeParts'))</title>
 
     {{-- Primary meta --}}
     <meta name="description" content="@yield('meta_description', '')">
@@ -27,9 +27,9 @@
     @yield('canonical')
 
     {{-- Open Graph --}}
-    <meta property="og:site_name" content="{{ settings('general.site_name', 'OEMHub') }}">
+    <meta property="og:site_name" content="{{ settings('general.site_name', 'OeParts') }}">
     <meta property="og:type" content="@yield('og_type', 'website')">
-    <meta property="og:title" content="@yield('og_title', settings('general.site_name', 'OEMHub'))">
+    <meta property="og:title" content="@yield('og_title', settings('general.site_name', 'OeParts'))">
     <meta property="og:description" content="@yield('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.')">
     <meta property="og:url" content="{{ url()->current() }}">
     @hasSection('og_image')
@@ -38,11 +38,11 @@
         <meta property="og:image" content="{{ settings('seo.og_image', url('/og-default.png')) }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
-        <meta property="og:image:alt" content="{{ settings('general.site_name', 'OEMHub') }} — Genuine OEM Auto Parts">
+        <meta property="og:image:alt" content="{{ settings('general.site_name', 'OeParts') }} — Genuine OEM Auto Parts">
     @endif
     {{-- Twitter Card --}}
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="@yield('og_title', settings('general.site_name', 'OEMHub'))">
+    <meta name="twitter:title" content="@yield('og_title', settings('general.site_name', 'OeParts'))">
     <meta name="twitter:description" content="@yield('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.')">
     <meta name="twitter:image" content="{{ settings('seo.og_image', url('/og-default.png')) }}">
 
@@ -304,7 +304,7 @@
         <div class="bp-pre-inner">
             <div class="bp-pre-spec"><i></i><span>{{ e(settings_trans('preloader.spec_line', '§ SYS · INIT / EU')) }}</span></div>
 
-            <div class="bp-pre-mark">{{ e(settings_trans('preloader.headline', 'OEM·HUB.')) }}</div>
+            <div class="bp-pre-mark">{{ e(settings_trans('preloader.headline', 'Oe·Parts.')) }}</div>
 
             <div class="bp-pre-sub">{{ e(settings_trans('preloader.subline', 'Genuine Parts Index')) }}</div>
 
@@ -320,7 +320,7 @@
         </div>
 
         <div class="bp-pre-foot">
-            <span>{{ e(settings_trans('preloader.foot_left', 'OEMHUB · EU')) }}</span>
+            <span>{{ e(settings_trans('preloader.foot_left', 'OeParts · EU')) }}</span>
             <span>{{ e(settings_trans('preloader.foot_right', 'LIVE CATALOGUE')) }}</span>
         </div>
     </div>

@@ -1,6 +1,6 @@
 @php
     $lang     = app()->getLocale();
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
     $tagline  = settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.');
     $phone    = settings('contact.phone', '');
     $email    = settings('contact.email', '');
@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="min-w-0">
-                    <p class="bp-spec-light mb-3">§ 99 · COLOPHON · OEMHUB/EU</p>
+                    <p class="bp-spec-light mb-3">§ 99 · COLOPHON · OEPARTS/EU</p>
                     <h2 class="font-display text-4xl sm:text-5xl font-extrabold tracking-[-0.03em] leading-[0.95]">
                         {{ $siteName }}<span class="text-amber">.</span>
                     </h2>
@@ -182,7 +182,7 @@
                         <dd class="mt-1">
                             <a href="mailto:{{ $email }}"
                                class="text-ivory hover:text-amber transition-colors">
-                                {{ $email ?: 'info@oemhub.eu' }}
+                                {{ $email ?: 'info@oeparts.lt' }}
                             </a>
                         </dd>
                     </div>
@@ -288,7 +288,7 @@
             <p aria-hidden="true"
                class="select-none pointer-events-none font-display font-extrabold tracking-[-0.05em] leading-[0.78]
                       text-[clamp(3.5rem,13vw,11rem)] text-ivory/[0.06]">
-                OEMHUB<span class="text-amber/20">.</span>
+                OEPARTS<span class="text-amber/20">.</span>
             </p>
             {{-- Floating meta --}}
             <div class="absolute inset-0 flex items-center justify-between px-0 pointer-events-none">
@@ -310,7 +310,7 @@
             <nav class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.18em]" aria-label="Legal">
                 <a href="{{ url('/'.$lang.'/privacy-policy') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Privacy</a>
                 <a href="{{ url('/'.$lang.'/terms-of-service') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Terms</a>
-                <a href="{{ url('/'.$lang.'/cookie-policy') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Cookies</a>
+                <a href="#cookies" @click.prevent="$dispatch('open-cookie-consent')" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Cookies</a>
                 <a href="{{ route('frontend.sitemap', ['lang' => $lang]) }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Sitemap</a>
             </nav>
         </div>

@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('Request Refund — Order :number', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OEMHub'))
+@section('title', __('Request Refund — Order :number', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 

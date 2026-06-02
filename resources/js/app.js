@@ -16,7 +16,7 @@ Alpine.plugin(focus);
 document.addEventListener('alpine:init', () => {
     let initial = 'table';
     try {
-        initial = localStorage.getItem('oemhub_view') || 'table';
+        initial = localStorage.getItem('oeparts_view') || 'table';
     } catch {
         /* ignore */
     }
@@ -25,7 +25,7 @@ document.addEventListener('alpine:init', () => {
         setView(v) {
             this.view = v;
             try {
-                localStorage.setItem('oemhub_view', v);
+                localStorage.setItem('oeparts_view', v);
             } catch {
                 /* ignore */
             }
@@ -34,7 +34,7 @@ document.addEventListener('alpine:init', () => {
 });
 
 window.addEventListener('storage', (e) => {
-    if (e.key !== 'oemhub_view' || !e.newValue || !window.Alpine) {
+    if (e.key !== 'oeparts_view' || !e.newValue || !window.Alpine) {
         return;
     }
     try {

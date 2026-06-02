@@ -212,7 +212,7 @@
                     <p class="mt-1 text-xs text-ink-muted leading-relaxed">
                         Our B2B team replies within 2 business hours.
                     </p>
-                    <a href="mailto:{{ settings('general.contact_email', 'support@oemhub.eu') }}"
+                    <a href="mailto:{{ settings('general.contact_email', 'info@oeparts.lt') }}"
                        class="mt-3 inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
                               border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
                         Contact support

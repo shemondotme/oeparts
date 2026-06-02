@@ -1,14 +1,22 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "oemhub/oemhub",
+    "name": "oeparts/oeparts",
     "type": "project",
-    "description": "OEMHub — Open-source B2B/B2C e-commerce platform for genuine OEM auto parts in Europe.",
-    "keywords": ["laravel", "oemhub", "oem", "auto-parts", "e-commerce"],
+    "description": "OeParts \u2014 Open-source B2B/B2C e-commerce platform for genuine OEM auto parts in Europe.",
+    "keywords": [
+        "laravel",
+        "oeparts",
+        "oem",
+        "auto-parts",
+        "e-commerce"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.0",
         "blade-ui-kit/blade-heroicons": "^2.3",
+        "filament/filament": "^5.6",
+        "flowframe/laravel-trend": "*",
         "laravel/framework": "^11.31",
         "laravel/tinker": "^2.9",
         "spatie/laravel-permission": "^6.0"
@@ -40,7 +48,8 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"

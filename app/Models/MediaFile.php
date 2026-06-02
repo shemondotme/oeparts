@@ -12,6 +12,7 @@ class MediaFile extends Model
     protected $fillable = [
         'uploaded_by', 'file_name', 'file_path',
         'file_url', 'mime_type', 'size', 'alt_text',
+        'caption', 'type',
     ];
 
     public function uploader(): BelongsTo

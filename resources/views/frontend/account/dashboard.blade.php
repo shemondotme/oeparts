@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', __('My Account') . ' — ' . settings('general.site_name', 'OEMHub'))
+@section('title', __('My Account') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -309,4 +309,8 @@
                         </p>
                     </div>
                 </a>
- 
+            @endforeach
+        </div>
+    </section>
+</x-account.shell>
+@endsection

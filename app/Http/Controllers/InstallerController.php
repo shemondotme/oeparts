@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Admin;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Admin;
-use App\Models\Setting;
-use App\Models\Language;
-use App\Models\User;
-use App\Services\SettingsService;
 
 class InstallerController extends Controller
 {
@@ -25,12 +22,14 @@ class InstallerController extends Controller
         $permissions = $this->checkPermissions();
         $phpVersion = phpversion();
         $phpRequired = '8.2';
+        $currentStep = 1;
 
         return view('installer.step1-requirements', compact(
             'requirements',
             'permissions',
             'phpVersion',
-            'phpRequired'
+            'phpRequired',
+            'currentStep'
         ));
     }
 
@@ -39,7 +38,9 @@ class InstallerController extends Controller
      */
     public function database()
     {
-        return view('installer.step2-database');
+        $currentStep = 2;
+
+        return view('installer.step2-database', compact('currentStep'));
     }
 
     /**
@@ -47,7 +48,9 @@ class InstallerController extends Controller
      */
     public function siteSettings()
     {
-        return view('installer.step3-site-settings');
+        $currentStep = 3;
+
+        return view('installer.step3-site-settings', compact('currentStep'));
     }
 
     /**
@@ -55,7 +58,9 @@ class InstallerController extends Controller
      */
     public function adminAccount()
     {
-        return view('installer.step4-admin-account');
+        $currentStep = 4;
+
+        return view('installer.step4-admin-account', compact('currentStep'));
     }
 
     /**
@@ -63,18 +68,21 @@ class InstallerController extends Controller
      */
     public function emailSetup()
     {
-        return view('installer.step5-email-setup');
+        $currentStep = 5;
+
+        return view('installer.step5-email-setup', compact('currentStep'));
     }
 
     /**
      * Step 6: Installation complete.
+     * Lock file is written by install() — this view only renders after a
+     * successful installation run, so it just checks the lock exists.
      */
     public function complete()
     {
-        // Create installed.lock file
-        File::put(storage_path('installed.lock'), 'Installed at ' . now()->toDateTimeString());
+        $currentStep = 6;
 
-        return view('installer.step6-complete');
+        return view('installer.step6-complete', compact('currentStep'));
     }
 
     /**
@@ -121,9 +129,9 @@ class InstallerController extends Controller
 
             return redirect()->route('installer.site-settings')
                 ->with('success', 'Database connection successful!');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return redirect()->route('installer.database')
-                ->withErrors(['db_connection' => 'Could not connect to database: ' . $e->getMessage()])
+                ->withErrors(['db_connection' => 'Could not connect to database: '.$e->getMessage()])
                 ->withInput();
         }
     }
@@ -164,7 +172,7 @@ class InstallerController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:admins,email',
+            'email' => 'required|email',
             'password' => 'required|string|min:8|confirmed',
         ]);
 
@@ -177,7 +185,7 @@ class InstallerController extends Controller
         session([
             'installer.admin_name' => $request->name,
             'installer.admin_email' => $request->email,
-            'installer.admin_password' => $request->password,
+            'installer.admin_password' => Hash::make($request->password),
         ]);
 
         return redirect()->route('installer.email-setup');
@@ -226,49 +234,41 @@ class InstallerController extends Controller
     public function install()
     {
         try {
-            // Run migrations
+            // 1. Run migrations from clean state
             Artisan::call('migrate:fresh', ['--force' => true, '--seed' => false]);
 
-            // Run seeders
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SettingsSeeder', '--force' => true]);
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\LanguagesSeeder', '--force' => true]);
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesSeeder', '--force' => true]);
+            // 2. Run core seeders (roles must run before admin creation for Spatie)
+            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SettingsSeeder',   '--force' => true]);
+            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\LanguagesSeeder',  '--force' => true]);
+            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesSeeder',      '--force' => true]);
+            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SequencesSeeder',  '--force' => true]);
+            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\CarriersSeeder',   '--force' => true]);
 
-            // Create admin user
-            Admin::create([
+            // 3. Create super admin (password already hashed from processAdminAccount)
+            $admin = Admin::create([
                 'name' => session('installer.admin_name'),
                 'email' => session('installer.admin_email'),
-                'password' => Hash::make(session('installer.admin_password')),
-                'role' => 'super_admin',
+                'password' => session('installer.admin_password'),
+                'is_active' => true,
                 'email_verified_at' => now(),
             ]);
 
-            // Update site settings
-            Setting::updateOrCreate(['key' => 'site_name'], [
-                'value' => session('installer.site_name'),
-                'type' => 'string',
-                'group' => 'general',
-            ]);
+            // Assign Spatie role (requires roles to be seeded first)
+            $admin->assignRole('super_admin');
 
-            Setting::updateOrCreate(['key' => 'site_url'], [
-                'value' => session('installer.site_url'),
-                'type' => 'string',
-                'group' => 'general',
-            ]);
+            // 4. Persist site settings
+            $settingsMap = [
+                'site_name' => ['value' => session('installer.site_name'),      'type' => 'string', 'group' => 'general'],
+                'site_url' => ['value' => session('installer.site_url'),       'type' => 'string', 'group' => 'general'],
+                'default_locale' => ['value' => session('installer.default_locale'), 'type' => 'string', 'group' => 'localization'],
+                'timezone' => ['value' => session('installer.timezone'),       'type' => 'string', 'group' => 'localization'],
+            ];
 
-            Setting::updateOrCreate(['key' => 'default_locale'], [
-                'value' => session('installer.default_locale'),
-                'type' => 'string',
-                'group' => 'localization',
-            ]);
+            foreach ($settingsMap as $key => $data) {
+                Setting::updateOrCreate(['key' => $key], $data);
+            }
 
-            Setting::updateOrCreate(['key' => 'timezone'], [
-                'value' => session('installer.timezone'),
-                'type' => 'string',
-                'group' => 'localization',
-            ]);
-
-            // Update .env with email settings
+            // 5. Persist email settings to .env
             $this->updateEnvFile([
                 'MAIL_MAILER' => session('installer.mail_driver', 'smtp'),
                 'MAIL_HOST' => session('installer.mail_host', ''),
@@ -280,13 +280,17 @@ class InstallerController extends Controller
                 'MAIL_FROM_NAME' => session('installer.mail_from_name', ''),
             ]);
 
-            // Clear session data
+            // 6. Write lock file — installer is now disabled
+            File::put(storage_path('installed.lock'), 'Installed at '.now()->toDateTimeString());
+
+            // 7. Clear installer session and compiled views
             session()->forget('installer');
+            Artisan::call('view:clear');
 
             return redirect()->route('installer.complete');
         } catch (\Exception $e) {
-            return redirect()->route('installer.email-setup')
-                ->with('error', 'Installation failed: ' . $e->getMessage());
+            return redirect()->route('installer.site-settings')
+                ->with('error', 'Installation failed: '.$e->getMessage());
         }
     }
 
@@ -304,6 +308,7 @@ class InstallerController extends Controller
             'Mbstring PHP Extension' => extension_loaded('mbstring'),
             'OpenSSL PHP Extension' => extension_loaded('openssl'),
             'PDO PHP Extension' => extension_loaded('pdo'),
+            'Redis PHP Extension' => extension_loaded('redis'),
             'Tokenizer PHP Extension' => extension_loaded('tokenizer'),
             'XML PHP Extension' => extension_loaded('xml'),
         ];
@@ -319,7 +324,7 @@ class InstallerController extends Controller
         $permissions = [
             'storage/' => is_writable(storage_path()),
             'bootstrap/cache/' => is_writable(base_path('bootstrap/cache')),
-            '.env' => !file_exists(base_path('.env')) || is_writable(base_path('.env')),
+            '.env' => ! file_exists(base_path('.env')) || is_writable(base_path('.env')),
         ];
 
         return $permissions;
@@ -331,17 +336,18 @@ class InstallerController extends Controller
     private function updateEnvFile(array $values)
     {
         $envPath = base_path('.env');
-        
-        if (!file_exists($envPath)) {
+
+        if (! file_exists($envPath)) {
             File::copy(base_path('.env.example'), $envPath);
         }
 
         $envContent = File::get($envPath);
 
         foreach ($values as $key => $value) {
-            $pattern = "/^{$key}=.*/m";
+            $escapedKey = preg_quote($key, '/');
+            $pattern = "/^{$escapedKey}=.*/m";
             $replacement = "{$key}=\"{$value}\"";
-            
+
             if (preg_match($pattern, $envContent)) {
                 $envContent = preg_replace($pattern, $replacement, $envContent);
             } else {

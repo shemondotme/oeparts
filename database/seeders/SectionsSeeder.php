@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\SectionStatus;
 use App\Models\Section;
 use Illuminate\Database\Seeder;
 
@@ -18,10 +19,11 @@ class SectionsSeeder extends Seeder
             Section::updateOrCreate(
                 ['type' => $data['type'], 'location' => 'homepage'],
                 [
-                    'title'      => $data['title'],
-                    'content'    => $data['content'],
-                    'is_active'  => $data['is_active'] ?? true,
+                    'title'     => $data['title'],
+                    'content'   => $data['content'],
+                    'is_active' => $data['is_active'] ?? true,
                     'sort_order' => $data['sort_order'],
+                    'status'    => $data['status'] ?? SectionStatus::Published->value,
                 ]
             );
         }
@@ -37,11 +39,11 @@ class SectionsSeeder extends Seeder
         return [
             // 1 — Hero: full-width OEM search bar with headline
             [
-                'type'       => 'hero',
-                'title'      => 'Hero',
+                'type' => 'hero',
+                'title' => 'Hero',
                 'sort_order' => 10,
-                'content'    => [
-                    'headline'    => $this->ml(
+                'content' => [
+                    'headline' => $this->ml(
                         'Find Genuine OEM Parts — Fast',
                         'Originale OEM-Teile finden — Schnell',
                         'Raskite originalias OEM dalis — Greitai',
@@ -63,16 +65,16 @@ class SectionsSeeder extends Seeder
                         'Introduce el número OEM, ej. 1K0407271F'
                     ),
                     'button_text' => $this->ml('Find Part', 'Suchen', 'Ieškoti', 'Rechercher', 'Buscar'),
-                    'bg_style'    => 'navy',
+                    'bg_style' => 'navy',
                 ],
             ],
 
             // 2 — Trust bar: 4 trust signals below hero
             [
-                'type'       => 'trust_bar',
-                'title'      => 'Trust Bar',
+                'type' => 'trust_bar',
+                'title' => 'Trust Bar',
                 'sort_order' => 20,
-                'content'    => [
+                'content' => [
                     'items' => [
                         [
                             'icon' => 'truck',
@@ -96,10 +98,10 @@ class SectionsSeeder extends Seeder
 
             // 3 — Stats counter: animated numbers from settings group stats_counter
             [
-                'type'       => 'stats_counter',
-                'title'      => 'Stats Counter',
-                'sort_order' => 40,
-                'content'    => [
+                'type' => 'stats_counter',
+                'title' => 'Stats Counter',
+                'sort_order' => 30,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'BY THE NUMBERS', 'IN ZAHLEN', 'SKAIČIAIS', 'EN CHIFFRES', 'EN CIFRAS'
                     ),
@@ -128,10 +130,10 @@ class SectionsSeeder extends Seeder
 
             // 4 — How it works: 3-step process
             [
-                'type'       => 'how_it_works',
-                'title'      => 'How It Works',
-                'sort_order' => 30,
-                'content'    => [
+                'type' => 'how_it_works',
+                'title' => 'How It Works',
+                'sort_order' => 50,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'PROCESS', 'ABLAUF', 'PROCESAS', 'PROCESSUS', 'PROCESO'
                     ),
@@ -145,9 +147,9 @@ class SectionsSeeder extends Seeder
                     ),
                     'steps' => [
                         [
-                            'icon'        => 'magnifying-glass',
+                            'icon' => 'magnifying-glass',
                             'step_number' => 1,
-                            'title'       => $this->ml('Search by OEM Number', 'Nach OEM-Nummer suchen', 'Ieškokite pagal OEM numerį', 'Cherchez par numéro OEM', 'Busca por número OEM'),
+                            'title' => $this->ml('Search by OEM Number', 'Nach OEM-Nummer suchen', 'Ieškokite pagal OEM numerį', 'Cherchez par numéro OEM', 'Busca por número OEM'),
                             'description' => $this->ml(
                                 'Enter the exact OEM part number from your vehicle manual or old part.',
                                 'Geben Sie die genaue OEM-Teilenummer aus Ihrem Fahrzeughandbuch ein.',
@@ -157,9 +159,9 @@ class SectionsSeeder extends Seeder
                             ),
                         ],
                         [
-                            'icon'        => 'shopping-cart',
+                            'icon' => 'shopping-cart',
                             'step_number' => 2,
-                            'title'       => $this->ml('Compare & Order', 'Vergleichen & Bestellen', 'Lyginkite ir užsakykite', 'Comparez & Commandez', 'Compara y Pide'),
+                            'title' => $this->ml('Compare & Order', 'Vergleichen & Bestellen', 'Lyginkite ir užsakykite', 'Comparez & Commandez', 'Compara y Pide'),
                             'description' => $this->ml(
                                 'See real-time stock availability and condition (Grade A/B/C). Add to cart securely.',
                                 'Sieh dir Echtzeit-Verfügbarkeit an. Sicher in den Warenkorb und Kasse.',
@@ -169,9 +171,9 @@ class SectionsSeeder extends Seeder
                             ),
                         ],
                         [
-                            'icon'        => 'truck',
+                            'icon' => 'truck',
                             'step_number' => 3,
-                            'title'       => $this->ml('Fast EU Delivery', 'Schnelle EU-Lieferung', 'Greitas pristatymas ES', 'Livraison UE rapide', 'Entrega rápida en UE'),
+                            'title' => $this->ml('Fast EU Delivery', 'Schnelle EU-Lieferung', 'Greitas pristatymas ES', 'Livraison UE rapide', 'Entrega rápida en UE'),
                             'description' => $this->ml(
                                 'Your genuine OEM part ships from our EU warehouse within 1–2 business days.',
                                 'Ihr originales OEM-Teil wird innerhalb von 1–2 Werktagen aus unserem EU-Lager versendet.',
@@ -184,12 +186,12 @@ class SectionsSeeder extends Seeder
                 ],
             ],
 
-            // 5 — Featured brands: top manufacturer grid
+            // 6 — Featured brands: top manufacturer grid
             [
-                'type'       => 'featured_brands',
-                'title'      => 'Featured Brands',
-                'sort_order' => 50,
-                'content'    => [
+                'type' => 'featured_brands',
+                'title' => 'Featured Brands',
+                'sort_order' => 60,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'OEM MANUFACTURERS', 'OEM-HERSTELLER', 'OEM GAMINTOJAI',
                         'FABRICANTS OEM', 'FABRICANTES OEM'
@@ -209,12 +211,12 @@ class SectionsSeeder extends Seeder
                 ],
             ],
 
-            // 6 — Popular searches: most-searched OEM numbers
+            // 7 — Popular searches: most-searched OEM numbers
             [
-                'type'       => 'popular_searches',
-                'title'      => 'Popular Searches',
-                'sort_order' => 60,
-                'content'    => [
+                'type' => 'popular_searches',
+                'title' => 'Popular Searches',
+                'sort_order' => 70,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'TRENDING NOW', 'AKTUELL BELIEBT', 'POPULIARU DABAR',
                         'EN CE MOMENT', 'TENDENCIAS'
@@ -234,12 +236,12 @@ class SectionsSeeder extends Seeder
                 ],
             ],
 
-            // 7 — Testimonials: customer reviews from DB
+            // 9 — Testimonials: customer reviews from DB
             [
-                'type'       => 'testimonials',
-                'title'      => 'Testimonials',
-                'sort_order' => 70,
-                'content'    => [
+                'type' => 'testimonials',
+                'title' => 'Testimonials',
+                'sort_order' => 90,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'CUSTOMER REVIEWS', 'KUNDENBEWERTUNGEN', 'KLIENTŲ ATSILIEPIMAI',
                         'AVIS CLIENTS', 'OPINIONES DE CLIENTES'
@@ -261,12 +263,12 @@ class SectionsSeeder extends Seeder
                 ],
             ],
 
-            // 8 — FAQs: accordion from DB
+            // 11 — FAQs: accordion from DB
             [
-                'type'       => 'faqs',
-                'title'      => 'FAQs',
-                'sort_order' => 80,
-                'content'    => [
+                'type' => 'faqs',
+                'title' => 'FAQs',
+                'sort_order' => 110,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'SUPPORT', 'SUPPORT', 'PAGALBA', 'ASSISTANCE', 'SOPORTE'
                     ),
@@ -287,12 +289,12 @@ class SectionsSeeder extends Seeder
                 ],
             ],
 
-            // 9 — Newsletter: email subscribe form
+            // 13 — Newsletter: email subscribe form
             [
-                'type'       => 'newsletter',
-                'title'      => 'Newsletter',
-                'sort_order' => 90,
-                'content'    => [
+                'type' => 'newsletter',
+                'title' => 'Newsletter',
+                'sort_order' => 130,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'STAY INFORMED', 'BLEIBEN SIE INFORMIERT', 'BŪKITE INFORMUOTI',
                         'RESTEZ INFORMÉ', 'MANTENTE INFORMADO'
@@ -311,36 +313,36 @@ class SectionsSeeder extends Seeder
                         'Rejoignez 10 000+ professionnels de l\'automobile. Pas de spam, désinscription à tout moment.',
                         'Únase a más de 10.000 profesionales del automóvil. Sin spam, cancela cuando quieras.'
                     ),
-                    'button_text'   => $this->ml('Subscribe', 'Abonnieren', 'Prenumeruoti', 'S\'abonner', 'Suscribirse'),
-                    'placeholder'   => $this->ml('Your email address', 'Ihre E-Mail-Adresse', 'Jūsų el. paštas', 'Votre adresse e-mail', 'Tu dirección de correo'),
-                    'success_text'  => $this->ml('Thank you! Check your inbox.', 'Danke! Prüfen Sie Ihren Posteingang.', 'Ačiū! Patikrinkite savo el. paštą.', 'Merci ! Vérifiez votre boîte de réception.', '¡Gracias! Revisa tu bandeja de entrada.'),
+                    'button_text' => $this->ml('Subscribe', 'Abonnieren', 'Prenumeruoti', 'S\'abonner', 'Suscribirse'),
+                    'placeholder' => $this->ml('Your email address', 'Ihre E-Mail-Adresse', 'Jūsų el. paštas', 'Votre adresse e-mail', 'Tu dirección de correo'),
+                    'success_text' => $this->ml('Thank you! Check your inbox.', 'Danke! Prüfen Sie Ihren Posteingang.', 'Ačiū! Patikrinkite savo el. paštą.', 'Merci ! Vérifiez votre boîte de réception.', '¡Gracias! Revisa tu bandeja de entrada.'),
                 ],
             ],
 
-            // 10 — Blog preview: latest 3 posts from DB
+            // 14 — Blog preview: latest 3 posts from DB
             [
-                'type'       => 'blog_preview',
-                'title'      => 'Blog Preview',
-                'sort_order' => 100,
-                'is_active'  => false, // off by default until blog posts exist
-                'content'    => [
+                'type' => 'blog_preview',
+                'title' => 'Blog Preview',
+                'sort_order' => 140,
+                'is_active' => true,
+                'content' => [
                     'headline' => $this->ml(
-                        'From the OEMHub Blog',
-                        'Aus dem OEMHub Blog',
-                        'Iš OEMHub tinklaraščio',
-                        'Du blog OEMHub',
-                        'Del blog de OEMHub'
+                        'From the OeParts Blog',
+                        'Aus dem OeParts Blog',
+                        'Iš OeParts tinklaraščio',
+                        'Du blog OeParts',
+                        'Del blog de OeParts'
                     ),
                     'view_all_text' => $this->ml('View All Articles', 'Alle Artikel ansehen', 'Peržiūrėti visus straipsnius', 'Voir tous les articles', 'Ver todos los artículos'),
                 ],
             ],
 
-            // 11 — Part inquiry CTA: quick find-my-part form
+            // 4 — Part inquiry CTA: quick find-my-part form
             [
-                'type'       => 'part_inquiry',
-                'title'      => 'Part Inquiry',
-                'sort_order' => 110,
-                'content'    => [
+                'type' => 'part_inquiry',
+                'title' => 'Part Inquiry',
+                'sort_order' => 40,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'SOURCING SERVICE', 'BESCHAFFUNGSSERVICE', 'PAIEŠKOS PASLAUGA',
                         'SERVICE DE SOURCING', 'SERVICIO DE BÚSQUEDA'
@@ -365,10 +367,10 @@ class SectionsSeeder extends Seeder
 
             // 12 — Contact CTA: simple banner linking to /contact
             [
-                'type'       => 'contact_cta',
-                'title'      => 'Contact CTA',
+                'type' => 'contact_cta',
+                'title' => 'Contact CTA',
                 'sort_order' => 120,
-                'content'    => [
+                'content' => [
                     'eyebrow' => $this->ml(
                         'GET IN TOUCH', 'KONTAKT AUFNEHMEN', 'SUSISIEKITE',
                         'CONTACTEZ-NOUS', 'PONTE EN CONTACTO'
@@ -388,17 +390,17 @@ class SectionsSeeder extends Seeder
                         'Nuestros especialistas están disponibles de lunes a viernes, de 9:00 a 18:00 CET.'
                     ),
                     'button_text' => $this->ml('Contact Us', 'Kontaktieren Sie uns', 'Susisiekite', 'Nous contacter', 'Contáctenos'),
-                    'phone'       => $this->ml('', '', '', '', ''),
+                    'phone' => $this->ml('', '', '', '', ''),
                 ],
             ],
 
-            // 13 — Promotional banner: configurable banner with CTA
+            // Promotional banner: configurable banner with CTA
             [
-                'type'       => 'banner',
-                'title'      => 'Promo Banner',
-                'sort_order' => 50,
-                'is_active'  => true,
-                'content'    => [
+                'type' => 'banner',
+                'title' => 'Promo Banner',
+                'sort_order' => 80,
+                'is_active' => true,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'FOR WORKSHOPS', 'FÜR WERKSTÄTTEN', 'DIRBTUVĖMS', 'POUR ATELIERS', 'PARA TALLERES'
                     ),
@@ -417,16 +419,16 @@ class SectionsSeeder extends Seeder
                         'Abra una cuenta comercial para precios al por mayor y soporte prioritario.'
                     ),
                     'button_text' => $this->ml('Register as Partner', 'Als Partner registrieren', 'Registruotis partneriu', "S'inscrire comme partenaire", 'Registrarse como socio'),
-                    'button_url'  => '#register'
+                    'button_url' => '#register',
                 ],
             ],
 
-            // 14 — Shipping info: EU coverage & carriers
+            // Shipping info: EU coverage & carriers
             [
-                'type'       => 'shipping_info',
-                'title'      => 'Shipping Info',
-                'sort_order' => 140,
-                'content'    => [
+                'type' => 'shipping_info',
+                'title' => 'Shipping Info',
+                'sort_order' => 100,
+                'content' => [
                     'eyebrow' => $this->ml(
                         'LOGISTICS', 'LOGISTIK', 'LOGISTIKA', 'LOGISTIQUE', 'LOGÍSTICA'
                     ),
@@ -447,22 +449,22 @@ class SectionsSeeder extends Seeder
                     'carriers' => ['DHL', 'DPD', 'GLS', 'FedEx', 'UPS'],
                     'features' => [
                         [
-                            'icon'  => 'truck',
+                            'icon' => 'truck',
                             'value' => $this->ml('1–3 Days', '1–3 Tage', '1–3 dienos', '1–3 jours', '1–3 días'),
                             'label' => $this->ml('Express Delivery', 'Expresslieferung', 'Greitas pristatymas', 'Livraison express', 'Entrega exprés'),
                         ],
                         [
-                            'icon'  => 'globe-europe-africa',
+                            'icon' => 'globe-europe-africa',
                             'value' => $this->ml('27 Countries', '27 Länder', '27 šalys', '27 pays', '27 países'),
                             'label' => $this->ml('Full EU Coverage', 'Ganz EU abgedeckt', 'Visa ES padengta', 'Toute l\'UE couverte', 'Toda la UE cubierta'),
                         ],
                         [
-                            'icon'  => 'map-pin',
+                            'icon' => 'map-pin',
                             'value' => $this->ml('100%', '100%', '100%', '100%', '100%'),
                             'label' => $this->ml('Live Tracking', 'Live-Tracking', 'Sekimas', 'Suivi en direct', 'Seguimiento en vivo'),
                         ],
                         [
-                            'icon'  => 'arrow-path',
+                            'icon' => 'arrow-path',
                             'value' => $this->ml('14 Days', '14 Tage', '14 dienų', '14 jours', '14 días'),
                             'label' => $this->ml('Easy Returns', 'Einfache Rückgabe', 'Lengvas grąžinimas', 'Retours faciles', 'Devoluciones fáciles'),
                         ],

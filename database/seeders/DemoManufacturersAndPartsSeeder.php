@@ -23,15 +23,15 @@ class DemoManufacturersAndPartsSeeder extends Seeder
         
         // Define manufacturers based on available logos
         $manufacturersData = [
-            ['name' => 'Alfa Romeo', 'slug' => 'alfa-romeo', 'logo_file' => 'Alfa-Romeo.png', 'country' => 'IT'],
-            ['name' => 'Audi', 'slug' => 'audi', 'logo_file' => 'Audi.png', 'country' => 'DE'],
-            ['name' => 'BMW', 'slug' => 'bmw', 'logo_file' => 'BMW.png', 'country' => 'DE'],
-            ['name' => 'Ford', 'slug' => 'ford', 'logo_file' => 'Ford.png', 'country' => 'US'],
-            ['name' => 'Mercedes-Benz', 'slug' => 'mercedes-benz', 'logo_file' => 'Mercedes-Benz.png', 'country' => 'DE'],
-            ['name' => 'Opel', 'slug' => 'opel', 'logo_file' => 'Opel.png', 'country' => 'DE'],
-            ['name' => 'Peugeot', 'slug' => 'peugeot', 'logo_file' => 'Peugeot.png', 'country' => 'FR'],
-            ['name' => 'Toyota', 'slug' => 'toyota', 'logo_file' => 'Toyota.png', 'country' => 'JP'],
-            ['name' => 'Volkswagen', 'slug' => 'volkswagen', 'logo_file' => 'Volkwagen.png', 'country' => 'DE'],
+            ['name' => 'Alfa Romeo', 'slug' => 'alfa-romeo', 'logo_file' => 'Alfa-Romeo.png', 'country' => 'IT', 'sort_order' => 10],
+            ['name' => 'Audi', 'slug' => 'audi', 'logo_file' => 'Audi.png', 'country' => 'DE', 'sort_order' => 20],
+            ['name' => 'BMW', 'slug' => 'bmw', 'logo_file' => 'BMW.png', 'country' => 'DE', 'sort_order' => 30],
+            ['name' => 'Ford', 'slug' => 'ford', 'logo_file' => 'Ford.png', 'country' => 'US', 'sort_order' => 40],
+            ['name' => 'Mercedes-Benz', 'slug' => 'mercedes-benz', 'logo_file' => 'Mercedes-Benz.png', 'country' => 'DE', 'sort_order' => 50],
+            ['name' => 'Opel', 'slug' => 'opel', 'logo_file' => 'Opel.png', 'country' => 'DE', 'sort_order' => 60],
+            ['name' => 'Peugeot', 'slug' => 'peugeot', 'logo_file' => 'Peugeot.png', 'country' => 'FR', 'sort_order' => 70],
+            ['name' => 'Toyota', 'slug' => 'toyota', 'logo_file' => 'Toyota.png', 'country' => 'JP', 'sort_order' => 80],
+            ['name' => 'Volkswagen', 'slug' => 'volkswagen', 'logo_file' => 'Volkwagen.png', 'country' => 'DE', 'sort_order' => 90],
         ];
 
         DB::transaction(function () use ($manufacturersData, $logoPath) {
@@ -45,7 +45,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
             if (!$admin) {
                 $admin = Admin::create([
                     'name' => 'System Admin',
-                    'email' => 'system@oemhub.test',
+                    'email' => 'system@oeparts.test',
                     'password' => Hash::make('password123'),
                     'is_active' => true,
                 ]);
@@ -94,7 +94,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                     'country_code' => $data['country'],
                     'is_active' => true,
                     'is_verified_oem' => true,
-                    'sort_order' => 0,
+                    'sort_order' => $data['sort_order'],
                 ]);
 
                 // 5. Create Demo Products for this Manufacturer

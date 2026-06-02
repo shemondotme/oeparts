@@ -5,7 +5,7 @@ namespace App\Services;
 use Illuminate\Support\Facades\Cache;
 
 /**
- * CacheService — key-based cache helpers for OEMHub.
+ * CacheService — key-based cache helpers for OeParts.
  *
  * NEVER call Cache::flush() — it destroys all sessions.
  * Always use specific key patterns to invalidate cache.
@@ -17,9 +17,8 @@ class CacheService
     /**
      * Remember a section result, respecting the cache_sections setting.
      *
-     * @param  string    $location  e.g. 'homepage', 'sidebar'
+     * @param  string  $location  e.g. 'homepage', 'sidebar'
      * @param  callable  $callback  The closure that fetches the data
-     * @return mixed
      */
     public function rememberSection(string $location, callable $callback): mixed
     {
@@ -91,10 +90,9 @@ class CacheService
     /**
      * Remember any value under a namespaced key.
      *
-     * @param  string    $key      Cache key
-     * @param  int       $minutes  TTL in minutes
-     * @param  callable  $callback Data fetcher
-     * @return mixed
+     * @param  string  $key  Cache key
+     * @param  int  $minutes  TTL in minutes
+     * @param  callable  $callback  Data fetcher
      */
     public function remember(string $key, int $minutes, callable $callback): mixed
     {

@@ -15,7 +15,7 @@
                     § ACCOUNT · ACTIVATED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
-                    Welcome to OEMHub<span class="text-amber">.</span>
+                    Welcome to OeParts<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.welcome.greeting', ['name' => $user->name], $locale) }}
@@ -119,8 +119,8 @@
                     {{ trans('emails.welcome.support_text', [], $locale) ?: 'Need assistance? Our technical support team is available MON–FRI · 09:00–18:00 CET.' }}
                 </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px;">
-                    <a href="mailto:{{ settings('contact.email', 'support@oemhub.eu') }}" style="color: #9A5A00; text-decoration: underline; font-family: 'Courier New', Courier, monospace;">
-                        {{ settings('contact.email', 'support@oemhub.eu') }}
+                    <a href="mailto:{{ settings('contact.email', 'info@oeparts.lt') }}" style="color: #9A5A00; text-decoration: underline; font-family: 'Courier New', Courier, monospace;">
+                        {{ settings('contact.email', 'info@oeparts.lt') }}
                     </a>
                 </p>
             </td>

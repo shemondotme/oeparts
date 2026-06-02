@@ -4,7 +4,7 @@
     $price_stats = is_array($price_stats ?? null)
         ? $price_stats
         : ['min' => null, 'max' => null, 'avg' => null, 'avg_numeric' => null];
-    $siteName = settings('general.site_name', 'OEMHub');
+    $siteName = settings('general.site_name', 'OeParts');
     $oemForSeo = $normalized_query ?? '';
     $countForSeo = number_format($total ?? 0);
     $titleTpl = trim((string) settings('seo.search_results_title_template', ''));

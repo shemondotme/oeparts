@@ -1,0 +1,985 @@
+/**
+ * OeParts admin — Filament shell overrides (panel + simple auth pages).
+ * Core Filament styles load via @filamentStyles; this file extends branding only.
+ * Tokens: Navy #0B3A68, Amber #F59E0B, body #334155, muted #64748B, page bg #F8FAFC.
+ * Fonts via @fontsource (no Google Fonts CDN).
+ */
+
+@import '@fontsource/inter/latin.css';
+@import '@fontsource/plus-jakarta-sans/latin.css';
+@import '@fontsource/jetbrains-mono/latin.css';
+
+:root {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono-oem: 'JetBrains Mono', ui-monospace, monospace;
+    --oeparts-navy: #0b3a68;
+    --oeparts-navy-mid: #134e8a;
+    --oeparts-navy-dark: #082949;
+    --oeparts-amber: #f59e0b;
+    --oeparts-amber-text: #b45309;
+    --oeparts-body: #334155;
+    --oeparts-muted: #64748b;
+    --oeparts-page-bg: #f8fafc;
+    --oeparts-card: #ffffff;
+    --oeparts-ring: rgba(245, 158, 11, 0.45);
+}
+
+/* ─── Typography ───────────────────────────────────────────────────────── */
+
+.fi-body,
+body {
+    font-family: var(--font-sans);
+    color: var(--oeparts-body);
+}
+
+.fi-header-heading,
+.fi-sidebar-header,
+.fi-section-header-heading,
+.fi-wi-stats-overview-stat-label,
+.fi-oeparts-brand-wordmark,
+.fi-simple-header-heading,
+.fi-topbar-heading {
+    font-family: var(--font-display);
+}
+
+.fi-oeparts-brand-mark {
+    font-family: var(--font-display);
+}
+
+/* OEM numbers — consistent monospace across all tables */
+.oem-number,
+[data-oem='true'] {
+    font-family: var(--font-mono-oem) !important;
+    font-weight: 600;
+    color: var(--oeparts-navy) !important;
+    letter-spacing: 0.05em;
+}
+
+/* ─── Authenticated shell — page canvas ───────────────────────────────── */
+
+.fi-main-ctn {
+    background: var(--oeparts-page-bg) !important;
+}
+
+.fi-main {
+    background: transparent !important;
+}
+
+/* ─── Topbar — light surface, navy accents ───────────────────────────── */
+
+.fi-topbar-ctn {
+    border-bottom: 1px solid rgb(226 232 240);
+    background: linear-gradient(180deg, #fff 0%, #fafbfc 100%);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+}
+
+.fi-topbar {
+    min-height: 3.5rem;
+}
+
+.fi-topbar-start .fi-oeparts-brand-wordmark,
+.fi-simple-header .fi-oeparts-brand-wordmark {
+    color: var(--oeparts-navy);
+}
+
+.fi-topbar-item-button {
+    border-radius: 0.5rem;
+    transition: background-color 150ms ease;
+}
+
+.fi-topbar-item-button:hover {
+    background-color: rgba(11, 58, 104, 0.06);
+}
+
+/* ─── Sidebar — navy enterprise rail ─────────────────────────────────── */
+
+.fi-sidebar {
+    background: linear-gradient(180deg, var(--oeparts-navy) 0%, var(--oeparts-navy-dark) 100%) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.12);
+}
+
+.fi-sidebar-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-block: 1rem;
+}
+
+.fi-sidebar-header .fi-oeparts-brand-wordmark {
+    color: #fff !important;
+}
+
+.fi-sidebar-nav-groups,
+.fi-sidebar-nav {
+    --tw-ring-color: transparent;
+}
+
+.fi-sidebar-group-label {
+    color: rgba(255, 255, 255, 0.55) !important;
+    font-family: var(--font-display);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.fi-sidebar-item-button {
+    color: rgba(255, 255, 255, 0.88) !important;
+    border-radius: 0.5rem;
+    margin-inline: 0.25rem;
+    transition: background-color 150ms ease, color 150ms ease;
+}
+
+.fi-sidebar-item-button:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-button {
+    border-inline-start-width: 3px !important;
+    border-inline-start-color: var(--oeparts-amber) !important;
+    background: linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(255, 255, 255, 0.06) 100%) !important;
+    color: #fff !important;
+}
+
+.fi-sidebar-item-icon {
+    color: rgba(255, 255, 255, 0.75);
+    transition: color 150ms ease;
+}
+
+.fi-sidebar-item.fi-active .fi-sidebar-item-icon {
+    color: var(--oeparts-amber);
+}
+
+.fi-sidebar-group-button {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+/* Collapsed rail — keep mark visible */
+.fi-sidebar.fi-sidebar-collapsed .fi-oeparts-brand-wordmark {
+    display: none;
+}
+
+/* ─── Content / sections / tables ─────────────────────────────────────── */
+
+.fi-section {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: box-shadow 200ms ease;
+}
+
+.fi-section:hover {
+    box-shadow: 0 2px 8px rgba(11, 58, 104, 0.06);
+}
+
+.fi-section-header {
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.fi-section-header-heading {
+    color: var(--oeparts-navy);
+    font-weight: 600;
+}
+
+.fi-section-content-ctn {
+    border-radius: 0.75rem;
+}
+
+.fi-wi-stats-overview-section > .fi-section-content {
+    border-radius: 0.75rem;
+}
+
+/* Table hover — amber left accent */
+.fi-ta-table tbody tr {
+    transition: background-color 120ms ease;
+}
+
+.fi-ta-table tbody tr:hover td:first-child {
+    box-shadow: inset 3px 0 0 0 var(--oeparts-amber);
+}
+
+/* Table header — navy tint */
+.fi-ta-table thead th {
+    background: linear-gradient(180deg, #f1f5f9 0%, #f8fafc 100%);
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--oeparts-muted);
+}
+
+/* ─── Stats card hover — subtle lift ─────────────────────────────────── */
+
+.fi-wi-stats-overview-stat {
+    transition: box-shadow 200ms ease, transform 200ms ease;
+    border-radius: 0.75rem;
+}
+
+.fi-wi-stats-overview-stat:hover {
+    box-shadow: 0 4px 12px rgba(11, 58, 104, 0.08);
+    transform: translateY(-1px);
+}
+
+.fi-wi-stats-overview-stat-label {
+    font-size: 0.8rem;
+    color: var(--oeparts-muted);
+}
+
+.fi-wi-stats-overview-stat-value {
+    font-family: var(--font-display);
+    font-weight: 700;
+}
+
+/* ─── Primary actions — navy CTA ─────────────────────────────────────── */
+
+.fi-btn.fi-btn-color-primary.fi-btn-variant-filled {
+    box-shadow: 0 1px 2px rgba(11, 58, 104, 0.15);
+    transition: filter 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.fi-btn.fi-btn-color-primary.fi-btn-variant-filled:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(11, 58, 104, 0.2);
+}
+
+/* ─── Form inputs — consistent styling ───────────────────────────────── */
+
+.fi-input-wrp {
+    border-radius: 0.5rem;
+    transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.fi-input-wrp:focus-within {
+    --tw-ring-color: var(--oeparts-ring);
+}
+
+.fi-select-input:focus-within {
+    --tw-ring-color: var(--oeparts-ring);
+}
+
+/* ─── Badge smooth transitions ───────────────────────────────────────── */
+
+.fi-badge {
+    transition: background-color 200ms ease, color 200ms ease;
+    font-weight: 500;
+}
+
+/* ─── Toggle smooth sliding ──────────────────────────────────────────── */
+
+.fi-fo-field-wrp-toggle .fi-fo-toggle {
+    transition: background-color 150ms ease;
+}
+
+/* ─── Loading skeleton — navy tint ───────────────────────────────────── */
+
+.fi-loading-skeleton {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-loading {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ─── Modal animation ────────────────────────────────────────────────── */
+
+.fi-modal-content {
+    animation: modal-enter 200ms ease-out;
+}
+
+@keyframes modal-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* ─── Notification polish ────────────────────────────────────────────── */
+
+.fi-notification {
+    border-radius: 0.5rem;
+}
+
+/* ─── Scrollbar — subtle navy tint ───────────────────────────────────── */
+
+.fi-sidebar::-webkit-scrollbar,
+.fi-main::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fi-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fi-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+.fi-main::-webkit-scrollbar-thumb {
+    background: rgba(11, 58, 104, 0.2);
+    border-radius: 3px;
+}
+
+/* ─── Login & simple auth layout — split screen, no scroll ────────────── */
+
+.fi-simple-layout {
+    position: relative;
+    min-height: 100dvh;
+    overflow: hidden;
+    background: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Reserve the left 45% for the branded aside on desktop */
+@media (min-width: 1024px) {
+    .fi-simple-layout {
+        padding-left: 45%;
+    }
+}
+
+@media (min-width: 1280px) {
+    .fi-simple-layout {
+        padding-left: 40%;
+    }
+}
+
+/* ─── Branded aside (left panel) ─────────────────────────────────────── */
+
+.fi-oeparts-login-aside {
+    display: none;
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 45%;
+    overflow: hidden;
+    color: #fff;
+    z-index: 0;
+}
+
+@media (min-width: 1024px) {
+    .fi-oeparts-login-aside {
+        display: block;
+    }
+}
+
+@media (min-width: 1280px) {
+    .fi-oeparts-login-aside {
+        width: 42%;
+    }
+}
+
+.fi-oeparts-login-aside__bg {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245, 158, 11, 0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 110%, rgba(0, 0, 0, 0.35) 0%, transparent 60%),
+        linear-gradient(165deg, var(--oeparts-navy) 0%, #082949 55%, #061f38 100%);
+}
+
+.fi-oeparts-login-aside__dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.6;
+    animation: fi-oeparts-dot-pulse 4s ease-in-out infinite;
+}
+
+.fi-oeparts-login-aside__blob-a {
+    position: absolute;
+    top: 25%;
+    right: -4rem;
+    width: 24rem;
+    height: 24rem;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.15;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.3), transparent 70%);
+    animation: fi-oeparts-blob 18s ease-in-out infinite;
+}
+
+.fi-oeparts-login-aside__blob-b {
+    position: absolute;
+    bottom: -8rem;
+    left: -8rem;
+    width: 30rem;
+    height: 30rem;
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0.08;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.25), transparent 70%);
+    animation: fi-oeparts-blob 18s ease-in-out infinite;
+    animation-delay: -6s;
+}
+
+@keyframes fi-oeparts-blob {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25%      { transform: translate(20px, -30px) scale(1.05); }
+    50%      { transform: translate(-10px, 10px) scale(0.95); }
+    75%      { transform: translate(15px, 20px) scale(1.02); }
+}
+
+@keyframes fi-oeparts-dot-pulse {
+    0%, 100% { opacity: 0.6; }
+    50%      { opacity: 0.8; }
+}
+
+.fi-oeparts-login-aside__ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(245, 158, 11, 0.18);
+    pointer-events: none;
+}
+
+.fi-oeparts-login-aside__ring--a {
+    top: -6rem;
+    right: -6rem;
+    width: 22rem;
+    height: 22rem;
+}
+
+.fi-oeparts-login-aside__ring--b {
+    top: -3rem;
+    right: -3rem;
+    width: 16rem;
+    height: 16rem;
+    border-color: rgba(245, 158, 11, 0.1);
+}
+
+.fi-oeparts-login-aside__content {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100%;
+    padding: 2.5rem 3rem;
+}
+
+.fi-oeparts-login-aside__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+}
+
+.fi-oeparts-login-aside__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.875rem;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    color: var(--oeparts-navy);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.9375rem;
+    letter-spacing: -0.02em;
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.fi-oeparts-login-aside__wordmark {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.125rem;
+    color: #fff;
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.fi-oeparts-login-aside__tag {
+    margin-top: 0.25rem;
+    font-family: var(--font-mono-oem);
+    font-size: 0.625rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.fi-oeparts-login-aside__hero {
+    align-self: center;
+    padding: 2rem 0;
+}
+
+.fi-oeparts-login-aside__heading {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1.75rem, 2.2vw, 2.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    color: #fff;
+    margin: 0;
+}
+
+.fi-oeparts-login-aside__dot {
+    color: var(--oeparts-amber);
+}
+
+.fi-oeparts-login-aside__lede {
+    margin-top: 1rem;
+    max-width: 22rem;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.fi-oeparts-login-aside__features {
+    margin: 2rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.fi-oeparts-login-aside__features li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.fi-oeparts-login-aside__features svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--oeparts-amber);
+    flex-shrink: 0;
+}
+
+.fi-oeparts-login-aside__trust {
+    margin-top: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.fi-oeparts-login-aside__trust-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.fi-oeparts-login-aside__trust-item svg {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+.fi-oeparts-login-aside__trust-item span {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.fi-oeparts-login-aside__footer {
+    margin: 2rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: var(--font-mono-oem);
+    font-size: 0.6875rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+/* ─── Right column (form) ────────────────────────────────────────────── */
+
+.fi-simple-main-ctn {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+}
+
+@media (min-width: 1024px) {
+    .fi-simple-main-ctn {
+        padding: 2rem 2.5rem;
+    }
+}
+
+/* Tighter card on the right column */
+.fi-simple-page-content {
+    padding: 2rem 2rem 1.5rem !important;
+}
+
+.fi-simple-header {
+    margin-bottom: 1.25rem !important;
+}
+
+.fi-simple-header .fi-logo {
+    margin-bottom: 1rem !important;
+}
+
+.fi-simple-header .fi-logo .fi-oeparts-brand-mark {
+    height: 2.75rem !important;
+    width: 2.75rem !important;
+    font-size: 0.9375rem !important;
+    border-radius: 0.75rem !important;
+}
+
+.fi-simple-page .fi-fo-field {
+    margin-bottom: 1rem !important;
+}
+
+/* ─── Submit button — amber CTA (Filament Action override) ───────────── */
+
+.fi-simple-page .fi-oeparts-login-submit,
+.fi-simple-page .fi-form-actions button[type="submit"],
+.fi-simple-page form .fi-btn[type="submit"] {
+    width: 100% !important;
+    min-height: 2.75rem !important;
+    padding: 0.625rem 1.25rem !important;
+    border-radius: 0.625rem !important;
+    background: var(--oeparts-navy) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    font-size: 0.9375rem !important;
+    letter-spacing: 0 !important;
+    box-shadow: 0 1px 2px rgba(11, 58, 104, 0.15), 0 4px 12px -2px rgba(11, 58, 104, 0.15) !important;
+    transition: background 150ms ease, transform 150ms ease, box-shadow 150ms ease !important;
+}
+
+.fi-simple-page .fi-oeparts-login-submit:hover,
+.fi-simple-page .fi-form-actions button[type="submit"]:hover,
+.fi-simple-page form .fi-btn[type="submit"]:hover {
+    background: #0a3260 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(11, 58, 104, 0.2), 0 8px 18px -4px rgba(11, 58, 104, 0.25) !important;
+}
+
+.fi-simple-page .fi-oeparts-login-submit:active {
+    transform: translateY(0) !important;
+}
+
+/* Submit button arrow icon (not loading spinner) */
+.fi-simple-page .fi-oeparts-login-submit svg:not(.fi-loading-indicator):not([wire\:loading]) {
+    color: #fff !important;
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+/* Form actions container — full width */
+.fi-simple-page .fi-form-actions,
+.fi-simple-page .fi-ac {
+    width: 100%;
+}
+
+.fi-simple-main {
+    width: 100%;
+}
+
+.fi-simple-page {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 26rem;
+    border-radius: 1rem;
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    background: #fff;
+    box-shadow:
+        0 1px 2px rgba(15, 23, 42, 0.04),
+        0 12px 32px -8px rgba(15, 23, 42, 0.08),
+        0 24px 48px -16px rgba(11, 58, 104, 0.1);
+    animation: login-card-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes login-card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* ─── Card header (brand + heading + subheading) ─────────────────────── */
+
+.fi-simple-header {
+    text-align: center;
+    margin-bottom: 1.25rem !important;
+}
+
+.fi-simple-header .fi-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.875rem !important;
+}
+
+.fi-simple-header .fi-logo .fi-oeparts-brand-wordmark {
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    color: var(--oeparts-navy) !important;
+    letter-spacing: -0.02em !important;
+}
+
+.fi-simple-header-heading {
+    font-size: 1.375rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--oeparts-navy);
+    line-height: 1.25;
+}
+
+.fi-simple-header-subheading {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--oeparts-muted);
+    max-width: 22rem;
+    margin-inline: auto;
+}
+
+/* ─── Form fields — minimal polish only (let Filament style the rest) ── */
+
+.fi-simple-page .fi-fo-field-wrp-label,
+.fi-simple-page .fi-fo-field-label {
+    font-weight: 600;
+    color: var(--oeparts-navy);
+    font-size: 0.8125rem;
+}
+
+/* Navy focus ring using Filament's ring system (works WITH default styling) */
+.fi-simple-page .fi-input-wrp:focus-within {
+    --tw-ring-color: rgba(11, 58, 104, 0.35);
+    border-color: var(--oeparts-navy);
+}
+
+/* Checkbox */
+.fi-simple-page .fi-fo-field-wrp-checkbox {
+    margin-bottom: 1rem !important;
+}
+
+.fi-simple-page .fi-fo-field-wrp-checkbox .fi-fo-checkbox {
+    border-radius: 0.375rem;
+    border: 1.5px solid #cbd5e1;
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--oeparts-navy);
+    cursor: pointer;
+}
+
+.fi-simple-page .fi-fo-field-wrp-checkbox label {
+    font-size: 0.875rem;
+    color: var(--oeparts-body);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Validation errors */
+.fi-simple-page .fi-fo-field-wrp-error-message {
+    font-size: 0.8125rem;
+    color: #dc2626;
+    margin-top: 0.375rem;
+}
+
+.fi-simple-page .fi-input-wrp.fi-invalid,
+.fi-simple-page .fi-input.fi-invalid {
+    border-color: #dc2626;
+    background: #fef2f2;
+}
+
+.fi-simple-page .fi-input-wrp.fi-invalid:focus-within {
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Filament error notification (failed login) */
+.fi-simple-page .fi-no-notification,
+.fi-no-notification[data-key^="auth"] {
+    border-radius: 0.625rem;
+}
+
+/* Password hint link */
+.fi-simple-page .fi-fo-field-wrp-hint a {
+    color: var(--oeparts-navy);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    transition: color 150ms ease;
+}
+
+.fi-simple-page .fi-fo-field-wrp-hint a:hover {
+    color: var(--oeparts-amber-text);
+}
+
+/* ─── Loading & disabled state (post-click) ──────────────────────────── */
+
+.fi-simple-page .fi-oeparts-login-submit[wire\:loading],
+.fi-simple-page .fi-oeparts-login-submit[disabled],
+.fi-simple-page .fi-oeparts-login-submit.fi-disabled {
+    opacity: 0.85;
+    cursor: progress !important;
+    transform: none !important;
+    pointer-events: none;
+}
+
+/* Loading spinner — let Filament's spinner SVG be its native size */
+.fi-simple-page .fi-oeparts-login-submit svg[wire\:loading],
+.fi-simple-page .fi-oeparts-login-submit .fi-loading-indicator,
+.fi-simple-page .fi-oeparts-login-submit svg.fi-loading-indicator {
+    width: 1.125rem !important;
+    height: 1.125rem !important;
+    animation: spin 700ms linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* During loading, hide the arrow icon, keep label visible */
+.fi-simple-page .fi-oeparts-login-submit[wire\:loading] svg:not(.fi-loading-indicator):not([wire\:loading]) {
+    display: none;
+}
+
+/* ─── Full-page Livewire loading indicator (top progress bar) ───────── */
+
+#nprogress .bar {
+    background: linear-gradient(90deg, var(--oeparts-amber) 0%, #fbbf24 50%, var(--oeparts-amber) 100%) !important;
+    height: 3px !important;
+}
+
+#nprogress .peg {
+    box-shadow: 0 0 12px var(--oeparts-amber), 0 0 6px var(--oeparts-amber) !important;
+}
+
+/* ─── Mobile brand strip (shown above card when aside is hidden) ─────── */
+
+.fi-oeparts-login-mobile-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    margin-bottom: 1.5rem;
+    color: var(--oeparts-navy);
+}
+
+@media (min-width: 1024px) {
+    .fi-oeparts-login-mobile-brand {
+        display: none;
+    }
+}
+
+.fi-oeparts-login-mobile-brand__mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.5rem;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    color: var(--oeparts-navy);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.75rem;
+    letter-spacing: -0.02em;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.fi-oeparts-login-mobile-brand__text {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+    color: var(--oeparts-navy);
+}
+
+/* ─── Responsive breakpoints ─────────────────────────────────────────── */
+
+/* Small mobile: tighter card, smaller header */
+@media (max-width: 480px) {
+    .fi-simple-page {
+        max-width: 100%;
+        border-radius: 0.875rem;
+    }
+
+    .fi-simple-page-content {
+        padding: 1.5rem 1.25rem 1.25rem !important;
+    }
+
+    .fi-simple-header-heading {
+        font-size: 1.25rem;
+    }
+
+    .fi-simple-header-subheading {
+        font-size: 0.8125rem;
+    }
+}
+
+/* Tablet: a bit more breathing room */
+@media (min-width: 640px) and (max-width: 1023px) {
+    .fi-simple-page {
+        max-width: 28rem;
+    }
+
+    .fi-simple-page-content {
+        padding: 2.25rem 2.25rem 1.75rem !important;
+    }
+}
+
+/* Aside heading on smaller laptop screens */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .fi-oeparts-login-aside__content {
+        padding: 2rem 2rem;
+    }
+
+    .fi-oeparts-login-aside__heading {
+        font-size: 1.625rem;
+    }
+
+    .fi-oeparts-login-aside__lede {
+        font-size: 0.8125rem;
+    }
+}
+
+/* Very tall screens — center vertically with more space */
+@media (min-height: 900px) {
+    .fi-simple-main-ctn {
+        padding-block: 3rem;
+    }
+}
+
+/* ─── Panel footer (login + authenticated) ─────────────────────────────── */
+
+.fi-oeparts-panel-footer {
+    position: relative;
+    z-index: 1;
+    padding: 1rem 1.25rem 1.5rem;
+    text-align: center;
+}
+
+.fi-oeparts-panel-footer__text {
+    font-size: 0.75rem;
+    line-height: 1.5;
+}
+
+.fi-simple-layout .fi-oeparts-panel-footer {
+    position: relative;
+    z-index: 1;
+}
+
+.fi-simple-layout .fi-oeparts-panel-footer__text {
+    color: var(--oeparts-muted);
+}
+
+.fi-layout .fi-oeparts-panel-footer__text {
+    color: var(--oeparts-muted);
+}
+
+.fi-oeparts-panel-footer__sep {
+    margin-inline: 0.35rem;
+    opacity: 0.6;
+}

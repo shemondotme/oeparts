@@ -2,7 +2,7 @@
 
 @php
     $lang      = app()->getLocale();
-    $siteName  = settings('general.site_name', 'OEMHub');
+    $siteName  = settings('general.site_name', 'OeParts');
     $pageTitle = trans_field($page->title);
     $metaTitle = trans_field($page->meta_title) ?: $pageTitle;
     $metaDescr = trans_field($page->meta_description) ?: Str::limit(strip_tags(trans_field($page->content)), 160);
@@ -36,7 +36,7 @@
 @endphp
 
 @section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
-@section('description'){{ $metaDescr }}@endsection
+@section('meta_description'){{ $metaDescr }}@endsection
 
 @section('canonical')
     <link rel="canonical" href="{{ url('/' . $lang . '/' . $page->slug) }}">

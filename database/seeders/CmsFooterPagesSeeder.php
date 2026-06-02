@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ContentStatus;
+use App\Models\Admin;
 use App\Models\Page;
 use Illuminate\Database\Seeder;
 
@@ -17,18 +18,18 @@ class CmsFooterPagesSeeder extends Seeder
 {
     public function run(): void
     {
-        $creatorId = \App\Models\Admin::query()->orderBy('id')->value('id') ?? 1;
+        $creatorId = Admin::query()->orderBy('id')->value('id') ?? 1;
 
         foreach ($this->pages() as $slug => $payload) {
             Page::updateOrCreate(
                 ['slug' => $slug],
                 array_merge($payload, [
-                    'status'       => ContentStatus::Published,
+                    'status' => ContentStatus::Published,
                     'published_at' => now(),
-                    'is_footer'    => true,
-                    'is_header'    => false,
-                    'is_homepage'  => false,
-                    'created_by'   => $creatorId,
+                    'is_footer' => true,
+                    'is_header' => false,
+                    'is_homepage' => false,
+                    'created_by' => $creatorId,
                 ])
             );
         }
@@ -39,24 +40,24 @@ class CmsFooterPagesSeeder extends Seeder
         return [
             'about' => [
                 'title' => [
-                    'en' => 'About OEMHub',
-                    'de' => 'Über OEMHub',
-                    'lt' => 'Apie OEMHub',
-                    'fr' => 'À propos d’OEMHub',
-                    'es' => 'Acerca de OEMHub',
+                    'en' => 'About OeParts',
+                    'de' => 'Über OeParts',
+                    'lt' => 'Apie OeParts',
+                    'fr' => 'À propos d’OeParts',
+                    'es' => 'Acerca de OeParts',
                 ],
                 'meta_title' => [
-                    'en' => 'About OEMHub — the B2B marketplace for genuine OEM auto parts',
+                    'en' => 'About OeParts — the B2B marketplace for genuine OEM auto parts',
                 ],
                 'meta_description' => [
-                    'en' => 'OEMHub is the dedicated B2B marketplace for verified OEM auto parts — cross-reference by OEM number, compare suppliers, ship across the EU.',
+                    'en' => 'OeParts is the dedicated B2B marketplace for verified OEM auto parts — cross-reference by OEM number, compare suppliers, ship across the EU.',
                 ],
                 'content' => [
                     'en' => <<<'HTML'
-<p class="lead">OEMHub is a specialist B2B marketplace built for workshops, dealers and parts buyers across Europe. We help professionals find, verify and source genuine OEM auto parts without the catalogue guesswork.</p>
+<p class="lead">OeParts is a specialist B2B marketplace built for workshops, dealers and parts buyers across Europe. We help professionals find, verify and source genuine OEM auto parts without the catalogue guesswork.</p>
 
 <h2>Our mission</h2>
-<p>Every day, millions of OEM part numbers change hands across Europe. Cross-referencing them, verifying authenticity, and getting a fair price still takes far too much time. OEMHub exists to remove that friction — one searchable, verified catalogue, backed by vetted suppliers and transparent logistics.</p>
+<p>Every day, millions of OEM part numbers change hands across Europe. Cross-referencing them, verifying authenticity, and getting a fair price still takes far too much time. OeParts exists to remove that friction — one searchable, verified catalogue, backed by vetted suppliers and transparent logistics.</p>
 
 <h2>What we do</h2>
 <ul>
@@ -84,17 +85,17 @@ HTML,
                     'es' => 'Política de privacidad',
                 ],
                 'meta_title' => [
-                    'en' => 'Privacy Policy — OEMHub',
+                    'en' => 'Privacy Policy — OeParts',
                 ],
                 'meta_description' => [
-                    'en' => 'How OEMHub collects, uses, stores and protects personal data under GDPR and EU regulations.',
+                    'en' => 'How OeParts collects, uses, stores and protects personal data under GDPR and EU regulations.',
                 ],
                 'content' => [
                     'en' => <<<'HTML'
-<p class="lead">This policy explains what personal data OEMHub collects, why we collect it, how long we keep it, and the rights you have under the EU General Data Protection Regulation (GDPR).</p>
+<p class="lead">This policy explains what personal data OeParts collects, why we collect it, how long we keep it, and the rights you have under the EU General Data Protection Regulation (GDPR).</p>
 
 <h2>1. Data controller</h2>
-<p>The data controller for this website is OEMHub. You can reach our privacy team via the contact desk linked in the footer.</p>
+<p>The data controller for this website is OeParts. You can reach our privacy team via the contact desk linked in the footer.</p>
 
 <h2>2. What data we collect</h2>
 <ul>
@@ -138,17 +139,17 @@ HTML,
                     'es' => 'Términos del servicio',
                 ],
                 'meta_title' => [
-                    'en' => 'Terms of Service — OEMHub',
+                    'en' => 'Terms of Service — OeParts',
                 ],
                 'meta_description' => [
-                    'en' => 'The rules that govern your use of the OEMHub marketplace, including account, ordering, payment and liability terms.',
+                    'en' => 'The rules that govern your use of the OeParts marketplace, including account, ordering, payment and liability terms.',
                 ],
                 'content' => [
                     'en' => <<<'HTML'
-<p class="lead">By accessing or using OEMHub you agree to these Terms of Service. Please read them carefully. If you do not accept any part of these terms, please stop using the service.</p>
+<p class="lead">By accessing or using OeParts you agree to these Terms of Service. Please read them carefully. If you do not accept any part of these terms, please stop using the service.</p>
 
 <h2>1. Eligibility &amp; accounts</h2>
-<p>OEMHub is a B2B marketplace intended for businesses and professional buyers. You confirm that you have the authority to act on behalf of the account you register, and that the information you provide is accurate.</p>
+<p>OeParts is a B2B marketplace intended for businesses and professional buyers. You confirm that you have the authority to act on behalf of the account you register, and that the information you provide is accurate.</p>
 
 <h2>2. Orders &amp; contract formation</h2>
 <p>Placing an order constitutes an offer to purchase. A binding contract is formed only once we confirm acceptance of your order. We reserve the right to refuse or cancel orders in cases of pricing errors, supply unavailability or suspected fraud.</p>
@@ -163,13 +164,13 @@ HTML,
 <p>Returns are accepted within the window shown on your order confirmation, subject to the part being unused, in original packaging and not subject to a no-return exclusion. Consumables, sealed electronic units and special-order parts may be excluded.</p>
 
 <h2>6. Liability</h2>
-<p>To the extent permitted by law, OEMHub’s aggregate liability for any claim arising from these terms is limited to the price paid for the part(s) giving rise to the claim. We are not liable for indirect or consequential losses.</p>
+<p>To the extent permitted by law, OeParts’s aggregate liability for any claim arising from these terms is limited to the price paid for the part(s) giving rise to the claim. We are not liable for indirect or consequential losses.</p>
 
 <h2>7. Intellectual property</h2>
-<p>All OEMHub content, trademarks and software are the property of OEMHub or its licensors. Third-party trademarks appear solely for identification and remain the property of their respective owners.</p>
+<p>All OeParts content, trademarks and software are the property of OeParts or its licensors. Third-party trademarks appear solely for identification and remain the property of their respective owners.</p>
 
 <h2>8. Governing law</h2>
-<p>These terms are governed by the laws of the jurisdiction in which OEMHub is established. Any dispute is subject to the exclusive jurisdiction of the competent courts in that jurisdiction, save where consumer law grants you protection in another jurisdiction.</p>
+<p>These terms are governed by the laws of the jurisdiction in which OeParts is established. Any dispute is subject to the exclusive jurisdiction of the competent courts in that jurisdiction, save where consumer law grants you protection in another jurisdiction.</p>
 
 <h2>9. Changes</h2>
 <p>We may amend these terms from time to time. Material changes will be communicated via email or a notice on the site.</p>
@@ -186,14 +187,14 @@ HTML,
                     'es' => 'Política de cookies',
                 ],
                 'meta_title' => [
-                    'en' => 'Cookie Policy — OEMHub',
+                    'en' => 'Cookie Policy — OeParts',
                 ],
                 'meta_description' => [
-                    'en' => 'How OEMHub uses cookies and similar technologies, and how you can control them.',
+                    'en' => 'How OeParts uses cookies and similar technologies, and how you can control them.',
                 ],
                 'content' => [
                     'en' => <<<'HTML'
-<p class="lead">This page explains the cookies and similar technologies that OEMHub uses, what they do, and how you can manage your preferences.</p>
+<p class="lead">This page explains the cookies and similar technologies that OeParts uses, what they do, and how you can manage your preferences.</p>
 
 <h2>1. What is a cookie?</h2>
 <p>A cookie is a small text file stored on your device when you visit a website. Cookies allow the site to remember your actions and preferences over a period of time, so you don’t have to keep re-entering them whenever you come back.</p>

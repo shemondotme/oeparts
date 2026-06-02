@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Manufacturer;
 use App\Models\Setting;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -273,6 +274,8 @@ class CartTest extends TestCase
             'value' => '500',
             'type' => 'string',
         ]);
+
+        app(SettingsService::class)->forget('shipping');
 
         // Add item with price 100
         $response = $this->postJson('/en/cart/add', [

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\SendPasswordResetEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -32,12 +33,12 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'             => 'datetime',
-            'password'                      => 'hashed',
-            'is_active'                     => 'boolean',
-            'prefers_order_notifications'   => 'boolean',
-            'prefers_email_notifications'   => 'boolean',
-            'prefers_promotional_emails'    => 'boolean',
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'is_active' => 'boolean',
+            'prefers_order_notifications' => 'boolean',
+            'prefers_email_notifications' => 'boolean',
+            'prefers_promotional_emails' => 'boolean',
         ];
     }
 
@@ -59,5 +60,30 @@ class User extends Authenticatable
     public function refundRequests(): HasMany
     {
         return $this->hasMany(RefundRequest::class);
+    }
+
+    /**
+     * Send the password reset notification using the custom Industrial Blueprint
+     * email dispatched to the critical queue and logged to email_logs.
+     */
+    public function sendPasswordResetNotification(mixed $token): void
+    {
+        $locale = $this->preferred_locale ?? app()->getLocale();
+
+        $resetUrl = url(route('frontend.password.reset', [
+            'lang' => $locale,
+            'token' => $token,
+        ], false)).'?email='.urlencode($this->email);
+
+        dispatch(new SendPasswordResetEmail(
+            email: $this->email,
+            resetUrl: $resetUrl,
+            locale: $locale,
+        ));
+    }
+
+    public function getFirstNameAttribute(): string
+    {
+        return explode(' ', $this->name)[0];
     }
 }

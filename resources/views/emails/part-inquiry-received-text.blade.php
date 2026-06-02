@@ -1,4 +1,4 @@
-NEW PART INQUIRY — {{ config('app.name', 'OEMHub') }}
+NEW PART INQUIRY — {{ config('app.name', 'OeParts') }}
 ================================================
 Submitted: {{ $inquiry->created_at->format('d M Y, H:i') }} UTC
 
@@ -29,4 +29,4 @@ Email : {{ $inquiry->email }}
 Phone : {{ $inquiry->phone }}
 @endif
 
-Admin panel: {{ route('admin.cms.inquiries.index') }}
+Admin panel: {{ url('/admin/part-inquiries') }}

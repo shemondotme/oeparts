@@ -44,7 +44,7 @@
             </label>
             <input type="text" id="db_name" name="db_name" value="{{ old('db_name') }}"
                 class="form-input w-full @error('db_name') border-red-300 @enderror"
-                placeholder="oemhub" required>
+                placeholder="oeparts" required>
             @error('db_name')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror

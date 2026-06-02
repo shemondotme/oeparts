@@ -48,10 +48,17 @@ class ManufacturerController extends Controller
      */
     public function index(Request $request, string $lang)
     {
-        $manufacturers = Manufacturer::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->paginate(30);
+        $query = Manufacturer::query()
+            ->where('is_active', true);
+
+        if ($request->filled('letter')) {
+            $letter = strtoupper($request->letter);
+            $query->where('name->en', 'like', $letter . '%');
+        }
+
+        $manufacturers = $query->orderBy('name->en')
+            ->paginate(30)
+            ->withQueryString();
 
         return view('frontend.manufacturer.index', [
             'manufacturers' => $manufacturers,

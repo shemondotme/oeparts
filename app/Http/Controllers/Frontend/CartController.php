@@ -169,8 +169,8 @@ class CartController extends Controller
             return [
                 'id' => $item->id,
                 'quantity' => $item->quantity,
-                'price' => (float) $product->price,
-                'line_total' => (float) bcmul((string) $product->price, (string) $item->quantity, 2),
+                'price' => $product->price,
+                'line_total' => bcmul((string) $product->price, (string) $item->quantity, 2),
                 'oem_number' => $product->oem_number,
                 'name' => trans_field($product->name),
                 'condition' => $product->condition,

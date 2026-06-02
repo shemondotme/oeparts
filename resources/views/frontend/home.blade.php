@@ -2,7 +2,7 @@
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
 @section('title')
-    {{ trans_field(settings('seo.homepage_title', null)) ?: settings('general.site_name', 'OEMHub') . ' — Genuine OEM Auto Parts' }}
+    {{ trans_field(settings('seo.homepage_title', null)) ?: settings('general.site_name', 'OeParts') . ' — Genuine OEM Auto Parts' }}
 @endsection
 
 @section('meta_description')
@@ -10,7 +10,7 @@
 @endsection
 
 @section('og_title')
-    {{ trans_field(settings('seo.homepage_title', null)) ?: settings('general.site_name', 'OEMHub') . ' — Genuine OEM Auto Parts' }}
+    {{ trans_field(settings('seo.homepage_title', null)) ?: settings('general.site_name', 'OeParts') . ' — Genuine OEM Auto Parts' }}
 @endsection
 
 @section('og_description')
@@ -33,9 +33,9 @@
 {!! json_encode(array_filter([
     '@context' => 'https://schema.org',
     '@type' => 'Organization',
-    'name' => settings('general.site_name', 'OEMHub'),
+    'name' => settings('general.site_name', 'OeParts'),
     'url' => settings('general.site_url', url('/')),
-    'logo' => settings('general.site_url', url('/')) . '/logo.png',
+    'logo' => settings('general.site_url', url('/')) . '/logo.svg',
     'sameAs' => array_values(array_filter([
         settings('contact.facebook_url', ''),
         settings('contact.linkedin_url', ''),
@@ -53,7 +53,7 @@
 {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "{{ settings('general.site_name', 'OEMHub') }}",
+    "name": "{{ settings('general.site_name', 'OeParts') }}",
     "url": "{{ settings('general.site_url', url('/')) }}",
     "potentialAction": {
         "@type": "SearchAction",

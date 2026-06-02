@@ -103,9 +103,8 @@ class SecurityTest extends TestCase
         $response = $this->get('/en/parts/'.urlencode($xssPayload));
 
         // Response should escape the payload, not execute script
-        $this->assertStringNotContainsString('<script>', $response->getContent());
+        $this->assertStringNotContainsString($xssPayload, $response->getContent());
         // Should be HTML-encoded or at minimum not contain executable script
-        // (search results page doesn't necessarily show the payload back, so just verify no unescaped script tag)
         $this->assertTrue(true); // Just verify the page loads without executing script
     }
 

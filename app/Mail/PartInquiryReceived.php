@@ -15,14 +15,15 @@ class PartInquiryReceived extends Mailable
 
     public function __construct(
         public readonly PartInquiry $inquiry,
-    ) {}
+        string $locale = 'en',
+    ) {
+        $this->locale = $locale;
+    }
 
     public function envelope(): Envelope
     {
-        $siteName = config('app.name', 'OEMHub');
-
         return new Envelope(
-            subject: "[{$siteName}] New part inquiry: {$this->inquiry->oem_number}",
+            subject: trans('emails.part_inquiry.subject', ['oem' => $this->inquiry->oem_number], $this->locale),
             tags: ['part-inquiry'],
             metadata: ['inquiry_id' => $this->inquiry->id],
         );
@@ -35,7 +36,7 @@ class PartInquiryReceived extends Mailable
             text: 'emails.part-inquiry-received-text',
             with: [
                 'inquiry' => $this->inquiry,
-                'locale'  => 'en',
+                'locale' => $this->locale,
             ],
         );
     }
