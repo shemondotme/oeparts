@@ -1,94 +1,111 @@
 <x-filament-panels::page>
+    @include('filament.components.admin-styles')
     {{-- Header filter controls --}}
     <div class="flex justify-end mb-6">
-        <x-filament::input.wrapper class="shadow-sm w-full max-w-xs">
-            <x-filament::input.select wire:model.live="period" class="font-mono text-xs uppercase tracking-wider">
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="90">Last 90 Days</option>
-                <option value="365">Last 12 Months</option>
-            </x-filament::input.select>
-        </x-filament::input.wrapper>
+        <div class="flex items-center gap-2 p-1 rounded-xl" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); box-shadow: var(--shadow-1);">
+            @foreach(['7' => '7d', '30' => '30d', '90' => '90d', '365' => '1y'] as $value => $label)
+                <button
+                    wire:click="$set('period', '{{ $value }}')"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200"
+                    style="{{ $this->period === $value
+                        ? 'background: var(--color-brand-600); color: white; box-shadow: var(--shadow-1);'
+                        : 'color: var(--color-text-secondary);' }}"
+                >{{ $label }}</button>
+            @endforeach
+        </div>
     </div>
-
 
     {{-- KPI Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <x-filament::section class="border-s-4 border-primary-500 dark:border-primary-600 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        {{-- Total Customers --}}
+        <div class="op-card op-hover-lift p-6 relative overflow-hidden" style="border-left: 4px solid var(--color-brand-500);">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl" style="background: var(--color-brand-500); opacity: 0.05;"></div>
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest font-mono">Total Customers</div>
-                    <div class="text-3xl font-extrabold font-display text-gray-900 dark:text-white mt-2">{{ $this->getTotalCustomers() }}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Total Customers</div>
+                    <div class="text-2xl font-black mt-1.5 font-mono" style="color: var(--color-text-primary);">{{ number_format($this->getTotalCustomers()) }}</div>
                 </div>
-                <div class="p-3 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400">
-                    <x-heroicon-o-users class="w-6 h-6" />
+                <div class="p-2.5 rounded-xl" style="background: var(--color-brand-50); color: var(--color-brand-600); border: 1px solid var(--color-brand-100);">
+                    <x-heroicon-o-users class="w-5 h-5" />
                 </div>
             </div>
-        </x-filament::section>
+        </div>
 
-        <x-filament::section class="border-s-4 border-success-500 dark:border-success-600 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+        {{-- New Registered --}}
+        <div class="op-card op-hover-lift p-6 relative overflow-hidden" style="border-left: 4px solid var(--color-success-500);">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl" style="background: var(--color-success-500); opacity: 0.05;"></div>
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest font-mono">New Registered</div>
-                    <div class="text-3xl font-extrabold font-display text-gray-900 dark:text-white mt-2">{{ $this->getNewCustomers() }}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">New Registered</div>
+                    <div class="text-2xl font-black mt-1.5 font-mono" style="color: var(--color-text-primary);">{{ number_format($this->getNewCustomers()) }}</div>
                 </div>
-                <div class="p-3 rounded-xl bg-success-50 dark:bg-success-950/40 text-success-600 dark:text-success-400">
-                    <x-heroicon-o-user-plus class="w-6 h-6" />
+                <div class="p-2.5 rounded-xl" style="background: var(--color-success-50); color: var(--color-success-600); border: 1px solid var(--color-success-100);">
+                    <x-heroicon-o-user-plus class="w-5 h-5" />
                 </div>
             </div>
-        </x-filament::section>
+        </div>
 
-        <x-filament::section class="border-s-4 border-amber-500 dark:border-amber-600 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+        {{-- Repeat Purchases --}}
+        <div class="op-card op-hover-lift p-6 relative overflow-hidden" style="border-left: 4px solid var(--color-accent-500);">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl" style="background: var(--color-accent-500); opacity: 0.05;"></div>
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest font-mono">Repeat Purchases</div>
-                    <div class="text-3xl font-extrabold font-display text-gray-900 dark:text-white mt-2">{{ $this->getRepeatCustomers() }}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Repeat Purchases</div>
+                    <div class="text-2xl font-black mt-1.5 font-mono" style="color: var(--color-text-primary);">{{ number_format($this->getRepeatCustomers()) }}</div>
                 </div>
-                <div class="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">
-                    <x-heroicon-o-arrow-path class="w-6 h-6" />
+                <div class="p-2.5 rounded-xl" style="background: var(--color-accent-50); color: var(--color-accent-600); border: 1px solid var(--color-accent-100);">
+                    <x-heroicon-o-arrow-path class="w-5 h-5" />
                 </div>
             </div>
-        </x-filament::section>
+        </div>
     </div>
 
-    {{-- Customer Growth chart widget --}}
-    <x-filament::section heading="Acquisition Trend Over Time" class="mb-6">
-        <div class="h-68">
-            @livewire(\App\Filament\Widgets\CustomerGrowthChart::class, ['period' => $this->period])
+    {{-- Customer Growth Chart --}}
+    <div class="op-card p-6 mb-6" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="flex items-center gap-2 mb-4">
+            <x-heroicon-o-chart-bar class="w-4 h-4" style="color: var(--color-brand-500);" />
+            <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Customer Growth</h3>
         </div>
-    </x-filament::section>
+        @livewire(\App\Filament\Widgets\CustomerGrowthChart::class, ['period' => $this->period])
+    </div>
 
-    {{-- Top Customers by Spend table --}}
-    <x-filament::section heading="Top Customers by Spend">
-        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-            <table class="w-full text-sm text-left divide-y divide-gray-200 dark:divide-gray-800">
-                <thead class="bg-gray-50 dark:bg-gray-900/60">
-                    <tr class="text-xs font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase font-mono">
-                        <th scope="col" class="px-6 py-4">Name</th>
-                        <th scope="col" class="px-6 py-4">Email Address</th>
-                        <th scope="col" class="px-6 py-4 text-center">Completed Orders</th>
-                        <th scope="col" class="px-6 py-4 text-right">Total Investment</th>
+    {{-- Top Customers table --}}
+    <div class="op-card overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="px-6 py-4" style="border-bottom: 1px solid var(--color-border-subtle);">
+            <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Top Customers by Spend</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="text-[10px] font-bold tracking-wider uppercase font-mono" style="color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-subtle);">
+                        <th scope="col" class="px-6 py-3.5">Name</th>
+                        <th scope="col" class="px-6 py-3.5">Email</th>
+                        <th scope="col" class="px-6 py-3.5 text-center">Orders</th>
+                        <th scope="col" class="px-6 py-3.5 text-right">Total Spent</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-transparent">
+                <tbody>
                     @forelse($this->getTopCustomers() as $customer)
-                        <tr class="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors duration-150">
-                            <td class="px-6 py-4 font-medium text-gray-900 dark:text-white">
+                        <tr style="border-bottom: 1px solid var(--color-border-subtle);" class="op-table-row">
+                            <td class="px-6 py-4 font-medium" style="color: var(--color-text-primary);">
                                 {{ $customer['name'] ?? 'Guest Customer' }}
                             </td>
-                            <td class="px-6 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">
+                            <td class="px-6 py-4 font-mono text-xs" style="color: var(--color-text-muted);">
                                 {{ $customer['email'] ?? '—' }}
                             </td>
-                            <td class="px-6 py-4 text-center font-mono font-bold text-gray-900 dark:text-white">
-                                {{ $customer['order_count'] }}
+                            <td class="px-6 py-4 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full font-mono font-bold text-xs"
+                                    style="background: var(--color-bg-inset); color: var(--color-text-primary); border: 1px solid var(--color-border-default);">
+                                    {{ $customer['order_count'] }}
+                                </span>
                             </td>
-                            <td class="px-6 py-4 text-right font-mono font-bold text-primary-600 dark:text-primary-400">
+                            <td class="px-6 py-4 text-right font-mono font-bold" style="color: var(--color-brand-600);">
                                 &euro;{{ number_format($customer['total_spent'], 2) }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="4" class="px-6 py-8 text-center text-sm font-medium" style="color: var(--color-text-muted);">
                                 No customer spending data found for this period.
                             </td>
                         </tr>
@@ -96,5 +113,5 @@
                 </tbody>
             </table>
         </div>
-    </x-filament::section>
+    </div>
 </x-filament-panels::page>

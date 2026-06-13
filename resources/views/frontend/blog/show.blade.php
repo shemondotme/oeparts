@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang       = app()->getLocale();
@@ -110,17 +110,17 @@
             </div>
         </div>
 
-        {{-- ═══ §00 · Article header ═══ --}}
+        {{-- ═══ 00 · Article header ═══ --}}
         <header class="mb-12 bp-rise bp-rise-delay-1">
             <div class="flex items-center gap-4 mb-8">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
                 @if($post->category)
                     <a href="{{ route('frontend.blog.index', ['lang' => $lang, 'category' => $post->category->slug]) }}"
                        class="bp-spec text-amber-ink hover:text-ink transition-colors">
-                        § {{ trans_field($post->category->name) }}
+                        {{ trans_field($post->category->name) }}
                     </a>
                 @else
-                    <span class="bp-spec text-amber-ink">§ {{ __('Journal · Entry') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('Journal · Entry') }}</span>
                 @endif
             </div>
 
@@ -197,7 +197,7 @@
             {{-- ── Article body ── --}}
             <article class="col-span-12 lg:col-span-8">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-8">
-                    <span class="bp-spec text-ink">§ 01 · {{ __('Body') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ __('Body') }}</span>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         {{ __('Content') }}
                     </span>
@@ -215,13 +215,13 @@
                             prose-blockquote:border-l-amber prose-blockquote:border-l-4 prose-blockquote:pl-6 prose-blockquote:text-body prose-blockquote:not-italic
                             prose-ul:marker:text-amber prose-ol:marker:text-ink-muted prose-li:text-body
                             prose-img:border prose-img:border-ink prose-img:rounded-none">
-                    {!! trans_field($post->content) !!}
+                    {!! clean(trans_field($post->content)) !!}
                 </div>
 
                 {{-- Share row --}}
                 <div class="mt-12 pt-6 border-t border-ink">
                     <div class="flex items-end justify-between pb-3 border-b border-rule mb-5">
-                        <span class="bp-spec text-ink">§ 02 · {{ trans('blog.share') }}</span>
+                        <span class="bp-spec text-ink">02 · {{ trans('blog.share') }}</span>
                         <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                             {{ __('Distribute') }}
                         </span>
@@ -272,7 +272,7 @@
                 {{-- Author card --}}
                 <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('§ Author') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Author') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">ID · {{ str_pad($post->author->id ?? 0, 3, '0', STR_PAD_LEFT) }}</span>
                     </div>
                     <div class="p-5 flex items-start gap-4">
@@ -295,7 +295,7 @@
                 {{-- Mini directory: explore more --}}
                 <div class="border border-ink bg-paper">
                     <div class="px-5 py-3 bg-ink text-ivory">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">§ {{ __('Quick · Nav') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Quick · Nav') }}</span>
                     </div>
                     <ul class="divide-y divide-rule">
                         <li>
@@ -324,7 +324,7 @@
 
                 {{-- CTA --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">§ {{ __('Action · Line') }}</p>
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Action · Line') }}</p>
                     <p class="font-display text-lg font-extrabold tracking-[-0.02em] leading-tight">
                         {{ __('Need a specific part?') }}
                     </p>
@@ -342,11 +342,11 @@
             </aside>
         </div>
 
-        {{-- ═══ §03 · Related entries ═══ --}}
+        {{-- ═══ 03 · Related entries ═══ --}}
         @if($relatedPosts->count() > 0)
             <section class="mt-20 bp-rise bp-rise-delay-4">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                    <span class="bp-spec text-ink">§ 03 · {{ trans('blog.related_posts') }}</span>
+                    <span class="bp-spec text-ink">03 · {{ trans('blog.related_posts') }}</span>
                     <span class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         {{ $relatedPosts->count() }} {{ __('nearby') }}
                     </span>
@@ -364,7 +364,7 @@
                             @endif
                             <div class="p-5 flex-1 flex flex-col">
                                 <div class="flex items-center gap-2 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
-                                    <span class="text-amber-ink">§ {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="text-amber-ink">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                                     <span class="text-rule-strong">│</span>
                                     <time datetime="{{ $relatedPost->published_at }}" class="tabular-nums">
                                         {{ \Carbon\Carbon::parse($relatedPost->published_at)->format('d M Y') }}

@@ -279,33 +279,28 @@ class Dashboard extends BaseDashboard
                     Repeater::make('widgets')
                         ->label('')
                         ->schema([
-                            Grid::make(12)
-                                ->columnSpan('full')
-                                ->schema([
-                                    Placeholder::make('info')
-                                        ->label('')
-                                        ->columnSpan(11)
-                                        ->content(fn ($get) => new HtmlString(
-                                            '<div class="flex items-center gap-3">' .
-                                                '<div class="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 flex-shrink-0">' .
-                                                    $this->getWidgetIconSvg($get('id')) .
-                                                '</div>' .
-                                                '<div class="flex-grow min-w-0">' .
-                                                    '<div class="text-sm font-medium text-gray-900 dark:text-gray-100">' . e($get('label')) . '</div>' .
-                                                    '<div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">' . e($this->getWidgetDescription($get('id'))) . '</div>' .
-                                                '</div>' .
-                                            '</div>'
-                                        )),
+                            Placeholder::make('info')
+                                ->label('')
+                                ->content(fn ($get) => new HtmlString(
+                                    '<div class="flex items-center justify-between gap-4">' .
+                                        '<div class="flex items-center gap-3 flex-grow min-w-0">' .
+                                            '<div class="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 flex-shrink-0">' .
+                                                $this->getWidgetIconSvg($get('id')) .
+                                            '</div>' .
+                                            '<div class="flex-grow min-w-0">' .
+                                                '<div class="text-sm font-medium text-gray-900 dark:text-gray-100">' . e($get('label')) . '</div>' .
+                                                '<div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">' . e($this->getWidgetDescription($get('id'))) . '</div>' .
+                                            '</div>' .
+                                        '</div>' .
+                                    '</div>'
+                                )),
 
-                                    Toggle::make('enabled')
-                                        ->label('')
-                                        ->columnSpan(1)
-                                        ->inline(false)
-                                        ->alignEnd(),
+                            Toggle::make('enabled')
+                                ->label('')
+                                ->inline(false),
 
-                                    Hidden::make('id'),
-                                    Hidden::make('label'),
-                                ])
+                            Hidden::make('id'),
+                            Hidden::make('label'),
                         ])
                         ->addable(false)
                         ->deletable(false)

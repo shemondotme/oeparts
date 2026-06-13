@@ -17,4 +17,14 @@ class EditTestimonial extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    public function getHeading(): string
+    {
+        return 'Edit ' . ($this->record?->name ?? 'Testimonial');
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Update the customer details, quote, rating, or display settings.';
+    }
 }

@@ -4,18 +4,24 @@ namespace App\Filament\Resources;
 
 use App\Enums\ContentStatus;
 use App\Filament\Resources\PageResource\Pages;
-use App\Models\Admin;
+use App\Filament\Support\AdminUi;
 use App\Models\Page;
 use Filament\Forms;
-use Filament\Notifications\Notification;
 use Filament\Actions;
+use Filament\Notifications\Notification;
+use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Support\Enums\FontWeight;
 
 class PageResource extends Resource
 {
@@ -23,7 +29,7 @@ class PageResource extends Resource
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
-        return 'heroicon-o-document-text';
+        return 'heroicon-o-document';
     }
 
     public static function getNavigationGroup(): ?string
@@ -38,95 +44,169 @@ class PageResource extends Resource
 
     public static function getRecordTitleAttribute(): ?string
     {
-        return 'title';
+        return null;
+    }
+
+    public static function getRecordTitle(?Model $record): string|null
+    {
+        return $record ? AdminUi::localizedName($record->title, 'Page') : null;
     }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Page Content')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('title')
-                            ->label('Title (JSON)')
-                            ->helperText('e.g. {"en": "About Us", "de": "Über uns"}')
-                            ->required()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, callable $set, ?string $operation) {
-                                if ($operation === 'create' && is_string($state) && filled($state)) {
-                                    $set('slug', Str::slug($state));
-                                }
-                            }),
-                        Forms\Components\TextInput::make('slug')
-                            ->required()
-                            ->maxLength(200)
-                            ->unique(ignoreRecord: true)
-                            ->helperText('URL path — auto-generated from title'),
-                        Forms\Components\Textarea::make('content')
-                            ->label('Content (JSON)')
-                            ->helperText('HTML content per language: {"en": "<p>...</p>", "de": "<p>...</p>"}')
-                            ->rows(10)
-                            ->nullable(),
+                        // ─── Main column ──────────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('Page Info')
+                                    ->icon('heroicon-o-document-text')
+                                    ->description('Basic page metadata and featured image.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('slug')
+                                            ->label('URL Slug')
+                                            ->placeholder('e.g. about-us, shipping-policy')
+                                            ->helperText('Used in page URLs (e.g. /pages/about-us). Auto-generated from English title.')
+                                            ->required()
+                                            ->maxLength(200)
+                                            ->unique(ignoreRecord: true),
+                                        Forms\Components\Select::make('featured_image_id')
+                                            ->label('Featured Image')
+                                            ->relationship('featuredImage', 'file_name')
+                                            ->searchable()
+                                            ->nullable()
+                                            ->helperText('Optional image displayed at the top of the page.'),
+                                    ])->columns(2),
+
+                                Section::make('Multilingual Page Content')
+                                    ->icon('heroicon-o-language')
+                                    ->description('Translate the page title, content, and SEO meta fields in supported languages.')
+                                    ->schema([
+                                        Tabs::make('Locales')
+                                            ->schema(
+                                                collect(AdminUi::LOCALES)
+                                                    ->map(fn (string $label, string $code) => Tab::make($label)
+                                                        ->badge($code === 'en' ? 'Primary' : null)
+                                                        ->schema([
+                                                            Forms\Components\TextInput::make("title.$code")
+                                                                ->label('Title')
+                                                                ->required($code === 'en')
+                                                                ->maxLength(255)
+                                                                ->live(onBlur: true)
+                                                                ->afterStateUpdated(function ($state, callable $set, ?string $operation) use ($code) {
+                                                                    if ($code === 'en' && $operation === 'create' && is_string($state) && filled($state)) {
+                                                                        $set('slug', \Illuminate\Support\Str::slug($state));
+                                                                    }
+                                                                }),
+                                                            Forms\Components\RichEditor::make("content.$code")
+                                                                ->label('Content Body')
+                                                                ->nullable()
+                                                                ->columnSpanFull(),
+                                                        ]))
+                                                    ->values()
+                                                    ->all()
+                                            )
+                                            ->columnSpanFull(),
+                                    ]),
+
+                                Section::make('SEO & Meta')
+                                    ->icon('heroicon-o-globe-alt')
+                                    ->description('Search engine optimization settings to improve visibility in search results.')
+                                    ->collapsible()
+                                    ->schema([
+                                        Tabs::make('SeoLocales')
+                                            ->schema(
+                                                collect(AdminUi::LOCALES)
+                                                    ->map(fn (string $label, string $code) => Tab::make($label)
+                                                        ->schema([
+                                                            Forms\Components\TextInput::make("meta_title.$code")
+                                                                ->label('Meta Title')
+                                                                ->maxLength(255)
+                                                                ->nullable()
+                                                                ->helperText('Optimal: 50–60 characters. Currently shown in search results as the clickable headline.'),
+                                                            Forms\Components\Textarea::make("meta_description.$code")
+                                                                ->label('Meta Description')
+                                                                ->rows(3)
+                                                                ->nullable()
+                                                                ->helperText('Optimal: 150–160 characters. Shanked beneath the title in search results.'),
+                                                        ]))
+                                                    ->values()
+                                                    ->all()
+                                            )
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+
+                        // ─── Sidebar column ───────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('Publishing & Visibility')
+                                    ->icon('heroicon-o-adjustments-horizontal')
+                                    ->description('Control page status, scheduling, and navigation placement.')
+                                    ->schema([
+                                        Forms\Components\Select::make('status')
+                                            ->label('Publish Status')
+                                            ->options(ContentStatus::class)
+                                            ->required()
+                                            ->default(ContentStatus::Draft)
+                                            ->helperText('Draft pages are not visible on the storefront.'),
+                                        Forms\Components\DateTimePicker::make('published_at')
+                                            ->label('Published At')
+                                            ->nullable()
+                                            ->helperText('Schedule a future publication date. Leave empty to publish immediately.'),
+                                        Forms\Components\Toggle::make('is_homepage')
+                                            ->label('Set as Homepage')
+                                            ->default(false)
+                                            ->helperText('Only one page can be set as the homepage. This will override the current homepage.'),
+                                        Forms\Components\Toggle::make('is_header')
+                                            ->label('Show in Header Navigation')
+                                            ->default(false)
+                                            ->helperText('Add this page link to the main header navigation menu.'),
+                                        Forms\Components\Toggle::make('is_footer')
+                                            ->label('Show in Footer Navigation')
+                                            ->default(false)
+                                            ->helperText('Add this page link to the footer navigation menu.'),
+                                    ]),
+                            ]),
                     ]),
-                Section::make('SEO & Meta')
-                    ->schema([
-                        Forms\Components\TextInput::make('meta_title')
-                            ->label('Meta Title (JSON)')
-                            ->nullable(),
-                        Forms\Components\Textarea::make('meta_description')
-                            ->label('Meta Description (JSON)')
-                            ->rows(3)
-                            ->nullable(),
-                    ])->columns(2),
-                Section::make('Settings')
-                    ->schema([
-                        Forms\Components\Select::make('status')
-                            ->options(ContentStatus::class)
-                            ->required()
-                            ->default('draft'),
-                        Forms\Components\DateTimePicker::make('published_at')
-                            ->label('Published At')
-                            ->nullable(),
-                        Forms\Components\Toggle::make('is_homepage')
-                            ->label('Homepage')
-                            ->default(false)
-                            ->helperText('Only one page can be the homepage'),
-                        Forms\Components\Toggle::make('is_header')
-                            ->label('Show in Header')
-                            ->default(false),
-                        Forms\Components\Toggle::make('is_footer')
-                            ->label('Show in Footer')
-                            ->default(false),
-                    ])->columns(2),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->columns([
-                Tables\Columns\TextColumn::make('title')
-                    ->label('Title')
-                    ->getStateUsing(fn (Page $record): string => is_array($record->title) ? ($record->title['en'] ?? $record->title[array_key_first($record->title)] ?? '—') : ($record->title ?? '—'))
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->where(function ($q) use ($search) {
-                            $q->where('title->en', 'like', "%{$search}%")
-                                ->orWhere('title->de', 'like', "%{$search}%");
-                        });
-                    })
-                    ->limit(30),
-                Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug')
-                    ->badge()
-                    ->color('gray')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (ContentStatus $state): string => match ($state) {
-                        ContentStatus::Published => 'success',
-                        ContentStatus::Draft => 'warning',
-                        ContentStatus::Archived => 'danger',
-                    }),
+            Tables\Columns\TextColumn::make('title')
+                ->label('Title')
+                ->getStateUsing(fn (Page $record): string => AdminUi::localizedName($record->title))
+                ->searchable(query: function (Builder $query, string $search): Builder {
+                    return $query->where(function ($q) use ($search) {
+                        $q->where('title->en', 'like', "%{$search}%")
+                            ->orWhere('title->de', 'like', "%{$search}%");
+                    });
+                })
+                ->sortable()
+                ->weight(FontWeight::Medium)
+                ->limit(30),
+            Tables\Columns\TextColumn::make('slug')
+                ->label('Slug')
+                ->badge()
+                ->color('gray')
+                ->searchable(),
+            Tables\Columns\TextColumn::make('status')
+                ->label('Status')
+                ->badge()
+                ->color(fn (ContentStatus $state): string => match ($state) {
+                    ContentStatus::Published => 'success',
+                    ContentStatus::Draft => 'warning',
+                    ContentStatus::Archived => 'danger',
+                    default => 'gray',
+                }),
                 Tables\Columns\IconColumn::make('is_homepage')
                     ->label('Home')
                     ->boolean()
@@ -141,33 +221,49 @@ class PageResource extends Resource
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('published_at')
                     ->label('Published')
-                    ->dateTime()
+                    ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(ContentStatus::class),
+                    ->label('Publish Status')
+                    ->options(ContentStatus::class)
+                    ->native(false)
+                    ->helperText('Filter by draft, published, or archived pages.'),
                 Tables\Filters\TernaryFilter::make('is_homepage')
-                    ->label('Homepage'),
+                    ->label('Homepage')
+                    ->placeholder('All')
+                    ->trueLabel('Homepage Only')
+                    ->falseLabel('Non-Homepage'),
                 Tables\Filters\TernaryFilter::make('is_header')
-                    ->label('Header'),
+                    ->label('Header Nav')
+                    ->placeholder('All')
+                    ->trueLabel('In Header')
+                    ->falseLabel('Not in Header'),
                 Tables\Filters\TernaryFilter::make('is_footer')
-                    ->label('Footer'),
+                    ->label('Footer Nav')
+                    ->placeholder('All')
+                    ->trueLabel('In Footer')
+                    ->falseLabel('Not in Footer'),
             ])
-            ->actions([
-                Actions\ViewAction::make(),
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
+            ->actions(AdminUi::recordActions())
             ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+            Actions\BulkActionGroup::make([
+                AdminUi::exportCsvBulkAction('Export Pages', [
+                    'title' => 'Title',
+                    'slug' => 'Slug',
+                    'status' => 'Status',
+                    'is_homepage' => 'Homepage',
+                    'published_at' => 'Published',
                 ]),
+                Actions\DeleteBulkAction::make(),
+            ]),
             ])
             ->defaultSort('created_at', 'desc')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->emptyStateIcon('heroicon-o-document-text')
+            ->emptyStateHeading('No CMS pages created yet')
+            ->emptyStateDescription('Create custom landing pages, policy pages, or informational content pages.');
     }
 
     public static function getRelations(): array
@@ -195,4 +291,10 @@ class PageResource extends Resource
     {
         return 'success';
     }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title'];
+    }
 }
+

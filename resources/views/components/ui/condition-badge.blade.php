@@ -1,37 +1,30 @@
-{{--
-    Condition badge — maps a product condition slug to its design-token color pair.
-
-    Usage:
-        <x-ui.condition-badge condition="new" />
-        <x-ui.condition-badge condition="used_grade_a" />
-        <x-ui.condition-badge condition="{{ $product->condition }}" />
-
-    Supported condition values (aligned with tailwind.config.js tokens):
-        new | used_grade_a | used_grade_b | used_grade_c
-        remanufactured | aftermarket | new_old_stock
-
-    Optional slot — override the display label:
-        <x-ui.condition-badge condition="new">Brand New</x-ui.condition-badge>
---}}
-@props(['condition'])
+@props(['condition' => null])
 
 @php
-    $map = [
-        'new'            => 'bg-condition-new-bg text-condition-new-text',
-        'used_grade_a'   => 'bg-condition-used-a-bg text-condition-used-a-text',
-        'used_grade_b'   => 'bg-condition-used-b-bg text-condition-used-b-text',
-        'used_grade_c'   => 'bg-condition-used-c-bg text-condition-used-c-text',
-        'remanufactured' => 'bg-condition-remanufactured-bg text-condition-remanufactured-text',
-        'aftermarket'    => 'bg-condition-aftermarket-bg text-condition-aftermarket-text',
-        'new_old_stock'  => 'bg-condition-nos-bg text-condition-nos-text',
-    ];
+    $bg = '#6B7280';
+    $text = '#FFFFFF';
+    $label = '—';
 
-    $cls = $map[$condition] ?? 'bg-slate-100 text-slate-600';
-
-    // Default label: replace underscores and "grade " for readability
-    $defaultLabel = ucwords(str_replace(['_', 'grade '], [' ', ''], $condition));
+    if ($condition instanceof \App\Models\Condition) {
+        $bg = $condition->bg_color;
+        $text = $condition->text_color;
+        $label = $condition->name;
+    } elseif (is_string($condition)) {
+        $conditionModel = \App\Models\Condition::where('slug', $condition)->first();
+        if ($conditionModel) {
+            $bg = $conditionModel->bg_color;
+            $text = $conditionModel->text_color;
+            $label = $conditionModel->name;
+        } else {
+            $label = ucfirst($condition);
+        }
+    } elseif (is_object($condition) && property_exists($condition, 'bg_color')) {
+        $bg = $condition->bg_color;
+        $text = $condition->text_color;
+        $label = $condition->name ?? 'Preview';
+    }
 @endphp
 
-<span {{ $attributes->merge(['class' => "inline-flex items-center rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide $cls"]) }}>
-    {{ $slot->isEmpty() ? $defaultLabel : $slot }}
+<span {{ $attributes->merge(['class' => 'inline-flex items-center rounded px-2 py-0.5 bp-spec-mono font-bold']) }} style="background-color: {{ $bg }}; color: {{ $text }};">
+    {{ $slot->isEmpty() ? $label : $slot }}
 </span>

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Addresses') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -9,7 +9,7 @@
 @section('content')
 <x-account.shell
     active="addresses"
-    eyebrow="§ 04 · Addresses · Register"
+    eyebrow="04 · Addresses · Register"
     title="Saved addresses"
     :subtitle="__('Dispatch endpoints tied to your account — ready to auto-fill at checkout and keep your procurement flow fast.')"
     docId="DOC · ADDRESS-REGISTER · {{ now()->format('Y.m.d') }}"
@@ -50,19 +50,19 @@
         <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-3 divide-x divide-rule"
              style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('On file') }}</p>
+                <p class="bp-spec-mono">{{ __('On file') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $addresses->count(), 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('Default') }}</p>
+                <p class="bp-spec-mono">{{ __('Default') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-amber-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $addresses->where('is_default', true)->count(), 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="hidden sm:block px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('Countries') }}</p>
+                <p class="bp-spec-mono">{{ __('Countries') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $addresses->pluck('country_code')->filter()->unique()->count(), 2, '0', STR_PAD_LEFT) }}
                 </p>
@@ -84,7 +84,7 @@
                     <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
                             <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber-ink">
-                                §{{ str_pad((string) $rowNum, 2, '0', STR_PAD_LEFT) }}
+                                {{ str_pad((string) $rowNum, 2, '0', STR_PAD_LEFT) }}
                             </span>
                             <span class="font-display text-sm font-bold tracking-[-0.01em] text-ink truncate">
                                 {{ ucfirst($addr->label ?: __('Address')) }}

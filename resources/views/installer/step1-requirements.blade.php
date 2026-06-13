@@ -78,12 +78,12 @@
         <div></div>
         <div>
             @if(collect($requirements)->every(fn($met) => $met) && collect($permissions)->every(fn($writable) => $writable))
-            <a href="{{ route('installer.database') }}" class="btn-primary">
+            <a href="{{ route('installer.database') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200">
                 Continue to Database Setup
                 <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
             </a>
             @else
-            <button class="btn-primary opacity-50 cursor-not-allowed" disabled>
+            <button class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm opacity-50 cursor-not-allowed" disabled>
                 Fix Requirements First
             </button>
             @endif

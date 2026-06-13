@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $siteName = settings('general.site_name', 'OeParts');
@@ -38,11 +38,7 @@
 
         {{-- ═══ Document header: breadcrumb + doc ID ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
-            <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('search.console_breadcrumb_home') }}</a>
-                <span class="text-rule-strong">/</span>
-                <span class="text-ink">{{ __('search.console_breadcrumb_current') }}</span>
-            </nav>
+            <x-ui.breadcrumb :items="[['label' => __('search.console_breadcrumb_current')]]" />
             <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
                 {{ __('search.console_doc_id') }}
             </div>
@@ -110,7 +106,7 @@
             </aside>
         </div>
 
-        {{-- ═══ §01 · Query input ═══ --}}
+        {{-- ═══ 01 · Query input ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-2"
                  x-data="{
                      q: '',
@@ -164,7 +160,7 @@
             </form>
         </section>
 
-        {{-- ═══ §02 · Popular OEMs ═══ --}}
+        {{-- ═══ 02 · Popular OEMs ═══ --}}
         @if($popularOems && $popularOems->isNotEmpty())
         <section class="mb-16 bp-rise bp-rise-delay-3">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
@@ -193,7 +189,7 @@
         </section>
         @endif
 
-        {{-- ═══ §03 · Featured brands ═══ --}}
+        {{-- ═══ 03 · Featured brands ═══ --}}
         @if($featuredBrands && $featuredBrands->isNotEmpty())
         <section class="mb-16 bp-rise bp-rise-delay-4">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
@@ -219,7 +215,7 @@
         </section>
         @endif
 
-        {{-- ═══ §04 · Not finding it? concierge ═══ --}}
+        {{-- ═══ 04 · Not finding it? concierge ═══ --}}
         <section class="bp-rise bp-rise-delay-5">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
                 <span class="bp-spec text-ink">{{ __('search.console_concierge_heading') }}</span>
@@ -236,7 +232,7 @@
                         {{ __('search.console_concierge_body', ['hours' => $inquiryHours]) }}
                     </p>
                     <button type="button"
-                            onclick="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
+                            x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
                             class="mt-6 group inline-flex items-center justify-center gap-3
                                    px-6 py-3.5
                                    bg-ink text-ivory font-sans text-[12px] font-bold uppercase tracking-[0.22em]

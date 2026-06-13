@@ -1,68 +1,95 @@
+# ============================================================
+# OeParts — .gitignore
+# ============================================================
+
+# Laravel framework
 /.phpunit.cache
 /node_modules
-# public/build is intentionally committed — production server has no Node.js (see CLAUDE.md Rule #9)
 /public/hot
 /public/storage
 /storage/*.key
 /storage/pail
 /vendor
+/auth.json
+
+# Environment — only .env.example and .env.testing are committed
 .env
-.env.backup
-.env.production
-.phpactor.json
+.env.*
+!.env.example
+!.env.testing
+
+# PHPUnit / Pest
 .phpunit.result.cache
+.phpunit.cache
+
+# Homestead (legacy)
 Homestead.json
 Homestead.yaml
-npm-debug.log
-yarn-error.log
-/auth.json
+
+# Compiled / build outputs (generic)
+dist/
+build/
+
+# IMPORTANT: public/build/ MUST be committed — production server has no Node.js.
+# The generic `build/` rule above would otherwise exclude it, so we re-include it here.
+!public/build/
+!public/build/**
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary / cache
+*.tmp
+*.temp
+.cache/
+
+# ============================================================
+# Dev / Debug artifacts (prevent future accidents)
+# ============================================================
+temp_check*.php
+test_check*.php
+debug_check*.php
+db_search.php
+temp_cookies.txt
+test_cookies.txt
+scratch/
+
+# Debug files accidentally placed in public/
+public/test_*.php
+public/debug_*.php
+public/info.php
+public/phpinfo.php
+
+# Backup files
+*.bak
+*.backup
+*.orig
+*.old
+
+# ============================================================
+# IDE & editor files
+# ============================================================
 /.fleet
 /.idea
 /.nova
 /.vscode
 /.zed
-
-# Auto-generated entries
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build outputs
-dist/
-build/
-*.log
-
-# Environment files
-.env
-.env.*
-!.env.example
-
-# IDE files
-.vscode/
-.idea/
+.cursor/
 *.swp
 *.swo
+*.kate-swp
 
-# OS files
+# ============================================================
+# OS / system files
+# ============================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-
-# Temporary files
-*.tmp
-*.temp
-.cache/
-
-# Sensitive files (auto-detected)
-.env
-.env.example
-.env.testing
-.phpunit.result.cache
-node_modules
-
-# Compiled Vite assets MUST be committed (production server has no Node.js).
-# The generic `build/` rule above otherwise ignores public/build — re-include it here.
-!public/build/
-!public/build/**
-
+desktop.ini

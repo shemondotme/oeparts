@@ -1,4 +1,4 @@
-{{-- Cookie Consent Banner — Industrial Blueprint (2026) --}}
+﻿{{-- Cookie Consent Banner — Industrial Blueprint (2026) --}}
 @props(['enabled' => true])
 
 @if($enabled)
@@ -18,7 +18,7 @@
     }"
     x-on:open-cookie-consent.window="visible = true"
     x-show="visible"
-    x-transition:enter="transition ease-out duration-400"
+    x-transition:enter="transition ease-out duration-300"
     x-transition:enter-start="translate-x-6 opacity-0"
     x-transition:enter-end="translate-x-0 opacity-100"
     x-transition:leave="transition ease-in duration-200"
@@ -41,7 +41,7 @@
             <div class="flex items-center gap-2.5">
                 <span class="w-2.5 h-2.5 bg-amber"></span>
                 <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">
-                    § Consent · 01
+                    Consent · 01
                 </span>
             </div>
             <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ivory/50">
@@ -72,7 +72,7 @@
                 <button
                     @click="decline()"
                     type="button"
-                    class="group flex items-center justify-center gap-2 px-4 py-3 border border-ivory/25
+                    class="group flex items-center justify-center gap-2 px-4 py-3 border border-ivory/50
                            font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ivory
                            hover:border-amber hover:text-amber transition-colors"
                     aria-label="Decline all cookies"
@@ -145,6 +145,7 @@
         },
         save() {
             localStorage.setItem('cookie_preferences', JSON.stringify(this.preferences));
+            localStorage.setItem('cookie_consent_accepted', '1');
             this.open = false;
             $dispatch('cookie-preferences-saved', this.preferences);
         }
@@ -183,7 +184,7 @@
                 <div class="flex items-center gap-3">
                     <span class="w-2 h-8 bg-amber"></span>
                     <div>
-                        <span class="bp-spec text-amber-ink">§ Consent · Detail</span>
+                        <span class="bp-spec text-amber-ink">Consent · Detail</span>
                         <h3 id="cookie-pref-title" class="font-display text-lg font-extrabold text-ink tracking-[-0.02em] leading-tight">
                             {{ __('Cookie preferences') }}
                         </h3>

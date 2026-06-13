@@ -26,7 +26,7 @@ class ManufacturerController extends Controller
             ->where('is_active', true)
             ->with(['manufacturer', 'carModels'])
             ->orderBy('oem_number')
-            ->paginate(20);
+            ->paginate(settings('general.pagination_per_page', 20));
 
         // Get car models for this manufacturer
         $carModels = $manufacturer->carModels()
@@ -57,7 +57,7 @@ class ManufacturerController extends Controller
         }
 
         $manufacturers = $query->orderBy('name->en')
-            ->paginate(30)
+            ->paginate(settings('general.pagination_per_page', 30))
             ->withQueryString();
 
         return view('frontend.manufacturer.index', [

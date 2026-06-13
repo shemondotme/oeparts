@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
@@ -16,7 +16,7 @@
     <title>@yield('title', settings('general.site_name', 'OeParts'))</title>
 
     {{-- Primary meta --}}
-    <meta name="description" content="@yield('meta_description', '')">
+    <meta name="description" content="@yield('meta_description', settings('seo.default_description', ''))">
     @hasSection('meta_robots')
         @yield('meta_robots')
     @else
@@ -66,7 +66,7 @@
 
     {{-- Custom appearance from settings (CSS variable overrides) --}}
     @if(settings('appearance.custom_css_enabled', false) && settings('appearance.custom_css', ''))
-    <style>
+    <style nonce="{{ csp_nonce() }}">
         :root {
             --color-primary: {{ settings('appearance.primary_color', '#0B3A68') }};
             --color-accent:  {{ settings('appearance.accent_color', '#F59E0B') }};
@@ -77,7 +77,7 @@
 
     {{-- Header scripts (GTM etc.) from settings --}}
     @if(settings('general.header_scripts', ''))
-    {!! settings('general.header_scripts', '') !!}
+    <script nonce="{{ csp_nonce() }}">{!! settings('general.header_scripts', '') !!}</script>
     @endif
 
     {{-- Per-page extra styles --}}
@@ -291,7 +291,7 @@
     <script>document.documentElement.classList.add('bp-preloading');</script>
     @endif
 </head>
-<body class="font-sans text-body bg-bg-page antialiased">
+<body class="font-sans text-body bg-ink antialiased min-h-screen flex flex-col">
 
     @if($showPreloader)
     {{-- ─── Industrial Blueprint · Preloader (copy from settings) ─── --}}
@@ -302,7 +302,7 @@
         <span class="bp-pre-corner bp-pre-corner--br" aria-hidden="true"></span>
 
         <div class="bp-pre-inner">
-            <div class="bp-pre-spec"><i></i><span>{{ e(settings_trans('preloader.spec_line', '§ SYS · INIT / EU')) }}</span></div>
+            <div class="bp-pre-spec"><i></i><span>{{ e(settings_trans('preloader.spec_line', 'SYS · INIT / EU')) }}</span></div>
 
             <div class="bp-pre-mark">{{ e(settings_trans('preloader.headline', 'Oe·Parts.')) }}</div>
 
@@ -409,7 +409,7 @@
 
     {{-- Skip navigation — keyboard / screen-reader accessibility --}}
     <a href="#main-content"
-       class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-navy focus:text-white focus:rounded-lg focus:font-semibold focus:text-sm focus:shadow-lg">
+       class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-ink focus:text-ivory focus:ring-2 focus:ring-amber focus:ring-offset-0 focus:font-mono focus:text-xs focus:font-bold focus:uppercase focus:tracking-widest">
         {{ __('Skip to main content') }}
     </a>
 
@@ -442,25 +442,23 @@
     @include('components.navbar')
 
     {{-- Main content --}}
-    <main id="main-content">
+    <main id="main-content" class="flex-1 bg-ivory">
         @yield('content')
+
+        {{-- Global modals live inside main — children are position:fixed so DOM placement has no visual effect --}}
+        @include('components.modals.auth-modal')
+        @include('components.modals.otp-modal')
     </main>
 
     {{-- Footer --}}
     @include('components.footer')
-
-    {{-- Auth modal (login / register) — loaded globally, toggled via Alpine --}}
-    @include('components.modals.auth-modal')
-
-    {{-- OTP modal — triggered from auth modal or checkout --}}
-    @include('components.modals.otp-modal')
 
     {{-- Cookie consent banner (GDPR compliance) --}}
     <x-cookie-consent :enabled="true" />
 
     {{-- Footer scripts from settings (analytics etc.) --}}
     @if(settings('general.footer_scripts', ''))
-    {!! settings('general.footer_scripts', '') !!}
+    <script nonce="{{ csp_nonce() }}">{!! settings('general.footer_scripts', '') !!}</script>
     @endif
 
     {{-- Per-page extra scripts --}}

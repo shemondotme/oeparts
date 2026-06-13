@@ -1,66 +1,86 @@
 <x-filament-panels::page>
+    @include('filament.components.admin-styles')
     {{-- Header filter controls --}}
     <div class="flex justify-end mb-6">
-        <x-filament::input.wrapper class="shadow-sm w-full max-w-xs">
-            <x-filament::input.select wire:model.live="period" class="font-mono text-xs uppercase tracking-wider">
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
-                <option value="90">Last 90 Days</option>
-            </x-filament::input.select>
-        </x-filament::input.wrapper>
+        <div class="flex items-center gap-2 p-1 rounded-xl" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); box-shadow: var(--shadow-1);">
+            @foreach(['7' => '7d', '30' => '30d', '90' => '90d'] as $value => $label)
+                <button
+                    wire:click="$set('period', '{{ $value }}')"
+                    class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200"
+                    style="{{ $this->period === $value
+                        ? 'background: var(--color-brand-600); color: white; box-shadow: var(--shadow-1);'
+                        : 'color: var(--color-text-secondary);' }}"
+                >{{ $label }}</button>
+            @endforeach
+        </div>
     </div>
-
 
     {{-- Search metrics --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <x-filament::section class="border-s-4 border-primary-500 dark:border-primary-600 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+        {{-- Total Searches --}}
+        <div class="op-card op-hover-lift p-6 relative overflow-hidden" style="border-left: 4px solid var(--color-brand-500);">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl" style="background: var(--color-brand-500); opacity: 0.05;"></div>
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest font-mono">Total Searches Logged</div>
-                    <div class="text-3xl font-extrabold font-display text-gray-900 dark:text-white mt-2">{{ $this->getTotalSearches() }}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Total Searches Logged</div>
+                    <div class="text-2xl font-black mt-1.5 font-mono" style="color: var(--color-text-primary);">{{ number_format($this->getTotalSearches()) }}</div>
                 </div>
-                <div class="p-3 rounded-xl bg-primary-50 dark:bg-primary-950/40 text-primary-600 dark:text-primary-400">
-                    <x-heroicon-o-magnifying-glass class="w-6 h-6" />
+                <div class="p-2.5 rounded-xl" style="background: var(--color-brand-50); color: var(--color-brand-600); border: 1px solid var(--color-brand-100);">
+                    <x-heroicon-o-magnifying-glass class="w-5 h-5" />
                 </div>
             </div>
-        </x-filament::section>
+        </div>
 
-        <x-filament::section class="border-s-4 border-danger-500 dark:border-danger-600 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow duration-200">
+        {{-- Unresolved --}}
+        <div class="op-card op-hover-lift p-6 relative overflow-hidden" style="border-left: 4px solid var(--color-danger-500);">
+            <div class="absolute -right-6 -bottom-6 w-24 h-24 rounded-full blur-2xl" style="background: var(--color-danger-500); opacity: 0.05;"></div>
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest font-mono">Unresolved Queries (No Inquiry)</div>
-                    <div class="text-3xl font-extrabold font-display text-danger-600 dark:text-danger-500 mt-2">{{ $this->getUnresolvedSearches() }}</div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest font-mono flex items-center gap-1.5" style="color: var(--color-text-muted);">
+                        Unresolved Queries
+                        <span class="relative flex h-2 w-2">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background: var(--color-danger-400);"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2" style="background: var(--color-danger-500);"></span>
+                        </span>
+                    </div>
+                    <div class="text-2xl font-black mt-1.5 font-mono" style="color: var(--color-danger-600);">{{ number_format($this->getUnresolvedSearches()) }}</div>
                 </div>
-                <div class="p-3 rounded-xl bg-danger-50 dark:bg-danger-950/40 text-danger-600 dark:text-danger-400">
-                    <x-heroicon-o-exclamation-triangle class="w-6 h-6" />
+                <div class="p-2.5 rounded-xl" style="background: var(--color-danger-50); color: var(--color-danger-600); border: 1px solid var(--color-danger-100);">
+                    <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
                 </div>
             </div>
-        </x-filament::section>
+        </div>
     </div>
 
     {{-- Top Search Queries table --}}
-    <x-filament::section heading="Top OEM & Part Search Queries" class="mb-6">
-        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-            <table class="w-full text-sm text-left divide-y divide-gray-200 dark:divide-gray-800">
-                <thead class="bg-gray-50 dark:bg-gray-900/60">
-                    <tr class="text-xs font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase font-mono">
-                        <th scope="col" class="px-6 py-4">OEM / Search Query</th>
-                        <th scope="col" class="px-6 py-4 text-center">Execution Count</th>
+    <div class="op-card overflow-hidden mb-6" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="px-6 py-4" style="border-bottom: 1px solid var(--color-border-subtle);">
+            <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Top OEM & Part Search Queries</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="text-[10px] font-bold tracking-wider uppercase font-mono" style="color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-subtle);">
+                        <th scope="col" class="px-6 py-3.5">OEM / Search Query</th>
+                        <th scope="col" class="px-6 py-3.5 text-center">Count</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-transparent">
+                <tbody>
                     @forelse($this->getTopSearches() as $search)
-                        <tr class="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors duration-150">
-                            <td class="px-6 py-4 font-mono text-sm tracking-wider text-primary-600 dark:text-primary-400 font-bold uppercase">
-                                {{ $search['search_query'] }}
+                        <tr style="border-bottom: 1px solid var(--color-border-subtle);" class="op-table-row">
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center font-mono tracking-wider text-xs font-semibold px-3 py-1 rounded-md uppercase"
+                                    style="background: var(--color-brand-50); color: var(--color-brand-700); border: 1px solid var(--color-brand-100);">
+                                    {{ $search['search_query'] }}
+                                </span>
                             </td>
-                            <td class="px-6 py-4 text-center font-mono font-bold text-gray-900 dark:text-white">
+                            <td class="px-6 py-4 text-center font-mono font-bold" style="color: var(--color-text-primary);">
                                 {{ number_format($search['count']) }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                            <td colspan="2" class="px-6 py-8 text-center text-sm font-medium" style="color: var(--color-text-muted);">
                                 No search queries recorded for this period.
                             </td>
                         </tr>
@@ -68,37 +88,43 @@
                 </tbody>
             </table>
         </div>
-    </x-filament::section>
+    </div>
 
     {{-- Unresolved Queries table --}}
-    <x-filament::section heading="Unresolved Failures (Zero Matches & No Inquiry Submitted)">
-        <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950">
-            <table class="w-full text-sm text-left divide-y divide-gray-200 dark:divide-gray-800">
-                <thead class="bg-gray-50 dark:bg-gray-900/60">
-                    <tr class="text-xs font-bold tracking-wider text-gray-500 dark:text-gray-400 uppercase font-mono">
-                        <th scope="col" class="px-6 py-4">Failed OEM Query</th>
-                        <th scope="col" class="px-6 py-4 text-center">Unresolved Attempt Count</th>
+    <div class="op-card overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="px-6 py-4" style="border-bottom: 1px solid var(--color-border-subtle);">
+            <h3 class="text-sm font-semibold" style="color: var(--color-text-primary);">Unresolved Failures (Zero Matches & No Inquiry)</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="text-[10px] font-bold tracking-wider uppercase font-mono" style="color: var(--color-text-muted); border-bottom: 1px solid var(--color-border-subtle);">
+                        <th scope="col" class="px-6 py-3.5">Failed Query</th>
+                        <th scope="col" class="px-6 py-3.5 text-center">Count</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-transparent">
+                <tbody>
                     @forelse($this->getFailedQueries() as $failed)
-                        <tr class="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors duration-150">
-                            <td class="px-6 py-4 font-mono text-sm tracking-wider text-danger-600 dark:text-danger-400 font-bold uppercase">
-                                {{ $failed['search_query'] }}
+                        <tr style="border-bottom: 1px solid var(--color-border-subtle);" class="op-table-row">
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center font-mono tracking-wider text-xs font-semibold px-3 py-1 rounded-md uppercase"
+                                    style="background: var(--color-danger-50); color: var(--color-danger-600); border: 1px solid var(--color-danger-100);">
+                                    {{ $failed['search_query'] }}
+                                </span>
                             </td>
-                            <td class="px-6 py-4 text-center font-mono font-bold text-gray-900 dark:text-white">
+                            <td class="px-6 py-4 text-center font-mono font-bold" style="color: var(--color-text-primary);">
                                 {{ number_format($failed['count']) }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="2" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                                No unresolved failed queries recorded for this period.
+                            <td colspan="2" class="px-6 py-8 text-center text-sm font-medium" style="color: var(--color-text-muted);">
+                                No unresolved failed queries for this period.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-    </x-filament::section>
+    </div>
 </x-filament-panels::page>

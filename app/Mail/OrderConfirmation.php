@@ -30,7 +30,7 @@ class OrderConfirmation extends Mailable
      */
     public function envelope(): Envelope
     {
-        $siteName = config('app.name', 'OeParts');
+        $siteName = settings('general.site_name', 'OeParts');
         $subject = trans('emails.order_confirmation.subject', [
             'order_number' => $this->order->order_number,
         ], $this->locale);

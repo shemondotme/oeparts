@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang      = app()->getLocale();
@@ -77,7 +77,7 @@
         <header class="mb-14 bp-rise bp-rise-delay-1">
             <div class="flex items-center gap-4 mb-8">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
             </div>
 
             <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
@@ -133,7 +133,7 @@
             {{-- ── Body ── --}}
             <article class="col-span-12 lg:col-span-8">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-8">
-                    <span class="bp-spec text-ink">§ 01 · {{ __('Body · Content') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ __('Body · Content') }}</span>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         {{ __('Revision') }} {{ $updatedAt->format('Y.m.d') }}
                     </span>
@@ -155,12 +155,12 @@
                             prose-img:border prose-img:border-ink prose-img:rounded-none
                             prose-table:border prose-table:border-ink prose-th:border prose-th:border-rule prose-th:bg-ivory-alt prose-th:px-3 prose-th:py-2 prose-th:font-mono prose-th:text-[10px] prose-th:uppercase prose-th:tracking-[0.18em]
                             prose-td:border prose-td:border-rule prose-td:px-3 prose-td:py-2">
-                    {!! trans_field($page->content) !!}
+                    {!! clean(trans_field($page->content)) !!}
                 </div>
 
                 {{-- Sign-off --}}
-                <div class="mt-12 pt-6 border-t border-ink flex flex-wrap items-center justify-between gap-3 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                    <span>{{ __('End of document') }} · §{{ $page->slug }}</span>
+                <div class="mt-12 pt-6 border-t border-ink flex flex-wrap items-center justify-between gap-3 bp-spec-mono">
+                    <span>{{ __('End of document') }} · {{ $page->slug }}</span>
                     <span class="tabular-nums">{{ $updatedAt->format('d M Y') }}</span>
                 </div>
             </article>
@@ -171,7 +171,7 @@
                 {{-- Doc identity --}}
                 <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">§ {{ __('Document · ID') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Document · ID') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">CMS</span>
                     </div>
                     <div class="p-5 flex items-start gap-4">
@@ -192,7 +192,7 @@
                 {{-- Legal/CMS nav links --}}
                 <div class="border border-ink bg-paper">
                     <div class="px-5 py-3 bg-ink text-ivory">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">§ {{ __('Related · Docs') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Related · Docs') }}</span>
                     </div>
                     <ul class="divide-y divide-rule">
                         @foreach([
@@ -221,7 +221,7 @@
                 {{-- Language alternates --}}
                 <div class="border border-ink bg-paper">
                     <div class="px-5 py-3 bg-ink text-ivory">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">§ {{ __('Languages') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Languages') }}</span>
                     </div>
                     <div class="p-4 grid grid-cols-5 gap-1">
                         @foreach(['en' => 'EN', 'de' => 'DE', 'lt' => 'LT', 'fr' => 'FR', 'es' => 'ES'] as $code => $label)
@@ -239,7 +239,7 @@
 
                 {{-- Contact CTA --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">§ {{ __('Questions?') }}</p>
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Questions?') }}</p>
                     <p class="font-display text-base font-extrabold tracking-[-0.02em] leading-tight">
                         {{ __('Contact our desk') }}
                     </p>

@@ -11,7 +11,7 @@
                     <p class="bp-spec text-brand-600">{{ $eyebrow }}</p>
                 @endif
                 @if($title)
-                    <h2 class="mt-1 font-display text-lg font-bold tracking-tight text-slate-900">
+                    <h2 class="mt-1 font-display text-lg font-bold tracking-tight" style="color: var(--color-text-primary);">
                         {{ $title }}
                     </h2>
                 @endif

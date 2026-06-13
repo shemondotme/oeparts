@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Jobs\GenerateInvoicePdf;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -53,12 +54,12 @@ class CheckoutService
                 'otp_verified' => false,
                 'shipping_address' => null,
                 'shipping_method_id' => null,
-                'payment_method' => 'card',
+                'payment_method' => settings('checkout.default_payment_method', 'card'),
                 'customer_note' => null,
             ],
             'created_at' => now()->toIso8601String(),
             'expires_at' => now()->addMinutes(
-                $this->settings->get('checkout.timeout_minutes', 30)
+                (int) $this->settings->get('checkout.timeout_minutes', 30)
             )->toIso8601String(),
         ]);
 
@@ -80,7 +81,7 @@ class CheckoutService
             return false;
         }
 
-        $checkout['step'] = min(5, $currentStep + 1);
+        $checkout['step'] = min((int) settings('checkout.max_steps', 5), $currentStep + 1);
         Session::put("checkout.{$checkoutId}", $checkout);
         return true;
     }
@@ -164,12 +165,20 @@ class CheckoutService
             return false;
         }
 
+        $allowed = [
+            'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes', 
+            'vat_number', 'vat_valid', 'vat_exempt', 'coupon_code', 'company_name',
+            'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'is_b2b', 'customer_note'
+        ];
+
         foreach (['step', 'expires_at', 'created_at', 'cart_id'] as $topLevelKey) {
             if (array_key_exists($topLevelKey, $updates)) {
                 $checkout[$topLevelKey] = $updates[$topLevelKey];
                 unset($updates[$topLevelKey]);
             }
         }
+
+        $updates = array_intersect_key($updates, array_flip($allowed));
 
         $checkout['data'] = array_merge($checkout['data'], $updates);
         Session::put("checkout.{$checkoutId}", $checkout);
@@ -185,17 +194,29 @@ class CheckoutService
     }
 
     /**
-     * Return a hardcoded shipping method object by ID, or null.
+     * Return a shipping method from the database by ID, or null.
      */
     private function getShippingMethod(?int $id): ?object
     {
-        $methods = [
-            1 => (object) ['id' => 1, 'name' => 'Express Shipping', 'flat_rate' => '75.00', 'estimated_days_min' => 3, 'estimated_days_max' => 5],
-            2 => (object) ['id' => 2, 'name' => 'Standard Shipping', 'flat_rate' => '40.00', 'estimated_days_min' => 5, 'estimated_days_max' => 7],
-            3 => (object) ['id' => 3, 'name' => 'Economy Shipping', 'flat_rate' => '30.00', 'estimated_days_min' => null, 'estimated_days_max' => 15],
-        ];
+        if (! $id) {
+            return null;
+        }
 
-        return $methods[$id] ?? null;
+        $method = \App\Models\ShippingMethod::where('is_active', true)->find($id);
+
+        if (! $method) {
+            return null;
+        }
+
+        $name = is_array($method->name) ? ($method->name['en'] ?? reset($method->name)) : $method->name;
+
+        return (object) [
+            'id' => $method->id,
+            'name' => $name,
+            'flat_rate' => $method->flat_rate,
+            'estimated_days_min' => $method->estimated_days_min,
+            'estimated_days_max' => $method->estimated_days_max,
+        ];
     }
 
     /**
@@ -223,7 +244,7 @@ class CheckoutService
             $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
             $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id']);
             $taxableBase = bcadd((string) $subtotal, (string) $shippingCost, 2);
-            $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase);
+            $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase, $data);
             $grandTotal = bcadd($taxableBase, $vatAmount, 2);
 
             // --- Coupon application ---
@@ -305,10 +326,7 @@ class CheckoutService
                     ? (trans_field($product->manufacturer->name) ?: 'Unknown')
                     : 'Unknown';
 
-                // Condition is a BackedEnum cast on Product; materialise as scalar.
-                $conditionSnapshot = $product && $product->condition instanceof \BackedEnum
-                    ? $product->condition->value
-                    : (string) ($product->condition ?? '');
+                $conditionSnapshot = $product?->condition?->slug ?? '';
 
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -339,56 +357,75 @@ class CheckoutService
                 $this->createGuestAccount($data['guest_email'], $order);
             }
 
+            dispatch(new GenerateInvoicePdf($order));
+
+            \App\Events\OrderPlaced::dispatch($order);
+
             return $order;
         });
     }
 
     /**
-     * Calculate shipping cost based on selected method.
+     * Calculate shipping cost based on selected method from database.
      */
     public function calculateShippingCost(Cart $cart, ?int $shippingMethodId): string
     {
-        $prices = [1 => '75.00', 2 => '40.00', 3 => '30.00'];
+        if (! $shippingMethodId) {
+            return '0.00';
+        }
 
-        return $prices[$shippingMethodId] ?? '0.00';
+        $method = \App\Models\ShippingMethod::where('is_active', true)->find($shippingMethodId);
+
+        if (! $method) {
+            return '0.00';
+        }
+
+        $rate = (string) $method->flat_rate;
+
+        if ($method->free_shipping_threshold && bccomp((string) $this->cartService->getSummary($cart)['subtotal'], $method->free_shipping_threshold, 2) >= 0) {
+            return '0.00';
+        }
+
+        return $rate;
     }
 
     /**
      * Calculate VAT amount based on customer's country and B2B status.
      */
-    private function calculateVat(string $amount): string
+    private function calculateVat(string $amount, array $data): string
     {
-        // TODO: implement VAT calculation based on shipping country
-        $vatRate = (string) settings('tax.default_vat_rate', 21);
+        // Check if customer is VAT exempt (B2B with valid VIES)
+        if (!empty($data['vat_number']) && !empty($data['vat_valid']) && $data['vat_valid'] === true) {
+            return '0.00';
+        }
+
+        $vatRate = (string) settings('tax.default_vat_rate', '21.00');
         return bcmul($amount, bcdiv($vatRate, '100', 4), 2);
     }
 
     /**
      * Automatically create a user account for a guest after order placement.
      */
-    private function createGuestAccount(string $email, Order $order): void
+    private function createGuestAccount(string $email, Order $order): \App\Models\User
     {
-        // Check if a user with this email already exists
-        $user = User::where('email', $email)->first();
-        if ($user) {
-            // Link order to existing user
+        return DB::transaction(function () use ($email, $order) {
+            $user = User::where('email', $email)->first();
+            if ($user) {
+                $order->update(['user_id' => $user->id]);
+                return $user;
+            }
+
+            $password = Str::random((int) settings('checkout.guest_password_length', 12));
+            $user = User::create([
+                'name' => 'Guest ' . explode('@', $email)[0],
+                'email' => $email,
+                'password' => bcrypt($password),
+                'email_verified_at' => now(),
+            ]);
+
             $order->update(['user_id' => $user->id]);
-            return;
-        }
 
-        // Create new user with a random password
-        $password = Str::random(12);
-        $user = User::create([
-            'name' => 'Guest ' . explode('@', $email)[0], // Generate name from email
-            'email' => $email,
-            'password' => bcrypt($password),
-            'email_verified_at' => now(),
-        ]);
-
-        // Send welcome email with password set link (implement in EmailService)
-        // ...
-
-        // Link order to the new user
-        $order->update(['user_id' => $user->id]);
+            return $user;
+        });
     }
 }

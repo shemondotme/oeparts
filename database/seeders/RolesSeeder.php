@@ -25,6 +25,9 @@ class RolesSeeder extends Seeder
             'view refunds',
             'process refunds',
 
+            // Payments
+            'view payments',
+
             // Products / Catalog
             'view products',
             'create products',
@@ -40,6 +43,10 @@ class RolesSeeder extends Seeder
             'create car models',
             'edit car models',
             'delete car models',
+            'view categories',
+            'create categories',
+            'edit categories',
+            'delete categories',
 
             // Customers
             'view customers',
@@ -78,11 +85,20 @@ class RolesSeeder extends Seeder
             'view testimonials',
             'edit testimonials',
             'view faqs',
+            'create faqs',
             'edit faqs',
-            'view newsletter',
+            'delete faqs',
+
+            // Marketing
+            'view newsletters',
+            'create newsletters',
+            'edit newsletters',
+            'delete newsletters',
             'export newsletter',
+            'view abandoned carts',
             'view contact messages',
             'edit contact messages',
+            'view email logs',
 
             // Reports
             'view reports',
@@ -99,10 +115,41 @@ class RolesSeeder extends Seeder
             'view failed jobs',
             'retry failed jobs',
             'view ip blocklist',
+            'create ip blocklist',
             'edit ip blocklist',
+            'delete ip blocklist',
             'view translations',
             'edit translations',
             'view health',
+            'view languages',
+            'create languages',
+            'edit languages',
+            'delete languages',
+            'view seo meta',
+            'create seo meta',
+            'edit seo meta',
+            'delete seo meta',
+            'view admins',
+            'create admins',
+            'edit admins',
+            'delete admins',
+            'view roles',
+            'create roles',
+            'edit roles',
+            'delete roles',
+            'view shipping methods',
+            'create shipping methods',
+            'edit shipping methods',
+            'delete shipping methods',
+            'view shipping zones',
+            'create shipping zones',
+            'edit shipping zones',
+            'delete shipping zones',
+            'view carriers',
+            'create carriers',
+            'edit carriers',
+            'delete carriers',
+            'view system information',
         ];
 
         foreach ($permissions as $permission) {
@@ -127,13 +174,16 @@ class RolesSeeder extends Seeder
         $manager->syncPermissions([
             'view orders', 'edit orders', 'cancel orders', 'export orders',
             'view refunds', 'process refunds',
+            'view payments',
             'view products', 'create products', 'edit products', 'delete products',
             'import products', 'bulk update products',
             'view manufacturers', 'create manufacturers', 'edit manufacturers',
             'view car models', 'create car models', 'edit car models',
+            'view categories', 'create categories', 'edit categories',
             'view customers', 'edit customers', 'export customers',
             'view coupons', 'create coupons', 'edit coupons',
             'view inquiries', 'edit inquiries',
+            'view abandoned carts',
             'view reports', 'export reports',
             'view activity logs',
             'view health',
@@ -150,6 +200,33 @@ class RolesSeeder extends Seeder
             'view manufacturers', 'create manufacturers', 'edit manufacturers', 'delete manufacturers',
             'view car models', 'create car models', 'edit car models', 'delete car models',
             'view media', 'upload media',
+        ]);
+
+        // ── ADMIN ─────────────────────────────────────────────────────────────
+        $adminRole = Role::updateOrCreate(
+            ['name' => 'admin', 'guard_name' => 'admin'],
+            ['name' => 'admin', 'guard_name' => 'admin']
+        );
+        $adminRole->syncPermissions([
+            // Everything manager has
+            'view orders', 'edit orders', 'cancel orders', 'export orders',
+            'view refunds', 'process refunds',
+            'view payments',
+            'view products', 'create products', 'edit products', 'delete products',
+            'import products', 'bulk update products',
+            'view manufacturers', 'create manufacturers', 'edit manufacturers',
+            'view car models', 'create car models', 'edit car models',
+            'view categories', 'create categories', 'edit categories',
+            'view customers', 'edit customers', 'export customers',
+            'view coupons', 'create coupons', 'edit coupons',
+            'view inquiries', 'edit inquiries',
+            'view abandoned carts',
+            'view reports', 'export reports',
+            'view activity logs',
+            'view health',
+            // Plus settings
+            'view settings',
+            'view system information',
         ]);
 
         // ── SUPPORT ──────────────────────────────────────────────────────────

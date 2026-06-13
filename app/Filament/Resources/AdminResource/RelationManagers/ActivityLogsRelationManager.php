@@ -16,8 +16,7 @@ class ActivityLogsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('action')
+        return AdminUi::configureTable($table)->recordTitleAttribute('action')
             ->columns([
                 Tables\Columns\TextColumn::make('action')
                     ->searchable(),

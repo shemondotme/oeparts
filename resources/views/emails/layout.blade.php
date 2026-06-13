@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ $locale ?? 'en' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>{{ $subject ?? 'OeParts Notification' }}</title>
+    <title>{{ $subject ?? settings('email.default_subject', 'OeParts Notification') }}</title>
     <style type="text/css">
         /* =========================================
            INDUSTRIAL BLUEPRINT EMAIL RESET
@@ -109,7 +109,7 @@
 
     <!-- Preheader (Hidden) -->
     <div style="display:none;font-size:1px;color:#F7F3E7;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        {{ $preheader ?? 'OeParts Notification' }}
+        {{ $preheader ?? settings('email.default_subject', 'OeParts Notification') }}
     </div>
 
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -132,12 +132,12 @@
                                     <td>
                                         <!-- Eyebrow / Spec Label -->
                                         <p class="spec-label" style="margin: 0 0 12px 0;">
-                                            § OEPARTS · NOTIFICATION
+                                            {{ settings('email.header_text', 'OEPARTS · NOTIFICATION') }}
                                         </p>
 
                                         <!-- Logo / Brand Name -->
                                         <h1 class="font-display" style="margin: 0; font-size: 28px; line-height: 32px; color: #F7F3E7;">
-                                            Oe<span class="text-amber">·</span>Parts
+                                            {{ settings('general.site_name', 'OeParts') }}<span class="text-amber">·</span>Parts
                                         </h1>
 
                                         <!-- Tagline -->
@@ -164,11 +164,11 @@
                                 <tr>
                                     <td style="padding-bottom: 20px; border-bottom: 1px solid #1D2A44;">
                                         <p class="spec-label" style="margin: 0 0 8px 0; color: #F59E0B;">
-                                            § COLOPHON
+                                            COLOPHON
                                         </p>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #F7F3E7;">
-                                            <strong>OeParts Europe</strong><br>
-                                            Genuine Parts Distribution Network
+                                            <strong>{{ settings('general.company_name', 'OeParts Europe') }}</strong><br>
+                                            {{ settings('general.company_tagline', 'Genuine Parts Distribution Network') }}
                                         </p>
                                     </td>
                                 </tr>

@@ -47,13 +47,26 @@ These rules exist to prevent production incidents. PRs that violate them will no
 - Use `#[Test]` attribute (PHP 8), not `/** @test */` doc-comments
 - All tests use `RefreshDatabase` where they touch the DB
 
+## Commit Messages
+
+OeParts uses Conventional Commits. See [.github/commit_convention.md](commit_convention.md) for the full guide.
+
+Quick reference:
+```
+feat(search): add fuzzy match for OEM numbers
+fix(checkout): resolve race condition on double-submit
+security(auth): enforce 2FA for all admin accounts
+chore(deps): update filament to 5.7.0
+```
+
 ## Pull Request Process
 
-1. Fork the repo and create a branch from `main` (`feature/your-feature` or `fix/your-bug`)
+1. Fork the repo and create a branch (`feature/your-feature`, `fix/your-bug`, `hotfix/...`)
 2. Write tests for new behaviour
 3. Run `php artisan test` — all must pass
 4. Run `php artisan view:cache && php artisan view:clear` — no Blade errors
 5. Open a PR against `main` and fill in the template
+6. Ensure commit messages follow [Conventional Commits](.github/commit_convention.md)
 
 ## Reporting Security Issues
 

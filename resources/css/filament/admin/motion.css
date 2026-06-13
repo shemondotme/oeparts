@@ -1,0 +1,242 @@
+/* =============================================================================
+ * OeParts Admin — Motion & Interaction Library
+ * 4 easings, 6 duration steps, micro-interactions, transitions
+ * ============================================================================= */
+
+/* ─── Page transitions (Filament SPA mode) ──────────────────────────── */
+.fi-main-ctn {
+    transition: opacity var(--duration-200) var(--ease-out-quint);
+}
+
+/* ─── Skeleton fade-out when content arrives ─────────────────────────── */
+@keyframes op-content-fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.op-fade-in {
+    animation: op-content-fade-in 0.3s var(--ease-out-quint) both;
+}
+
+/* ─── Hover lift (cards, widgets) ───────────────────────────────────── */
+.op-hover-lift {
+    transition: transform var(--duration-200) var(--ease-out-quint),
+                box-shadow var(--duration-200) var(--ease-out-quint);
+}
+
+.op-hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+}
+
+/* ─── Press-down (buttons, action cards) ────────────────────────────── */
+.op-press:active {
+    transform: scale(0.98);
+    transition: transform 60ms var(--ease-in-out-cubic);
+}
+
+/* ─── Focus ring (a11y) ──────────────────────────────────────────────── */
+.op-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+    border-radius: var(--radius-sm);
+}
+
+/* ─── Slide-in (modals, drawers, dropdowns) ─────────────────────────── */
+@keyframes op-slide-up {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+@keyframes op-slide-down {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes op-slide-left {
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes op-slide-right {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.op-slide-up    { animation: op-slide-up    0.25s var(--ease-out-expo) both; }
+.op-slide-down  { animation: op-slide-down  0.25s var(--ease-out-expo) both; }
+.op-slide-left  { animation: op-slide-left  0.25s var(--ease-out-expo) both; }
+.op-slide-right { animation: op-slide-right 0.25s var(--ease-out-expo) both; }
+
+/* ─── Drawer slide (right-side panel) ───────────────────────────────── */
+@keyframes op-drawer-in {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+}
+
+@keyframes op-drawer-out {
+    from { transform: translateX(0); }
+    to   { transform: translateX(100%); }
+}
+
+.op-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 480px;
+    max-width: 100vw;
+    background: var(--color-bg-surface);
+    border-left: 1px solid var(--color-border-default);
+    box-shadow: var(--shadow-5);
+    z-index: var(--z-modal);
+    display: flex;
+    flex-direction: column;
+    animation: op-drawer-in 0.3s var(--ease-out-expo) both;
+}
+
+.op-drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: var(--color-bg-overlay);
+    z-index: var(--z-overlay);
+    animation: op-fade-in 0.2s var(--ease-out-quint) both;
+}
+
+@keyframes op-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.op-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.op-drawer-title {
+    font-family: var(--font-display);
+    font-size: var(--text-h3);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.op-drawer-close {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all var(--duration-150) var(--ease-out-quint);
+}
+
+.op-drawer-close:hover {
+    background: var(--color-bg-inset);
+    color: var(--color-text-primary);
+}
+
+.op-drawer-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-5);
+}
+
+.op-drawer-footer {
+    padding: var(--space-3) var(--space-5);
+    border-top: 1px solid var(--color-border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+/* ─── Modal scale-in ────────────────────────────────────────────────── */
+@keyframes op-modal-in {
+    from { opacity: 0; transform: scale(0.96) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.op-modal {
+    animation: op-modal-in 0.25s var(--ease-out-expo) both;
+}
+
+/* ─── Badge pulse (notifications, status changes) ───────────────────── */
+@keyframes op-badge-pulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.op-badge-pulse {
+    animation: op-badge-pulse 0.5s var(--ease-spring);
+}
+
+/* ─── Number flip (counter changes) ─────────────────────────────────── */
+@keyframes op-num-flip {
+    from { transform: translateY(0); opacity: 1; }
+    50%  { transform: translateY(-100%); opacity: 0; }
+    51%  { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.op-num-flip {
+    animation: op-num-flip 0.4s var(--ease-out-quint);
+}
+
+/* ─── Progress shimmer (progress bars during data fetch) ────────────── */
+@keyframes op-progress-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.op-progress-shimmer {
+    background: linear-gradient(90deg,
+        var(--color-brand-500) 0%,
+        var(--color-brand-300) 50%,
+        var(--color-brand-500) 100%
+    );
+    background-size: 200% 100%;
+    animation: op-progress-shimmer 1.5s linear infinite;
+}
+
+/* ─── Staggered list entry ───────────────────────────────────────────── */
+.op-stagger > * {
+    opacity: 0;
+    animation: op-fade-in 0.4s var(--ease-out-quint) both;
+}
+
+.op-stagger > *:nth-child(1)  { animation-delay: 30ms; }
+.op-stagger > *:nth-child(2)  { animation-delay: 60ms; }
+.op-stagger > *:nth-child(3)  { animation-delay: 90ms; }
+.op-stagger > *:nth-child(4)  { animation-delay: 120ms; }
+.op-stagger > *:nth-child(5)  { animation-delay: 150ms; }
+.op-stagger > *:nth-child(6)  { animation-delay: 180ms; }
+.op-stagger > *:nth-child(7)  { animation-delay: 210ms; }
+.op-stagger > *:nth-child(8)  { animation-delay: 240ms; }
+.op-stagger > *:nth-child(9)  { animation-delay: 270ms; }
+.op-stagger > *:nth-child(10) { animation-delay: 300ms; }
+.op-stagger > *:nth-child(11) { animation-delay: 330ms; }
+.op-stagger > *:nth-child(12) { animation-delay: 360ms; }
+
+/* ─── Live indicator dot ────────────────────────────────────────────── */
+@keyframes op-live-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 var(--color-success-500); }
+    50%      { box-shadow: 0 0 0 6px transparent; }
+}
+
+.op-live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-success-500);
+    animation: op-live-pulse 1.8s var(--ease-in-out-cubic) infinite;
+}

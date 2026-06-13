@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CustomerResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,8 +17,7 @@ class AddressesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('address_line1')
+        return AdminUi::configureTable($table)->recordTitleAttribute('address_line1')
             ->columns([
                 Tables\Columns\TextColumn::make('label')
                     ->label('Label')
@@ -32,11 +32,16 @@ class AddressesRelationManager extends RelationManager
                     ->label('City'),
                 Tables\Columns\TextColumn::make('country_code')
                     ->label('Country')
+                    ->badge()
+                    ->color('gray')
                     ->alignCenter(),
-                Tables\Columns\IconColumn::make('is_default')
+                Tables\Columns\TextColumn::make('is_default')
                     ->label('Default')
-                    ->boolean()
-                    ->alignCenter(),
+                    ->badge()
+                    ->alignCenter()
+                    ->getStateUsing(fn ($record): string => $record->is_default ? 'Default' : '—')
+                    ->color(fn (string $state): string => $state === 'Default' ? 'warning' : 'gray')
+                    ->icon(fn (string $state): string => $state === 'Default' ? 'heroicon-o-star' : ''),
             ]);
     }
 }

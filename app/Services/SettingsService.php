@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * SettingsService — reads settings from DB, cached per group for 5 minutes.
@@ -40,6 +41,11 @@ class SettingsService
                             try {
                                 $value = \Illuminate\Support\Facades\Crypt::decryptString($value);
                             } catch (\Exception $e) {
+                                Log::warning('Failed to decrypt setting value', [
+                                    'group' => $setting->group,
+                                    'key' => $setting->key,
+                                    'error' => $e->getMessage(),
+                                ]);
                             }
                         }
                         return $value;
@@ -72,10 +78,36 @@ class SettingsService
             return;
         }
 
+        $setting = \App\Models\Setting::where('group', $group)->where('key', $settingKey)->first();
+
+        $sensitivePatterns = ['password', 'secret', 'key', 'token', 'api_key', 'access_key'];
+        $shouldEncrypt = $setting
+            ? $setting->is_encrypted
+            : in_array($settingKey, $sensitivePatterns)
+                || str_contains(strtolower($settingKey), 'password')
+                || str_contains(strtolower($settingKey), 'secret')
+                || str_contains(strtolower($settingKey), '_key')
+                || str_contains(strtolower($settingKey), 'token');
+
+        if ($shouldEncrypt && $value) {
+            try {
+                $value = \Illuminate\Support\Facades\Crypt::encryptString((string) $value);
+            } catch (\Exception $e) {
+                Log::critical('Failed to encrypt setting value', [
+                    'group' => $group,
+                    'key' => $settingKey,
+                    'error' => $e->getMessage(),
+                ]);
+                throw $e;
+            }
+        }
+
         \App\Models\Setting::updateOrCreate(
             ['group' => $group, 'key' => $settingKey],
-            ['value' => $value]
+            ['value' => $value, 'is_encrypted' => $shouldEncrypt]
         );
+
+        Log::info('Setting updated', ['group' => $group, 'key' => $settingKey, 'admin' => auth('admin')->id()]);
 
         $this->forget($group);
     }

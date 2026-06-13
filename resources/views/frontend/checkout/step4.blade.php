@@ -1,4 +1,4 @@
-@extends('frontend.checkout.layout')
+﻿@extends('frontend.checkout.layout')
 
 @section('checkout_content')
 @php
@@ -30,10 +30,10 @@
         <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-cube class="w-3.5 h-3.5" />
-                § Manifest · Order items
+                Manifest · Order items
             </span>
             @if($cart)
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec-mono">
                     {{ str_pad($cart->items->count(), 2, '0', STR_PAD_LEFT) }} {{ Str::plural('item', $cart->items->count()) }}
                 </span>
             @endif
@@ -50,14 +50,18 @@
                             <x-heroicon-o-cube class="w-4 h-4 text-ink" />
                         </div>
                     </div>
-                    <div class="col-span-6 min-w-0">
-                        <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $item->product->oem_number }}</p>
-                        <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
-                            Qty {{ str_pad($item->quantity, 2, '0', STR_PAD_LEFT) }} × €{{ number_format($item->price_at_add, 2) }}
+                    <div class="col-span-6 min-w-0" x-data="clipboard()">
+                        <p class="font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer"
+                           @click="copy('{{ $item->product->oem_number }}')" title="Copy OEM number">
+                            {{ $item->product->oem_number }}
                         </p>
+                        <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
+                            Qty {{ str_pad($item->quantity, 2, '0', STR_PAD_LEFT) }} × {{ format_price($item->price_at_add) }}
+                        </p>
+                        <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                     </div>
                     <span class="col-span-4 text-right font-mono text-base font-bold tabular-nums text-ink">
-                        €{{ number_format((float) bcmul((string) $item->price_at_add, (string) $item->quantity, 2), 2) }}
+                        {{ format_price(bcmul((string) $item->price_at_add, (string) $item->quantity, 2)) }}
                     </span>
                 </li>
                 @endforeach
@@ -75,7 +79,7 @@
             <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-map-pin class="w-3.5 h-3.5" />
-                    § Delivering to
+                    Delivering to
                 </span>
             </header>
             <div class="px-4 py-4">
@@ -100,7 +104,7 @@
             <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-truck class="w-3.5 h-3.5" />
-                    § Carrier
+                    Carrier
                 </span>
             </header>
             <div class="flex items-center justify-between px-4 py-4">
@@ -111,7 +115,7 @@
                     @if($shippingCost === '0.00')
                         <span class="inline-flex items-center gap-1 px-2 py-0.5 border border-amber bg-paper text-[10px] uppercase tracking-[0.22em]">Free</span>
                     @else
-                        €{{ number_format((float) $shippingCost, 2) }}
+                        {{ format_price($shippingCost) }}
                     @endif
                 </p>
             </div>
@@ -123,36 +127,36 @@
         <header class="flex items-center px-4 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-calculator class="w-3.5 h-3.5" />
-                § Price breakdown
+                Price breakdown
             </span>
         </header>
         <dl class="px-4 py-4 divide-y divide-rule">
             <div class="flex items-baseline justify-between gap-3 py-2.5">
-                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Subtotal · excl. VAT</dt>
+                <dt class="bp-spec-mono">Subtotal · excl. VAT</dt>
                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                <dd class="font-mono text-sm font-bold tabular-nums text-ink">€{{ number_format((float) $subtotal, 2) }}</dd>
+                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($subtotal) }}</dd>
             </div>
             <div class="flex items-baseline justify-between gap-3 py-2.5">
-                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Shipping</dt>
+                <dt class="bp-spec-mono">Shipping</dt>
                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                 <dd class="font-mono text-sm font-bold tabular-nums {{ $shippingCost === '0.00' ? 'text-amber-ink' : 'text-ink' }}">
-                    {{ $shippingCost === '0.00' ? 'FREE' : '€' . number_format((float) $shippingCost, 2) }}
+                    {{ $shippingCost === '0.00' ? 'FREE' : format_price($shippingCost) }}
                 </dd>
             </div>
             <div class="flex items-baseline justify-between gap-3 py-2.5">
-                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">VAT · {{ $vatRate }}%</dt>
+                <dt class="bp-spec-mono">VAT · {{ $vatRate }}%</dt>
                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                <dd class="font-mono text-sm font-bold tabular-nums text-ink">€{{ number_format((float) $vatAmount, 2) }}</dd>
+                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($vatAmount) }}</dd>
             </div>
         </dl>
         {{-- Grand total --}}
         <div class="px-4 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
             <div>
-                <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Grand total · EUR</p>
+                <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Grand total · {{ settings('store.currency', 'EUR') }}</p>
                 <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">Including all taxes</p>
             </div>
             <p class="font-mono text-3xl sm:text-4xl font-medium text-ink tabular-nums leading-none tracking-tight">
-                €{{ number_format((float) $total, 2) }}
+                {{ format_price($total) }}
             </p>
         </div>
     </section>

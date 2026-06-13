@@ -7,7 +7,11 @@ use App\Models\Testimonial;
 use App\Models\Faq;
 use App\Models\BlogPost;
 use App\Models\Manufacturer;
+use App\Models\Product;
+use App\Models\ProductCrossReference;
+use App\Models\SearchLog;
 use App\Enums\SectionLocation;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -69,17 +73,103 @@ class SectionRendererService
             $data['manufacturers'] = $this->loadManufacturers();
         }
 
+        if (in_array('hero', $types)) {
+            $data['hero_stats']    = $this->loadHeroStats();
+            $data['popular_oems']  = $this->loadPopularOems();
+        }
+
         return $data;
     }
 
     // ── Private data loaders ──────────────────────────────────────────────────
+
+    private function loadHeroStats(): array
+    {
+        try {
+            return $this->cache->rememberHeroStats(function () {
+                $partsCount  = Product::where('is_active', true)->count();
+                $mfrCount    = Manufacturer::where('is_active', true)->count();
+                $crossCount  = ProductCrossReference::count();
+
+                return [
+                    'parts_count'   => number_format($partsCount),
+                    'manufacturers' => (string) $mfrCount,
+                    'cross_refs'    => $this->formatLargeNumber($crossCount),
+                ];
+            });
+        } catch (\Exception $e) {
+            Log::warning('SectionRendererService: failed to load hero stats', ['error' => $e->getMessage()]);
+
+            return [
+                'parts_count'   => number_format((int) settings('stats_counter.parts_count', 1000000)),
+                'manufacturers' => settings('ui.hero_spec_r2_value', '214'),
+                'cross_refs'    => settings('ui.hero_spec_r3_value', '3.2M'),
+            ];
+        }
+    }
+
+    private function loadPopularOems(): array
+    {
+        try {
+            return $this->cache->rememberPopularOems(function () {
+                // Primary: most-searched OEM queries (last 30 days, searches that returned results)
+                $normalized = SearchLog::query()
+                    ->select('normalized_query', DB::raw('COUNT(*) as cnt'))
+                    ->where('created_at', '>=', now()->subDays(30))
+                    ->where('result_count', '>', 0)
+                    ->groupBy('normalized_query')
+                    ->orderByDesc('cnt')
+                    ->limit(12)
+                    ->pluck('normalized_query');
+
+                if ($normalized->isNotEmpty()) {
+                    $oemMap = Product::whereIn('normalized_oem', $normalized->toArray())
+                        ->where('is_active', true)
+                        ->pluck('oem_number', 'normalized_oem');
+
+                    $oems = $normalized
+                        ->map(fn ($n) => $oemMap->get($n))
+                        ->filter()
+                        ->take(6)
+                        ->values()
+                        ->toArray();
+
+                    if (count($oems) >= 4) {
+                        return $oems;
+                    }
+                }
+
+                // Fallback: recently added active in-stock products
+                return Product::where('is_active', true)
+                    ->where('is_in_stock', true)
+                    ->orderByDesc('created_at')
+                    ->limit(6)
+                    ->pluck('oem_number')
+                    ->toArray();
+            });
+        } catch (\Exception $e) {
+            Log::warning('SectionRendererService: failed to load popular OEMs', ['error' => $e->getMessage()]);
+            return [];
+        }
+    }
+
+    private function formatLargeNumber(int $n): string
+    {
+        if ($n >= 1_000_000) {
+            return number_format($n / 1_000_000, 1) . 'M+';
+        }
+        if ($n >= 1_000) {
+            return number_format($n / 1_000, 1) . 'K+';
+        }
+        return (string) $n;
+    }
 
     private function loadTestimonials(): Collection
     {
         try {
             return Testimonial::where('is_active', true)
                 ->orderBy('sort_order')
-                ->limit(6)
+                ->limit((int) settings('sections.testimonials_limit', 6))
                 ->get();
         } catch (\Exception $e) {
             Log::warning('SectionRendererService: failed to load testimonials', ['error' => $e->getMessage()]);
@@ -92,7 +182,7 @@ class SectionRendererService
         try {
             return Faq::where('is_active', true)
                 ->orderBy('sort_order')
-                ->limit(8)
+                ->limit((int) settings('sections.faq_limit', 8))
                 ->get();
         } catch (\Exception $e) {
             Log::warning('SectionRendererService: failed to load faqs', ['error' => $e->getMessage()]);
@@ -107,7 +197,7 @@ class SectionRendererService
                 ->with(['category', 'author'])
                 ->whereNotNull('published_at')
                 ->orderByDesc('published_at')
-                ->limit(6)
+                ->limit((int) settings('sections.blog_limit', 6))
                 ->get();
         } catch (\Exception $e) {
             Log::warning('SectionRendererService: failed to load blog posts', ['error' => $e->getMessage()]);
@@ -122,7 +212,7 @@ class SectionRendererService
                 return Manufacturer::with('logo')
                     ->where('is_active', true)
                     ->orderBy('sort_order')
-                    ->limit(12)
+                    ->limit((int) settings('sections.manufacturers_limit', 12))
                     ->get();
             });
         } catch (\Exception $e) {

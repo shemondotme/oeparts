@@ -18,9 +18,9 @@
     <div class="bg-white border border-slate-300 rounded-lg overflow-hidden shadow-sm">
         <div id="tinymce-{{ $name }}" class="prose-editor" style="min-height: 400px;">
             @if(is_array($value))
-                {!! $value['en'] ?? '' !!}
+                {!! clean($value['en'] ?? '') !!}
             @else
-                {!! $value ?? '' !!}
+                {!! clean($value ?? '') !!}
             @endif
         </div>
     </div>
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .tox .tox-mbtn.tox-mbtn--active {
-    background-color: #0B3A68 !important;
+    background-color: #09090b !important;
     color: white !important;
 }
 </style>

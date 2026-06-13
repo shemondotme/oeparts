@@ -9,6 +9,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            ConditionSeeder::class,
             SettingsSeeder::class,
             LanguagesSeeder::class,
             RolesSeeder::class,
@@ -17,9 +18,9 @@ class DatabaseSeeder extends Seeder
             CarriersSeeder::class,
             SectionsSeeder::class,
             ShippingZonesAndMethodsSeeder::class,
-            DemoManufacturersAndPartsSeeder::class,
             DemoDataSeeder::class,
             CmsFooterPagesSeeder::class,
+            TestimonialsAndFaqsSeeder::class,
         ]);
     }
 }

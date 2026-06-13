@@ -23,7 +23,7 @@ class PasswordReset extends Mailable
 
     public function envelope(): Envelope
     {
-        $siteName = config('app.name', 'OeParts');
+        $siteName = settings('general.site_name', 'OeParts');
 
         return new Envelope(
             from: new Address(

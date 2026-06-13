@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang     = app()->getLocale();
@@ -89,7 +89,7 @@
             <div class="col-span-12 lg:col-span-8">
                 <div class="flex items-center gap-4 mb-8">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ __('Editorial · Ledger') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('Editorial · Ledger') }}</span>
                 </div>
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
@@ -168,7 +168,7 @@
             {{-- ── Entries column ── --}}
             <main class="col-span-12 lg:col-span-8">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                    <span class="bp-spec text-ink">§ 01 · {{ __('Entries') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ __('Entries') }}</span>
                     <span class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         {{ __('Page') }} {{ $posts->currentPage() }}/{{ max(1, $posts->lastPage()) }}
                     </span>
@@ -193,8 +193,8 @@
                                                      class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300" />
                                             @else
                                                 <div class="w-full h-full flex items-center justify-center">
-                                                    <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                                                        §{{ str_pad($indexNum, 3, '0', STR_PAD_LEFT) }}
+                                                    <span class="bp-spec-mono">
+                                                        {{ str_pad($indexNum, 3, '0', STR_PAD_LEFT) }}
                                                     </span>
                                                 </div>
                                             @endif
@@ -205,7 +205,7 @@
                                     <div class="col-span-12 sm:col-span-8 md:col-span-9 min-w-0 flex flex-col">
                                         {{-- Meta --}}
                                         <div class="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
-                                            <span class="text-amber-ink">§ {{ str_pad($indexNum, 3, '0', STR_PAD_LEFT) }}</span>
+                                            <span class="text-amber-ink">{{ str_pad($indexNum, 3, '0', STR_PAD_LEFT) }}</span>
                                             @if($post->category)
                                                 <span class="text-rule-strong">│</span>
                                                 <a href="{{ route('frontend.blog.index', ['lang' => $lang, 'category' => $post->category->slug]) }}"
@@ -294,7 +294,7 @@
                     <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                         <div class="px-5 py-3 bg-amber text-ink flex items-center justify-between">
                             <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ trans('blog.featured') }}</span>
-                            <span class="font-mono text-[10px] tracking-[0.18em] uppercase">§ 00</span>
+                            <span class="font-mono text-[10px] tracking-[0.18em] uppercase">00</span>
                         </div>
                         @if($featuredPost->featuredImage)
                             <div class="aspect-[16/9] bg-ivory-alt overflow-hidden">
@@ -321,7 +321,7 @@
                 @if($categories->count() > 0)
                     <div class="border border-ink bg-paper">
                         <div class="px-5 py-3 bg-ink text-ivory">
-                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">§ {{ trans('blog.categories') }}</span>
+                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ trans('blog.categories') }}</span>
                         </div>
                         <ul class="divide-y divide-rule">
                             @foreach($categories as $category)
@@ -348,7 +348,7 @@
                 @if($tags->count() > 0)
                     <div class="border border-ink bg-paper">
                         <div class="px-5 py-3 bg-ink text-ivory">
-                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">§ {{ trans('blog.tags') }}</span>
+                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ trans('blog.tags') }}</span>
                         </div>
                         <div class="p-5 flex flex-wrap gap-2">
                             @foreach($tags as $tag)
@@ -367,7 +367,7 @@
 
                 {{-- Newsletter / CTA --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">§ {{ __('Pro · Bulletin') }}</p>
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Pro · Bulletin') }}</p>
                     <p class="font-display text-lg font-extrabold tracking-[-0.02em] leading-tight">
                         {{ __('Catalogue updates, direct.') }}
                     </p>

@@ -1,4 +1,4 @@
-{{-- Section: blog_preview (Industrial Blueprint)
+﻿{{-- Section: blog_preview (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), view_all_text(ml)
      $sectionData['blog_posts'] injected by SectionRendererService.
 --}}
@@ -24,7 +24,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -75,7 +75,7 @@
 
                     {{-- Date --}}
                     @if($post->published_at)
-                    <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted mb-3">
+                    <p class="bp-spec-mono mb-3">
                         <time datetime="{{ $post->published_at->toDateString() }}">
                             {{ $post->published_at->format('Y · m · d') }}
                         </time>
@@ -107,7 +107,7 @@
                         </div>
                         <span class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
                                      group-hover:text-amber-ink transition-colors shrink-0">
-                            Read
+                            {{ __('Read') }}
                             <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                         </span>
                     </div>
@@ -118,8 +118,8 @@
 
         {{-- CTA --}}
         <div class="mt-10 flex flex-wrap items-center justify-between gap-4">
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                Journal · Editorial · Updated weekly
+            <span class="bp-spec-mono">
+                {{ __('Technical Articles · OEM Parts Expertise') }}
             </span>
             <a href="{{ url('/'.$lang.'/blog/') }}" class="bp-btn-outline">
                 {{ $viewAllText }}

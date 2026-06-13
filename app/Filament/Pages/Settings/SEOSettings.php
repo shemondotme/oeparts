@@ -20,90 +20,128 @@ class SEOSettings extends SettingsPage
     {
         return $schema
             ->components([
-                Section::make('Meta Templates')
-                    ->description('Use {oem}, {min}, {max}, {manufacturer}, {brand} as placeholders')
+                Section::make('Global Meta Title Templates')
+                    ->description('Placeholders like {oem}, {min}, {max}, {manufacturer}, or {brand} are evaluated dynamically.')
                     ->schema([
                         Forms\Components\TextInput::make('home_title')
-                            ->label('Homepage Title')
+                            ->label('Homepage Meta Title')
                             ->maxLength(60)
-                            ->helperText('Max 60 characters')
+                            ->helperText('Ideal: 50-60 characters')
                             ->default('Buy Genuine OEM Auto Parts Online | OeParts'),
+
                         Forms\Components\Textarea::make('home_description')
                             ->label('Homepage Meta Description')
                             ->rows(2)
                             ->maxLength(160)
-                            ->helperText('Max 160 characters')
+                            ->helperText('Ideal: 150-160 characters')
                             ->default(null),
+
                         Forms\Components\TextInput::make('oem_title_template')
-                            ->label('OEM Title Template')
+                            ->label('OEM Parts Page Title Template')
                             ->maxLength(100)
-                            ->helperText('Placeholders: {oem}, {min}, {manufacturer}')
+                            ->helperText('Available placeholders: {oem}, {min}, {manufacturer}')
                             ->default('Buy {oem} — From €{min} | OeParts'),
+
                         Forms\Components\Textarea::make('oem_description_template')
-                            ->label('OEM Description Template')
+                            ->label('OEM Parts Page Description Template')
                             ->rows(2)
                             ->maxLength(200)
-                            ->helperText('Placeholders: {oem}, {manufacturer}')
+                            ->helperText('Available placeholders: {oem}, {manufacturer}')
                             ->default('Genuine {oem} parts from {manufacturer}.'),
+
                         Forms\Components\TextInput::make('brand_title_template')
-                            ->label('Brand Title Template')
+                            ->label('Brand/Manufacturer Page Title Template')
                             ->maxLength(100)
-                            ->helperText('Placeholders: {brand}')
+                            ->helperText('Available placeholders: {brand}')
                             ->default('Genuine {brand} OEM Parts — Buy Online'),
                     ])->columns(2),
 
-                Section::make('Defaults')
+                Section::make('SEO Directives & Crawling Defaults')
+                    ->description('Configure search crawler policies and sitemap indexes.')
                     ->schema([
                         Forms\Components\Select::make('default_robots')
-                            ->label('Default Robots Meta')
+                            ->label('Default Robots Directive')
                             ->options([
-                                'index,follow' => 'Index, Follow',
+                                'index,follow' => 'Index, Follow (Recommended)',
                                 'noindex,follow' => 'No Index, Follow',
                                 'index,nofollow' => 'Index, No Follow',
                                 'noindex,nofollow' => 'No Index, No Follow',
                             ])
                             ->default('index,follow'),
+
                         Forms\Components\Toggle::make('maintenance_noindex')
-                            ->label('Noindex During Maintenance')
+                            ->label('Enforce Noindex During Maintenance')
+                            ->helperText('Appends noindex tag when site is set offline')
                             ->default(true),
+
                         Forms\Components\Toggle::make('google_ping_enabled')
-                            ->label('Ping Google on Sitemap Update')
+                            ->label('Ping Google on Sitemap Updates')
+                            ->helperText('Automatically requests recrawling when products updates trigger new sitemap builds')
                             ->default(true),
+
                         Forms\Components\TextInput::make('sitemap_search_log_days')
-                            ->label('Sitemap Search Log Days')
+                            ->label('Sitemap Query History (Days)')
                             ->numeric()
                             ->minValue(1)
                             ->maxValue(365)
+                            ->helperText('Include custom keyword routes based on logs from the last X days')
                             ->default(90),
+
                         Forms\Components\TextInput::make('twitter_handle')
-                            ->label('Twitter Handle')
+                            ->label('Company Twitter Handle')
+                            ->placeholder('@oeparts')
                             ->maxLength(50)
                             ->default(null),
                     ])->columns(2),
 
-                Section::make('Open Graph')
+                Section::make('Open Graph Defaults')
+                    ->description('Default meta shares rendered across social feeds (Facebook, LinkedIn, Discord).')
                     ->schema([
                         Forms\Components\TextInput::make('og_site_name')
-                            ->label('OG Site Name')
+                            ->label('OG Site Name Attribute')
                             ->maxLength(255)
                             ->default('OeParts'),
+
                         Forms\Components\FileUpload::make('default_og_image')
-                            ->label('Default OG Image')
+                            ->label('Default OG Fallback Image')
                             ->image()
+                            ->disk('public')
                             ->directory('og-images')
                             ->maxSize(1024)
+                            ->helperText('Image shown when sharing links lacking specific graphics (max size 1MB)')
                             ->visibility('public'),
                     ])->columns(2),
 
-                Section::make('Verification')
+                Section::make('Search Results Templates')
+                    ->description('Customise the title and meta description shown on internal search result pages.')
+                    ->schema([
+                        Forms\Components\TextInput::make('search_results_title_template')
+                            ->label('Search Results Title Template')
+                            ->maxLength(100)
+                            ->helperText('Placeholders: {query}, {count}, {site}. e.g. "{query} — {count} results | {site}"')
+                            ->default('{query} — {count} results | OeParts'),
+
+                        Forms\Components\Textarea::make('search_results_meta_template')
+                            ->label('Search Results Meta Description Template')
+                            ->rows(2)
+                            ->maxLength(200)
+                            ->helperText('Placeholders: {query}, {count}, {site}. e.g. "Showing {count} OEM results for {query} on {site}."')
+                            ->default('Showing {count} OEM auto part results for "{query}" on OeParts.'),
+                    ])->columns(2),
+
+                Section::make('Webmaster Verification Codes')
+                    ->description('Verify website ownership with search console integrations.')
                     ->schema([
                         Forms\Components\TextInput::make('google_verification')
-                            ->label('Google Site Verification')
+                            ->label('Google Site Verification Key')
                             ->maxLength(255)
+                            ->placeholder('google-verification-token')
                             ->default(null),
+
                         Forms\Components\TextInput::make('bing_verification')
-                            ->label('Bing Site Verification')
+                            ->label('Bing Site Verification Key')
                             ->maxLength(255)
+                            ->placeholder('bing-verification-token')
                             ->default(null),
                     ])->columns(2),
             ]);

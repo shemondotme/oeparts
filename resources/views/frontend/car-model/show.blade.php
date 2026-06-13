@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang        = app()->getLocale();
@@ -75,7 +75,7 @@
             <div class="col-span-12 md:col-span-8">
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ __('Chassis Platform · Covered Specification') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('Chassis Platform · Covered Specification') }}</span>
                 </div>
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
@@ -153,7 +153,7 @@
             {{-- Left column: parts list ledger (8 cols) --}}
             <section class="col-span-12 lg:col-span-8 bp-rise bp-rise-delay-2">
                 <div class="flex flex-wrap items-end justify-between gap-3 pb-3 border-b border-ink mb-6">
-                    <span class="bp-spec text-ink">§ 01 · {{ __('Compatible Parts Ledger') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ __('Compatible Parts Ledger') }}</span>
                     <div class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         {{ __('Page') }} {{ $products->currentPage() }}/{{ max(1,$products->lastPage()) }}
                         <span class="mx-2 text-rule-strong">│</span>
@@ -198,13 +198,17 @@
                                         #{{ str_pad(($products->currentPage() - 1) * $products->perPage() + $loop->iteration, 3, '0', STR_PAD_LEFT) }}
                                     </span>
                                     {{-- OEM --}}
-                                    <div class="min-w-0">
-                                        <p class="font-mono text-sm font-bold text-ink truncate">
+                                    <div class="min-w-0" x-data="clipboard()">
+                                        <p class="font-mono text-sm font-bold text-ink truncate cursor-pointer"
+                                           @click="copy('{{ $product->oem_number }}')"
+                                           title="Copy OEM number">
                                             {{ $product->oem_number }}
                                         </p>
                                         <p class="md:hidden mt-0.5 text-xs text-ink-muted truncate">
                                             {{ trans_field($product->name) }}
                                         </p>
+                                        <span x-show="copied" x-cloak x-transition
+                                              class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                     </div>
                                     {{-- Name --}}
                                     <p class="hidden md:block text-sm text-body truncate">
@@ -213,7 +217,7 @@
                                     {{-- Condition --}}
                                     <div class="hidden md:flex items-center gap-2">
                                         @if($product->condition)
-                                            <x-ui.condition-badge :condition="$product->condition->value" />
+                                            <x-ui.condition-badge :condition="$product->condition" />
                                         @else
                                             <span class="inline-flex items-center px-2 h-6 border border-rule-strong font-mono text-[9px] tracking-[0.18em] uppercase text-ink">
                                                 —
@@ -224,7 +228,7 @@
                                     <div class="md:text-right">
                                         @if($product->price)
                                             <p class="font-mono text-sm font-bold text-ink tabular-nums">
-                                                €{{ number_format((float)$product->price, 2) }}
+                                                {{ format_price($product->price) }}
                                             </p>
                                         @else
                                             <p class="font-mono text-xs text-ink-muted tabular-nums">
@@ -262,7 +266,7 @@
             <aside class="col-span-12 lg:col-span-4 space-y-6 lg:sticky lg:top-10 lg:h-fit bp-rise bp-rise-delay-3">
                 <div class="border border-ink bg-paper">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">§ {{ __('Brand Models') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Brand Models') }}</span>
                         <span class="font-mono text-[9px] tracking-[0.16em] uppercase text-ivory/60">LIST</span>
                     </div>
 
@@ -302,7 +306,7 @@
 
                 {{-- Technical drawing concierge sidebar widget --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">§ {{ __('Sourcing desk') }}</p>
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Sourcing desk') }}</p>
                     <h3 class="font-display text-base font-extrabold tracking-[-0.02em] leading-tight">
                         {{ __('Can\'t find compatible parts?') }}
                     </h3>
@@ -310,7 +314,7 @@
                         {{ __('If your chassis code is rare or you require heavy components, submit a manual specification request to our sourcing desk.') }}
                     </p>
                     <button type="button"
-                            onclick="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
+                            x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
                             class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-amber text-ink
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                    hover:bg-paper transition-colors w-full justify-center">

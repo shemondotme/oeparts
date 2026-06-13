@@ -22,7 +22,7 @@ class OtpEmail extends Mailable
 
     public function envelope(): Envelope
     {
-        $siteName = config('app.name', 'OeParts');
+        $siteName = settings('general.site_name', 'OeParts');
 
         return new Envelope(
             subject: trans('emails.otp.subject', ['code' => $this->code], $this->locale),

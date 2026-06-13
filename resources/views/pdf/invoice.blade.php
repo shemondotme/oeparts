@@ -112,7 +112,7 @@
             <h2>INVOICE</h2>
             <div><strong>Invoice #:</strong> {{ $order->invoice_number ?? $order->order_number }}</div>
             <div><strong>Date:</strong> {{ $order->created_at->format('d/m/Y') }}</div>
-            <div><strong>Due Date:</strong> {{ $order->created_at->addDays(30)->format('d/m/Y') }}</div>
+            <div><strong>Due Date:</strong> {{ $order->created_at->addDays((int) settings('invoice.payment_terms_days', 30))->format('d/m/Y') }}</div>
         </div>
     </div>
 
@@ -217,7 +217,7 @@
     </div>
 
     <div class="footer">
-        <div>Thank you for your business!</div>
+        <div>{{ settings('invoice.thank_you_text', 'Thank you for your business!') }}</div>
         <div>If you have any questions about this invoice, please contact {{ $settings['company_email'] }}</div>
         <div>Invoice generated on {{ now()->format('d/m/Y H:i') }}</div>
     </div>

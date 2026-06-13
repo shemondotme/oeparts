@@ -10,11 +10,18 @@ class Settings extends Cluster
 
     protected static ?string $navigationLabel = 'Settings';
 
+    protected static ?string $clusterBreadcrumb = 'Settings';
+
     protected static ?string $title = 'Settings';
 
     protected static ?int $navigationSort = 100;
 
     protected string $view = 'filament.clusters.settings';
+
+    public static function canAccess(): bool
+    {
+        return auth('admin')->user()->hasAnyRole(['super_admin', 'admin']);
+    }
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {

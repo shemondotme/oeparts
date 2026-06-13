@@ -39,6 +39,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'track.utm' => TrackUtm::class,
             'handle.redirects' => HandleRedirects::class,
             'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
+            'csp' => \App\Http\Middleware\ContentSecurityPolicy::class,
+            'honeypot' => \Spatie\Honeypot\ProtectAgainstSpam::class,
+        ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\ContentSecurityPolicy::class,
         ]);
     })
     ->withProviders([

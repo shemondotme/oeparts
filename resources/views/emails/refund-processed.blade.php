@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § FINANCE · REFUND ISSUED
+                    FINANCE · REFUND ISSUED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     Your refund has been processed<span class="text-amber">.</span>
@@ -85,7 +85,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 12px 0; color: #9A5A00;">
-                    § REFUND AMOUNT
+                    REFUND AMOUNT
                 </p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -137,13 +137,13 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § PROCESSING TIME
+                    PROCESSING TIME
                 </p>
                 <p style="margin: 0 0 12px 0; font-size: 14px; line-height: 20px; color: #0A1228;">
-                    The refunded amount will appear in your original payment method within <strong>5–10 business days</strong>, depending on your bank or card issuer.
+                    The refunded amount will appear in your original payment method within <strong>{{ settings('email.refund_processing_time', '5–10 business days') }}</strong>, depending on your bank or card issuer.
                 </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    You will receive a separate notification once the funds have cleared.
+                    {{ settings('email.refund_notification', 'You will receive a separate notification once the funds have cleared.') }}
                 </p>
             </td>
         </tr>

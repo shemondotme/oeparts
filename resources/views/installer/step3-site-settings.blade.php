@@ -82,11 +82,11 @@
         </div>
 
         <div class="flex justify-between items-center pt-6 border-t border-slate-200">
-            <a href="{{ route('installer.database') }}" class="btn-outline">
+            <a href="{{ route('installer.database') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 Back
             </a>
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200">
                 Continue
                 <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
             </button>

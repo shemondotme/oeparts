@@ -1,4 +1,4 @@
-{{-- Section: testimonials (Industrial Blueprint)
+﻿{{-- Section: testimonials (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml)
      $sectionData['testimonials'] is injected by SectionRendererService
 --}}
@@ -20,7 +20,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -35,7 +35,7 @@
                 <p class="text-base text-body leading-relaxed">
                     {{ $subheadline }}
                 </p>
-                <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <p class="mt-4 bp-spec-mono">
                     Log · {{ $testimonials->count() }} verified entries
                 </p>
             </div>
@@ -53,8 +53,7 @@
                 $meta = implode(' · ', array_filter([$testimonial->company ?? null, $testimonial->location ?? null]));
             @endphp
 
-            <article class="relative p-6 sm:p-8 border-r border-b border-rule last:border-r-0 flex flex-col"
-                     role="article">
+            <article class="relative p-6 sm:p-8 border-r border-b border-rule last:border-r-0 flex flex-col">
 
                 {{-- Top meta: entry # + rating --}}
                 <div class="flex items-center justify-between mb-6">
@@ -99,9 +98,9 @@
                     {{-- Verified tick --}}
                     <span class="inline-flex items-center gap-1.5 border border-rule px-2 py-1
                                  font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted"
-                          title="Verified customer">
+                          title="{{ __('Verified customer') }}">
                         <x-heroicon-s-check-badge class="w-3 h-3 text-amber-ink" />
-                        Verified
+                        {{ __('Verified') }}
                     </span>
                 </footer>
             </article>

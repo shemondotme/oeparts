@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang = app()->getLocale();
@@ -73,13 +73,7 @@
 
         {{-- ═══ Document header: breadcrumb + doc ID ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
-            <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">Home</a>
-                <span class="text-rule-strong">/</span>
-                <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">Search</a>
-                <span class="text-rule-strong">/</span>
-                <span class="text-ink">No Match</span>
-            </nav>
+            <x-ui.breadcrumb :items="[['label' => __('search.console_breadcrumb_current'), 'url' => route('frontend.search.console', ['lang' => $lang])], ['label' => 'No Match']]" />
             <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
                 DOC · FIELD-REPORT · 404-A
             </div>
@@ -160,7 +154,7 @@
                      }
                  }">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">§02 · Re-submit query</span>
+                <span class="bp-spec text-ink">02 · Re-submit query</span>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     min {{ $minChars }} chars · alphanumeric
                 </span>
@@ -204,7 +198,7 @@
         {{-- ═══ Primary: Concierge inquiry card ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-3">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">§03 · {{ __('search.zero_cta_title') }}</span>
+                <span class="bp-spec text-ink">03 · {{ __('search.zero_cta_title') }}</span>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     RESPONSE · {{ $inquiryHours }}h
                 </span>
@@ -234,7 +228,7 @@
 
                     {{-- Primary CTA --}}
                     <button type="button"
-                            onclick="window.dispatchEvent(new CustomEvent('open-inquiry-modal', { detail: { oem: {{ json_encode($normalized_query) }} } }))"
+                            x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal', { detail: { oem: {{ json_encode($normalized_query) }} } }))"
                             class="mt-8 w-full group inline-flex items-center justify-center gap-3
                                    px-6 py-4
                                    bg-ink text-ivory font-sans text-[13px] font-bold uppercase tracking-[0.22em]
@@ -293,7 +287,7 @@
         @if($popularOems->isNotEmpty())
         <section class="mb-16 bp-rise">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">§04 · {{ __('search.zero_popular_heading') }}</span>
+                <span class="bp-spec text-ink">04 · {{ __('search.zero_popular_heading') }}</span>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     frequently indexed
                 </span>
@@ -325,7 +319,7 @@
         {{-- ═══ Diagnostic tips ═══ --}}
         <section class="mb-16 bp-rise">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">§05 · {{ __('search.zero_tips_heading') }}</span>
+                <span class="bp-spec text-ink">05 · {{ __('search.zero_tips_heading') }}</span>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     diagnostic
                 </span>

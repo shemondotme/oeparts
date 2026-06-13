@@ -52,7 +52,7 @@ class BlogController extends Controller
         }
 
         $posts = $query->orderBy('published_at', 'desc')
-            ->paginate(10)
+            ->paginate(settings('general.pagination_per_page', 10))
             ->withQueryString();
 
         $categories = Category::whereHas('blogPosts')->get();

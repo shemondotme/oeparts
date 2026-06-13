@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\ContentStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class BlogPost extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'category_id', 'title', 'slug', 'excerpt', 'content',
         'featured_image_id', 'author_id', 'status',
@@ -44,5 +47,10 @@ class BlogPost extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(BlogTag::class, 'blog_post_tags', 'post_id', 'tag_id');
+    }
+
+    public function scopePublished($q)
+    {
+        return $q->where('status', ContentStatus::Published);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\LoginUserType;
 use App\Enums\LogStatus;
 use App\Filament\Resources\LoginLogResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\LoginLog;
 use Filament\Forms;
 use Filament\Actions;
@@ -19,7 +20,7 @@ class LoginLogResource extends Resource
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
-        return 'heroicon-o-shield-check';
+        return 'heroicon-o-finger-print';
     }
 
     public static function getNavigationGroup(): ?string
@@ -39,49 +40,67 @@ class LoginLogResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('email')
-                    ->searchable(),
+                    ->label('Email Address')
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30),
                 Tables\Columns\TextColumn::make('user_type')
-                    ->label('Type')
+                    ->label('Account Type')
                     ->badge()
                     ->color(fn (LoginUserType $state): string => match ($state) {
                         LoginUserType::Admin => 'warning',
                         LoginUserType::Customer => 'info',
                     }),
                 Tables\Columns\TextColumn::make('status')
+                    ->label('Result')
                     ->badge()
                     ->color(fn (LogStatus $state): string => match ($state) {
                         LogStatus::Success => 'success',
                         LogStatus::Failed => 'danger',
                     }),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP')
+                    ->label('IP Address')
+                    ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->label('Attempted At')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('user_type')
-                    ->label('Type')
-                    ->options(LoginUserType::class),
+                    ->label('Account Type')
+                    ->options(LoginUserType::class)
+                    ->native(false)
+                    ->helperText('Filter by admin or customer login attempts.'),
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(LogStatus::class),
+                    ->label('Result')
+                    ->options(LogStatus::class)
+                    ->native(false)
+                    ->helperText('Show successful or failed login attempts.'),
             ])
             ->actions([
-                Actions\DeleteAction::make(),
+                ...AdminUi::recordActionsReadOnly(),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Login Logs', [
+                        'email' => 'Email',
+                        'user_type' => 'Account Type',
+                        'status' => 'Result',
+                        'ip_address' => 'IP Address',
+                        'created_at' => 'Attempted At',
+                    ]),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->emptyStateIcon('heroicon-o-finger-print')
+            ->emptyStateHeading('No login attempts logged')
+            ->emptyStateDescription('Login attempts will appear here, including both successful and failed authentication attempts.');
     }
 
     public static function getRelations(): array
@@ -93,6 +112,7 @@ class LoginLogResource extends Resource
     {
         return [
             'index' => Pages\ListLoginLogs::route('/'),
+            'view'  => Pages\ViewLoginLog::route('/{record}'),
         ];
     }
 
@@ -110,5 +130,10 @@ class LoginLogResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'danger';
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['email'];
     }
 }

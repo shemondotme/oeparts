@@ -23,38 +23,47 @@ class IntegrationsSettings extends SettingsPage
     {
         return $schema
             ->components([
-                Section::make('Google')
+                Section::make('Google Tag Manager & Console')
+                    ->description('Link Tag Manager containers and Search Console tracking metrics.')
                     ->schema([
                         Forms\Components\TextInput::make('gtm_id')
-                            ->label('Google Tag Manager ID')
+                            ->label('Google Tag Manager Container ID')
                             ->placeholder('GTM-XXXXXXX')
-                            ->helperText('e.g. GTM-ABC1234')
+                            ->helperText('Container ID format: GTM-XXXXXXX')
                             ->maxLength(50)
                             ->default(null),
+
                         Forms\Components\TextInput::make('gsc_verification')
-                            ->label('Google Search Console Verification')
-                            ->helperText('The meta verification string from Google Search Console')
+                            ->label('Google Search Console Meta Token')
+                            ->placeholder('google-site-verification-token')
+                            ->helperText('The content attribute value from Google verification meta tags')
                             ->maxLength(255)
                             ->default(null),
                     ])->columns(2),
 
-                Section::make('Analytics')
+                Section::make('Google Analytics 4 (GA4)')
+                    ->description('Expose storefront ecommerce tracking data using standard GA4 streams.')
                     ->schema([
                         Forms\Components\TextInput::make('ga4_measurement_id')
-                            ->label('GA4 Measurement ID')
+                            ->label('GA4 Stream Measurement ID')
                             ->placeholder('G-XXXXXXXXXX')
+                            ->helperText('E.g. G-H2KL987YZ6')
                             ->maxLength(50)
                             ->default(null),
                     ]),
 
-                Section::make('Social & Chat')
+                Section::make('Marketing Pixels & Customer Service')
+                    ->description('Set Facebook tracking ids and load support chat widgets.')
                     ->schema([
                         Forms\Components\TextInput::make('fb_pixel_id')
                             ->label('Facebook Pixel ID')
+                            ->placeholder('123456789012345')
                             ->maxLength(50)
                             ->default(null),
+
                         Forms\Components\TextInput::make('crisp_website_id')
-                            ->label('Crisp Chat Website ID')
+                            ->label('Crisp Website ID')
+                            ->placeholder('e.g. 5d57b543-9876-4321-a000-a00000000000')
                             ->maxLength(50)
                             ->default(null),
                     ])->columns(2),

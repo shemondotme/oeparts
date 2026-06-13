@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', 'Order Confirmed - ' . settings('general.site_name', 'OeParts'))
 
@@ -50,7 +50,7 @@
                 <div class="col-span-12 md:col-span-8">
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ Status · Order placed</span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">Status · Order placed</span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
                         Thank you<span class="text-amber">.</span>
@@ -72,7 +72,7 @@
                             <x-heroicon-s-check class="w-5 h-5 text-amber" />
                         </div>
                         <div>
-                            <p class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">§ Filed</p>
+                            <p class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">Filed</p>
                             <p class="font-display text-xl font-extrabold text-ivory tracking-[-0.02em]">Confirmed</p>
                         </div>
                     </div>
@@ -88,9 +88,9 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-document-text class="w-3.5 h-3.5" />
-                    § Order details
+                    Order details
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Reference</span>
+                <span class="bp-spec-mono">Reference</span>
             </header>
 
             <div class="relative p-6 sm:p-8">
@@ -99,7 +99,7 @@
 
                 {{-- Order number --}}
                 <div class="pb-6 mb-6 border-b border-rule">
-                    <p class="bp-spec text-ink-muted mb-2">§ Order number</p>
+                    <p class="bp-spec text-ink-muted mb-2">Order number</p>
                     <p class="font-mono font-medium text-3xl md:text-4xl text-ink tabular-nums tracking-tight">
                         {{ $orderData['order_number'] }}
                     </p>
@@ -110,21 +110,21 @@
                     <div>
                         <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
                             <x-heroicon-s-envelope class="w-3 h-3 text-amber-ink" />
-                            § Email
+                            Email
                         </p>
                         <p class="font-mono text-sm font-bold text-ink truncate">{{ $orderData['email'] }}</p>
                     </div>
                     <div>
                         <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
                             <x-heroicon-s-calendar class="w-3 h-3 text-amber-ink" />
-                            § Date
+                            Date
                         </p>
                         <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $orderData['created_at']->format('M j, Y') }}</p>
                     </div>
                     <div>
                         <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
                             <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
-                            § Payment
+                            Payment
                         </p>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 border font-mono text-[10px] font-bold uppercase tracking-[0.22em]
                                      {{ $isPaid ? 'border-amber bg-paper text-amber-ink' : 'border-ink bg-ivory-alt text-ink' }}">
@@ -141,11 +141,11 @@
                 {{-- Total --}}
                 <div class="flex items-end justify-between gap-3">
                     <div>
-                        <p class="bp-spec text-ink mb-1">§ Order total · EUR</p>
+                        <p class="bp-spec text-ink mb-1">Order total · {{ settings('store.currency', 'EUR') }}</p>
                         <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">Including all taxes</p>
                     </div>
                     <p class="font-mono text-4xl md:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
-                        €{{ number_format($orderData['grand_total'], 2) }}
+                        {{ format_price($orderData['grand_total']) }}
                     </p>
                 </div>
 
@@ -159,9 +159,9 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-map class="w-3.5 h-3.5" />
-                    § What happens next · Protocol
+                    What happens next · Protocol
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">03 steps</span>
+                <span class="bp-spec-mono">03 steps</span>
             </header>
             <ul class="divide-y divide-rule">
                 @foreach([
@@ -213,7 +213,7 @@
 
             <div class="relative p-8 md:p-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div class="md:col-span-8">
-                    <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber mb-3">§ Continue · Shop</p>
+                    <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber mb-3">Continue · Shop</p>
                     <h3 class="font-display text-2xl md:text-3xl font-extrabold text-ivory tracking-[-0.02em] leading-tight">
                         Need more parts<span class="text-amber">?</span>
                     </h3>
@@ -233,7 +233,7 @@
 
         {{-- Support --}}
         <div class="text-center pt-6 border-t border-rule">
-            <p class="bp-spec text-ink-muted mb-3">§ Need help</p>
+            <p class="bp-spec text-ink-muted mb-3">Need help</p>
             <a href="{{ route('frontend.contact.show', ['lang' => app()->getLocale()]) }}"
                class="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
                 <x-heroicon-o-chat-bubble-left-right class="w-4 h-4" />

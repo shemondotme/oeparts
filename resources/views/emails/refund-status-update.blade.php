@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § FINANCE · REFUND UPDATE
+                    FINANCE · REFUND UPDATE
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     Refund #{{ $refund->id }}<span class="text-amber">.</span>
@@ -79,7 +79,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § NOTE FROM SUPPORT
+                    NOTE FROM SUPPORT
                 </p>
                 <div style="background-color: #FFFFFF; border-left: 4px solid #F59E0B; padding: 16px; font-size: 14px; line-height: 22px; color: #0A1228;">
                     {!! nl2br(e($message)) !!}

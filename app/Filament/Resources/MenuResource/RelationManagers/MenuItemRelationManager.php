@@ -4,12 +4,16 @@ namespace App\Filament\Resources\MenuResource\RelationManagers;
 
 use App\Enums\MenuTarget;
 use App\Models\Page;
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Support\Enums\FontWeight;
 
 class MenuItemRelationManager extends RelationManager
 {
@@ -21,10 +25,21 @@ class MenuItemRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Forms\Components\TextInput::make('label')
-                    ->label('Label (JSON)')
-                    ->helperText('e.g. {"en": "Home", "de": "Startseite"}')
-                    ->required(),
+                Tabs::make('Locales')
+                    ->schema(
+                        collect(AdminUi::LOCALES)
+                            ->map(fn (string $label, string $code) => Tab::make($label)
+                                ->badge($code === 'en' ? 'Primary' : null)
+                                ->schema([
+                                    Forms\Components\TextInput::make("label.$code")
+                                        ->label('Label')
+                                        ->required($code === 'en')
+                                        ->maxLength(255),
+                                ]))
+                            ->values()
+                            ->all()
+                    )
+                    ->columnSpanFull(),
                 Forms\Components\Select::make('type')
                     ->options([
                         'url'  => 'Custom URL',
@@ -32,6 +47,7 @@ class MenuItemRelationManager extends RelationManager
                     ])
                     ->default('url')
                     ->reactive()
+                    ->native(false)
                     ->required(),
                 Forms\Components\TextInput::make('url')
                     ->label('URL')
@@ -45,12 +61,11 @@ class MenuItemRelationManager extends RelationManager
                             ->where('status', \App\Enums\ContentStatus::Published)
                             ->get()
                             ->mapWithKeys(fn (Page $page): array => [
-                                $page->id => is_array($page->title)
-                                    ? ($page->title['en'] ?? $page->title[array_key_first($page->title)] ?? "Page #{$page->id}")
-                                    : ($page->title ?? "Page #{$page->id}"),
+                                $page->id => AdminUi::localizedName($page->title),
                             ]);
                     })
                     ->searchable()
+                    ->native(false)
                     ->hidden(fn ($get): bool => $get('type') !== 'page'),
                 Forms\Components\Select::make('parent_id')
                     ->label('Parent Item')
@@ -60,22 +75,23 @@ class MenuItemRelationManager extends RelationManager
                             ->whereNull('parent_id')
                             ->get()
                             ->mapWithKeys(fn ($item): array => [
-                                $item->id => is_array($item->label)
-                                    ? ($item->label['en'] ?? $item->label[array_key_first($item->label)] ?? "Item #{$item->id}")
-                                    : ($item->label ?? "Item #{$item->id}"),
+                                $item->id => AdminUi::localizedName($item->label),
                             ])
                             ->toArray();
                     })
                     ->nullable()
+                    ->native(false)
                     ->helperText('Leave empty for top-level item'),
                 Forms\Components\Select::make('target')
                     ->options(MenuTarget::class)
                     ->default('_self')
+                    ->native(false)
                     ->required(),
                 Forms\Components\TextInput::make('sort_order')
                     ->label('Sort Order')
                     ->numeric()
-                    ->default(0),
+                    ->default(0)
+                    ->minValue(0),
             ]);
     }
 
@@ -86,7 +102,8 @@ class MenuItemRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('label')
                     ->label('Label')
-                    ->getStateUsing(fn ($record): string => is_array($record->label) ? ($record->label['en'] ?? $record->label[array_key_first($record->label)] ?? '—') : ($record->label ?? '—'))
+                    ->getStateUsing(fn ($record): string => AdminUi::localizedName($record->label))
+                    ->weight(FontWeight::Medium)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
                     ->badge()
@@ -98,13 +115,7 @@ class MenuItemRelationManager extends RelationManager
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('parent_id')
                     ->label('Parent')
-                    ->getStateUsing(function ($record): string {
-                        if (!$record->parent) {
-                            return '—';
-                        }
-                        $label = $record->parent->label;
-                        return is_array($label) ? ($label['en'] ?? $label[array_key_first($label)] ?? '—') : ($label ?? '—');
-                    })
+                    ->getStateUsing(fn ($record): string => $record->parent ? AdminUi::localizedName($record->parent->label) : '—')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('target')
                     ->badge()
@@ -115,15 +126,15 @@ class MenuItemRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->headerActions([
-                Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make(),
             ])
             ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('sort_order', 'asc')
@@ -131,3 +142,4 @@ class MenuItemRelationManager extends RelationManager
             ->paginated(false);
     }
 }
+

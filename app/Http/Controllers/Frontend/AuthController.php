@@ -7,11 +7,13 @@ use App\Models\User;
 use App\Services\OtpService;
 use App\Enums\OtpPurpose;
 use App\Jobs\SendOtpEmail;
+use App\Jobs\SendWelcomeEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Password;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 class AuthController extends Controller
@@ -102,7 +104,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:200',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:30',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
             'password_confirmation' => 'required|string',
             'agree_terms' => 'required|accepted',
         ]);
@@ -123,6 +125,8 @@ class AuthController extends Controller
             'is_active' => true,
             'email_verified_at' => null,
         ]);
+
+        dispatch(new SendWelcomeEmail($user, $lang));
 
         $otpService = app(OtpService::class);
         $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());

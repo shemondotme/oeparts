@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang         = app()->getLocale();
@@ -71,7 +71,7 @@
             <header class="col-span-12 lg:col-span-8">
                 <div class="flex items-center gap-4 mb-8">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ __('Directory · Covered Platforms') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('Directory · Covered Platforms') }}</span>
                 </div>
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
@@ -121,10 +121,10 @@
             </aside>
         </div>
 
-        {{-- ═══ §01 · Models List ═══ --}}
+        {{-- ═══ 01 · Models List ═══ --}}
         <section class="mb-10 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                <span class="bp-spec text-ink">§ 01 · {{ __('Covered Chassis Ledger') }}</span>
+                <span class="bp-spec text-ink">01 · {{ __('Covered Chassis Ledger') }}</span>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ $carModels->count() }} {{ __('displayed on page') }}
                 </span>
@@ -158,7 +158,7 @@
                            class="group relative flex flex-col justify-between p-5 border border-rule-strong bg-paper hover:bg-ink hover:border-ink transition-colors">
                             <div>
                                 <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted group-hover:text-amber">
-                                    §{{ $sequenceNum }} · Platform
+                                    {{ $sequenceNum }} · Platform
                                 </span>
                                 <h3 class="font-display text-lg font-bold tracking-[-0.01em] text-ink group-hover:text-ivory mt-2 truncate">
                                     {{ $model->name }}

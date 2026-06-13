@@ -68,7 +68,7 @@ class AccountController extends Controller
         $user = Auth::guard('web')->user();
         $orders = Order::where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(settings('general.pagination_per_page', 10));
 
         return view('frontend.account.orders', compact('orders'));
     }
@@ -193,17 +193,11 @@ class AccountController extends Controller
     /**
      * Update account settings.
      */
-    public function updateSettings(Request $request, string $lang)
+    public function updateSettings(\App\Http\Requests\Frontend\AccountSettingsRequest $request, string $lang)
     {
         $user = Auth::guard('web')->user();
 
-        $validated = $request->validate([
-            'name'  => 'required|string|max:200',
-            'phone' => 'nullable|string|max:30',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'current_password' => 'nullable|string|min:8',
-            'new_password'     => 'nullable|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         // Update basic info
         $user->name = $validated['name'];
@@ -227,14 +221,11 @@ class AccountController extends Controller
     /**
      * Update password only (separate form from profile fields).
      */
-    public function updatePassword(Request $request, string $lang)
+    public function updatePassword(\App\Http\Requests\Frontend\AccountPasswordRequest $request, string $lang)
     {
         $user = Auth::guard('web')->user();
 
-        $validated = $request->validate([
-            'current_password' => 'required|string|min:8',
-            'new_password'     => 'required|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         if (! \Hash::check($validated['current_password'], $user->password)) {
             return back()->withErrors(['current_password' => __('Current password is incorrect.')]);
@@ -409,7 +400,7 @@ class AccountController extends Controller
         })
         ->with('order')
         ->orderByDesc('created_at')
-        ->paginate(10);
+        ->paginate(settings('general.pagination_per_page', 10));
 
         return view('frontend.account.refunds', compact('refunds'));
     }

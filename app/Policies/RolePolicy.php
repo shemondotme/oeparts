@@ -4,72 +4,71 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
-use Spatie\Permission\Models\Role;
+use App\Models\Admin;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Spatie\Permission\Models\Role;
 
 class RolePolicy
 {
     use HandlesAuthorization;
-    
-    public function viewAny(AuthUser $authUser): bool
+
+    public function viewAny(Admin $admin): bool
     {
-        return $authUser->can('ViewAny:Role');
+        return $admin->hasRole('super_admin') || $admin->can('view roles');
     }
 
-    public function view(AuthUser $authUser, Role $role): bool
+    public function view(Admin $admin, Role $role): bool
     {
-        return $authUser->can('View:Role');
+        return $admin->hasRole('super_admin') || $admin->can('view roles');
     }
 
-    public function create(AuthUser $authUser): bool
+    public function create(Admin $admin): bool
     {
-        return $authUser->can('Create:Role');
+        return $admin->hasRole('super_admin') || $admin->can('create roles');
     }
 
-    public function update(AuthUser $authUser, Role $role): bool
+    public function update(Admin $admin, Role $role): bool
     {
-        return $authUser->can('Update:Role');
+        return $admin->hasRole('super_admin') || $admin->can('edit roles');
     }
 
-    public function delete(AuthUser $authUser, Role $role): bool
+    public function delete(Admin $admin, Role $role): bool
     {
-        return $authUser->can('Delete:Role');
+        return $admin->hasRole('super_admin') || $admin->can('delete roles');
     }
 
-    public function deleteAny(AuthUser $authUser): bool
+    public function deleteAny(Admin $admin): bool
     {
-        return $authUser->can('DeleteAny:Role');
+        return $admin->hasRole('super_admin') || $admin->can('delete roles');
     }
 
-    public function restore(AuthUser $authUser, Role $role): bool
+    public function restore(Admin $admin, Role $role): bool
     {
-        return $authUser->can('Restore:Role');
+        return false;
     }
 
-    public function forceDelete(AuthUser $authUser, Role $role): bool
+    public function forceDelete(Admin $admin, Role $role): bool
     {
-        return $authUser->can('ForceDelete:Role');
+        return false;
     }
 
-    public function forceDeleteAny(AuthUser $authUser): bool
+    public function forceDeleteAny(Admin $admin): bool
     {
-        return $authUser->can('ForceDeleteAny:Role');
+        return false;
     }
 
-    public function restoreAny(AuthUser $authUser): bool
+    public function restoreAny(Admin $admin): bool
     {
-        return $authUser->can('RestoreAny:Role');
+        return false;
     }
 
-    public function replicate(AuthUser $authUser, Role $role): bool
+    public function replicate(Admin $admin, Role $role): bool
     {
-        return $authUser->can('Replicate:Role');
+        return false;
     }
 
-    public function reorder(AuthUser $authUser): bool
+    public function reorder(Admin $admin): bool
     {
-        return $authUser->can('Reorder:Role');
+        return $admin->hasRole('super_admin') || $admin->can('edit roles');
     }
-
 }

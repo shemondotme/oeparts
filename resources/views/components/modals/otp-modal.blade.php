@@ -1,4 +1,4 @@
-{{--
+﻿{{--
   ═══════════════════════════════════════════════════════════════════
   INDUSTRIAL BLUEPRINT — OTP Verification Modal
   ═══════════════════════════════════════════════════════════════════
@@ -160,7 +160,7 @@
                 </div>
                 <div class="relative px-7 pt-5 pb-5">
                     <div class="flex items-center justify-between mb-4">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">§ OTP · VERIFY</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">OTP · VERIFY</span>
                         <button @click="close()"
                                 class="w-8 h-8 flex items-center justify-center border border-white/20 text-ivory/70
                                        hover:bg-amber hover:text-ink hover:border-amber transition-colors"
@@ -204,7 +204,7 @@
                  x-data="otpInput({{ $otpLen }})"
                  @otp-complete.window="verify($event.detail.code)"
                  @otp-reset.window="reset()">
-                <p class="bp-spec text-amber-ink mb-3">§ {{ $otpLen }}-digit access code</p>
+                <p class="bp-spec text-amber-ink mb-3">{{ $otpLen }}-digit access code</p>
                 <div class="flex justify-between gap-1.5 sm:gap-2">
                     <template x-for="(digit, i) in digits" :key="i">
                         <input

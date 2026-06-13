@@ -9,6 +9,7 @@ use App\Enums\PaymentTransactionStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -27,7 +28,7 @@ use Illuminate\Support\Str;
  */
 class PaymentService
 {
-    private const AIRWALLEX_API_BASE_SANDBOX = 'https://api.airwallex.com/api/v1';
+    private const AIRWALLEX_API_BASE_SANDBOX = 'https://api-demo.airwallex.com/api/v1';
     private const AIRWALLEX_API_BASE_LIVE = 'https://api.airwallex.com/api/v1';
 
     public function __construct(
@@ -57,7 +58,7 @@ class PaymentService
         $payload = [
             'request_id' => Str::uuid()->toString(),
             'amount' => (string) $amountCents,
-            'currency' => 'EUR',
+            'currency' => settings('store.currency', 'EUR'),
             'merchant_order_id' => $order->order_number,
             'customer' => [
                 'email' => $order->guest_email ?? $order->user->email,
@@ -72,7 +73,7 @@ class PaymentService
             $response = Http::withHeaders([
                 'Authorization' => "Bearer {$apiKey}",
                 'Content-Type' => 'application/json',
-            ])->post("{$baseUrl}/pa/payment_intents/create", $payload);
+            ])->timeout(15)->retry(3, 1000)->post("{$baseUrl}/pa/payment_intents/create", $payload);
 
             $data = $response->json();
 
@@ -125,7 +126,7 @@ class PaymentService
         }
 
         // Generate a unique reference for this order
-        $reference = 'OEM-' . $order->order_number;
+        $reference = settings('payment.reference_prefix', 'OEM') . '-' . $order->order_number;
 
         // Create payment record
         $payment = Payment::create([
@@ -144,7 +145,7 @@ class PaymentService
             'account_holder' => $accountHolder,
             'reference' => $reference,
             'amount' => $order->grand_total,
-            'currency' => 'EUR',
+            'currency' => settings('store.currency', 'EUR'),
             'payment_id' => $payment->id,
             'expiry_hours' => $this->settings->get('orders.bank_transfer_expiry_hours', 48),
         ];
@@ -169,7 +170,8 @@ class PaymentService
 
         // Verify timestamp within 5 minutes
         $now = time();
-        if (abs($now - $timestamp) > 300) {
+        $tolerance = (int) settings('payment.webhook_tolerance_seconds', 300);
+        if (abs($now - $timestamp) > $tolerance) {
             Log::warning('Airwallex webhook timestamp expired', [
                 'timestamp' => $timestamp,
                 'now' => $now,
@@ -195,18 +197,21 @@ class PaymentService
     public function isDuplicateEvent(string $eventId): bool
     {
         $cacheKey = "airwallex_webhook_{$eventId}";
-        return Cache::has($cacheKey);
+        $ttl = (int) settings('payment.webhook_cache_days', 7) * 24 * 60;
+
+        return ! Cache::add($cacheKey, true, $ttl);
     }
 
     /**
      * Mark a webhook event as processed.
      *
-     * Stores the event ID in cache for 7 days to prevent duplicates.
+     * Uses Cache::add() for atomic idempotency — if isDuplicateEvent() already
+     * added the key, this is a no-op.
      */
     public function markEventProcessed(string $eventId): void
     {
-        $cacheKey = "airwallex_webhook_{$eventId}";
-        Cache::put($cacheKey, true, now()->addDays(7));
+        // Already handled atomically by isDuplicateEvent() via Cache::add().
+        // Left as a no-op for call-site compatibility.
     }
 
     /**
@@ -235,36 +240,40 @@ class PaymentService
             throw new \RuntimeException('Payment not found');
         }
 
-        // Update payment status
-        $payment->update([
-            'status' => PaymentTransactionStatus::Captured,
-            'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
-        ]);
+        DB::transaction(function () use ($payment, $paymentIntentId, $webhookData, $eventId) {
+            // Update payment status
+            $payment->update([
+                'status' => PaymentTransactionStatus::Captured,
+                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
+            ]);
 
-        // Update order
-        $order = $payment->order;
-        $oldStatus = $order->status;
-        $order->update([
-            'payment_status' => \App\Enums\PaymentStatus::Paid,
-            'status' => \App\Enums\OrderStatus::Processing,
-            'payment_reference' => $paymentIntentId,
-        ]);
+            // Update order
+            $order = $payment->order;
+            $oldStatus = $order->status;
+            $order->update([
+                'payment_status' => \App\Enums\PaymentStatus::Paid,
+                'status' => \App\Enums\OrderStatus::Processing,
+                'payment_reference' => $paymentIntentId,
+            ]);
 
-        // Log status change
-        \App\Models\OrderStatusHistory::create([
-            'order_id' => $order->id,
-            'old_status' => $oldStatus,
-            'new_status' => \App\Enums\OrderStatus::Processing,
-            'note' => 'Payment confirmed via Airwallex webhook',
-        ]);
+            // Log status change
+            \App\Models\OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'old_status' => $oldStatus,
+                'new_status' => \App\Enums\OrderStatus::Processing,
+                'note' => 'Payment confirmed via Airwallex webhook',
+            ]);
 
-        dispatch(new SendOrderConfirmationEmail($order));
+            dispatch(new SendOrderConfirmationEmail($order));
 
-        Log::info('Payment processed successfully', [
-            'order_id' => $order->id,
-            'payment_id' => $payment->id,
-            'event_id' => $eventId,
-        ]);
+            \App\Events\PaymentReceived::dispatch($order, $payment);
+
+            Log::info('Payment processed successfully', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'event_id' => $eventId,
+            ]);
+        });
     }
 
     /**
@@ -282,18 +291,20 @@ class PaymentService
             ->first();
 
         if ($payment) {
-            $payment->update([
-                'status' => PaymentTransactionStatus::Failed,
-                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
-            ]);
+            DB::transaction(function () use ($payment, $webhookData) {
+                $payment->update([
+                    'status' => PaymentTransactionStatus::Failed,
+                    'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
+                ]);
 
-            $order = $payment->order;
-            $order->update([
-                'payment_status' => \App\Enums\PaymentStatus::Failed,
-            ]);
+                $order = $payment->order;
+                $order->update([
+                    'payment_status' => \App\Enums\PaymentStatus::Failed,
+                ]);
+            });
 
             Log::warning('Payment failed via webhook', [
-                'order_id' => $order->id,
+                'order_id' => $payment->order_id,
                 'payment_id' => $payment->id,
             ]);
         }
@@ -308,30 +319,32 @@ class PaymentService
             throw new \RuntimeException('Payment is not a bank transfer.');
         }
 
-        $payment->update([
-            'status' => PaymentTransactionStatus::Captured,
-        ]);
+        DB::transaction(function () use ($payment, $referenceNote) {
+            $payment->update([
+                'status' => PaymentTransactionStatus::Captured,
+            ]);
 
-        $order = $payment->order;
-        $oldStatus = $order->status;
-        $order->update([
-            'payment_status' => \App\Enums\PaymentStatus::Paid,
-            'status' => \App\Enums\OrderStatus::Processing,
-            'payment_reference' => $referenceNote ?: $payment->transaction_id,
-        ]);
+            $order = $payment->order;
+            $oldStatus = $order->status;
+            $order->update([
+                'payment_status' => \App\Enums\PaymentStatus::Paid,
+                'status' => \App\Enums\OrderStatus::Processing,
+                'payment_reference' => $referenceNote ?: $payment->transaction_id,
+            ]);
 
-        \App\Models\OrderStatusHistory::create([
-            'order_id' => $order->id,
-            'old_status' => $oldStatus,
-            'new_status' => \App\Enums\OrderStatus::Processing,
-            'note' => 'Bank transfer confirmed manually' . ($referenceNote ? ": {$referenceNote}" : ''),
-        ]);
+            \App\Models\OrderStatusHistory::create([
+                'order_id' => $order->id,
+                'old_status' => $oldStatus,
+                'new_status' => \App\Enums\OrderStatus::Processing,
+                'note' => 'Bank transfer confirmed manually' . ($referenceNote ? ": {$referenceNote}" : ''),
+            ]);
 
-        dispatch(new SendOrderConfirmationEmail($order));
+            dispatch(new SendOrderConfirmationEmail($order));
 
-        Log::info('Bank transfer payment confirmed', [
-            'order_id' => $order->id,
-            'payment_id' => $payment->id,
-        ]);
+            Log::info('Bank transfer payment confirmed', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+            ]);
+        });
     }
 }

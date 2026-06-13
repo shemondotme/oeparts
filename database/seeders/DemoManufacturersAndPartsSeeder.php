@@ -3,10 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Admin;
+use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\MediaFile;
 use App\Models\Product;
-use App\Enums\ProductCondition;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -109,8 +109,10 @@ class DemoManufacturersAndPartsSeeder extends Seeder
 
         // Create 10 demo products per manufacturer
         for ($i = 1; $i <= 10; $i++) {
-            // SQLite test DB keeps legacy CHECK on `condition` unless MySQL-style ALTER ran; keep `new` only for portability.
-            $condition = ProductCondition::New;
+            $condition = Condition::where('slug', 'new')->first() ?? Condition::firstOrCreate(
+                ['slug' => 'new'],
+                ['name' => 'New', 'bg_color' => '#ecfdf5', 'text_color' => '#065f46', 'is_active' => true]
+            );
             $isInStock = $i % 2 === 0; // Alternate stock status
             $oemNumber = $oemPrefix . '-' . str_pad($i, 6, '0', STR_PAD_LEFT);
             
@@ -135,7 +137,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                     'fr' => "Pièce OEM de haute qualité de {$manufacturer->name['fr']}. État : {$condition->name}.",
                     'es' => "Pieza OEM de alta calidad de {$manufacturer->name['es']}. Condición: {$condition->name}.",
                 ],
-                'condition' => $condition,
+                'condition_id' => $condition->id,
                 'price' => bcmul((string)rand(20, 500), '1.00', 2), // Random price between 20 and 500
                 'delivery_time' => '2-4 days',
                 'moq' => 1,

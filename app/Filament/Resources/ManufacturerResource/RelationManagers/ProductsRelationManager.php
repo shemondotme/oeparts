@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\ManufacturerResource\RelationManagers;
 
-use App\Enums\ProductCondition;
+use App\Filament\Support\AdminUi;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,33 +17,33 @@ class ProductsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('oem_number')
+        return AdminUi::configureTable($table)->recordTitleAttribute('oem_number')
             ->columns([
                 Tables\Columns\TextColumn::make('oem_number')
                     ->label('OEM Number')
+                    ->copyable()
+                    ->copyMessage('OEM number copied')
+                    ->fontMono()
+                    ->weight('medium')
                     ->extraAttributes(['class' => 'oem-number']),
-                Tables\Columns\TextColumn::make('condition')
+                Tables\Columns\TextColumn::make('condition.name')
                     ->label('Condition')
                     ->badge()
-                    ->color(fn ($state): string => match ($state->value) {
-                        'new'            => 'success',
-                        'used_grade_a'   => 'info',
-                        'used_grade_b'   => 'warning',
-                        'used_grade_c'   => 'gray',
-                        'remanufactured' => 'primary',
-                        'aftermarket'    => 'danger',
-                        'new_old_stock'  => 'info',
-                        default          => 'gray',
-                    }),
+                    ->formatStateUsing(fn ($state): string => $state?->name ?? '—')
+                    ->extraAttributes(fn ($record): array => $record->condition ? [
+                        'style' => "background-color: {$record->condition->bg_color} !important; color: {$record->condition->text_color} !important;",
+                    ] : []),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
-                    ->getStateUsing(fn ($record): string => format_money($record->price)),
+                    ->getStateUsing(fn ($record): string => format_money($record->price))
+                    ->alignEnd()
+                    ->fontMono(),
                 Tables\Columns\TextColumn::make('is_in_stock')
                     ->label('Stock')
                     ->getStateUsing(fn ($record): string => $record->is_in_stock ? 'In Stock' : 'Out of Stock')
                     ->badge()
-                    ->color(fn ($record): string => $record->is_in_stock ? 'success' : 'danger'),
+                    ->color(fn ($record): string => $record->is_in_stock ? 'success' : 'danger')
+                    ->icon(fn ($record): string => $record->is_in_stock ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
             ])
             ->defaultSort('created_at', 'desc');
     }

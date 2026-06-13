@@ -1,15 +1,15 @@
-{{-- Section: popular_searches (Industrial Blueprint)
+﻿{{-- Section: popular_searches (Industrial Blueprint)
      content: eyebrow, headline, subheadline, search_cta_text(ml)
      Displays top 5 searched OEM numbers from search_logs (last 30 days)
 --}}
 @php
     try {
-        $limit = 5;
+        $limit = (int) settings('search.popular_display_limit', 5);
         $cacheKey = 'popular_searches_' . app()->getLocale() . '_' . $limit;
-        $popular = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(6), function () use ($limit) {
+        $popular = \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours((int) settings('search.cache_ttl_hours', 6)), function () use ($limit) {
             return \DB::table('search_logs')
                 ->select('search_query', \DB::raw('COUNT(*) as hits'))
-                ->where('created_at', '>=', now()->subDays(30))
+                ->where('created_at', '>=', now()->subDays((int) settings('search.popular_days_window', 30)))
                 ->where('result_count', '>', 0)
                 ->groupBy('search_query')
                 ->orderByDesc('hits')
@@ -39,7 +39,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -54,7 +54,7 @@
                 <p class="text-base text-body leading-relaxed">
                     {{ $subheadline }}
                 </p>
-                <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <p class="mt-4 bp-spec-mono">
                     Log window · 30 days · {{ $popular->sum('hits') }} hits
                 </p>
             </div>
@@ -66,13 +66,13 @@
             {{-- Header row --}}
             <div class="grid grid-cols-12 gap-4 px-6 py-3 border-b border-ink bg-ivory-alt
                         font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
-                <span class="col-span-1">Rank</span>
-                <span class="col-span-5 sm:col-span-4">OEM · Number</span>
-                <span class="hidden sm:block col-span-5 text-ink-muted">Frequency</span>
-                <span class="col-span-6 sm:col-span-2 text-right">Hits</span>
+                <span class="col-span-1">{{ __('Rank') }}</span>
+                <span class="col-span-5 sm:col-span-4">{{ __('OEM · Number') }}</span>
+                <span class="hidden sm:block col-span-5 text-ink-muted">{{ __('Frequency') }}</span>
+                <span class="col-span-6 sm:col-span-2 text-right">{{ __('Hits') }}</span>
             </div>
 
-            <ol aria-label="Top searched OEM part numbers">
+            <ol aria-label="{{ __('Top searched OEM part numbers') }}">
                 @foreach($popular as $item)
                 @php
                     $rank = $loop->iteration;
@@ -106,7 +106,7 @@
                         <span class="shrink-0 inline-flex items-center gap-1.5 px-2 py-0.5
                                      border border-amber bg-amber/10 text-amber-ink
                                      font-mono text-[9px] font-bold tracking-[0.2em] uppercase">
-                            Hot
+                            {{ __('Hot') }}
                         </span>
                         @endif
                     </div>
@@ -134,7 +134,7 @@
 
         {{-- Footer / CTA --}}
         <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+            <span class="bp-spec-mono">
                 Ledger updated · {{ now()->format('Y·m·d') }} · cached 6h
             </span>
             <a href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}" class="bp-btn-primary">

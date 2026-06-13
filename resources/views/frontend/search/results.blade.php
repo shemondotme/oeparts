@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $price_stats = is_array($price_stats ?? null)
@@ -75,7 +75,7 @@
                 'offers' => [
                     '@type' => 'Offer',
                     'price' => (string) $product->price,
-                    'priceCurrency' => 'EUR',
+                    'priceCurrency' => settings('store.currency', 'EUR'),
                     'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                 ],
             ],
@@ -117,18 +117,9 @@
                        + ($manufacturer_filter ? 1 : 0)
                        + ($car_model_filter ? 1 : 0);
 
-    $conditionLabels = ['new' => ui_copy('search_condition_filter_new', 'search.condition_filter_new'), 'used' => ui_copy('search_condition_filter_used', 'search.condition_filter_used')];
-
-    $conditionLabelMap = [
-        'new'             => ui_copy('search_condition_label_new', 'search.condition_label_new'),
-        'used'            => ui_copy('search_condition_label_used', 'search.condition_label_used'),
-        'used_a'          => ui_copy('search_condition_label_used_a', 'search.condition_label_used_a'),
-        'used_b'          => ui_copy('search_condition_label_used_b', 'search.condition_label_used_b'),
-        'used_c'          => ui_copy('search_condition_label_used_c', 'search.condition_label_used_c'),
-        'remanufactured'  => ui_copy('search_condition_label_remanufactured', 'search.condition_label_remanufactured'),
-        'aftermarket'     => ui_copy('search_condition_label_aftermarket', 'search.condition_label_aftermarket'),
-        'new_old_stock'   => ui_copy('search_condition_label_new_old_stock', 'search.condition_label_new_old_stock'),
-    ];
+    $allConditions = \App\Models\Condition::where('is_active', true)->orderBy('sort_order')->get();
+    $conditionLabels = $allConditions->pluck('name', 'slug')->toArray();
+    $conditionLabelMap = $allConditions->pluck('name', 'slug')->toArray();
 @endphp
 
 <div class="relative min-h-screen bg-ivory text-ink pb-20">
@@ -148,14 +139,14 @@
 
             {{-- ── Document header ─────────────────────────────────────── --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-rule">
-                <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted" aria-label="Breadcrumbs">
+                <nav class="flex items-center gap-2 bp-spec-mono" aria-label="Breadcrumbs">
                     <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber-ink transition-colors">Home</a>
                     <span class="text-rule-strong">/</span>
                     <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="hover:text-amber-ink transition-colors">Catalogue</a>
                     <span class="text-rule-strong">/</span>
                     <span class="text-ink">Results</span>
                 </nav>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec-mono">
                     DOC · SPEC-SHEET · {{ $matchBadge['code'] }}
                 </span>
             </div>
@@ -166,7 +157,7 @@
                 <div class="col-span-12 md:col-span-7">
                     <div class="flex items-center gap-4 mb-6">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="bp-spec text-amber-ink">§ 01 · {{ ui_copy('search_heading_results_for', 'search.heading_results_for') }}</span>
+                        <span class="bp-spec text-amber-ink">01 · {{ ui_copy('search_heading_results_for', 'search.heading_results_for') }}</span>
                     </div>
 
                     <h1 class="font-display font-extrabold text-ink leading-[0.9] tracking-[-0.03em]
@@ -186,31 +177,31 @@
                 <aside class="col-span-12 md:col-span-5">
                     <div class="bp-card-ivory p-5 h-full flex flex-col">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="bp-spec text-amber-ink">§ 01.a · Query Log</span>
-                            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                            <span class="bp-spec text-amber-ink">01.a · Query Log</span>
+                            <span class="bp-spec-mono">
                                 {{ now()->format('Y·m·d') }}
                             </span>
                         </div>
 
                         <dl class="space-y-0 flex-1">
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted shrink-0">Query</dt>
+                                <dt class="bp-spec-mono shrink-0">Query</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0 truncate max-w-[180px]">{{ $normalized_query }}</dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted shrink-0">Match type</dt>
+                                <dt class="bp-spec-mono shrink-0">Match type</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-amber-ink shrink-0">{{ $matchBadge['code'] }}</dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted shrink-0">Hits</dt>
+                                <dt class="bp-spec-mono shrink-0">Hits</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">{{ number_format($total) }}</dd>
                             </div>
                             @if($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted shrink-0">Page</dt>
+                                <dt class="bp-spec-mono shrink-0">Page</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm tabular-nums text-ink shrink-0">
                                     {{ $products->currentPage() }} / {{ $products->lastPage() }}
@@ -218,7 +209,7 @@
                             </div>
                             @endif
                             <div class="flex items-baseline justify-between gap-3 py-2.5">
-                                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted shrink-0">Filters</dt>
+                                <dt class="bp-spec-mono shrink-0">Filters</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0">
                                     {{ $activeFilterCount }} {{ $activeFilterCount === 1 ? 'active' : 'active' }}
@@ -241,7 +232,7 @@
                          }
                      }">
                 <div class="flex items-end justify-between pb-3 border-b border-ink">
-                    <span class="bp-spec text-ink">§ 02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</span>
+                    <span class="bp-spec text-ink">02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</span>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         min {{ settings('search.min_chars', 3) }} chars · alphanumeric
                     </span>
@@ -287,9 +278,9 @@
             @php $priceMinMaxSame = (string) $price_stats['min'] === (string) $price_stats['max']; @endphp
             <div class="grid grid-cols-3 border border-ink bg-paper mb-8">
                 @foreach([
-                    ['label' => ui_copy('search_price_from', 'search.price_from'), 'value' => '€' . $price_stats['min'], 'em' => false],
-                    ['label' => ui_copy('search_price_avg', 'search.price_avg'),  'value' => '€' . ($priceMinMaxSame ? $price_stats['min'] : $price_stats['avg']), 'em' => true],
-                    ['label' => ui_copy('search_price_to', 'search.price_to'),   'value' => '€' . $price_stats['max'], 'em' => false],
+                    ['label' => ui_copy('search_price_from', 'search.price_from'), 'value' => settings('store.currency_symbol', '€') . $price_stats['min'], 'em' => false],
+                    ['label' => ui_copy('search_price_avg', 'search.price_avg'),  'value' => settings('store.currency_symbol', '€') . ($priceMinMaxSame ? $price_stats['min'] : $price_stats['avg']), 'em' => true],
+                    ['label' => ui_copy('search_price_to', 'search.price_to'),   'value' => settings('store.currency_symbol', '€') . $price_stats['max'], 'em' => false],
                 ] as $idx => $stat)
                 <div class="p-5 sm:p-6 {{ !$loop->last ? 'border-r border-rule' : '' }}">
                     <p class="bp-spec text-ink-muted mb-3">{{ $stat['label'] }}</p>
@@ -313,7 +304,7 @@
                     <x-heroicon-o-arrow-path class="w-4 h-4 text-ink" />
                 </div>
                 <div>
-                    <p class="bp-spec text-amber-ink mb-1">§ Notice · Cross-Reference</p>
+                    <p class="bp-spec text-amber-ink mb-1">Notice · Cross-Reference</p>
                     <p class="font-display text-base font-bold text-ink mb-1">{{ ui_copy('search_notice_cross_title', 'search.notice_cross_title') }}</p>
                     <p class="text-sm text-body leading-relaxed">{{ ui_copy('search_notice_cross_body', 'search.notice_cross_body', ['oem' => $normalized_query]) }}</p>
                 </div>
@@ -326,7 +317,7 @@
                     <x-heroicon-o-magnifying-glass class="w-4 h-4 text-amber-ink" />
                 </div>
                 <div>
-                    <p class="bp-spec text-amber-ink mb-1">§ Notice · Partial Match</p>
+                    <p class="bp-spec text-amber-ink mb-1">Notice · Partial Match</p>
                     <p class="font-display text-base font-bold text-ink mb-1">{{ ui_copy('search_notice_partial_title', 'search.notice_partial_title') }}</p>
                     <p class="text-sm text-body leading-relaxed">{{ ui_copy('search_notice_partial_body', 'search.notice_partial_body', ['oem' => $normalized_query]) }}</p>
                 </div>
@@ -371,7 +362,7 @@
 
                     {{-- Header row --}}
                     <div class="flex items-center justify-between px-4 py-2 border-b border-rule bg-ivory-alt">
-                        <span class="bp-spec text-ink">§ 03 · Filters & Sort</span>
+                        <span class="bp-spec text-ink">03 · Filters & Sort</span>
                         @if($activeFilterCount > 0)
                         <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $normalized_query]) }}"
                            class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted hover:text-red-600 transition-colors">
@@ -397,14 +388,14 @@
                                         class="px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] border-l border-ink transition-colors inline-flex items-center gap-1"
                                         :aria-pressed="sort === 'price_asc'">
                                     <x-heroicon-s-arrow-small-up class="w-3 h-3" />
-                                    €
+                                    {{ settings('store.currency_symbol', '€') }}
                                 </button>
                                 <button type="button" @click="sort = 'price_desc'; apply()"
                                         :class="sort === 'price_desc' ? 'bg-ink text-ivory' : 'bg-paper text-ink hover:bg-ivory'"
                                         class="px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] border-l border-ink transition-colors inline-flex items-center gap-1"
                                         :aria-pressed="sort === 'price_desc'">
                                     <x-heroicon-s-arrow-small-down class="w-3 h-3" />
-                                    €
+                                    {{ settings('store.currency_symbol', '€') }}
                                 </button>
                             </div>
                         </div>
@@ -536,7 +527,7 @@
                             @if($condition_filter)
                             <a href="{{ request()->fullUrlWithQuery(['condition' => null, 'page' => null]) }}"
                                class="inline-flex items-center gap-1.5 px-2.5 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink hover:bg-ivory transition-colors">
-                                {{ ui_copy('search_condition_chip', 'search.condition_chip', ['condition' => ucfirst($condition_filter)]) }}
+                                {{ ui_copy('search_condition_chip', 'search.condition_chip', ['condition' => $conditionLabelMap[$condition_filter] ?? ucfirst($condition_filter)]) }}
                                 <x-heroicon-s-x-mark class="w-3 h-3 shrink-0" />
                             </a>
                             @endif
@@ -576,7 +567,7 @@
             {{-- ════════════════════════════════════════════════════════════ --}}
             @if($filtered_empty)
             <div class="bp-card p-10 my-8 text-center">
-                <span class="bp-spec text-amber-ink block mb-4">§ Report · Filtered-Empty</span>
+                <span class="bp-spec text-amber-ink block mb-4">Report · Filtered-Empty</span>
                 <div class="inline-flex w-12 h-12 border-2 border-ink items-center justify-center mb-6">
                     <x-heroicon-o-funnel class="w-6 h-6 text-ink" />
                 </div>
@@ -616,7 +607,7 @@
                                         </th>
                                         <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Condition</th>
                                         <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Stock</th>
-                                        <th class="text-right px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Price · €</th>
+                                        <th class="text-right px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Price · {{ settings('store.currency_symbol', '€') }}</th>
                                         <th class="text-center px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Action</th>
                                     </tr>
                                 </thead>
@@ -627,10 +618,10 @@
                                         $crossRefs    = $product->crossReferences ?? collect();
                                         $priceWithVat = bcmul((string) $product->price, $vatMultiplier, 2);
                                         $cCond = $product->condition;
-                                        $condKey = $cCond instanceof \BackedEnum
-                                            ? $cCond->value
-                                            : (is_scalar($cCond) ? (string) $cCond : (string) \Illuminate\Support\enum_value($cCond, 'new'));
-                                        $condLabel = $conditionLabelMap[$condKey] ?? ui_copy('search_condition_unknown', 'search.condition_unknown');
+                                        $condKey = $cCond?->slug ?? 'new';
+                                        $condLabel = $cCond?->name ?? 'New';
+                                        $condBg = $cCond?->bg_color ?? '#DCFCE7';
+                                        $condText = $cCond?->text_color ?? '#16A34A';
                                         $rowNum = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
                                         if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator) {
                                             $rowNum = str_pad(($products->firstItem() + $index), 3, '0', STR_PAD_LEFT);
@@ -647,7 +638,7 @@
                                             <div class="flex items-center gap-2">
                                                 <span class="w-6 h-[2px] bg-amber"></span>
                                                 <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-ink">
-                                                    § Best Match · Row 001
+                                                    Best Match · Row 001
                                                 </span>
                                             </div>
                                         </td>
@@ -671,21 +662,25 @@
                                                     <x-heroicon-o-building-office-2 class="w-4 h-4 text-ink-muted" />
                                                 </div>
                                                 @endif
-                                                <div class="min-w-0">
-                                                    <p class="font-mono text-base font-bold text-ink tabular-nums truncate">
+                                                <div class="min-w-0" x-data="clipboard()">
+                                                    <p class="font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer"
+                                                       @click="copy('{{ $product->oem_number }}')"
+                                                       title="Copy OEM number">
                                                         {{ $product->oem_number }}
                                                     </p>
                                                     <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                                         {{ $manufacturer ? trans_field($manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand') }}
                                                     </p>
+                                                    <span x-show="copied" x-cloak x-transition
+                                                          class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                                 </div>
                                             </div>
                                         </td>
 
                                         {{-- Condition --}}
                                         <td class="px-4 py-4 text-center align-middle">
-                                            <span class="inline-flex items-center justify-center px-2 py-0.5 border border-ink
-                                                         font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-ink bg-paper">
+                                            <span class="inline-flex items-center justify-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm"
+                                                  style="background-color: {{ $condBg }}; color: {{ $condText }};">
                                                 {{ $condLabel }}
                                             </span>
                                         </td>
@@ -708,7 +703,7 @@
                                         {{-- Price --}}
                                         <td class="px-4 py-4 text-right align-middle">
                                             <p class="font-mono text-lg font-bold text-ink tabular-nums leading-none">
-                                                €{{ number_format($product->price, 2) }}
+                                                {{ format_price($product->price) }}
                                             </p>
                                         </td>
 
@@ -792,11 +787,12 @@
                                                 @endif
                                                 <div class="p-4 {{ $product->delivery_time ? 'border-rule border-b sm:border-b-0 sm:border-r' : 'border-rule border-b sm:border-b-0 sm:border-r' }}">
                                                     <p class="bp-spec text-ink-muted mb-2">Condition</p>
-                                                    <p class="font-mono text-sm font-bold text-ink">{{ $condLabel }}</p>
+                                                    <span class="inline-flex items-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm"
+                                                          style="background-color: {{ $condBg }}; color: {{ $condText }};">{{ $condLabel }}</span>
                                                 </div>
                                                 <div class="p-4">
                                                     <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
-                                                    <p class="font-mono text-sm font-bold tabular-nums text-ink">€{{ number_format($priceWithVat, 2) }}</p>
+                                                    <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($priceWithVat) }}</p>
                                                 </div>
                                             </div>
 
@@ -805,7 +801,7 @@
                                             <div class="mt-5 pt-4 border-t border-rule">
                                                 <div class="flex items-center gap-3 mb-3">
                                                     <x-heroicon-o-arrow-path class="w-3.5 h-3.5 text-amber-ink" />
-                                                    <span class="bp-spec text-amber-ink">§ Cross-references · {{ $totalRefs }}</span>
+                                                    <span class="bp-spec text-amber-ink">Cross-references · {{ $totalRefs }}</span>
                                                 </div>
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($crossRefs as $cross)
@@ -865,10 +861,10 @@
                         $logoPath     = $manufacturer?->logo?->file_path;
                         $priceWithVat = bcmul((string) $product->price, $vatMultiplier, 2);
                         $cCond = $product->condition;
-                        $condKey = $cCond instanceof \BackedEnum
-                            ? $cCond->value
-                            : (is_scalar($cCond) ? (string) $cCond : (string) \Illuminate\Support\enum_value($cCond, 'new'));
-                        $condLabel = $conditionLabelMap[$condKey] ?? ui_copy('search_condition_unknown', 'search.condition_unknown');
+                        $condKey = $cCond?->slug ?? 'new';
+                        $condLabel = $cCond?->name ?? 'New';
+                        $condBg = $cCond?->bg_color ?? '#DCFCE7';
+                        $condText = $cCond?->text_color ?? '#16A34A';
                         $crossRefs = $product->crossReferences ?? collect();
                         $rowNum = str_pad($loop->index + 1, 3, '0', STR_PAD_LEFT);
                         if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator) {
@@ -883,7 +879,7 @@
                         <div class="flex items-center gap-2 bg-amber/10 border-b border-amber px-4 py-2">
                             <span class="w-4 h-[2px] bg-amber"></span>
                             <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-ink">
-                                § Best Match
+                                Best Match
                             </span>
                         </div>
                         @endif
@@ -905,15 +901,21 @@
                                         <x-heroicon-o-building-office-2 class="w-4 h-4 text-ink-muted" />
                                     </div>
                                     @endif
-                                    <div class="min-w-0">
-                                        <p class="font-mono text-base font-bold text-ink tabular-nums truncate">{{ $product->oem_number }}</p>
+                                    <div class="min-w-0" x-data="clipboard()">
+                                        <p class="font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer"
+                                           @click="copy('{{ $product->oem_number }}')"
+                                           title="Copy OEM number">
+                                            {{ $product->oem_number }}
+                                        </p>
                                         <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                             {{ $manufacturer ? trans_field($manufacturer->name) : '—' }}
                                         </p>
+                                        <span x-show="copied" x-cloak x-transition
+                                              class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                     </div>
                                 </div>
-                                <span class="inline-flex items-center justify-center px-2 py-0.5 border border-ink
-                                             font-mono text-[9px] font-bold uppercase tracking-[0.22em] text-ink shrink-0">
+                                <span class="inline-flex items-center justify-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm shrink-0"
+                                      style="background-color: {{ $condBg }}; color: {{ $condText }};">
                                     {{ $condLabel }}
                                 </span>
                             </div>
@@ -934,7 +936,7 @@
 
                                 <div class="text-right">
                                     <p class="font-mono text-xl font-bold text-ink tabular-nums leading-none">
-                                        €{{ number_format($product->price, 2) }}
+                                        {{ format_price($product->price) }}
                                     </p>
                                     <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">
                                         {{ ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}
@@ -1026,14 +1028,14 @@
                                 @endif
                                 <div class="p-3 {{ !$product->delivery_time ? 'col-span-2' : '' }}">
                                     <p class="bp-spec text-ink-muted mb-1">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
-                                    <p class="font-mono text-xs font-bold tabular-nums text-ink">€{{ number_format($priceWithVat, 2) }}</p>
+                                    <p class="font-mono text-xs font-bold tabular-nums text-ink">{{ format_price($priceWithVat) }}</p>
                                 </div>
                             </div>
 
                             @if($crossRefs->isNotEmpty())
                             @php $refLimit = 4; $totalRefs = $crossRefs->count(); @endphp
                             <div class="pt-2">
-                                <p class="bp-spec text-amber-ink mb-3">§ Cross-references</p>
+                                <p class="bp-spec text-amber-ink mb-3">Cross-references</p>
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach($crossRefs as $cross)
                                     <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $cross->normalized_cross_oem ?? $cross->cross_oem_number]) }}"
@@ -1070,8 +1072,8 @@
             {{-- ── Inquiry CTA ─────────────────────────────────────────── --}}
             <div class="mt-12 border border-ink bg-paper">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-rule bg-ivory-alt">
-                    <span class="bp-spec text-amber-ink">§ 99 · {{ ui_copy('search_inquiry_title', 'search.inquiry_title') }}</span>
-                    <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    <span class="bp-spec text-amber-ink">99 · {{ ui_copy('search_inquiry_title', 'search.inquiry_title') }}</span>
+                    <span class="bp-spec-mono">
                         SLA · {{ (int) settings('part_inquiry.response_hours', 24) }} h
                     </span>
                 </div>
@@ -1103,12 +1105,12 @@
 
                     <div class="p-6 md:p-8 bg-ivory-alt/40 flex flex-col justify-center">
                         <button type="button"
-                                onclick="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
+                                x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
                                 class="bp-btn-primary w-full justify-center">
                             <x-heroicon-s-paper-airplane class="w-5 h-5" />
                             {{ ui_copy('search_inquiry_submit', 'search.inquiry_submit') }}
                         </button>
-                        <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted text-center">
+                        <p class="mt-4 bp-spec-mono text-center">
                             Secure · TLS 1.3 · Response within {{ (int) settings('part_inquiry.response_hours', 24) }} h
                         </p>
                     </div>

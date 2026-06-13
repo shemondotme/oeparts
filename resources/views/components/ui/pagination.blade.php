@@ -1,4 +1,4 @@
-@if ($paginator->hasPages())
+﻿@if ($paginator->hasPages())
     {{-- ══════════════════════════════════════════════════════════════
          INDUSTRIAL BLUEPRINT — Pagination Ledger
          ══════════════════════════════════════════════════════════════ --}}
@@ -49,7 +49,7 @@
 
             {{-- Range readout --}}
             <div class="flex items-center gap-4 px-5 border-r border-rule bg-ivory-alt min-w-[260px]">
-                <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber-ink">§ Range</span>
+                <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber-ink">Range</span>
                 <p class="font-mono text-[11px] tabular-nums tracking-[0.08em] uppercase text-ink-muted">
                     @if ($paginator->firstItem())
                         <span class="text-ink font-bold">{{ str_pad($paginator->firstItem(), 3, '0', STR_PAD_LEFT) }}</span>

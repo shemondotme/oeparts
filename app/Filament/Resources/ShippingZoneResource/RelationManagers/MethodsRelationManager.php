@@ -2,11 +2,15 @@
 
 namespace App\Filament\Resources\ShippingZoneResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables;
+use Filament\Tables\Actions;
 use Filament\Tables\Table;
 
 class MethodsRelationManager extends RelationManager
@@ -19,24 +23,37 @@ class MethodsRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Forms\Components\TextInput::make('name')
-                    ->label('Name (JSON)')
-                    ->helperText('e.g. {"en": "Standard Shipping", "de": "Standardversand"}')
-                    ->required(),
-                Forms\Components\Textarea::make('description')
-                    ->label('Description (JSON)')
-                    ->rows(2)
-                    ->nullable(),
+                Tabs::make('Locales')
+                    ->schema(
+                        collect(AdminUi::LOCALES)
+                            ->map(fn (string $label, string $code) => Tab::make($label)
+                                ->badge($code === 'en' ? 'Primary' : null)
+                                ->schema([
+                                    Forms\Components\TextInput::make("name.$code")
+                                        ->label('Method Name')
+                                        ->required($code === 'en')
+                                        ->maxLength(255),
+                                    Forms\Components\Textarea::make("description.$code")
+                                        ->label('Description')
+                                        ->rows(2)
+                                        ->nullable(),
+                                ]))
+                            ->values()
+                            ->all()
+                    )
+                    ->columnSpanFull(),
                 Forms\Components\TextInput::make('flat_rate')
                     ->label('Flat Rate (€)')
                     ->numeric()
                     ->required()
+                    ->minValue(0)
                     ->step(0.01)
                     ->prefix('€'),
                 Forms\Components\TextInput::make('free_shipping_threshold')
                     ->label('Free Shipping Threshold (€)')
                     ->numeric()
                     ->nullable()
+                    ->minValue(0)
                     ->step(0.01)
                     ->prefix('€')
                     ->helperText('Leave empty for no free shipping'),
@@ -58,40 +75,44 @@ class MethodsRelationManager extends RelationManager
                 Forms\Components\TextInput::make('sort_order')
                     ->label('Sort Order')
                     ->numeric()
-                    ->default(0),
+                    ->default(0)
+                    ->minValue(0),
             ]);
     }
 
     public function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Method')
-                    ->getStateUsing(fn ($record): string => is_array($record->name) ? ($record->name['en'] ?? $record->name[array_key_first($record->name)] ?? '—') : ($record->name ?? '—'))
+                    ->getStateUsing(fn ($record): string => AdminUi::localizedName($record->name))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('flat_rate')
                     ->label('Rate')
                     ->money('EUR')
+                    ->fontMono()
                     ->alignEnd(),
                 Tables\Columns\TextColumn::make('free_shipping_threshold')
                     ->label('Free Threshold')
                     ->money('EUR')
+                    ->fontMono()
                     ->alignEnd()
                     ->getStateUsing(fn ($record): string => $record->free_shipping_threshold ?: '—'),
-                Tables\Columns\TextColumn::make('estimated_days_min')
-                    ->label('Min Days')
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('estimated_days_max')
-                    ->label('Max Days')
-                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('estimated_days')
+                    ->label('Delivery')
+                    ->alignCenter()
+                    ->getStateUsing(fn ($record): string => "{$record->estimated_days_min}–{$record->estimated_days_max} days")
+                    ->badge()
+                    ->color('gray'),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sort')
+                    ->fontMono()
                     ->alignCenter()
                     ->sortable(),
             ])
@@ -99,15 +120,13 @@ class MethodsRelationManager extends RelationManager
                 Actions\CreateAction::make(),
             ])
             ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
+                ...AdminUi::recordActionsWithoutView(),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('sort_order', 'asc')
-            ->paginated(false);
+            ->defaultSort('sort_order', 'asc');
     }
 }

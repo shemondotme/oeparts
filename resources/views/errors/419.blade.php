@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('419 · Verification Expired'))
 
@@ -14,7 +14,7 @@
     $prev = url()->previous();
     $backUrl = ($prev && parse_url($prev, PHP_URL_HOST) === request()->getHost() && $prev !== url()->current())
         ? $prev
-        : route('frontend.home', ['lang' => $lang]);
+        : url('/'.$lang.'/');
 @endphp
 
 <div class="relative min-h-screen bg-ivory text-ink overflow-hidden">
@@ -37,7 +37,7 @@
             <div class="flex items-center gap-4 mb-4">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
                 <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">
-                    § Status · HTTP · 419
+                    Status · HTTP · 419
                 </span>
             </div>
             <h1 class="font-display font-extrabold text-ivory leading-[0.9] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
@@ -61,8 +61,8 @@
 
             {{-- Card header --}}
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                <span class="bp-spec text-amber-ink">§ Incident · Report</span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec text-amber-ink">Incident · Report</span>
+                <span class="bp-spec-mono">
                     {{ now()->format('Y-m-d H:i T') }}
                 </span>
             </div>
@@ -75,7 +75,7 @@
                         <x-heroicon-o-clock class="w-7 h-7 text-amber-ink" />
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="bp-spec text-amber-ink mb-1">§ Error · Code</p>
+                        <p class="bp-spec text-amber-ink mb-1">Error · Code</p>
                         <p class="font-display text-6xl md:text-7xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
                             4<span class="text-amber">1</span>9
                         </p>
@@ -110,7 +110,7 @@
 
                 {{-- Explanation block --}}
                 <div class="border border-rule bg-ivory-alt p-5 mb-8">
-                    <p class="bp-spec text-amber-ink mb-2">§ {{ __('What occurred') }}</p>
+                    <p class="bp-spec text-amber-ink mb-2">{{ __('What occurred') }}</p>
                     <p class="text-sm text-body leading-relaxed">
                         {{ __('For security, all forms submit session-based verification tokens (CSRF keys). Since your connection has remained idle, the session key expired. Reload the document to request a new cryptographic token.') }}
                     </p>
@@ -119,7 +119,7 @@
                 {{-- Action row --}}
                 <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <button type="button"
-                            onclick="window.location.reload();"
+                            x-on:click="window.location.reload();"
                             class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-ink border border-ink text-ivory
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                    hover:bg-amber hover:text-ink hover:border-amber transition-colors">
@@ -138,11 +138,11 @@
 
             {{-- Trust strip --}}
             <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
-                <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                     <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
                     {{ __('Automatic session protection') }}
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec-mono">
                     CSRF · verified
                 </span>
             </div>

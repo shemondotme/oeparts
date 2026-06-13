@@ -22,7 +22,8 @@ class SearchController extends Controller
     {
         $query = $request->query('q', '');
         $lang = (string) $request->query('lang', 'en');
-        if (! in_array($lang, ['en', 'de', 'lt', 'fr', 'es'], true)) {
+        $supportedLanguages = (array) settings('search.supported_languages', ['en', 'de', 'lt', 'fr', 'es']);
+        if (! in_array($lang, $supportedLanguages, true)) {
             $lang = 'en';
         }
         $minChars = (int) settings('search.min_chars', 3);
@@ -37,7 +38,8 @@ class SearchController extends Controller
         }
 
         // Rate limit autocomplete requests (30 per minute per IP)
-        if (!RateLimiter::attempt("search:autocomplete:{$request->ip()}", 30, function () {
+        $maxSearches = (int) settings('search.autocomplete_rate_limit', 30);
+        if (!RateLimiter::attempt("search:autocomplete:{$request->ip()}", $maxSearches, function () {
             return true;
         }, 60)) {
             throw new TooManyRequestsHttpException(60, 'Too many search requests. Please slow down.');

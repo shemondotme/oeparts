@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -12,10 +12,10 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § ACCOUNT · ACTIVATED
+                    ACCOUNT · ACTIVATED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
-                    Welcome to OeParts<span class="text-amber">.</span>
+                    {{ settings('email.welcome_subject', 'Welcome to OeParts') }}<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.welcome.greeting', ['name' => $user->name], $locale) }}
@@ -39,7 +39,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 12px 0; color: #9A5A00;">
-                    § GETTING STARTED
+                    GETTING STARTED
                 </p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; background-color: #F7F3E7;">
@@ -52,9 +52,9 @@
                                         <span class="font-mono" style="font-size: 14px; font-weight: bold; color: #0A1228;">01</span>
                                     </td>
                                     <td valign="top">
-                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">Search by OEM Number</strong>
+                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ settings('email.welcome_step1_title', 'Search by OEM Number') }}</strong>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                                            Enter any manufacturer part number to find exact matches and cross-references across 27 EU countries.
+                                            {{ settings('email.welcome_step1_body', 'Enter any manufacturer part number to find exact matches and cross-references across 27 EU countries.') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -70,9 +70,9 @@
                                         <span class="font-mono" style="font-size: 14px; font-weight: bold; color: #0A1228;">02</span>
                                     </td>
                                     <td valign="top">
-                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">Verify Supplier & Price</strong>
+                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ settings('email.welcome_step2_title', 'Verify Supplier & Price') }}</strong>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                                            Compare prices from verified distributors. All parts are guaranteed genuine with full warranty support.
+                                            {{ settings('email.welcome_step2_body', 'Compare prices from verified distributors. All parts are guaranteed genuine with full warranty support.') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -88,9 +88,9 @@
                                         <span class="font-mono" style="font-size: 14px; font-weight: bold; color: #0A1228;">03</span>
                                     </td>
                                     <td valign="top">
-                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">Track Your Order</strong>
+                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ settings('email.welcome_step3_title', 'Track Your Order') }}</strong>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                                            Monitor shipment status from dispatch to delivery via your account dashboard.
+                                            {{ settings('email.welcome_step3_body', 'Monitor shipment status from dispatch to delivery via your account dashboard.') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -116,7 +116,7 @@
         <tr>
             <td style="padding-top: 24px;">
                 <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    {{ trans('emails.welcome.support_text', [], $locale) ?: 'Need assistance? Our technical support team is available MON–FRI · 09:00–18:00 CET.' }}
+                    {{ trans('emails.welcome.support_text', [], $locale) ?: settings('contact.support_hours', 'Need assistance? Our technical support team is available MON–FRI · 09:00–18:00 CET.') }}
                 </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px;">
                     <a href="mailto:{{ settings('contact.email', 'info@oeparts.lt') }}" style="color: #9A5A00; text-decoration: underline; font-family: 'Courier New', Courier, monospace;">

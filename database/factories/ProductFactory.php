@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\ProductCondition;
+use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -33,7 +33,10 @@ class ProductFactory extends Factory
                 'en' => fake()->sentence(),
                 'de' => fake()->sentence(),
             ],
-            'condition' => fake()->randomElement([ProductCondition::New, ProductCondition::Used]),
+            'condition_id' => Condition::inRandomOrder()->first()?->id ?? Condition::firstOrCreate(
+                ['slug' => 'new'],
+                ['name' => 'New', 'bg_color' => '#ecfdf5', 'text_color' => '#065f46', 'is_active' => true]
+            )->id,
             'price' => fake()->numerify('###.##'),
             'delivery_time' => fake()->numerify('# days'),
             'moq' => fake()->numberBetween(1, 10),
@@ -65,10 +68,10 @@ class ProductFactory extends Factory
     /**
      * Set specific condition.
      */
-    public function condition(ProductCondition $condition): static
+    public function condition(int $conditionId): static
     {
         return $this->state(fn (array $attributes) => [
-            'condition' => $condition,
+            'condition_id' => $conditionId,
         ]);
     }
 }

@@ -22,7 +22,7 @@
             </div>
             <h3 class="font-semibold text-slate-800 mb-2">Visit Your Website</h3>
             <p class="text-sm text-muted mb-3">Check out your newly installed site.</p>
-            <a href="{{ url('/') }}" target="_blank" class="btn-outline w-full">
+            <a href="{{ url('/') }}" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200 w-full">
                 Go to Homepage
                 <x-heroicon-o-arrow-top-right-on-square class="w-4 h-4 ml-2" />
             </a>
@@ -34,7 +34,7 @@
             </div>
             <h3 class="font-semibold text-slate-800 mb-2">Admin Dashboard</h3>
             <p class="text-sm text-muted mb-3">Manage your site, products, and orders.</p>
-            <a href="{{ route('filament.admin.auth.login') }}" target="_blank" class="btn-primary w-full">
+            <a href="{{ route('filament.admin.auth.login') }}" target="_blank" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200 w-full">
                 Go to Admin
                 <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
             </a>

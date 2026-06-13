@@ -1,10 +1,14 @@
-{{-- Filament brand — Navy + amber; wordmark color from theme (sidebar vs topbar vs login) --}}
-<div class="fi-oeparts-brand flex min-w-0 items-center gap-3">
-    <span
-        class="fi-oeparts-brand-mark flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-sm font-bold tracking-tight text-[#0B3A68] shadow-lg ring-1 ring-white/20"
-        aria-hidden="true"
-    >OP</span>
-    <span class="fi-oeparts-brand-wordmark truncate text-lg font-bold tracking-tight">
-        OeParts
+<div class="fi-oeparts-brand flex items-center gap-2.5">
+    {{-- Monogram badge — visible always, prominent when sidebar collapsed --}}
+    <span class="fi-oeparts-brand-mark flex items-center justify-center w-8 h-8 rounded-lg font-display font-extrabold text-sm tracking-tight"
+          style="background: linear-gradient(135deg, var(--brand-mark-from), var(--brand-mark-to)); color: var(--brand-mark-text);">
+        OE
+    </span>
+    {{-- Full wordmark — hidden when sidebar collapsed --}}
+    <span class="fi-oeparts-brand-wordmark font-display font-extrabold text-xl tracking-tight"
+          style="color: var(--color-text-primary); letter-spacing: -0.03em;">
+        OEPARTS
+        <span class="inline-block w-1.5 h-1.5 rounded-full ml-0.5 align-middle"
+              style="background: var(--color-accent-500);"></span>
     </span>
 </div>

@@ -1,4 +1,4 @@
-@props(['normalizedQuery' => ''])
+﻿@props(['normalizedQuery' => ''])
 
 @php
     $lang = app()->getLocale();
@@ -83,6 +83,10 @@
             this.state = 'loading';
             this.errors = {};
             try {
+                const honeypotData = {};
+                document.querySelectorAll('[name^="my_name"], [name="valid_from"]').forEach(el => {
+                    honeypotData[el.name] = el.value;
+                });
                 const res = await fetch('{{ route('frontend.inquiry.store', ['lang' => $lang]) }}', {
                     method: 'POST',
                     headers: {
@@ -90,7 +94,7 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify(this.form)
+                    body: JSON.stringify({ ...this.form, ...honeypotData })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -193,7 +197,7 @@
                         <div class="flex items-center gap-2 mb-2">
                             <span class="inline-block w-6 h-[2px] bg-amber"></span>
                             <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber">
-                                § PART · INQUIRY · FORM-01
+                                PART · INQUIRY · FORM-01
                             </span>
                         </div>
                         <h2 id="part-inquiry-modal-title" class="font-display text-lg sm:text-xl font-black leading-[1.05] tracking-tight text-ivory">
@@ -272,7 +276,7 @@
             <div class="flex items-center justify-center gap-2 mb-4">
                 <span class="inline-block w-6 h-[2px] bg-amber"></span>
                 <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber-ink">
-                    § STATUS · TRANSMITTED
+                    STATUS · TRANSMITTED
                 </span>
                 <span class="inline-block w-6 h-[2px] bg-amber"></span>
             </div>
@@ -286,7 +290,7 @@
             <div class="mx-auto mt-6 max-w-md border border-ink bg-ivory-alt">
                 <div class="flex items-center justify-between px-4 py-2.5 border-b border-rule">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
-                        § Est. Response
+                        Est. Response
                     </span>
                     <x-heroicon-o-clock class="h-4 w-4 text-amber-ink" />
                 </div>
@@ -304,7 +308,7 @@
             <div class="mx-auto mt-6 max-w-sm text-left border border-rule bg-paper">
                 <div class="px-4 py-2 border-b border-rule bg-ivory-alt">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
-                        § Next Protocol
+                        Next Protocol
                     </span>
                 </div>
                 <ol class="divide-y divide-rule">
@@ -337,6 +341,7 @@
         {{-- ═══════════ FORM ═══════════ --}}
         <form x-show="state !== 'success'" @submit.prevent="submit" class="flex min-h-0 flex-1 flex-col">
             <input type="text" name="website" x-model="form.website" class="hidden" tabindex="-1" autocomplete="off">
+            @honeypot
 
             <div x-ref="scrollArea" class="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-paper">
                 <div class="relative px-5 py-6 sm:px-7 sm:py-7">
@@ -368,7 +373,7 @@
                                     </span>
                                     <div class="flex-1 min-w-0">
                                         <div class="flex items-center gap-2">
-                                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 01</span>
+                                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">01</span>
                                             <p class="text-sm font-bold text-ink leading-tight">{{ __('part_inquiry.section_part_title') }}</p>
                                         </div>
                                         <p class="text-xs text-body mt-0.5">{{ __('part_inquiry.section_part_subtitle') }}</p>
@@ -474,7 +479,7 @@
                                         <x-heroicon-o-plus class="h-4 w-4" />
                                     </span>
                                     <div class="min-w-0">
-                                        <p class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 02 · OPTIONAL</p>
+                                        <p class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">02 · OPTIONAL</p>
                                         <p class="text-sm font-bold text-ink mt-0.5">{{ __('part_inquiry.button_add_vehicle') }}</p>
                                     </div>
                                 </div>
@@ -505,7 +510,7 @@
                                         </span>
                                         <div class="min-w-0">
                                             <div class="flex items-center gap-2">
-                                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 02A</span>
+                                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">02A</span>
                                                 <p class="text-sm font-bold text-ink leading-tight">{{ __('part_inquiry.vehicle_title') }}</p>
                                             </div>
                                             <p class="text-xs text-body mt-0.5">{{ __('part_inquiry.vehicle_subtitle') }}</p>
@@ -578,7 +583,7 @@
                                         </span>
                                         <div class="min-w-0">
                                             <div class="flex items-center gap-2">
-                                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">§ 02B</span>
+                                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-amber-ink">02B</span>
                                                 <p class="text-sm font-bold text-ink leading-tight">{{ __('part_inquiry.timing_title') }}</p>
                                             </div>
                                             <p class="text-xs text-body mt-0.5">{{ __('part_inquiry.timing_subtitle') }}</p>
@@ -706,7 +711,7 @@
                              class="flex items-start gap-3 px-4 py-3 border border-red-500 bg-red-50">
                             <x-heroicon-o-exclamation-triangle class="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
                             <div class="flex-1 min-w-0">
-                                <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-red-700 mb-0.5">§ Error · Validation</p>
+                                <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-red-700 mb-0.5">Error · Validation</p>
                                 <p class="text-sm text-red-800" x-text="Object.values(errors)[0]?.[0] ?? validationFallback"></p>
                             </div>
                         </div>

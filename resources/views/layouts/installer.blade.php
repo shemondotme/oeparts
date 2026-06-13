@@ -15,7 +15,7 @@
 <div class="min-h-full flex flex-col">
 
     {{-- Installer header --}}
-    <header class="bg-navy py-4 px-6 shadow-sm">
+    <header class="py-4 px-6" style="background-color: var(--color-navy, #1e293b); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);">
         <div class="max-w-3xl mx-auto flex items-center gap-3">
             <span class="font-display font-bold text-xl text-white">OeParts</span>
             <span class="text-xs text-amber font-medium uppercase tracking-widest">Installer</span>
@@ -24,7 +24,7 @@
 
     {{-- Step progress --}}
     @isset($currentStep)
-    <div class="bg-white border-b border-slate-200">
+    <div class="bg-white border-b" style="border-color: var(--color-border-subtle, #e2e8f0);">
         <div class="max-w-3xl mx-auto px-6 py-4">
             <div class="flex items-center">
                 @foreach([
@@ -38,19 +38,21 @@
                 <div class="flex items-center {{ $loop->last ? '' : 'flex-1' }}">
                     <div class="flex flex-col items-center">
                         <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-                            {{ $step < $currentStep ? 'bg-green-500 text-white' : ($step === $currentStep ? 'bg-navy text-white' : 'bg-slate-200 text-muted') }}">
+                            {{ $step < $currentStep ? 'text-white' : ($step === $currentStep ? 'text-white' : '') }}"
+                            style="{{ $step < $currentStep ? 'background-color: var(--color-success, #22c55e);' : ($step === $currentStep ? 'background-color: var(--color-navy, #1e293b);' : 'background-color: var(--color-bg-muted, #e2e8f0); color: var(--color-text-muted, #64748b);') }}">
                             @if($step < $currentStep)
                                 <x-heroicon-o-check class="w-4 h-4" />
                             @else
                                 {{ $step }}
                             @endif
                         </div>
-                        <span class="mt-1 text-xs font-medium {{ $step === $currentStep ? 'text-navy' : 'text-muted' }} hidden sm:block">
+                        <span class="mt-1 text-xs font-medium hidden sm:block"
+                            style="{{ $step === $currentStep ? 'color: var(--color-navy, #1e293b);' : 'color: var(--color-text-muted, #64748b);' }}">
                             {{ $label }}
                         </span>
                     </div>
                     @if(!$loop->last)
-                    <div class="flex-1 h-0.5 mx-2 {{ $step < $currentStep ? 'bg-green-500' : 'bg-slate-200' }}"></div>
+                    <div class="flex-1 h-0.5 mx-2" style="{{ $step < $currentStep ? 'background-color: var(--color-success, #22c55e);' : 'background-color: var(--color-border-subtle, #e2e8f0);' }}"></div>
                     @endif
                 </div>
                 @endforeach

@@ -21,11 +21,11 @@
     @if($title || isset($actions))
         <div class="bp-card-header flex items-start justify-between gap-4">
             <div class="min-w-0">
-                <h2 class="truncate font-display text-[0.9375rem] font-semibold tracking-tight text-slate-900">
+                <h2 class="truncate font-display text-[0.9375rem] font-semibold tracking-tight" style="color: var(--color-text-primary);">
                     {{ $title }}
                 </h2>
                 @if($description)
-                    <p class="mt-0.5 text-xs text-slate-500">{{ $description }}</p>
+                    <p class="mt-0.5 text-xs" style="color: var(--color-text-muted);">{{ $description }}</p>
                 @endif
             </div>
             @isset($actions)

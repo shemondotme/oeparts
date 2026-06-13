@@ -41,7 +41,7 @@ Route::get('/', function (Request $request) {
     $lang = detectBrowserLanguage($request);
 
     return redirect("/{$lang}/");
-});
+})->name('root');
 
 // Login route for auth middleware redirect (outside language prefix)
 Route::get('/login', function (Request $request) {
@@ -54,10 +54,12 @@ Route::get('/login', function (Request $request) {
 // Webhook endpoints (no language prefix, CSRF exempt)
 Route::post('/webhooks/airwallex', [WebhookController::class, 'handleAirwallex'])
     ->name('webhooks.airwallex')
-    ->withoutMiddleware(['web', 'verify.csrf']);
+    ->middleware('throttle:webhook')
+    ->withoutMiddleware(['web', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 Route::post('/webhooks/bank-transfer-confirm', [WebhookController::class, 'handleBankTransferConfirm'])
     ->name('webhooks.bank-transfer-confirm')
-    ->withoutMiddleware(['web', 'verify.csrf']);
+    ->middleware('throttle:webhook')
+    ->withoutMiddleware(['web', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 
 // Robots.txt (dynamic)
 Route::get('/robots.txt', [RobotsController::class, 'index'])
@@ -105,17 +107,25 @@ Route::prefix('{lang}')
         Route::get('/', [HomeController::class, 'index'])->name('frontend.home');
 
         // Authentication routes (Sprint 10)
-        Route::post('/login', [AuthController::class, 'login'])->name('frontend.auth.login');
-        Route::post('/register', [AuthController::class, 'register'])->name('frontend.auth.register');
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('frontend.auth.login');
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register')->name('frontend.auth.register');
         Route::post('/logout', [AuthController::class, 'logout'])->name('frontend.auth.logout');
-        Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->name('frontend.auth.verify-otp');
-        Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->name('frontend.auth.resend-otp');
+        Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:login')->name('frontend.auth.verify-otp');
+        Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->middleware('throttle:login')->name('frontend.auth.resend-otp');
 
         // Password reset routes
         Route::get('/reset-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('frontend.password.request');
-        Route::post('/reset-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('frontend.password.email');
+        Route::post('/reset-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:password-reset')->name('frontend.password.email');
         Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('frontend.password.reset');
-        Route::post('/reset-password/update', [ResetPasswordController::class, 'reset'])->name('frontend.password.update');
+        Route::post('/reset-password/update', [ResetPasswordController::class, 'reset'])->middleware('throttle:password-reset')->name('frontend.password.update');
+
+        // Social login routes
+        Route::get('/auth/{provider}/redirect', [\App\Http\Controllers\Frontend\SocialAuthController::class, 'redirect'])
+            ->whereIn('provider', ['google', 'facebook'])
+            ->name('social.redirect');
+        Route::get('/auth/{provider}/callback', [\App\Http\Controllers\Frontend\SocialAuthController::class, 'callback'])
+            ->whereIn('provider', ['google', 'facebook'])
+            ->name('social.callback');
 
         // Account routes (protected)
         Route::middleware(['auth:web'])->group(function () {
@@ -153,6 +163,7 @@ Route::prefix('{lang}')
 
         // Autocomplete endpoint
         Route::get('/search/autocomplete', [SearchController::class, 'autocomplete'])
+            ->middleware('throttle:' . settings('search.autocomplete_rate_limit', 60) . ',1')
             ->name('frontend.search.autocomplete');
 
         // Human-readable HTML sitemap (the machine-readable /sitemap.xml lives at root)
@@ -178,7 +189,9 @@ Route::prefix('{lang}')
         Route::get('/cart', [CartController::class, 'index'])->name('frontend.cart.index');
         Route::get('/cart/summary', [CartController::class, 'summary'])->name('frontend.cart.summary');
         Route::get('/cart/preview', [CartController::class, 'preview'])->name('frontend.cart.preview');
-        Route::post('/cart/add', [CartController::class, 'add'])->name('frontend.cart.add');
+        Route::post('/cart/add', [CartController::class, 'add'])
+            ->middleware('throttle:30,1')
+            ->name('frontend.cart.add');
         Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('frontend.cart.remove');
         Route::put('/cart/update/{item}', [CartController::class, 'update'])->name('frontend.cart.update');
         Route::post('/cart/merge', [CartController::class, 'merge'])->name('frontend.cart.merge');
@@ -187,7 +200,7 @@ Route::prefix('{lang}')
 
         // Checkout flow (Sprint 8)
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('frontend.checkout');
-        Route::post('/checkout', [CheckoutController::class, 'store'])->name('frontend.checkout.store');
+        Route::post('/checkout', [CheckoutController::class, 'store'])->middleware('throttle:30,1')->name('frontend.checkout.store');
         Route::get('/checkout/thank-you/{order}', [CheckoutController::class, 'thankYou'])->name('frontend.checkout.thank-you');
 
         // Payment routes (Sprint 9)
@@ -205,8 +218,12 @@ Route::prefix('{lang}')
         Route::delete('/coupon/remove', [CouponAjaxController::class, 'remove'])->name('frontend.coupon.remove');
 
         // Newsletter subscription
-        Route::post('/newsletter/subscribe', [App\Http\Controllers\Frontend\NewsletterController::class, 'subscribe'])->name('frontend.newsletter.subscribe');
-        Route::get('/newsletter/unsubscribe/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'unsubscribe'])->name('frontend.newsletter.unsubscribe');
+        Route::post('/newsletter/subscribe', [App\Http\Controllers\Frontend\NewsletterController::class, 'subscribe'])
+            ->middleware('honeypot')
+            ->name('frontend.newsletter.subscribe');
+        Route::get('/newsletter/unsubscribe/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'unsubscribe'])
+            ->middleware('throttle:10,1')
+            ->name('frontend.newsletter.unsubscribe');
 
         // Blog
         Route::get('/blog', [BlogController::class, 'index'])->name('frontend.blog.index');
@@ -214,10 +231,14 @@ Route::prefix('{lang}')
 
         // Contact
         Route::get('/contact', [ContactController::class, 'show'])->name('frontend.contact.show');
-        Route::post('/contact/submit', [ContactController::class, 'submit'])->name('frontend.contact.submit');
+        Route::post('/contact/submit', [ContactController::class, 'submit'])
+            ->middleware(['honeypot', 'throttle:contact'])
+            ->name('frontend.contact.submit');
 
         // Part Inquiry (from search results page)
-        Route::post('/inquiry', [PartInquiryController::class, 'store'])->name('frontend.inquiry.store');
+        Route::post('/inquiry', [PartInquiryController::class, 'store'])
+            ->middleware(['honeypot', 'throttle:' . settings('part_inquiry.rate_limit_per_hour', 10) . ',1'])
+            ->name('frontend.inquiry.store');
 
         // CMS catch-all slug — MUST be defined LAST
         Route::get('/{slug}', [PageController::class, 'show'])
@@ -239,7 +260,7 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         }
 
         return response()->download($path, $filename)->deleteFileAfterSend(true);
-    })->name('export.download')->where('filename', '.*\.csv$');
+    })->name('export.download')->where('filename', '[a-zA-Z0-9_\-]+\.csv$')->middleware('auth.admin');
 
     // ── WYSIWYG Editor (Feature 2) ───────────────────────────────────────
     Route::prefix('editor')->name('editor.')->middleware('auth.admin')->group(function () {
@@ -269,4 +290,25 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
                 ->name('destroy');
         });
     });
+
+    // ── Invoice PDF Download ─────────────────────────────────────────────
+    Route::get('/orders/{order}/invoice', [\App\Http\Controllers\Admin\InvoiceController::class, 'download'])
+        ->name('orders.invoice')
+        ->middleware('auth.admin');
+
+    // ── Backup Download ─────────────────────────────────────────────────
+    Route::get('/backups/{filename}', function (string $filename) {
+        $admin = auth('admin')->user();
+        if (!$admin || !$admin->hasRole('super_admin')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $path = storage_path('app/backups/' . basename($filename));
+
+        if (!file_exists($path)) {
+            abort(404, 'Backup file not found.');
+        }
+
+        return response()->download($path, basename($filename));
+    })->name('backup.download')->where('filename', '[a-zA-Z0-9_\-]+\.zip$')->middleware(['auth.admin', 'throttle:export-download']);
 });

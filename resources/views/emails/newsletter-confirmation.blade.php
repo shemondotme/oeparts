@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -12,13 +12,13 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § SUBSCRIPTION · VERIFY
+                    SUBSCRIPTION · VERIFY
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     Confirm your subscription<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
-                    {{ trans('emails.newsletter_confirmation.greeting', [], $locale) ?: 'You are one step away from joining the OeParts Journal.' }}
+                    {{ trans('emails.newsletter_confirmation.greeting', [], $locale) ?: settings('email.newsletter_greeting', 'You are one step away from joining the OeParts Journal.') }}
                 </p>
             </td>
         </tr>
@@ -27,7 +27,7 @@
         <tr>
             <td style="padding: 24px 0;">
                 <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 24px; color: #0A1228;">
-                    {{ trans('emails.newsletter_confirmation.body', [], $locale) ?: 'We send technical updates, new arrival alerts, and industry insights. No spam, no fluff. Just genuine parts intelligence.' }}
+                    {{ trans('emails.newsletter_confirmation.body', [], $locale) ?: settings('email.newsletter_body', 'We send technical updates, new arrival alerts, and industry insights. No spam, no fluff. Just genuine parts intelligence.') }}
                 </p>
                 <p style="margin: 0; font-size: 15px; line-height: 24px; color: #0A1228;">
                     Please click the button below to verify your email address and activate your subscription.
@@ -50,7 +50,7 @@
         <tr>
             <td style="padding-top: 24px;">
                 <p style="margin: 0 0 8px 0; font-size: 13px; line-height: 18px; color: #4E5A74; text-align: center;">
-                    This link will expire in 24 hours.
+                    {{ settings('email.newsletter_expiry', 'This link will expire in 24 hours.') }}
                 </p>
                 <p style="margin: 0; font-size: 13px; line-height: 18px; color: #4E5A74; text-align: center;">
                     If you did not request this subscription, you can safely ignore this email.

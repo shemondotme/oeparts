@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang     = app()->getLocale();
@@ -58,7 +58,7 @@
             <header class="col-span-12 lg:col-span-8">
                 <div class="flex items-center gap-4 mb-8">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ Directory · Manufacturers</span>
+                    <span class="bp-spec text-amber-ink">Directory · Manufacturers</span>
                 </div>
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
@@ -108,10 +108,10 @@
             </aside>
         </div>
 
-        {{-- ═══ §01 · Alphabet jump ═══ --}}
+        {{-- ═══ 01 · Alphabet jump ═══ --}}
         <section class="mb-12 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-5">
-                <span class="bp-spec text-ink">§ 01 · Jump · By letter</span>
+                <span class="bp-spec text-ink">01 · Jump · By letter</span>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     A–Z · this page
                 </span>
@@ -136,10 +136,10 @@
             </div>
         </section>
 
-        {{-- ═══ §02 · A-Z ledger ═══ --}}
+        {{-- ═══ 02 · A-Z ledger ═══ --}}
         <section class="mb-10 bp-rise bp-rise-delay-3">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                <span class="bp-spec text-ink">§ 02 · Ledger · Alphabetical</span>
+                <span class="bp-spec text-ink">02 · Ledger · Alphabetical</span>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ $manufacturers->count() }} {{ __('on page') }}
                 </span>
@@ -172,8 +172,8 @@
                                 <span class="font-display text-5xl font-extrabold leading-none text-ink tracking-[-0.03em]">
                                     {{ $letter }}
                                 </span>
-                                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted pb-2">
-                                    §{{ str_pad(array_search($letter, array_keys($grouped->toArray())) + 1, 2, '0', STR_PAD_LEFT) }} · {{ $brands->count() }} {{ Str::plural(__('brand'), $brands->count()) }}
+                                <span class="bp-spec-mono pb-2">
+                                    {{ str_pad(array_search($letter, array_keys($grouped->toArray())) + 1, 2, '0', STR_PAD_LEFT) }} · {{ $brands->count() }} {{ Str::plural(__('brand'), $brands->count()) }}
                                 </span>
                             </div>
 
@@ -225,10 +225,10 @@
             </div>
         @endif
 
-        {{-- ═══ §03 · Can't find brand CTA ═══ --}}
+        {{-- ═══ 03 · Can't find brand CTA ═══ --}}
         <section class="mt-16 bp-rise bp-rise-delay-5">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">§ 03 · Fallback · Search</span>
+                <span class="bp-spec text-ink">03 · Fallback · Search</span>
             </div>
             <div class="grid grid-cols-12 border-x border-b border-ink bg-paper">
                 <div class="col-span-12 md:col-span-8 p-6 sm:p-10 md:border-r md:border-rule">
@@ -251,7 +251,7 @@
                     </a>
                 </div>
                 <div class="col-span-12 md:col-span-4 p-6 sm:p-8 bg-ivory-alt">
-                    <p class="bp-spec text-amber-ink mb-4">§ {{ __('Quick tips') }}</p>
+                    <p class="bp-spec text-amber-ink mb-4">{{ __('Quick tips') }}</p>
                     <ul class="space-y-3 text-sm text-body">
                         <li class="flex items-start gap-2.5">
                             <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] text-ink-muted mt-1">01</span>

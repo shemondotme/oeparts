@@ -29,7 +29,9 @@ class ProcessCsvImport implements ShouldQueue
         private readonly string $storagePath,
         private readonly int    $adminId,
         private readonly bool   $updateExisting,
-    ) {}
+    ) {
+        $this->onQueue('default');
+    }
 
     public function handle(ProductImportService $service): void
     {

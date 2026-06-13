@@ -5,20 +5,6 @@ namespace App\Providers\Filament;
 use App\Filament\Clusters\Reports;
 use App\Filament\Clusters\Settings;
 use App\Filament\Pages\Dashboard;
-use App\Filament\Widgets\CheckoutDropoffChart;
-use App\Filament\Widgets\CustomerGrowthChart;
-use App\Filament\Widgets\DashboardAlerts;
-use App\Filament\Widgets\DashboardKpiStats;
-use App\Filament\Widgets\FailedSearchesWidget;
-use App\Filament\Widgets\HealthStrip;
-use App\Filament\Widgets\OrderStatusDistribution;
-use App\Filament\Widgets\PaymentMethodSplit;
-use App\Filament\Widgets\RecentActivityLog;
-use App\Filament\Widgets\RecentOrdersList;
-use App\Filament\Widgets\RevenueChart;
-use App\Filament\Widgets\SalesByCountryChart;
-use App\Filament\Widgets\TopManufacturersRevenue;
-use App\Filament\Widgets\TopSearchedOems;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -36,7 +22,9 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Session\Middleware\AuthenticateSession;
+use Illuminate\Support\Facades\View;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use pxlrbt\FilamentSpotlight\SpotlightPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -47,28 +35,60 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->authGuard('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\CustomLogin::class)
+            ->databaseNotifications()
             ->simplePageMaxContentWidth(Width::Medium)
             ->colors([
-                'primary' => Color::hex('#0B3A68'),
+                'primary' => Color::hex('#0A1228'),
                 'warning' => Color::hex('#F59E0B'),
                 'success' => Color::hex('#10B981'),
                 'danger'  => Color::hex('#EF4444'),
-                'info'    => Color::hex('#3B82F6'),
-                'gray'    => Color::hex('#64748B'),
+                'info'    => Color::hex('#0A1228'),
+                'gray'    => Color::Stone,
             ])
-            ->font('Inter')
+            ->font('Geist Sans')
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn (): string => Blade::render('<x-admin.skip-nav /><x-admin.aria-enhancer />'),
+            )
+            ->renderHook(
+                PanelsRenderHook::SIMPLE_LAYOUT_START,
+                fn (): string => view('filament.login-banner')->render(),
+            )
             ->renderHook(
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): string => Blade::render("@vite('resources/css/filament/admin/theme.css')"),
             )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render("@vite('resources/js/filament/admin/dashboard-canvas.js')"),
+            )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                // Login.js only on unauthenticated (simple-layout) pages
+                fn (): string => ! filament()->auth()->check()
+                    ? Blade::render("@vite('resources/js/filament/admin/login.js')")
+                    : '',
+            )
+            // TOPBAR_END, SIDEBAR_NAV_START, SIDEBAR_FOOTER render hooks removed:
+            // env badge + theme toggle are now inlined in livewire/topbar.blade.php (Zone C)
+            // sidebar search moved to topbar Zone B (Spotlight)
+            // sidebar footer is inlined in livewire/sidebar.blade.php rail footer
+            ->renderHook(
+                PanelsRenderHook::FOOTER,
+                fn (): string => Blade::render('<x-admin.loading-bar /><x-admin.toast /><x-admin.keyboard-shortcuts />'),
+            )
             ->brandName('OeParts')
             ->brandLogo(fn () => view('filament.brand'))
+            ->brandLogoHeight('2.5rem')
             ->favicon(asset('favicon.ico'))
-            ->darkMode(true)
+            ->unsavedChangesAlerts()
             ->profile(isSimple: false)
-            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('3.5rem') // Rail-only width; flyout panel is position:absolute
             ->spa()
+            ->plugins([
+                SpotlightPlugin::make(),
+            ])
             ->navigationGroups([
                 NavigationGroup::make('Commerce')
                     ->icon('heroicon-o-shopping-bag')
@@ -97,22 +117,6 @@ class AdminPanelProvider extends PanelProvider
                 Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
-            ->widgets([
-                DashboardKpiStats::class,
-                DashboardAlerts::class,
-                RevenueChart::class,
-                RecentOrdersList::class,
-                TopSearchedOems::class,
-                TopManufacturersRevenue::class,
-                FailedSearchesWidget::class,
-                CheckoutDropoffChart::class,
-                CustomerGrowthChart::class,
-                SalesByCountryChart::class,
-                OrderStatusDistribution::class,
-                PaymentMethodSplit::class,
-                RecentActivityLog::class,
-                HealthStrip::class,
-            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

@@ -18,7 +18,12 @@
         "filament/filament": "^5.6",
         "flowframe/laravel-trend": "*",
         "laravel/framework": "^11.31",
+        "laravel/socialite": "^5.27",
         "laravel/tinker": "^2.9",
+        "mews/purifier": "*",
+        "pragmarx/google2fa-laravel": "^3.0",
+        "pxlrbt/filament-spotlight": "*",
+        "spatie/laravel-honeypot": "*",
         "spatie/laravel-permission": "^6.0"
     },
     "require-dev": {

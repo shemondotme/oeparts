@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -6,7 +6,7 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0;">
-                    § SECURITY · VERIFICATION
+                    SECURITY · VERIFICATION
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     Verify your identity<span class="text-amber">.</span>
@@ -21,7 +21,7 @@
                     {{ trans('emails.otp.body', [], $locale) }}
                 </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    This code is valid for a short period. Do not share it with anyone.
+                    {{ settings('email.otp_warning', 'This code is valid for a short period. Do not share it with anyone.') }}
                 </p>
             </td>
         </tr>

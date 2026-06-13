@@ -3,14 +3,18 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\MediaFileResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\MediaFile;
 use Filament\Forms;
 use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Support\Enums\FontWeight;
 
 class MediaFileResource extends Resource
 {
@@ -40,55 +44,90 @@ class MediaFileResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('File Details')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('file_name')
-                            ->label('File Name')
-                            ->required()
-                            ->maxLength(255),
-                        Forms\Components\TextInput::make('alt_text')
-                            ->label('Alt Text')
-                            ->maxLength(255)
-                            ->nullable()
-                            ->helperText('For accessibility and SEO'),
-                        Forms\Components\TextInput::make('caption')
-                            ->label('Caption')
-                            ->maxLength(255)
-                            ->nullable(),
-                        Forms\Components\TextInput::make('file_url')
-                            ->label('URL')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('mime_type')
-                            ->label('MIME Type')
-                            ->disabled()
-                            ->dehydrated(false),
-                        Forms\Components\TextInput::make('size')
-                            ->label('Size')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1) . ' KB' : '—'),
-                    ])->columns(2),
+                        // ─── Main column ──────────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('File Info')
+                                    ->icon('heroicon-o-photo')
+                                    ->description('Metadata for this media file used across the platform.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('file_name')
+                                            ->label('File Name')
+                                            ->placeholder('e.g. brake-pad-diagram.jpg')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->helperText('Descriptive name for this file. Used for identification.'),
+                                        Forms\Components\TextInput::make('alt_text')
+                                            ->label('Alt Text')
+                                            ->placeholder('e.g. Diagram showing brake pad thickness measurement')
+                                            ->maxLength(255)
+                                            ->nullable()
+                                            ->helperText('Describe the image for screen readers and search engines. Important for accessibility and SEO.'),
+                                        Forms\Components\TextInput::make('caption')
+                                            ->label('Caption')
+                                            ->placeholder('e.g. Brake pad thickness measurement guide')
+                                            ->maxLength(255)
+                                            ->nullable()
+                                            ->helperText('Optional caption text shown beneath the media file on the storefront.'),
+                                    ]),
+                            ]),
+
+                        // ─── Sidebar column ───────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('File Details')
+                                    ->icon('heroicon-o-document-text')
+                                    ->description('Technical information about this uploaded file.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('file_url')
+                                            ->label('File URL')
+                                            ->disabled()
+                                            ->dehydrated(false)
+                                            ->copyable()
+                                            ->copyMessage('URL copied')
+                                            ->helperText('Full URL to access this file. Click the copy icon to copy.'),
+                                        Forms\Components\TextInput::make('mime_type')
+                                            ->label('MIME Type')
+                                            ->disabled()
+                                            ->dehydrated(false)
+                                            ->helperText('The file format type (e.g. image/jpeg, application/pdf).'),
+                                        Forms\Components\TextInput::make('size')
+                                            ->label('File Size')
+                                            ->disabled()
+                                            ->dehydrated(false)
+                                            ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1) . ' KB' : '—')
+                                            ->helperText('File size in kilobytes.'),
+                                    ]),
+                            ]),
+                    ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
+            ->modifyQueryUsing(fn ($query) => $query->with('uploader'))
             ->columns([
                 Tables\Columns\ImageColumn::make('file_url')
                     ->label('Preview')
-                    ->height(60)
-                    ->width(60)
+                    ->height(50)
+                    ->width(50)
                     ->square(),
                 Tables\Columns\TextColumn::make('file_name')
-                    ->label('File')
+                    ->label('File Name')
                     ->searchable()
-                    ->limit(30),
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->limit(40),
                 Tables\Columns\TextColumn::make('mime_type')
                     ->label('Type')
                     ->badge()
+                    ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('size')
                     ->label('Size')
@@ -96,14 +135,16 @@ class MediaFileResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('alt_text')
                     ->label('Alt Text')
-                    ->limit(40)
+                    ->placeholder('—')
+                    ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('uploader.name')
                     ->label('Uploaded By')
+                    ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Uploaded')
-                    ->dateTime()
+                    ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -115,20 +156,27 @@ class MediaFileResource extends Resource
                         'application' => 'Documents',
                         'video'  => 'Video',
                     ])
-                    ->query(fn ($query, $data): mixed => ($data['value'] ?? null) ? $query->where('mime_type', 'like', "{$data['value']}/%") : $query),
+                    ->query(fn ($query, $data): mixed => ($data['value'] ?? null) ? $query->where('mime_type', 'like', "{$data['value']}/%") : $query)
+                    ->helperText('Filter by image, document, or video files.'),
             ])
-            ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
+            ->actions(AdminUi::recordActionsWithoutView())
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Media Files', [
+                        'file_name' => 'File Name',
+                        'mime_type' => 'Type',
+                        'size' => 'Size',
+                        'alt_text' => 'Alt Text',
+                        'uploader.name' => 'Uploaded By',
+                        'created_at' => 'Uploaded',
+                    ]),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->emptyStateIcon('heroicon-o-photo')
+            ->emptyStateHeading('No media files uploaded yet')
+            ->emptyStateDescription('Media files uploaded through products, categories, blog posts, and pages will appear here.');
     }
 
     public static function getRelations(): array
@@ -153,4 +201,10 @@ class MediaFileResource extends Resource
     {
         return null;
     }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['file_name', 'alt_text'];
+    }
 }
+

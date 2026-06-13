@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -12,10 +12,10 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § ORDER · CONFIRMED
+                    ORDER · CONFIRMED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
-                    Thank you for your order<span class="text-amber">.</span>
+                    {{ settings('email.order_confirmation_subject', 'Thank you for your order') }}<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.order_confirmation.greeting', ['name' => $order->shipping_name], $locale) }}
@@ -87,7 +87,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § DELIVERING TO
+                    DELIVERING TO
                 </p>
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; background-color: #FFFFFF;">
                     <tr>
@@ -111,7 +111,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 12px 0; color: #9A5A00;">
-                    § ITEM MANIFEST
+                    ITEM MANIFEST
                 </p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; border-collapse: collapse;">

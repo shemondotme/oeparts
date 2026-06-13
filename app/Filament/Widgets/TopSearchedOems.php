@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\ProductResource;
 use App\Models\SearchLog;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -10,11 +11,24 @@ use Illuminate\Support\Facades\DB;
 
 class TopSearchedOems extends TableWidget
 {
-    protected static ?int $sort = -16;
+    public function getDescription(): ?string
+    {
+        return 'Most popular search queries';
+    }
 
-    protected static ?string $heading = 'Top Searched OEMs (7 days)';
+    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
 
-    protected static ?string $maxWidth = '1/2';
+    protected ?string $pollingInterval = '120s';
+
+    protected static ?int $sort = -33;
+
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+
+    public function getHeading(): string
+    {
+        return 'Top Searched OEMs (' . $this->periodLabel() . ')';
+    }
 
     public function table(Table $table): Table
     {
@@ -22,7 +36,7 @@ class TopSearchedOems extends TableWidget
             ->query(
                 SearchLog::query()
                     ->select('search_query', DB::raw('COUNT(*) as search_count'))
-                    ->where('created_at', '>=', now()->subDays(7))
+                    ->where('created_at', '>=', $this->periodStart())
                     ->groupBy('search_query')
                     ->orderByDesc('search_count')
                     ->limit(8)
@@ -36,6 +50,13 @@ class TopSearchedOems extends TableWidget
                     ->label('Searches')
                     ->sortable()
                     ->alignCenter(),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('search')
+                    ->icon('heroicon-o-magnifying-glass')
+                    ->color('gray')
+                    ->url(fn ($record): string => ProductResource::getUrl('index', ['tableSearch' => $record->search_query]))
+                    ->openUrlInNewTab(),
             ])
             ->searchable(false)
             ->paginated(false);

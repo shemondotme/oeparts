@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\BlogPostResource\RelationManagers;
 
 use App\Models\BlogTag;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -39,8 +40,7 @@ class TagsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('name')
+        return AdminUi::configureTable($table)->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Tag Name')

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class InvoiceService
@@ -12,37 +14,55 @@ class InvoiceService
     /**
      * Generate PDF invoice for an order.
      *
+    /**
+     * Generate PDF invoice for an order.
+     *
      * @param  bool  $download  Whether to return download response or PDF content
+     * @param  bool  $skipAuthorization Whether to bypass user authorization check (useful for system jobs)
      * @return \Barryvdh\DomPDF\PDF|Response
      */
-    public function generate(Order $order, bool $download = false)
+    public function generate(Order $order, bool $download = false, bool $skipAuthorization = false): \Barryvdh\DomPDF\PDF|\Illuminate\Http\Response
     {
-        $order->loadMissing(['items.product']);
-
-        $snapshotAddress = $this->addressFromOrderSnapshot($order);
-
-        $data = [
-            'order' => $order,
-            'user' => $order->user,
-            'items' => $order->items,
-            'billingAddress' => $snapshotAddress,
-            'shippingAddress' => $snapshotAddress,
-            'settings' => [
-                'company_name' => settings('company.name', 'OeParts'),
-                'company_address' => settings('company.address', ''),
-                'company_vat' => settings('company.vat_number', ''),
-                'company_email' => settings('company.email', 'info@oeparts.lt'),
-                'company_phone' => settings('company.phone', ''),
-            ],
-        ];
-
-        $pdf = Pdf::loadView('pdf.invoice', $data);
-
-        if ($download) {
-            return $pdf->download("invoice-{$order->order_number}.pdf");
+        if (! $skipAuthorization) {
+            $this->authorize($order);
         }
 
-        return $pdf;
+        try {
+            $order->loadMissing(['items.product']);
+
+            $snapshotAddress = $this->addressFromOrderSnapshot($order);
+
+            $data = [
+                'order' => $order,
+                'user' => $order->user,
+                'items' => $order->items,
+                'billingAddress' => $snapshotAddress,
+                'shippingAddress' => $snapshotAddress,
+                'settings' => [
+                    'company_name' => settings('company.name', 'OeParts'),
+                    'company_address' => settings('company.address', ''),
+                    'company_vat' => settings('company.vat_number', ''),
+                    'company_email' => settings('company.email', 'info@oeparts.lt'),
+                    'company_phone' => settings('company.phone', ''),
+                ],
+            ];
+
+            $pdf = Pdf::loadView('pdf.invoice', $data);
+
+            if ($download) {
+                return $pdf->download("invoice-{$order->order_number}.pdf");
+            }
+
+            return $pdf;
+        } catch (\Exception $e) {
+            Log::error('Invoice generation failed', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 
     /**
@@ -50,8 +70,8 @@ class InvoiceService
      */
     private function addressFromOrderSnapshot(Order $order): object
     {
-        $name = trim((string) ($order->shipping_name ?? ''));
-        $parts = $name === '' ? ['', ''] : preg_split('/\s+/', $name, 2);
+        $name = trim(mb_strtolower((string) ($order->shipping_name ?? '')));
+        $parts = $name === '' ? ['', ''] : preg_split('/\s+/u', $name, 2);
 
         return (object) [
             'first_name' => $parts[0] ?? '',
@@ -72,9 +92,25 @@ class InvoiceService
      */
     public function saveToStorage(Order $order): string
     {
-        $pdf = $this->generate($order);
+        $pdf = $this->generate($order, false, true);
         $filename = "invoices/{$order->order_number}.pdf";
-        Storage::disk('private')->put($filename, $pdf->output());
+
+        $content = $pdf->output();
+        if (strlen($content) > 10 * 1024 * 1024) {
+            throw new \RuntimeException('PDF too large');
+        }
+
+        try {
+            Storage::disk('private')->put($filename, $content);
+        } catch (\Exception $e) {
+            Log::error('Failed to save invoice to storage', [
+                'order_id' => $order->id,
+                'filename' => $filename,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
 
         return $filename;
     }
@@ -92,10 +128,39 @@ class InvoiceService
     /**
      * Get invoice from storage.
      */
-    public function getFromStorage(Order $order)
+    public function getFromStorage(Order $order): ?string
     {
+        $this->authorize($order);
+
         $filename = "invoices/{$order->order_number}.pdf";
 
+        if (!Storage::disk('private')->exists($filename)) {
+            Log::error('Invoice file not found in storage', [
+                'order_id' => $order->id,
+                'filename' => $filename,
+            ]);
+
+            return null;
+        }
+
         return Storage::disk('private')->get($filename);
+    }
+
+    /**
+     * Verify the order belongs to the requesting user or user is admin.
+     */
+    private function authorize(Order $order): void
+    {
+        $admin = Auth::guard('admin')->user();
+        if ($admin) {
+            return;
+        }
+
+        $user = Auth::guard('web')->user();
+        if ($user && $order->user_id === $user->id) {
+            return;
+        }
+
+        abort(403, 'Unauthorized access to invoice.');
     }
 }

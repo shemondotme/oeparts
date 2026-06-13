@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FailedSearchLogResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\FailedSearchLog;
 use Filament\Forms;
 use Filament\Actions;
@@ -18,7 +19,19 @@ class FailedSearchLogResource extends Resource
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
-        return 'heroicon-o-magnifying-glass';
+        return 'heroicon-o-x-circle';
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::whereDate('created_at', today())->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'warning';
     }
 
     public static function getNavigationGroup(): ?string
@@ -41,13 +54,14 @@ class FailedSearchLogResource extends Resource
         return $schema
             ->components([
                 Section::make('Search Details')
+                    ->description('Read-only details of a search query that returned no results.')
                     ->schema([
                         Forms\Components\TextInput::make('search_query')
-                            ->label('Query')
+                            ->label('Search Query')
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('normalized_query')
-                            ->label('Normalized')
+                            ->label('Normalized Query')
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('lang')
@@ -55,19 +69,20 @@ class FailedSearchLogResource extends Resource
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('user.name')
-                            ->label('User')
+                            ->label('Searched By')
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('ip_address')
-                            ->label('IP')
+                            ->label('IP Address')
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\Toggle::make('inquiry_submitted')
                             ->label('Inquiry Submitted')
+                            ->helperText('Whether the user submitted a part inquiry after the failed search.')
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\DateTimePicker::make('created_at')
-                            ->label('Date')
+                            ->label('Searched At')
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(2),
@@ -76,18 +91,21 @@ class FailedSearchLogResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('search_query')
-                    ->label('Query')
+                    ->label('Search Query')
                     ->searchable()
+                    ->sortable()
                     ->copyable()
-                    ->limit(30),
+                    ->copyMessage('Query copied')
+                    ->limit(30)
+                    ->fontMono(),
                 Tables\Columns\TextColumn::make('normalized_query')
-                    ->label('Normalized')
+                    ->label('Normalized Query')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('lang')
-                    ->label('Lang')
+                    ->label('Language')
                     ->badge()
                     ->alignCenter()
                     ->toggleable(),
@@ -96,31 +114,46 @@ class FailedSearchLogResource extends Resource
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP')
+                    ->label('IP Address')
+                    ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->label('Searched At')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('lang')
+                    ->label('Language')
                     ->options([
                         'en' => 'English',
                         'de' => 'German',
                         'lt' => 'Lithuanian',
                         'fr' => 'French',
                         'es' => 'Spanish',
-                    ]),
+                    ])
+                    ->native(false)
+                    ->helperText('Filter failed searches by language.'),
                 Tables\Filters\TernaryFilter::make('inquiry_submitted')
-                    ->label('Inquiry Submitted'),
+                    ->label('Inquiry Submitted')
+                    ->helperText('Show searches that did or did not result in a part inquiry.'),
             ])
             ->actions([
-                Actions\ViewAction::make(),
-                Actions\DeleteAction::make(),
+                ...AdminUi::recordActionsReadOnly(),
             ])
+            ->emptyStateIcon('heroicon-o-x-circle')
+            ->emptyStateHeading('No failed searches logged')
+            ->emptyStateDescription('Failed searches help identify gaps in your catalog. Consider adding parts that customers frequently search for.')
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Failed Searches', [
+                        'search_query' => 'Query',
+                        'normalized_query' => 'Normalized',
+                        'lang' => 'Language',
+                        'inquiry_submitted' => 'Inquiry Submitted',
+                        'ip_address' => 'IP Address',
+                        'created_at' => 'Date',
+                    ]),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
@@ -147,4 +180,8 @@ class FailedSearchLogResource extends Resource
         return false;
     }
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['search_query'];
+    }
 }

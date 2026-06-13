@@ -1,4 +1,3 @@
-import './bootstrap';
 import Alpine from 'alpinejs';
 import collapse from '@alpinejs/collapse';
 import focus from '@alpinejs/focus';
@@ -6,6 +5,7 @@ import NProgress from 'nprogress';
 import otpInput from './otp-input';
 import countup from './countup';
 import clipboard from './clipboard';
+import cartData from './cart';
 
 // Alpine.js — the ONLY JS interactivity layer (no Vue, React, Livewire, jQuery)
 window.Alpine = Alpine;
@@ -48,6 +48,9 @@ window.addEventListener('storage', (e) => {
 Alpine.data('otpInput', otpInput);
 Alpine.data('countup', countup);
 Alpine.data('clipboard', clipboard);
+Alpine.data('cartData', (initialCart, initialSummary, locale, routeUpdate, routeRemove, routePreview, routeCouponApply, routeCouponRemove) =>
+    cartData(initialCart, initialSummary, locale, routeUpdate, routeRemove, routePreview, routeCouponApply, routeCouponRemove)
+);
 
 Alpine.start();
 

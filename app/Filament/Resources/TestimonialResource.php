@@ -3,12 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TestimonialResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\Testimonial;
 use Filament\Forms;
 use Filament\Actions;
+use Filament\Actions\BulkAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,99 +45,233 @@ class TestimonialResource extends Resource
         return 'name';
     }
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'company'];
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Testimonial')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Customer Name')
-                            ->required()
-                            ->maxLength(100),
-                        Forms\Components\TextInput::make('company')
-                            ->label('Company')
-                            ->maxLength(100)
-                            ->nullable(),
-                        Forms\Components\TextInput::make('location')
-                            ->label('Location')
-                            ->maxLength(100)
-                            ->nullable(),
-                        Forms\Components\Textarea::make('quote')
-                            ->label('Quote (JSON)')
-                            ->helperText('e.g. {"en": "Great service!", "de": "Toller Service!"}')
-                            ->rows(4)
-                            ->required(),
-                        Forms\Components\TextInput::make('rating')
-                            ->label('Rating')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(5)
-                            ->default(5)
-                            ->step(1),
+                        // ─── Main column ──────────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('Client Details')
+                                    ->icon('heroicon-o-user')
+                                    ->description('Information about the client giving the feedback.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Customer Name')
+                                            ->placeholder('e.g. Jan de Vries')
+                                            ->required()
+                                            ->maxLength(100),
+                                        Forms\Components\TextInput::make('company')
+                                            ->label('Company Name')
+                                            ->placeholder('e.g. AutoParts B.V.')
+                                            ->maxLength(100)
+                                            ->nullable()
+                                            ->helperText('Optional company or business name.'),
+                                        Forms\Components\TextInput::make('location')
+                                            ->label('Location')
+                                            ->placeholder('e.g. Amsterdam, Netherlands')
+                                            ->maxLength(100)
+                                            ->nullable()
+                                            ->helperText('City and country of the client.'),
+                                    ])
+                                    ->columns(3),
+
+                                Section::make('Client Testimonial')
+                                    ->icon('heroicon-o-chat-bubble-bottom-center-text')
+                                    ->description('The customer quote translated in each supported language.')
+                                    ->schema([
+                                        Tabs::make('Locales')
+                                            ->schema(
+                                                collect(AdminUi::LOCALES)
+                                                    ->map(fn (string $label, string $code) => Tab::make($label)
+                                                        ->badge($code === 'en' ? 'Primary' : null)
+                                                        ->schema([
+                                                            Forms\Components\Textarea::make("quote.$code")
+                                                                ->label('Testimonial Quote')
+                                                                ->placeholder('e.g. Excellent service and fast delivery. The parts fit perfectly!')
+                                                                ->required($code === 'en')
+                                                                ->rows(4)
+                                                                ->helperText($code === 'en' ? 'English quote is required and used as the default fallback.' : null),
+                                                        ]))
+                                                    ->values()
+                                                    ->all()
+                                            )
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+
+                        // ─── Sidebar column ───────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('Settings & Rating')
+                                    ->icon('heroicon-o-adjustments-horizontal')
+                                    ->description('Visibility, display order, and star rating for this testimonial.')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('is_active')
+                                            ->label('Testimonial Active')
+                                            ->helperText('Inactive testimonials are hidden from the storefront.')
+                                            ->default(true),
+                                        Forms\Components\TextInput::make('sort_order')
+                                            ->label('Display Order')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->minValue(0)
+                                            ->helperText('Lower numbers appear first in testimonial listings.'),
+                                        Forms\Components\Select::make('rating')
+                                            ->label('Star Rating')
+                                            ->options([
+                                                5 => '5 Stars ★★★★★',
+                                                4 => '4 Stars ★★★★☆',
+                                                3 => '3 Stars ★★★☆☆',
+                                                2 => '2 Stars ★★☆☆☆',
+                                                1 => '1 Star ★☆☆☆☆',
+                                            ])
+                                            ->native(false)
+                                            ->required()
+                                            ->default(5)
+                                            ->helperText('Customer satisfaction rating shown with the testimonial.'),
+                                    ]),
+                            ]),
                     ]),
-                Section::make('Settings')
-                    ->schema([
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
-                            ->default(true),
-                        Forms\Components\TextInput::make('sort_order')
-                            ->label('Sort Order')
-                            ->numeric()
-                            ->default(0),
-                    ])->columns(2),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
-                    ->searchable(),
+            Tables\Columns\TextColumn::make('name')
+                ->label('Client')
+                ->searchable()
+                ->sortable()
+                ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('company')
                     ->label('Company')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('location')
                     ->label('Location')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('quote')
                     ->label('Quote')
-                    ->getStateUsing(fn (Testimonial $record): string => is_array($record->quote) ? ($record->quote['en'] ?? $record->quote[array_key_first($record->quote)] ?? '—') : ($record->quote ?? '—'))
+                    ->getStateUsing(fn (Testimonial $record): string => AdminUi::localizedName($record->quote))
                     ->limit(60),
                 Tables\Columns\TextColumn::make('rating')
                     ->label('Rating')
                     ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
+                    ->color('warning')
                     ->alignCenter(),
-                Tables\Columns\IconColumn::make('is_active')
+                Tables\Columns\TextColumn::make('is_active')
                     ->label('Active')
-                    ->boolean()
+                    ->badge()
+                    ->color(fn (bool $state): string => $state ? 'success' : 'gray')
+                    ->icon(fn (bool $state): string => $state ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sort')
+                    ->fontMono()
                     ->alignCenter()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('Testimonial Status')
+                    ->placeholder('All')
+                    ->trueLabel('Active Only')
+                    ->falseLabel('Inactive Only')
+                    ->native(false)
+                    ->columnSpan(1),
+                Tables\Filters\Filter::make('created_at')
+                    ->label('Date Added')
+                    ->form([
+                        Forms\Components\DatePicker::make('created_from')
+                            ->label('Added After')
+                            ->placeholder('Select start date'),
+                        Forms\Components\DatePicker::make('created_until')
+                            ->label('Added Before')
+                            ->placeholder('Select end date'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['created_from'], fn ($q) => $q->whereDate('created_at', '>=', $data['created_from']))
+                            ->when($data['created_until'], fn ($q) => $q->whereDate('created_at', '<=', $data['created_until']));
+                    })
+                    ->columnSpan(2),
             ])
-            ->actions([
-                Actions\ViewAction::make(),
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+            ->filtersFormColumns(2)
+            ->actions(AdminUi::recordActions(after: [
+                Actions\Action::make('toggleActive')
+                    ->label(fn (Testimonial $record): string => $record->is_active ? 'Deactivate' : 'Activate')
+                    ->icon(fn (Testimonial $record): string => $record->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->color(fn (Testimonial $record): string => $record->is_active ? 'warning' : 'success')
+                    ->action(function (Testimonial $record) {
+                        $record->update(['is_active' => !$record->is_active]);
+
+                        Notification::make()
+                            ->title($record->is_active ? 'Testimonial activated' : 'Testimonial deactivated')
+                            ->success()
+                            ->send();
+                    }),
+            ]))
+        ->bulkActions([
+            Actions\BulkActionGroup::make([
+                AdminUi::impactBulkAction(
+                    name: 'bulkToggleActive',
+                    label: 'Toggle Active',
+                    color: 'warning',
+                    icon: 'heroicon-o-arrow-path',
+                    action: function ($records) {
+                        $firstState = $records->first()->is_active;
+                        $allSame = $records->every(fn (Testimonial $record) => $record->is_active === $firstState);
+                        $newState = $allSame ? !$firstState : true;
+
+                        $records->each(function (Testimonial $record) use ($newState) {
+                            $record->update(['is_active' => $newState]);
+                        });
+
+                        Notification::make()
+                            ->title($records->count() . ' testimonials ' . ($newState ? 'activated' : 'deactivated'))
+                            ->success()
+                            ->send();
+                    },
+                ),
+                AdminUi::exportCsvBulkAction('Export Testimonials', [
+                    'name' => 'Client',
+                    'company' => 'Company',
+                    'location' => 'Location',
+                    'quote' => 'Quote',
+                    'rating' => 'Rating',
+                    'is_active' => 'Active',
+                    'sort_order' => 'Sort Order',
                 ]),
-            ])
+                Actions\DeleteBulkAction::make(),
+            ]),
+        ])
             ->defaultSort('sort_order', 'asc')
             ->reorderable('sort_order')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->emptyStateIcon('heroicon-o-chat-bubble-left-right')
+            ->emptyStateHeading('No testimonials added yet')
+            ->emptyStateDescription('Add customer testimonials and reviews to build trust and social proof on the storefront.')
+            ->emptyStateActions([
+                Tables\Actions\Action::make('create')
+                    ->label('Add Testimonial')
+                    ->url(static::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 
     public static function getRelations(): array

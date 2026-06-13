@@ -21,15 +21,18 @@ class NewsletterController extends Controller
             'lang' => 'nullable|in:en,de,lt,fr,es',
         ]);
 
-        // Rate limit: max 3 subscriptions per hour per IP
-        if (!RateLimiter::attempt("newsletter:{$request->ip()}", 3, function () {
+        // Rate limit: max subscriptions per hour per IP
+        $maxSubscriptions = (int) settings('newsletter.rate_limit_per_hour', 3);
+        $windowSeconds = (int) settings('newsletter.rate_window_seconds', 3600);
+        if (!RateLimiter::attempt("newsletter:{$request->ip()}", $maxSubscriptions, function () {
             return true;
-        }, 3600)) {
+        }, $windowSeconds)) {
             throw new TooManyRequestsHttpException(3600, 'Too many subscription attempts. Please try again later.');
         }
 
         $email = $validated['email'];
         $locale = $validated['lang'] ?? $lang;
+        $unsubscribeToken = hash_hmac('sha256', $email, config('app.key'));
 
         // Check if already subscribed
         $existing = NewsletterSubscriber::where('email', $email)->first();
@@ -60,6 +63,7 @@ class NewsletterController extends Controller
                 'is_active' => false,
                 'subscribed_at' => now(),
                 'ip_address' => $request->ip(),
+                'unsubscribe_token' => $unsubscribeToken,
             ]);
 
             // Send confirmation email
@@ -79,7 +83,7 @@ class NewsletterController extends Controller
      */
     public function unsubscribe(Request $request, string $lang, string $token)
     {
-        $subscriber = NewsletterSubscriber::where('email', $token)->first();
+        $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
 
         if (!$subscriber) {
             return redirect()->route('frontend.home', compact('lang'))

@@ -163,8 +163,8 @@ class InstallerTest extends TestCase
         $response = $this->post('/install/admin-account', [
             'name' => 'Test Admin',
             'email' => 'admin@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Qz7#mV2!xP',
+            'password_confirmation' => 'Qz7#mV2!xP',
         ]);
 
         $response->assertRedirect('/install/email-setup');

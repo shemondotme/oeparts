@@ -2,7 +2,9 @@
 
 namespace App\Enums;
 
-enum OrderStatus: string
+use Filament\Support\Contracts\HasLabel;
+
+enum OrderStatus: string implements HasLabel
 {
     case Pending          = 'pending';
     case Paid             = 'paid';
@@ -12,6 +14,11 @@ enum OrderStatus: string
     case Cancelled        = 'cancelled';
     case RefundRequested  = 'refund_requested';
     case Refunded         = 'refunded';
+
+    public function getLabel(): string
+    {
+        return $this->label();
+    }
 
     public function label(): string
     {
@@ -24,6 +31,19 @@ enum OrderStatus: string
             self::Cancelled       => 'Cancelled',
             self::RefundRequested => 'Refund Requested',
             self::Refunded        => 'Refunded',
+        };
+    }
+
+    public function color(): string
+    {
+        return match ($this) {
+            self::Pending => 'warning',
+            self::Paid => 'info',
+            self::Processing => 'primary',
+            self::Shipped, self::Delivered => 'success',
+            self::Cancelled => 'danger',
+            self::RefundRequested => 'warning',
+            self::Refunded => 'gray',
         };
     }
 

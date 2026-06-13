@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class MediaPickerController extends Controller
 {
@@ -47,6 +48,8 @@ class MediaPickerController extends Controller
         $query = MediaFile::query();
 
         if ($search = $request->input('search')) {
+            $search = Str::limit($search, 100);
+            $search = str_replace(['%', '_'], ['\%', '\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('file_name', 'like', "%{$search}%")
                   ->orWhere('alt_text', 'like', "%{$search}%");
@@ -64,6 +67,11 @@ class MediaPickerController extends Controller
 
     public function destroy(MediaFile $media): JsonResponse
     {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->cannot('delete media files')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
         if ($media->file_path) {
             Storage::disk('public')->delete($media->file_path);
         }

@@ -1,14 +1,25 @@
-@extends('frontend.checkout.layout')
+﻿@extends('frontend.checkout.layout')
 
 @section('checkout_content')
 @php
     $selected = (string) old('shipping_method_id', $selectedId ?? '');
 
-    $shippingOptions = [
-        ['id' => 1, 'name' => 'Express Shipping', 'days_min' => 3, 'days_max' => 5, 'price' => 75.00, 'icon' => 'rocket-launch'],
-        ['id' => 2, 'name' => 'Standard Shipping', 'days_min' => 5, 'days_max' => 7, 'price' => 40.00, 'icon' => 'truck'],
-        ['id' => 3, 'name' => 'Economy Shipping', 'days_min' => null, 'days_max' => 15, 'price' => 30.00, 'icon' => 'globe-alt'],
-    ];
+    $shippingOptions = \App\Models\ShippingMethod::where('is_active', true)
+        ->orderBy('sort_order')
+        ->get()
+        ->map(fn ($m) => [
+            'id' => $m->id,
+            'name' => is_array($m->name) ? ($m->name['en'] ?? reset($m->name)) : $m->name,
+            'days_min' => $m->estimated_days_min,
+            'days_max' => $m->estimated_days_max,
+            'price' => (float) $m->flat_rate,
+            'icon' => match(true) {
+                str_contains(strtolower(is_array($m->name) ? ($m->name['en'] ?? '') : $m->name), 'express') => 'rocket-launch',
+                str_contains(strtolower(is_array($m->name) ? ($m->name['en'] ?? '') : $m->name), 'economy') => 'globe-alt',
+                default => 'truck',
+            },
+        ])
+        ->toArray();
 @endphp
 
 <div class="space-y-6">
@@ -25,7 +36,7 @@
 
     {{-- Carrier options --}}
     <div class="border border-ink bg-paper" x-data="{ selected: '{{ $selected }}' }">
-        @foreach($shippingOptions as $option)
+        @forelse($shippingOptions as $option)
             @php
                 $optId = (string) $option['id'];
                 $isSelected = $selected === $optId;
@@ -76,10 +87,14 @@
 
                 {{-- Price --}}
                 <div class="shrink-0 text-right">
-                    <span class="font-mono text-xl font-medium text-ink tabular-nums tracking-tight">€{{ number_format($option['price'], 2) }}</span>
+                    <span class="font-mono text-xl font-medium text-ink tabular-nums tracking-tight">{{ settings('store.currency_symbol', '€') }}{{ number_format($option['price'], 2) }}</span>
                 </div>
             </label>
-        @endforeach
+        @empty
+            <div class="p-8 text-center">
+                <p class="text-sm text-ink-muted">No shipping methods available. Please contact support.</p>
+            </div>
+        @endforelse
     </div>
 
     @error('shipping_method_id')
@@ -95,8 +110,8 @@
             <x-heroicon-s-information-circle class="w-4 h-4 text-amber-ink" />
         </div>
         <div>
-            <p class="bp-spec text-amber-ink mb-1">§ Shipping note</p>
-            <p class="text-xs text-body">All shipments tracked and insured. Delivery times are estimates from dispatch.</p>
+            <p class="bp-spec text-amber-ink mb-1">Shipping note</p>
+            <p class="text-xs text-body">{{ settings('shipping.note_text', 'All shipments tracked and insured. Delivery times are estimates from dispatch.') }}</p>
         </div>
     </div>
 </div>

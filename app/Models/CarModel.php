@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class CarModel extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'manufacturer_id', 'name', 'slug',
         'year_from', 'year_to', 'is_active', 'sort_order',

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('403 · Access Forbidden'))
 
@@ -14,7 +14,7 @@
     $prev = url()->previous();
     $backUrl = ($prev && parse_url($prev, PHP_URL_HOST) === request()->getHost() && $prev !== url()->current())
         ? $prev
-        : route('frontend.home', ['lang' => $lang]);
+        : url('/'.$lang.'/');
 @endphp
 
 <div class="relative min-h-screen bg-ivory text-ink overflow-hidden">
@@ -37,7 +37,7 @@
             <div class="flex items-center gap-4 mb-4">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
                 <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">
-                    § Status · HTTP · 403
+                    Status · HTTP · 403
                 </span>
             </div>
             <h1 class="font-display font-extrabold text-ivory leading-[0.9] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
@@ -61,8 +61,8 @@
 
             {{-- Card header --}}
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                <span class="bp-spec text-amber-ink">§ Incident · Report</span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec text-amber-ink">Incident · Report</span>
+                <span class="bp-spec-mono">
                     {{ now()->format('Y-m-d H:i T') }}
                 </span>
             </div>
@@ -75,7 +75,7 @@
                         <x-heroicon-o-lock-closed class="w-7 h-7 text-red-600" />
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="bp-spec text-red-700 mb-1">§ Error · Code</p>
+                        <p class="bp-spec text-red-700 mb-1">Error · Code</p>
                         <p class="font-display text-6xl md:text-7xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
                             4<span class="text-amber">0</span>3
                         </p>
@@ -110,7 +110,7 @@
 
                 {{-- Explanation block --}}
                 <div class="border border-rule bg-ivory-alt p-5 mb-8">
-                    <p class="bp-spec text-amber-ink mb-2">§ {{ __('What occurred') }}</p>
+                    <p class="bp-spec text-amber-ink mb-2">{{ __('What occurred') }}</p>
                     <p class="text-sm text-body leading-relaxed">
                         {{ __('The directory system detected unauthorized traffic parameters. This path is restricted to operators possessing higher verification keys or valid administrative security guards. Log in with compliant credentials or contact the support desk.') }}
                     </p>
@@ -125,7 +125,7 @@
                         <x-heroicon-s-arrow-long-left class="w-4 h-4" />
                         {{ __('Return Back') }}
                     </a>
-                    <a href="{{ route('frontend.home', ['lang' => $lang]) }}"
+                    <a href="{{ url('/'.$lang.'/') }}"
                        class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ink text-ink
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-ink hover:text-ivory transition-colors">
@@ -137,11 +137,11 @@
 
             {{-- Trust strip --}}
             <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
-                <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                     <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
                     {{ __('Protected system ledger') }}
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec-mono">
                     SSL · TLS 1.3
                 </span>
             </div>

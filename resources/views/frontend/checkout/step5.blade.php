@@ -1,4 +1,4 @@
-@extends('frontend.checkout.layout')
+﻿@extends('frontend.checkout.layout')
 
 @section('checkout_content')
 <div x-data="{ paymentMethod: '{{ old('payment_method', $checkoutData['payment_method'] ?? 'card') }}' }" class="space-y-6">
@@ -66,7 +66,7 @@
                 <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
             </div>
             <div class="flex-1">
-                <p class="bp-spec text-amber-ink mb-1">§ Secure card checkout</p>
+                <p class="bp-spec text-amber-ink mb-1">Secure card checkout</p>
                 <p class="text-sm text-body leading-relaxed">
                     Card details are collected securely by Airwallex after the order is created. This step stores only your payment preference.
                 </p>
@@ -81,7 +81,7 @@
                 <x-heroicon-s-information-circle class="w-4 h-4 text-amber-ink" />
             </div>
             <div class="flex-1">
-                <p class="bp-spec text-amber-ink mb-1">§ Bank transfer instructions</p>
+                <p class="bp-spec text-amber-ink mb-1">Bank transfer instructions</p>
                 <p class="text-sm text-body leading-relaxed">
                     We create the order first, then show your bank details and payment reference on the next page.
                 </p>
@@ -92,7 +92,7 @@
     {{-- Customer note --}}
     <div>
         <label for="customer_note" class="bp-spec block mb-2 text-ink">
-            § Order note
+            Order note
             <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
         </label>
         <div class="border border-ink bg-paper focus-within:border-amber transition-colors">

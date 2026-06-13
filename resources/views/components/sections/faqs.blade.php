@@ -1,4 +1,4 @@
-{{-- Section: faqs (Industrial Blueprint)
+﻿{{-- Section: faqs (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml)
      $sectionData['faqs'] injected by SectionRendererService.
 --}}
@@ -22,7 +22,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -36,7 +36,7 @@
                     {{ $subheadline }}
                 </p>
                 @endif
-                <p class="mt-8 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <p class="mt-8 bp-spec-mono">
                     Manual · Index · {{ $faqs->count() }} entries
                 </p>
                 <div class="mt-2 h-[3px] w-10 bg-amber"></div>

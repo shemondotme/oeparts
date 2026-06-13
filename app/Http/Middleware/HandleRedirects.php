@@ -20,17 +20,19 @@ class HandleRedirects
         $path = ltrim($request->path(), '/');
 
         // Check cache first
-        $redirect = Cache::remember("redirect.{$path}", now()->addHours(24), function () use ($path) {
+        $redirect = Cache::remember("redirect.{$path}", now()->addSeconds(60), function () use ($path) {
             return RedirectModel::where('from_url', $path)
                 ->where('is_active', true)
                 ->first();
         });
 
         if ($redirect) {
-            // Increment hit count
-            $redirect->increment('hit_count');
+            try {
+                $redirect->increment('hit_count');
+            } catch (\Exception) {
+                // Continue even if increment fails
+            }
 
-            // Perform redirect
             return redirect($redirect->to_url, $redirect->type);
         }
 

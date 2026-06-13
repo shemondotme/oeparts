@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\ContentStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Page extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title', 'slug', 'content', 'featured_image_id', 'status',
         'meta_title', 'meta_description', 'is_homepage', 'is_header',

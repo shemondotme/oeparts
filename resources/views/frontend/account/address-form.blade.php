@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', ($address ? __('Edit Address') : __('Add Address')) . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -12,7 +12,7 @@
 @section('content')
 <x-account.shell
     active="addresses"
-    :eyebrow="$isEdit ? '§ Edit · Address · Record' : '§ New · Address · Record'"
+    :eyebrow="$isEdit ? 'Edit · Address · Record' : 'New · Address · Record'"
     :title="$isEdit ? __('Edit address') : __('Add new address')"
     :subtitle="$isEdit ? __('Update this saved ship-to record.') : __('Save a new ship-to record for faster checkout on future orders.')"
     :docId="$isEdit ? 'DOC · ADDRESS-EDIT · ' . $address->id : 'DOC · ADDRESS-NEW'"
@@ -30,7 +30,7 @@
                     <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-red-600" />
                 </div>
                 <div class="flex-1">
-                    <p class="bp-spec text-red-700 mb-1">§ Validation · Error</p>
+                    <p class="bp-spec text-red-700 mb-1">Validation · Error</p>
                     <ul class="text-sm text-red-800 space-y-0.5 list-disc list-inside">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -45,9 +45,9 @@
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-map-pin class="w-3.5 h-3.5" />
-                § Address · Details
+                Address · Details
             </span>
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+            <span class="bp-spec-mono">
                 * = required
             </span>
         </header>
@@ -62,7 +62,7 @@
 
             {{-- Recipient --}}
             <fieldset class="space-y-5">
-                <legend class="bp-spec text-amber-ink mb-3">§ 01 · Recipient</legend>
+                <legend class="bp-spec text-amber-ink mb-3">01 · Recipient</legend>
 
                 <div class="grid sm:grid-cols-2 gap-5">
                     <div>
@@ -112,7 +112,7 @@
 
             {{-- Location --}}
             <fieldset class="space-y-5">
-                <legend class="bp-spec text-amber-ink mb-3">§ 02 · Location</legend>
+                <legend class="bp-spec text-amber-ink mb-3">02 · Location</legend>
 
                 <div>
                     <label for="address_line_1" class="bp-spec block mb-2 text-ink">
@@ -187,7 +187,7 @@
 
             {{-- Flags --}}
             <fieldset>
-                <legend class="bp-spec text-amber-ink mb-3">§ 03 · Flags</legend>
+                <legend class="bp-spec text-amber-ink mb-3">03 · Flags</legend>
 
                 <label class="flex items-start gap-3 p-4 border border-rule-strong bg-ivory-alt cursor-pointer
                               hover:border-ink transition-colors">

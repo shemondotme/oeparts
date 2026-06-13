@@ -9,6 +9,7 @@ use App\Models\Manufacturer;
 use App\Models\Page;
 use App\Models\Product;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use XMLWriter;
 
@@ -46,23 +47,33 @@ class SitemapService
      */
     public function generateAll(): array
     {
-        $this->ensureDirectory();
+        try {
+            $this->ensureDirectory();
 
-        $files = [];
+            $files = [];
 
-        array_push($files, ...$this->generateProductsSitemap());
-        array_push($files, ...$this->generateManufacturersSitemap());
-        array_push($files, ...$this->generateCarModelsSitemap());
-        array_push($files, ...$this->generatePagesSitemap());
-        array_push($files, ...$this->generateBlogSitemap());
+            array_push($files, ...$this->generateProductsSitemap());
+            array_push($files, ...$this->generateManufacturersSitemap());
+            array_push($files, ...$this->generateCarModelsSitemap());
+            array_push($files, ...$this->generatePagesSitemap());
+            array_push($files, ...$this->generateBlogSitemap());
 
-        $indexPath = $this->generateIndex($files);
+            $indexPath = $this->generateIndex($files);
 
-        if ($this->settings->get('seo.google_ping_enabled', true)) {
-            $this->pingGoogle();
+            if ($this->settings->get('seo.google_ping_enabled', true)) {
+                $this->pingGoogle();
+            }
+
+            return array_merge([$indexPath], $files);
+        } catch (\Exception $e) {
+            Log::error('Sitemap generation failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            throw $e;
         }
-
-        return array_merge([$indexPath], $files);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -306,7 +317,10 @@ class SitemapService
         $filename = $batch === 1 ? "{$base}.xml" : "{$base}-{$batch}.xml";
         $path = public_path("{$this->sitemapDirectory}/{$filename}");
 
-        file_put_contents($path, $writer->outputMemory(true));
+        $bytes = file_put_contents($path, $writer->outputMemory(true));
+        if ($bytes === false) {
+            throw new \RuntimeException("Failed to write sitemap file: {$path}");
+        }
 
         return $filename;
     }
@@ -318,7 +332,8 @@ class SitemapService
     {
         $writer = $this->openWriter();
 
-        return $this->closeWriter($writer, rtrim(str_replace('.xml', '', $filename), '-1'), 1);
+        $base = preg_replace('/-\d+$/', '', str_replace('.xml', '', $filename));
+        return $this->closeWriter($writer, $base, 1);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -346,7 +361,10 @@ class SitemapService
         $writer->endDocument();
 
         $path = public_path('sitemap.xml');
-        file_put_contents($path, $writer->outputMemory(true));
+        $bytes = file_put_contents($path, $writer->outputMemory(true));
+        if ($bytes === false) {
+            throw new \RuntimeException("Failed to write sitemap index file: {$path}");
+        }
 
         return 'sitemap.xml';
     }
@@ -366,8 +384,8 @@ class SitemapService
             $client->get('https://www.google.com/ping', [
                 'query' => ['sitemap' => url('sitemap.xml')],
             ]);
-        } catch (\Exception) {
-            // Silent — ping failure must never abort sitemap generation
+        } catch (\Exception $e) {
+            Log::debug('Google ping failed', ['error' => $e->getMessage()]);
         }
     }
 
@@ -385,7 +403,14 @@ class SitemapService
 
         foreach (glob(public_path("{$this->sitemapDirectory}/sitemap-*.xml")) ?: [] as $file) {
             if (! in_array(basename($file), $keep, true)) {
-                @unlink($file);
+                try {
+                    unlink($file);
+                } catch (\Exception $e) {
+                    Log::error('Failed to delete sitemap file', [
+                        'file' => $file,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
         }
     }

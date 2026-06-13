@@ -5,14 +5,18 @@ namespace App\Filament\Resources;
 use App\Enums\MenuLocation;
 use App\Filament\Resources\MenuResource\Pages;
 use App\Filament\Resources\MenuResource\RelationManagers;
+use App\Filament\Support\AdminUi;
 use App\Models\Menu;
 use Filament\Forms;
 use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Support\Enums\FontWeight;
 
 class MenuResource extends Resource
 {
@@ -42,85 +46,131 @@ class MenuResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Menu Details')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Menu Name')
-                            ->required()
-                            ->maxLength(100),
-                        Forms\Components\Select::make('location')
-                            ->options(MenuLocation::class)
-                            ->required(),
-                        Forms\Components\Select::make('lang')
-                            ->label('Language')
-                            ->options([
-                                'en' => 'English',
-                                'de' => 'German',
-                                'lt' => 'Lithuanian',
-                                'fr' => 'French',
-                                'es' => 'Spanish',
-                            ])
-                            ->required(),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
-                            ->default(true),
-                    ])->columns(2),
+                        // ─── Main column ──────────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('Menu Details')
+                                    ->icon('heroicon-o-bars-3')
+                                    ->description('Define the menu name, location, and language for navigation.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Menu Name')
+                                            ->placeholder('e.g. Main Navigation, Footer Links')
+                                            ->required()
+                                            ->maxLength(100)
+                                            ->helperText('Internal name for this menu. Not shown to customers.'),
+                                        Forms\Components\Select::make('location')
+                                            ->label('Menu Location')
+                                            ->options(MenuLocation::class)
+                                            ->native(false)
+                                            ->required()
+                                            ->helperText('Where this menu appears on the storefront (header or footer).'),
+                                        Forms\Components\Select::make('lang')
+                                            ->label('Language')
+                                            ->options(AdminUi::LOCALES)
+                                            ->native(false)
+                                            ->required()
+                                            ->helperText('The language this menu is displayed in.'),
+                                    ])->columns(2),
+                            ]),
+
+                        // ─── Sidebar column ───────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('Settings')
+                                    ->icon('heroicon-o-adjustments-horizontal')
+                                    ->description('Menu visibility settings.')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('is_active')
+                                            ->label('Menu Active')
+                                            ->helperText('Inactive menus are hidden from the storefront navigation.')
+                                            ->default(true),
+                                    ]),
+                            ]),
+                    ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
+            ->modifyQueryUsing(fn ($query) => $query->with('items'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Menu')
                     ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('location')
-                    ->badge()
-                    ->color(fn (MenuLocation $state): string => match ($state) {
-                        MenuLocation::Header => 'info',
-                        MenuLocation::Footer => 'gray',
-                    }),
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+            Tables\Columns\TextColumn::make('location')
+                ->label('Location')
+                ->badge()
+                ->color(fn (MenuLocation $state): string => match ($state) {
+                    MenuLocation::Header => 'info',
+                    MenuLocation::Footer => 'gray',
+                }),
                 Tables\Columns\TextColumn::make('lang')
-                    ->label('Lang')
+                    ->label('Language')
                     ->badge()
-                    ->alignCenter(),
+                    ->formatStateUsing(fn (string $state): string => AdminUi::LOCALES[$state] ?? strtoupper($state))
+                    ->color('gray')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('items_count')
-                    ->label('Items')
+                    ->label('Menu Items')
                     ->counts('items')
-                    ->alignCenter(),
+                    ->fontMono()
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('location')
-                    ->options(MenuLocation::class),
+                    ->label('Menu Location')
+                    ->options(MenuLocation::class)
+                    ->helperText('Filter by header or footer menus.'),
                 Tables\Filters\SelectFilter::make('lang')
-                    ->options([
-                        'en' => 'English',
-                        'de' => 'German',
-                        'lt' => 'Lithuanian',
-                        'fr' => 'French',
-                        'es' => 'Spanish',
-                    ]),
+                    ->label('Language')
+                    ->options(AdminUi::LOCALES)
+                    ->helperText('Filter menus by language.'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('Menu Status')
+                    ->placeholder('All')
+                    ->trueLabel('Active Only')
+                    ->falseLabel('Inactive Only'),
             ])
-            ->actions([
-                Actions\ViewAction::make(),
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
-            ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+            ->actions(AdminUi::recordActions())
+        ->bulkActions([
+            Actions\BulkActionGroup::make([
+                AdminUi::exportCsvBulkAction('Export Menus', [
+                    'name' => 'Menu',
+                    'location' => 'Location',
+                    'lang' => 'Language',
+                    'items_count' => 'Items',
+                    'is_active' => 'Active',
                 ]),
-            ])
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+                Actions\DeleteBulkAction::make(),
+            ]),
+        ])
+            ->defaultSort('name', 'asc')
+            ->emptyStateIcon('heroicon-o-bars-3')
+            ->emptyStateHeading('No navigation menus created yet')
+            ->emptyStateDescription('Create navigation menus for the header or footer, then add menu items to build the navigation structure.')
+            ->emptyStateActions([
+                Tables\Actions\Action::make('create')
+                    ->label('Create Menu')
+                    ->url(static::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 
     public static function getRelations(): array
@@ -150,4 +200,10 @@ class MenuResource extends Resource
     {
         return 'success';
     }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
 }
+

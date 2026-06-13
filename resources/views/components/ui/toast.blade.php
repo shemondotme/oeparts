@@ -1,4 +1,4 @@
-{{--
+﻿{{--
 Toast Notification — Industrial Blueprint
 Position: Bottom-Right · Stack: vertical
 Types: success · error · warning · info
@@ -6,9 +6,22 @@ Types: success · error · warning · info
 <div
     x-data="toastComponent()"
     x-init="init()"
-    class="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 flex flex-col gap-3 pointer-events-none"
+    class="fixed bottom-24 sm:bottom-6 right-6 sm:right-8 flex flex-col gap-3 pointer-events-none"
     style="z-index: 99999 !important;"
 >
+    {{-- Dismiss-all button (visible when 3+ toasts) --}}
+    <template x-if="toasts.length >= 3">
+        <div class="pointer-events-auto flex justify-end mb-0.5">
+            <button @click="dismissAll()"
+                    class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted hover:text-ink
+                           bg-paper border border-ink px-3 py-1.5 shadow-[3px_3px_0_0_#0A1228]
+                           transition-colors"
+                    aria-label="Dismiss all notifications">
+                Clear All · <span x-text="toasts.length"></span>
+            </button>
+        </div>
+    </template>
+
     <template x-for="toast in toasts" :key="toast.id">
         <div
             x-show="toast.visible"
@@ -22,8 +35,8 @@ Types: success · error · warning · info
             @mouseleave="resumeToast(toast.id)"
             class="pointer-events-auto relative w-[360px] max-w-[calc(100vw-3rem)] bg-paper border border-ink
                    shadow-[6px_6px_0_0_#0A1228] motion-reduce:transition-none"
-            role="status"
-            aria-live="polite"
+            :role="toast.type === 'error' ? 'alert' : 'status'"
+            :aria-live="toast.type === 'error' ? 'assertive' : 'polite'"
         >
             {{-- Type-coloured tick strip --}}
             <div
@@ -78,7 +91,7 @@ Types: success · error · warning · info
 
                 {{-- Content --}}
                 <div class="flex-1 min-w-0 pt-0.5">
-                    {{-- Doc header: § TAG · TYPE --}}
+                    {{-- Doc header: TAG · TYPE --}}
                     <div class="flex items-center gap-2 mb-1">
                         <span class="inline-block w-3 h-[2px]"
                               :class="{
@@ -100,12 +113,24 @@ Types: success · error · warning · info
                     {{-- Message --}}
                     <p class="text-[13px] font-semibold text-ink leading-snug tracking-tight" x-text="toast.message"></p>
 
-                    {{-- Cart-specific ledger link --}}
+                    {{-- context-specific action link --}}
                     <template x-if="toast.context === 'cart'">
                         <a href="{{ url('/'.app()->getLocale().'/cart') }}"
                            class="mt-2 inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase
                                   text-ink border-b border-amber pb-0.5 hover:text-amber-ink hover:border-ink transition-colors">
                             <span>View Cart</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
+                                <path stroke-linecap="square" stroke-linejoin="miter" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                            </svg>
+                        </a>
+                    </template>
+
+                    {{-- generic action link --}}
+                    <template x-if="toast.action">
+                        <a :href="toast.action.url"
+                           class="mt-2 inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase
+                                  text-ink border-b border-amber pb-0.5 hover:text-amber-ink hover:border-ink transition-colors">
+                            <span x-text="toast.action.label"></span>
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" aria-hidden="true">
                                 <path stroke-linecap="square" stroke-linejoin="miter" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                             </svg>
@@ -150,8 +175,8 @@ function toastComponent() {
         toasts: [],
         init() {
             window.addEventListener('toast', (e) => {
-                const { message, type = 'info', title, duration = 4000 } = e.detail;
-                this.showToast(message, type, title, duration);
+                const { message, type = 'info', title, duration = 4000, action } = e.detail;
+                this.showToast(message, type, title, duration, null, action);
             });
             window.addEventListener('cart-toast', (e) => {
                 const { productName, quantity } = e.detail;
@@ -160,16 +185,15 @@ function toastComponent() {
         },
         defaultTitle(type) {
             switch (type) {
-                case 'success': return '§ OK · CONFIRMED';
-                case 'error':   return '§ ERR · FAILED';
-                case 'warning': return '§ ATT · NOTICE';
+                case 'success': return 'OK · CONFIRMED';
+                case 'error':   return 'ERR · FAILED';
+                case 'warning': return 'ATT · NOTICE';
                 case 'info':
-                default:        return '§ INFO · SYSTEM';
+                default:        return 'INFO · SYSTEM';
             }
         },
-        showToast(message, type = 'info', title = null, duration = 4000, context = null) {
+        showToast(message, type = 'info', title = null, duration = 4000, context = null, action = null) {
             const now = Date.now();
-            // Deduplicate: ignore identical message within 1 second
             if (this.toasts.length > 0) {
                 const last = this.toasts[this.toasts.length - 1];
                 if (last.message === message && (now - last.id < 1000)) return;
@@ -186,7 +210,8 @@ function toastComponent() {
                 duration,
                 remaining: duration,
                 paused: false,
-                context: context
+                context,
+                action,
             };
             this.toasts.push(toast);
             this.startProgress(id);
@@ -195,7 +220,7 @@ function toastComponent() {
             this.showToast(
                 `${productName} × ${quantity} added to cart`,
                 'success',
-                '§ CART · UPDATED',
+                'CART · UPDATED',
                 5000,
                 'cart'
             );
@@ -232,6 +257,12 @@ function toastComponent() {
                     this.toasts = this.toasts.filter(t => t.id !== id);
                 }, 300);
             }
+        },
+        dismissAll() {
+            this.toasts.forEach(t => t.visible = false);
+            setTimeout(() => {
+                this.toasts = [];
+            }, 300);
         }
     };
 }

@@ -1,4 +1,4 @@
-{{-- Section: featured_brands (Industrial Blueprint)
+﻿{{-- Section: featured_brands (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), view_all_text(ml)
      $sectionData['manufacturers'] injected by SectionRendererService
 --}}
@@ -38,7 +38,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -53,7 +53,7 @@
                 <p class="text-base text-body leading-relaxed">
                     {{ $subheadline }}
                 </p>
-                <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <p class="mt-4 bp-spec-mono">
                     Index · {{ $manufacturers->count() }} manufacturers · verified
                 </p>
             </div>
@@ -82,11 +82,11 @@
 
                 {{-- Top meta row: index + part count --}}
                 <div class="flex items-center justify-between mb-6">
-                    <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    <span class="bp-spec-mono">
                         № {{ $rowNum }}
                     </span>
                     <span class="font-mono text-[11px] tabular-nums text-ink-muted">
-                        {{ $formattedCount }}&nbsp;<span class="uppercase tracking-wider">pcs</span>
+                        {{ $formattedCount }}&nbsp;<span class="uppercase tracking-wider">{{ __('pcs') }}</span>
                     </span>
                 </div>
 
@@ -129,7 +129,7 @@
         {{-- Alphabet index + CTA --}}
         <div class="mt-12 pt-8 border-t border-ink">
             <div class="flex items-baseline gap-4 mb-6">
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">§ Index by letter</span>
+                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">{{ __('Index by letter') }}</span>
                 <span class="flex-1 h-px bg-rule"></span>
             </div>
 
@@ -162,8 +162,8 @@
             </div>
 
             <div class="mt-10 flex flex-wrap items-center justify-between gap-4">
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                    Source · OEM manufacturer catalogues · EU
+                <span class="bp-spec-mono">
+                    {{ __('Source · OEM manufacturer catalogues · EU') }}
                 </span>
                 <a href="{{ url('/'.$lang.'/brands') }}" class="bp-btn-primary">
                     {{ $viewAllText }}

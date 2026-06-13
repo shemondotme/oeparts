@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ProductResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -28,11 +30,14 @@ class CrossReferencesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('cross_oem_number')
+        return AdminUi::configureTable($table)->recordTitleAttribute('cross_oem_number')
             ->columns([
                 Tables\Columns\TextColumn::make('cross_oem_number')
                     ->label('Cross OEM Number')
+                    ->copyable()
+                    ->copyMessage('OEM number copied')
+                    ->fontMono()
+                    ->weight('medium')
                     ->extraAttributes(['class' => 'oem-number']),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Added')

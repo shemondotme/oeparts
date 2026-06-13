@@ -6,6 +6,7 @@ use App\Providers\SettingsSyncServiceProvider;
 
 return [
     AppServiceProvider::class,
+    AuthServiceProvider::class,
     AdminPanelProvider::class,
     SettingsSyncServiceProvider::class,
 ];

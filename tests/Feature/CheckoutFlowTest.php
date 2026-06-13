@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\OtpPurpose;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Order;
 use App\Models\Product;
@@ -30,10 +31,17 @@ class CheckoutFlowTest extends TestCase
     private ShippingMethod $shippingMethod;
     private Manufacturer $manufacturer;
     private ShippingZone $zone;
+    private Condition $condition;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Create default condition
+        $this->condition = Condition::firstOrCreate(
+            ['slug' => 'new'],
+            ['name' => 'New', 'bg_color' => '#ecfdf5', 'text_color' => '#065f46', 'is_active' => true]
+        );
 
         // Create a manufacturer
         $this->manufacturer = Manufacturer::create([
@@ -51,7 +59,7 @@ class CheckoutFlowTest extends TestCase
             'name' => ['en' => 'Test Product'],
             'description' => ['en' => 'Test description'],
             'price' => 150.00,
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'is_in_stock' => true,
             'is_active' => true,
         ]);
@@ -212,8 +220,6 @@ class CheckoutFlowTest extends TestCase
     #[Test]
     public function b2b_vat_validation_works(): void
     {
-        // This test would mock the VIES service to simulate valid and invalid VAT numbers
-        // For now, we need to set up a checkout session first
         $cart = Cart::create([
             'guest_token' => 'vat-test',
             'expires_at' => now()->addDays(7),
@@ -231,19 +237,113 @@ class CheckoutFlowTest extends TestCase
 
         // Skip OTP step by manually setting checkout data
         $checkoutId = Session::get('active_checkout_id');
-        app(CheckoutService::class)->update($checkoutId, [
+        $checkoutService = app(CheckoutService::class);
+        $checkoutService->update($checkoutId, [
             'guest_email' => 'vat@example.com',
             'otp_verified' => true,
-            'step' => 2, // Manually advance to step 2
+            'step' => 2,
         ]);
 
-        // Now test VAT validation
+        // Submit step 2 with B2B VAT data
         $response = $this->post('/en/checkout', [
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'street' => 'Test St 1',
+            'city' => 'Berlin',
+            'postal_code' => '10115',
+            'country_code' => 'DE',
             'is_b2b' => 1,
+            'company_name' => 'Test GmbH',
             'vat_number' => 'DE123456789',
+            'vat_valid' => 1,
         ]);
         $response->assertRedirect();
-        // In a real test we would mock the ViesService and check session data
+
+        // Verify B2B data was stored
+        $checkout = $checkoutService->get($checkoutId);
+        $this->assertTrue($checkout['data']['is_b2b']);
+        $this->assertEquals('Test GmbH', $checkout['data']['company_name']);
+        $this->assertEquals('DE123456789', $checkout['data']['vat_number']);
+        $this->assertTrue($checkout['data']['vat_valid']);
+        $this->assertTrue($checkout['data']['vat_exempt']);
+        $this->assertEquals(3, $checkout['step']);
+    }
+
+    #[Test]
+    public function checkout_view_receives_seconds_remaining(): void
+    {
+        $cart = Cart::create([
+            'guest_token' => 'timeout-test',
+            'expires_at' => now()->addDays(7),
+        ]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'price_at_add' => $this->product->price,
+        ]);
+
+        $response = $this->withCookie('guest_token', 'timeout-test')
+            ->get('/en/checkout');
+
+        $response->assertStatus(200);
+        $response->assertViewHas('secondsRemaining');
+        $this->assertGreaterThan(0, $response->viewData('secondsRemaining'));
+    }
+
+    #[Test]
+    public function bank_transfer_proof_upload_is_validated(): void
+    {
+        // Create an order directly for testing payment processing
+        $cart = Cart::create([
+            'guest_token' => 'proof-test',
+            'expires_at' => now()->addDays(7),
+        ]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'price_at_add' => $this->product->price,
+        ]);
+
+        $this->withCookie('guest_token', 'proof-test')
+            ->get('/en/checkout')
+            ->assertOk();
+
+        // Skip to step 5
+        $checkoutId = Session::get('active_checkout_id');
+        app(CheckoutService::class)->update($checkoutId, [
+            'contact_email' => 'proof@example.com',
+            'guest_email' => 'proof@example.com',
+            'otp_verified' => true,
+            'step' => 5,
+            'shipping_address' => ['first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St', 'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE'],
+            'shipping_method_id' => $this->shippingMethod->id,
+            'payment_method' => 'bank_transfer',
+        ]);
+
+        // Place order (bank transfer)
+        $response = $this->post('/en/checkout', [
+            'payment_method' => 'bank_transfer',
+        ]);
+        $response->assertRedirect();
+
+        // Verify order created
+        $order = \App\Models\Order::where('guest_email', 'proof@example.com')->first();
+        $this->assertNotNull($order);
+
+        // Test payment processing for bank transfer (returns redirect, not JSON)
+        $response = $this->post("/en/checkout/payment/{$order->order_number}/process", [
+            'payment_method' => 'bank_transfer',
+        ]);
+        $response->assertRedirect();
+
+        // Verify payment gateway_response includes method
+        $payment = $order->payment->fresh();
+        $this->assertNotNull($payment);
+        $this->assertEquals('pending', $payment->status->value);
+        $this->assertArrayHasKey('method', $payment->gateway_response);
+        $this->assertEquals('bank_transfer', $payment->gateway_response['method']);
     }
 
     #[Test]

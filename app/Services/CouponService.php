@@ -6,6 +6,8 @@ use App\Enums\DiscountType;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\Order;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class CouponService
@@ -65,8 +67,14 @@ class CouponService
 
         // 5. Usage limit
         if ($coupon->usage_limit !== null) {
-            $usageCount = CouponUsage::where('coupon_id', $coupon->id)->count();
-            if ($usageCount >= $coupon->usage_limit) {
+            try {
+                DB::transaction(function () use ($coupon) {
+                    $usageCount = CouponUsage::where('coupon_id', $coupon->id)->lockForUpdate()->count();
+                    if ($coupon->usage_limit && $usageCount >= $coupon->usage_limit) {
+                        throw new \Exception('Coupon usage limit reached');
+                    }
+                });
+            } catch (\Exception $e) {
                 return [
                     'valid' => false,
                     'coupon' => $coupon,
@@ -133,12 +141,27 @@ class CouponService
      */
     public function apply(Coupon $coupon, Order $order): void
     {
-        CouponUsage::create([
-            'coupon_id' => $coupon->id,
-            'user_id'   => $order->user_id, // nullable — guest orders have null
-            'order_id'  => $order->id,
-            'used_at'   => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($coupon, $order) {
+                $usageCount = CouponUsage::where('coupon_id', $coupon->id)->lockForUpdate()->count();
+                if ($coupon->usage_limit !== null && $usageCount >= $coupon->usage_limit) {
+                    throw new \Exception('Coupon usage limit reached');
+                }
+
+                CouponUsage::create([
+                    'coupon_id' => $coupon->id,
+                    'user_id'   => $order->user_id,
+                    'order_id'  => $order->id,
+                    'used_at'   => now(),
+                ]);
+            });
+        } catch (\Exception $e) {
+            Log::warning('Failed to record coupon usage', [
+                'coupon_id' => $coupon->id,
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

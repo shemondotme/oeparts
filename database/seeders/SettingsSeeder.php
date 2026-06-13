@@ -193,7 +193,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'security', 'key' => 'honeypot_enabled',      'value' => '1',  'type' => $b],
             ['group' => 'security', 'key' => 'csrf_enabled',          'value' => '1',  'type' => $b],
             ['group' => 'security', 'key' => 'force_https',           'value' => '0',  'type' => $b],
-            ['group' => 'security', 'key' => 'admin_2fa_required',    'value' => '0',  'type' => $b],
+            ['group' => 'security', 'key' => 'session_lifetime',      'value' => '120', 'type' => $i],
 
             // ── INTEGRATIONS ─────────────────────────────────────────────────────
             ['group' => 'integrations', 'key' => 'gtm_id',           'value' => '', 'type' => $s],
@@ -303,6 +303,76 @@ class SettingsSeeder extends Seeder
             ['group' => 'maintenance', 'key' => 'estimated_back_at',   'value' => '',                         'type' => $s],
             ['group' => 'maintenance', 'key' => 'show_estimated_time', 'value' => '0',                        'type' => $b],
             ['group' => 'maintenance', 'key' => 'contact_email',       'value' => '',                         'type' => $s],
+            ['group' => 'maintenance', 'key' => 'retry_after',         'value' => '3600',                     'type' => $i],
+
+            // ── STORE ─────────────────────────────────────────────────────────────
+            ['group' => 'store', 'key' => 'currency',           'value' => 'EUR', 'type' => $s],
+            ['group' => 'store', 'key' => 'currency_symbol',    'value' => '€',   'type' => $s],
+            ['group' => 'store', 'key' => 'currency_position',  'value' => 'left', 'type' => $s],
+            ['group' => 'store', 'key' => 'decimal_separator',  'value' => '.',    'type' => $s],
+            ['group' => 'store', 'key' => 'thousand_separator', 'value' => ',',    'type' => $s],
+
+            // ── CHECKOUT ──────────────────────────────────────────────────────────
+            ['group' => 'checkout', 'key' => 'default_payment_method',    'value' => 'bank_transfer', 'type' => $s],
+            ['group' => 'checkout', 'key' => 'timeout_minutes',           'value' => '30',            'type' => $i],
+            ['group' => 'checkout', 'key' => 'max_steps',                 'value' => '5',             'type' => $i],
+            ['group' => 'checkout', 'key' => 'payment_success_message',   'value' => $ml('Payment received. Thank you!'), 'type' => $j],
+            ['group' => 'checkout', 'key' => 'payment_error_message',     'value' => $ml('Payment failed. Please try again.'), 'type' => $j],
+            ['group' => 'checkout', 'key' => 'max_note_length',           'value' => '500',           'type' => $i],
+
+            // ── SECTIONS ──────────────────────────────────────────────────────────
+            ['group' => 'sections', 'key' => 'testimonials_limit',   'value' => '6',  'type' => $i],
+            ['group' => 'sections', 'key' => 'faq_limit',            'value' => '20', 'type' => $i],
+            ['group' => 'sections', 'key' => 'blog_limit',           'value' => '9',  'type' => $i],
+            ['group' => 'sections', 'key' => 'manufacturers_limit',  'value' => '12', 'type' => $i],
+
+            // ── NEWSLETTER ────────────────────────────────────────────────────────
+            ['group' => 'newsletter', 'key' => 'rate_limit_per_hour',  'value' => '10',   'type' => $i],
+            ['group' => 'newsletter', 'key' => 'rate_window_seconds',  'value' => '3600', 'type' => $i],
+            ['group' => 'newsletter', 'key' => 'double_opt_in',        'value' => '1',    'type' => $b],
+
+            // ── PART INQUIRY ──────────────────────────────────────────────────────
+            ['group' => 'part_inquiry', 'key' => 'response_hours',          'value' => '24', 'type' => $i],
+            ['group' => 'part_inquiry', 'key' => 'guest_inquiries_allowed', 'value' => '1',  'type' => $b],
+            ['group' => 'part_inquiry', 'key' => 'rate_limit_per_hour',     'value' => '5',  'type' => $i],
+
+            // ── COMPANY ───────────────────────────────────────────────────────────
+            ['group' => 'company', 'key' => 'name',                 'value' => 'OeParts', 'type' => $s],
+            ['group' => 'company', 'key' => 'vat_number',           'value' => '',         'type' => $s],
+            ['group' => 'company', 'key' => 'registration_number',  'value' => '',         'type' => $s],
+            ['group' => 'company', 'key' => 'email',                'value' => '',         'type' => $s],
+            ['group' => 'company', 'key' => 'phone',                'value' => '',         'type' => $s],
+            ['group' => 'company', 'key' => 'address',              'value' => '',         'type' => $s],
+
+            // ── MENU ──────────────────────────────────────────────────────────────
+            ['group' => 'menu', 'key' => 'footer_show_about',    'value' => '1', 'type' => $b],
+            ['group' => 'menu', 'key' => 'footer_show_contact',  'value' => '1', 'type' => $b],
+            ['group' => 'menu', 'key' => 'footer_show_faq',      'value' => '1', 'type' => $b],
+            ['group' => 'menu', 'key' => 'footer_show_blog',     'value' => '1', 'type' => $b],
+
+            // ── SOCIAL LINKS ──────────────────────────────────────────────────────
+            ['group' => 'social_links', 'key' => 'facebook_url',      'value' => '',       'type' => $s],
+            ['group' => 'social_links', 'key' => 'instagram_url',     'value' => '',       'type' => $s],
+            ['group' => 'social_links', 'key' => 'twitter_url',       'value' => '',       'type' => $s],
+            ['group' => 'social_links', 'key' => 'linkedin_url',      'value' => '',       'type' => $s],
+            ['group' => 'social_links', 'key' => 'youtube_url',       'value' => '',       'type' => $s],
+            ['group' => 'social_links', 'key' => 'tiktok_url',        'value' => '',       'type' => $s],
+            ['group' => 'social_links', 'key' => 'show_in_footer',    'value' => '1',      'type' => $b],
+            ['group' => 'social_links', 'key' => 'footer_icon_style', 'value' => 'outline', 'type' => $s],
+
+            // ── Missing individual keys in existing groups ────────────────────────
+            ['group' => 'search', 'key' => 'max_results',       'value' => '20', 'type' => $i],
+            ['group' => 'search', 'key' => 'log_failed',        'value' => '1',  'type' => $b],
+            ['group' => 'security', 'key' => 'blocked_ips',     'value' => '',   'type' => $s],
+            ['group' => 'seo', 'key' => 'og_site_name',         'value' => 'OeParts', 'type' => $s],
+            ['group' => 'seo', 'key' => 'google_verification',  'value' => '',   'type' => $s],
+            ['group' => 'seo', 'key' => 'bing_verification',    'value' => '',   'type' => $s],
+
+            // ── DASHBOARD (widget thresholds — defaults mirrored in code) ─────────
+            ['group' => 'dashboard', 'key' => 'pending_orders_warning',   'value' => '50', 'type' => $i],
+            ['group' => 'dashboard', 'key' => 'pending_orders_attention', 'value' => '10', 'type' => $i],
+            ['group' => 'dashboard', 'key' => 'backup_stale_hours',       'value' => '26', 'type' => $i],
+            ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],
         ];
     }
 }

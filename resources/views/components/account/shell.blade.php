@@ -1,4 +1,4 @@
-@props([
+﻿@props([
     'active'     => 'dashboard',
     'docId'      => null,
     'eyebrow'    => null,
@@ -88,7 +88,7 @@
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
                         <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">
-                            {{ $eyebrow ?: '§ Customer · Operating · Console' }}
+                            {{ $eyebrow ?: 'Customer · Operating · Console' }}
                         </span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
@@ -141,7 +141,7 @@
                 {{-- User identity panel --}}
                 <div class="border border-ink bg-paper mb-4" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
-                        <span class="bp-spec text-amber-ink">§ Account · ID</span>
+                        <span class="bp-spec text-amber-ink">Account · ID</span>
                         <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-emerald-700 flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 bg-emerald-600 rounded-full"></span>
                             Active
@@ -165,7 +165,7 @@
                 {{-- Nav --}}
                 <nav class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">§ Nav · Index</span>
+                        <span class="bp-spec text-amber-ink">Nav · Index</span>
                     </div>
                     <ul class="divide-y divide-rule">
                         @foreach($nav as $item)
@@ -207,7 +207,7 @@
 
                 {{-- Support strip --}}
                 <div class="mt-4 border border-rule bg-ivory-alt p-4">
-                    <p class="bp-spec text-amber-ink mb-1.5">§ Support · Desk</p>
+                    <p class="bp-spec text-amber-ink mb-1.5">Support · Desk</p>
                     <p class="font-display text-sm font-bold text-ink leading-tight">Need help?</p>
                     <p class="mt-1 text-xs text-ink-muted leading-relaxed">
                         Our B2B team replies within 2 business hours.
