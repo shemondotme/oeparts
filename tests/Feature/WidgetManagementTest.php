@@ -9,58 +9,55 @@ class WidgetManagementTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function sampleWidgets(): array
+    {
+        return [
+            ['id' => 'kpi_stats',     'label' => 'KPI Stats',    'enabled' => true,  'description' => 'Sales and revenue KPIs.', 'icon' => '<svg></svg>'],
+            ['id' => 'recent_orders', 'label' => 'Recent Orders','enabled' => false, 'description' => 'Latest customer orders.',  'icon' => '<svg></svg>'],
+            ['id' => 'alerts',        'label' => 'Alerts',       'enabled' => true,  'description' => 'System alerts.',           'icon' => '<svg></svg>'],
+        ];
+    }
+
     public function test_widget_management_view_compiles(): void
     {
-        $view = view('filament.modals.widget-management', [
-            'getCanvasItems' => fn () => [],
-            'getWidgetDescription' => fn ($id) => 'Test description',
-            'getWidgetIconSvg' => fn ($id) => '<svg></svg>',
-        ]);
+        $rendered = view('filament.modals.widget-management', [
+            'widgets' => $this->sampleWidgets(),
+        ])->render();
 
-        $rendered = $view->render();
-
-        $this->assertNotNull($rendered);
         $this->assertStringContainsString('Search widgets', $rendered);
         $this->assertStringContainsString('widgetManager', $rendered);
+    }
+
+    public function test_widget_management_view_renders_grid(): void
+    {
+        $rendered = view('filament.modals.widget-management', [
+            'widgets' => $this->sampleWidgets(),
+        ])->render();
+
+        $this->assertStringContainsString('grid-cols-2', $rendered);
         $this->assertStringContainsString('filteredWidgets', $rendered);
+        $this->assertStringContainsString('x-show', $rendered);
+        $this->assertStringContainsString('x-html', $rendered);
     }
 
-    public function test_widget_management_view_handles_multiple_widgets(): void
+    public function test_widget_management_view_has_wire_sync(): void
     {
-        $widgets = [];
-        for ($i = 0; $i < 5; $i++) {
-            $widgets[] = [
-                'id' => "widget_$i",
-                'label' => "Widget $i",
-                'enabled' => $i % 2 === 0,
-                'description' => "Description for widget $i",
-                'icon' => '<svg></svg>',
-            ];
-        }
+        $rendered = view('filament.modals.widget-management', [
+            'widgets' => $this->sampleWidgets(),
+        ])->render();
 
-        $view = view('filament.modals.widget-management', [
-            'getCanvasItems' => fn () => array_filter($widgets, fn ($w) => $w['enabled']),
-            'getWidgetDescription' => fn ($id) => "Test description for $id",
-            'getWidgetIconSvg' => fn ($id) => '<svg></svg>',
-        ]);
-
-        $rendered = $view->render();
-        $this->assertStringContainsString('grid grid-cols-1', $rendered);
+        // Livewire wire sync is in the Alpine component
+        $this->assertStringContainsString('widgetSelections', $rendered);
+        $this->assertStringContainsString('toggleWidget', $rendered);
     }
 
-    public function test_widget_management_produces_valid_json(): void
+    public function test_widget_management_view_handles_empty_widgets(): void
     {
-        $view = view('filament.modals.widget-management', [
-            'getCanvasItems' => fn () => [],
-            'getWidgetDescription' => fn ($id) => 'Test',
-            'getWidgetIconSvg' => fn ($id) => '<svg></svg>',
-        ]);
+        $rendered = view('filament.modals.widget-management', [
+            'widgets' => [],
+        ])->render();
 
-        $rendered = $view->render();
-
-        // Verify Alpine.js data initialization is present
-        $this->assertStringContainsString('x-data="widgetManager', $rendered);
-        // Verify form field is present
-        $this->assertStringContainsString('name="widgets"', $rendered);
+        $this->assertStringContainsString('widgetManager', $rendered);
+        $this->assertStringContainsString('No widgets match', $rendered);
     }
 }
