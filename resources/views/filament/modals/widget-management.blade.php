@@ -1,6 +1,6 @@
 @php
     $admin = auth('admin')->user();
-    $onCanvas = array_column($this->getCanvasItems(), 'id');
+    $onCanvas = array_column($getCanvasItems(), 'id');
 
     $widgets = [];
     foreach (\App\Services\WidgetPreferenceService::WIDGETS as $id => $config) {
@@ -12,8 +12,8 @@
             'id' => $id,
             'label' => $config['label'],
             'enabled' => in_array($id, $onCanvas, true),
-            'description' => $this->getWidgetDescription($id),
-            'icon' => $this->getWidgetIconSvg($id),
+            'description' => $getWidgetDescription($id),
+            'icon' => $getWidgetIconSvg($id),
         ];
     }
 @endphp
