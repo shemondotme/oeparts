@@ -254,6 +254,32 @@ class Dashboard extends BaseDashboard
                 ->icon(fn (): string => $this->editMode ? 'heroicon-o-check' : 'heroicon-o-arrows-pointing-out')
                 ->color(fn (): string => $this->editMode ? 'success' : 'gray')
                 ->action('toggleEditMode'),
+            Action::make('resetLayout')
+                ->label('Reset to Defaults')
+                ->icon('heroicon-o-arrow-path')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Reset layout to defaults?')
+                ->modalDescription('This will reset your current dashboard widgets to their default positions and sizes. Your custom arrangements will be lost.')
+                ->action(function (): void {
+                    $admin = auth('admin')->user();
+
+                    if (! $admin || ! $this->activeDashboardId) {
+                        return;
+                    }
+
+                    $service = app(DashboardLayoutService::class);
+                    $defaultWidgetIds = app(WidgetPreferenceService::class)->roleDefaultWidgetIds($admin);
+                    $defaultLayout = $service->packLayout($defaultWidgetIds);
+
+                    \App\Models\AdminDashboard::where('admin_id', $admin->id)
+                        ->where('id', $this->activeDashboardId)
+                        ->update(['layout' => $defaultLayout]);
+
+                    Notification::make()->title('Dashboard layout reset to defaults')->success()->send();
+
+                    $this->redirect(route('filament.admin.pages.dashboard'));
+                }),
             Action::make('manageWidgets')
                 ->label('Manage Widgets')
                 ->icon('heroicon-o-squares-2x2')

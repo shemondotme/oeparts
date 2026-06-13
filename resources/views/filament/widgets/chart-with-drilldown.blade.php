@@ -15,8 +15,6 @@
 
 <x-filament-widgets::widget class="fi-wi-chart">
     <x-filament::section
-        :description="$description"
-        :heading="$heading"
         :collapsible="$isCollapsible"
     >
         <x-slot name="header">

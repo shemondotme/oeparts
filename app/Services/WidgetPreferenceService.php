@@ -137,7 +137,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 2],
+            'default_layout' => ['w' => 6, 'h' => 4],
         ],
         'health_strip' => [
             'class' => \App\Filament\Widgets\HealthStrip::class,
@@ -148,7 +148,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::SHORT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 2],
+            'default_layout' => ['w' => 6, 'h' => 4],
         ],
         'manufacturer_revenue' => [
             'class' => \App\Filament\Widgets\TopManufacturersRevenue::class,
