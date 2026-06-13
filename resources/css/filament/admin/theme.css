@@ -2631,3 +2631,43 @@ select.fi-select-input {
         z-index: -1;
     }
 }
+
+/* ─── Widget Management Modal Styling ─────────────────────────────────────── */
+
+.fi-form-field-wrapper.fi-repeater-field .fi-repeater-item {
+    @apply rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 transition-all duration-200;
+}
+
+.fi-form-field-wrapper.fi-repeater-field .fi-repeater-item:hover {
+    @apply border-amber-200 dark:border-amber-800/40 bg-amber-50/30 dark:bg-gray-800/80 shadow-sm;
+}
+
+.fi-form-field-wrapper.fi-repeater-field .fi-repeater-item .fi-placeholder-wrapper {
+    @apply mb-0;
+}
+
+.fi-form-field-wrapper.fi-repeater-field .fi-repeater-item > div {
+    @apply flex items-center justify-between gap-4;
+}
+
+.fi-form-field-wrapper.fi-repeater-field .fi-repeater-item [data-field-wrapper="info"] {
+    @apply flex-grow;
+}
+
+/* Toggle button styling in widget manager */
+.fi-form-field-wrapper.fi-repeater-field .fi-toggle-field {
+    @apply m-0 flex-shrink-0;
+}
+
+.fi-form-field-wrapper.fi-repeater-field .fi-toggle-field .fi-toggle-button {
+    @apply ring-amber-400/40 dark:ring-amber-500/40;
+}
+
+.fi-form-field-wrapper.fi-repeater-field .fi-toggle-field .fi-toggle-button.fi-checked {
+    @apply bg-amber-600 dark:bg-amber-500;
+}
+
+/* Reorder handle styling */
+.fi-form-field-wrapper.fi-repeater-field .fi-repeater-item-grabber {
+    @apply p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors;
+}
