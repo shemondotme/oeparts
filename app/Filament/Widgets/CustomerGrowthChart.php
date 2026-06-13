@@ -26,6 +26,14 @@ class CustomerGrowthChart extends ChartWidget implements \App\Filament\Support\D
 
     protected ?string $heading = 'Acquisition Trend over Time';
 
+    protected static bool $isLazy = true;
+
+    #[\Livewire\Attributes\Renderless]
+    public function getPlaceholder(): string
+    {
+        return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
+    }
+
     protected static ?string $maxWidth = '2/3';
 
     public function getDrilldownUrl(): ?string

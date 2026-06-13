@@ -24,6 +24,9 @@ class Dashboard extends BaseDashboard
     /** Holds selected widget IDs while the Manage Widgets modal is open. */
     public array $widgetSelections = [];
 
+    /** Request-scoped cache for getCanvasItems() to avoid repeated layout queries. */
+    private ?array $cachedCanvasItems = null;
+
     public function mount(): void
     {
         $admin = auth('admin')->user();
@@ -80,15 +83,19 @@ class Dashboard extends BaseDashboard
     /** @return list<array{id:string,class:string,x:int,y:int,w:int,h:int}> */
     public function getCanvasItems(): array
     {
+        if ($this->cachedCanvasItems !== null) {
+            return $this->cachedCanvasItems;
+        }
+
         $admin = auth('admin')->user();
 
         if (! $admin || ! $this->activeDashboardId) {
-            return [];
+            return $this->cachedCanvasItems = [];
         }
 
         $service = app(DashboardLayoutService::class);
 
-        return $service->canvasItems($admin, $service->activeDashboard($admin));
+        return $this->cachedCanvasItems = $service->canvasItems($admin, $service->activeDashboard($admin));
     }
 
     /** @return list<array{id:int,name:string}> */

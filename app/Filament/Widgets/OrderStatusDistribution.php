@@ -27,6 +27,14 @@ class OrderStatusDistribution extends ChartWidget implements \App\Filament\Suppo
 
     protected static ?int $sort = -25;
 
+    protected static bool $isLazy = true;
+
+    #[\Livewire\Attributes\Renderless]
+    public function getPlaceholder(): string
+    {
+        return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
+    }
+
     protected static ?string $maxWidth = '1/3';
 
     public function getDrilldownUrl(): ?string

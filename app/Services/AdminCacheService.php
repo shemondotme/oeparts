@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
  * tagged so it can be selectively invalidated.
  *
  * NOTE: never Cache::flush() — only forget() specific keys.
+ *
+ * For local development: set CACHE_STORE=file (or database) in .env to enable
+ * widget caching across page reloads. Array driver is used in tests and skips cache.
+ * Production should use Redis or a persistent cache driver.
  */
 final class AdminCacheService
 {
@@ -65,7 +69,17 @@ final class AdminCacheService
 
     private static function shouldSkipCache(): bool
     {
-        return config('cache.default') === 'array' && ! self::$bypassArrayDriverCheck;
+        if (self::$bypassArrayDriverCheck) {
+            return false;
+        }
+
+        $driver = config('cache.default');
+
+        if ($driver === 'array') {
+            return true;
+        }
+
+        return false;
     }
 
     /**

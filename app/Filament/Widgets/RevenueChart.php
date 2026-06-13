@@ -27,6 +27,14 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
 
     protected ?string $pollingInterval = '120s';
 
+    protected static bool $isLazy = true;
+
+    #[\Livewire\Attributes\Renderless]
+    public function getPlaceholder(): string
+    {
+        return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
+    }
+
     protected static ?int $sort = -37;
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
