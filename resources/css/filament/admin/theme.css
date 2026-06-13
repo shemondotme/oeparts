@@ -745,7 +745,7 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
 
 .fi-wi-stats-overview-stat {
     border-radius: 20px;
-    padding: 1.25rem;
+    padding: 0.625rem 0.75rem;
     box-shadow: var(--glass-shadow);
     transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
     border: 1px solid var(--glass-border);
@@ -831,15 +831,16 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
 }
 
 .fi-wi-stats-overview .fi-section-header {
-    padding: 1rem 1.25rem 0.5rem;
+    padding: 0.75rem 1rem 0.35rem;
 }
 
 .fi-wi-stats-overview .fi-section-content {
-    padding: 0.75rem 1.25rem 1.25rem;
+    padding: 0.4rem 0.75rem 0.4rem !important;
+    overflow: hidden !important;
 }
 
 .fi-stats-overview {
-    gap: var(--kpi-gap);
+    gap: 0.5rem;
 }
 
 /* ─── Modals & Notifications ───────────────────────────────────────────────── */
@@ -912,10 +913,15 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
     flex-grow: 1;
     height: 100%;
     padding: var(--widget-body-padding);
-    overflow-y: auto;
+    overflow: hidden; /* Prevent scrolling on outer section card */
     max-height: 100%;
-    scrollbar-width: thin;
-    scrollbar-color: var(--glass-border) transparent;
+    display: flex;
+    flex-direction: column;
+}
+
+.fi-wi-activity-overview > div,
+.fi-wi-quick-actions > div {
+    overflow: hidden !important;
 }
 
 .fi-wi {
