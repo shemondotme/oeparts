@@ -4,7 +4,13 @@
 
     $widgets = [];
     foreach (\App\Services\WidgetPreferenceService::WIDGETS as $id => $config) {
-        if (!$admin || !$admin->hasAnyRole($config['roles'])) {
+        // Skip if admin is not authenticated
+        if (!$admin) {
+            continue;
+        }
+
+        // Check if admin has access to this widget (skip if roles don't match and config has role restrictions)
+        if (!empty($config['roles']) && !$admin->hasAnyRole($config['roles'])) {
             continue;
         }
 
