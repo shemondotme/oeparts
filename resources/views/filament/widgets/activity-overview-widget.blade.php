@@ -1,10 +1,10 @@
 <x-filament-widgets::widget class="fi-wi-activity-overview op-fade-in" wire:poll.60s>
-    <div class="p-5 h-full flex flex-col" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-1);">
+    <div class="p-5 h-full flex flex-col" style="background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-top: 2px solid var(--aurora-indigo); border-radius: 20px; box-shadow: var(--glass-shadow);">
         <div class="flex items-center justify-between mb-4" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--color-border-subtle);">
             <h2 class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-muted); font-family: var(--font-mono);">
                 Activity Overview
             </h2>
-            <a href="{{ route('filament.admin.resources.activity-logs.index') }}" wire:navigate class="text-[10px] font-semibold uppercase tracking-wider transition-colors" style="color: var(--color-accent-500);">
+            <a href="{{ route('filament.admin.resources.activity-logs.index') }}" wire:navigate class="text-[10px] font-semibold uppercase tracking-wider transition-colors" style="background: var(--aurora-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
                 View All &rarr;
             </a>
         </div>
@@ -12,7 +12,7 @@
         <div class="space-y-3.5 flex-1">
             <div class="flex justify-between items-center text-sm">
                 <div class="flex items-center gap-2.5" style="color: var(--color-text-secondary);">
-                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--color-brand-600);"></span>
+                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--aurora-indigo);"></span>
                     <span>Total Orders</span>
                 </div>
                 <div class="flex items-center gap-3">
@@ -28,7 +28,7 @@
                                 $points[] = "{$x},{$y}";
                             }
                         @endphp
-                        <polyline fill="none" stroke="var(--color-brand-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="{{ implode(' ', $points) }}" />
+                        <polyline fill="none" stroke="var(--aurora-indigo)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="{{ implode(' ', $points) }}" />
                     </svg>
                     @endif
                 </div>
@@ -36,7 +36,7 @@
 
             <div class="flex justify-between items-center text-sm">
                 <div class="flex items-center gap-2.5" style="color: var(--color-text-secondary);">
-                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--color-accent-500);"></span>
+                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--aurora-violet);"></span>
                     <span>Total Customers</span>
                 </div>
                 <div class="flex items-center gap-3">
@@ -52,7 +52,7 @@
                                 $points[] = "{$x},{$y}";
                             }
                         @endphp
-                        <polyline fill="none" stroke="var(--color-accent-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="{{ implode(' ', $points) }}" />
+                        <polyline fill="none" stroke="var(--aurora-violet)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="{{ implode(' ', $points) }}" />
                     </svg>
                     @endif
                 </div>
@@ -60,7 +60,7 @@
 
             <div class="flex justify-between items-center text-sm">
                 <div class="flex items-center gap-2.5" style="color: var(--color-text-secondary);">
-                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--color-accent-500);"></span>
+                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--aurora-blue);"></span>
                     <span>Active Products</span>
                 </div>
                 <span class="font-bold font-mono" style="color: var(--color-text-primary);">{{ number_format($activeProducts) }}</span>
@@ -68,7 +68,7 @@
 
             <div class="flex justify-between items-center text-sm">
                 <div class="flex items-center gap-2.5" style="color: var(--color-text-secondary);">
-                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--color-success-600);"></span>
+                    <span class="w-1.5 h-1.5 rounded-full" style="background: var(--aurora-cyan);"></span>
                     <span>Month Revenue</span>
                 </div>
                 <div class="flex items-center gap-3">
@@ -84,7 +84,7 @@
                                 $points[] = "{$x},{$y}";
                             }
                         @endphp
-                        <polyline fill="none" stroke="var(--color-success-500)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="{{ implode(' ', $points) }}" />
+                        <polyline fill="none" stroke="var(--aurora-cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" points="{{ implode(' ', $points) }}" />
                     </svg>
                     @endif
                 </div>
@@ -104,7 +104,7 @@
                     <span class="font-bold font-mono" style="color: var(--color-text-primary);">{{ $completionRate }}%</span>
                 </div>
                 <div class="w-full rounded-full h-2 overflow-hidden" style="background: var(--color-bg-inset);">
-                    <div class="h-2 rounded-full transition-all duration-500" style="width: {{ $completionRate }}%; background: var(--color-success-500);"></div>
+                    <div class="h-2 rounded-full transition-all duration-500" style="width: {{ $completionRate }}%; background: var(--aurora-gradient);"></div>
                 </div>
             </div>
         </div>
