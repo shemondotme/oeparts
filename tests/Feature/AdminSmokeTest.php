@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Condition;
 use App\Models\Product;
 use App\Models\Section;
-use App\Enums\ProductCondition;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -75,13 +75,13 @@ class AdminSmokeTest extends TestCase
         $this->assertContains(\App\Filament\Widgets\FailedSearchesWidget::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\DashboardAlerts::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\HealthStrip::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\CheckoutDropoffChart::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\SalesByCountryChart::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\OrderStatusDistribution::class, $enabled);
 
         // Non-essential widgets are hidden by default
         $this->assertNotContains(\App\Filament\Widgets\TopManufacturersRevenue::class, $enabled);
         $this->assertNotContains(\App\Filament\Widgets\CustomerGrowthChart::class, $enabled);
-        $this->assertNotContains(\App\Filament\Widgets\CheckoutDropoffChart::class, $enabled);
-        $this->assertNotContains(\App\Filament\Widgets\SalesByCountryChart::class, $enabled);
-        $this->assertNotContains(\App\Filament\Widgets\OrderStatusDistribution::class, $enabled);
         $this->assertNotContains(\App\Filament\Widgets\PaymentMethodSplit::class, $enabled);
         $this->assertNotContains(\App\Filament\Widgets\RecentActivityLog::class, $enabled);
     }
@@ -262,10 +262,16 @@ class AdminSmokeTest extends TestCase
             'slug' => 'test-mfr-' . uniqid(),
             'country_code' => 'DE',
         ]);
+        $condition = Condition::first() ?? Condition::create([
+            'name' => 'New',
+            'slug' => 'new',
+            'bg_color' => '#DCFCE7',
+            'text_color' => '#16A34A',
+        ]);
         $product = Product::factory()->create([
             'name'               => json_encode(['en' => 'Test Product']),
             'normalized_oem'     => app(\App\Services\OemNormalizerService::class)->normalize('12345'),
-            'condition'          => ProductCondition::New,
+            'condition_id'       => $condition->id,
             'is_in_stock'        => true,
             'is_active'          => true,
             'price'              => '10.00',
@@ -287,6 +293,122 @@ class AdminSmokeTest extends TestCase
             $response = $this->get($url);
             $response->assertStatus(200);
         }
+    }
+
+    // ── Widget Sort Uniqueness ──────────────────────────────────────────────────
+
+    #[Test]
+    public function all_widget_sort_values_are_unique(): void
+    {
+        $sorts = [];
+
+        foreach (\App\Services\WidgetPreferenceService::WIDGETS as $id => $config) {
+            try {
+                $prop = (new \ReflectionClass($config['class']))->getProperty('sort');
+                $prop->setAccessible(true);
+                $value = $prop->getValue();
+
+                if ($value !== null) {
+                    $sorts[$id] = $value;
+                }
+            } catch (\ReflectionException) {
+                // Widget has no $sort — skip
+            }
+        }
+
+        $values = array_values($sorts);
+        $unique = array_unique($values);
+        $duplicates = array_filter(
+            array_count_values($values),
+            fn (int $count) => $count > 1,
+        );
+
+        $this->assertCount(
+            count($values),
+            $unique,
+            'Widget $sort values must be unique. Duplicates: ' . json_encode($duplicates),
+        );
+    }
+
+    // ── Layout Save — Junk ID Rejection ────────────────────────────────────────
+
+    #[Test]
+    public function save_layout_with_junk_id_is_silently_rejected(): void
+    {
+        $service = app(\App\Services\DashboardLayoutService::class);
+        $dashboard = $service->ensureDefaultDashboard($this->admin);
+
+        $result = $service->saveLayout($this->admin, $dashboard->id, [
+            ['id' => 'totally_bogus_widget_id', 'x' => 0, 'y' => 0, 'w' => 6, 'h' => 4],
+            ['id' => '../../../etc/passwd',     'x' => 0, 'y' => 0, 'w' => 6, 'h' => 4],
+            ['id' => '<script>alert(1)</script>', 'x' => 0, 'y' => 0, 'w' => 6, 'h' => 4],
+        ]);
+
+        $this->assertEmpty($result, 'Unknown widget IDs must all be stripped from layout');
+        $this->assertEmpty($dashboard->fresh()->layout, 'Dashboard layout must be empty after junk-only save');
+    }
+
+    #[Test]
+    public function save_layout_mixes_valid_and_junk_ids_keeps_only_valid(): void
+    {
+        $service = app(\App\Services\DashboardLayoutService::class);
+        $dashboard = $service->ensureDefaultDashboard($this->admin);
+
+        $result = $service->saveLayout($this->admin, $dashboard->id, [
+            ['id' => 'kpi_stats',         'x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
+            ['id' => 'totally_fake',      'x' => 0, 'y' => 4, 'w' => 6,  'h' => 4],
+            ['id' => 'revenue_chart',     'x' => 0, 'y' => 2, 'w' => 8,  'h' => 4],
+        ]);
+
+        $ids = array_column($result, 'id');
+        $this->assertContains('kpi_stats', $ids);
+        $this->assertContains('revenue_chart', $ids);
+        $this->assertNotContains('totally_fake', $ids);
+    }
+
+    // ── Chrome Layout ───────────────────────────────────────────────────────────
+
+    #[Test]
+    public function topbar_has_expected_zones(): void
+    {
+        $response = $this->get('/admin');
+        $response->assertStatus(200);
+        $response->assertSee('op-topbar-left', false);
+        $response->assertSee('op-topbar-center', false);
+        $response->assertSee('op-topbar-right', false);
+    }
+
+    #[Test]
+    public function quick_create_is_role_aware(): void
+    {
+        $catalogAdmin = Admin::create([
+            'name'     => 'Catalog Admin',
+            'email'    => 'catalog@oeparts.test',
+            'password' => bcrypt('password'),
+        ]);
+        $catalogAdmin->assignRole('catalog_admin');
+
+        // Log in as catalog_admin in the admin guard so the Blade component sees it.
+        auth('admin')->login($catalogAdmin);
+
+        try {
+            $html = (string) \Illuminate\Support\Facades\Blade::render('<x-admin.quick-create />');
+            $this->assertStringNotContainsString('/admin/filament/orders/create', $html);
+            // Catalog admin DOES get the product link
+            $this->assertStringContainsString('/admin/products/create', $html);
+        } finally {
+            auth('admin')->logout();
+            $this->actingAs($this->admin, 'admin');
+        }
+    }
+
+    #[Test]
+    public function sidebar_rail_renders_navigation_group_icons(): void
+    {
+        $response = $this->get('/admin');
+        $response->assertStatus(200);
+        $response->assertSee('op-sidebar-rail', false);
+        $response->assertSee('op-sidebar-panel', false);
     }
 
     // ── Admin Panel Auth Guard ──────────────────────────────────────────────────

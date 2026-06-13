@@ -38,6 +38,6 @@ class ContactController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Your message has been sent successfully. We will get back to you soon.']);
+        return response()->json(['success' => true, 'message' => settings('contact.success_message', 'Your message has been sent successfully. We will get back to you soon.')]);
     }
 }

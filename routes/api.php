@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+// API routes are intentionally unauthenticated — cart is for anonymous users,
+// but VAT validation and inquiry endpoints must be rate-limited.
+Route::middleware('throttle:api')->group(function () {
+
 // Health ping
 Route::get('/ping', fn() => response()->json(['ok' => true]));
 
@@ -43,4 +47,6 @@ Route::prefix('sections')->group(function () {
 // Part Inquiry API (from homepage modal)
 Route::post('/inquiry', [\App\Http\Controllers\Api\InquiryController::class, 'store'])
     ->name('api.inquiry.store');
+
+}); // throttle:api group
 

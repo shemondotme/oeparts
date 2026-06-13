@@ -16,7 +16,12 @@ namespace App\Services;
 class TranslationService
 {
     /** @var string[] Supported locales in priority order */
-    private array $locales = ['en', 'de', 'lt', 'fr', 'es'];
+    private array $locales;
+
+    public function __construct()
+    {
+        $this->locales = config('app.supported_locales', ['en', 'de', 'lt', 'fr', 'es']);
+    }
 
     /**
      * Resolve the translated value from a multilang field.

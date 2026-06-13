@@ -3,12 +3,13 @@
 namespace App\Services;
 
 use App\Enums\BulkUpdateAction;
-use App\Enums\ProductCondition;
 use App\Models\BulkUpdateLog;
+use App\Models\Condition;
 use App\Models\InventoryLog;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ProductImportService
@@ -20,8 +21,8 @@ class ProductImportService
     /** @var array<string, Manufacturer|null> */
     private array $manufacturerCache = [];
 
-    /** @var array<string, ProductCondition|null> */
-    private array $conditionCache = [];  // slug → enum case or null
+    /** @var array<string, Condition|null> */
+    private array $conditionCache = [];  // slug → condition model or null
 
     public function __construct(private OemNormalizerService $normalizer) {}
 
@@ -34,6 +35,15 @@ class ProductImportService
      */
     public function process(string $absolutePath, int $adminId, bool $updateExisting): array
     {
+        $fileHash = hash_file('sha256', $absolutePath);
+        $recentDuplicate = BulkUpdateLog::where('action_type', BulkUpdateAction::Import->value)
+            ->where('created_at', '>=', now()->subHour())
+            ->whereJsonContains('payload->file_hash', $fileHash)
+            ->exists();
+        if ($recentDuplicate) {
+            Log::warning('Duplicate CSV import detected — same file hash within 1 hour', ['file_hash' => $fileHash]);
+        }
+
         $handle = fopen($absolutePath, 'r');
         if ($handle === false) {
             throw new \RuntimeException('Cannot open CSV file for reading.');
@@ -89,7 +99,10 @@ class ProductImportService
         }
 
         fclose($handle);
-        $this->logBulkAction($adminId, $created + $updated, $created, $updated, $skipped, $rowErrors);
+        $this->logBulkAction($adminId, $created + $updated, $created, $updated, $skipped, $rowErrors, $fileHash);
+
+        \Illuminate\Support\Facades\Cache::forget('admin:dashboard:stock_alerts');
+        \Illuminate\Support\Facades\Cache::forget('sitemap_parts');
 
         return compact('created', 'updated', 'skipped', 'rowErrors');
     }
@@ -158,73 +171,75 @@ class ProductImportService
         $name = $this->buildJsonField($record, 'name', $record['oem_number']);
         $description = $this->buildJsonField($record, 'description');
 
-        // ── upsert ───────────────────────────────────────────────────────────
-        $existing = Product::where('manufacturer_id', $manufacturer->id)
-            ->where('normalized_oem', $normalizedOem)
-            ->first();
+        return DB::transaction(function () use ($record, $adminId, $updateExisting, $condition, $price, $isInStock, $manufacturer, $moq, $normalizedOem, $deliveryTime, $name, $description) {
+            // ── upsert ───────────────────────────────────────────────────────────
+            $existing = Product::where('manufacturer_id', $manufacturer->id)
+                ->where('normalized_oem', $normalizedOem)
+                ->first();
 
-        if ($existing !== null) {
-            if (! $updateExisting) {
-                return 'skipped';
+            if ($existing !== null) {
+                if (! $updateExisting) {
+                    return 'skipped';
+                }
+
+                $oldStock = $existing->is_in_stock;
+
+                $existing->update([
+                    'oem_number' => $record['oem_number'],
+                    'normalized_oem' => $normalizedOem,
+                    'name' => $name,
+                    'description' => $description ?? $existing->description,
+                    'condition_id' => $condition->id,
+                    'price' => $price,
+                    'delivery_time' => $deliveryTime,
+                    'moq' => $moq,
+                    'is_in_stock' => $isInStock,
+                ]);
+
+                if ((bool) $oldStock !== $isInStock) {
+                    InventoryLog::create([
+                        'product_id' => $existing->id,
+                        'admin_id' => $adminId,
+                        'change_type' => 'csv_import',
+                        'old_status' => $oldStock,
+                        'new_status' => $isInStock,
+                        'note' => 'Stock updated via CSV import',
+                    ]);
+                }
+
+                $this->processCrossReferences($existing->id, $record['cross_oem_numbers'] ?? '');
+
+                return 'updated';
             }
 
-            $oldStock = $existing->is_in_stock;
-
-            $existing->update([
+            // ── create ───────────────────────────────────────────────────────────
+            $product = Product::create([
+                'manufacturer_id' => $manufacturer->id,
                 'oem_number' => $record['oem_number'],
                 'normalized_oem' => $normalizedOem,
                 'name' => $name,
-                'description' => $description ?? $existing->description,
-                'condition' => $condition->value,
+                'description' => $description,
+                'condition_id' => $condition->id,
                 'price' => $price,
                 'delivery_time' => $deliveryTime,
                 'moq' => $moq,
                 'is_in_stock' => $isInStock,
+                'is_active' => true,
             ]);
 
-            if ((bool) $oldStock !== $isInStock) {
-                InventoryLog::create([
-                    'product_id' => $existing->id,
-                    'admin_id' => $adminId,
-                    'change_type' => 'csv_import',
-                    'old_status' => $oldStock,
-                    'new_status' => $isInStock,
-                    'note' => 'Stock updated via CSV import',
-                ]);
-            }
+            InventoryLog::create([
+                'product_id' => $product->id,
+                'admin_id' => $adminId,
+                'change_type' => 'csv_import',
+                'old_status' => false,
+                'new_status' => $isInStock,
+                'note' => 'Created via CSV import',
+            ]);
 
-            $this->processCrossReferences($existing->id, $record['cross_oem_numbers'] ?? '');
+            $this->processCrossReferences($product->id, $record['cross_oem_numbers'] ?? '');
 
-            return 'updated';
-        }
-
-        // ── create ───────────────────────────────────────────────────────────
-        $product = Product::create([
-            'manufacturer_id' => $manufacturer->id,
-            'oem_number' => $record['oem_number'],
-            'normalized_oem' => $normalizedOem,
-            'name' => $name,
-            'description' => $description,
-            'condition_id' => $condition->id,
-            'price' => $price,
-            'delivery_time' => $deliveryTime,
-            'moq' => $moq,
-            'is_in_stock' => $isInStock,
-            'is_active' => true,
-        ]);
-
-        InventoryLog::create([
-            'product_id' => $product->id,
-            'admin_id' => $adminId,
-            'change_type' => 'csv_import',
-            'old_status' => false,
-            'new_status' => $isInStock,
-            'note' => 'Created via CSV import',
-        ]);
-
-        $this->processCrossReferences($product->id, $record['cross_oem_numbers'] ?? '');
-
-        return 'created';
+            return 'created';
+        });
     }
 
     /**
@@ -275,16 +290,16 @@ class ProductImportService
         return $this->manufacturerCache[$slug];
     }
 
-    private function resolveCondition(string $slug): ?ProductCondition
+    private function resolveCondition(string $slug): ?Condition
     {
         if (! array_key_exists($slug, $this->conditionCache)) {
-            $this->conditionCache[$slug] = ProductCondition::tryFrom($slug);
+            $this->conditionCache[$slug] = Condition::where('slug', $slug)->first();
         }
 
         return $this->conditionCache[$slug];
     }
 
-    private function logBulkAction(int $adminId, int $affected, int $created, int $updated, int $skipped, array $errors): void
+    private function logBulkAction(int $adminId, int $affected, int $created, int $updated, int $skipped, array $errors, string $fileHash = ''): void
     {
         try {
             BulkUpdateLog::create([
@@ -296,6 +311,7 @@ class ProductImportService
                     'updated' => $updated,
                     'skipped' => $skipped,
                     'errors' => array_slice($errors, 0, 200),
+                    'file_hash' => $fileHash,
                 ],
                 'created_at' => now(),
             ]);

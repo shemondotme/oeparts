@@ -1,4 +1,4 @@
-{{-- Section: newsletter (Industrial Blueprint)
+﻿{{-- Section: newsletter (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), button_text(ml), placeholder(ml), success_text(ml)
      Submits via fetch() to POST /{lang}/newsletter/subscribe. Honeypot included.
 --}}
@@ -20,7 +20,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -47,6 +47,10 @@
                         this.state = 'loading';
                         this.error = '';
                         try {
+                            const honeypotData = {};
+                            document.querySelectorAll('[name^=my_name], [name=valid_from]').forEach(el => {
+                                honeypotData[el.name] = el.value;
+                            });
                             const res = await fetch('{{ route('frontend.newsletter.subscribe', ['lang' => app()->getLocale()]) }}', {
                                 method: 'POST',
                                 headers: {
@@ -54,7 +58,7 @@
                                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                                     'Accept': 'application/json',
                                 },
-                                body: JSON.stringify({ email: this.email, lang: '{{ app()->getLocale() }}' }),
+                                body: JSON.stringify({ email: this.email, lang: '{{ app()->getLocale() }}', ...honeypotData }),
                             });
                             const json = await res.json();
                             if (json.success) {
@@ -73,9 +77,10 @@
                 <template x-if="state !== 'success'">
                     <form @submit.prevent="submit" novalidate>
                         <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+                        @honeypot
 
                         <label for="newsletter-email" class="bp-spec mb-3 inline-block">
-                            § Enter email address
+                            {{ __('Enter email address') }}
                         </label>
 
                         {{-- Input + button row --}}
@@ -107,7 +112,7 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    Transmitting
+                                    {{ __('Transmitting') }}
                                 </span>
                             </button>
                         </div>
@@ -115,9 +120,9 @@
                         <p x-show="state === 'error'" x-text="error" id="newsletter-error" role="alert"
                            class="mt-3 font-mono text-[11px] uppercase tracking-wider text-red-600"></p>
 
-                        <p class="mt-4 flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        <p class="mt-4 flex items-center gap-2 bp-spec-mono">
                             <x-heroicon-s-lock-closed class="w-3 h-3 text-amber-ink" />
-                            GDPR · Privacy respected · Unsubscribe any time
+                            {{ __('GDPR · Privacy respected · Unsubscribe any time') }}
                         </p>
                     </form>
                 </template>
@@ -130,14 +135,14 @@
                             </div>
                             <div>
                                 <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink mb-2">
-                                    § Status · Confirmed
+                                    {{ __('Status · Confirmed') }}
                                 </p>
                                 <h3 class="font-display text-2xl font-extrabold text-ink mb-2 tracking-tight">
-                                    Subscription logged<span class="text-amber">.</span>
+                                    {{ __('Subscription logged') }}<span class="text-amber">.</span>
                                 </h3>
                                 <p class="text-body" x-text="successText"></p>
-                                <p class="mt-3 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                                    Check inbox · confirmation email sent
+                                <p class="mt-3 bp-spec-mono">
+                                    {{ __('Check inbox · confirmation email sent') }}
                                 </p>
                             </div>
                         </div>

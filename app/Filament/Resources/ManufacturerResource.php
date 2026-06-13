@@ -3,13 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ManufacturerResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\Manufacturer;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
-use Filament\Actions;
+use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -43,139 +50,245 @@ class ManufacturerResource extends Resource
     {
         return $schema
             ->components([
-                Section::make('Manufacturer Details')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label('Name (JSON)')
-                            ->helperText('JSON format: {"en": "BMW", "de": "BMW", "lt": "BMW", "fr": "BMW", "es": "BMW"}')
-                            ->required()
-                            ->maxLength(200)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                if (is_string($state) && filled($state)) {
-                                    $set('slug', Str::slug($state));
-                                }
-                            }),
-                        Forms\Components\TextInput::make('slug')
-                            ->required()
-                            ->maxLength(200)
-                            ->unique(ignoreRecord: true),
-                        Forms\Components\FileUpload::make('logo_id')
-                            ->label('Logo')
-                            ->image()
-                            ->nullable()
-                            ->directory('manufacturer-logos'),
-                        Forms\Components\Select::make('country_code')
-                            ->label('Country')
-                            ->options([
-                                'DE' => '🇩🇪 Germany',
-                                'FR' => '🇫🇷 France',
-                                'IT' => '🇮🇹 Italy',
-                                'JP' => '🇯🇵 Japan',
-                                'KR' => '🇰🇷 South Korea',
-                                'SE' => '🇸🇪 Sweden',
-                                'CZ' => '🇨🇿 Czech Republic',
-                                'US' => '🇺🇸 United States',
-                                'GB' => '🇬🇧 United Kingdom',
-                                'ES' => '🇪🇸 Spain',
-                                'NL' => '🇳🇱 Netherlands',
-                                'AT' => '🇦🇹 Austria',
-                                'PL' => '🇵🇱 Poland',
-                            ])
-                            ->nullable(),
-                        Forms\Components\Toggle::make('is_verified_oem')
-                            ->label('Verified OEM')
-                            ->default(false),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
-                            ->default(true),
-                        Forms\Components\TextInput::make('sort_order')
-                            ->label('Sort Order')
-                            ->numeric()
-                            ->default(0),
-                    ])->columns(2),
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('Brand Identity')
+                                    ->description('How this manufacturer appears in the catalog and storefront.')
+                                    ->icon('heroicon-o-building-office-2')
+                                    ->schema([
+                                        Tabs::make('Names')
+                                            ->schema(
+                                                collect(AdminUi::LOCALES)
+                                                    ->map(fn (string $label, string $code) => Tab::make($label)
+                                                        ->badge($code === 'en' ? 'Primary' : null)
+                                                        ->schema([
+                                                            Forms\Components\TextInput::make("name.{$code}")
+                                                                ->label('Manufacturer Name')
+                                                                ->placeholder('e.g. Bosch, Continental, ZF')
+                                                                ->required($code === 'en')
+                                                                ->maxLength(200)
+                                                                ->live(onBlur: true)
+                                                                ->afterStateUpdated(function ($state, callable $set, callable $get) use ($code): void {
+                                                                    if ($code === 'en' && filled($state) && blank($get('slug'))) {
+                                                                        $set('slug', Str::slug($state));
+                                                                    }
+                                                                })
+                                                                ->helperText($code === 'en' ? 'English name is required and used as the default fallback.' : null),
+                                                        ]))
+                                                    ->values()
+                                                    ->all()
+                                            )
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('slug')
+                                            ->label('URL Slug')
+                                            ->placeholder('e.g. bosch, continental')
+                                            ->helperText('Used in manufacturer page URLs (e.g. /manufacturers/bosch). Auto-filled from the English name.')
+                                            ->required()
+                                            ->maxLength(200)
+                                            ->unique(ignoreRecord: true)
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('Settings')
+                                    ->icon('heroicon-o-cog-6-tooth')
+                                    ->description('Logo, country, OEM verification, and display settings.')
+                                    ->schema([
+                                        Forms\Components\Select::make('logo_id')
+                                            ->label('Brand Logo')
+                                            ->relationship('logo', 'file_name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->nullable()
+                                            ->helperText('Select a media file to use as the manufacturer logo.'),
+                                        Forms\Components\Select::make('country_code')
+                                            ->label('Country of Origin')
+                                            ->options([
+                                                'DE' => 'Germany',
+                                                'FR' => 'France',
+                                                'IT' => 'Italy',
+                                                'JP' => 'Japan',
+                                                'KR' => 'South Korea',
+                                                'SE' => 'Sweden',
+                                                'CZ' => 'Czech Republic',
+                                                'US' => 'United States',
+                                                'GB' => 'United Kingdom',
+                                                'ES' => 'Spain',
+                                                'NL' => 'Netherlands',
+                                                'AT' => 'Austria',
+                                                'PL' => 'Poland',
+                                            ])
+                                            ->searchable()
+                                            ->native(false)
+                                            ->nullable()
+                                            ->helperText('Primary country associated with this manufacturer.'),
+                                        Forms\Components\Toggle::make('is_verified_oem')
+                                            ->label('Verified OEM Manufacturer')
+                                            ->helperText('Shows a verified trust badge on the storefront. Indicates genuine OEM parts supplier.')
+                                            ->default(false),
+                                        Forms\Components\Toggle::make('is_active')
+                                            ->label('Manufacturer Active')
+                                            ->helperText('Inactive manufacturers are hidden from the storefront and product search.')
+                                            ->default(true),
+                                        Forms\Components\TextInput::make('sort_order')
+                                            ->label('Display Order')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->minValue(0)
+                                            ->helperText('Lower numbers appear first in manufacturer listings.'),
+                                    ]),
+                            ]),
+                    ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
+            ->modifyQueryUsing(fn ($query) => $query->with('logo')->withCount('products'))
             ->columns([
                 Tables\Columns\ImageColumn::make('logo.file_url')
                     ->label('Logo')
                     ->circular()
                     ->size(40),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
-                    ->getStateUsing(fn (Manufacturer $record): string => is_array($record->name) ? ($record->name['en'] ?? $record->name[array_key_first($record->name)] ?? '—') : ($record->name ?? '—'))
+                    ->label('Manufacturer')
+                    ->getStateUsing(fn (Manufacturer $record): string => AdminUi::localizedName($record->name))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where(function ($q) use ($search) {
                             $q->where('name->en', 'like', "%{$search}%")
                                 ->orWhere('name->de', 'like', "%{$search}%");
                         });
                     })
-                    ->limit(25),
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->description(fn (Manufacturer $record): ?string => $record->slug ?: null)
+                    ->limit(28),
                 Tables\Columns\TextColumn::make('country_code')
                     ->label('Country')
-                    ->getStateUsing(fn (Manufacturer $record): string => match ($record->country_code) {
-                        'DE' => '🇩🇪 DE',
-                        'FR' => '🇫🇷 FR',
-                        'IT' => '🇮🇹 IT',
-                        'JP' => '🇯🇵 JP',
-                        'KR' => '🇰🇷 KR',
-                        'SE' => '🇸🇪 SE',
-                        'CZ' => '🇨🇿 CZ',
-                        'US' => '🇺🇸 US',
-                        'GB' => '🇬🇧 GB',
-                        'ES' => '🇪🇸 ES',
-                        'NL' => '🇳🇱 NL',
-                        'AT' => '🇦🇹 AT',
-                        'PL' => '🇵🇱 PL',
-                        default => $record->country_code ?? '—',
-                    })
+                    ->badge()
+                    ->placeholder('—')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('products_count')
                     ->label('Products')
                     ->counts('products')
-                    ->alignCenter(),
-                Tables\Columns\IconColumn::make('is_verified_oem')
-                    ->label('Verified OEM')
-                    ->boolean()
-                    ->alignCenter(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
-                    ->boolean()
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->fontMono()
                     ->alignCenter()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('is_verified_oem')
+                    ->label('OEM')
+                    ->badge()
+                    ->alignCenter()
+                    ->toggleable()
+                    ->getStateUsing(fn (Manufacturer $record): string => $record->is_verified_oem ? 'Verified' : 'Standard')
+                    ->color(fn (string $state): string => $state === 'Verified' ? 'success' : 'gray')
+                    ->icon(fn (string $state): string => $state === 'Verified' ? 'heroicon-o-check-badge' : 'heroicon-o-minus'),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label('Active')
+                    ->badge()
+                    ->alignCenter()
+                    ->getStateUsing(fn (Manufacturer $record): string => $record->is_active ? 'Active' : 'Inactive')
+                    ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
+                    ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->label('Sort')
+                    ->fontMono()
+                    ->alignCenter()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('Manufacturer Status')
+                    ->placeholder('All')
+                    ->trueLabel('Active Only')
+                    ->falseLabel('Inactive Only')
+                    ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('is_verified_oem')
-                    ->label('Verified OEM'),
+                    ->label('OEM Verification')
+                    ->placeholder('All')
+                    ->trueLabel('Verified OEM')
+                    ->falseLabel('Not Verified')
+                    ->columnSpan(1),
+                Tables\Filters\Filter::make('created_at')
+                    ->label('Date Added')
+                    ->form([
+                        Forms\Components\DatePicker::make('created_from')
+                            ->label('Added After')
+                            ->placeholder('Select start date'),
+                        Forms\Components\DatePicker::make('created_until')
+                            ->label('Added Before')
+                            ->placeholder('Select end date'),
+                    ])
+                    ->query(function ($query, array $data) {
+                        return $query
+                            ->when($data['created_from'], fn ($q) => $q->whereDate('created_at', '>=', $data['created_from']))
+                            ->when($data['created_until'], fn ($q) => $q->whereDate('created_at', '<=', $data['created_until']));
+                    })
+                    ->columns(2)
+                    ->columnSpan(2),
             ])
-            ->actions([
-                Actions\ViewAction::make(),
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
+            ->filtersFormColumns(2)
+            ->actions(AdminUi::recordActions())
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    AdminUi::impactBulkAction(
+                        name: 'bulkActivate',
+                        label: 'Activate',
+                        color: 'success',
+                        icon: 'heroicon-o-check-circle',
+                        summary: fn ($record): ?array => $record->is_active
+                            ? null
+                            : [
+                                'key' => AdminUi::localizedName($record->name),
+                                'old' => 'Inactive',
+                                'new' => 'Active',
+                            ],
+                        action: fn ($records) => $records->each->update(['is_active' => true]),
+                    ),
+                    AdminUi::impactBulkAction(
+                        name: 'bulkDeactivate',
+                        label: 'Deactivate',
+                        color: 'danger',
+                        icon: 'heroicon-o-x-circle',
+                        summary: fn ($record): ?array => !$record->is_active
+                            ? null
+                            : [
+                                'key' => AdminUi::localizedName($record->name),
+                                'old' => 'Active',
+                                'new' => 'Inactive',
+                            ],
+                        action: fn ($records) => $records->each->update(['is_active' => false]),
+                    ),
+                    AdminUi::exportCsvBulkAction('Export Manufacturers', [
+                        'name' => 'Name',
+                        'country_code' => 'Country',
+                        'products_count' => 'Products',
+                        'is_active' => 'Active',
+                        'is_verified_oem' => 'Verified OEM',
+                    ]),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
+            ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->emptyStateIcon('heroicon-o-building-office-2')
+            ->emptyStateHeading('No manufacturers added yet')
+            ->emptyStateDescription('Add OEM brands to organize your parts catalog and enable manufacturer-based filtering.');
     }
 
     public static function getRelations(): array
     {
         return [
             \App\Filament\Resources\ManufacturerResource\RelationManagers\ProductsRelationManager::class,
+            \App\Filament\Resources\ManufacturerResource\RelationManagers\CarModelsRelationManager::class,
         ];
     }
 
@@ -199,5 +312,10 @@ class ManufacturerResource extends Resource
     public static function getNavigationBadgeColor(): ?string
     {
         return 'success';
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name.en', 'slug'];
     }
 }

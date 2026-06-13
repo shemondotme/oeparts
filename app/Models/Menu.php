@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\MenuLocation;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Menu extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['name', 'location', 'lang', 'is_active'];
 
     protected $casts = [

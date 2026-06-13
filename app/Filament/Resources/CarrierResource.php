@@ -3,12 +3,14 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CarrierResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\Carrier;
-use Filament\Forms;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -28,59 +30,114 @@ class CarrierResource extends Resource
 
     protected static ?int $navigationSort = 40;
 
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getModel()::where('is_active', true)->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'success';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Section::make('Carrier Details')
+                    ->description('Configure the shipping carrier and tracking integration.')
+                    ->icon('heroicon-o-truck')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label('Carrier Name')
+                            ->placeholder('e.g. DHL, DPD, GLS, UPS')
                             ->required()
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->helperText('Display name shown to admins and customers.'),
                         Forms\Components\TextInput::make('tracking_url')
-                            ->label('Tracking URL')
-                            ->helperText('Use {tracking_no} as placeholder for the tracking number')
+                            ->label('Tracking URL Template')
+                            ->placeholder('e.g. https://www.dhl.com/track?trackingNo={tracking_no}')
+                            ->helperText('Use {tracking_no} as a placeholder for the actual tracking number. The customer\'s tracking link is built from this template.')
                             ->url()
                             ->maxLength(500),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('Carrier Active')
+                            ->helperText('Inactive carriers cannot be assigned to new orders.')
                             ->default(true),
                         Forms\Components\TextInput::make('sort_order')
-                            ->label('Sort Order')
+                            ->label('Display Order')
                             ->numeric()
-                            ->default(0),
+                            ->default(0)
+                            ->minValue(0)
+                            ->helperText('Lower numbers appear first in selection lists.'),
                     ])->columns(2),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('tracking_url')
-                    ->limit(40)
-                    ->copyable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('sort_order')
-                    ->numeric()
-                    ->sortable(),
+            Tables\Columns\TextColumn::make('name')
+                ->label('Carrier')
+                ->searchable()
+                ->sortable()
+                ->weight(FontWeight::Medium),
+            Tables\Columns\TextColumn::make('tracking_url')
+                ->label('Tracking URL')
+                ->limit(40)
+                ->copyable()
+                ->copyMessage('URL copied')
+                ->tooltip(fn (Carrier $record): ?string => $record->tracking_url)
+                ->toggleable(isToggledHiddenByDefault: true),
+            Tables\Columns\TextColumn::make('is_active')
+                ->label('Active')
+                ->badge()
+                ->alignCenter()
+                ->sortable()
+                ->getStateUsing(fn (Carrier $record): string => $record->is_active ? 'Active' : 'Inactive')
+                ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
+                ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
+            Tables\Columns\TextColumn::make('sort_order')
+                ->label('Order')
+                ->numeric()
+                ->sortable()
+                ->fontMono()
+                ->alignCenter(),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active'),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Carrier Status')
+                    ->placeholder('All')
+                    ->trueLabel('Active Only')
+                    ->falseLabel('Inactive Only'),
             ])
-            ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
+            ->actions(AdminUi::recordActionsWithoutView())
+            ->reorderable('sort_order')
+            ->defaultSort('sort_order', 'asc')
+            ->emptyStateIcon('heroicon-o-truck')
+            ->emptyStateHeading('No carriers configured')
+            ->emptyStateDescription('Add shipping carriers to enable tracking URLs and order fulfillment.')
+            ->emptyStateActions([
+                Tables\Actions\Action::make('create')
+                    ->label('Add Carrier')
+                    ->url(static::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
             ])
-            ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+        ->bulkActions([
+            Actions\BulkActionGroup::make([
+                AdminUi::exportCsvBulkAction('Export Carriers', [
+                    'name' => 'Carrier',
+                    'tracking_url' => 'Tracking URL',
+                    'is_active' => 'Active',
+                    'sort_order' => 'Sort Order',
                 ]),
-            ]);
+                Actions\DeleteBulkAction::make(),
+            ]),
+        ]);
     }
 
     public static function getRelations(): array
@@ -91,9 +148,15 @@ class CarrierResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListCarriers::route('/'),
+            'index'  => Pages\ListCarriers::route('/'),
             'create' => Pages\CreateCarrier::route('/create'),
-            'edit' => Pages\EditCarrier::route('/{record}/edit'),
+            'view'   => Pages\ViewCarrier::route('/{record}'),
+            'edit'   => Pages\EditCarrier::route('/{record}/edit'),
         ];
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
     }
 }

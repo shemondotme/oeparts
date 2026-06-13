@@ -17,4 +17,14 @@ class EditNewsletterSubscriber extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    public function getHeading(): string
+    {
+        return 'Edit ' . ($this->record?->email ?? 'Subscriber');
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Update language preference or subscription status.';
+    }
 }

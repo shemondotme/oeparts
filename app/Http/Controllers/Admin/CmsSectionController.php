@@ -31,6 +31,11 @@ class CmsSectionController extends Controller
 
     public function update(Request $request, Section $section): RedirectResponse
     {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->cannot('edit sections')) {
+            abort(403, 'Unauthorized.');
+        }
+
         $data = $request->validate([
             'location' => 'required|string|in:homepage,landing',
             'title' => 'required|array',
@@ -41,12 +46,11 @@ class CmsSectionController extends Controller
             'change_summary' => 'nullable|string|max:500',
         ]);
 
-        $admin = Auth::guard('admin')->user();
         $section->update($data);
 
         $section->saveVersion(
             'updated',
-            $admin?->id,
+            $admin->id,
             $request->input('change_summary', 'Updated via admin')
         );
 
@@ -55,10 +59,13 @@ class CmsSectionController extends Controller
 
     public function restoreVersion(Section $section, SectionVersion $version): RedirectResponse
     {
-        $section->restoreFromVersion($version);
-
         $admin = Auth::guard('admin')->user();
-        $section->saveVersion('restored', $admin?->id, 'Restored from version #'.$version->id);
+        if (!$admin || $admin->cannot('edit sections')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $section->restoreFromVersion($version);
+        $section->saveVersion('restored', $admin->id, 'Restored from version #'.$version->id);
 
         return redirect()->back();
     }

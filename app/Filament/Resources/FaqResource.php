@@ -3,15 +3,25 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FaqResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\Faq;
 use Filament\Forms;
 use Filament\Actions;
+use Filament\Actions\BulkAction;
+use Filament\Notifications\Notification;
+use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Filament\Support\Enums\FontWeight;
 
 class FaqResource extends Resource
 {
@@ -34,78 +44,131 @@ class FaqResource extends Resource
 
     public static function getRecordTitleAttribute(): ?string
     {
-        return 'question';
+        return null;
+    }
+
+    public static function getRecordTitle(?Model $record): string|null
+    {
+        return $record ? AdminUi::localizedName($record->question, 'FAQ') : null;
     }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('FAQ Entry')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('question')
-                            ->label('Question (JSON)')
-                            ->helperText('e.g. {"en": "How long does shipping take?", "de": "Wie lange dauert der Versand?"}')
-                            ->required(),
-                        Forms\Components\Textarea::make('answer')
-                            ->label('Answer (JSON)')
-                            ->helperText('HTML answer per language')
-                            ->rows(5)
-                            ->nullable(),
-                        Forms\Components\Select::make('category')
-                            ->label('Category')
-                            ->options([
-                                'shipping'  => 'Shipping',
-                                'ordering'  => 'Ordering',
-                                'returns'   => 'Returns',
-                                'payment'   => 'Payment',
-                                'products'  => 'Products',
-                                'general'   => 'General',
-                            ])
-                            ->nullable(),
+                        // ─── Main column ──────────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('FAQ Content')
+                                    ->icon('heroicon-o-chat-bubble-left-right')
+                                    ->description('Categorize this FAQ entry for organized display on the help center.')
+                                    ->schema([
+                                        Forms\Components\Select::make('category')
+                                            ->label('FAQ Category')
+                                            ->options([
+                                                'shipping'  => 'Shipping',
+                                                'ordering'  => 'Ordering',
+                                                'returns'   => 'Returns',
+                                                'payment'   => 'Payment',
+                                                'products'  => 'Products',
+                                                'general'   => 'General',
+                                            ])
+                                            ->native(false)
+                                            ->nullable()
+                                            ->helperText('Group related FAQs together for better organization.'),
+                                    ]),
+
+                                Section::make('Multilingual Question & Answer')
+                                    ->icon('heroicon-o-language')
+                                    ->description('Translate the FAQ question and answer in supported languages.')
+                                    ->schema([
+                                        Tabs::make('Locales')
+                                            ->schema(
+                                                collect(AdminUi::LOCALES)
+                                                    ->map(fn (string $label, string $code) => Tab::make($label)
+                                                        ->badge($code === 'en' ? 'Primary' : null)
+                                                        ->schema([
+                                                            Forms\Components\TextInput::make("question.$code")
+                                                                ->label('Question')
+                                                                ->required($code === 'en')
+                                                                ->maxLength(255),
+                                                            Forms\Components\RichEditor::make("answer.$code")
+                                                                ->label('Answer')
+                                                                ->nullable()
+                                                                ->columnSpanFull(),
+                                                        ]))
+                                                    ->values()
+                                                    ->all()
+                                            )
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+
+                        // ─── Sidebar column ───────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('Settings')
+                                    ->icon('heroicon-o-adjustments-horizontal')
+                                    ->description('FAQ visibility and display ordering.')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('is_active')
+                                            ->label('FAQ Active')
+                                            ->helperText('Inactive FAQs are hidden from the storefront help center.')
+                                            ->default(true),
+                                        Forms\Components\TextInput::make('sort_order')
+                                            ->label('Display Order')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->minValue(0)
+                                            ->helperText('Lower numbers appear first in the FAQ list.'),
+                                    ]),
+                            ]),
                     ]),
-                Section::make('Settings')
-                    ->schema([
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
-                            ->default(true),
-                        Forms\Components\TextInput::make('sort_order')
-                            ->label('Sort Order')
-                            ->numeric()
-                            ->default(0),
-                    ])->columns(2),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->columns([
-                Tables\Columns\TextColumn::make('question')
-                    ->label('Question')
-                    ->getStateUsing(fn (Faq $record): string => is_array($record->question) ? ($record->question['en'] ?? $record->question[array_key_first($record->question)] ?? '—') : ($record->question ?? '—'))
-                    ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->where(function ($q) use ($search) {
-                            $q->where('question->en', 'like', "%{$search}%")
-                                ->orWhere('question->de', 'like', "%{$search}%");
-                        });
-                    })
-                    ->limit(50),
+            Tables\Columns\TextColumn::make('question')
+                ->label('Question')
+                ->getStateUsing(fn (Faq $record): string => AdminUi::localizedName($record->question))
+                ->searchable(query: function (Builder $query, string $search): Builder {
+                    return $query->where(function ($q) use ($search) {
+                        $q->where('question->en', 'like', "%{$search}%")
+                            ->orWhere('question->de', 'like', "%{$search}%");
+                    });
+                })
+                ->sortable()
+                ->weight(FontWeight::Medium)
+                ->limit(50),
                 Tables\Columns\TextColumn::make('category')
                     ->label('Category')
                     ->badge()
-                    ->alignCenter(),
+                    ->color('gray')
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean()
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label('Sort')
+                    ->fontMono()
                     ->alignCenter()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('category')
+                    ->label('FAQ Category')
                     ->options([
                         'shipping' => 'Shipping',
                         'ordering' => 'Ordering',
@@ -113,24 +176,73 @@ class FaqResource extends Resource
                         'payment'  => 'Payment',
                         'products' => 'Products',
                         'general'  => 'General',
-                    ]),
+                    ])
+                    ->native(false)
+                    ->helperText('Filter FAQs by topic category.'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('FAQ Status')
+                    ->placeholder('All')
+                    ->trueLabel('Active Only')
+                    ->falseLabel('Inactive Only'),
             ])
-            ->actions([
-                Actions\ViewAction::make(),
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
+            ->actions(AdminUi::recordActions(after: [
+                Actions\Action::make('toggleActive')
+                    ->label(fn (Faq $record): string => $record->is_active ? 'Deactivate' : 'Activate')
+                    ->icon(fn (Faq $record): string => $record->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->color(fn (Faq $record): string => $record->is_active ? 'warning' : 'success')
+                    ->action(function (Faq $record) {
+                        $record->update(['is_active' => !$record->is_active]);
+
+                        Notification::make()
+                            ->title($record->is_active ? 'FAQ activated' : 'FAQ deactivated')
+                            ->success()
+                            ->send();
+                    }),
+            ]))
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    AdminUi::impactBulkAction(
+                        name: 'bulkToggleActive',
+                        label: 'Toggle Active',
+                        color: 'warning',
+                        icon: 'heroicon-o-arrow-path',
+                        action: function ($records) {
+                            $firstState = $records->first()->is_active;
+                            $allSame = $records->every(fn (Faq $record) => $record->is_active === $firstState);
+                            $newState = $allSame ? !$firstState : true;
+
+                            $records->each(function (Faq $record) use ($newState) {
+                                $record->update(['is_active' => $newState]);
+                            });
+
+                            Notification::make()
+                                ->title($records->count() . ' FAQs ' . ($newState ? 'activated' : 'deactivated'))
+                                ->success()
+                                ->send();
+                        },
+                    ),
+                AdminUi::exportCsvBulkAction('Export FAQs', [
+                    'question' => 'Question',
+                    'answer' => 'Answer',
+                    'category' => 'Category',
+                    'is_active' => 'Active',
+                    'sort_order' => 'Sort Order',
+                ]),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('sort_order', 'asc')
             ->reorderable('sort_order')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->emptyStateIcon('heroicon-o-question-mark-circle')
+            ->emptyStateHeading('No FAQ entries created yet')
+            ->emptyStateDescription('Create FAQ entries to help customers find answers to common questions about shipping, orders, and products.')
+            ->emptyStateActions([
+                Tables\Actions\Action::make('create')
+                    ->label('Create FAQ')
+                    ->url(static::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 
     public static function getRelations(): array
@@ -158,4 +270,10 @@ class FaqResource extends Resource
     {
         return 'success';
     }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['question', 'answer'];
+    }
 }
+

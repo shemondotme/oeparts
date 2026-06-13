@@ -60,8 +60,8 @@ class EmailTest extends TestCase
         $this->postJson('/en/register', [
             'name'                  => 'Test User',
             'email'                 => 'newuser@example.com',
-            'password'              => 'Password123!',
-            'password_confirmation' => 'Password123!',
+            'password'              => 'Qz7#mV2!xP',
+            'password_confirmation' => 'Qz7#mV2!xP',
             'agree_terms'           => true,
         ]);
 

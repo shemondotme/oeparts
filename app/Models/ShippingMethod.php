@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ShippingMethod extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'zone_id', 'name', 'description', 'flat_rate',
         'free_shipping_threshold', 'estimated_days_min',

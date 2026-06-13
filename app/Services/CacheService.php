@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * CacheService — key-based cache helpers for OeParts.
@@ -29,7 +30,17 @@ class CacheService
         $ttl = (int) settings('performance.cache_ttl_sections', 60);
         $key = $this->sectionKey($location);
 
-        return Cache::remember($key, now()->addMinutes($ttl), $callback);
+        try {
+            return Cache::remember($key, now()->addMinutes($ttl), $callback);
+        } catch (\Exception $e) {
+            Log::error('Cache rememberSection failed', [
+                'location' => $location,
+                'key' => $key,
+                'error' => $e->getMessage(),
+            ]);
+
+            return $callback();
+        }
     }
 
     /**
@@ -37,6 +48,7 @@ class CacheService
      */
     public function forgetSections(string $location): void
     {
+        Log::debug('Cache invalidated', ['key' => $this->sectionKey($location)]);
         Cache::forget($this->sectionKey($location));
     }
 
@@ -72,6 +84,42 @@ class CacheService
     public function forgetManufacturers(): void
     {
         Cache::forget('manufacturers.active');
+    }
+
+    // ── Hero stats cache ──────────────────────────────────────────────────────
+
+    /**
+     * Remember hero spec-panel counts (parts, manufacturers, cross-refs).
+     * TTL: 6 hours — these counts change infrequently.
+     */
+    public function rememberHeroStats(callable $callback): mixed
+    {
+        return Cache::remember('hero.stats', now()->addHours(6), $callback);
+    }
+
+    /**
+     * Invalidate hero stats cache — call after bulk product/manufacturer imports.
+     */
+    public function forgetHeroStats(): void
+    {
+        Cache::forget('hero.stats');
+    }
+
+    /**
+     * Remember popular OEM numbers for the hero "INDEXED:" strip.
+     * TTL: 1 hour — refreshes as search trends shift.
+     */
+    public function rememberPopularOems(callable $callback): mixed
+    {
+        return Cache::remember('hero.popular_oems', now()->addHour(), $callback);
+    }
+
+    /**
+     * Invalidate popular OEMs cache — call after bulk product imports.
+     */
+    public function forgetPopularOems(): void
+    {
+        Cache::forget('hero.popular_oems');
     }
 
     // ── Settings cache ────────────────────────────────────────────────────────

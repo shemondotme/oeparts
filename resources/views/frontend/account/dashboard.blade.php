@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('My Account') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -20,7 +20,7 @@
 @section('content')
 <x-account.shell
     active="dashboard"
-    eyebrow="§ 01 · Customer · Console"
+    eyebrow="01 · Customer · Console"
     title="Welcome back, {!! e($user->first_name ?: $user->name) !!}"
     :subtitle="__('Your B2B operating sheet — orders in flight, addresses on file, and everything tied to your procurement pipeline.')"
     docId="DOC · CUSTOMER-SHEET · REV. {{ now()->format('Y.m.d') }}"
@@ -46,8 +46,8 @@
     {{-- ── KPI Cards ─────────────────────────────────────────────────── --}}
     <section class="mb-8">
         <div class="flex items-center justify-between mb-4">
-            <span class="bp-spec text-amber-ink">§ 01 · Key · Metrics</span>
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+            <span class="bp-spec text-amber-ink">01 · Key · Metrics</span>
+            <span class="bp-spec-mono">
                 Member since {{ $memberSince }}
             </span>
         </div>
@@ -57,7 +57,7 @@
             <div class="border border-ink bg-paper p-5 relative overflow-hidden"
                  style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-amber"></span>
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Total orders</p>
+                <p class="bp-spec-mono">Total orders</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
                     {{ str_pad((string) $totalOrders, 2, '0', STR_PAD_LEFT) }}
                 </p>
@@ -71,13 +71,13 @@
             <div class="border border-ink bg-paper p-5 relative overflow-hidden"
                  style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-emerald-600"></span>
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Total spent</p>
+                <p class="bp-spec-mono">Total spent</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
-                    €{{ number_format($totalSpent, 0) }}
+                    {{ format_price($totalSpent) }}
                 </p>
                 <div class="mt-3 flex items-center gap-1.5">
                     <x-heroicon-s-currency-euro class="w-3 h-3 text-emerald-700" />
-                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">Lifetime · EUR</span>
+                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">Lifetime · {{ settings('store.currency', 'EUR') }}</span>
                 </div>
             </div>
 
@@ -85,7 +85,7 @@
             <div class="border border-ink bg-paper p-5 relative overflow-hidden"
                  style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-ink"></span>
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">In flight</p>
+                <p class="bp-spec-mono">In flight</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
                     {{ str_pad((string) $pendingOrders, 2, '0', STR_PAD_LEFT) }}
                 </p>
@@ -99,7 +99,7 @@
             <div class="border border-ink bg-paper p-5 relative overflow-hidden"
                  style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-blue-600"></span>
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Addresses on file</p>
+                <p class="bp-spec-mono">Addresses on file</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
                     {{ str_pad((string) $savedAddresses, 2, '0', STR_PAD_LEFT) }}
                 </p>
@@ -116,7 +116,7 @@
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-identification class="w-3.5 h-3.5" />
-                § 02 · Account · Profile
+                02 · Account · Profile
             </span>
             <a href="{{ route('frontend.account.settings', ['lang' => $lang]) }}"
                class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
@@ -128,25 +128,25 @@
 
         <dl class="grid sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-rule">
             <div class="px-5 py-4">
-                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Full name</dt>
+                <dt class="bp-spec-mono">Full name</dt>
                 <dd class="mt-1.5 font-display text-base font-bold text-ink tracking-[-0.01em]">
                     {{ $user->name }}
                 </dd>
             </div>
             <div class="px-5 py-4">
-                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Email</dt>
+                <dt class="bp-spec-mono">Email</dt>
                 <dd class="mt-1.5 font-mono text-sm font-bold text-ink truncate">
                     {{ $user->email }}
                 </dd>
             </div>
             <div class="px-5 py-4">
-                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Phone</dt>
+                <dt class="bp-spec-mono">Phone</dt>
                 <dd class="mt-1.5 font-mono text-sm font-bold text-ink">
                     {{ $user->phone ?: '—' }}
                 </dd>
             </div>
             <div class="px-5 py-4">
-                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Member since</dt>
+                <dt class="bp-spec-mono">Member since</dt>
                 <dd class="mt-1.5 font-mono text-sm font-bold text-ink">
                     {{ $memberSince }}
                 </dd>
@@ -157,7 +157,7 @@
     {{-- ── Recent Orders ────────────────────────────────────────────── --}}
     <section class="mb-8">
         <header class="flex items-center justify-between mb-4">
-            <span class="bp-spec text-amber-ink">§ 03 · Recent · Orders</span>
+            <span class="bp-spec text-amber-ink">03 · Recent · Orders</span>
             <a href="{{ route('frontend.account.orders', ['lang' => $lang]) }}"
                class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
                       border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
@@ -212,7 +212,7 @@
                                         {{ $order->created_at->format('Y-m-d') }}
                                     </td>
                                     <td class="px-5 py-4 text-right font-mono text-sm font-bold text-ink tabular-nums">
-                                        €{{ number_format((float) $order->grand_total, 2) }}
+                                        {{ format_price($order->grand_total) }}
                                     </td>
                                     <td class="px-5 py-4">
                                         <span class="inline-flex items-center gap-2">
@@ -259,7 +259,7 @@
     {{-- ── Quick actions ────────────────────────────────────────────── --}}
     <section>
         <header class="flex items-center justify-between mb-4">
-            <span class="bp-spec text-amber-ink">§ 04 · Quick · Actions</span>
+            <span class="bp-spec text-amber-ink">04 · Quick · Actions</span>
         </header>
 
         <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

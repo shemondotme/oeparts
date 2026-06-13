@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CouponResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,8 +17,7 @@ class UsagesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('used_at')
+        return AdminUi::configureTable($table)->recordTitleAttribute('used_at')
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Customer')

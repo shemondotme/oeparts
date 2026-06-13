@@ -3,14 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\SeoMetaResource\Pages;
+use App\Filament\Support\AdminUi;
 use App\Models\SeoMeta;
 use Filament\Forms;
 use Filament\Actions;
+use Filament\Notifications\Notification;
+use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Support\Enums\FontWeight;
 
 class SeoMetaResource extends Resource
 {
@@ -18,12 +24,22 @@ class SeoMetaResource extends Resource
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
-        return 'heroicon-o-globe-alt';
+        return 'heroicon-o-magnifying-glass-circle';
     }
 
     public static function getNavigationGroup(): ?string
     {
         return 'System';
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'info';
     }
 
     public static function getNavigationSort(): ?int
@@ -33,102 +49,161 @@ class SeoMetaResource extends Resource
 
     public static function getRecordTitleAttribute(): ?string
     {
-        return 'meta_title';
+        return 'metable_type';
     }
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('SEO Metadata')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Forms\Components\TextInput::make('metable_type')
-                            ->label('Resource Type')
-                            ->disabled()
-                            ->dehydrated(false),
-                        Forms\Components\TextInput::make('metable_id')
-                            ->label('Resource ID')
-                            ->disabled()
-                            ->dehydrated(false),
-                        Forms\Components\TextInput::make('meta_title')
-                            ->label('Meta Title')
-                            ->maxLength(255)
-                            ->nullable(),
-                        Forms\Components\Textarea::make('meta_description')
-                            ->label('Meta Description')
-                            ->rows(3)
-                            ->nullable(),
-                        Forms\Components\TextInput::make('canonical_url')
-                            ->label('Canonical URL')
-                            ->maxLength(500)
-                            ->nullable()
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('og_title')
-                            ->label('OG Title')
-                            ->maxLength(255)
-                            ->nullable(),
-                        Forms\Components\Textarea::make('og_description')
-                            ->label('OG Description')
-                            ->rows(2)
-                            ->nullable(),
-                        Forms\Components\Select::make('robots')
-                            ->options([
-                                'index, follow' => 'Index, Follow',
-                                'noindex, follow' => 'No Index, Follow',
-                                'index, nofollow' => 'Index, No Follow',
-                                'noindex, nofollow' => 'No Index, No Follow',
-                            ])
-                            ->nullable(),
-                    ])->columns(2),
+                        // ─── Main column ──────────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('Resource Details')
+                                    ->icon('heroicon-o-document-text')
+                                    ->description('SEO metadata for the linked resource (product, page, blog post, etc.).')
+                                    ->schema([
+                                        AdminUi::readOnlyField('metable_type', 'Resource Type', 'The model type this SEO metadata belongs to.'),
+                                        AdminUi::readOnlyField('metable_id', 'Resource ID'),
+                                        Forms\Components\TextInput::make('meta_title')
+                                            ->label('Meta Title')
+                                            ->placeholder('e.g. Brake Pads for VW Golf | OeParts')
+                                            ->maxLength(255)
+                                            ->nullable()
+                                            ->helperText('Optimal: 50–60 characters. Currently shown in search results as the clickable headline.'),
+                                        Forms\Components\Textarea::make('meta_description')
+                                            ->label('Meta Description')
+                                            ->placeholder('e.g. Find genuine OEM brake pads for your VW Golf...')
+                                            ->rows(3)
+                                            ->nullable()
+                                            ->columnSpanFull()
+                                            ->helperText('Optimal: 150–160 characters. Shanked beneath the title in search results.'),
+                                    ])->columns(2),
+
+                                Section::make('Canonical URL')
+                                    ->icon('heroicon-o-link')
+                                    ->description('Set the canonical URL to prevent duplicate content issues.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('canonical_url')
+                                            ->label('Canonical URL')
+                                            ->placeholder('e.g. https://oeparts.com/products/brake-pads')
+                                            ->url()
+                                            ->maxLength(500)
+                                            ->nullable()
+                                            ->columnSpanFull()
+                                            ->helperText('The preferred URL for this resource. Leave empty to use the default URL.'),
+                                    ]),
+                            ]),
+
+                        // ─── Sidebar column ───────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('Social & Indexing')
+                                    ->icon('heroicon-o-adjustments-horizontal')
+                                    ->description('Open Graph tags and search engine indexing directives.')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('og_title')
+                                            ->label('Open Graph Title')
+                                            ->placeholder('e.g. Brake Pads for VW Golf | OeParts')
+                                            ->maxLength(255)
+                                            ->nullable()
+                                            ->helperText('Title shown when shared on social media. Falls back to meta title if empty.'),
+                                        Forms\Components\Textarea::make('og_description')
+                                            ->label('Open Graph Description')
+                                            ->placeholder('e.g. Find genuine OEM brake pads...')
+                                            ->rows(2)
+                                            ->nullable()
+                                            ->helperText('Description shown when shared on social media. Falls back to meta description if empty.'),
+                                        Forms\Components\Select::make('robots')
+                                            ->label('Robots Directive')
+                                            ->options([
+                                                'index,follow' => 'Index, Follow',
+                                                'noindex,follow' => 'No Index, Follow',
+                                                'index,nofollow' => 'Index, No Follow',
+                                                'noindex,nofollow' => 'No Index, No Follow',
+                                            ])
+                                            ->native(false)
+                                            ->nullable()
+                                            ->helperText('Control how search engines crawl and index this page.'),
+                                    ]),
+                            ]),
+                    ]),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->columns([
-                Tables\Columns\TextColumn::make('metable_type')
-                    ->label('Type')
-                    ->badge()
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('metable_id')
-                    ->label('ID')
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('meta_title')
-                    ->label('Meta Title')
-                    ->limit(40)
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('robots')
-                    ->badge()
-                    ->toggleable(isToggledHiddenByDefault: true),
+            Tables\Columns\TextColumn::make('metable_type')
+                ->label('Type')
+                ->badge()
+                ->color('gray')
+                ->searchable()
+                ->sortable()
+                ->weight(FontWeight::Medium),
+            Tables\Columns\TextColumn::make('metable_id')
+                ->label('ID')
+                ->alignCenter()
+                ->fontMono(),
+            Tables\Columns\TextColumn::make('meta_title')
+                ->label('Meta Title')
+                ->limit(40)
+                ->searchable(),
+            Tables\Columns\TextColumn::make('robots')
+                ->label('Robots')
+                ->badge()
+                ->color('primary')
+                ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')
-                    ->dateTime()
+                    ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('metable_type')
-                    ->label('Type')
-                    ->options(fn (): array => SeoMeta::distinct()->pluck('metable_type', 'metable_type')->toArray()),
+                    ->label('Resource Type')
+                    ->options(fn (): array => SeoMeta::distinct()->pluck('metable_type', 'metable_type')->toArray())
+                    ->native(false)
+                    ->helperText('Filter SEO metadata by the linked model type.'),
                 Tables\Filters\SelectFilter::make('robots')
+                    ->label('Robots Directive')
                     ->options([
-                        'index, follow' => 'Index, Follow',
-                        'noindex, follow' => 'No Index, Follow',
-                    ]),
+                        'index,follow' => 'Index, Follow',
+                        'noindex,follow' => 'No Index, Follow',
+                    ])
+                    ->native(false)
+                    ->helperText('Filter by search engine indexing directive.'),
             ])
-            ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
-            ])
+            ->actions(AdminUi::recordActionsWithoutView())
             ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+            Actions\BulkActionGroup::make([
+                AdminUi::exportCsvBulkAction('Export SEO Meta', [
+                    'metable_type' => 'Type',
+                    'meta_title' => 'Title',
+                    'meta_description' => 'Description',
+                    'robots' => 'Robots',
                 ]),
+                Actions\DeleteBulkAction::make(),
+            ]),
             ])
             ->defaultSort('created_at', 'desc')
-            ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->emptyStateIcon('heroicon-o-magnifying-glass-circle')
+            ->emptyStateHeading('No SEO metadata configured yet')
+            ->emptyStateDescription('SEO metadata records for products, pages, and blog posts will appear here. You can also add them manually.')
+            ->emptyStateActions([
+                Tables\Actions\Action::make('create')
+                    ->label('Add SEO Meta')
+                    ->url(static::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->button(),
+            ]);
     }
 
     public static function getRelations(): array
@@ -140,12 +215,19 @@ class SeoMetaResource extends Resource
     {
         return [
             'index' => Pages\ListSeoMetas::route('/'),
+            'create' => Pages\CreateSeoMeta::route('/create'),
             'edit'  => Pages\EditSeoMeta::route('/{record}/edit'),
         ];
     }
 
     public static function canCreate(): bool
     {
-        return false;
+        return true;
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['meta_title', 'meta_description'];
     }
 }
+

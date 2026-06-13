@@ -31,18 +31,18 @@ class Order extends Model
     ];
 
     protected $casts = [
-        'status'              => OrderStatus::class,
-        'payment_method'      => PaymentMethod::class,
-        'payment_status'      => PaymentStatus::class,
-        'subtotal'            => 'decimal:2',
-        'discount_amount'     => 'decimal:2',
-        'shipping_cost'       => 'decimal:2',
-        'vat_amount'          => 'decimal:2',
-        'grand_total'         => 'decimal:2',
-        'urgent_processing_fee'=> 'decimal:2',
-        'is_b2b'              => 'boolean',
-        'vat_exempt'          => 'boolean',
-        'urgent_processing'   => 'boolean',
+        'status' => OrderStatus::class,
+        'payment_method' => PaymentMethod::class,
+        'payment_status' => PaymentStatus::class,
+        'subtotal' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'shipping_cost' => 'decimal:2',
+        'vat_amount' => 'decimal:2',
+        'grand_total' => 'decimal:2',
+        'urgent_processing_fee' => 'decimal:2',
+        'is_b2b' => 'boolean',
+        'vat_exempt' => 'boolean',
+        'urgent_processing' => 'boolean',
     ];
 
     public function user(): BelongsTo
@@ -80,13 +80,56 @@ class Order extends Model
         return $this->hasOne(Payment::class);
     }
 
+    // payments(): HasMany kept alongside payment() for cases where multiple
+    // payment attempts or split payments exist. Use payment() for the primary
+    // payment and payments() when querying all attempts.
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function refundRequest(): HasOne
     {
         return $this->hasOne(RefundRequest::class);
     }
 
+    public function refundRequests(): HasMany
+    {
+        return $this->hasMany(RefundRequest::class);
+    }
+
     public function couponUsage(): HasOne
     {
         return $this->hasOne(CouponUsage::class);
+    }
+
+    public function scopeByStatus($q, $status)
+    {
+        return $q->where('status', $status);
+    }
+
+    public function scopeRecent($q, $days = 30)
+    {
+        return $q->where('created_at', '>=', now()->subDays($days));
+    }
+
+    public function scopePaid($q)
+    {
+        return $q->where('payment_status', PaymentStatus::Paid->value);
+    }
+
+    public function scopeShipped($q)
+    {
+        return $q->where('status', OrderStatus::Shipped->value);
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status->label();
+    }
+
+    public function getFormattedGrandTotalAttribute(): string
+    {
+        return bcmul($this->grand_total, '1', 2);
     }
 }

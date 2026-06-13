@@ -172,6 +172,10 @@ class CheckoutController extends Controller
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
             'country_code' => 'required|string|size:2',
+            'is_b2b' => 'nullable|boolean',
+            'company_name' => 'nullable|string|max:255',
+            'vat_number' => 'nullable|string|max:50',
+            'vat_valid' => 'nullable|boolean',
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -179,6 +183,9 @@ class CheckoutController extends Controller
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
+
+        $vatValid = $request->boolean('vat_valid');
+        $vatExempt = $vatValid && settings('tax.b2b_exempt_on_valid_vat', true);
 
         $this->checkoutService->update($checkoutId, [
             'shipping_address' => [
@@ -188,7 +195,13 @@ class CheckoutController extends Controller
                 'city' => $request->input('city'),
                 'postal_code' => $request->input('postal_code'),
                 'country_code' => $request->input('country_code'),
+                'company_name' => $request->input('company_name'),
             ],
+            'is_b2b' => $request->boolean('is_b2b'),
+            'company_name' => $request->input('company_name'),
+            'vat_number' => $request->input('vat_number'),
+            'vat_valid' => $vatValid,
+            'vat_exempt' => $vatExempt,
         ]);
 
         $this->checkoutService->advance($checkoutId);
@@ -210,8 +223,10 @@ class CheckoutController extends Controller
 
     private function processStep3(Request $request, string $checkoutId, string $lang)
     {
+        $validIds = \App\Models\ShippingMethod::where('is_active', true)->pluck('id')->toArray();
+
         $validator = Validator::make($request->all(), [
-            'shipping_method_id' => ['required', 'integer', Rule::in([1, 2, 3])],
+            'shipping_method_id' => ['required', 'integer', Rule::in($validIds)],
         ], [
             'shipping_method_id.in' => __('Please select a valid shipping method.'),
         ]);
@@ -264,13 +279,25 @@ class CheckoutController extends Controller
 
         $validated = $request->validate([
             'payment_method' => 'required|in:card,bank_transfer',
-            'customer_note' => 'nullable|string|max:500',
+            'customer_note' => 'nullable|string|max:' . settings('checkout.max_note_length', 500),
         ]);
 
         $this->checkoutService->update($checkoutId, [
             'payment_method' => $validated['payment_method'],
             'customer_note' => $validated['customer_note'] ?? null,
         ]);
+
+        $checkout = $this->checkoutService->get($checkoutId);
+        $cart = $this->cartService->getCartByCheckout($checkoutId);
+        if ($cart) {
+            $summary = $this->cartService->getSummary($cart);
+            $minimumOrder = (float) settings('orders.minimum_order_amount', 0);
+            if ($minimumOrder > 0 && $summary['subtotal'] < $minimumOrder) {
+                return back()->with('error', __('Your order does not meet the minimum amount of :amount.', [
+                    'amount' => format_price($minimumOrder),
+                ]));
+            }
+        }
 
         try {
             $order = $this->checkoutService->createOrder($checkoutId);
@@ -316,6 +343,9 @@ class CheckoutController extends Controller
 
         $sidebar = $this->buildSidebarSummary($checkoutData, $summary, $shippingCost);
 
+        $expiresAt = \Carbon\Carbon::parse($checkout['expires_at']);
+        $secondsRemaining = max(0, now()->diffInSeconds($expiresAt, false));
+
         return view($view, array_merge($data, [
             'checkoutId' => $checkoutId,
             'lang' => $lang,
@@ -326,39 +356,30 @@ class CheckoutController extends Controller
             'selectedShippingMethod' => $selectedShippingMethod,
             'selectedShippingCost' => $shippingCost,
             'sidebarSummary' => $sidebar,
+            'secondsRemaining' => $secondsRemaining,
         ]));
     }
 
     /**
-     * Return a hardcoded shipping method object by ID, or null.
+     * Return a shipping method from the database by ID, or null.
      */
     private function getShippingMethod(int $id): ?object
     {
-        $methods = [
-            1 => (object) [
-                'id' => 1,
-                'name' => 'Express Shipping',
-                'flat_rate' => '75.00',
-                'estimated_days_min' => 3,
-                'estimated_days_max' => 5,
-            ],
-            2 => (object) [
-                'id' => 2,
-                'name' => 'Standard Shipping',
-                'flat_rate' => '40.00',
-                'estimated_days_min' => 5,
-                'estimated_days_max' => 7,
-            ],
-            3 => (object) [
-                'id' => 3,
-                'name' => 'Economy Shipping',
-                'flat_rate' => '30.00',
-                'estimated_days_min' => null,
-                'estimated_days_max' => 15,
-            ],
-        ];
+        $method = \App\Models\ShippingMethod::where('is_active', true)->find($id);
 
-        return $methods[$id] ?? null;
+        if (! $method) {
+            return null;
+        }
+
+        $name = is_array($method->name) ? ($method->name['en'] ?? reset($method->name)) : $method->name;
+
+        return (object) [
+            'id' => $method->id,
+            'name' => $name,
+            'flat_rate' => $method->flat_rate,
+            'estimated_days_min' => $method->estimated_days_min,
+            'estimated_days_max' => $method->estimated_days_max,
+        ];
     }
 
     private function buildSidebarSummary(array $checkoutData, ?array $summary, ?string $shippingCost): array
@@ -433,7 +454,7 @@ class CheckoutController extends Controller
         if ($order->payment_method !== PaymentMethod::Card) {
             return response()->json([
                 'success' => false,
-                'message' => 'Payment method is not card',
+                'message' => settings('checkout.payment_error_message', 'Payment method is not card'),
             ], 400);
         }
         
@@ -445,7 +466,7 @@ class CheckoutController extends Controller
             'client_secret' => $intent['client_secret'],
             'payment_id' => $intent['payment_id'],
             'env' => settings('payment.airwallex_environment', 'sandbox') === 'live' ? 'prod' : 'demo',
-            'currency' => 'EUR',
+            'currency' => settings('store.currency', 'EUR'),
             'amount' => (int) bcmul((string) $order->grand_total, '100', 0),
         ]);
     }
@@ -460,9 +481,10 @@ class CheckoutController extends Controller
         $this->authorizePaymentAccess($order);
         
         $validated = $request->validate([
-            'payment_method' => 'required|in:card,bank_transfer',
+            'payment_method' => 'required|in:' . implode(',', settings('checkout.allowed_payment_methods', ['card', 'bank_transfer'])),
             'payment_intent_id' => 'nullable|string|max:255',
             'payment_reference' => 'nullable|string|max:255',
+            'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:' . (settings('checkout.proof_max_size_kb', 5120)),
         ]);
         
         // Update order payment method if different
@@ -475,12 +497,27 @@ class CheckoutController extends Controller
         // For bank transfer, mark as pending with reference
         if ($validated['payment_method'] === 'bank_transfer') {
             $payment = $order->payment;
+            if (!$payment) {
+                $payment = $order->payment()->create([
+                    'order_id' => $order->id,
+                    'gateway' => \App\Enums\PaymentGateway::BankTransfer,
+                    'status' => \App\Enums\PaymentTransactionStatus::Pending,
+                    'amount' => $order->grand_total,
+                    'gateway_response' => [],
+                ]);
+            }
             if ($payment) {
+                $proofPath = null;
+                if ($request->hasFile('payment_proof') && $request->file('payment_proof')->isValid()) {
+                    $proofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+                }
+
                 $payment->update([
                     'status' => 'pending',
                     'gateway_response' => [
                         'reference' => $validated['payment_reference'] ?? '',
                         'method' => 'bank_transfer',
+                        'proof_path' => $proofPath,
                         'submitted_at' => now()->toISOString(),
                     ],
                 ]);
@@ -497,7 +534,7 @@ class CheckoutController extends Controller
         // For card payments, we rely on webhook for status updates
         return response()->json([
             'success' => true,
-            'message' => 'Payment processing initiated',
+            'message' => settings('checkout.payment_success_message', 'Payment processing initiated'),
             'redirect_url' => route('frontend.checkout.payment.return', [
                 'lang' => $lang,
                 'order' => $order->order_number,

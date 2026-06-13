@@ -1,4 +1,4 @@
-{{-- Section: contact_cta (Industrial Blueprint)
+﻿{{-- Section: contact_cta (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), button_text(ml)
 --}}
 @php
@@ -25,7 +25,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ {{ $eyebrow }}</span>
+                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -48,7 +48,7 @@
                     @if($email)
                     <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
                         <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
-                            Email
+                            {{ __('Email') }}
                         </dt>
                         <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm text-ivory shrink-0">
@@ -61,7 +61,7 @@
                     @if($phone)
                     <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
                         <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
-                            Phone
+                            {{ __('Phone') }}
                         </dt>
                         <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">
@@ -73,17 +73,17 @@
                     @endif
                     <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
                         <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
-                            Hours
+                            {{ __('Hours') }}
                         </dt>
                         <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">Mon-Fri · 09:00-18:00 CET</dd>
+                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">{{ settings('general.business_hours', 'Mon-Fri · 09:00-18:00 CET') }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
                         <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
-                            SLA
+                            {{ __('SLA') }}
                         </dt>
                         <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">&lt; 24 h response</dd>
+                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">{{ settings('general.support_sla', '< 24 h response') }}</dd>
                     </div>
                 </dl>
 
@@ -99,7 +99,7 @@
                               font-mono text-xs font-bold uppercase tracking-[0.22em]
                               hover:border-amber hover:text-amber transition-colors">
                         <x-heroicon-s-phone class="w-4 h-4" />
-                        Call now
+                        {{ __('Call now') }}
                     </a>
                     @endif
                 </div>

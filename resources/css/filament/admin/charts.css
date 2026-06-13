@@ -1,0 +1,405 @@
+/* =============================================================================
+ * OeParts Admin — Chart Design System
+ * Standardised visual language for all Chart.js widgets
+ * =============================================================================
+ * Reads tokens from tokens.css. Apply class `op-chart` on chart container.
+ *
+ * Includes:
+ *  - .op-chart-frame (loading skeleton, header, footer)
+ *  - .op-chart-tooltip (custom tooltip styling override)
+ *  - .op-chart-legend (consistent legend styling)
+ *  - .op-chart-empty (empty state)
+ *  - .op-chart-skeleton (loading shimmer)
+ *  - .op-sparkline (mini inline chart)
+ * ============================================================================= */
+
+.op-chart-frame {
+    position: relative;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--chart-frame-radius);
+    box-shadow: var(--shadow-1);
+    transition: box-shadow var(--duration-200) var(--ease-out-quint),
+                transform var(--duration-200) var(--ease-out-quint);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.op-chart-frame:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-1px);
+}
+
+.op-chart-frame-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 0.5rem 1rem;
+    background: var(--chart-header-bg);
+    border-bottom: 1px solid var(--color-border-subtle);
+    min-height: var(--widget-header-height);
+}
+
+.op-chart-frame-header-start {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-width: 0;
+}
+
+.op-chart-frame-title {
+    font-family: var(--font-display);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.3;
+    letter-spacing: var(--tracking-tight);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-chart-frame-subtitle {
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    line-height: 1.3;
+    display: none;
+}
+
+.op-chart-frame-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.op-chart-frame-action {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-xs);
+    color: var(--color-text-muted);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all var(--duration-150) var(--ease-out-quint);
+}
+
+.op-chart-frame-action:hover {
+    color: var(--color-text-primary);
+    background: var(--color-bg-inset);
+    border-color: var(--color-border-default);
+}
+
+.op-chart-frame-drilldown {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-accent-500);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color 150ms ease;
+}
+
+.op-chart-frame-drilldown:hover {
+    color: var(--color-accent-600);
+    text-decoration: underline;
+}
+
+.op-chart-frame-body {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    position: relative;
+    min-height: 180px;
+}
+
+.op-chart-frame-footer {
+    border-top: 1px solid var(--color-border-subtle);
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    background: var(--chart-header-bg);
+}
+
+/* Loading shimmer skeleton */
+.op-chart-skeleton {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(90deg,
+        var(--color-bg-inset) 0%,
+        var(--color-bg-surface) 50%,
+        var(--color-bg-inset) 100%
+    );
+    background-size: 200% 100%;
+    animation: op-shimmer 1.5s linear infinite;
+}
+
+@keyframes op-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Empty state */
+.op-chart-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    text-align: center;
+    padding: var(--space-6);
+    color: var(--color-text-muted);
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        var(--color-border-subtle) 10px,
+        var(--color-border-subtle) 11px
+    );
+}
+
+.op-chart-empty-title {
+    font-family: var(--font-display);
+    font-size: var(--text-h4);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+}
+
+.op-chart-empty-desc {
+    font-size: var(--text-body-sm);
+    max-width: 320px;
+    line-height: var(--leading-normal);
+}
+
+/* Center label (donut/pie charts) */
+.op-chart-center-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    pointer-events: none;
+}
+
+.op-chart-center-label-value {
+    font-family: var(--font-display);
+    font-size: var(--text-h1);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: var(--tracking-tight);
+    line-height: 1;
+}
+
+.op-chart-center-label-label {
+    font-size: var(--text-caption);
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-widest);
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+/* Sparkline (inline mini-chart) */
+.op-sparkline {
+    display: inline-block;
+    width: 80px;
+    height: 28px;
+    vertical-align: middle;
+}
+
+.op-sparkline svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.op-sparkline-path {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.op-sparkline-fill {
+    stroke: none;
+    opacity: 0.18;
+}
+
+.op-sparkline-area {
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.6;
+}
+
+.op-sparkline-up    .op-sparkline-path { stroke: var(--color-success-600); }
+.op-sparkline-up    .op-sparkline-fill { fill: var(--color-success-500); }
+.op-sparkline-down  .op-sparkline-path { stroke: var(--color-danger-500); }
+.op-sparkline-down  .op-sparkline-fill { fill: var(--color-danger-500); }
+.op-sparkline-flat  .op-sparkline-path { stroke: var(--color-text-muted); }
+.op-sparkline-flat  .op-sparkline-fill { fill: var(--color-text-muted); }
+
+/* Custom tooltip override (used by Chart.js external tooltip handler) */
+.op-chartjs-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--chart-tooltip-bg);
+    color: var(--chart-tooltip-text);
+    border-radius: var(--radius-md);
+    padding: var(--space-3) var(--space-3);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    box-shadow: var(--shadow-4);
+    transform: translate(-50%, -100%);
+    z-index: var(--z-tooltip);
+    min-width: 180px;
+    transition: opacity var(--duration-150) var(--ease-out-quint);
+}
+
+.op-chartjs-tooltip-title {
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    margin-bottom: 6px;
+    opacity: 0.7;
+}
+
+.op-chartjs-tooltip-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 2px 0;
+    font-family: var(--font-mono);
+}
+
+.op-chartjs-tooltip-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--chart-tooltip-text);
+    opacity: 0.9;
+}
+
+.op-chartjs-tooltip-swatch {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+}
+
+.op-chartjs-tooltip-value {
+    font-weight: 700;
+    color: var(--chart-tooltip-text);
+}
+
+/* Heatmap (used for hourly/daily) */
+.op-heatmap {
+    display: grid;
+    gap: 2px;
+    padding: var(--space-2);
+}
+
+.op-heatmap-cell {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: var(--color-bg-inset);
+    transition: transform var(--duration-150) var(--ease-out-quint);
+    cursor: pointer;
+}
+
+.op-heatmap-cell:hover {
+    transform: scale(1.4);
+    z-index: 2;
+}
+
+.op-heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-caption);
+    color: var(--color-text-muted);
+    margin-top: var(--space-2);
+    justify-content: flex-end;
+}
+
+.op-heatmap-legend-scale {
+    display: flex;
+    gap: 1px;
+}
+
+.op-heatmap-legend-step {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* Geo map (choropleth) */
+.op-geo-map {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.op-geo-map svg {
+    width: 100%;
+    height: 100%;
+}
+
+.op-geo-map-region {
+    fill: var(--color-bg-inset);
+    stroke: var(--color-border-subtle);
+    stroke-width: 1;
+    transition: fill var(--duration-200) var(--ease-out-quint),
+                stroke-width var(--duration-150) var(--ease-out-quint);
+    cursor: pointer;
+}
+
+.op-geo-map-region:hover {
+    stroke: var(--color-brand-500);
+    stroke-width: 1.5;
+}
+
+/* Animated data-point pulse (for live counters) */
+@keyframes op-pulse-ring {
+    0%   { box-shadow: 0 0 0 0 currentColor; }
+    100% { box-shadow: 0 0 0 8px transparent; }
+}
+
+.op-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: op-pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.op-pulse-dot-success { color: var(--color-success-500); }
+.op-pulse-dot-warning { color: var(--color-warning-500); }
+.op-pulse-dot-danger  { color: var(--color-danger-500); }
+.op-pulse-dot-info    { color: var(--color-info-500); }
+.op-pulse-dot-muted   { color: var(--color-text-muted); }
+
+/* Bar chart bar hover */
+.op-chartjs-bar-hover {
+    filter: brightness(1.1);
+    transition: filter var(--duration-150) var(--ease-out-quint);
+}

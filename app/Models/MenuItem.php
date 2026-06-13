@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\MenuTarget;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MenuItem extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'menu_id', 'parent_id', 'label', 'type', 'page_id', 'url', 'sort_order', 'target',
     ];

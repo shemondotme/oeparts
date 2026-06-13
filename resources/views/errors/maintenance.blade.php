@@ -1,4 +1,4 @@
-@php
+﻿@php
     /**
      * Multilang settings are stored as JSON strings in DB.
      * Normalise to an array so trans_field() can pick the right locale.
@@ -117,7 +117,7 @@
                     <div class="flex items-center gap-3">
                         <span class="inline-block w-2.5 h-2.5 bg-amber bp-pulse"></span>
                         <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">
-                            § System · Offline · 01
+                            System · Offline · 01
                         </span>
                     </div>
                     <div class="flex items-center gap-3 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
@@ -143,8 +143,8 @@
 
                     {{-- Card header strip --}}
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">§ Incident · Report</span>
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        <span class="bp-spec text-amber-ink">Incident · Report</span>
+                        <span class="bp-spec-mono">
                             {{ now()->format('Y-m-d H:i T') }}
                         </span>
                     </div>
@@ -160,7 +160,7 @@
                                 </svg>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="bp-spec text-amber-ink mb-1">§ Status · Code</p>
+                                <p class="bp-spec text-amber-ink mb-1">Status · Code</p>
                                 <p class="font-display text-5xl md:text-6xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
                                     5<span class="text-amber">0</span>3
                                 </p>
@@ -212,7 +212,7 @@
                                         </svg>
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <p class="bp-spec text-amber-ink mb-1">§ Estimated · Return</p>
+                                        <p class="bp-spec text-amber-ink mb-1">Estimated · Return</p>
                                         <p class="font-display text-xl font-extrabold text-ink tracking-[-0.02em] leading-tight">
                                             {{ \Carbon\Carbon::parse($estimatedBackAt)->format('M d, Y') }}
                                         </p>
@@ -228,7 +228,7 @@
                         {{-- Contact --}}
                         @if(!empty($contactEmail))
                             <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-6 border-t border-rule">
-                                <p class="bp-spec text-ink-muted">§ {{ $helpLabel }}</p>
+                                <p class="bp-spec text-ink-muted">{{ $helpLabel }}</p>
                                 <a href="mailto:{{ $contactEmail }}"
                                    class="inline-flex items-center gap-2 font-mono text-xs font-bold text-ink
                                           border-b border-amber hover:text-amber-ink transition-colors pb-0.5 self-start sm:self-auto">
@@ -243,13 +243,13 @@
 
                     {{-- Footer trust strip --}}
                     <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
-                        <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                             <svg class="w-3 h-3 text-amber-ink" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                 <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" />
                             </svg>
                             {{ $checkBackLabel }}
                         </span>
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        <span class="bp-spec-mono">
                             AUTO · RETRY
                         </span>
                     </div>
@@ -257,7 +257,7 @@
 
                 {{-- Footer --}}
                 <div class="mt-10 text-center">
-                    <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    <p class="bp-spec-mono">
                         &copy; {{ date('Y') }} · {{ $brandName }} · {{ $rightsLabel }}
                     </p>
                 </div>

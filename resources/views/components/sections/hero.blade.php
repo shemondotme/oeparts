@@ -1,4 +1,4 @@
-{{-- Section: hero (Industrial Blueprint)
+﻿{{-- Section: hero (Industrial Blueprint)
      content: headline(ml), subheadline(ml), placeholder(ml), button_text(ml), popular_oem[]
 --}}
 @php
@@ -7,26 +7,27 @@
     $headline = trans_field($section->content['headline'] ?? null) ?: 'Every genuine OEM part. One hub. Precisely indexed.';
     $subheadline = trans_field($section->content['subheadline'] ?? null);
     $buttonText = trans_field($section->content['button_text'] ?? null) ?: 'DISPATCH QUERY';
-    $popularOems = $section->content['popular_oem'] ?? ['1K0698151E', '3C0615301B', 'WHT005549A', '06H103405A'];
+    $popularOems = $sectionData['popular_oems']
+        ?? $section->content['popular_oem']
+        ?? [];
     $minChars = (int) settings('search.min_chars', 3);
-    $heroIndexBadge = settings_trans('ui.hero_index_badge', '§ INDEX');
-    $heroLive = settings_trans('ui.hero_live_status', 'CATALOGUE LIVE');
-    $heroEyebrow = settings_trans('ui.hero_eyebrow', 'Genuine OEM Parts Index · 1,000,000+');
+    $heroEyebrow = settings_trans('ui.hero_eyebrow', 'Genuine OEM Parts Index');
     $heroDefaultSub = settings_trans('ui.hero_subtext_default', 'Enter any OEM number. We return matches, cross-references, and verified suppliers across the European Union — or open a concierge inquiry if the part is rare.');
     $heroSpecTitle = settings_trans('ui.hero_spec_title', 'Specification');
+    $heroStats = $sectionData['hero_stats'] ?? [];
     $heroR1l = settings_trans('ui.hero_spec_r1_label', 'Catalogue');
-    $catCount = number_format((int) settings('stats_counter.parts_count', 1000000));
+    $catCount = $heroStats['parts_count'] ?? number_format((int) settings('stats_counter.parts_count', 1000000));
     $heroR2l = settings_trans('ui.hero_spec_r2_label', 'Manufacturers');
-    $heroR2v = settings_trans('ui.hero_spec_r2_value', '214');
+    $heroR2v = $heroStats['manufacturers'] ?? settings_trans('ui.hero_spec_r2_value', '214');
     $heroR3l = settings_trans('ui.hero_spec_r3_label', 'Cross-refs');
-    $heroR3v = settings_trans('ui.hero_spec_r3_value', '3.2M');
+    $heroR3v = $heroStats['cross_refs'] ?? settings_trans('ui.hero_spec_r3_value', '3.2M');
     $heroR4l = settings_trans('ui.hero_spec_r4_label', 'Avg. despatch');
     $heroR4v = settings_trans('ui.hero_spec_r4_value', '24h');
     $heroR5l = settings_trans('ui.hero_spec_r5_label', 'Languages');
     $heroR5v = settings_trans('ui.hero_spec_r5_value', 'EN·DE·LT·FR·ES');
     $heroSrcL = settings_trans('ui.hero_source_label', 'Source');
     $heroSrcB = settings_trans('ui.hero_source_badge', 'VERIFIED · EU');
-    $heroSearchStrip = settings_trans('ui.hero_search_strip', '§ ENTER OEM NUMBER');
+    $heroSearchStrip = settings_trans('ui.hero_search_strip', 'ENTER OEM NUMBER');
     $heroSearchMeta = str_replace(':min', (string) $minChars, settings_trans('ui.hero_search_meta_hint', 'min :min chars · uppercase alphanumeric'));
     $heroIndexedLbl = settings_trans('ui.hero_indexed_label', 'Indexed:');
     $heroFoot1 = settings_trans('ui.hero_footer_pill_1', 'Verified Suppliers');
@@ -49,19 +50,6 @@
 
     <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24 lg:py-32">
 
-        {{-- ═══ Spec-sheet header row ═══ --}}
-        <div class="flex items-center justify-between mb-12 md:mb-16 pb-5 border-b border-rule">
-            <div class="flex items-center gap-6 sm:gap-8">
-                <span class="font-mono text-spec-sm font-bold text-ink-muted tracking-[0.22em] uppercase">
-                    {{ $heroIndexBadge }}
-                </span>
-            </div>
-            <div class="flex items-center gap-2 font-mono text-[10px] text-ink-muted tracking-[0.2em] uppercase">
-                <span class="w-1.5 h-1.5 bg-emerald-600 animate-pulse motion-reduce:animate-none"></span>
-                <span class="hidden sm:inline">{{ $heroLive }}</span>
-            </div>
-        </div>
-
         {{-- ═══ 12-column editorial grid ═══ --}}
         <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 gap-y-10 items-end">
 
@@ -80,22 +68,16 @@
 
                 {{-- Ruler-line under headline --}}
                 <div class="relative mt-6 mb-8">
-                    <div class="bp-rule-draw h-px bg-ink/70 origin-left"></div>
+                    <div class="bp-rule-draw bg-ink/70"></div>
                 </div>
 
-                @if($subheadline)
-                    <p class="bp-rise bp-rise-delay-2 max-w-xl text-lg text-body leading-relaxed">
-                        {{ $subheadline }}
-                    </p>
-                @else
-                    <p class="bp-rise bp-rise-delay-2 max-w-xl text-lg text-body leading-relaxed">
-                        {{ $heroDefaultSub }}
-                    </p>
-                @endif
+                <p class="bp-rise bp-rise-delay-2 max-w-xl text-lg text-body leading-relaxed">
+                    {{ $subheadline ?: $heroDefaultSub }}
+                </p>
             </div>
 
-            {{-- Right: spec panel (4 cols) — data as image --}}
-            <aside class="col-span-12 lg:col-span-4 bp-rise bp-rise-delay-3">
+            {{-- Right: spec panel (4 cols) — hidden on mobile, search is the priority --}}
+            <aside class="max-lg:hidden lg:col-span-4 bp-rise bp-rise-delay-3">
                 <div class="relative border border-ink p-6 sm:p-7 bg-paper bp-register">
                     <p class="bp-spec text-ink-muted mb-4">{{ $heroSpecTitle }}</p>
                     <dl class="space-y-3 text-sm">
@@ -161,13 +143,11 @@
                         setTimeout(() => this.type(), this.isDeleting ? 50 : 90);
                     },
                  }"
-                 x-init="type()">
+                 x-init="window.matchMedia('(prefers-reduced-motion: reduce)').matches ? (placeholder = placeholders[0] || '') : type()">
 
                 {{-- Form label strip --}}
                 <div class="flex items-end justify-between pb-3 border-b border-ink">
-                    <div class="flex items-center gap-3">
-                        <span class="bp-spec text-ink">{{ $heroSearchStrip }}</span>
-                    </div>
+                    <span class="bp-spec text-ink">{{ $heroSearchStrip }}</span>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         {{ $heroSearchMeta }}
                     </span>
@@ -196,7 +176,7 @@
                             aria-describedby="{{ $searchHintId }}"
                             autocomplete="off"
                             autocapitalize="characters"
-                            inputmode="text"
+                            inputmode="search"
                             class="flex-1 bg-transparent font-mono uppercase tracking-wider
                                    text-xl sm:text-2xl md:text-3xl font-medium text-ink
                                    placeholder:normal-case placeholder:tracking-normal placeholder:font-sans placeholder:text-ink-muted/60
@@ -233,7 +213,7 @@
                                   font-mono text-sm font-medium text-ink
                                   hover:bg-ink hover:text-ivory
                                   transition-colors duration-150">
-                            <span class="text-[10px] text-ink-muted group-hover:text-amber">→</span>
+                            <x-heroicon-s-arrow-right class="w-3 h-3 text-ink-muted group-hover:text-amber transition-colors shrink-0" aria-hidden="true" />
                             {{ $oem }}
                         </a>
                     @endforeach
@@ -249,12 +229,12 @@
                     <x-heroicon-s-check-badge class="w-4 h-4 text-amber-ink" />
                     {{ $heroFoot1 }}
                 </span>
-                <span class="text-rule">│</span>
+                <span class="text-rule" aria-hidden="true">│</span>
                 <span class="flex items-center gap-2">
                     <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
                     {{ $heroFoot2 }}
                 </span>
-                <span class="text-rule">│</span>
+                <span class="text-rule" aria-hidden="true">│</span>
                 <span class="flex items-center gap-2">
                     <x-heroicon-o-truck class="w-4 h-4 text-amber-ink" />
                     {{ $heroFoot3 }}
@@ -262,7 +242,7 @@
             </div>
             <a href="#how-it-works"
                class="inline-flex items-center gap-2 font-mono text-[11px] font-bold tracking-[0.2em] uppercase text-ink border-b border-ink hover:text-amber-ink hover:border-amber-ink pb-0.5 transition-colors">
-                How it works
+                {{ __('How it works') }}
                 <x-heroicon-s-arrow-long-down class="w-4 h-4" />
             </a>
         </div>

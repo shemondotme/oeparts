@@ -25,8 +25,7 @@
                 $needsTopBorder = $index >= 2 && count($items) > 2;
             @endphp
             <li class="flex items-center gap-4 px-5 py-5 sm:px-6
-                       {{ $needsTopBorder ? 'border-t md:border-t-0 border-rule' : '' }}"
-                role="listitem">
+                       {{ $needsTopBorder ? 'border-t md:border-t-0 border-rule' : '' }}">
 
                 <div class="w-9 h-9 border border-ink flex items-center justify-center shrink-0 bg-paper">
                     @switch($icon)

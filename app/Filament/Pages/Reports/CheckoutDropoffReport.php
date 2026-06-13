@@ -14,6 +14,13 @@ class CheckoutDropoffReport extends Page
 
     protected static ?string $title = 'Checkout Drop-off';
 
+    public static function canAccess(): bool
+    {
+        $user = auth('admin')->user();
+
+        return $user && ($user->hasRole('super_admin') || $user->hasRole('admin'));
+    }
+
     protected ?string $subheading = 'Funnel performance and checkout drop-off rate tracking.';
 
     protected string $view = 'filament.pages.reports.checkout-dropoff-report';

@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § LOGISTICS · DISPATCHED
+                    LOGISTICS · DISPATCHED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     Your order is on the way<span class="text-amber">.</span>
@@ -78,7 +78,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 12px 0; color: #9A5A00;">
-                    § PACKAGE CONTENTS
+                    PACKAGE CONTENTS
                 </p>
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; border-collapse: collapse;">
                     <thead>

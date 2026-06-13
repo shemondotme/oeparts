@@ -1,4 +1,4 @@
-@props(['align' => 'right', 'theme' => 'light'])
+﻿@props(['align' => 'right', 'theme' => 'light'])
 
 {{--
     ═══════════════════════════════════════════════════════════════════
@@ -92,7 +92,7 @@
         <div class="flex items-center justify-between px-4 py-2.5 border-b
                     {{ $isDark ? 'border-white/15 bg-ink' : 'border-ink bg-ivory-alt' }}">
             <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase
-                         {{ $isDark ? 'text-amber' : 'text-amber-ink' }}">§ Locale</span>
+                         {{ $isDark ? 'text-amber' : 'text-amber-ink' }}">Locale</span>
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase
                          {{ $isDark ? 'text-ivory/50' : 'text-ink-muted' }}">5 options</span>
         </div>

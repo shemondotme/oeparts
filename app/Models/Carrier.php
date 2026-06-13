@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Carrier extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['name', 'tracking_url', 'is_active', 'sort_order'];
 
     protected $casts = [

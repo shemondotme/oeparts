@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Condition;
 use App\Models\Product;
+use App\Models\SearchLog;
 use App\Models\User;
 use App\Models\Manufacturer;
 use App\Models\Setting;
@@ -21,10 +23,17 @@ class CartTest extends TestCase
     private Product $product2;
     private User $user;
     private Manufacturer $manufacturer;
+    private Condition $condition;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Create default condition
+        $this->condition = Condition::firstOrCreate(
+            ['slug' => 'new'],
+            ['name' => 'New', 'bg_color' => '#ecfdf5', 'text_color' => '#065f46', 'is_active' => true]
+        );
 
         // Create manufacturer
         $this->manufacturer = Manufacturer::create([
@@ -42,7 +51,7 @@ class CartTest extends TestCase
             'name' => 'Test Product 1',
             'description' => 'Test description',
             'price' => 100.00,
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'is_in_stock' => true,
             'is_active' => true,
         ]);
@@ -54,7 +63,7 @@ class CartTest extends TestCase
             'name' => 'Test Product 2',
             'description' => 'Test description',
             'price' => 200.00,
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'is_in_stock' => true,
             'is_active' => true,
         ]);
@@ -121,7 +130,7 @@ class CartTest extends TestCase
             'name' => 'Out of Stock Product',
             'description' => 'Test description',
             'price' => 50.00,
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'is_in_stock' => false,
             'is_active' => true,
         ]);
@@ -286,8 +295,8 @@ class CartTest extends TestCase
         $response = $this->getJson('/en/cart/summary');
 
         $response->assertStatus(200)
-            ->assertJsonPath('summary.shipping_needed', 400)
-            ->assertJsonPath('summary.free_shipping_threshold', 500);
+            ->assertJsonPath('summary.shipping_needed', '400.00')
+            ->assertJsonPath('summary.free_shipping_threshold', '500');
     }
 
     #[Test]
@@ -329,5 +338,60 @@ class CartTest extends TestCase
         $response->assertStatus(200)
             ->assertViewHas('summary', fn ($s) => $s['item_count'] === 3 && $s['subtotal'] == 400.0)
             ->assertSee('cart.items');
+    }
+
+    #[Test]
+    public function empty_cart_shows_popular_oems_from_search_logs(): void
+    {
+        // Create search logs to seed popular OEMs
+        $log = new SearchLog();
+        $log->search_query = '06L906036L';
+        $log->normalized_query = '06L906036L';
+        $log->result_count = 5;
+        $log->lang = 'en';
+        $log->ip_address = '127.0.0.1';
+        $log->created_at = now();
+        $log->save();
+
+        $log = new SearchLog();
+        $log->search_query = '06L906036M';
+        $log->normalized_query = '06L906036M';
+        $log->result_count = 3;
+        $log->lang = 'en';
+        $log->ip_address = '127.0.0.1';
+        $log->created_at = now();
+        $log->save();
+
+        $response = $this->get('/en/cart');
+
+        $response->assertStatus(200)
+            ->assertViewHas('popularOems')
+            ->assertSee('06L906036L')
+            ->assertSee('06L906036M');
+    }
+
+    #[Test]
+    public function cart_preview_returns_condition_fields(): void
+    {
+        $this->actingAs($this->user);
+
+        $this->postJson('/en/cart/add', [
+            'product_id' => $this->product1->id,
+            'quantity' => 1,
+        ]);
+
+        $response = $this->getJson('/en/cart/preview');
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true]);
+
+        $items = $response->json('items');
+        $this->assertNotEmpty($items);
+        $this->assertArrayHasKey('condition_slug', $items[0]);
+        $this->assertArrayHasKey('condition_name', $items[0]);
+        $this->assertArrayHasKey('condition_bg', $items[0]);
+        $this->assertArrayHasKey('condition_text', $items[0]);
+        $this->assertEquals('new', $items[0]['condition_slug']);
+        $this->assertEquals('New', $items[0]['condition_name']);
     }
 }

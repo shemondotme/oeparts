@@ -1,4 +1,4 @@
-{{-- Section: stats_counter (Industrial Blueprint)
+﻿{{-- Section: stats_counter (Industrial Blueprint)
      content: eyebrow(ml), headline(ml), subheadline(ml), items[] — each: key, suffix, label(ml), cta_text(ml), cta_url
 --}}
 @if(settings('stats_counter.show_section', true))
@@ -34,7 +34,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -81,7 +81,8 @@
             <div class="relative p-6 sm:p-8 lg:p-10
                         {{ $index !== count($items) - 1 ? 'border-r border-rule' : '' }}
                         {{ $index < count($items) - 2 ? 'border-b border-rule lg:border-b-0' : '' }}
-                        {{ $index % 2 === 1 ? 'border-r-0 lg:border-r' : '' }}">
+                        {{ $index % 2 === 1 ? 'border-r-0 lg:border-r' : '' }}"
+                 aria-label="{{ $displayValue }} {{ trans_field($item['label'] ?? null) }}">
 
                 {{-- Header row: label + row number + icon --}}
                 <div class="flex items-start justify-between mb-6">
@@ -117,7 +118,7 @@
                 {{-- Amber tick accent --}}
                 <div class="mt-5 flex items-center gap-2">
                     <span class="h-px w-8 bg-amber"></span>
-                    <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-amber-ink">Live</span>
+                    <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-amber-ink">{{ __('Live') }}</span>
                 </div>
             </div>
             @endforeach
@@ -126,8 +127,8 @@
         {{-- Optional CTA --}}
         @if($ctaText && $ctaUrl)
         <div class="mt-10 flex items-center justify-between pt-6 border-t border-rule">
-            <span class="hidden sm:inline font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                Source · Verified · EU
+            <span class="hidden sm:inline bp-spec-mono">
+                {{ __('Source · Verified · EU') }}
             </span>
             <a href="{{ $ctaUrl }}" class="bp-btn-outline">
                 {{ $ctaText }}

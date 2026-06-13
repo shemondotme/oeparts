@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Order :number', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -44,7 +44,7 @@
 @section('content')
 <x-account.shell
     active="orders"
-    eyebrow="§ Order · Detail · Record"
+    eyebrow="Order · Detail · Record"
     :title="'Order ' . $order->order_number"
     :subtitle="__('Placed on :date', ['date' => $order->created_at->format('F j, Y · H:i')])"
     :docId="'DOC · ' . $order->order_number"
@@ -98,7 +98,7 @@
                 <x-heroicon-s-exclamation-circle class="w-4 h-4 text-amber-ink" />
             </div>
             <div>
-                <p class="bp-spec text-amber-ink mb-1">§ Awaiting · Bank · Transfer</p>
+                <p class="bp-spec text-amber-ink mb-1">Awaiting · Bank · Transfer</p>
                 <p class="text-sm text-body leading-relaxed">
                     {{ __('Your order is held until we confirm the bank transfer. Please complete the transfer using :ref as the reference. Processing starts within 1 business day after funds clear.', ['ref' => $order->order_number]) }}
                 </p>
@@ -111,7 +111,7 @@
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-signal class="w-3.5 h-3.5" />
-                § 01 · Fulfilment · Status
+                01 · Fulfilment · Status
             </span>
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase
                          {{ $isTerminalNegative ? 'text-red-700' : 'text-emerald-700' }} flex items-center gap-1.5">
@@ -171,7 +171,7 @@
                                 <x-heroicon-s-truck class="w-4 h-4 text-emerald-700" />
                             </div>
                             <div>
-                                <p class="bp-spec text-emerald-700 mb-0.5">§ Tracking · Number</p>
+                                <p class="bp-spec text-emerald-700 mb-0.5">Tracking · Number</p>
                                 <p class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->tracking_number }}</p>
                             </div>
                         </div>
@@ -196,9 +196,9 @@
                 <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-cube class="w-3.5 h-3.5" />
-                        § 02 · Line · Items
+                        02 · Line · Items
                     </span>
-                    <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                    <span class="bp-spec-mono">
                         {{ $order->items->count() }} {{ \Illuminate\Support\Str::plural('row', $order->items->count()) }}
                     </span>
                 </header>
@@ -219,14 +219,16 @@
                             <div class="w-11 h-11 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0">
                                 <x-heroicon-o-cube class="w-5 h-5 text-ink-muted" />
                             </div>
-                            <div class="flex-1 min-w-0">
+                            <div class="flex-1 min-w-0" x-data="clipboard()">
                                 <p class="font-display text-sm font-bold text-ink tracking-[-0.01em] truncate">
                                     {{ $productName }}
                                 </p>
                                 <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink">
+                                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink cursor-pointer"
+                                          @click="copy('{{ $item->oem_number_snapshot }}')" title="Copy OEM number">
                                         OEM · {{ $item->oem_number_snapshot }}
                                     </span>
+                                    <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600 ml-2">Copied</span>
                                     @if($item->manufacturer_snapshot)
                                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
                                             {{ $item->manufacturer_snapshot }}
@@ -244,12 +246,12 @@
                                 </div>
                             </div>
                             <div class="text-right shrink-0">
-                                <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                                    {{ $item->quantity }} × €{{ number_format((float) $item->unit_price, 2) }}
-                                </p>
-                                <p class="mt-1 font-mono text-base font-medium text-ink tabular-nums">
-                                    €{{ number_format((float) $lineTotal, 2) }}
-                                </p>
+                                    <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
+                                        {{ $item->quantity }} × {{ format_price($item->unit_price) }}
+                                    </p>
+                                    <p class="mt-1 font-mono text-base font-medium text-ink tabular-nums">
+                                        {{ format_price($lineTotal) }}
+                                    </p>
                             </div>
                         </li>
                     @endforeach
@@ -261,40 +263,40 @@
                 <header class="px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-calculator class="w-3.5 h-3.5" />
-                        § 03 · Totals · Ledger
+                        03 · Totals · Ledger
                     </span>
                 </header>
                 <dl class="px-5 py-4 space-y-2">
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Subtotal</dt>
+                        <dt class="bp-spec-mono">Subtotal</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm text-ink tabular-nums">€{{ number_format((float) $order->subtotal, 2) }}</dd>
+                        <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->subtotal) }}</dd>
                     </div>
                     @if($hasDiscount)
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Discount</dt>
+                        <dt class="bp-spec-mono">Discount</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm text-emerald-700 tabular-nums">−€{{ number_format((float) $order->discount_amount, 2) }}</dd>
+                        <dd class="font-mono text-sm text-emerald-700 tabular-nums">−{{ format_price($order->discount_amount) }}</dd>
                     </div>
                     @endif
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Shipping</dt>
+                        <dt class="bp-spec-mono">Shipping</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm text-ink tabular-nums">€{{ number_format((float) $order->shipping_cost, 2) }}</dd>
+                        <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->shipping_cost) }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">VAT</dt>
+                        <dt class="bp-spec-mono">VAT</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm text-ink tabular-nums">€{{ number_format((float) $order->vat_amount, 2) }}</dd>
+                        <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->vat_amount) }}</dd>
                     </div>
                 </dl>
                 <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                     <div>
                         <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Grand total</p>
-                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">EUR · incl. VAT</p>
+                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · incl. VAT</p>
                     </div>
                     <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
-                        €{{ number_format((float) $order->grand_total, 2) }}
+                        {{ format_price($order->grand_total) }}
                     </p>
                 </div>
             </section>
@@ -304,7 +306,7 @@
                     <header class="px-5 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-pencil-square class="w-3.5 h-3.5" />
-                            § 04 · Customer · Note
+                            04 · Customer · Note
                         </span>
                     </header>
                     <div class="p-5 text-sm text-body leading-relaxed whitespace-pre-line">
@@ -322,7 +324,7 @@
                 <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-map-pin class="w-3.5 h-3.5" />
-                        § Ship-to · Address
+                        Ship-to · Address
                     </span>
                 </div>
                 <address class="p-4 not-italic text-sm text-body leading-relaxed space-y-1">
@@ -346,7 +348,7 @@
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-truck class="w-3.5 h-3.5" />
-                            § Shipping · Method
+                            Shipping · Method
                         </span>
                     </div>
                     <div class="p-4">
@@ -367,7 +369,7 @@
                 <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-credit-card class="w-3.5 h-3.5" />
-                        § Payment · Record
+                        Payment · Record
                     </span>
                 </div>
                 <div class="p-4">
@@ -392,7 +394,7 @@
                     </div>
 
                     <div class="mt-4 pt-4 border-t border-rule flex items-center justify-between">
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Status</span>
+                        <span class="bp-spec-mono">Status</span>
                         @php
                             $ps = $order->payment_status?->value ?? 'pending';
                             $psBg = match($ps) {
@@ -418,19 +420,19 @@
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-briefcase class="w-3.5 h-3.5" />
-                            § B2B · Record
+                            B2B · Record
                         </span>
                     </div>
                     <dl class="p-4 space-y-2">
                         @if($order->company_name)
                             <div class="flex items-baseline justify-between gap-3">
-                                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Company</dt>
+                                <dt class="bp-spec-mono">Company</dt>
                                 <dd class="font-mono text-xs font-bold text-ink truncate">{{ $order->company_name }}</dd>
                             </div>
                         @endif
                         @if($order->vat_number)
                             <div class="flex items-baseline justify-between gap-3">
-                                <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">VAT</dt>
+                                <dt class="bp-spec-mono">VAT</dt>
                                 <dd class="font-mono text-xs font-bold text-ink tabular-nums">{{ $order->vat_number }}</dd>
                             </div>
                         @endif

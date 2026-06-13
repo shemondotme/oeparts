@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Account Settings') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -9,7 +9,7 @@
 @section('content')
 <x-account.shell
     active="settings"
-    eyebrow="§ 05 · Settings · Operations"
+    eyebrow="05 · Settings · Operations"
     title="Account settings"
     :subtitle="__('Manage your profile, credentials, notifications, and regional preferences.')"
     docId="DOC · SETTINGS · REV. {{ now()->format('Y.m.d') }}"
@@ -52,9 +52,9 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-user class="w-3.5 h-3.5" />
-                    § 01 · Profile · Information
+                    01 · Profile · Information
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">* = required</span>
+                <span class="bp-spec-mono">* = required</span>
             </header>
 
             <form method="POST"
@@ -117,9 +117,9 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-lock-closed class="w-3.5 h-3.5" />
-                    § 02 · Password · Credentials
+                    02 · Password · Credentials
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">TLS · Encrypted</span>
+                <span class="bp-spec-mono">TLS · Encrypted</span>
             </header>
 
             <form method="POST"
@@ -195,7 +195,7 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-bell class="w-3.5 h-3.5" />
-                    § 03 · Notification · Preferences
+                    03 · Notification · Preferences
                 </span>
             </header>
 
@@ -263,7 +263,7 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-globe-alt class="w-3.5 h-3.5" />
-                    § 04 · Language · Region
+                    04 · Language · Region
                 </span>
             </header>
 
@@ -320,14 +320,14 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-red-600 bg-red-600 text-ivory">
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase font-bold flex items-center gap-2">
                     <x-heroicon-s-exclamation-triangle class="w-3.5 h-3.5" />
-                    § 05 · Danger · Zone
+                    05 · Danger · Zone
                 </span>
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/80">Irreversible</span>
             </header>
 
             <div class="p-6 sm:p-8 space-y-5">
                 <div class="border border-red-600 bg-red-50 p-5">
-                    <p class="bp-spec text-red-700 mb-2">§ Delete · Account</p>
+                    <p class="bp-spec text-red-700 mb-2">Delete · Account</p>
                     <p class="text-sm text-red-900 leading-relaxed">
                         {{ __('Once you delete your account, there is no going back. All orders, addresses, and profile data will be permanently removed from our systems (subject to legal retention requirements). Please be certain.') }}
                     </p>
@@ -337,7 +337,7 @@
                     @csrf
                     @method('DELETE')
                     <button type="button"
-                            onclick="if(confirm('{{ __('Are you absolutely sure? This action cannot be undone.') }}')) document.getElementById('account-delete-form').submit();"
+                            x-on:click="if(confirm('{{ __('Are you absolutely sure? This action cannot be undone.') }}')) document.getElementById('account-delete-form').submit();"
                             class="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-ivory border border-red-600
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                    hover:bg-red-700 hover:border-red-700 transition-colors"

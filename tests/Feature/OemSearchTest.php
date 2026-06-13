@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
@@ -18,10 +19,21 @@ class OemSearchTest extends TestCase
 
     private Manufacturer $manufacturer;
     private CarModel $carModel;
+    private Condition $condition;
+    private Condition $conditionUsed;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->condition = Condition::firstOrCreate(
+            ['slug' => 'new'],
+            ['name' => 'New', 'bg_color' => '#ecfdf5', 'text_color' => '#065f46', 'is_active' => true]
+        );
+        $this->conditionUsed = Condition::firstOrCreate(
+            ['slug' => 'used'],
+            ['name' => 'Used', 'bg_color' => '#fef2f2', 'text_color' => '#991b1b', 'is_active' => true]
+        );
 
         // Create a manufacturer
         $this->manufacturer = Manufacturer::create([
@@ -48,7 +60,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => '06L906036L',
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '100.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -67,7 +79,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => '06L906036L',
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '100.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -86,7 +98,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => '06L906036L',
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '100.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -124,7 +136,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => '06L906036L',
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '100.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -154,7 +166,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => '06L906036L',
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '100.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -171,7 +183,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $otherManufacturer->id,
             'oem_number' => '06L906036L', // Same OEM but different manufacturer
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '150.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -196,7 +208,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => '06L906036L',
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '100.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -218,7 +230,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => '06L906036L',
             'normalized_oem' => '06L906036L',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '100.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -254,7 +266,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => 'ZZPARTIALDEMO999FULL',
             'normalized_oem' => 'ZZPARTIALDEMO999FULL',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '50.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -272,7 +284,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => 'FILTERCOND01',
             'normalized_oem' => 'FILTERCOND01',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '80.00',
             'is_in_stock' => true,
             'is_active' => true,
@@ -290,7 +302,7 @@ class OemSearchTest extends TestCase
             'manufacturer_id' => $this->manufacturer->id,
             'oem_number' => 'FILTERSTOCK01',
             'normalized_oem' => 'FILTERSTOCK01',
-            'condition' => 'new',
+            'condition_id' => $this->condition->id,
             'price' => '90.00',
             'is_in_stock' => false,
             'is_active' => true,
@@ -309,7 +321,7 @@ class OemSearchTest extends TestCase
                 'manufacturer_id' => $this->manufacturer->id,
                 'oem_number' => 'PAGETEST01-' . $i,
                 'normalized_oem' => 'PAGETEST01',
-                'condition' => 'new',
+                'condition_id' => $this->condition->id,
                 'price' => '100.00',
                 'is_in_stock' => true,
                 'is_active' => true,

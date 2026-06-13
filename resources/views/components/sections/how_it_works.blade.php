@@ -1,4 +1,4 @@
-{{-- Section: how_it_works (Industrial Blueprint)
+﻿{{-- Section: how_it_works (Industrial Blueprint)
      content: eyebrow, headline, subheadline, steps[] — each: icon, step_number, title(ml), description(ml)
 --}}
 @php
@@ -10,7 +10,7 @@
 @endphp
 
 @if(!empty($steps))
-<section class="relative bg-paper text-ink border-b border-rule">
+<section id="how-it-works" class="relative bg-paper text-ink border-b border-rule">
 
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
 
@@ -20,7 +20,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -35,8 +35,8 @@
                 <p class="text-base text-body leading-relaxed">
                     {{ $subheadline }}
                 </p>
-                <p class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                    Protocol · {{ count($steps) }} steps · avg 2 min
+                <p class="mt-4 bp-spec-mono">
+                    Protocol · {{ count($steps) }} steps
                 </p>
             </div>
             @endif
@@ -81,7 +81,7 @@
                     </span>
                     <span class="flex-1 h-px bg-ink"></span>
                     <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">
-                        § Step
+                        {{ __('Step') }}
                     </span>
                 </div>
 
@@ -125,13 +125,13 @@
                     <div class="h-[3px] w-10 bg-amber"></div>
                     @if(!$isLast)
                     <span class="hidden md:inline-flex items-center gap-1 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted/60">
-                        NEXT
+                        {{ __('NEXT') }}
                         <x-heroicon-s-arrow-long-right class="w-3.5 h-3.5" />
                     </span>
                     @else
                     <span class="inline-flex items-center gap-1 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber-ink">
                         <x-heroicon-s-check-circle class="w-3.5 h-3.5" />
-                        COMPLETE
+                        {{ __('COMPLETE') }}
                     </span>
                     @endif
                 </div>

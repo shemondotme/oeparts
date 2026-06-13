@@ -19,7 +19,7 @@ class SendRefundProcessedEmail implements ShouldQueue
         public readonly RefundRequest $refund,
         public readonly string $locale = 'en',
     ) {
-        $this->onQueue('default');
+        $this->onQueue('critical');
     }
 
     public function handle(): void

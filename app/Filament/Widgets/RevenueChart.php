@@ -8,15 +8,33 @@ use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
 
-class RevenueChart extends ChartWidget
+use App\Filament\Resources\OrderResource;
+
+class RevenueChart extends ChartWidget implements \App\Filament\Support\DrilldownContract
 {
-    protected ?string $heading = 'Revenue';
+    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
-    protected static ?int $sort = -18;
+    public function getDescription(): ?string
+    {
+        return 'Revenue trend over the selected period';
+    }
 
-    protected static ?string $maxWidth = '2/3';
+    protected string $view = 'filament.widgets.chart-with-drilldown';
 
-    public string $period = '30';
+    protected ?string $heading = 'Revenue Trend over Time';
+
+    protected ?string $pollingInterval = '120s';
+
+    protected static ?int $sort = -37;
+
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+
+    public function getDrilldownUrl(): ?string
+    {
+        return OrderResource::getUrl('index');
+    }
 
     protected function getType(): string
     {
@@ -25,42 +43,47 @@ class RevenueChart extends ChartWidget
 
     protected function getData(): array
     {
-        $paidStatuses = [
-            OrderStatus::Paid->value,
-            OrderStatus::Processing->value,
-            OrderStatus::Shipped->value,
-            OrderStatus::Delivered->value,
-        ];
+        $cached = $this->cachedWidgetData(function (): array {
+            $paidStatuses = [
+                OrderStatus::Paid->value,
+                OrderStatus::Processing->value,
+                OrderStatus::Shipped->value,
+                OrderStatus::Delivered->value,
+            ];
 
-        $query = Order::whereIn('status', $paidStatuses);
+            $data = Trend::query(Order::whereIn('status', $paidStatuses))
+                ->between(
+                    start: $this->periodStart(),
+                    end: now(),
+                )
+                ->perDay()
+                ->sum('grand_total');
 
-        $data = Trend::query($query)
-            ->between(
-                start: now()->subDays((int) $this->period),
-                end: now(),
-            )
-            ->perDay()
-            ->sum('grand_total');
+            return [
+                'values' => $data->map(fn (TrendValue $v) => bcadd((string) $v->aggregate, '0', 2))->all(),
+                'labels' => $data->map(fn (TrendValue $v) => $v->date)->all(),
+            ];
+        });
 
         return [
             'datasets' => [
                 [
                     'label' => 'Revenue (€)',
-                    'data' => $data->map(fn (TrendValue $v) => bcadd((string) $v->aggregate, '0', 2)),
-                    'borderColor' => '#0B3A68',
-                    'backgroundColor' => 'rgba(245, 158, 11, 0.08)',
+                    'data' => $cached['values'],
+                    'borderColor' => '#0f172a',
+                    'backgroundColor' => 'rgba(15, 23, 42, 0.04)',
                     'fill' => true,
                     'tension' => 0.4,
                     'pointRadius' => 2,
                     'pointHoverRadius' => 5,
-                    'pointBackgroundColor' => '#0B3A68',
+                    'pointBackgroundColor' => '#0f172a',
                     'pointBorderColor' => '#fff',
                     'pointBorderWidth' => 2,
-                    'pointHoverBackgroundColor' => '#F59E0B',
-                    'pointHoverBorderColor' => '#0B3A68',
+                    'pointHoverBackgroundColor' => '#d97706',
+                    'pointHoverBorderColor' => '#0f172a',
                 ],
             ],
-            'labels' => $data->map(fn (TrendValue $v) => $v->date),
+            'labels' => $cached['labels'],
         ];
     }
 
@@ -72,20 +95,31 @@ class RevenueChart extends ChartWidget
                     'grid' => ['display' => false],
                     'ticks' => [
                         'maxTicksLimit' => 7,
-                        'font' => ['size' => 11],
+                        'font' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
+                        'color' => '#94a3b8',
                     ],
                 ],
                 'y' => [
-                    'grid' => ['color' => 'rgba(0,0,0,0.05)'],
+                    'grid' => ['color' => 'rgba(0,0,0,0.04)', 'drawBorder' => false],
                     'ticks' => [
                         'callback' => 'function(value) { return "€" + value; }',
-                        'font' => ['size' => 11],
+                        'font' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
+                        'color' => '#94a3b8',
                     ],
                 ],
             ],
             'plugins' => [
                 'legend' => ['display' => false],
                 'tooltip' => [
+                    'titleFont' => ['family' => 'Geist Sans, sans-serif', 'size' => 12, 'weight' => 'bold'],
+                    'bodyFont' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 12],
+                    'backgroundColor' => '#0f172a',
+                    'titleColor' => '#f8fafc',
+                    'bodyColor' => '#cbd5e1',
+                    'borderColor' => '#1e293b',
+                    'borderWidth' => 1,
+                    'cornerRadius' => 8,
+                    'padding' => 10,
                     'callbacks' => [
                         'label' => 'function(ctx) { return "€" + Number(ctx.parsed.y).toLocaleString("en-US", {minimumFractionDigits: 2}); }',
                     ],

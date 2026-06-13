@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Refund Requests') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -9,7 +9,7 @@
 @section('content')
 <x-account.shell
     active="refunds"
-    eyebrow="§ 03 · Refunds · Ledger"
+    eyebrow="03 · Refunds · Ledger"
     title="Refund requests"
     :subtitle="__('Track every refund submission — from initial request through admin decision and payout.')"
     docId="DOC · REFUND-INDEX · {{ now()->format('Y.m.d') }}"
@@ -65,27 +65,27 @@
         <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule"
              style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('Total') }}</p>
+                <p class="bp-spec-mono">{{ __('Total') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $totals['all'], 3, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('Pending') }}</p>
+                <p class="bp-spec-mono">{{ __('Pending') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-amber-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $totals['pending'], 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('Processed') }}</p>
+                <p class="bp-spec-mono">{{ __('Processed') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-emerald-700 tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $totals['processed'], 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('Value') }}</p>
+                <p class="bp-spec-mono">{{ __('Value') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
-                    €{{ number_format($totals['amount'], 0) }}
+                    {{ format_price($totals['amount']) }}
                 </p>
             </div>
         </div>
@@ -94,8 +94,8 @@
         <div class="hidden md:block border border-ink bg-paper overflow-hidden"
              style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
-                <span class="bp-spec text-amber-ink">§ {{ __('Refunds · Register') }}</span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">EUR · {{ __('amount requested') }}</span>
+                <span class="bp-spec text-amber-ink">{{ __('Refunds · Register') }}</span>
+                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · {{ __('amount requested') }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -129,7 +129,7 @@
                                     {{ $refund->created_at->format('Y-m-d') }}
                                 </td>
                                 <td class="px-5 py-4 text-right font-mono text-sm font-bold text-ink tabular-nums">
-                                    €{{ number_format((float) $refund->amount_requested, 2) }}
+                                    {{ format_price($refund->amount_requested) }}
                                 </td>
                                 <td class="px-5 py-4">
                                     <span class="inline-flex items-center gap-2">
@@ -179,9 +179,9 @@
                         </span>
                     </div>
                     <div class="flex items-baseline justify-between gap-3 pt-3 border-t border-rule">
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __('Requested') }}</span>
+                        <span class="bp-spec-mono">{{ __('Requested') }}</span>
                         <span class="font-mono text-lg font-medium text-ink tabular-nums">
-                            €{{ number_format((float) $refund->amount_requested, 2) }}
+                            {{ format_price($refund->amount_requested) }}
                         </span>
                     </div>
                     @if($refund->admin_note)

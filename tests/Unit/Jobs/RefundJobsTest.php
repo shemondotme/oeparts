@@ -21,7 +21,7 @@ class RefundJobsTest extends TestCase
     use RefreshDatabase;
 
     #[Test]
-    public function send_refund_processed_email_is_queued_on_default(): void
+    public function send_refund_processed_email_is_queued_on_critical(): void
     {
         Queue::fake();
         $user = User::factory()->create();
@@ -30,7 +30,7 @@ class RefundJobsTest extends TestCase
 
         dispatch(new SendRefundProcessedEmail($refund));
 
-        Queue::assertPushedOn('default', SendRefundProcessedEmail::class);
+        Queue::assertPushedOn('critical', SendRefundProcessedEmail::class);
     }
 
     #[Test]

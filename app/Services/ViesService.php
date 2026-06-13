@@ -2,7 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Http\Request;
 
 /**
  * ViesService — validate EU VAT numbers via the VIES SOAP service.
@@ -94,27 +97,42 @@ class ViesService
             return new ViesResult(valid: false, reason: 'not_eu', countryCode: $countryCode, vatNumber: $vatNumber);
         }
 
+        $request = app(Request::class);
+        $rateKey = 'vies:' . ($request->user()?->id ?? $request->ip());
+        if (RateLimiter::tooManyAttempts($rateKey, 30)) {
+            Log::warning('VIES validation rate limited', [
+                'country' => $countryCode,
+                'vat'     => $vatNumber,
+            ]);
+            return new ViesResult(valid: null, reason: 'rate_limited', countryCode: $countryCode, vatNumber: $vatNumber);
+        }
+        RateLimiter::hit($rateKey, 60);
+
         try {
-            $client = new \SoapClient(self::WSDL, [
-                'connection_timeout' => 10,
-                'cache_wsdl'         => WSDL_CACHE_DISK,
-            ]);
+            $cacheKey = "vies:{$countryCode}:{$vatNumber}";
 
-            $response = $client->checkVat([
-                'countryCode' => $countryCode,
-                'vatNumber'   => $vatNumber,
-            ]);
+            return Cache::remember($cacheKey, 86400, function () use ($countryCode, $vatNumber) {
+                $client = new \SoapClient(self::WSDL, [
+                    'connection_timeout' => 10,
+                    'cache_wsdl'         => WSDL_CACHE_DISK,
+                ]);
 
-            $valid = (bool) ($response->valid ?? false);
+                $response = $client->checkVat([
+                    'countryCode' => $countryCode,
+                    'vatNumber'   => $vatNumber,
+                ]);
 
-            return new ViesResult(
-                valid:       $valid,
-                reason:      $valid ? null : 'invalid',
-                countryCode: $countryCode,
-                vatNumber:   $vatNumber,
-                name:        $response->name ?? null,
-                address:     $response->address ?? null,
-            );
+                $valid = (bool) ($response->valid ?? false);
+
+                return new ViesResult(
+                    valid:       $valid,
+                    reason:      $valid ? null : 'invalid',
+                    countryCode: $countryCode,
+                    vatNumber:   $vatNumber,
+                    name:        $response->name ?? null,
+                    address:     $response->address ?? null,
+                );
+            });
         } catch (\SoapFault $e) {
             Log::warning('VIES SOAP fault', [
                 'country' => $countryCode,
@@ -163,7 +181,7 @@ class ViesService
  * Value object returned by ViesService::validate().
  *
  * @property bool|null   $valid        true=valid, false=invalid, null=unverifiable
- * @property string|null $reason       null | 'invalid' | 'not_eu' | 'service_unavailable' | 'error'
+ * @property string|null $reason       null | 'invalid' | 'not_eu' | 'service_unavailable' | 'error' | 'rate_limited'
  * @property string      $countryCode
  * @property string      $vatNumber
  * @property string|null $name         Business name from VIES (if available)
@@ -188,5 +206,10 @@ readonly class ViesResult
     public function isUnavailable(): bool
     {
         return $this->valid === null;
+    }
+
+    public function isRateLimited(): bool
+    {
+        return $this->reason === 'rate_limited';
     }
 }

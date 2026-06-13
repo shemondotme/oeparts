@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Payment') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -35,7 +35,7 @@
                 <div>
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ 06 · Payment · Finalise</span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">06 · Payment · Finalise</span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
                         Complete payment<span class="text-amber">.</span>
@@ -59,16 +59,6 @@
     </div>
     @endif
 
-    {{-- ── Inline payment error banner (driven by JS, replaces native alert) ── --}}
-    <div id="payment-error-banner"
-         class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-6 hidden"
-         role="alert" aria-live="assertive">
-        <div class="border border-red-600 bg-red-50 px-4 py-3 flex items-start gap-3">
-            <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
-            <p class="text-sm text-red-800" id="payment-error-message"></p>
-        </div>
-    </div>
-
     {{-- ── Main content ── --}}
     <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
@@ -79,8 +69,8 @@
 
                 <div class="border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">§ Payment method</span>
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        <span class="bp-spec text-amber-ink">Payment method</span>
+                        <span class="bp-spec-mono">
                             Order · {{ $order->order_number }}
                         </span>
                     </div>
@@ -91,11 +81,25 @@
                               action="{{ route('frontend.checkout.payment.process', ['lang' => $lang, 'order' => $order->order_number]) }}"
                               id="payment-form"
                               enctype="multipart/form-data"
-                              class="space-y-6">
+                              class="space-y-6"
+                              x-data="{
+                                  submitting: false,
+                                  errorMessage: '',
+                                  showError(msg) {
+                                      this.errorMessage = msg;
+                                      this.$el.querySelector('#payment-error-inline')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                  },
+                                  clearError() {
+                                      this.errorMessage = '';
+                                  },
+                                  onSubmit() {
+                                      this.submitting = true;
+                                      this.errorMessage = '';
+                                  }
+                              }"
+                              @submit="onSubmit">
                             @csrf
                             <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
-
-                            {{-- Method selection --}}
                             <div class="border border-ink bg-paper">
                                 <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors hover:bg-ivory-alt">
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
@@ -134,6 +138,21 @@
                                 </label>
                             </div>
 
+                            {{-- Inline payment error (Alpine) --}}
+                            <div id="payment-error-inline" x-show="errorMessage" x-cloak
+                                 class="border border-red-600 bg-red-50 px-4 py-3 flex items-start gap-3"
+                                 role="alert" aria-live="assertive">
+                                <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                                <div class="flex-1 min-w-0">
+                                    <p class="bp-spec-mono text-red-600 mb-0.5">{{ __('Payment Error') }}</p>
+                                    <p class="text-sm text-red-800" x-text="errorMessage"></p>
+                                </div>
+                                <button type="button" @click="clearError()"
+                                        class="shrink-0 text-red-600 hover:text-red-800">
+                                    <x-heroicon-s-x-mark class="w-4 h-4" />
+                                </button>
+                            </div>
+
                             {{-- Card section --}}
                             <div id="card-section" class="hidden space-y-4">
                                 <div class="border border-rule-strong bg-ivory-alt p-5 flex items-start gap-3">
@@ -141,7 +160,7 @@
                                         <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
                                     </div>
                                     <div>
-                                        <p class="bp-spec text-amber-ink mb-1">§ Secure payment</p>
+                                        <p class="bp-spec text-amber-ink mb-1">Secure payment</p>
                                         <p class="text-sm text-body leading-relaxed">
                                             {{ __('Your payment is processed securely by Airwallex. We never store your card details.') }}
                                         </p>
@@ -162,7 +181,7 @@
                                         <x-heroicon-s-exclamation-circle class="w-4 h-4 text-amber-ink" />
                                     </div>
                                     <div>
-                                        <p class="bp-spec text-amber-ink mb-1">§ Important instructions</p>
+                                        <p class="bp-spec text-amber-ink mb-1">Important instructions</p>
                                         <p class="text-sm text-body leading-relaxed">
                                             {{ __('Please include your order number in the payment reference. Bank transfers may take 1-2 business days to process.') }}
                                         </p>
@@ -173,7 +192,7 @@
                                     <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
                                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                                             <x-heroicon-o-building-library class="w-3.5 h-3.5" />
-                                            § {{ __('Bank Transfer Details') }}
+                                            {{ __('Bank Transfer Details') }}
                                         </span>
                                     </header>
                                     <div class="p-5">
@@ -182,7 +201,7 @@
                                                 @foreach($bankDetails as $key => $value)
                                                 @if(is_scalar($value) || $value === null)
                                                 <div class="flex items-baseline justify-between gap-3 py-3">
-                                                    <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">{{ __(ucfirst(str_replace('_', ' ', $key))) }}</dt>
+                                                    <dt class="bp-spec-mono">{{ __(ucfirst(str_replace('_', ' ', $key))) }}</dt>
                                                     <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                                     <dd class="flex items-center gap-2">
                                                         <span class="font-mono text-sm font-bold text-ink tabular-nums">{{ $value }}</span>
@@ -206,7 +225,7 @@
 
                                 <div>
                                     <label for="payment_proof" class="bp-spec block mb-2 text-ink">
-                                        § {{ __('Upload Payment Proof') }}
+                                        {{ __('Upload Payment Proof') }}
                                         <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
                                     </label>
                                     <input type="file" id="payment_proof" name="payment_proof"
@@ -222,10 +241,17 @@
                             </div>
 
                             {{-- Submit --}}
-                            <button type="submit" id="submit-btn" class="bp-btn-primary w-full justify-center py-4 text-base">
-                                <x-heroicon-s-lock-closed class="w-5 h-5" />
-                                <span>{{ __('Complete Payment') }}</span>
-                                <x-heroicon-s-arrow-long-right class="w-5 h-5" />
+                            <button type="submit" id="submit-btn"
+                                    :disabled="submitting"
+                                    class="bp-btn-primary w-full justify-center py-4 text-base"
+                                    :class="submitting && 'opacity-60 pointer-events-none'">
+                                <span x-show="submitting" x-cloak>
+                                    <x-heroicon-s-arrow-path class="w-5 h-5 animate-spin" />
+                                </span>
+                                <span x-show="!submitting" x-cloak>
+                                    <x-heroicon-s-lock-closed class="w-5 h-5" />
+                                </span>
+                                <span x-text="submitting ? '{{ __("Processing…") }}' : '{{ __("Complete Payment") }}'"></span>
                             </button>
                         </form>
 
@@ -237,45 +263,45 @@
             <aside class="col-span-12 lg:col-span-4 lg:sticky lg:top-10 lg:h-fit mt-8 lg:mt-0">
                 <div class="border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">§ Order summary</span>
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">EUR</span>
+                        <span class="bp-spec text-amber-ink">Order summary</span>
+                        <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
                     </div>
 
                     <div class="p-5 space-y-2">
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Order number</dt>
+                            <dt class="bp-spec-mono">Order number</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Items</dt>
+                            <dt class="bp-spec-mono">Items</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->items->count() }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Subtotal</dt>
+                            <dt class="bp-spec-mono">Subtotal</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">€{{ number_format((float) $order->subtotal, 2) }}</dd>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->subtotal) }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Shipping</dt>
+                            <dt class="bp-spec-mono">Shipping</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">€{{ number_format((float) $order->shipping_cost, 2) }}</dd>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->shipping_cost) }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">VAT</dt>
+                            <dt class="bp-spec-mono">VAT</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">€{{ number_format((float) $order->vat_amount, 2) }}</dd>
+                            <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->vat_amount) }}</dd>
                         </div>
                     </div>
 
                     <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                         <div>
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Grand total</p>
-                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">EUR · incl. VAT</p>
+                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · incl. VAT</p>
                         </div>
                         <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
-                            €{{ number_format((float) $order->grand_total, 2) }}
+                            {{ format_price($order->grand_total) }}
                         </p>
                     </div>
                 </div>
@@ -311,15 +337,20 @@
             const cardSection = document.getElementById('card-section');
             const bankSection = document.getElementById('bank-section');
             const submitBtn = document.getElementById('submit-btn');
-            const submitLabel = submitBtn ? submitBtn.querySelector('span') : null;
-            const errorBanner = document.getElementById('payment-error-banner');
-            const errorMessage = document.getElementById('payment-error-message');
+            const submitLabel = submitBtn ? submitBtn.querySelector('span:not([x-show])') : null;
+
+            function getAlpineForm() {
+                const form = document.getElementById('payment-form');
+                return form ? Alpine.$data(form) : null;
+            }
 
             function showPaymentError(message) {
-                if (!errorBanner || !errorMessage) return;
-                errorMessage.textContent = message;
-                errorBanner.classList.remove('hidden');
-                errorBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const alpine = getAlpineForm();
+                if (alpine) {
+                    alpine.showError(message);
+                } else {
+                    alert(message);
+                }
             }
             window.showPaymentError = showPaymentError;
 
@@ -327,14 +358,10 @@
                 if (cardRadio.checked) {
                     cardSection.classList.remove('hidden');
                     bankSection.classList.add('hidden');
-                    submitBtn.disabled = false;
-                    if (submitLabel) submitLabel.textContent = '{{ __("Pay Now") }}';
                     initAirwallex();
                 } else if (bankRadio.checked) {
                     cardSection.classList.add('hidden');
                     bankSection.classList.remove('hidden');
-                    submitBtn.disabled = false;
-                    if (submitLabel) submitLabel.textContent = '{{ __("Confirm Bank Transfer") }}';
                 }
             }
 

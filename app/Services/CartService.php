@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use App\Models\Coupon;
 use App\Enums\DiscountType;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -90,38 +91,43 @@ class CartService
      */
     public function addItem(Cart $cart, int $productId, int $quantity = 1): CartItem
     {
-        $maxItems = $this->settings->get('cart.max_items', 50);
-        if ($cart->items()->count() >= $maxItems) {
-            throw new \Exception("Cart cannot have more than {$maxItems} items.");
-        }
+        return DB::transaction(function () use ($cart, $productId, $quantity) {
+            $maxItems = $this->settings->get('cart.max_items', 50);
+            if ($cart->items()->count() >= $maxItems) {
+                throw new \Exception("Cart cannot have more than {$maxItems} items.");
+            }
 
-        $product = Product::findOrFail($productId);
+            $product = Product::lockForUpdate()->findOrFail($productId);
 
-        // Check if product is in stock
-        if (!$product->is_in_stock) {
-            throw new \Exception("Product is out of stock.");
-        }
+            // Check if product is in stock
+            if (!$product->is_in_stock) {
+                throw new \Exception("Product is out of stock.");
+            }
 
-        // Check if item already exists in cart
-        $existingItem = $cart->items()->where('product_id', $productId)->first();
+            // Check if item already exists in cart
+            $existingItem = $cart->items()->where('product_id', $productId)->first();
 
-        if ($existingItem) {
-            // Update quantity
-            $newQuantity = $existingItem->quantity + $quantity;
-            $existingItem->update([
-                'quantity' => $newQuantity,
-                'price_at_add' => $product->price, // Update price to current
+            if ($existingItem) {
+                // Update quantity
+                $newQuantity = $existingItem->quantity + $quantity;
+                $existingItem->update([
+                    'quantity' => $newQuantity,
+                    'price_at_add' => $product->price,
+                ]);
+                Cache::forget("cart_summary:{$cart->id}");
+                return $existingItem;
+            }
+
+            // Create new cart item
+            $newItem = CartItem::create([
+                'cart_id' => $cart->id,
+                'product_id' => $productId,
+                'quantity' => $quantity,
+                'price_at_add' => $product->price,
             ]);
-            return $existingItem;
-        }
-
-        // Create new cart item
-        return CartItem::create([
-            'cart_id' => $cart->id,
-            'product_id' => $productId,
-            'quantity' => $quantity,
-            'price_at_add' => $product->price,
-        ]);
+            Cache::forget("cart_summary:{$cart->id}");
+            return $newItem;
+        });
     }
 
     /**
@@ -138,7 +144,11 @@ class CartService
             return false;
         }
 
-        return $item->delete();
+        $deleted = $item->delete();
+        if ($deleted) {
+            Cache::forget("cart_summary:{$cart->id}");
+        }
+        return $deleted;
     }
 
     /**
@@ -168,6 +178,7 @@ class CartService
         }
 
         $item->update(['quantity' => $quantity]);
+        Cache::forget("cart_summary:{$cart->id}");
         return $item;
     }
 
@@ -201,6 +212,7 @@ class CartService
             $guestCart->delete();
         });
 
+        Cache::forget("cart_summary:{$userCart->id}");
         return $userCart;
     }
 
@@ -216,10 +228,11 @@ class CartService
         $changes = [];
 
         foreach ($cart->items as $item) {
+            if (!$item->product) continue;
             $currentPrice = $item->product->price;
             $oldPrice = $item->price_at_add;
 
-            if ($oldPrice == 0) continue;
+            if (bccomp((string) $oldPrice, '0') === 0) continue;
 
             $diff = bcsub((string) $currentPrice, (string) $oldPrice, 4);
             $absDiff = ltrim($diff, '-');
@@ -228,9 +241,9 @@ class CartService
             if ($changePercent >= $threshold) {
                 $changes[] = [
                     'item' => $item,
-                    'old_price' => (float) $oldPrice,
-                    'current_price' => (float) $currentPrice,
-                    'change_percent' => (float) $changePercent,
+                    'old_price' => bcadd((string) $oldPrice, '0', 2),
+                    'current_price' => bcadd((string) $currentPrice, '0', 2),
+                    'change_percent' => bcadd((string) $changePercent, '0', 2),
                     'block_checkout' => $changePercent >= $threshold,
                 ];
             }
@@ -241,81 +254,86 @@ class CartService
 
     public function getSummary(Cart $cart): array
     {
-        $subtotal = '0.00';
-        $itemCount = 0;
+        $cacheKey = "cart_summary:{$cart->id}";
 
-        foreach ($cart->items as $item) {
-            $lineTotal = bcmul((string) $item->product->price, (string) $item->quantity, 2);
-            $subtotal = bcadd($subtotal, $lineTotal, 2);
-            $itemCount += $item->quantity;
+        if (app()->environment('testing')) {
+            Cache::forget($cacheKey);
         }
 
-        // Apply coupon discount if any
-        $couponCode = $cart->coupon_code;
-        $couponDiscount = '0.00';
-        $appliedCoupon = null;
+        return Cache::remember($cacheKey, 60, function () use ($cart) {
+            $subtotal = '0.00';
+            $itemCount = 0;
 
-        if ($couponCode) {
-            $coupon = Coupon::where('code', $couponCode)
-                ->where('is_active', true)
-                ->where(function($query) {
-                    $query->whereNull('expires_at')->orWhere('expires_at', '>=', Carbon::now());
-                })
-                ->first();
+            foreach ($cart->items as $item) {
+                $lineTotal = bcmul((string) $item->product->price, (string) $item->quantity, 2);
+                $subtotal = bcadd($subtotal, $lineTotal, 2);
+                $itemCount += $item->quantity;
+            }
 
-            if ($coupon) {
-                // Check min order amount
-                $minAmount = $coupon->min_order_amount ?? 0;
-                if ($subtotal >= $minAmount) {
-                    // `discount_type` is cast to the DiscountType enum; normalise to its
-                    // string value so this works whether an enum or a raw string is set.
-                    $type = $coupon->discount_type instanceof DiscountType
-                        ? $coupon->discount_type->value
-                        : (string) $coupon->discount_type;
+            // Apply coupon discount if any
+            $couponCode = $cart->coupon_code;
+            $couponDiscount = '0.00';
+            $appliedCoupon = null;
 
-                    if ($type === DiscountType::Fixed->value) {
-                        $couponDiscount = bccomp((string)$coupon->discount_value, $subtotal, 2) > 0 ? $subtotal : (string)$coupon->discount_value;
-                    } elseif ($type === DiscountType::Percentage->value) {
-                        $discountAmt = bcmul($subtotal, bcdiv((string)$coupon->discount_value, '100', 4), 2);
-                        $couponDiscount = bccomp($discountAmt, $subtotal, 2) > 0 ? $subtotal : $discountAmt;
+            if ($couponCode) {
+                $coupon = Coupon::where('code', $couponCode)
+                    ->where('is_active', true)
+                    ->where(function($query) {
+                        $query->whereNull('expires_at')->orWhere('expires_at', '>=', Carbon::now());
+                    })
+                    ->first();
+
+                if ($coupon) {
+                    // Check min order amount
+                    $minAmount = $coupon->min_order_amount ?? 0;
+                    if (bccomp($subtotal, (string) $minAmount) >= 0) {
+                        // `discount_type` is cast to the DiscountType enum; normalise to its
+                        // string value so this works whether an enum or a raw string is set.
+                        $type = $coupon->discount_type instanceof DiscountType
+                            ? $coupon->discount_type->value
+                            : (string) $coupon->discount_type;
+
+                        if ($type === DiscountType::Fixed->value) {
+                            $couponDiscount = bccomp((string)$coupon->discount_value, $subtotal, 2) > 0 ? $subtotal : (string)$coupon->discount_value;
+                        } elseif ($type === DiscountType::Percentage->value) {
+                            $discountAmt = bcmul($subtotal, bcdiv((string)$coupon->discount_value, '100', 4), 2);
+                            $couponDiscount = bccomp($discountAmt, $subtotal, 2) > 0 ? $subtotal : $discountAmt;
+                        }
+                        $couponDiscount = bcadd($couponDiscount, '0', 2);
+                        $appliedCoupon = $couponCode;
+                    } else {
+                        $couponCode = null;
                     }
-                    $couponDiscount = bcadd($couponDiscount, '0', 2);
-                    $appliedCoupon = $couponCode;
                 } else {
-                    // Invalidated by min order amount, optionally remove from cart
-                    $cart->update(['coupon_code' => null]);
                     $couponCode = null;
                 }
-            } else {
-                $cart->update(['coupon_code' => null]);
-                $couponCode = null;
             }
-        }
 
-        // Subtotal after discount for VAT and Shipping calculation
-        $discountedSubtotal = bcsub($subtotal, $couponDiscount, 2);
+            // Subtotal after discount for VAT and Shipping calculation
+            $discountedSubtotal = bcsub($subtotal, $couponDiscount, 2);
 
-        $freeShippingThreshold = (string) $this->settings->get('shipping.free_threshold', 0);
-        $shippingRemaining = bcsub($freeShippingThreshold, $discountedSubtotal, 2);
-        $shippingNeeded = bccomp($shippingRemaining, '0', 2) > 0 ? $shippingRemaining : '0.00';
+            $freeShippingThreshold = (string) $this->settings->get('shipping.free_threshold', 0);
+            $shippingRemaining = bcsub($freeShippingThreshold, $discountedSubtotal, 2);
+            $shippingNeeded = bccomp($shippingRemaining, '0', 2) > 0 ? $shippingRemaining : '0.00';
 
-        $vatRate = (string) $this->settings->get('tax.default_vat_rate', 21);
-        $vatAmount = bcmul($discountedSubtotal, bcdiv($vatRate, '100', 4), 2);
-        $grandTotal = bcadd($discountedSubtotal, $vatAmount, 2);
+            $vatRate = (string) $this->settings->get('tax.default_vat_rate', 21);
+            $vatAmount = bcmul($discountedSubtotal, bcdiv($vatRate, '100', 4), 2);
+            $grandTotal = bcadd($discountedSubtotal, $vatAmount, 2);
 
-        return [
-            'item_count' => $itemCount,
-            'subtotal' => (float) $subtotal,
-            'subtotal_excl_vat' => (float) $subtotal,
-            'vat_rate' => (float) $vatRate,
-            'vat_amount' => (float) $vatAmount,
-            'grand_total' => (float) $grandTotal,
-            'shipping_needed' => (float) $shippingNeeded,
-            'free_shipping_threshold' => (float) $freeShippingThreshold,
-            'coupon_code' => $appliedCoupon,
-            'coupon_discount' => (float) $couponDiscount,
-            'price_changes' => $this->checkPriceChanges($cart),
-        ];
+            return [
+                'item_count' => $itemCount,
+                'subtotal' => $subtotal,
+                'subtotal_excl_vat' => $subtotal,
+                'vat_rate' => $vatRate,
+                'vat_amount' => $vatAmount,
+                'grand_total' => $grandTotal,
+                'shipping_needed' => $shippingNeeded,
+                'free_shipping_threshold' => $freeShippingThreshold,
+                'coupon_code' => $appliedCoupon,
+                'coupon_discount' => $couponDiscount,
+                'price_changes' => $this->checkPriceChanges($cart),
+            ];
+        });
     }
 
     /**

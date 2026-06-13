@@ -1,4 +1,4 @@
-{{--
+﻿{{--
   ═══════════════════════════════════════════════════════════════════
   INDUSTRIAL BLUEPRINT — Auth Modal (Login / Register with Inline OTP)
   ═══════════════════════════════════════════════════════════════════
@@ -64,7 +64,8 @@
     >
         <div class="flex min-h-full items-center justify-center p-4" @click.self="close()">
         <div class="relative bg-paper border border-ink w-full max-w-md shadow-[8px_8px_0_0_rgba(11,26,41,0.12)]"
-             role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+             role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"
+             x-trap.noscroll.inert="show">
 
             {{-- Corner marks --}}
             <span class="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-amber" aria-hidden="true"></span>
@@ -83,7 +84,7 @@
                 <div class="relative px-7 pt-6 pb-5">
                     <div class="flex items-center justify-between mb-5">
                         <span class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">
-                            § AUTH · <span x-text="tab === 'login' ? 'PROTOCOL-IN' : 'PROTOCOL-REG'"></span>
+                            AUTH · <span x-text="tab === 'login' ? 'PROTOCOL-IN' : 'PROTOCOL-REG'"></span>
                         </span>
                         <button @click="close()"
                                 class="w-8 h-8 flex items-center justify-center border border-white/20 text-ivory/70 hover:bg-amber hover:text-ink hover:border-amber transition-colors"
@@ -109,18 +110,22 @@
                             :class="tab === 'login' ? 'bg-amber text-ink' : 'text-ivory/70 hover:text-ivory hover:bg-white/5'"
                             class="relative py-3 font-mono text-[11px] font-bold tracking-[0.22em] uppercase transition-colors"
                             role="tab"
+                            id="auth-tab-login"
+                            aria-controls="auth-panel-login"
                             :aria-selected="tab === 'login'"
                         >
-                            Sign in
+                            {{ __('Sign in') }}
                         </button>
                         <button
                             @click="tab = 'register'; error = ''"
                             :class="tab === 'register' ? 'bg-amber text-ink' : 'text-ivory/70 hover:text-ivory hover:bg-white/5'"
                             class="relative py-3 font-mono text-[11px] font-bold tracking-[0.22em] uppercase transition-colors border-l border-white/20"
                             role="tab"
+                            id="auth-tab-register"
+                            aria-controls="auth-panel-register"
                             :aria-selected="tab === 'register'"
                         >
-                            Register
+                            {{ __('Register') }}
                         </button>
                     </div>
                 </div>
@@ -138,7 +143,7 @@
             <div class="relative px-7 py-6 space-y-6">
 
                 {{-- LOGIN FORM --}}
-                <div x-show="tab === 'login'" role="tabpanel" class="space-y-5">
+                <div x-show="tab === 'login'" role="tabpanel" id="auth-panel-login" aria-labelledby="auth-tab-login" class="space-y-5">
                     <form
                         method="POST"
                         action="{{ $loginUrl }}"
@@ -170,7 +175,7 @@
                     >
                         {{-- Email --}}
                         <div>
-                            <label for="login-email" class="bp-spec block mb-2 text-ink">§ Email address</label>
+                            <label for="login-email" class="bp-spec block mb-2 text-ink">Email address</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-envelope class="w-4 h-4" />
@@ -192,7 +197,7 @@
                         {{-- Password --}}
                         <div>
                             <div class="flex items-center justify-between mb-2">
-                                <label for="login-password" class="bp-spec text-ink">§ Password</label>
+                                <label for="login-password" class="bp-spec text-ink">Password</label>
                                 <a href="{{ url('/'.app()->getLocale().'/reset-password') }}"
                                    class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink hover:text-ink transition-colors">
                                     Forgot?
@@ -241,7 +246,7 @@
                 </div>
 
                 {{-- REGISTER FORM (Modern Inline OTP) --}}
-                <div x-show="tab === 'register'" x-cloak role="tabpanel" class="space-y-4">
+                <div x-show="tab === 'register'" x-cloak role="tabpanel" id="auth-panel-register" aria-labelledby="auth-tab-register" class="space-y-4">
                     <form
                         method="POST"
                         action="{{ $registerUrl }}"
@@ -265,7 +270,7 @@
                             })
                             .then(d => {
                                 if(d.success) {
-                                    window.location.href = '{{ url('/en/account/dashboard') }}';
+                                    window.location.href = '{{ url('/'.$lang.'/account/dashboard') }}';
                                 } else {
                                     error = d.message || 'Registration failed';
                                     loading = false;
@@ -279,7 +284,7 @@
                         class="space-y-4"
                     >
                         <div>
-                            <label for="reg-name" class="bp-spec block mb-2 text-ink">§ Full name</label>
+                            <label for="reg-name" class="bp-spec block mb-2 text-ink">Full name</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-user class="w-4 h-4" />
@@ -290,34 +295,37 @@
                         </div>
 
                         <div>
-                            <label for="reg-email" class="bp-spec block mb-2 text-ink">§ Email address</label>
+                            <label for="reg-email" class="bp-spec block mb-2 text-ink">Email address</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-envelope class="w-4 h-4" />
                                 </span>
-                                <input type="email" id="reg-email" name="email" x-ref="regEmail" required placeholder="you@example.com"
+                                <input type="email" id="reg-email" name="email" x-ref="regEmail" required
+                                       inputmode="email" autocomplete="email" placeholder="you@example.com"
                                        class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
                             </div>
                         </div>
 
                         <div>
-                            <label for="reg-password" class="bp-spec block mb-2 text-ink">§ Password · min {{ $pwMin }} chars</label>
+                            <label for="reg-password" class="bp-spec block mb-2 text-ink">Password · min {{ $pwMin }} chars</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-lock-closed class="w-4 h-4" />
                                 </span>
-                                <input type="password" id="reg-password" name="password" x-ref="regPassword" required :placeholder="'Min {{ $pwMin }} characters'"
+                                <input type="password" id="reg-password" name="password" x-ref="regPassword" required
+                                       autocomplete="new-password" :placeholder="'Min {{ $pwMin }} characters'"
                                        class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
                             </div>
                         </div>
 
                         <div>
-                            <label for="reg-confirm" class="bp-spec block mb-2 text-ink">§ Confirm password</label>
+                            <label for="reg-confirm" class="bp-spec block mb-2 text-ink">Confirm password</label>
                             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-lock-closed class="w-4 h-4" />
                                 </span>
-                                <input type="password" id="reg-confirm" name="password_confirmation" x-ref="regConfirm" required placeholder="••••••••"
+                                <input type="password" id="reg-confirm" name="password_confirmation" x-ref="regConfirm" required
+                                       autocomplete="new-password" placeholder="••••••••"
                                        class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
                             </div>
                         </div>

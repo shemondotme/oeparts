@@ -3,9 +3,14 @@
 namespace App\Filament\Resources\SectionResource\Pages;
 
 use App\Filament\Resources\SectionResource;
+use App\Filament\Support\AdminUi;
 use Filament\Actions;
 use Filament\Infolists;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -24,44 +29,87 @@ class ViewSection extends ViewRecord
     {
         return $schema
             ->components([
-                Section::make('Section Details')
+                Grid::make(['default' => 1, 'xl' => 3])
+                    ->columnSpanFull()
                     ->schema([
-                        Infolists\Components\TextEntry::make('type')
-                            ->label('Type')
-                            ->getStateUsing(fn ($record): string => ucwords(str_replace('_', ' ', $record->type))),
-                        Infolists\Components\TextEntry::make('location')
-                            ->label('Location'),
-                        Infolists\Components\TextEntry::make('title')
-                            ->label('Title')
-                            ->getStateUsing(fn ($record): string => is_array($record->title) ? json_encode($record->title) : ($record->title ?? '—')),
-                        Infolists\Components\TextEntry::make('status')
-                            ->label('Status')
-                            ->badge()
-                            ->color(fn ($state): string => match ($state->value) {
-                                'published' => 'success',
-                                'draft'     => 'gray',
-                                'scheduled' => 'warning',
-                                'archived'  => 'danger',
-                                default     => 'gray',
-                            }),
-                        Infolists\Components\TextEntry::make('publish_at')
-                            ->label('Publish At')
-                            ->dateTime('M j, Y H:i')
-                            ->placeholder('—'),
-                        Infolists\Components\TextEntry::make('sort_order')
-                            ->label('Sort Order'),
-                        Infolists\Components\IconEntry::make('is_active')
-                            ->label('Active')
-                            ->boolean(),
-                    ])->columns(3),
+                        // ─── Main column ──────────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 2])
+                            ->schema([
+                                Section::make('Multilingual Titles')
+                                    ->icon('heroicon-o-language')
+                                    ->schema([
+                                        KeyValueEntry::make('title')
+                                            ->hiddenLabel()
+                                            ->placeholder('No titles provided')
+                                            ->columnSpanFull(),
+                                    ]),
 
-                Section::make('Content (JSON)')
-                    ->schema([
-                        Infolists\Components\TextEntry::make('content')
-                            ->label('')
-                            ->getStateUsing(fn ($record): string => $record->content ? json_encode($record->content, JSON_PRETTY_PRINT) : '—')
-                            ->columnSpanFull(),
+                                Section::make('Content Configuration (JSON)')
+                                    ->icon('heroicon-o-code-bracket')
+                                    ->schema([
+                                        KeyValueEntry::make('content')
+                                            ->hiddenLabel()
+                                            ->placeholder('No content configuration provided')
+                                            ->columnSpanFull(),
+                                    ]),
+                            ]),
+
+                        // ─── Sidebar column ───────────────────────────────
+                        Group::make()
+                            ->columnSpan(['default' => 1, 'xl' => 1])
+                            ->schema([
+                                Section::make('Section Settings')
+                                    ->icon('heroicon-o-adjustments-horizontal')
+                                    ->schema([
+                                        TextEntry::make('type')
+                                            ->label('Type')
+                                            ->badge()
+                                            ->color('gray')
+                                            ->getStateUsing(fn ($record): string => ucwords(str_replace('_', ' ', $record->type))),
+                                        TextEntry::make('location')
+                                            ->label('Location')
+                                            ->badge()
+                                            ->color('info')
+                                            ->formatStateUsing(fn ($state): string => ucfirst($state->value)),
+                                        TextEntry::make('status')
+                                            ->label('Status')
+                                            ->badge()
+                                            ->color(fn ($state): string => match ($state->value) {
+                                                'published' => 'success',
+                                                'draft'     => 'gray',
+                                                'scheduled' => 'warning',
+                                                'archived'  => 'danger',
+                                                default     => 'gray',
+                                            })
+                                            ->formatStateUsing(fn ($state): string => ucfirst($state->value)),
+                                        TextEntry::make('publish_at')
+                                            ->label('Publish At')
+                                            ->dateTime('M j, Y H:i')
+                                            ->placeholder('—'),
+                                        TextEntry::make('sort_order')
+                                            ->label('Sort Order')
+                                            ->numeric(),
+                                        TextEntry::make('is_active')
+                                            ->label('Active Status')
+                                            ->badge()
+                                            ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
+                                            ->color(fn (bool $state): string => $state ? 'success' : 'gray'),
+                                    ]),
+
+                                Section::make('Record')
+                                    ->icon('heroicon-o-clock')
+                                    ->schema([
+                                        TextEntry::make('created_at')
+                                            ->label('Created')
+                                            ->dateTime('M j, Y H:i'),
+                                        TextEntry::make('updated_at')
+                                            ->label('Last updated')
+                                            ->since(),
+                                    ]),
+                            ]),
                     ]),
             ]);
     }
 }
+

@@ -15,35 +15,26 @@
 /* NProgress — page loading bar */
 @import "nprogress/nprogress.css";
 
-/* Tailwind */
+/* Tailwind v4 */
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+
 /* x-cloak: hide Alpine elements until JS initializes (prevents FOUC) */
 [x-cloak] {
-    display: none !important;
+    display: none;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-@layer base {
-    body {
-        @apply font-sans text-body bg-bg-page;
+/* bp-rise — entrance animation for staggered heading characters */
+@keyframes bp-rise {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
     }
-
-    h1,
-    h2,
-    h3 {
-        @apply font-display;
-    }
-
-    /* OEM numbers MUST always use font-mono */
-    .oem-number {
-        @apply font-mono;
-    }
-
-    /* Visible focus ring for all interactive elements (WCAG 2.4.7) */
-    *:focus-visible {
-        @apply outline-2 outline-offset-2 outline-navy;
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -55,13 +46,13 @@
 
     #nprogress .peg {
         box-shadow:
-            0 0 10px theme("colors.amber"),
-            0 0 5px theme("colors.amber");
+            0 0 10px var(--color-amber),
+            0 0 5px var(--color-amber);
     }
 
     #nprogress .spinner-icon {
-        border-top-color: theme("colors.amber");
-        border-left-color: theme("colors.amber");
+        border-top-color: var(--color-amber);
+        border-left-color: var(--color-amber);
     }
 
     /* Animation delays for staggered animations */
@@ -101,20 +92,20 @@
         @apply text-center text-body font-medium mt-3 mb-8 max-w-2xl mx-auto leading-relaxed;
     }
 
-    /* Section badge/eyebrow - Standardized */
+    /* Section badge/eyebrow - Industrial Blueprint (Flat) */
     .section-badge {
-        @apply inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest uppercase rounded-none;
+        @apply inline-flex items-center gap-2 px-4 py-1.5 text-xs font-bold tracking-widest uppercase;
         @apply bg-amber/10 border border-amber/25 text-amber-text;
         @apply transition-colors duration-150;
     }
 
-    /* Section accent bar */
+    /* Section accent bar - Industrial Blueprint (Flat) */
     .section-accent-bar {
         @apply relative mb-6 mx-auto;
     }
 
     .section-accent-bar-main {
-        @apply w-16 h-[3px] bg-amber rounded-none;
+        @apply w-16 h-[3px] bg-amber;
     }
 
     /* Section cards grid */
@@ -126,139 +117,18 @@
         @apply mt-8;
     }
 
-    /* Button variants - Standardized for consistency
-       WARNING: Do not delete legacy .btn-* classes. The web installer wizard
-       loads app.css and currently depends on these legacy button styles. */
-    .btn-primary {
-        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
-        @apply bg-gradient-to-r from-amber to-orange-500 text-white shadow-lg shadow-amber/30;
-        @apply transition-all duration-300 transform hover:scale-105 hover:from-amber/90 hover:to-orange-500/90 hover:shadow-xl hover:shadow-amber/40;
-    }
-
-    .btn-secondary {
-        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
-        @apply bg-gradient-to-r from-navy to-navy/90 text-white shadow-lg shadow-navy/30;
-        @apply transition-all duration-300 transform hover:scale-105 hover:from-navy/90 hover:to-navy hover:shadow-xl;
-    }
-
-    .btn-outline {
-        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
-        @apply bg-transparent border-2 border-amber text-amber;
-        @apply transition-all duration-300 hover:bg-amber/5 hover:scale-105;
-    }
-
-    .btn-ghost {
-        @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl font-semibold;
-        @apply bg-transparent hover:bg-gray-100 text-gray-700;
-        @apply transition-all duration-300 hover:scale-105;
-    }
-
-    /* Button sizes - Standardized */
-    .btn-sm {
-        @apply px-4 py-2 text-sm rounded-2xl;
-    }
-
-    .btn-md {
-        @apply px-6 py-3 text-sm rounded-2xl;
-    }
-
-    .btn-lg {
-        @apply px-8 py-4 text-base rounded-2xl;
-    }
-
-    /* Icon wrapper variants */
-    .icon-wrapper {
-        @apply rounded-2xl flex items-center justify-center flex-shrink-0;
-    }
-
-    .icon-wrapper-gradient {
-        @apply icon-wrapper bg-gradient-to-br from-amber/10 to-orange-100 text-amber;
-    }
-
-    .icon-wrapper-solid {
-        @apply icon-wrapper bg-amber text-white;
-    }
-
-    .icon-wrapper-outline {
-        @apply icon-wrapper border-2 border-amber text-amber bg-transparent;
-    }
-
-    /* Icon sizes */
-    .icon-sm {
-        @apply w-8 h-8;
-    }
-
-    .icon-md {
-        @apply w-12 h-12;
-    }
-
-    .icon-lg {
-        @apply w-16 h-16;
-    }
-
-    .icon-inner-sm {
-        @apply w-4 h-4;
-    }
-
-    .icon-inner-md {
-        @apply w-6 h-6;
-    }
-
-    .icon-inner-lg {
-        @apply w-8 h-8;
-    }
-
     /* =========================================
-       Card Shadows - Standardized
+       Industrial Blueprint Tokens & Utilities
        ========================================= */
-    .card-shadow-sm {
-        @apply shadow-sm hover:shadow-lg transition-shadow duration-300;
-    }
-
-    .card-shadow-md {
-        @apply shadow-md hover:shadow-xl transition-shadow duration-300;
-    }
-
-    .card-shadow-lg {
-        @apply shadow-lg hover:shadow-2xl transition-shadow duration-300;
-    }
-
-    /* Consistent border radius for cards */
-    .card-radius {
-        @apply rounded-2xl;
-    }
-
-    .card-radius-lg {
-        @apply rounded-3xl;
-    }
-
-    /* Line clamp utility for text truncation */
-    .line-clamp-3 {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    /* =========================================
-       INDUSTRIAL BLUEPRINT — v2 design language
-       Technical draftsman aesthetic. Used by
-       redesigned frontend pages. Old btn-/card-
-       classes above remain for legacy pages.
-       ========================================= */
-
-    /* Blueprint section marker — "§01 · PROLOGUE" style */
-    .bp-marker {
-        @apply inline-flex items-baseline gap-2 font-mono text-spec-sm font-medium text-ink-muted uppercase;
-    }
-
-    .bp-marker-num {
-        @apply text-ink font-bold;
-    }
 
     /* Blueprint micro label — small-caps spec text */
     .bp-spec {
         @apply text-spec-sm font-sans font-bold uppercase text-ink-muted;
+    }
+
+    /* Blueprint Spec Label - Mono variant for OEM numbers/metrics */
+    .bp-spec-mono {
+        @apply font-mono text-spec-xs uppercase text-ink-muted tracking-[0.22em] leading-tight;
     }
 
     .bp-spec-light {
@@ -283,166 +153,128 @@
         @apply bg-ivory border border-rule;
     }
 
-    /* Blueprint button — flat, sharp, monospace label */
+    .bp-marker {
+        @apply inline-flex items-center gap-2 px-3 py-1 text-xs font-mono tracking-wider uppercase text-ink/60;
+    }
+
+    .bp-marker-num {
+        @apply text-ink font-bold;
+    }
+
     .bp-btn {
-        @apply inline-flex items-center justify-center gap-2.5 px-5 py-3
-               font-sans text-[13px] font-bold uppercase tracking-[0.18em]
-               border transition-colors duration-150
-               focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
-               focus-visible:ring-offset-ivory focus-visible:ring-ink;
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-mono text-[11px] font-bold tracking-[0.22em] uppercase;
+        @apply border border-rule;
+        @apply transition-all duration-200;
     }
 
     .bp-btn-primary {
-        @apply bp-btn bg-ink text-ivory border-ink
-               hover:bg-amber hover:text-ink hover:border-amber
-               active:translate-y-[1px];
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-mono text-[11px] font-bold tracking-[0.22em] uppercase;
+        @apply border border-rule transition-all duration-200;
+        @apply bg-ink text-ivory hover:bg-amber hover:text-ink;
     }
 
     .bp-btn-amber {
-        @apply bp-btn bg-amber text-ink border-ink
-               hover:bg-ink hover:text-amber
-               active:translate-y-[1px];
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-mono text-[11px] font-bold tracking-[0.22em] uppercase;
+        @apply border border-rule transition-all duration-200;
+        @apply bg-amber text-ink hover:bg-ivory hover:text-ink;
     }
 
     .bp-btn-outline {
-        @apply bp-btn bg-transparent text-ink border-ink
-               hover:bg-ink hover:text-ivory
-               active:translate-y-[1px];
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-mono text-[11px] font-bold tracking-[0.22em] uppercase;
+        @apply border border-rule transition-all duration-200;
+        @apply bg-transparent text-ink hover:bg-amber/5 hover:text-ink;
     }
 
     .bp-btn-ghost {
-        @apply bp-btn bg-transparent text-ink-muted border-transparent
-               hover:text-ink hover:border-ink;
+        @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-mono text-[11px] font-bold tracking-[0.22em] uppercase;
+        @apply border border-rule transition-all duration-200;
+        @apply bg-transparent text-ink hover:bg-ivory/5 hover:text-ink;
     }
 
-    /* Blueprint input — flat, hairline underline on focus */
     .bp-input {
-        @apply w-full bg-transparent border border-rule
-               px-4 py-3 text-ink placeholder:text-ink-muted/70
-               font-sans text-base
-               focus:outline-none focus:border-ink
-               focus:bg-paper transition-colors duration-150;
+        @apply block w-full rounded border border-rule px-4 py-2 text-sm font-sans;
+        @apply focus:outline-none focus:ring-2 focus:ring-amber focus:border-amber;
     }
 
     .bp-input-mono {
-        @apply bp-input font-mono uppercase tracking-wider
-               placeholder:normal-case placeholder:tracking-normal placeholder:font-sans;
+        @apply block w-full rounded border border-rule px-4 py-2 text-sm font-mono;
+        @apply focus:outline-none focus:ring-2 focus:ring-amber focus:border-amber;
     }
 
-    /* Register marks — corner crosshairs for technical drawing feel */
     .bp-register::before,
     .bp-register::after {
         content: "";
-        position: absolute;
-        width: 10px;
-        height: 10px;
-        border-color: theme("colors.ink");
-        border-style: solid;
-        opacity: 0.4;
+        @apply absolute top-0 h-[1px] w-[12px] bg-rule;
     }
+
     .bp-register::before {
-        top: -1px;
-        left: -1px;
-        border-width: 1px 0 0 1px;
+        @apply left-0;
     }
+
     .bp-register::after {
-        bottom: -1px;
-        right: -1px;
-        border-width: 0 1px 1px 0;
+        @apply right-0;
     }
 
-    /* Dotted leader row — for "LABEL ........... VALUE" spec lists */
+    /* spec-sheet leader row: label ···· value */
     .bp-leader {
-        @apply flex items-baseline gap-3;
-    }
-    .bp-leader-dots {
-        @apply flex-1 bg-dotted-leader bg-leader bg-repeat-x
-               self-end mb-[6px] opacity-70;
+        @apply flex items-baseline w-full gap-1;
     }
 
-    /* Amber underline accent — replaces gradient buttons on highlights */
-    .bp-amber-rule {
-        @apply relative;
+    /* dotted spacer that fills the gap between label and value */
+    .bp-leader-dots {
+        @apply flex-1 min-w-0 self-end;
+        height: 1px;
+        margin-bottom: 4px;
+        background: radial-gradient(circle, rgba(10,18,40,0.25) 1px, transparent 1.5px);
+        background-size: 6px 1px;
+        background-repeat: repeat-x;
     }
+
+    .bp-amber-rule {
+        @apply relative inline-flex items-baseline mb-4;
+    }
+
     .bp-amber-rule::after {
         content: "";
-        position: absolute;
-        left: 0;
-        bottom: -4px;
-        width: 2.5rem;
-        height: 3px;
-        background: theme("colors.amber");
+        @apply absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-amber/20 via-amber/60 to-amber/20;
     }
 
-    /* Blueprint link — inline text link with animated underline */
     .bp-link {
-        @apply relative inline-flex items-center gap-1.5 text-ink font-semibold
-               border-b border-ink pb-[1px]
-               hover:text-amber-ink hover:border-amber-ink
-               transition-colors duration-150;
+        @apply inline-flex items-center gap-1.5 text-sm font-sans font-medium text-ink hover:text-amber transition-colors duration-150;
     }
 
-    /* Blueprint number display — monospace, tabular, tight */
     .bp-number {
-        @apply font-mono font-medium tabular-nums tracking-tight text-ink;
+        @apply font-mono text-[18px] font-bold tracking-[-0.02em] text-ink;
     }
 
-    /* Diagonal "safety tape" divider */
     .bp-tape {
-        background-image: repeating-linear-gradient(
-            -45deg,
-            theme("colors.ink") 0,
-            theme("colors.ink") 8px,
-            theme("colors.amber") 8px,
-            theme("colors.amber") 16px
-        );
+        @apply absolute -top-3 left-3 -z-10 h-[6px] w-[6px] bg-amber/20 rounded-full;
     }
 
-    /* Page-load entrance — subtle, singular */
-    @keyframes bp-rise {
-        0% {
-            opacity: 0;
-            transform: translateY(6px);
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
     .bp-rise {
-        animation: bp-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        @apply inline-block animate-[bp-rise_0.7s_ease-out_forwards];
     }
+
     .bp-rise-delay-1 {
-        animation-delay: 80ms;
+        @apply animate-[bp-rise_0.7s_ease-out_0.1s_forwards];
     }
+
     .bp-rise-delay-2 {
-        animation-delay: 160ms;
+        @apply animate-[bp-rise_0.7s_ease-out_0.2s_forwards];
     }
+
     .bp-rise-delay-3 {
-        animation-delay: 240ms;
+        @apply animate-[bp-rise_0.7s_ease-out_0.3s_forwards];
     }
+
     .bp-rise-delay-4 {
-        animation-delay: 320ms;
+        @apply animate-[bp-rise_0.7s_ease-out_0.4s_forwards];
     }
 
-    /* Ruler-line draw — animates border-bottom width on section headings */
-    @keyframes bp-rule-draw {
-        0% {
-            transform: scaleX(0);
-        }
-        100% {
-            transform: scaleX(1);
-        }
-    }
     .bp-rule-draw {
-        transform-origin: left;
-        animation: bp-rule-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-        animation-delay: 200ms;
+        @apply relative w-full h-[1px] bg-rule;
     }
 
-    /* =========================================
-       Accessibility: prefers-reduced-motion
-       ========================================= */
     @media (prefers-reduced-motion: reduce) {
         *,
         *::before,
@@ -452,227 +284,5 @@
             transition-duration: 0.01ms !important;
             scroll-behavior: auto !important;
         }
-        .animate-blob {
-            animation: none !important;
-        }
-        .animate-marquee {
-            animation: none !important;
-        }
-        .animate-ping {
-            animation: none !important;
-        }
-    }
-
-    /* =========================================
-       Shared keyframe animations
-       ========================================= */
-    @keyframes scaleIn {
-        0% {
-            opacity: 0;
-            transform: scale(0.5);
-        }
-        100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    /* Floating particles animation */
-    @keyframes float {
-        0% {
-            transform: translateY(0) scale(1);
-            opacity: 0;
-        }
-        10% {
-            opacity: 1;
-        }
-        90% {
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(-100vh) scale(0);
-            opacity: 0;
-        }
-    }
-
-    .animate-float {
-        animation: float linear infinite;
-        bottom: -10px;
-    }
-
-    /* Animated gradient shift for CTA cards */
-    @keyframes gradient-shift {
-        0%,
-        100% {
-            background-position: 0% 50%;
-        }
-        50% {
-            background-position: 100% 50%;
-        }
-    }
-
-    .animate-gradient {
-        background-size: 200% 200%;
-        animation: gradient-shift 8s ease infinite;
-    }
-
-    /* Pulse glow effect for badges/icons */
-    @keyframes pulse-glow {
-        0%,
-        100% {
-            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
-        }
-        50% {
-            box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
-        }
-    }
-
-    .animate-pulse-glow {
-        animation: pulse-glow 2s ease-in-out infinite;
-    }
-
-    /* Subtle scale bounce for button clicks */
-    @keyframes scale-bounce {
-        0% {
-            transform: scale(1);
-        }
-        30% {
-            transform: scale(0.95);
-        }
-        60% {
-            transform: scale(1.02);
-        }
-        100% {
-            transform: scale(1);
-        }
-    }
-
-.animate-scale-bounce {
-  animation: scale-bounce 0.3s ease-out;
-}
-
-/* Cart badge bounce animation - triggered when item added */
-@keyframes cart-bounce {
-  0% {
-    transform: scale(1);
-  }
-  25% {
-    transform: scale(1.4);
-  }
-  50% {
-    transform: scale(0.9);
-  }
-  75% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-.animate-cart-bounce {
-  animation: cart-bounce 0.5s ease-out;
-}
-
-/* Slide in animation for cart drawer */
-@keyframes slide-in-right {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
-}
-
-/* Confetti particle animation */
-    @keyframes confetti-fall {
-        0% {
-            transform: translateY(-100%) rotate(0deg);
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(100vh) rotate(720deg);
-            opacity: 0;
-        }
-    }
-
-    .confetti-particle {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 8px;
-        height: 8px;
-        animation: confetti-fall 3s ease-out forwards;
-        pointer-events: none;
-        z-index: 100;
-    }
-
-    /* Shimmer effect for loading states */
-    @keyframes shimmer {
-        0% {
-            background-position: -200% 0;
-        }
-        100% {
-            background-position: 200% 0;
-        }
-    }
-
-    .animate-shimmer {
-        background: linear-gradient(
-            90deg,
-            transparent 0%,
-            rgba(255, 255, 255, 0.4) 50%,
-            transparent 100%
-        );
-        background-size: 200% 100%;
-        animation: shimmer 1.5s infinite;
-    }
-
-    /* Shimmer progress bar — needs background-size for animation */
-    .shimmer-progress {
-        background-size: 200% 100%;
-    }
-
-    /* Dot pattern overlay */
-    .dot-pattern {
-        background-image: radial-gradient(
-            circle,
-            rgba(11, 58, 104, 0.03) 1px,
-            transparent 1px
-        );
-        background-size: 20px 20px;
-    }
-
-    /* Grid pattern overlay */
-    .grid-pattern {
-        background-image:
-            linear-gradient(rgba(11, 58, 104, 0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(11, 58, 104, 0.02) 1px, transparent 1px);
-        background-size: 24px 24px;
-    }
-
-    /* Modern scroll indicator animation */
-    @keyframes scroll-down {
-        0% {
-            opacity: 0;
-            transform: translateY(0);
-        }
-        30% {
-            opacity: 1;
-        }
-        100% {
-            opacity: 0;
-            transform: translateY(12px);
-        }
-    }
-
-    .animate-scroll-down {
-        animation: scroll-down 1.5s ease-in-out infinite;
     }
 }

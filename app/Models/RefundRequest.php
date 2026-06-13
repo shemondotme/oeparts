@@ -32,4 +32,9 @@ class RefundRequest extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function scopePending($q)
+    {
+        return $q->where('status', RefundStatus::Pending);
+    }
 }

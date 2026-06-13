@@ -35,7 +35,7 @@
     '@type' => 'Organization',
     'name' => settings('general.site_name', 'OeParts'),
     'url' => settings('general.site_url', url('/')),
-    'logo' => settings('general.site_url', url('/')) . '/logo.svg',
+    'logo' => settings('general.logo_url', url('/favicon.svg')),
     'sameAs' => array_values(array_filter([
         settings('contact.facebook_url', ''),
         settings('contact.linkedin_url', ''),
@@ -59,8 +59,7 @@
         "@type": "SearchAction",
         "target": {
             "@type": "EntryPoint",
-            "urlTemplate": "{{ settings('general.site_url', url('/')) }}/{lang}/parts/{oem}",
-            "actionPlatform": ["http://schema.org/DesktopWebPlatform", "http://schema.org/MobileWebPlatform"]
+            "urlTemplate": "{{ settings('general.site_url', url('/')) }}/{{ app()->getLocale() }}/parts/{oem}"
         },
         "query-input": "required name=oem"
     }
@@ -73,7 +72,7 @@
     "itemListElement": [{
         "@type": "ListItem",
         "position": 1,
-        "name": "Home",
+        "name": "{{ __('Home') }}",
         "item": "{{ url('/' . app()->getLocale() . '/') }}"
     }]
 }

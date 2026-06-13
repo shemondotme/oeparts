@@ -19,6 +19,16 @@ class EditProduct extends EditRecord
         ];
     }
 
+    public function getHeading(): string
+    {
+        return "Edit {$this->getRecord()->oem_number}";
+    }
+
+    public function getSubheading(): string
+    {
+        return "Last updated {$this->getRecord()->updated_at->diffForHumans()}";
+    }
+
     protected function mutateFormDataBeforeSave(array $data): array
     {
         if (isset($data['oem_number'])) {

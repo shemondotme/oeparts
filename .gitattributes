@@ -1,11 +1,75 @@
+# ============================================================
+# OeParts — .gitattributes
+# Normalize line endings to LF for all text files.
+# Prevents CRLF/LF conflicts between Windows and Linux devs.
+# ============================================================
+
+# Default: auto-detect text files and normalize to LF
 * text=auto eol=lf
 
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
+# ---- PHP / Blade ----
+*.php       text eol=lf diff=php
+*.blade.php text eol=lf diff=html
 
-/.github export-ignore
-CHANGELOG.md export-ignore
-.styleci.yml export-ignore
+# ---- Web assets ----
+*.js        text eol=lf
+*.ts        text eol=lf
+*.jsx       text eol=lf
+*.tsx       text eol=lf
+*.css       text eol=lf diff=css
+*.scss      text eol=lf
+*.html      text eol=lf diff=html
+*.svg       text eol=lf
+
+# ---- Config / data ----
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.xml       text eol=lf
+*.ini       text eol=lf
+*.toml      text eol=lf
+*.lock      text eol=lf
+Makefile    text eol=lf
+
+# ---- Documentation ----
+*.md        text eol=lf diff=markdown
+*.txt       text eol=lf
+*.env       text eol=lf
+*.env.example text eol=lf
+
+# ---- Git config ----
+.gitignore      text eol=lf
+.gitattributes  text eol=lf
+
+# ---- Shell scripts ----
+*.sh        text eol=lf
+*.bash      text eol=lf
+
+# ---- Binary files — no conversion, no diff ----
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.webp      binary
+*.bmp       binary
+*.tiff      binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.otf       binary
+*.pdf       binary
+*.zip       binary
+*.tar       binary
+*.gz        binary
+*.rar       binary
+*.7z        binary
+
+# ---- Export-ignore (excluded from `git archive` / GitHub release ZIPs) ----
+/.github            export-ignore
+/docs/archive       export-ignore
+CHANGELOG.md        export-ignore
+.styleci.yml        export-ignore
+phpunit.xml         export-ignore
+.env.testing        export-ignore

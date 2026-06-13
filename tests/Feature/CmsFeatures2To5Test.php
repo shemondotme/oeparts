@@ -20,6 +20,9 @@ class CmsFeatures2To5Test extends TestCase
     {
         parent::setUp();
         $this->admin = Admin::factory()->create();
+        \Spatie\Permission\Models\Permission::findOrCreate('edit sections', 'admin');
+        \Spatie\Permission\Models\Permission::findOrCreate('delete media files', 'admin');
+        $this->admin->givePermissionTo(['edit sections', 'delete media files']);
         $this->actingAs($this->admin, 'admin');
     }
 

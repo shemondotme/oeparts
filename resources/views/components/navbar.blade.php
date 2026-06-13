@@ -1,4 +1,4 @@
-@php
+﻿@php
     $lang     = app()->getLocale();
     $cartUrl  = url("/{$lang}/cart");
     $homeUrl  = url("/{$lang}/");
@@ -8,10 +8,10 @@
         || (request()->path() === $lang . '/' || request()->path() === $lang);
 
     $navLinks = [
-        ['href' => route('frontend.search.console', ['lang' => $lang]), 'label' => ui_copy('nav_label_parts', 'navbar.label_parts'), 'num' => '01'],
-        ['href' => url("/{$lang}/brands"),  'label' => ui_copy('nav_label_brands', 'navbar.label_brands'), 'num' => '02'],
-        ['href' => url("/{$lang}/blog/"),   'label' => ui_copy('nav_label_journal', 'navbar.label_journal'), 'num' => '03'],
-        ['href' => url("/{$lang}/about"),   'label' => ui_copy('nav_label_about', 'navbar.label_about'), 'num' => '04'],
+        ['href' => route('frontend.search.console', ['lang' => $lang]), 'label' => ui_copy('nav_label_parts', 'navbar.label_parts')],
+        ['href' => url("/{$lang}/brands"),  'label' => ui_copy('nav_label_brands', 'navbar.label_brands')],
+        ['href' => url("/{$lang}/blog/"),   'label' => ui_copy('nav_label_journal', 'navbar.label_journal')],
+        ['href' => url("/{$lang}/about"),   'label' => ui_copy('nav_label_about', 'navbar.label_about')],
     ];
 @endphp
 
@@ -22,6 +22,7 @@
 <header
     x-data="{ mobileOpen: false, scrolled: false }"
     @scroll.window="scrolled = window.pageYOffset > 8"
+    @click.away="mobileOpen = false"
     :class="scrolled ? 'bg-ivory/95 backdrop-blur-md' : 'bg-ivory'"
     class="sticky top-0 z-50 border-b border-rule transition-colors duration-200"
     role="banner"
@@ -39,7 +40,7 @@
                     <span class="w-1.5 h-1.5 bg-emerald-600"></span>
                     {{ ui_copy('nav_strip_status', 'navbar.strip_status') }}
                 </span>
-                <span class="uppercase">{{ strtoupper($lang) }} · EUR</span>
+                <span class="uppercase">{{ strtoupper($lang) }} · {{ settings('store.currency', 'EUR') }}</span>
             </div>
         </div>
     </div>
@@ -69,7 +70,7 @@
                 </div>
                 <div class="leading-none">
                     <p class="font-display font-extrabold text-[22px] tracking-[-0.02em] text-ink leading-none">
-                        OeParts
+                        {{ $siteName }}
                     </p>
                     <p class="mt-1.5 font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">
                         {!! str_replace(' ', '&#160;', e(ui_copy('nav_logo_subline', 'navbar.logo_subline'))) !!}
@@ -85,9 +86,6 @@
                               text-ink hover:bg-ink/[0.04]
                               transition-colors duration-150
                               focus-visible:outline-none focus-visible:bg-ink/10">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.2em] text-ink-muted group-hover:text-amber-ink transition-colors">
-                            §{{ $link['num'] }}
-                        </span>
                         <span class="font-sans text-[13px] font-bold uppercase tracking-[0.14em]">
                             {{ $link['label'] }}
                         </span>
@@ -192,7 +190,7 @@
                     >
                         <x-heroicon-o-shopping-cart class="w-5 h-5" aria-hidden="true" />
                         <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase hidden sm:inline">
-                            CART
+                            {{ settings('navbar.cart_label', 'CART') }}
                         </span>
                         <span
                             x-show="count > 0"
@@ -221,7 +219,7 @@
                         {{-- Spec header --}}
                         <div class="flex items-center justify-between px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                DOC · BASKET / <span class="text-amber" x-text="('0' + count).slice(-2)"></span>
+                                {{ settings('navbar.cart_title', 'DOC · BASKET /') }} <span class="text-amber" x-text="('0' + count).slice(-2)"></span>
                             </p>
                             <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/70">
                                 <span x-text="count + ' LINE' + (count !== 1 ? 'S' : '')"></span>
@@ -254,18 +252,18 @@
                                             <div class="flex-1 min-w-0 space-y-1">
                                                 <p class="font-mono text-[13px] font-bold text-ink tracking-wide truncate uppercase"
                                                    x-text="item.oem_number"></p>
-                                                <p class="text-[11px] text-ink-muted truncate" x-text="item.name || 'Genuine OEM Part'"></p>
+                                                <p class="text-[11px] text-ink-muted truncate"                                                    x-text="item.name || '{{ settings('cart.fallback_name', 'Genuine OEM Part') }}'"></p>
                                                 <p class="text-[10px] font-mono text-ink-muted uppercase tracking-[0.18em]">
                                                     QTY <span x-text="item.quantity"></span>
                                                 </p>
                                             </div>
                                             <div class="text-right shrink-0 space-y-1">
                                                 <p class="font-mono text-[13px] font-bold text-ink tabular-nums"
-                                                   x-text="'€' + item.line_total.toFixed(2)"></p>
+                                                   x-text="'{{ settings('store.currency_symbol', '€') }}' + item.line_total.toFixed(2)"></p>
                                                 <button @click.stop="removeItem(item.id)"
                                                         aria-label="Remove"
                                                         class="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted hover:text-red-700 border-b border-transparent hover:border-red-700">
-                                                    REMOVE
+                                                    {{ settings('navbar.remove_label', 'REMOVE') }}
                                                 </button>
                                             </div>
                                         </div>
@@ -281,17 +279,17 @@
                         {{-- Footer: total + CTAs --}}
                         <div class="border-t border-ink px-5 py-4 space-y-3 bg-ivory">
                             <div class="bp-leader">
-                                <span class="bp-spec">SUBTOTAL</span>
+                                <span class="bp-spec">{{ settings('navbar.subtotal_label', 'SUBTOTAL') }}</span>
                                 <span class="bp-leader-dots"></span>
                                 <span class="font-mono text-lg font-bold text-ink tabular-nums"
-                                      x-text="'€' + subtotal.toFixed(2)"></span>
+                                      x-text="'{{ settings('store.currency_symbol', '€') }}' + subtotal.toFixed(2)"></span>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <a href="{{ $cartUrl }}" class="bp-btn-outline text-[11px] py-2.5">
-                                    VIEW CART
+                                    {{ settings('navbar.view_cart_label', 'VIEW CART') }}
                                 </a>
-                                <a href="{{ $cartUrl }}#checkout" class="bp-btn-amber text-[11px] py-2.5">
-                                    CHECKOUT
+                                <a href="{{ url("/{$lang}/checkout") }}" class="bp-btn-amber text-[11px] py-2.5">
+                                    {{ settings('navbar.checkout_label', 'CHECKOUT') }}
                                     <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                                 </a>
                             </div>
@@ -309,19 +307,19 @@
                     >
                         <div class="px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                DOC · BASKET / 00
+                                {{ settings('navbar.cart_title', 'DOC · BASKET /') }} 00
                             </p>
                         </div>
                         <div class="px-5 py-6 text-center">
-                            <p class="font-display text-lg font-bold text-ink leading-tight">Empty basket</p>
-                            <p class="mt-1.5 text-xs text-ink-muted">Search an OEM number to begin.</p>
+                             <p class="font-display text-lg font-bold text-ink leading-tight">{{ settings('cart.empty_message', 'Empty basket') }}</p>
+                            <p class="mt-1.5 text-xs text-ink-muted">{{ settings('cart.empty_description', 'Search an OEM number to begin.') }}</p>
                             <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                                class="mt-4 inline-flex items-center justify-center gap-2 w-full
                                       px-4 py-2.5 bg-ink text-ivory
                                       font-mono text-[10px] font-bold tracking-[0.22em] uppercase
                                       hover:bg-amber hover:text-ink transition-colors">
                                 <x-heroicon-s-magnifying-glass class="w-4 h-4" />
-                                Start search
+                                {{ settings('search.start_button_label', 'Start search') }}
                             </a>
                         </div>
                     </div>
@@ -337,7 +335,7 @@
                            focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
                 >
                     <x-heroicon-o-user-circle class="w-5 h-5" aria-hidden="true" />
-                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase">ACCOUNT</span>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase">{{ settings('navbar.account_label', 'ACCOUNT') }}</span>
                 </a>
                 @else
                 <button
@@ -348,7 +346,7 @@
                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-0"
                 >
                     <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" aria-hidden="true" />
-                    <span class="font-mono text-[11px] font-bold tracking-[0.2em] uppercase">SIGN IN</span>
+                    <span class="font-mono text-[11px] font-bold tracking-[0.2em] uppercase">{{ settings('navbar.sign_in_label', 'SIGN IN') }}</span>
                 </button>
                 @endauth
 
@@ -383,9 +381,6 @@
             @foreach($navLinks as $link)
                 <a href="{{ $link['href'] }}"
                    class="flex items-center gap-4 py-4 group">
-                    <span class="font-mono text-[10px] font-bold tracking-[0.2em] text-ink-muted group-hover:text-amber-ink w-8 shrink-0">
-                        §{{ $link['num'] }}
-                    </span>
                     <span class="font-sans text-sm font-bold uppercase tracking-[0.16em] text-ink">
                         {{ $link['label'] }}
                     </span>
@@ -396,13 +391,13 @@
 
         {{-- ── Language picker (mobile) ── --}}
         @php
-            $mobileLanguages = [
+            $mobileLanguages = json_decode(settings('store.languages', json_encode([
                 'en' => ['fi' => 'gb', 'native' => 'English'],
                 'de' => ['fi' => 'de', 'native' => 'Deutsch'],
                 'lt' => ['fi' => 'lt', 'native' => 'Lietuvių'],
                 'fr' => ['fi' => 'fr', 'native' => 'Français'],
                 'es' => ['fi' => 'es', 'native' => 'Español'],
-            ];
+            ])), true);
             $mobileLangUrl = function($newLocale) {
                 $current = request()->route();
                 if (!$current || !$current->getName()) { return "/{$newLocale}/"; }
@@ -422,8 +417,8 @@
         @endphp
         <div class="border-t border-rule px-4 sm:px-6 py-4">
             <div class="flex items-center justify-between mb-3">
-                <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-amber-ink">§ Locale</span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">5 options</span>
+                <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-amber-ink">Locale</span>
+                <span class="bp-spec-mono">5 options</span>
             </div>
             <div class="grid grid-cols-5 gap-[2px] border border-ink bg-ink">
                 @foreach($mobileLanguages as $code => $data)
@@ -450,13 +445,13 @@
                 class="w-full bp-btn-primary"
             >
                 <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
-                SIGN IN · REGISTER
+                {{ settings('navbar.sign_in_register_label', 'SIGN IN · REGISTER') }}
             </button>
             @endguest
             @auth
             <a href="{{ url('/'.$lang.'/account/dashboard') }}" class="w-full bp-btn-outline">
                 <x-heroicon-o-user-circle class="w-5 h-5" />
-                MY ACCOUNT
+                {{ settings('navbar.my_account_label', 'MY ACCOUNT') }}
             </a>
             @endauth
         </div>

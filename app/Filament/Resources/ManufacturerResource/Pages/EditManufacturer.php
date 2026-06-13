@@ -17,4 +17,15 @@ class EditManufacturer extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    public function getHeading(): string
+    {
+        $record = $this->getRecord();
+        return 'Edit ' . \App\Filament\Support\AdminUi::localizedName($record->name);
+    }
+
+    public function getSubheading(): string
+    {
+        return "Last updated {$this->getRecord()->updated_at->diffForHumans()}";
+    }
 }

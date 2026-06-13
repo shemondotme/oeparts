@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Request Refund — Order :number', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -9,7 +9,7 @@
 @section('content')
 <x-account.shell
     active="refunds"
-    eyebrow="§ Refund · Request · Form"
+    eyebrow="Refund · Request · Form"
     :title="'Request a refund'"
     :subtitle="__('Open a refund case against order :number. Our team will review and respond within 2 business days.', ['number' => $order->order_number])"
     :docId="'DOC · REFUND-REQUEST · ' . $order->order_number"
@@ -37,7 +37,7 @@
                     <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-red-600" />
                 </div>
                 <div class="flex-1">
-                    <p class="bp-spec text-red-700 mb-1">§ Validation · Error</p>
+                    <p class="bp-spec text-red-700 mb-1">Validation · Error</p>
                     <ul class="text-sm text-red-800 space-y-0.5 list-disc list-inside">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -56,9 +56,9 @@
                 <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-document-text class="w-3.5 h-3.5" />
-                        § Refund · Details
+                        Refund · Details
                     </span>
-                    <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">* = required</span>
+                    <span class="bp-spec-mono">* = required</span>
                 </header>
 
                 <form method="POST"
@@ -69,7 +69,7 @@
                     <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
 
                     <fieldset>
-                        <legend class="bp-spec text-amber-ink mb-3">§ 01 · Reason</legend>
+                        <legend class="bp-spec text-amber-ink mb-3">01 · Reason</legend>
                         <label for="reason" class="bp-spec block mb-2 text-ink">
                             Reason for refund <span class="text-red-600">*</span>
                         </label>
@@ -86,7 +86,7 @@
                     <div class="border-t border-dotted border-rule-strong"></div>
 
                     <fieldset>
-                        <legend class="bp-spec text-amber-ink mb-3">§ 02 · Evidence</legend>
+                        <legend class="bp-spec text-amber-ink mb-3">02 · Evidence</legend>
                         <label for="return_images" class="bp-spec block mb-2 text-ink">
                             Photo evidence
                             <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional, up to 5 images)</span>
@@ -125,22 +125,22 @@
                 <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-receipt-refund class="w-3.5 h-3.5" />
-                        § Order · Summary
+                        Order · Summary
                     </span>
                 </header>
                 <dl class="p-4 space-y-2">
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Order no.</dt>
+                        <dt class="bp-spec-mono">Order no.</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-xs font-bold text-ink tabular-nums">{{ $order->order_number }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Placed</dt>
+                        <dt class="bp-spec-mono">Placed</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-xs font-bold text-ink tabular-nums">{{ $order->created_at->format('Y-m-d') }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Status</dt>
+                        <dt class="bp-spec-mono">Status</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-xs font-bold text-ink">{{ $order->status->label() }}</dd>
                     </div>
@@ -148,17 +148,17 @@
                 <div class="px-4 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                     <div>
                         <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Order total</p>
-                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">EUR · incl. VAT</p>
+                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · incl. VAT</p>
                     </div>
                     <p class="font-mono text-2xl font-medium text-ink tabular-nums leading-none tracking-tight">
-                        €{{ number_format((float) $order->grand_total, 2) }}
+                        {{ format_price($order->grand_total) }}
                     </p>
                 </div>
             </div>
 
             {{-- Policy note --}}
             <div class="mt-4 border border-rule bg-ivory-alt p-4">
-                <p class="bp-spec text-amber-ink mb-1.5">§ Refund · Policy</p>
+                <p class="bp-spec text-amber-ink mb-1.5">Refund · Policy</p>
                 <p class="text-xs text-ink-muted leading-relaxed">
                     Requests are reviewed within 2 business days. Approved refunds are settled via the original payment method within 5–10 business days.
                 </p>

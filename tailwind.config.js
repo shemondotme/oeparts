@@ -2,12 +2,7 @@ import defaultTheme from "tailwindcss/defaultTheme";
 
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-        "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
-        "./storage/framework/views/*.php",
-        "./resources/views/**/*.blade.php",
-        "./resources/js/**/*.js",
-    ],
+    darkMode: 'class',
 
     theme: {
         extend: {
@@ -37,11 +32,11 @@ export default {
                 "bg-page": "#F8FAFC", // Page background
                 "section-alt": "#EEF4FF", // Alternating section bg — navy 6% tint
 
-                // Admin shell surfaces (cool neutral — executive dashboard canvas)
-                "admin-canvas": "#f1f4f9",
-                "admin-surface": "#ffffff",
-                "admin-border": "rgba(15, 23, 42, 0.08)",
-                "admin-muted": "#64748b",
+                // Admin shell surfaces (Industrial Blueprint Pro — warm drafting studio)
+                "admin-canvas": "#F4F2ED",
+                "admin-surface": "#FAF8F4",
+                "admin-border": "rgba(10, 18, 40, 0.08)",
+                "admin-muted": "#718096",
 
                 // ── Industrial Blueprint tokens ───────────────────────
                 // Deep ink for primary text on ivory — more contrast than navy
@@ -61,21 +56,6 @@ export default {
                 // Blueprint amber — slightly desaturated for ivory surfaces
                 "amber-ink": "#9A5A00", // maximal contrast amber text (> AA) on ivory
 
-                // Condition badge colors (bg / text pairs)
-                "condition-new-bg": "#DCFCE7",
-                "condition-new-text": "#16A34A",
-                "condition-used-a-bg": "#DBEAFE",
-                "condition-used-a-text": "#1D4ED8",
-                "condition-used-b-bg": "#FEF3C7",
-                "condition-used-b-text": "#D97706",
-                "condition-used-c-bg": "#F1F5F9",
-                "condition-used-c-text": "#64748B",
-                "condition-remanufactured-bg": "#F3E8FF",
-                "condition-remanufactured-text": "#7C3AED",
-                "condition-aftermarket-bg": "#FEE2E2",
-                "condition-aftermarket-text": "#DC2626",
-                "condition-nos-bg": "#ECFDF5",
-                "condition-nos-text": "#059669",
             },
 
             fontFamily: {
@@ -139,11 +119,11 @@ export default {
 
             boxShadow: {
                 "admin-card":
-                    "0 1px 2px 0 rgb(15 23 42 / 0.04), 0 12px 40px -16px rgb(15 23 42 / 0.1), inset 0 1px 0 0 rgb(255 255 255 / 0.75)",
+                    "0 1px 2px 0 rgba(10, 18, 40, 0.04), 0 12px 40px -16px rgba(10, 18, 40, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.75)",
                 "admin-card-hover":
-                    "0 4px 12px -2px rgb(15 23 42 / 0.08), 0 20px 48px -20px rgb(79 70 229 / 0.12)",
-                "admin-inset-highlight": "inset 0 1px 0 0 rgb(255 255 255 / 0.06)",
-                "admin-sidebar": "8px 0 48px -16px rgb(0 0 0 / 0.4)",
+                    "0 4px 12px -2px rgba(10, 18, 40, 0.08), 0 20px 48px -20px rgba(10, 18, 40, 0.12)",
+                "admin-inset-highlight": "inset 0 1px 0 0 rgba(255, 255, 255, 0.06)",
+                "admin-sidebar": "8px 0 48px -16px rgba(0, 0, 0, 0.4)",
             },
 
             animation: {
@@ -208,8 +188,4 @@ export default {
         },
     },
 
-    plugins: [
-        require("@tailwindcss/forms"),
-        require("@tailwindcss/typography"),
-    ],
 };

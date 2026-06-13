@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Payment failed') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-red-600 text-ivory">
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase font-bold flex items-center gap-2">
                     <x-heroicon-s-exclamation-triangle class="w-3.5 h-3.5" />
-                    § Payment · Failed
+                    Payment · Failed
                 </span>
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase">
                     {{ $order->order_number }}
@@ -42,7 +42,7 @@
                 </div>
 
                 <div class="mt-8 inline-flex items-center gap-3 px-4 py-3 border border-rule-strong bg-ivory-alt">
-                    <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Order</span>
+                    <span class="bp-spec-mono">Order</span>
                     <span class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</span>
                 </div>
             </div>

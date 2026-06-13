@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -7,7 +7,7 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § CART · PENDING
+                    CART · PENDING
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     Complete your order<span class="text-amber">.</span>
@@ -25,7 +25,7 @@
             <td style="padding: 16px 0;">
                 <div style="background-color: #F59E0B; padding: 12px 16px; border-left: 4px solid #0A1228;">
                     <p style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; color: #0A1228;">
-                        ⚠ Attention: Prices and availability are subject to change.
+                        {{ settings('email.abandoned_cart_urgency', '⚠ Attention: Prices and availability are subject to change.') }}
                     </p>
                 </div>
             </td>
@@ -35,7 +35,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 12px 0; color: #9A5A00;">
-                    § ITEMS IN CART
+                    ITEMS IN CART
                 </p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; border-collapse: collapse;">
@@ -120,7 +120,7 @@
         <tr>
             <td style="padding-top: 24px;">
                 <p style="margin: 0; font-size: 13px; line-height: 18px; color: #4E5A74; text-align: center;">
-                    Questions about fitment or compatibility? Reply to this email for technical support.
+                    {{ settings('email.abandoned_cart_support_note', 'Questions about fitment or compatibility? Reply to this email for technical support.') }}
                 </p>
             </td>
         </tr>

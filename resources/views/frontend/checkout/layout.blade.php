@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Secure Checkout') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -42,7 +42,7 @@
                 <div>
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ {{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · Secure checkout</span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · Secure checkout</span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
                         Secure Checkout<span class="text-amber">.</span>
@@ -105,12 +105,40 @@
         </div>
     </div>
 
+    {{-- ── Session timeout banner ── --}}
+    @if(isset($secondsRemaining) && $secondsRemaining > 0)
+    <div x-data="{ remaining: {{ $secondsRemaining }}, init() { setInterval(() => { this.remaining = Math.max(0, this.remaining - 1); }, 1000) } }"
+         x-show="remaining > 0"
+         x-cloak
+         :class="remaining < 120 ? 'bg-red-50 border-red-400 text-red-800' : (remaining < 300 ? 'bg-amber/10 border-amber text-amber-ink' : 'bg-paper border-ink text-ink')"
+         class="border-b transition-colors duration-500">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2 min-w-0">
+                <x-heroicon-s-clock class="w-4 h-4 shrink-0" />
+                <span class="font-mono text-[10px] tracking-[0.18em] uppercase truncate">
+                    Session expires in
+                    <span class="font-bold tabular-nums" x-text="Math.floor(remaining / 60) + ':' + String(remaining % 60).padStart(2, '0')"></span>
+                    @if($currentStep < 5)
+                        — please complete <span class="font-bold">{{ $steps[$currentStep] ?? 'current step' }}</span> before time runs out.
+                    @endif
+                </span>
+            </div>
+            <button @click="remaining = 0"
+                    class="shrink-0 font-mono text-[9px] uppercase tracking-[0.22em] hover:underline">
+                Dismiss
+            </button>
+        </div>
+    </div>
+    @endif
+
     {{-- ── Main content ── --}}
     <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-10">
 
         <form method="POST"
               action="{{ route('frontend.checkout.store', ['lang' => app()->getLocale()]) }}"
-              id="checkout-form">
+              id="checkout-form"
+              x-data="{ submitting: false }"
+              @submit="submitting = true">
             @csrf
             <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
 
@@ -123,8 +151,8 @@
                     <div class="border border-ink bg-paper">
                         {{-- Step header bar --}}
                         <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                            <span class="bp-spec text-amber-ink">§ {{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · {{ $steps[$currentStep] ?? '' }}</span>
-                            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                            <span class="bp-spec text-amber-ink">{{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · {{ $steps[$currentStep] ?? '' }}</span>
+                            <span class="bp-spec-mono">
                                 Step {{ $currentStep }}/5
                             </span>
                         </div>
@@ -149,13 +177,23 @@
                             </a>
                         @endif
 
-                        <button type="submit" form="checkout-form" class="bp-btn-primary justify-center sm:min-w-[240px]">
-                            @if($currentStep === 5)
-                                <x-heroicon-s-lock-closed class="w-5 h-5" />
-                                Place Order
-                            @else
-                                Continue
-                                <x-heroicon-s-arrow-long-right class="w-5 h-5" />
+                        <button type="submit" form="checkout-form"
+                                :disabled="submitting"
+                                class="bp-btn-primary justify-center sm:min-w-[240px]"
+                                :class="submitting && 'opacity-60 pointer-events-none'">
+                            <span x-show="submitting" x-cloak>
+                                <x-heroicon-s-arrow-path class="w-5 h-5 animate-spin" />
+                            </span>
+                            <span x-show="!submitting" x-cloak>
+                                @if($currentStep === 5)
+                                    <x-heroicon-s-lock-closed class="w-5 h-5" />
+                                @else
+                                    <x-heroicon-s-arrow-long-right class="w-5 h-5" />
+                                @endif
+                            </span>
+                            <span x-text="submitting ? '{{ __("Processing…") }}' : '{{ $currentStep === 5 ? __("Place Order") : __("Continue") }}'"></span>
+                            @if($currentStep !== 5)
+                                <x-heroicon-s-arrow-long-right class="w-5 h-5" x-show="!submitting" x-cloak />
                             @endif
                         </button>
                     </div>
@@ -172,8 +210,8 @@
 
                     <div class="border border-ink bg-paper">
                         <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                            <span class="bp-spec text-amber-ink">§ Order summary</span>
-                            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">EUR</span>
+                            <span class="bp-spec text-amber-ink">Order summary</span>
+                            <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
                         </div>
 
                         <div class="relative p-5">
@@ -190,17 +228,19 @@
                                             <div class="w-9 h-9 border border-rule flex items-center justify-center shrink-0 bg-ivory-alt">
                                                 <x-heroicon-o-cube class="w-4 h-4 text-ink" />
                                             </div>
-                                            <div class="min-w-0">
-                                                <p class="font-mono text-sm font-bold tabular-nums text-ink truncate">
+                                            <div class="min-w-0" x-data="clipboard()">
+                                                <p class="font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer"
+                                                   @click="copy('{{ $item->product->oem_number }}')" title="Copy OEM number">
                                                     {{ $item->product->oem_number }}
                                                 </p>
                                                 <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
                                                     Qty · {{ $item->quantity }}
                                                 </p>
+                                                <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                             </div>
                                         </div>
                                         <span class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">
-                                            €{{ number_format((float) bcmul((string) $item->price_at_add, (string) $item->quantity, 2), 2) }}
+                                            {{ format_price(bcmul((string) $item->price_at_add, (string) $item->quantity, 2)) }}
                                         </span>
                                     </li>
                                     @endforeach
@@ -216,26 +256,26 @@
                                         </dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-amber-ink">
-                                            -€{{ number_format($summaryData['coupon_discount'] ?? 0, 2) }}
+                                            -{{ settings('store.currency_symbol', '€') }}{{ number_format($summaryData['coupon_discount'] ?? 0, 2) }}
                                         </dd>
                                     </div>
                                     @endif
                                     <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
-                                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Subtotal</dt>
+                                        <dt class="bp-spec-mono">Subtotal</dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
-                                            €{{ number_format((float) ($summarySidebar['subtotal'] ?? 0), 2) }}
+                                            {{ format_price($summarySidebar['subtotal'] ?? 0) }}
                                         </dd>
                                     </div>
                                     <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
-                                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Shipping</dt>
+                                        <dt class="bp-spec-mono">Shipping</dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             @if(($summarySidebar['shipping_cost'] ?? null) !== null)
                                                 @if(($summarySidebar['shipping_cost'] ?? null) === '0.00')
                                                     <span class="text-amber-ink uppercase tracking-[0.22em] text-[10px]">FREE</span>
                                                 @else
-                                                    €{{ number_format((float) ($summarySidebar['shipping_cost'] ?? 0), 2) }}
+                                                    {{ format_price($summarySidebar['shipping_cost'] ?? 0) }}
                                                 @endif
                                             @else
                                                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">Next step</span>
@@ -243,15 +283,15 @@
                                         </dd>
                                     </div>
                                     <div class="flex items-baseline justify-between gap-3 py-2">
-                                        <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                                        <dt class="bp-spec-mono">
                                             VAT · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? 21) }}%
                                         </dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             @if($currentStep >= 2)
-                                                €{{ number_format((float) ($summarySidebar['vat_amount'] ?? 0), 2) }}
+                                                {{ format_price($summarySidebar['vat_amount'] ?? 0) }}
                                             @else
-                                                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">TBD</span>
+                                                <span class="bp-spec-mono">TBD</span>
                                             @endif
                                         </dd>
                                     </div>
@@ -261,22 +301,22 @@
                                 <div class="mt-4 pt-4 border-t-2 border-ink">
                                     <div class="flex items-end justify-between gap-3">
                                         <div>
-                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Total · EUR</p>
+                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Total · {{ settings('store.currency', 'EUR') }}</p>
                                             <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">Incl. all taxes</p>
                                         </div>
                                         <p class="font-mono text-3xl sm:text-4xl font-medium text-ink tabular-nums leading-none tracking-tight">
-                                            €{{ number_format((float) ($summarySidebar['grand_total'] ?? 0), 2) }}
+                                            {{ format_price($summarySidebar['grand_total'] ?? 0) }}
                                         </p>
                                     </div>
                                 </div>
 
                                 {{-- Trust badges --}}
                                 <div class="mt-5 pt-4 border-t border-rule flex items-center justify-between gap-3">
-                                    <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                                    <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                                         <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
                                         SSL · TLS 1.3
                                     </span>
-                                    <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                                    <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                                         <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
                                         Airwallex
                                     </span>
@@ -299,7 +339,7 @@
                             <x-heroicon-o-chat-bubble-left-ellipsis class="w-4 h-4 text-ink" />
                         </div>
                         <div class="flex-1">
-                            <p class="bp-spec text-amber-ink mb-1">§ Need help?</p>
+                            <p class="bp-spec text-amber-ink mb-1">Need help?</p>
                             <p class="text-xs text-body mb-2">Mon-Fri 09:00-18:00 CET. Our team is ready.</p>
                             <a href="{{ url('/'.app()->getLocale().'/contact') }}"
                                class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">

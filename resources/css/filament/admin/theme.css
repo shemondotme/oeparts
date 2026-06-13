@@ -2635,7 +2635,7 @@ select.fi-select-input {
 /* ─── Widget Management Modal Styling ─────────────────────────────────────── */
 
 .fi-form-field-wrapper.fi-repeater-field .fi-repeater-item {
-    @apply rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 transition-all duration-200;
+    @apply rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-0 transition-all duration-200;
 }
 
 .fi-form-field-wrapper.fi-repeater-field .fi-repeater-item:hover {
@@ -2643,31 +2643,29 @@ select.fi-select-input {
 }
 
 .fi-form-field-wrapper.fi-repeater-field .fi-repeater-item .fi-placeholder-wrapper {
-    @apply mb-0;
+    @apply mb-0 p-4;
 }
 
 .fi-form-field-wrapper.fi-repeater-field .fi-repeater-item > div {
-    @apply flex items-center justify-between gap-4;
+    @apply flex flex-col;
 }
 
 .fi-form-field-wrapper.fi-repeater-field .fi-repeater-item [data-field-wrapper="info"] {
     @apply flex-grow;
 }
 
-/* Toggle button styling in widget manager */
+/* Hide the toggle field - we're embedding it in placeholder */
 .fi-form-field-wrapper.fi-repeater-field .fi-toggle-field {
-    @apply m-0 flex-shrink-0;
+    @apply hidden;
 }
 
-.fi-form-field-wrapper.fi-repeater-field .fi-toggle-field .fi-toggle-button {
-    @apply ring-amber-400/40 dark:ring-amber-500/40;
-}
-
-.fi-form-field-wrapper.fi-repeater-field .fi-toggle-field .fi-toggle-button.fi-checked {
-    @apply bg-amber-600 dark:bg-amber-500;
+/* Hide the hidden fields */
+.fi-form-field-wrapper.fi-repeater-field [data-field-wrapper="id"],
+.fi-form-field-wrapper.fi-repeater-field [data-field-wrapper="label"] {
+    @apply hidden;
 }
 
 /* Reorder handle styling */
 .fi-form-field-wrapper.fi-repeater-field .fi-repeater-item-grabber {
-    @apply p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors;
+    @apply p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-grab active:cursor-grabbing;
 }

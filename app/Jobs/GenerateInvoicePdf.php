@@ -20,7 +20,9 @@ class GenerateInvoicePdf implements ShouldQueue
      */
     public function __construct(
         public Order $order
-    ) {}
+    ) {
+        $this->onQueue('critical');
+    }
 
     /**
      * Execute the job.
@@ -28,7 +30,7 @@ class GenerateInvoicePdf implements ShouldQueue
     public function handle(InvoiceService $invoiceService): void
     {
         // Generate invoice PDF
-        $pdf = $invoiceService->generate($this->order, false);
+        $pdf = $invoiceService->generate($this->order, false, true);
 
         // Store PDF in storage
         $filename = "invoices/{$this->order->invoice_number}.pdf";

@@ -1,4 +1,4 @@
-{{-- Section: banner (Industrial Blueprint)
+﻿{{-- Section: banner (Industrial Blueprint)
      content: eyebrow(ml), headline(ml), subheadline(ml), button_text(ml), button_url
      6 feature cards with trust indicators.
 --}}
@@ -11,7 +11,7 @@
 
     $features = [
         ['icon' => 'wrench-screwdriver', 'title' => 'Workshop Pricing',     'desc' => 'Volume tiers up to 35% off retail — automatic on every invoice once you qualify.'],
-        ['icon' => 'document-text',      'title' => 'Net-30 Terms',         'desc' => 'Order on account, pay monthly. Credit lines from €2K to €100K based on history.'],
+        ['icon' => 'document-text',      'title' => 'Net-30 Terms',         'desc' => 'Order on account, pay monthly. Credit lines from ' . settings('store.currency_symbol', '€') . '2K to ' . settings('store.currency_symbol', '€') . '100K based on history.'],
         ['icon' => 'clipboard-check',    'title' => 'Bulk RFQ Desk',        'desc' => 'Quote 50+ OEM numbers in one request. Answers within 4 working hours.'],
         ['icon' => 'chat-bubble',        'title' => 'Dedicated B2B Support', 'desc' => 'Named account manager, direct line, DE · EN · FR · LT · ES.'],
         ['icon' => 'truck',              'title' => 'Scheduled Delivery',   'desc' => 'Daily courier runs across the EU. Morning-order, next-day-arrival on stocked SKUs.'],
@@ -31,7 +31,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ {{ $eyebrow }}</span>
+                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)

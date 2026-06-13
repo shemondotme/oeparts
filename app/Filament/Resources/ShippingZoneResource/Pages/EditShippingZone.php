@@ -17,4 +17,14 @@ class EditShippingZone extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    public function getHeading(): string
+    {
+        return "Edit {$this->getRecord()->name}";
+    }
+
+    public function getSubheading(): string
+    {
+        return "Last updated {$this->getRecord()->updated_at->diffForHumans()}";
+    }
 }

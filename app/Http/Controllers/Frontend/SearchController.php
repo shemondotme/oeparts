@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Services\SearchService;
-use App\Models\Manufacturer;
 use App\Models\CarModel;
+use App\Models\Condition;
+use App\Models\Manufacturer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
@@ -45,7 +46,8 @@ class SearchController extends Controller
         $sort      = in_array($request->query('sort'), ['price_asc', 'price_desc', 'default'], true)
                      ? $request->query('sort')
                      : 'default';
-        $condition = in_array($request->query('condition'), ['new', 'used'], true)
+        $validConditionSlugs = Condition::where('is_active', true)->pluck('slug')->toArray();
+        $condition = in_array($request->query('condition'), $validConditionSlugs, true)
                      ? $request->query('condition')
                      : null;
         $inStockOnly = $request->boolean('in_stock');
@@ -55,10 +57,10 @@ class SearchController extends Controller
             manufacturerId: $manufacturerId ? (int) $manufacturerId : null,
             carModelId: $carModelId ? (int) $carModelId : null,
             options: [
-                'limit'        => 100,
+                'limit'        => settings('search.results_limit', 100),
                 'lang'         => $lang,
                 'paginate'     => true,
-                'per_page'     => 20,
+                'per_page'     => settings('search.per_page', 20),
                 'sort'         => $sort,
                 'condition'    => $condition,
                 'in_stock_only' => $inStockOnly,
@@ -188,15 +190,15 @@ class SearchController extends Controller
         try {
             $lang = app()->getLocale();
             $cacheKey = 'popular_oems_zero_results_norm_' . $lang;
-            return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours(6), function () {
+            return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours((int) settings('search.cache_ttl_hours', 6)), function () {
                 return \DB::table('search_logs')
                     ->select('normalized_query', \DB::raw('COUNT(*) as hits'))
-                    ->where('created_at', '>=', now()->subDays(30))
+                    ->where('created_at', '>=', now()->subDays((int) settings('search.popular_days_window', 30)))
                     ->where('result_count', '>', 0)
                     ->where('normalized_query', '!=', '')
                     ->groupBy('normalized_query')
                     ->orderByDesc('hits')
-                    ->limit(4)
+                    ->limit((int) settings('search.popular_limit', 4))
                     ->pluck('normalized_query');
             });
         } catch (\Exception $e) {

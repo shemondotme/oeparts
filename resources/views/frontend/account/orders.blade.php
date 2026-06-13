@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('My Orders') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -9,7 +9,7 @@
 @section('content')
 <x-account.shell
     active="orders"
-    eyebrow="§ 02 · Orders · Ledger"
+    eyebrow="02 · Orders · Ledger"
     title="Orders"
     :subtitle="__('Track every procurement transaction — from submission through shipment and refund.')"
     docId="DOC · ORDER-INDEX · {{ now()->format('Y.m.d') }}"
@@ -46,19 +46,19 @@
         <div class="mb-6 border border-ink bg-paper grid grid-cols-3 divide-x divide-rule"
              style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Total records</p>
+                <p class="bp-spec-mono">Total records</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $orders->total(), 3, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Page</p>
+                <p class="bp-spec-mono">Page</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ $orders->currentPage() }} / {{ max(1, $orders->lastPage()) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Showing</p>
+                <p class="bp-spec-mono">Showing</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ $orders->count() }}
                 </p>
@@ -69,8 +69,8 @@
         <div class="hidden md:block border border-ink bg-paper overflow-hidden"
              style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
-                <span class="bp-spec text-amber-ink">§ Orders · List</span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">EUR · VAT included</span>
+                <span class="bp-spec text-amber-ink">Orders · List</span>
+                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · VAT included</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
@@ -118,7 +118,7 @@
                                     {{ $order->items->count() }}
                                 </td>
                                 <td class="px-5 py-4 text-right font-mono text-sm font-bold text-ink tabular-nums">
-                                    €{{ number_format((float) $order->grand_total, 2) }}
+                                    {{ format_price($order->grand_total) }}
                                 </td>
                                 <td class="px-5 py-4">
                                     <span class="inline-flex items-center gap-2">
@@ -183,11 +183,11 @@
                         </span>
                     </div>
                     <div class="flex items-baseline justify-between gap-3 pt-3 border-t border-rule">
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        <span class="bp-spec-mono">
                             {{ $order->items->count() }} items
                         </span>
                         <span class="font-mono text-lg font-medium text-ink tabular-nums">
-                            €{{ number_format((float) $order->grand_total, 2) }}
+                            {{ format_price($order->grand_total) }}
                         </span>
                     </div>
                 </a>

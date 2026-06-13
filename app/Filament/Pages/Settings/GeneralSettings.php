@@ -5,6 +5,7 @@ namespace App\Filament\Pages\Settings;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Forms\Components\FileUpload;
 
 class GeneralSettings extends SettingsPage
 {
@@ -18,64 +19,96 @@ class GeneralSettings extends SettingsPage
     {
         return $schema
             ->components([
-                Section::make('Site Information')
+                Section::make('Site Identity & Branding')
+                    ->description('Upload branding assets and configure primary public identity details.')
                     ->schema([
+                        FileUpload::make('logo_id')
+                            ->label('Site Logo')
+                            ->disk('public')
+                            ->directory('branding')
+                            ->image()
+                            ->maxSize(2048)
+                            ->columnSpanFull(),
+
+                        FileUpload::make('favicon_id')
+                            ->label('Favicon')
+                            ->disk('public')
+                            ->directory('branding')
+                            ->image()
+                            ->maxSize(512)
+                            ->columnSpanFull(),
+
                         Forms\Components\TextInput::make('site_name')
                             ->label('Site Name')
                             ->maxLength(255)
                             ->required()
                             ->default('OeParts'),
+
                         Forms\Components\TextInput::make('site_url')
                             ->label('Site URL')
                             ->url()
                             ->maxLength(255)
+                            ->placeholder('https://oeparts.test')
                             ->default(null),
+
                         Forms\Components\TextInput::make('site_email')
-                            ->label('Site Email')
+                            ->label('Public Contact Email')
+                            ->helperText('Canonical email shown in site header/footer. Contact Settings page has a separate email field for customer support routing.')
                             ->email()
                             ->maxLength(255)
+                            ->placeholder('info@oeparts.lt')
                             ->default(null),
+
                         Forms\Components\TextInput::make('site_phone')
-                            ->label('Site Phone')
+                            ->label('Public Contact Phone')
+                            ->helperText('Canonical phone for public display. Contact Settings page has a separate phone for support routing.')
                             ->tel()
                             ->minLength(5)
                             ->maxLength(30)
+                            ->placeholder('+370 600 00000')
                             ->default(null),
+
                         Forms\Components\Textarea::make('site_address')
-                            ->label('Site Address')
+                            ->label('Registered Address')
+                            ->helperText('Canonical registered address. Contact Settings page has a separate address for business/support locations.')
                             ->rows(3)
                             ->maxLength(1000)
+                            ->placeholder("e.g. Ulonų g. 5, Vilnius, Lithuania")
                             ->columnSpanFull()
                             ->default(null),
                     ])->columns(2),
 
-                Section::make('Localization & Branding')
+                Section::make('Localization & Branding Defaults')
+                    ->description('Set default currencies, languages, timezones, and display formatting rules.')
                     ->schema([
                         Forms\Components\TextInput::make('tagline')
-                            ->label('Tagline')
+                            ->label('Store Tagline')
                             ->maxLength(255)
                             ->default('Genuine OEM Auto Parts'),
+
                         Forms\Components\Select::make('default_locale')
-                            ->label('Default Locale')
+                            ->label('Default Frontend Language')
                             ->options([
-                                'en' => 'English',
-                                'de' => 'Deutsch',
-                                'lt' => 'Lietuvių',
-                                'fr' => 'Français',
-                                'es' => 'Español',
+                                'en' => 'English (EN)',
+                                'de' => 'Deutsch (DE)',
+                                'lt' => 'Lietuvių (LT)',
+                                'fr' => 'Français (FR)',
+                                'es' => 'Español (ES)',
                             ])
                             ->required()
                             ->default('en'),
+
                         Forms\Components\Select::make('timezone')
-                            ->label('Timezone')
+                            ->label('System Timezone')
                             ->options(collect(\DateTimeZone::listIdentifiers(\DateTimeZone::EUROPE))
                                 ->mapWithKeys(fn ($tz) => [$tz => $tz])
                                 ->toArray())
                             ->searchable()
                             ->required()
                             ->default('Europe/Vilnius'),
+
                         Forms\Components\Select::make('date_format')
-                            ->label('Date Format')
+                            ->label('System Date Format')
                             ->options([
                                 'd/m/Y' => 'DD/MM/YYYY (e.g. 14/03/2025)',
                                 'Y-m-d' => 'YYYY-MM-DD (e.g. 2025-03-14)',
@@ -84,8 +117,10 @@ class GeneralSettings extends SettingsPage
                             ])
                             ->required()
                             ->default('d/m/Y'),
+
                         Forms\Components\Select::make('currency')
-                            ->label('Default Currency')
+                            ->label('Base Store Currency')
+                            ->helperText('This is the canonical currency setting. It is duplicated in Store Settings for convenience — both control the same value.')
                             ->options([
                                 'EUR' => 'EUR (€)',
                                 'USD' => 'USD ($)',
@@ -96,24 +131,29 @@ class GeneralSettings extends SettingsPage
                             ])
                             ->required()
                             ->default('EUR'),
+
                         Forms\Components\TextInput::make('currency_symbol')
-                            ->label('Currency Symbol')
+                            ->label('Currency Character')
+                            ->helperText('Must match the Base Store Currency. Also appears in Store Settings.')
                             ->maxLength(10)
+                            ->placeholder('€')
                             ->required()
                             ->default('€'),
                     ])->columns(2),
 
-                Section::make('Scripts')
+                Section::make('Global Injection Scripts')
+                    ->description('Inject trackers or customization script blocks directly into storefront markup.')
                     ->schema([
                         Forms\Components\Textarea::make('header_scripts')
-                            ->label('Header Scripts')
-                            ->helperText('Scripts injected before </head>')
+                            ->label('Header Injection Block')
+                            ->helperText('Injected inside <head> tags on all public pages')
                             ->rows(4)
                             ->columnSpanFull()
                             ->default(null),
+
                         Forms\Components\Textarea::make('footer_scripts')
-                            ->label('Footer Scripts')
-                            ->helperText('Scripts injected before </body>')
+                            ->label('Footer Injection Block')
+                            ->helperText('Injected before the ending </body> tag on all public pages')
                             ->rows(4)
                             ->columnSpanFull()
                             ->default(null),

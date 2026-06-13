@@ -1,4 +1,4 @@
-{{-- Section: shipping_info (Industrial Blueprint)
+﻿{{-- Section: shipping_info (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml),
               features[] — each: icon, value(ml), label(ml)
               carriers[] — e.g. ['DHL','DPD','GLS','FedEx','UPS']
@@ -23,7 +23,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ $eyebrow }}</span>
+                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
                 </div>
                 @endif
                 @if($headline)
@@ -106,11 +106,11 @@
                 <div class="flex items-center gap-3">
                     <span class="w-8 h-[3px] bg-amber inline-block"></span>
                     <span class="font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ink">
-                        § Trusted Carriers
+                        {{ __('Trusted Carriers') }}
                     </span>
                 </div>
-                <span class="hidden sm:inline font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                    EU · Tracked · Insured
+                <span class="hidden sm:inline bp-spec-mono">
+                    {{ __('EU · Tracked · Insured') }}
                 </span>
             </div>
 
@@ -126,7 +126,7 @@
                         {{ $carrier }}
                     </span>
                     <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">
-                        Carrier
+                        {{ __('Carrier') }}
                     </span>
                 </div>
                 @endforeach
@@ -136,15 +136,15 @@
             <div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 px-6 py-5 border-t border-rule">
                 <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink">
                     <x-heroicon-s-shield-check class="w-3.5 h-3.5 text-amber-ink" />
-                    Fully Insured
+                    {{ __('Fully Insured') }}
                 </span>
                 <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink">
                     <x-heroicon-s-map-pin class="w-3.5 h-3.5 text-amber-ink" />
-                    Real-time Tracking
+                    {{ __('Real-time Tracking') }}
                 </span>
                 <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink">
                     <x-heroicon-s-arrow-path class="w-3.5 h-3.5 text-amber-ink" />
-                    Free Returns
+                    {{ __('Free Returns') }}
                 </span>
             </div>
         </div>

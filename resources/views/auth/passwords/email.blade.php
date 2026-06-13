@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Reset Password') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -22,7 +22,7 @@
             </div>
             <div class="flex items-center gap-4 mb-4">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ 01 · Request link</span>
+                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">01 · Request link</span>
             </div>
             <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl">
                 Reset password<span class="text-amber">.</span>
@@ -43,8 +43,8 @@
 
             {{-- Card header --}}
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                <span class="bp-spec text-amber-ink">§ Email verification</span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Form · 01/01</span>
+                <span class="bp-spec text-amber-ink">Email verification</span>
+                <span class="bp-spec-mono">Form · 01/01</span>
             </div>
 
             <div class="p-6 sm:p-8">
@@ -62,7 +62,7 @@
                     @csrf
 
                     <div>
-                        <label for="email" class="bp-spec block mb-2 text-ink">§ Email address</label>
+                        <label for="email" class="bp-spec block mb-2 text-ink">Email address</label>
                         <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors
                                     @error('email') !border-red-600 @enderror">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
@@ -111,11 +111,11 @@
 
             {{-- Trust strip --}}
             <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
-                <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                     <x-heroicon-s-lock-closed class="w-3 h-3 text-amber-ink" />
                     TLS 1.3 · Secure
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec-mono">
                     EXPIRES · 60 MIN
                 </span>
             </div>

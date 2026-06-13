@@ -33,24 +33,28 @@ class OrderItemsRelationManager extends RelationManager
                 Forms\Components\TextInput::make('quantity')
                     ->label('Quantity')
                     ->required()
-                    ->numeric(),
+                    ->numeric()
+                    ->minValue(1),
                 Forms\Components\TextInput::make('unit_price')
                     ->label('Unit Price')
                     ->required()
                     ->numeric()
+                    ->minValue(0)
+                    ->step(0.01)
                     ->prefix('€'),
                 Forms\Components\TextInput::make('total_price')
                     ->label('Total Price')
                     ->required()
                     ->numeric()
+                    ->minValue(0)
+                    ->step(0.01)
                     ->prefix('€'),
             ]);
     }
 
     public function table(Table $table): Table
     {
-        return $table
-            ->recordTitleAttribute('oem_number_snapshot')
+        return AdminUi::configureTable($table)->recordTitleAttribute('oem_number_snapshot')
             ->columns([
                 Tables\Columns\TextColumn::make('oem_number_snapshot')
                     ->label('OEM Number')
@@ -65,10 +69,14 @@ class OrderItemsRelationManager extends RelationManager
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('unit_price')
                     ->label('Unit Price')
-                    ->getStateUsing(fn ($record): string => format_money($record->unit_price)),
+                    ->getStateUsing(fn ($record): string => format_money($record->unit_price))
+                    ->alignEnd()
+                    ->fontMono(),
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Total')
-                    ->getStateUsing(fn ($record): string => format_money($record->total_price)),
+                    ->getStateUsing(fn ($record): string => format_money($record->total_price))
+                    ->alignEnd()
+                    ->fontMono(),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),

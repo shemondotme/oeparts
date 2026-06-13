@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Enums\PartInquiryStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Frontend\PartInquiryRequest;
 use App\Jobs\SendPartInquiryNotification;
 use App\Models\PartInquiry;
 use App\Services\OemNormalizerService;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\RateLimiter;
 
 class PartInquiryController extends Controller
 {
-    public function store(Request $request, string $lang)
+    public function store(PartInquiryRequest $request, string $lang)
     {
         // Rate limit: 5 inquiries per hour per IP
         $maxInquiries = (int) settings('search.inquiry_max_per_email', 5);
@@ -23,19 +24,7 @@ class PartInquiryController extends Controller
             ], 429);
         }
 
-        $validated = $request->validate([
-            'email'        => ['required', 'email', 'max:255'],
-            'phone'        => ['nullable', 'string', 'max:50'],
-            'oem_number'   => ['required', 'string', 'max:100'],
-            'manufacturer' => ['nullable', 'string', 'max:100'],
-            'car_model'    => ['nullable', 'string', 'max:100'],
-            'year'         => ['nullable', 'string', 'max:10', 'regex:/^\d{4}$/'],
-            'vin_number'   => ['nullable', 'string', 'max:50'],
-            'quantity'     => ['nullable', 'integer', 'min:1', 'max:99'],
-            'urgency'      => ['nullable', 'string', 'in:normal,soon,urgent'],
-            'notes'        => ['nullable', 'string', 'max:500'],
-            'website'      => ['max:0'], // honeypot
-        ]);
+        $validated = $request->validated();
 
         $inquiry = PartInquiry::create([
             'email'        => $validated['email'],

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Services\CartService;
 use App\Models\Cart;
+use App\Models\SearchLog;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class CartController extends Controller
 {
@@ -25,10 +27,21 @@ class CartController extends Controller
         $cart = $cartData['cart'];
         $summary = $this->cartService->getSummary($cart);
 
+        $popularOems = Cache::remember('cart_popular_oems_' . $lang, 3600, function () {
+            return SearchLog::selectRaw('normalized_query, COUNT(*) as hits')
+                ->where('result_count', '>', 0)
+                ->where('created_at', '>=', now()->subDays((int) settings('search.popular_days_window', 30)))
+                ->groupBy('normalized_query')
+                ->orderByDesc('hits')
+                ->limit((int) settings('search.popular_limit', 8))
+                ->pluck('normalized_query');
+        });
+
         return view('frontend.cart.index', [
             'cart' => $cart,
             'summary' => $summary,
             'priceChanges' => $summary['price_changes'],
+            'popularOems' => $popularOems,
         ]);
     }
 
@@ -41,7 +54,7 @@ class CartController extends Controller
     {
         $request->validate([
             'product_id' => 'required|integer|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:999',
+            'quantity' => 'required|integer|min:1|max:' . settings('cart.max_quantity', 999),
         ]);
 
         $cartData = $this->getCurrentCart($request);
@@ -100,11 +113,10 @@ class CartController extends Controller
      *
      * PUT /{lang}/cart/update/{item}
      */
-    public function update(Request $request, string $lang, int $itemId)
+    public function update(\App\Http\Requests\Frontend\CartUpdateRequest $request, string $lang, int $itemId)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:0|max:999',
-        ]);
+        $validated = $request->validated();
+        $request->merge($validated);
 
         $cartData = $this->getCurrentCart($request);
         $cart = $cartData['cart'];
@@ -173,7 +185,10 @@ class CartController extends Controller
                 'line_total' => bcmul((string) $product->price, (string) $item->quantity, 2),
                 'oem_number' => $product->oem_number,
                 'name' => trans_field($product->name),
-                'condition' => $product->condition,
+                'condition_slug' => $product->condition?->slug ?? 'new',
+                'condition_name' => $product->condition?->name ?? 'New',
+                'condition_bg' => $product->condition?->bg_color ?? '#DCFCE7',
+                'condition_text' => $product->condition?->text_color ?? '#16A34A',
             ];
         });
 
@@ -235,6 +250,7 @@ class CartController extends Controller
 
         // Save code to cart to allow CartService to validate and build summary
         $cart->update(['coupon_code' => $request->coupon_code]);
+        \Cache::forget("cart_summary:{$cart->id}");
 
         // Fetch summary (CartService will validate and nullify invalid coupons within getSummary)
         $summary = $this->cartService->getSummary($cart);
@@ -264,6 +280,7 @@ class CartController extends Controller
         $cart = $cartData['cart'];
 
         $cart->update(['coupon_code' => null]);
+        \Cache::forget("cart_summary:{$cart->id}");
 
         return response()->json([
             'success' => true,
@@ -301,7 +318,7 @@ class CartController extends Controller
         $response = response()->json($data, $status);
         
         if ($guestToken) {
-            $response->cookie('guest_token', $guestToken, 60 * 24 * 7); // 7 days
+            $response->cookie('guest_token', $guestToken, (int) settings('cart.guest_cookie_days', 7) * 60 * 24);
         }
         
         return $response;

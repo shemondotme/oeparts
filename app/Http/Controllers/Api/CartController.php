@@ -40,8 +40,9 @@ class CartController extends Controller
      */
     public function add(Request $request, string $lang): JsonResponse
     {
-        // Rate limit: 60 add requests per minute per IP
-        if (!RateLimiter::attempt("cart:add:{$request->ip()}", 60, function () {
+        // Rate limit: add requests per minute per IP
+        $maxAdds = (int) settings('cart.rate_limit_per_minute', 60);
+        if (!RateLimiter::attempt("cart:add:{$request->ip()}", $maxAdds, function () {
             return true;
         }, 60)) {
             throw new TooManyRequestsHttpException(60, 'Too many cart requests. Please slow down.');
@@ -49,7 +50,7 @@ class CartController extends Controller
 
         $validated = $request->validate([
             'product_id' => 'required|integer|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:99',
+            'quantity' => 'required|integer|min:1|max:' . settings('cart.max_quantity', 99),
         ]);
 
         $user = Auth::user();
@@ -78,7 +79,7 @@ class CartController extends Controller
     public function update(Request $request, string $lang, int $itemId): JsonResponse
     {
         $validated = $request->validate([
-            'quantity' => 'required|integer|min:0|max:99',
+            'quantity' => 'required|integer|min:0|max:' . settings('cart.max_quantity', 99),
         ]);
 
         $user = Auth::user();

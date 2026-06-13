@@ -3,17 +3,36 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
+use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
-class SalesByCountryChart extends ChartWidget
+class SalesByCountryChart extends ChartWidget implements \App\Filament\Support\DrilldownContract
 {
-    protected ?string $heading = 'Sales by Country (30 days)';
+    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
-    protected static ?int $sort = -12;
+    public function getDescription(): ?string
+    {
+        return 'Geographic distribution of sales';
+    }
+
+    protected string $view = 'filament.widgets.chart-with-drilldown';
+
+    protected ?string $heading = 'Sales by Country';
+
+    protected ?string $pollingInterval = '120s';
+
+    protected static ?int $sort = -26;
 
     protected static ?string $maxWidth = '1/3';
+
+    public function getDrilldownUrl(): ?string
+    {
+        return OrderResource::getUrl('index');
+    }
 
     protected function getType(): string
     {
@@ -22,54 +41,47 @@ class SalesByCountryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $paidStatuses = [
-            OrderStatus::Paid->value,
-            OrderStatus::Processing->value,
-            OrderStatus::Shipped->value,
-            OrderStatus::Delivered->value,
-        ];
+        $cached = $this->cachedWidgetData(function (): array {
+            $paidStatuses = [
+                OrderStatus::Paid->value,
+                OrderStatus::Processing->value,
+                OrderStatus::Shipped->value,
+                OrderStatus::Delivered->value,
+            ];
 
-        $data = Order::whereIn('status', $paidStatuses)
-            ->where('created_at', '>=', now()->subDays(30))
-            ->select('shipping_country_code', DB::raw('COUNT(*) as order_count'))
-            ->groupBy('shipping_country_code')
-            ->orderByDesc('order_count')
-            ->limit(8)
-            ->get();
+            $data = Order::whereIn('status', $paidStatuses)
+                ->where('created_at', '>=', $this->periodStart())
+                ->select('shipping_country_code', DB::raw('COUNT(*) as order_count'))
+                ->groupBy('shipping_country_code')
+                ->orderByDesc('order_count')
+                ->limit(8)
+                ->get();
 
-        $countryNames = [
-            'DE' => 'Germany',
-            'FR' => 'France',
-            'NL' => 'Netherlands',
-            'BE' => 'Belgium',
-            'LT' => 'Lithuania',
-            'LV' => 'Latvia',
-            'EE' => 'Estonia',
-            'PL' => 'Poland',
-            'ES' => 'Spain',
-            'IT' => 'Italy',
-            'AT' => 'Austria',
-            'CZ' => 'Czech Republic',
-            'SE' => 'Sweden',
-            'DK' => 'Denmark',
-            'FI' => 'Finland',
-            'PT' => 'Portugal',
-            'IE' => 'Ireland',
-            'LU' => 'Luxembourg',
-        ];
+            return [
+                'values' => $data->pluck('order_count')->all(),
+                'codes' => $data->pluck('shipping_country_code')->all(),
+            ];
+        });
+
+        $countryNames = config('countries', []);
+
+        $labels = array_map(
+            fn (?string $code) => $code ? ($countryNames[$code] ?? $code) : '—',
+            $cached['codes'],
+        );
 
         return [
             'datasets' => [
                 [
                     'label' => 'Orders',
-                    'data' => $data->pluck('order_count'),
+                    'data' => $cached['values'],
                     'backgroundColor' => 'rgba(11, 58, 104, 0.75)',
                     'borderColor' => '#0B3A68',
                     'borderWidth' => 1,
                     'borderRadius' => 4,
                 ],
             ],
-            'labels' => $data->map(fn ($row) => $countryNames[$row->shipping_country_code] ?? $row->shipping_country_code),
+            'labels' => $labels,
         ];
     }
 
@@ -80,15 +92,32 @@ class SalesByCountryChart extends ChartWidget
             'scales' => [
                 'x' => [
                     'grid' => ['display' => false],
-                    'ticks' => ['font' => ['size' => 11]],
+                    'ticks' => [
+                        'font' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
+                        'color' => '#94a3b8',
+                    ],
                 ],
                 'y' => [
                     'grid' => ['display' => false],
-                    'ticks' => ['font' => ['size' => 11]],
+                    'ticks' => [
+                        'font' => ['family' => 'Geist Sans, sans-serif', 'size' => 11],
+                        'color' => '#64748b',
+                    ],
                 ],
             ],
             'plugins' => [
                 'legend' => ['display' => false],
+                'tooltip' => [
+                    'titleFont' => ['family' => 'Geist Sans, sans-serif', 'size' => 12, 'weight' => 'bold'],
+                    'bodyFont' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 12],
+                    'backgroundColor' => '#0f172a',
+                    'titleColor' => '#f8fafc',
+                    'bodyColor' => '#cbd5e1',
+                    'borderColor' => '#1e293b',
+                    'borderWidth' => 1,
+                    'cornerRadius' => 8,
+                    'padding' => 10,
+                ],
             ],
             'maintainAspectRatio' => false,
         ];

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', __('Reset Password') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -28,7 +28,7 @@
             </div>
             <div class="flex items-center gap-4 mb-4">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ 02 · Set new password</span>
+                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">02 · Set new password</span>
             </div>
             <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl">
                 New password<span class="text-amber">.</span>
@@ -47,8 +47,8 @@
             <span class="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-amber" aria-hidden="true"></span>
 
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                <span class="bp-spec text-amber-ink">§ Credentials reset</span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">Form · 02/02</span>
+                <span class="bp-spec text-amber-ink">Credentials reset</span>
+                <span class="bp-spec-mono">Form · 02/02</span>
             </div>
 
             <div class="p-6 sm:p-8">
@@ -58,7 +58,7 @@
 
                     {{-- Email --}}
                     <div>
-                        <label for="email" class="bp-spec block mb-2 text-ink">§ Email address</label>
+                        <label for="email" class="bp-spec block mb-2 text-ink">Email address</label>
                         <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors
                                     @error('email') !border-red-600 @enderror">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
@@ -86,7 +86,7 @@
 
                     {{-- Password --}}
                     <div>
-                        <label for="password" class="bp-spec block mb-2 text-ink">§ New password</label>
+                        <label for="password" class="bp-spec block mb-2 text-ink">New password</label>
                         <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors
                                     @error('password') !border-red-600 @enderror">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
@@ -119,7 +119,7 @@
 
                     {{-- Confirm --}}
                     <div>
-                        <label for="password-confirm" class="bp-spec block mb-2 text-ink">§ Confirm password</label>
+                        <label for="password-confirm" class="bp-spec block mb-2 text-ink">Confirm password</label>
                         <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                 <x-heroicon-o-lock-closed class="w-4 h-4" />
@@ -162,11 +162,11 @@
             </div>
 
             <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
-                <span class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                     <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
                     Secured · Encrypted
                 </span>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                <span class="bp-spec-mono">
                     Token · Single-use
                 </span>
             </div>

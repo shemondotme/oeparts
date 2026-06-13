@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
-use App\Enums\OrderStatus;
+use App\Filament\Support\AdminUi;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -17,37 +17,17 @@ class OrderStatusHistoryRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->recordTitleAttribute('new_status')
             ->columns([
                 Tables\Columns\TextColumn::make('old_status')
                     ->label('From')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending'         => 'warning',
-                        'paid'            => 'info',
-                        'processing'      => 'primary',
-                        'shipped'         => 'success',
-                        'delivered'       => 'success',
-                        'cancelled'       => 'danger',
-                        'refund_requested'=> 'warning',
-                        'refunded'        => 'gray',
-                        default           => 'gray',
-                    }),
+                    ->color(fn ($state): string => AdminUi::orderStatusColor($state)),
                 Tables\Columns\TextColumn::make('new_status')
                     ->label('To')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending'         => 'warning',
-                        'paid'            => 'info',
-                        'processing'      => 'primary',
-                        'shipped'         => 'success',
-                        'delivered'       => 'success',
-                        'cancelled'       => 'danger',
-                        'refund_requested'=> 'warning',
-                        'refunded'        => 'gray',
-                        default           => 'gray',
-                    }),
+                    ->color(fn ($state): string => AdminUi::orderStatusColor($state)),
                 Tables\Columns\TextColumn::make('note')
                     ->label('Note')
                     ->limit(50),

@@ -1,33 +1,74 @@
 @props([
+    'variant' => 'default', // default | filtered | error | first-time
     'title',
-    'description' => null,
-    'icon'        => 'heroicon-o-inbox',
-    'iconColor'   => 'text-slate-400',
+    'description',
+    'icon' => null,
+    'actionLabel' => null,
+    'actionUrl' => null,
+    'actionMethod' => null,
 ])
 
-<div {{ $attributes->merge(['class' => 'flex flex-col items-center justify-center px-6 py-14 text-center']) }}>
-    {{-- Icon box --}}
-    <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-slate-200/80 bg-gradient-to-b from-white to-slate-50/90 shadow-sm shadow-slate-900/[0.04] ring-1 ring-slate-900/[0.03]">
-        <x-dynamic-component :component="$icon" class="h-7 w-7 {{ $iconColor }}" />
+<style>
+.empty-state-cta:hover { background: var(--color-brand-700) !important; }
+</style>
+
+@php
+    $iconMap = [
+        'default' => 'heroicon-o-inbox',
+        'filtered' => 'heroicon-o-magnifying-glass',
+        'error' => 'heroicon-o-exclamation-triangle',
+        'first-time' => 'heroicon-o-rocket-launch',
+    ];
+
+    $iconColorMap = [
+        'default' => 'var(--color-text-muted)',
+        'filtered' => 'var(--color-warning-400)',
+        'error' => 'var(--color-danger-400)',
+        'first-time' => 'var(--color-brand-400)',
+    ];
+
+    $displayIcon = $icon ?? $iconMap[$variant] ?? $iconMap['default'];
+    $color = $iconColorMap[$variant] ?? $iconColorMap['default'];
+@endphp
+
+<div class="op-empty" role="status" aria-label="{{ $title }}">
+    {{-- Illustration --}}
+    <div class="op-empty-illustration" style="color: {{ $color }};">
+        @svg($displayIcon, 'w-full h-full')
     </div>
 
-    <p class="font-display text-base font-bold tracking-tight text-slate-900">{{ $title }}</p>
+    {{-- Title --}}
+    <h3 class="op-empty-title">{{ $title }}</h3>
 
+    {{-- Description --}}
     @if($description)
-        <p class="mt-1.5 max-w-xs text-sm leading-relaxed text-slate-500">{{ $description }}</p>
+        <p class="op-empty-desc">{{ $description }}</p>
     @endif
 
-    {{-- Primary actions slot --}}
-    @isset($actions)
-        <div class="mt-5 flex flex-wrap items-center justify-center gap-2.5">
-            {{ $actions }}
+    {{-- Action --}}
+    @if($actionLabel && ($actionUrl || $actionMethod))
+        <div class="op-empty-actions">
+            @if($actionUrl)
+                <a href="{{ $actionUrl }}"
+                   wire:navigate
+                   class="op-focus-ring op-press empty-state-cta inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
+                   style="background: var(--color-brand-600); color: white; box-shadow: var(--shadow-1);">
+                    {{ $actionLabel }}
+                </a>
+            @elseif($actionMethod)
+                <button wire:click="{{ $actionMethod }}"
+                    class="op-focus-ring op-press empty-state-cta inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-200"
+                    style="background: var(--color-brand-600); color: white; box-shadow: var(--shadow-1);">
+                    {{ $actionLabel }}
+                </button>
+            @endif
         </div>
-    @endisset
+    @endif
 
-    {{-- Secondary / help text slot --}}
-    @isset($secondary)
-        <div class="mt-3 text-xs text-slate-400">
-            {{ $secondary }}
+    {{-- Slot for additional content --}}
+    @if(isset($slot) && $slot->isNotEmpty())
+        <div class="mt-2">
+            {{ $slot }}
         </div>
-    @endisset
+    @endif
 </div>

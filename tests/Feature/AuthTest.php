@@ -29,8 +29,8 @@ class AuthTest extends TestCase
         $response = $this->postJson('/en/register', [
             'name' => 'John Doe',
             'email' => 'john@example.com',
-            'password' => 'Password123!',
-            'password_confirmation' => 'Password123!',
+            'password' => 'Xk9#mP2$vR',
+            'password_confirmation' => 'Xk9#mP2$vR',
             'agree_terms' => true,
         ]);
 
@@ -47,7 +47,7 @@ class AuthTest extends TestCase
         ]);
 
         $user = User::where('email', 'john@example.com')->first();
-        $this->assertTrue(Hash::check('Password123!', $user->password));
+        $this->assertTrue(Hash::check('Xk9#mP2$vR', $user->password));
     }
 
     #[Test]

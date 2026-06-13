@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang        = app()->getLocale();
@@ -78,15 +78,15 @@
             </div>
         </div>
 
-        {{-- ═══ §00 · Identity panel ═══ --}}
+        {{-- ═══ 00 · Identity panel ═══ --}}
         <section class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 gap-y-6 mb-14 bp-rise bp-rise-delay-1">
 
             {{-- Large logo/monogram --}}
             <div class="col-span-12 md:col-span-4">
                 <div class="relative border border-ink bg-paper aspect-square flex items-center justify-center overflow-hidden"
                      style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
-                    <span class="absolute top-3 left-3 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
-                        §00 · {{ __('Mark') }}
+                    <span class="absolute top-3 left-3 bp-spec-mono">
+                        00 · {{ __('Mark') }}
                     </span>
                     @if($manufacturer->logo && $manufacturer->logo->file_url)
                         <img src="{{ $manufacturer->logo->file_url }}"
@@ -97,7 +97,7 @@
                             <span class="font-display text-7xl sm:text-8xl font-extrabold text-ink tracking-[-0.04em] leading-none">
                                 {{ strtoupper(mb_substr($brandName, 0, 2)) }}
                             </span>
-                            <span class="mt-4 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                            <span class="mt-4 bp-spec-mono">
                                 {{ __('Logo pending') }}
                             </span>
                         </div>
@@ -112,7 +112,7 @@
             <div class="col-span-12 md:col-span-8">
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ __('Manufacturer · Identity') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('Manufacturer · Identity') }}</span>
                 </div>
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
@@ -173,11 +173,11 @@
             </div>
         </section>
 
-        {{-- ═══ §01 · Compatible car models ═══ --}}
+        {{-- ═══ 01 · Compatible car models ═══ --}}
         @if($modelCount > 0)
             <section class="mb-14 bp-rise bp-rise-delay-2">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-5">
-                    <span class="bp-spec text-ink">§ 01 · {{ __('Models · Covered') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ __('Models · Covered') }}</span>
                     <span class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         {{ $modelCount }} · {{ __('platforms') }}
                     </span>
@@ -187,7 +187,7 @@
                         <div class="group flex flex-col gap-1 px-3 py-2.5 border border-rule-strong bg-paper
                                     hover:bg-ink transition-colors">
                             <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted group-hover:text-amber">
-                                §{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
+                                {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
                             </span>
                             <p class="font-display text-sm font-bold tracking-[-0.01em] text-ink group-hover:text-ivory truncate">
                                 {{ $model->name }}
@@ -203,11 +203,11 @@
             </section>
         @endif
 
-        {{-- ═══ §02 · Parts ledger ═══ --}}
+        {{-- ═══ 02 · Parts ledger ═══ --}}
         <section class="mb-10 bp-rise bp-rise-delay-3">
             <div class="flex flex-wrap items-end justify-between gap-3 pb-3 border-b border-ink mb-6">
                 <div class="flex items-center gap-3">
-                    <span class="bp-spec text-ink">§ 02 · {{ __('Parts · Ledger') }}</span>
+                    <span class="bp-spec text-ink">02 · {{ __('Parts · Ledger') }}</span>
                 </div>
                 <div class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ __('Page') }} {{ $products->currentPage() }}/{{ max(1,$products->lastPage()) }}
@@ -247,13 +247,17 @@
                                     #{{ str_pad(($products->currentPage() - 1) * $products->perPage() + $loop->iteration, 3, '0', STR_PAD_LEFT) }}
                                 </span>
                                 {{-- OEM --}}
-                                <div class="min-w-0">
-                                    <p class="font-mono text-sm font-bold text-ink truncate">
+                                <div class="min-w-0" x-data="clipboard()">
+                                    <p class="font-mono text-sm font-bold text-ink truncate cursor-pointer"
+                                       @click="copy('{{ $product->oem_number }}')"
+                                       title="Copy OEM number">
                                         {{ $product->oem_number }}
                                     </p>
                                     <p class="md:hidden mt-0.5 text-xs text-ink-muted truncate">
                                         {{ trans_field($product->name) }}
                                     </p>
+                                    <span x-show="copied" x-cloak x-transition
+                                          class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                 </div>
                                 {{-- Name (desktop) --}}
                                 <p class="hidden md:block text-sm text-body truncate">
@@ -262,18 +266,21 @@
                                 {{-- Condition --}}
                                 <div class="hidden md:flex items-center gap-2">
                                     @php
-                                        $cond = $product->condition?->value ?? '';
-                                        $condLabel = $product->condition?->label() ?? ucfirst($cond);
+                                        $cCond = $product->condition;
+                                        $condBg = $cCond?->bg_color ?? '#DCFCE7';
+                                        $condText = $cCond?->text_color ?? '#16A34A';
+                                        $condLabel = $cCond?->name ?? '—';
                                     @endphp
-                                    <span class="inline-flex items-center px-2 h-6 border border-rule-strong font-mono text-[9px] tracking-[0.18em] uppercase text-ink">
-                                        {{ $condLabel ?: '—' }}
+                                    <span class="inline-flex items-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm"
+                                          style="background-color: {{ $condBg }}; color: {{ $condText }};">
+                                        {{ $condLabel }}
                                     </span>
                                 </div>
                                 {{-- Price --}}
                                 <div class="md:text-right">
                                     @if($product->price)
                                         <p class="font-mono text-sm font-bold text-ink tabular-nums">
-                                            €{{ number_format((float)$product->price, 2) }}
+                                            {{ format_price($product->price) }}
                                         </p>
                                     @else
                                         <p class="font-mono text-xs text-ink-muted tabular-nums">

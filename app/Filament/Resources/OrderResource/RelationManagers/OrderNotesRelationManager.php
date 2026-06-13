@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
+use Filament\Tables\Actions;
 use Filament\Tables\Table;
 
 class OrderNotesRelationManager extends RelationManager
@@ -28,7 +30,7 @@ class OrderNotesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->recordTitleAttribute('note')
             ->columns([
                 Tables\Columns\TextColumn::make('note')
@@ -50,8 +52,7 @@ class OrderNotesRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                Actions\EditAction::make(),
-                Actions\DeleteAction::make(),
+                ...AdminUi::recordActionsWithoutView(),
             ])
             ->defaultSort('created_at', 'desc');
     }

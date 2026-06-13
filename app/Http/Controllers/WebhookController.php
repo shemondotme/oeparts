@@ -7,6 +7,7 @@ use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 /**
  * WebhookController — handles incoming Airwallex webhooks.
@@ -48,7 +49,7 @@ class WebhookController extends Controller
         if (!$this->paymentService->verifyWebhookSignature($payload, $signature, $timestamp)) {
             Log::warning('Airwallex webhook signature verification failed', [
                 'timestamp' => $timestamp,
-                'signature' => $signature,
+                'signature' => substr($signature ?? '', 0, 8) . '***',
             ]);
             return response('Invalid signature', 401);
         }
@@ -98,8 +99,18 @@ class WebhookController extends Controller
      */
     public function handleBankTransferConfirm(Request $request): Response
     {
-        // This would typically be protected by an API key or admin auth
-        // For now, we'll implement basic validation
+        $rateKey = 'bank-transfer:' . ($request->input('payment_id') ?? $request->ip());
+        if (RateLimiter::tooManyAttempts($rateKey, 10)) {
+            return response()->json(['success' => false, 'message' => 'Too many attempts'], 429);
+        }
+        RateLimiter::hit($rateKey, 60);
+
+        $apiKey = $request->header('X-Webhook-Key');
+        $expectedKey = settings('payment.webhook_secret', '');
+
+        if ($apiKey !== $expectedKey) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
 
         $validator = \Validator::make($request->all(), [
             'payment_id' => 'required|exists:payments,id',

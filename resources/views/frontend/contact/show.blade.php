@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @php
     $lang     = app()->getLocale();
@@ -51,7 +51,7 @@
             <div class="col-span-12 lg:col-span-8">
                 <div class="flex items-center gap-4 mb-8">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">§ {{ __('Contact · Desk') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('Contact · Desk') }}</span>
                 </div>
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl max-w-[22ch]">
@@ -69,7 +69,7 @@
             <aside class="col-span-12 lg:col-span-4">
                 <div class="border border-ink bg-paper bp-register">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('§ Direct · Channel') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Direct · Channel') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ __('MON–FRI') }}</span>
                     </div>
                     <dl class="p-5 space-y-3.5">
@@ -112,7 +112,7 @@
             {{-- ── Form column ── --}}
             <section class="col-span-12 lg:col-span-8">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                    <span class="bp-spec text-ink">§ 01 · {{ __('Enquiry · Form') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ __('Enquiry · Form') }}</span>
                 </div>
 
                 <div x-data="contactForm()"
@@ -147,12 +147,13 @@
                         <form @submit.prevent="submitForm" class="space-y-6">
                             @csrf
                             <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+                            @honeypot
 
                             {{-- Name --}}
                             <div>
                                 <label for="name" class="flex items-center justify-between mb-2">
                                     <span class="bp-spec text-ink">{{ trans('contact.name') }} <span class="text-red-600">*</span></span>
-                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.01</span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.01</span>
                                 </label>
                                 <input type="text" id="name" x-model="form.name" required
                                        class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
@@ -164,7 +165,7 @@
                             <div>
                                 <label for="email" class="flex items-center justify-between mb-2">
                                     <span class="bp-spec text-ink">{{ trans('contact.email') }} <span class="text-red-600">*</span></span>
-                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.02</span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.02</span>
                                 </label>
                                 <input type="email" id="email" x-model="form.email" required
                                        class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
@@ -177,7 +178,7 @@
                             <div>
                                 <label for="subject_type" class="flex items-center justify-between mb-2">
                                     <span class="bp-spec text-ink">{{ trans('contact.subject') }} <span class="text-red-600">*</span></span>
-                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.03</span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.03</span>
                                 </label>
                                 <div class="relative">
                                     <select id="subject_type" x-model="form.subject_type" required
@@ -201,7 +202,7 @@
                             <div x-show="needsOrder" x-cloak x-collapse>
                                 <div class="flex items-center gap-3 mb-3 pt-2">
                                     <span class="w-6 h-[2px] bg-amber inline-block"></span>
-                                    <span class="bp-spec text-amber-ink">§ {{ trans('contact.section_order_details') }}</span>
+                                    <span class="bp-spec text-amber-ink">{{ trans('contact.section_order_details') }}</span>
                                 </div>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
@@ -210,7 +211,7 @@
                                                 {{ trans('contact.order_number') }}
                                                 <span class="text-red-600" x-show="form.subject_type === 'order_issue' || form.subject_type === 'return_refund'">*</span>
                                             </span>
-                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.04</span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.04</span>
                                         </label>
                                         <input type="text" id="order_number" x-model="form.order_number"
                                                class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
@@ -221,7 +222,7 @@
                                     <div x-show="form.subject_type === 'return_refund'">
                                         <label for="oem_number_r" class="flex items-center justify-between mb-2">
                                             <span class="bp-spec text-ink">{{ trans('contact.oem_number') }}</span>
-                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.05</span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.05</span>
                                         </label>
                                         <input type="text" id="oem_number_r" x-model="form.oem_number"
                                                class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tracking-wide
@@ -235,13 +236,13 @@
                             <div x-show="form.subject_type === 'part_not_found'" x-cloak x-collapse>
                                 <div class="flex items-center gap-3 mb-3 pt-2">
                                     <span class="w-6 h-[2px] bg-amber inline-block"></span>
-                                    <span class="bp-spec text-amber-ink">§ {{ trans('contact.section_part_details') }}</span>
+                                    <span class="bp-spec text-amber-ink">{{ trans('contact.section_part_details') }}</span>
                                 </div>
                                 <div class="space-y-4">
                                     <div>
                                         <label for="oem_number" class="flex items-center justify-between mb-2">
                                             <span class="bp-spec text-ink">{{ trans('contact.oem_number') }} <span class="text-red-600">*</span></span>
-                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.05</span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.05</span>
                                         </label>
                                         <input type="text" id="oem_number" x-model="form.oem_number"
                                                class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tracking-wide
@@ -253,7 +254,7 @@
                                         <div class="sm:col-span-1">
                                             <label for="manufacturer" class="flex items-center justify-between mb-2">
                                                 <span class="bp-spec text-ink">{{ trans('contact.manufacturer') }}</span>
-                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.06</span>
+                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.06</span>
                                             </label>
                                             <input type="text" id="manufacturer" x-model="form.manufacturer"
                                                    class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
@@ -263,7 +264,7 @@
                                         <div class="sm:col-span-1">
                                             <label for="car_model" class="flex items-center justify-between mb-2">
                                                 <span class="bp-spec text-ink">{{ trans('contact.car_model') }}</span>
-                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.07</span>
+                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.07</span>
                                             </label>
                                             <input type="text" id="car_model" x-model="form.car_model"
                                                    class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
@@ -273,7 +274,7 @@
                                         <div class="sm:col-span-1">
                                             <label for="year" class="flex items-center justify-between mb-2">
                                                 <span class="bp-spec text-ink">{{ trans('contact.vehicle_year') }}</span>
-                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.08</span>
+                                                <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.08</span>
                                             </label>
                                             <input type="text" id="year" x-model="form.year" inputmode="numeric" maxlength="4"
                                                    class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tabular-nums
@@ -284,7 +285,7 @@
                                     <div>
                                         <label for="vin_number" class="flex items-center justify-between mb-2">
                                             <span class="bp-spec text-ink">{{ trans('contact.vin_number') }}</span>
-                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.09</span>
+                                            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.09</span>
                                         </label>
                                         <input type="text" id="vin_number" x-model="form.vin_number" maxlength="17"
                                                class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tracking-[0.1em] uppercase
@@ -298,12 +299,12 @@
                             <div x-show="form.subject_type === 'b2b_partnership'" x-cloak x-collapse>
                                 <div class="flex items-center gap-3 mb-3 pt-2">
                                     <span class="w-6 h-[2px] bg-amber inline-block"></span>
-                                    <span class="bp-spec text-amber-ink">§ {{ trans('contact.section_b2b_details') }}</span>
+                                    <span class="bp-spec text-amber-ink">{{ trans('contact.section_b2b_details') }}</span>
                                 </div>
                                 <div>
                                     <label for="company" class="flex items-center justify-between mb-2">
                                         <span class="bp-spec text-ink">{{ trans('contact.company_name') }}</span>
-                                        <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.10</span>
+                                        <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.10</span>
                                     </label>
                                     <input type="text" id="company" x-model="form.manufacturer"
                                            class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
@@ -316,7 +317,7 @@
                             <div>
                                 <label for="message" class="flex items-center justify-between mb-2">
                                     <span class="bp-spec text-ink">{{ trans('contact.message') }} <span class="text-red-600">*</span></span>
-                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">§ 01.11</span>
+                                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.11</span>
                                 </label>
                                 <textarea id="message" x-model="form.message" required rows="6"
                                           class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
@@ -364,7 +365,7 @@
             {{-- ── Info rail ── --}}
             <aside class="col-span-12 lg:col-span-4 space-y-6">
                 <div class="flex items-end justify-between pb-3 border-b border-ink">
-                    <span class="bp-spec text-ink">§ 02 · {{ __('Info · Rail') }}</span>
+                    <span class="bp-spec text-ink">02 · {{ __('Info · Rail') }}</span>
                 </div>
 
                 <div class="border border-ink bg-paper">
@@ -401,7 +402,7 @@
 
                 {{-- Quick actions panel --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">§ {{ __('Shortcut · Panel') }}</p>
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Shortcut · Panel') }}</p>
                     <p class="font-display text-lg font-extrabold tracking-[-0.02em] leading-tight">
                         {{ __('Looking for a part?') }}
                     </p>
@@ -461,10 +462,14 @@ function contactForm() {
             this.resetMsgs();
             this.submitting = true;
             try {
+                const honeypotData = {};
+                document.querySelectorAll('[name^="my_name"], [name="valid_from"]').forEach(el => {
+                    honeypotData[el.name] = el.value;
+                });
                 const res = await fetch(submitUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
-                    body: JSON.stringify(this.form),
+                    body: JSON.stringify({ ...this.form, ...honeypotData }),
                 });
                 const data = await res.json();
                 if (res.ok && data.success) {

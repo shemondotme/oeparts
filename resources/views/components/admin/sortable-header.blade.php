@@ -13,12 +13,13 @@
     }
 @endphp
 
-<th {{ $attributes->merge(['scope' => 'col', 'class' => 'cursor-pointer px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-500 transition-colors hover:bg-slate-50/90']) }}
+<th {{ $attributes->merge(['scope' => 'col', 'class' => 'cursor-pointer px-5 py-3.5 text-left text-[11px] font-semibold uppercase tracking-[0.08em] transition-colors']) }}
+    style="color: var(--color-text-muted);"
     @if($sortBy) data-sort-by="{{ $sortBy }}" @endif>
     <div class="flex items-center gap-1">
         {{ $slot }}
         @if($sortBy)
-            <x-dynamic-component :component="$icon" class="h-3 w-3 text-slate-400" />
+            <x-dynamic-component :component="$icon" class="h-3 w-3" style="color: var(--color-text-muted);" />
         @endif
     </div>
 </th>

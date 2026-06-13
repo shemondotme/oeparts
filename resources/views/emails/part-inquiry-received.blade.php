@@ -1,4 +1,4 @@
-@extends('emails.layout')
+﻿@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -12,7 +12,7 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § SUPPORT · INQUIRY RECEIVED
+                    SUPPORT · INQUIRY RECEIVED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     We have received your request<span class="text-amber">.</span>
@@ -77,7 +77,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    § WHAT HAPPENS NEXT
+                    WHAT HAPPENS NEXT
                 </p>
                 <ul style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 22px; color: #0A1228;">
                     <li style="margin-bottom: 8px;">Our specialists verify the part number against manufacturer catalogs.</li>

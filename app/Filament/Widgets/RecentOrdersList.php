@@ -10,11 +10,21 @@ use Filament\Widgets\TableWidget;
 
 class RecentOrdersList extends TableWidget
 {
-    protected static ?int $sort = -17;
+    public function getDescription(): ?string
+    {
+        return 'Most recent orders placed';
+    }
+
+    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+
+    protected ?string $pollingInterval = '60s';
+
+    protected static ?int $sort = -35;
 
     protected static ?string $heading = 'Recent Orders';
 
-    protected static ?string $maxWidth = '1/3';
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
     public function table(Table $table): Table
     {
@@ -22,6 +32,7 @@ class RecentOrdersList extends TableWidget
             ->query(
                 Order::query()
                     ->with(['user'])
+                    ->where('created_at', '>=', $this->periodStart())
                     ->latest()
                     ->limit(5)
             )

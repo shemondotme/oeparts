@@ -6,6 +6,7 @@ use App\Enums\EmailTemplate;
 use App\Enums\LogStatus;
 use App\Models\EmailLog;
 use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Support\Facades\Log;
 
 class LogEmailSent
 {
@@ -43,16 +44,23 @@ class LogEmailSent
             $relatedType = 'order';
         }
 
-        // Create log entry
-        EmailLog::create([
-            'to_email' => $toEmail,
-            'subject' => $subject,
-            'template_type' => $templateType,
-            'related_id' => $relatedId,
-            'related_type' => $relatedType,
-            'status' => LogStatus::Success,
-            'sent_at' => now(),
-        ]);
+        try {
+            EmailLog::create([
+                'to_email' => $toEmail,
+                'subject' => $subject,
+                'template_type' => $templateType,
+                'related_id' => $relatedId,
+                'related_type' => $relatedType,
+                'status' => LogStatus::Success,
+                'sent_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to log email sent', [
+                'to_email' => $toEmail,
+                'subject' => $subject,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

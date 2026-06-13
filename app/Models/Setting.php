@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use App\Enums\SettingType;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Crypt;
 
 class Setting extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['group', 'key', 'value', 'type', 'is_encrypted'];
 
     protected function casts(): array

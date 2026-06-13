@@ -1,4 +1,4 @@
-@php
+﻿@php
     $lang     = app()->getLocale();
     $siteName = settings('general.site_name', 'OeParts');
     $tagline  = settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.');
@@ -54,7 +54,7 @@
                 </div>
 
                 <div class="min-w-0">
-                    <p class="bp-spec-light mb-3">§ 99 · COLOPHON · OEPARTS/EU</p>
+                    <p class="bp-spec-light mb-3">99 · COLOPHON · OEPARTS/EU</p>
                     <h2 class="font-display text-4xl sm:text-5xl font-extrabold tracking-[-0.03em] leading-[0.95]">
                         {{ $siteName }}<span class="text-amber">.</span>
                     </h2>
@@ -72,15 +72,15 @@
             <dl class="grid grid-cols-3 gap-0 border-l border-white/15 divide-x divide-white/15 shrink-0">
                 <div class="px-5 py-2">
                     <dt class="bp-spec-light">Parts</dt>
-                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">1M<span class="text-base align-top">+</span></dd>
+                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">{{ settings('footer.stat_parts', '1M+') }}</dd>
                 </div>
                 <div class="px-5 py-2">
                     <dt class="bp-spec-light">Countries</dt>
-                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">27</dd>
+                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">{{ settings('footer.stat_countries', '27') }}</dd>
                 </div>
                 <div class="px-5 py-2">
                     <dt class="bp-spec-light">Languages</dt>
-                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">05</dd>
+                    <dd class="mt-1 font-mono text-2xl sm:text-3xl font-bold text-amber tabular-nums leading-none tracking-tight">{{ settings('footer.stat_languages', '05') }}</dd>
                 </div>
             </dl>
         </div>
@@ -91,15 +91,15 @@
             {{-- Column 1 — Catalogue --}}
             <div class="sm:border-r border-white/15 py-10 sm:pr-8 lg:pr-10">
                 <div class="flex items-baseline gap-3 mb-5">
-                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§01</span>
-                    <h3 class="bp-spec-light">Catalogue</h3>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">01</span>
+                    <h3 class="bp-spec-light">{{ __('Catalogue') }}</h3>
                 </div>
                 <ul class="space-y-3">
                     @foreach([
-                        [route('frontend.search.console', ['lang' => $lang]), 'Search by OEM'],
-                        [url('/'.$lang.'/brands'),  'Browse Brands'],
-                        [url('/'.$lang.'/blog'),    'Journal'],
-                        [url('/'.$lang.'/contact'), 'Contact'],
+                        [route('frontend.search.console', ['lang' => $lang]), __('Search by OEM')],
+                        [url('/'.$lang.'/brands'),  __('Browse Brands')],
+                        [url('/'.$lang.'/blog'),    __('Journal')],
+                        [url('/'.$lang.'/contact'), __('Contact')],
                     ] as [$href, $label])
                         <li>
                             <a href="{{ $href }}"
@@ -115,16 +115,16 @@
             {{-- Column 2 — Account --}}
             <div class="lg:border-r border-white/15 py-10 sm:pl-8 lg:pr-10 lg:pl-10 border-t sm:border-t-0">
                 <div class="flex items-baseline gap-3 mb-5">
-                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§02</span>
-                    <h3 class="bp-spec-light">Account</h3>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">02</span>
+                    <h3 class="bp-spec-light">{{ __('Account') }}</h3>
                 </div>
                 <ul class="space-y-3">
                     @auth
                         @foreach([
-                            [url('/'.$lang.'/account/dashboard'), 'Dashboard'],
-                            [url('/'.$lang.'/account/orders'),    'Orders'],
-                            [url('/'.$lang.'/account/addresses'), 'Addresses'],
-                            [url('/'.$lang.'/account/refunds'),   'Refunds'],
+                            [url('/'.$lang.'/account/dashboard'), __('Dashboard')],
+                            [url('/'.$lang.'/account/orders'),    __('Orders')],
+                            [url('/'.$lang.'/account/addresses'), __('Addresses')],
+                            [url('/'.$lang.'/account/refunds'),   __('Refunds')],
                         ] as [$href, $label])
                             <li>
                                 <a href="{{ $href }}" class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
@@ -139,7 +139,7 @@
                                @click.prevent="$dispatch('open-auth-modal')"
                                class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                                 <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
-                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">Sign in</span>
+                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ __('Sign in') }}</span>
                             </a>
                         </li>
                         <li>
@@ -147,14 +147,14 @@
                                @click.prevent="$dispatch('open-auth-modal', { tab: 'register' })"
                                class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                                 <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
-                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">Register</span>
+                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ __('Register') }}</span>
                             </a>
                         </li>
                     @endauth
                     <li>
                         <a href="{{ url('/'.$lang.'/cart') }}" class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                             <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
-                            <span class="border-b border-transparent group-hover:border-amber pb-[1px]">Basket</span>
+                            <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ __('Basket') }}</span>
                         </a>
                     </li>
                 </ul>
@@ -163,31 +163,31 @@
             {{-- Column 3 — Contact spec-sheet --}}
             <div class="sm:border-r border-white/15 py-10 sm:pr-8 lg:pr-10 lg:pl-10 border-t lg:border-t-0">
                 <div class="flex items-baseline gap-3 mb-5">
-                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§03</span>
-                    <h3 class="bp-spec-light">Contact</h3>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">03</span>
+                    <h3 class="bp-spec-light">{{ __('Contact') }}</h3>
                 </div>
 
                 <dl class="space-y-4 text-sm">
                     <div>
-                        <dt class="bp-spec-light text-[9px]">Phone</dt>
+                        <dt class="bp-spec-light text-[9px]">{{ __('Phone') }}</dt>
                         <dd class="mt-1">
                             <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
                                class="font-mono text-ivory hover:text-amber transition-colors tabular-nums">
-                                {{ $phone ?: '+370 600 00000' }}
+                                {{ $phone ?: settings('contact.phone', '+370 600 00000') }}
                             </a>
                         </dd>
                     </div>
                     <div>
-                        <dt class="bp-spec-light text-[9px]">Email</dt>
+                        <dt class="bp-spec-light text-[9px]">{{ __('Email') }}</dt>
                         <dd class="mt-1">
                             <a href="mailto:{{ $email }}"
                                class="text-ivory hover:text-amber transition-colors">
-                                {{ $email ?: 'info@oeparts.lt' }}
+                                {{ $email ?: settings('contact.email', 'info@oeparts.lt') }}
                             </a>
                         </dd>
                     </div>
                     <div>
-                        <dt class="bp-spec-light text-[9px]">Hours</dt>
+                        <dt class="bp-spec-light text-[9px]">{{ __('Hours') }}</dt>
                         <dd class="mt-1 font-mono text-ivory/80 text-[13px]">{{ $hours }}</dd>
                     </div>
                 </dl>
@@ -215,8 +215,8 @@
             {{-- Column 4 — Languages + payments --}}
             <div class="py-10 sm:pl-8 lg:pl-10 border-t sm:border-t-0">
                 <div class="flex items-baseline gap-3 mb-5">
-                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">§04</span>
-                    <h3 class="bp-spec-light">Languages</h3>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">04</span>
+                    <h3 class="bp-spec-light">{{ __('Languages') }}</h3>
                 </div>
 
                 <div class="grid grid-cols-5 gap-1 mb-8">
@@ -232,9 +232,9 @@
                     @endforeach
                 </div>
 
-                <p class="bp-spec-light mb-3">Payments</p>
+                <p class="bp-spec-light mb-3">{{ __('Payments') }}</p>
                 <div class="flex flex-wrap gap-1.5">
-                    @foreach(['VISA', 'MASTERCARD', 'STRIPE', 'APPLE PAY', 'GOOGLE PAY', 'SEPA'] as $method)
+                    @foreach(settings('footer.payment_methods', ['VISA', 'MASTERCARD', 'APPLE PAY', 'GOOGLE PAY', 'SEPA', 'BANK TRANSFER']) as $method)
                         <span class="inline-flex items-center h-8 px-3 border border-white/25 font-mono text-[10px] font-bold tracking-[0.16em] text-ivory/80 whitespace-nowrap">
                             {{ $method }}
                         </span>
@@ -250,8 +250,8 @@
                     <x-heroicon-s-lock-closed class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">SSL Encrypted</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">TLS 1.3</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.security_badge_text', 'SSL Encrypted') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.security_badge_subtext', 'TLS 1.3') }}</p>
                 </div>
             </div>
             <div class="flex items-start gap-3 p-5">
@@ -259,8 +259,8 @@
                     <x-heroicon-o-truck class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">EU-Wide Despatch</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">DHL · DPD · GLS</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.shipping_badge_text', 'EU-Wide Despatch') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.shipping_badge_subtext', 'DHL · DPD · GLS') }}</p>
                 </div>
             </div>
             <div class="flex items-start gap-3 p-5">
@@ -268,8 +268,8 @@
                     <x-heroicon-o-arrow-path class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">Return Window</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">14 Days</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.returns_badge_text', 'Return Window') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.returns_badge_subtext', '14 Days') }}</p>
                 </div>
             </div>
             <div class="flex items-start gap-3 p-5">
@@ -277,25 +277,9 @@
                     <x-heroicon-s-shield-check class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">Genuine OEM</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">Verified Source</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.oem_badge_text', 'Genuine OEM') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.oem_badge_subtext', 'Verified Source') }}</p>
                 </div>
-            </div>
-        </div>
-
-        {{-- ═══ Oversize wordmark stamp ═══ --}}
-        <div class="relative py-10 overflow-hidden border-b border-white/15">
-            <p aria-hidden="true"
-               class="select-none pointer-events-none font-display font-extrabold tracking-[-0.05em] leading-[0.78]
-                      text-[clamp(3.5rem,13vw,11rem)] text-ivory/[0.06]">
-                OEPARTS<span class="text-amber/20">.</span>
-            </p>
-            {{-- Floating meta --}}
-            <div class="absolute inset-0 flex items-center justify-between px-0 pointer-events-none">
-                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-ivory/60">§100 · SIGN-OFF</span>
-                <span class="hidden md:inline font-mono text-[10px] tracking-[0.28em] uppercase text-ivory/60">
-                    GENUINE OEM · EU-WIDE
-                </span>
             </div>
         </div>
 

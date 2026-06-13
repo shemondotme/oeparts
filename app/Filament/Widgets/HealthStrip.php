@@ -10,20 +10,43 @@ use Illuminate\Support\Facades\Storage;
 
 class HealthStrip extends BaseWidget
 {
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+
+    public function getDescription(): ?string
+    {
+        return 'Real-time system health indicators';
+    }
+
     protected static bool $isLazy = false;
 
-    protected static ?int $sort = -8;
+    protected static ?int $sort = -30;
 
     protected ?string $heading = 'System Health';
 
+    protected int | string | array $columnSpan = 'full';
+
+    protected ?string $pollingInterval = '30s';
+
     protected function getStats(): array
     {
-        $dbStatus = $this->checkDatabase();
-        $redisStatus = $this->checkRedis();
-        $queueStatus = $this->checkQueue();
-        $storageStatus = $this->checkStorage();
-        $schedulerStatus = $this->checkScheduler();
-        $cacheStatus = $this->checkCache();
+        // SHORT_TTL (15s) keeps the strip live while halving the cost of the
+        // 30s polling — concurrent dashboards share one check run.
+        $checks = $this->cachedHealthData('checks', fn (): array => [
+            'db' => $this->checkDatabase(),
+            'redis' => $this->checkRedis(),
+            'queue' => $this->checkQueue(),
+            'storage' => $this->checkStorage(),
+            'scheduler' => $this->checkScheduler(),
+            'cache' => $this->checkCache(),
+        ]);
+
+        $dbStatus = $checks['db'];
+        $redisStatus = $checks['redis'];
+        $queueStatus = $checks['queue'];
+        $storageStatus = $checks['storage'];
+        $schedulerStatus = $checks['scheduler'];
+        $cacheStatus = $checks['cache'];
 
         return [
             Stat::make('Database', $dbStatus['label'])

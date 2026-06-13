@@ -2,10 +2,13 @@
 
 namespace App\Filament\Resources\ShippingZoneResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Actions;
 use Filament\Tables\Table;
 
 class CountriesRelationManager extends RelationManager
@@ -37,16 +40,18 @@ class CountriesRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        return $table
+        return AdminUi::configureTable($table)
             ->recordTitleAttribute('country_name')
             ->columns([
                 Tables\Columns\TextColumn::make('country_code')
                     ->label('Code')
                     ->badge()
+                    ->color('gray')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('country_name')
                     ->label('Country')
-                    ->searchable(),
+                    ->searchable()
+                    ->weight(FontWeight::Medium),
             ])
             ->headerActions([
                 Actions\CreateAction::make(),
@@ -61,16 +66,15 @@ class CountriesRelationManager extends RelationManager
                     }),
             ])
             ->actions([
-                Actions\EditAction::make(),
-                Actions\DetachAction::make(),
-                Actions\DeleteAction::make(),
+                ...AdminUi::recordActionsWithoutView(
+                    before: [Actions\DetachAction::make()],
+                ),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     Actions\DetachBulkAction::make(),
                     Actions\DeleteBulkAction::make(),
                 ]),
-            ])
-            ->paginated(false);
+            ]);
     }
 }

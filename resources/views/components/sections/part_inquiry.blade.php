@@ -1,4 +1,4 @@
-{{-- Section: part_inquiry (Industrial Blueprint)
+﻿{{-- Section: part_inquiry (Industrial Blueprint)
      content: eyebrow(ml), headline(ml), subheadline(ml), button_text(ml)
      Inline quick-inquiry form posting to /api/inquiry.
 --}}
@@ -26,7 +26,7 @@
                 @if($eyebrow)
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">§ {{ $eyebrow }}</span>
+                    <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ $eyebrow }}</span>
                 </div>
                 @endif
 
@@ -131,7 +131,7 @@
                         <span class="font-mono text-[10px] tracking-[0.22em] uppercase font-bold text-ink">
                             Form · Quick Inquiry
                         </span>
-                        <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                        <span class="bp-spec-mono">
                             REV · {{ now()->format('Y.m') }}
                         </span>
                     </div>
@@ -145,7 +145,7 @@
                             {{-- OEM Part Number --}}
                             <div>
                                 <label for="inquiry-oem" class="bp-spec mb-2 inline-block">
-                                    § OEM Part Number <span class="text-red-600">*</span>
+                                    {{ __('OEM Part Number') }} <span class="text-red-600">*</span>
                                 </label>
                                 <input type="text"
                                        x-model="oem"
@@ -160,14 +160,14 @@
                                        aria-describedby="inquiry-oem-error">
                                 <p x-show="state === 'error' && !oem" id="inquiry-oem-error" role="alert"
                                    class="mt-2 font-mono text-[11px] uppercase tracking-wider text-red-600">
-                                    OEM part number is required.
+                                    {{ __('OEM part number is required.') }}
                                 </p>
                             </div>
 
                             {{-- Email --}}
                             <div>
                                 <label for="inquiry-email" class="bp-spec mb-2 inline-block">
-                                    § Email address <span class="text-red-600">*</span>
+                                    {{ __('Email address') }} <span class="text-red-600">*</span>
                                 </label>
                                 <input type="email"
                                        inputmode="email"
@@ -181,7 +181,7 @@
                                        aria-describedby="inquiry-email-error">
                                 <p x-show="state === 'error' && !email" id="inquiry-email-error" role="alert"
                                    class="mt-2 font-mono text-[11px] uppercase tracking-wider text-red-600">
-                                    Email address is required.
+                                    {{ __('Email address is required.') }}
                                 </p>
                             </div>
 
@@ -194,7 +194,7 @@
                                         class="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
                                     <x-heroicon-o-plus-small class="w-4 h-4" x-show="!expanded" />
                                     <x-heroicon-o-minus-small class="w-4 h-4" x-show="expanded" x-cloak />
-                                    <span x-text="expanded ? '§ Hide Vehicle Details' : '§ Add Vehicle Details (optional)'"></span>
+                                    <span x-text="expanded ? 'Hide Vehicle Details' : 'Add Vehicle Details (optional)'"></span>
                                 </button>
 
                                 <div id="vehicle-details-panel" x-show="expanded" x-collapse x-cloak class="mt-5 space-y-4">
@@ -245,13 +245,13 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    Transmitting...
+                                    {{ __('Transmitting...') }}
                                 </span>
                             </button>
 
-                            <p class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink-muted">
+                            <p class="flex items-center gap-2 bp-spec-mono">
                                 <x-heroicon-s-lock-closed class="w-3 h-3 text-amber-ink" />
-                                Secure · TLS 1.3 · Response within 24 h
+                                {{ __('Secure · TLS 1.3 · Response within 24 h') }}
                             </p>
                         </form>
                     </div>
@@ -262,18 +262,18 @@
                             <x-heroicon-s-check class="w-6 h-6 text-amber" />
                         </div>
                         <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink mb-3">
-                            § Status · Received
+                            {{ __('Status · Received') }}
                         </p>
                         <h3 class="font-display text-3xl font-extrabold text-ink mb-3 tracking-tight">
-                            Inquiry logged<span class="text-amber">.</span>
+                            {{ __('Inquiry logged') }}<span class="text-amber">.</span>
                         </h3>
                         <p class="text-body max-w-sm mx-auto mb-8">
-                            We will review your request and respond within 24 hours.
+                            {{ __('We will review your request and respond within 24 hours.') }}
                         </p>
                         <button @click="reset()"
                                 class="inline-flex items-center gap-2 bp-spec text-ink hover:text-amber-ink transition-colors">
                             <x-heroicon-o-arrow-path class="w-4 h-4" />
-                            Submit another inquiry
+                            {{ __('Submit another inquiry') }}
                         </button>
                     </div>
                 </div>

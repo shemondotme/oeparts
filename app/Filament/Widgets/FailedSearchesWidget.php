@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\PartInquiryResource;
 use App\Models\FailedSearchLog;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -9,18 +10,28 @@ use Filament\Widgets\TableWidget;
 
 class FailedSearchesWidget extends TableWidget
 {
-    protected static ?int $sort = -14;
+    public function getDescription(): ?string
+    {
+        return 'Searches with zero results';
+    }
+
+    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+
+    protected ?string $pollingInterval = '120s';
+
+    protected static ?int $sort = -32;
 
     protected static ?string $heading = 'Failed Searches (Sourcing Opportunities)';
 
-    protected static ?string $maxWidth = '1/2';
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
                 FailedSearchLog::query()
-                    ->where('created_at', '>=', now()->subDays(7))
+                    ->where('created_at', '>=', $this->periodStart())
                     ->latest()
                     ->limit(8)
             )
@@ -38,6 +49,13 @@ class FailedSearchesWidget extends TableWidget
                     ->label('Date')
                     ->since()
                     ->sortable(),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('inquire')
+                    ->label('Inquire')
+                    ->icon('heroicon-o-chat-bubble-left-right')
+                    ->color('info')
+                    ->url(fn ($record): string => PartInquiryResource::getUrl('create', ['data' => ['search' => $record->search_query]])),
             ])
             ->searchable(false)
             ->paginated(false);
