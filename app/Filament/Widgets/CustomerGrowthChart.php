@@ -60,8 +60,11 @@ class CustomerGrowthChart extends ChartWidget implements \App\Filament\Support\D
                 [
                     'label' => 'New Customers',
                     'data' => $cached['values'],
-                    'backgroundColor' => '#0B3A68',
-                    'borderRadius' => 2,
+                    'backgroundColor' => 'function(ctx){const c=ctx.chart.ctx;const g=c.createLinearGradient(0,0,0,300);g.addColorStop(0,"rgba(129,140,248,0.8)");g.addColorStop(1,"rgba(99,102,241,0.5)");return g;}',
+                    'hoverBackgroundColor' => 'function(ctx){const c=ctx.chart.ctx;const g=c.createLinearGradient(0,0,0,300);g.addColorStop(0,"rgba(167,139,250,0.9)");g.addColorStop(1,"rgba(129,140,248,0.6)");return g;}',
+                    'borderColor' => '#6366F1',
+                    'borderWidth' => 1,
+                    'borderRadius' => 8,
                 ],
             ],
             'labels' => $cached['labels'],
@@ -81,7 +84,7 @@ class CustomerGrowthChart extends ChartWidget implements \App\Filament\Support\D
                     ],
                 ],
                 'y' => [
-                    'grid' => ['color' => 'rgba(0,0,0,0.04)', 'drawBorder' => false],
+                    'grid' => ['color' => 'rgba(255,255,255,0.06)', 'drawBorder' => false],
                     'ticks' => [
                         'precision' => 0,
                         'font' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\OrderItem;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -35,6 +36,16 @@ class Manufacturer extends Model
     public function carModels(): HasMany
     {
         return $this->hasMany(CarModel::class);
+    }
+
+    public function orderItems(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(
+            OrderItem::class,
+            Product::class,
+            'manufacturer_id',
+            'product_id',
+        );
     }
 
     public function scopeActive($q)

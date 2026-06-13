@@ -29,8 +29,8 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
     public function getStats(): array
     {
         $d = $this->cachedWidgetData(function (): array {
-            $top = \App\Models\Manufacturer::withCount(['orders' => fn ($q) => $q->where('created_at', '>=', $this->periodStart())])
-                ->orderByDesc('orders_count')
+            $top = \App\Models\Manufacturer::withCount(['orderItems' => fn ($q) => $q->whereHas('order', fn ($oq) => $oq->where('created_at', '>=', $this->periodStart()))])
+                ->orderByDesc('order_items_count')
                 ->first();
 
             return [
@@ -38,14 +38,14 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
                 'activeManufacturers' => \App\Models\Manufacturer::where('is_active', true)->count(),
                 'topId' => $top?->id,
                 'topName' => $top ? \App\Filament\Support\AdminUi::localizedName($top->name, '—') : null,
-                'topOrders' => $top?->orders_count ?? 0,
+                'topOrders' => $top?->order_items_count ?? 0,
             ];
         });
 
         return [
             Stat::make('Total Manufacturers', $d['manufacturers'])
                 ->description("{$d['activeManufacturers']} active")
-                ->descriptionIcon('heroicon-o-building-factory')
+                ->descriptionIcon('heroicon-o-building-office-2')
                 ->color('info')
                 ->url(ManufacturerResource::getUrl('index')),
             Stat::make('Top Manufacturer (' . $this->periodLabel() . ')', $d['topName'] ?? '—')

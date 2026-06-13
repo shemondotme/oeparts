@@ -13,6 +13,8 @@ use Filament\Widgets\WidgetConfiguration;
 
 class Dashboard extends BaseDashboard
 {
+    protected string $view = 'filament.pages.dashboard';
+
     public string $period = '30';
 
     public bool $editMode = false;
@@ -35,10 +37,12 @@ class Dashboard extends BaseDashboard
         }
     }
 
-    public function updatedPeriod($value): void
+    #[\Livewire\Attributes\Renderless]
+    public function setPeriod(string $period): void
     {
-        app(WidgetPreferenceService::class)->savePeriod((string) $value);
-        $this->dispatch('period-changed', period: (string) $value);
+        $this->period = $period;
+        app(WidgetPreferenceService::class)->savePeriod($period);
+        $this->dispatch('period-changed', period: $period);
     }
 
     public function toggleEditMode(): void
@@ -249,7 +253,7 @@ class Dashboard extends BaseDashboard
                 ->color('gray')
                 ->modalHeading('Dashboard Widgets')
                 ->modalDescription('Select the widgets you want to display on your dashboard.')
-                ->modalWidth(Width::ExtraLarge)
+                ->modalWidth(Width::TwoExtraLarge)
                 ->modalSubmitActionLabel('Save')
                 ->mountUsing(function () {
                     $this->widgetSelections = array_column($this->getCanvasItems(), 'id');
@@ -281,7 +285,6 @@ class Dashboard extends BaseDashboard
                         'widgets' => $widgets,
                     ]);
                 })
-                ->form([])
                 ->action(function () {
                     $admin    = auth('admin')->user();
                     $service  = app(WidgetPreferenceService::class);
@@ -312,6 +315,8 @@ class Dashboard extends BaseDashboard
                         ->title('Widget preferences updated')
                         ->success()
                         ->send();
+
+                    $this->redirect(route('filament.admin.pages.dashboard'));
                 }),
         ];
     }
