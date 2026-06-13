@@ -2656,18 +2656,24 @@ select.fi-select-input {
 
 /* Placeholder styling - widget info section */
 .fi-form-field-wrapper.fi-repeater-field .fi-placeholder-wrapper {
-    @apply p-4 pb-2;
+    @apply p-4 pb-3;
 }
 
-/* Toggle field styling - remove default spacing */
+/* Toggle field styling - make it horizontal */
 .fi-form-field-wrapper.fi-repeater-field .fi-toggle-field {
-    @apply m-0 p-4 pt-2 border-t border-gray-200 dark:border-gray-700;
+    @apply m-0 p-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3;
 }
 
-/* Add "Enabled" text label before toggle */
+/* Toggle field wrapper - flex container */
+.fi-form-field-wrapper.fi-repeater-field .fi-toggle-field > div {
+    @apply flex items-center gap-2 w-full;
+}
+
+/* Add "Enabled" text label inline */
 .fi-form-field-wrapper.fi-repeater-field .fi-toggle-field::before {
     content: "Enabled";
-    @apply block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2;
+    @apply text-sm font-medium text-gray-900 dark:text-gray-100;
+    order: -1;
 }
 
 /* Hide the hidden fields */
