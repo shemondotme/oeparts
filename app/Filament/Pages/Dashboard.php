@@ -5,12 +5,6 @@ namespace App\Filament\Pages;
 use App\Services\DashboardLayoutService;
 use App\Services\WidgetPreferenceService;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Placeholder;
-use Filament\Forms\Components\Hidden;
-use Filament\Schemas\Components\Grid;
-use Illuminate\Support\HtmlString;
 use Filament\Notifications\Notification;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Support\Enums\Width;
@@ -251,87 +245,44 @@ class Dashboard extends BaseDashboard
                 ->icon('heroicon-o-squares-2x2')
                 ->color('gray')
                 ->modalHeading('Dashboard Widgets')
-                ->modalDescription('Drag widgets to reorder them and toggle switches to show/hide them on your dashboard.')
+                ->modalDescription('Select the widgets you want to display on your dashboard.')
                 ->modalWidth(Width::Large)
                 ->modalSubmitActionLabel('Save Preferences')
-                ->fillForm(function () {
-                    $admin = auth('admin')->user();
-                    $onCanvas = array_column($this->getCanvasItems(), 'id');
-
-                    $items = [];
-                    foreach (WidgetPreferenceService::WIDGETS as $id => $config) {
-                        if (! $admin || ! $admin->hasAnyRole($config['roles'])) {
-                            continue;
-                        }
-
-                        $items[] = [
-                            'id' => $id,
-                            'label' => $config['label'],
-                            'enabled' => in_array($id, $onCanvas, true),
-                        ];
-                    }
-
-                    return [
-                        'widgets' => $items,
-                    ];
-                })
+                ->modalContent(fn () => view('filament.modals.widget-management', [
+                    'getCanvasItems' => fn () => $this->getCanvasItems(),
+                    'getWidgetDescription' => fn ($id) => $this->getWidgetDescription($id),
+                    'getWidgetIconSvg' => fn ($id) => $this->getWidgetIconSvg($id),
+                ]))
                 ->form([
-                    Repeater::make('widgets')
-                        ->label('')
-                        ->schema([
-                            Placeholder::make('info')
-                                ->label('')
-                                ->columnSpan('full')
-                                ->content(fn ($get) => new HtmlString(
-                                    '<div class="flex items-center gap-3">' .
-                                        '<div class="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 flex-shrink-0">' .
-                                            $this->getWidgetIconSvg($get('id')) .
-                                        '</div>' .
-                                        '<div class="flex-grow min-w-0">' .
-                                            '<div class="text-sm font-medium text-gray-900 dark:text-gray-100">' . e($get('label')) . '</div>' .
-                                            '<div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 mt-0.5">' . e($this->getWidgetDescription($get('id'))) . '</div>' .
-                                        '</div>' .
-                                    '</div>'
-                                )),
-
-                            Toggle::make('enabled')
-                                ->label('')
-                                ->inline(false)
-                                ->columnSpan('full'),
-
-                            Hidden::make('id'),
-                            Hidden::make('label'),
-                        ])
-                        ->addable(false)
-                        ->deletable(false)
-                        ->collapsible(false)
-                        ->cloneable(false)
-                        ->reorderable(true)
-                        ->itemLabel(fn ($state) => $state['label'] ?? null)
+                    \Filament\Forms\Components\TextInput::make('widgets')
+                        ->hidden(),
                 ])
                 ->action(function (array $data) {
                     $admin = auth('admin')->user();
                     $service = app(WidgetPreferenceService::class);
                     $knownIds = $service->widgetIds();
 
+                    // Decode the widget data from the modal
+                    $widgets = json_decode($data['widgets'] ?? '[]', true) ?? [];
+
                     $enabledIds = [];
                     $prefs = [];
                     $sort = 1;
 
-                    foreach ($data['widgets'] ?? [] as $item) {
+                    foreach ($widgets as $item) {
                         $id = (string) ($item['id'] ?? '');
 
                         if (! in_array($id, $knownIds, true)) {
                             continue;
                         }
 
-                        if ($item['enabled'] ?? true) {
+                        if ($item['enabled'] ?? false) {
                             $enabledIds[] = $id;
                         }
 
                         // Legacy flat prefs stay in sync for back-compat.
                         $prefs[$id] = [
-                            'hidden' => !($item['enabled'] ?? true),
+                            'hidden' => !($item['enabled'] ?? false),
                             'sort' => $sort++,
                         ];
                     }
