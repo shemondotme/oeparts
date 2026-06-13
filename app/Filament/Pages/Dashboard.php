@@ -19,6 +19,9 @@ class Dashboard extends BaseDashboard
 
     public ?int $activeDashboardId = null;
 
+    /** Holds selected widget IDs while the Manage Widgets modal is open. */
+    public array $widgetSelections = [];
+
     public function mount(): void
     {
         $admin = auth('admin')->user();
@@ -246,51 +249,63 @@ class Dashboard extends BaseDashboard
                 ->color('gray')
                 ->modalHeading('Dashboard Widgets')
                 ->modalDescription('Select the widgets you want to display on your dashboard.')
-                ->modalWidth(Width::Large)
-                ->modalSubmitActionLabel('Save Preferences')
-                ->modalContent(fn () => view('filament.modals.widget-management', [
-                    'getCanvasItems' => fn () => $this->getCanvasItems(),
-                    'getWidgetDescription' => fn ($id) => $this->getWidgetDescription($id),
-                    'getWidgetIconSvg' => fn ($id) => $this->getWidgetIconSvg($id),
-                ]))
-                ->form([
-                    \Filament\Forms\Components\TextInput::make('widgets')
-                        ->hidden(),
-                ])
-                ->action(function (array $data) {
+                ->modalWidth(Width::ExtraLarge)
+                ->modalSubmitActionLabel('Save')
+                ->mountUsing(function () {
+                    $this->widgetSelections = array_column($this->getCanvasItems(), 'id');
+                })
+                ->modalContent(function () {
                     $admin = auth('admin')->user();
-                    $service = app(WidgetPreferenceService::class);
-                    $knownIds = $service->widgetIds();
+                    $onCanvas = array_column($this->getCanvasItems(), 'id');
 
-                    // Decode the widget data from the modal
-                    $widgets = json_decode($data['widgets'] ?? '[]', true) ?? [];
-
-                    $enabledIds = [];
-                    $prefs = [];
-                    $sort = 1;
-
-                    foreach ($widgets as $item) {
-                        $id = (string) ($item['id'] ?? '');
-
-                        if (! in_array($id, $knownIds, true)) {
+                    $widgets = [];
+                    foreach (WidgetPreferenceService::WIDGETS as $id => $config) {
+                        if (! $admin || ! $admin->hasAnyRole($config['roles'])) {
                             continue;
                         }
+                        $widgets[] = [
+                            'id'          => $id,
+                            'label'       => $config['label'],
+                            'enabled'     => in_array($id, $onCanvas, true),
+                            'description' => $this->getWidgetDescription($id),
+                            'icon'        => $this->getWidgetIconSvg($id),
+                        ];
+                    }
 
-                        if ($item['enabled'] ?? false) {
-                            $enabledIds[] = $id;
-                        }
+                    // Sort: enabled first, then alphabetical
+                    usort($widgets, fn ($a, $b) =>
+                        ($b['enabled'] <=> $a['enabled']) ?: strcmp($a['label'], $b['label'])
+                    );
 
-                        // Legacy flat prefs stay in sync for back-compat.
+                    return view('filament.modals.widget-management', [
+                        'widgets' => $widgets,
+                    ]);
+                })
+                ->form([])
+                ->action(function () {
+                    $admin    = auth('admin')->user();
+                    $service  = app(WidgetPreferenceService::class);
+                    $knownIds = $service->widgetIds();
+
+                    $enabledIds = array_values(array_filter(
+                        $this->widgetSelections,
+                        fn ($id) => in_array($id, $knownIds, true)
+                    ));
+
+                    $prefs = [];
+                    $sort  = 1;
+                    foreach ($knownIds as $id) {
                         $prefs[$id] = [
-                            'hidden' => !($item['enabled'] ?? false),
-                            'sort' => $sort++,
+                            'hidden' => ! in_array($id, $enabledIds, true),
+                            'sort'   => $sort++,
                         ];
                     }
 
                     $service->savePreferences($prefs);
 
                     if ($admin && $this->activeDashboardId) {
-                        app(DashboardLayoutService::class)->setWidgets($admin, $this->activeDashboardId, $enabledIds);
+                        app(DashboardLayoutService::class)
+                            ->setWidgets($admin, $this->activeDashboardId, $enabledIds);
                     }
 
                     Notification::make()
