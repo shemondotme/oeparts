@@ -584,9 +584,22 @@ a.fi-breadcrumbs-item-label:hover {
     border-bottom: 1px solid var(--color-border-subtle);
 }
 
+.fi-wi .fi-section-header {
+    background: rgba(99, 102, 241, 0.06);
+    border-bottom: 1px solid var(--glass-border);
+}
+
 .fi-section-header-heading {
     color: var(--color-text-primary);
     font-weight: 600;
+}
+
+.fi-wi .fi-section-header-heading {
+    background: var(--aurora-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
 }
 
 .fi-section-content-ctn {
@@ -602,7 +615,7 @@ a.fi-breadcrumbs-item-label:hover {
 }
 
 .fi-ta-table tbody tr:hover td:first-child {
-    box-shadow: inset 3px 0 0 0 var(--color-accent-500);
+    box-shadow: inset 3px 0 0 0 var(--aurora-indigo);
 }
 
 .fi-ta-table thead th {
@@ -627,6 +640,10 @@ a.fi-breadcrumbs-item-label:hover {
 .fi-wi .fi-ta-ctn {
     border: none;
     box-shadow: none;
+    overflow-y: auto;
+    max-height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-border) transparent;
 }
 
 .fi-wi .fi-ta-table tbody tr:hover {
@@ -727,20 +744,22 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
 /* ─── Stats / KPI Cards — Command Center ──────────────────────────────────── */
 
 .fi-wi-stats-overview-stat {
-    border-radius: var(--widget-radius);
+    border-radius: 20px;
     padding: 1.25rem;
-    box-shadow: var(--shadow-1);
+    box-shadow: var(--glass-shadow);
     transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
-    border: 1px solid var(--color-border-subtle);
-    background: var(--widget-bg);
+    border: 1px solid var(--glass-border);
+    border-top: 2px solid var(--aurora-indigo);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
     position: relative;
     overflow: hidden;
 }
 
 .fi-wi-stats-overview-stat:hover {
     transform: translateY(-2px);
-    box-shadow: var(--widget-shadow-hover);
-    border-color: var(--color-border-default);
+    box-shadow: var(--glass-shadow), var(--glass-glow);
+    border-color: var(--aurora-violet);
 }
 
 .fi-wi-stats-overview-stat::after {
@@ -750,7 +769,7 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
     left: 1.25rem;
     right: 1.25rem;
     height: 2px;
-    background: var(--color-accent-500);
+    background: var(--aurora-gradient);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 200ms ease;
@@ -773,7 +792,10 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
     font-size: var(--kpi-value-size);
     font-weight: var(--kpi-value-weight);
     font-family: var(--font-display);
-    color: var(--color-text-primary);
+    background: var(--aurora-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     line-height: 1.15;
     margin-top: 0.125rem;
 }
@@ -804,8 +826,8 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
     width: var(--kpi-icon-size);
     height: var(--kpi-icon-size);
     flex-shrink: 0;
-    background: var(--kpi-icon-bg);
-    color: var(--color-accent-500);
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--aurora-indigo);
 }
 
 .fi-wi-stats-overview .fi-section-header {
@@ -841,6 +863,11 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
 
 /* ─── Widget cards — Command Center ────────────────────────────────────────-- */
 
+.grid-stack-item-content {
+    overflow: hidden;
+    height: 100%;
+}
+
 .fi-wi {
     display: flex;
     flex-direction: column;
@@ -857,18 +884,20 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
     display: flex;
     flex-direction: column;
     margin-bottom: 0;
-    background: var(--widget-bg);
-    border: 1px solid var(--color-border-subtle);
-    border-radius: var(--widget-radius);
-    box-shadow: var(--widget-shadow);
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-top: 2px solid var(--aurora-indigo);
+    border-radius: 20px;
+    box-shadow: var(--glass-shadow);
     transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
     overflow: hidden;
 }
 
 .fi-wi .fi-section:hover {
-    box-shadow: var(--widget-shadow-hover);
-    transform: translateY(-1px);
-    border-color: var(--color-border-default);
+    box-shadow: var(--glass-shadow), var(--glass-glow);
+    transform: translateY(-2px);
+    border-color: var(--aurora-violet);
 }
 
 .fi-wi .fi-section > .fi-section-content-ctn {
@@ -876,12 +905,17 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: hidden;
 }
 
 .fi-wi .fi-section > .fi-section-content-ctn > .fi-section-content {
     flex-grow: 1;
     height: 100%;
     padding: var(--widget-body-padding);
+    overflow-y: auto;
+    max-height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-border) transparent;
 }
 
 .fi-wi {

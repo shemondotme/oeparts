@@ -82,7 +82,7 @@ class WidgetPreferenceService
             'financial' => true,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 3],
+            'default_layout' => ['w' => 6, 'h' => 4],
         ],
         'recent_orders' => [
             'class' => \App\Filament\Widgets\RecentOrdersList::class,

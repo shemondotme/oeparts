@@ -1,19 +1,19 @@
 <x-filament-panels::page class="fi-dashboard">
     <div x-data="{ period: '{{ $this->period }}' }" class="flex items-center justify-between mb-6">
-        <p class="text-xs text-gray-400 dark:text-gray-500">
-            Showing data for: <span class="font-semibold text-amber-500" x-text="({'1':'Today','7':'Last 7 days','30':'Last 30 days','90':'Last 90 days','365':'Last year'})[period]"></span>
+        <p class="text-xs" style="color: var(--color-text-muted);">
+            Showing data for: <span class="font-semibold" style="background: var(--aurora-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;" x-text="({'1':'Today','7':'Last 7 days','30':'Last 30 days','90':'Last 90 days','365':'Last year'})[period]"></span>
         </p>
-        <div class="flex items-center gap-1 p-1 rounded-lg bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700">
+        <div class="flex items-center gap-1" style="padding: 4px; border-radius: 12px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border);">
             @foreach(['1' => 'Today', '7' => '7d', '30' => '30d', '90' => '90d', '365' => '1y'] as $value => $label)
                 <button
                     type="button"
                     @click="period = '{{ $value }}'; $wire.call('setPeriod', '{{ $value }}')"
                     :aria-pressed="period === '{{ $value }}'"
                     aria-label="Show data for {{ $label }}"
-                    :class="period === '{{ $value }}'
-                        ? 'bg-amber-500 text-white shadow-sm'
-                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-                    class="px-3 py-1 text-xs font-semibold rounded-md transition-all duration-150"
+                    :style="period === '{{ $value }}'
+                        ? 'background: var(--aurora-gradient); color: white; box-shadow: var(--glass-shadow); border-radius: 8px;'
+                        : 'color: var(--color-text-muted); border-radius: 8px;'"
+                    class="px-3 py-1 text-xs font-semibold transition-all duration-150"
                 >{{ $label }}</button>
             @endforeach
         </div>

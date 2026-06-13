@@ -1,5 +1,5 @@
 <x-filament-widgets::widget class="fi-wi-quick-actions op-fade-in">
-    <div class="p-5 h-full flex flex-col" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-1);">
+    <div class="p-5 h-full flex flex-col" style="background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-top: 2px solid var(--aurora-indigo); border-radius: 20px; box-shadow: var(--glass-shadow);">
         <div class="flex items-center justify-between mb-4">
             <h2 class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--color-text-muted); font-family: var(--font-mono);">
                 Quick Actions
@@ -11,17 +11,17 @@
                 <a href="{{ $action['url'] }}" wire:navigate
                     class="op-focus-ring op-press flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 group"
                     style="border: 1px solid transparent;"
-                    onmouseover="this.style.borderColor='var(--color-border-default)'; this.style.background='var(--color-bg-inset)';"
+                    onmouseover="this.style.borderColor='var(--glass-border)'; this.style.background='rgba(99,102,241,0.06)';"
                     onmouseout="this.style.borderColor='transparent'; this.style.background='transparent';"
                 >
                     <div class="flex items-center gap-3">
                         @php
                         $colorStyles = [
-                            'warning' => 'background: var(--color-warning-50); color: var(--color-warning-600);',
-                            'info' => 'background: var(--color-info-50); color: var(--color-info-600);',
-                            'success' => 'background: var(--color-success-50); color: var(--color-success-600);',
-                            'gray' => 'background: var(--color-bg-inset); color: var(--color-text-muted);',
-                            'danger' => 'background: var(--color-danger-50); color: var(--color-danger-600);',
+                            'warning' => 'background: rgba(245,158,11,0.12); color: var(--aurora-violet);',
+                            'info'    => 'background: rgba(99,102,241,0.12); color: var(--aurora-indigo);',
+                            'success' => 'background: rgba(34,211,238,0.12); color: var(--aurora-cyan);',
+                            'gray'    => 'background: rgba(99,102,241,0.08); color: var(--aurora-blue);',
+                            'danger'  => 'background: rgba(244,63,94,0.12); color: var(--aurora-rose);',
                         ];
                     @endphp
                     <div class="p-1.5 rounded-lg flex items-center justify-center" style="{{ $colorStyles[$action['color']] ?? '' }}">
