@@ -82,7 +82,7 @@ class WidgetPreferenceService
             'financial' => true,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 12, 'h' => 3],
+            'default_layout' => ['w' => 6, 'h' => 3],
         ],
         'recent_orders' => [
             'class' => \App\Filament\Widgets\RecentOrdersList::class,
@@ -93,7 +93,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'default_layout' => ['w' => 8, 'h' => 4],
         ],
         'quick_actions' => [
             'class' => \App\Filament\Widgets\QuickActionsWidget::class,
@@ -115,7 +115,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'default_layout' => ['w' => 8, 'h' => 4],
         ],
         'failed_searches' => [
             'class' => \App\Filament\Widgets\FailedSearchesWidget::class,
@@ -126,7 +126,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'default_layout' => ['w' => 4, 'h' => 4],
         ],
         'alerts' => [
             'class' => \App\Filament\Widgets\DashboardAlerts::class,
@@ -137,7 +137,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 12, 'h' => 2],
+            'default_layout' => ['w' => 6, 'h' => 2],
         ],
         'health_strip' => [
             'class' => \App\Filament\Widgets\HealthStrip::class,
@@ -148,7 +148,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::SHORT_TTL,
-            'default_layout' => ['w' => 12, 'h' => 2],
+            'default_layout' => ['w' => 6, 'h' => 2],
         ],
         'manufacturer_revenue' => [
             'class' => \App\Filament\Widgets\TopManufacturersRevenue::class,
@@ -159,7 +159,7 @@ class WidgetPreferenceService
             'financial' => true,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'default_layout' => ['w' => 8, 'h' => 4],
         ],
         'customer_growth' => [
             'class' => \App\Filament\Widgets\CustomerGrowthChart::class,
@@ -192,7 +192,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'default_layout' => ['w' => 4, 'h' => 4],
         ],
         'order_status_distribution' => [
             'class' => \App\Filament\Widgets\OrderStatusDistribution::class,
@@ -203,7 +203,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'default_layout' => ['w' => 4, 'h' => 4],
         ],
         'payment_method_split' => [
             'class' => \App\Filament\Widgets\PaymentMethodSplit::class,
@@ -225,7 +225,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::LONG_TTL,
-            'default_layout' => ['w' => 12, 'h' => 4],
+            'default_layout' => ['w' => 6, 'h' => 4],
         ],
         'stock_alert' => [
             'class' => \App\Filament\Widgets\StockAlertWidget::class,
@@ -269,7 +269,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 2],
+            'default_layout' => ['w' => 4, 'h' => 2],
         ],
         'latest_customers' => [
             'class' => \App\Filament\Widgets\LatestCustomersWidget::class,
@@ -291,7 +291,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 2],
+            'default_layout' => ['w' => 4, 'h' => 2],
         ],
         'newsletter_growth' => [
             'class' => \App\Filament\Widgets\NewsletterGrowthWidget::class,
@@ -302,7 +302,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::LONG_TTL,
-            'default_layout' => ['w' => 6, 'h' => 2],
+            'default_layout' => ['w' => 4, 'h' => 2],
         ],
         'disk_space' => [
             'class' => \App\Filament\Widgets\DiskSpaceWidget::class,
@@ -313,7 +313,7 @@ class WidgetPreferenceService
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::SHORT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 2],
+            'default_layout' => ['w' => 12, 'h' => 2],
         ],
         'request_metrics' => [
             'class' => \App\Filament\Widgets\RequestMetricsWidget::class,
@@ -334,34 +334,101 @@ class WidgetPreferenceService
      * DashboardLayoutService::ensureDefaultDashboard().
      */
     public const ROLE_DEFAULT_DASHBOARDS = [
+        // Zone layout for super_admin / admin (all 26 widgets):
+        // Row  1: dashboard_header (w12)
+        // Row  2: alerts (w6) + health_strip (w6)
+        // Row  3: kpi_stats (w12)
+        // Row  4: recent_orders (w8) + quick_actions (w4)
+        // Row  5: revenue_chart (w8) + order_status_distribution (w4)
+        // Row  6: abandoned_carts (w6) + checkout_dropoff (w6)
+        // Row  7: customer_growth (w6) + payment_method_split (w6)
+        // Row  8: top_searches (w8) + failed_searches (w4)
+        // Row  9: manufacturer_revenue (w8) + sales_by_country (w4)
+        // Row 10: manufacturing_stats (w4) + parts_inquiry (w4) + newsletter_growth (w4)
+        // Row 11: latest_customers (w6) + recent_activity (w6)
+        // Row 12: coupon_usage (w6) + stock_alert (w6)
+        // Row 13: activity_overview (w6) + request_metrics (w6)
+        // Row 14: disk_space (w12)
         'super_admin' => [
-            'dashboard_header', 'kpi_stats', 'alerts', 'health_strip',
-            'revenue_chart', 'quick_actions', 'recent_orders', 'top_searches',
-            'failed_searches', 'checkout_dropoff', 'sales_by_country',
-            'order_status_distribution', 'stock_alert', 'abandoned_carts',
-            'parts_inquiry', 'latest_customers',
+            'dashboard_header',
+            'alerts', 'health_strip',
+            'kpi_stats',
+            'recent_orders', 'quick_actions',
+            'revenue_chart', 'order_status_distribution',
+            'abandoned_carts', 'checkout_dropoff',
+            'customer_growth', 'payment_method_split',
+            'top_searches', 'failed_searches',
+            'manufacturer_revenue', 'sales_by_country',
+            'manufacturing_stats', 'parts_inquiry', 'newsletter_growth',
+            'latest_customers', 'recent_activity',
+            'coupon_usage', 'stock_alert',
+            'activity_overview', 'request_metrics',
+            'disk_space',
         ],
         'admin' => [
-            'dashboard_header', 'kpi_stats', 'alerts', 'health_strip',
-            'revenue_chart', 'quick_actions', 'recent_orders', 'top_searches',
-            'failed_searches', 'checkout_dropoff', 'sales_by_country',
-            'order_status_distribution', 'stock_alert', 'abandoned_carts',
-            'parts_inquiry', 'latest_customers',
+            'dashboard_header',
+            'alerts', 'health_strip',
+            'kpi_stats',
+            'recent_orders', 'quick_actions',
+            'revenue_chart', 'order_status_distribution',
+            'abandoned_carts', 'checkout_dropoff',
+            'customer_growth', 'payment_method_split',
+            'top_searches', 'failed_searches',
+            'manufacturer_revenue', 'sales_by_country',
+            'manufacturing_stats', 'parts_inquiry', 'newsletter_growth',
+            'latest_customers', 'recent_activity',
+            'coupon_usage', 'stock_alert',
+            'activity_overview', 'request_metrics',
+            'disk_space',
         ],
+        // Zone layout for manager (22 widgets, no system widgets):
+        // Row  1: dashboard_header (w12)
+        // Row  2: kpi_stats (w12)
+        // Row  3: recent_orders (w8) + quick_actions (w4)
+        // Row  4: revenue_chart (w8) + order_status_distribution (w4)
+        // Row  5: abandoned_carts (w6) + checkout_dropoff (w6)
+        // Row  6: customer_growth (w6) + payment_method_split (w6)
+        // Row  7: top_searches (w8) + failed_searches (w4)
+        // Row  8: manufacturer_revenue (w8) + sales_by_country (w4)
+        // Row  9: manufacturing_stats (w4) + parts_inquiry (w4) + newsletter_growth (w4)
+        // Row 10: latest_customers (w6) + coupon_usage (w6)
+        // Row 11: stock_alert (w6) + activity_overview (w6)
         'manager' => [
-            'dashboard_header', 'kpi_stats', 'revenue_chart', 'quick_actions',
-            'recent_orders', 'order_status_distribution', 'checkout_dropoff',
-            'sales_by_country', 'top_searches', 'failed_searches',
-            'stock_alert', 'abandoned_carts', 'parts_inquiry', 'latest_customers',
+            'dashboard_header',
+            'kpi_stats',
+            'recent_orders', 'quick_actions',
+            'revenue_chart', 'order_status_distribution',
+            'abandoned_carts', 'checkout_dropoff',
+            'customer_growth', 'payment_method_split',
+            'top_searches', 'failed_searches',
+            'manufacturer_revenue', 'sales_by_country',
+            'manufacturing_stats', 'parts_inquiry', 'newsletter_growth',
+            'latest_customers', 'coupon_usage',
+            'stock_alert', 'activity_overview',
         ],
+        // Zone layout for catalog_admin (7 widgets):
+        // Row 1: dashboard_header (w12)
+        // Row 2: quick_actions (w4) + stock_alert (w6)
+        // Row 3: top_searches (w8) + failed_searches (w4)
+        // Row 4: manufacturing_stats (w4) + order_status_distribution (w4)
         'catalog_admin' => [
-            'dashboard_header', 'quick_actions', 'stock_alert', 'top_searches',
-            'failed_searches', 'manufacturing_stats', 'order_status_distribution',
+            'dashboard_header',
+            'quick_actions', 'stock_alert',
+            'top_searches', 'failed_searches',
+            'manufacturing_stats', 'order_status_distribution',
         ],
+        // Zone layout for support (9 widgets):
+        // Row 1: dashboard_header (w12)
+        // Row 2: recent_orders (w8) + quick_actions (w4)
+        // Row 3: abandoned_carts (w6) + checkout_dropoff (w6)
+        // Row 4: order_status_distribution (w4) + parts_inquiry (w4) + newsletter_growth (w4)
+        // Row 5: latest_customers (w6)
         'support' => [
-            'dashboard_header', 'quick_actions', 'recent_orders',
-            'order_status_distribution', 'parts_inquiry', 'latest_customers',
-            'abandoned_carts', 'checkout_dropoff', 'newsletter_growth',
+            'dashboard_header',
+            'recent_orders', 'quick_actions',
+            'abandoned_carts', 'checkout_dropoff',
+            'order_status_distribution', 'parts_inquiry', 'newsletter_growth',
+            'latest_customers',
         ],
     ];
 

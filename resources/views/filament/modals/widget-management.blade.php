@@ -1,29 +1,27 @@
 <div
-    x-data="widgetManager(@json($widgets))"
+    x-data="widgetManager({{ Js::from($widgets) }})"
     x-init="init()"
-    class="pb-2"
+    class="flex flex-col gap-0"
 >
     {{-- Search + Counter bar --}}
-    <div class="flex items-center gap-3 mb-5">
+    <div class="flex items-center gap-2 mb-4 flex-shrink-0">
         <div class="relative flex-1">
-            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
-                </svg>
-            </div>
+            <svg class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
+            </svg>
             <input
                 x-model="search"
                 type="text"
                 placeholder="Search widgets..."
-                class="w-full pl-9 pr-9 py-2 text-sm border rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-slate-700 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-amber-500/60 focus:border-amber-400 transition"
+                class="w-full pl-8 pr-7 py-2 text-xs border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-amber-400 dark:focus:border-amber-400 focus:ring-1 focus:ring-amber-400/40 transition"
             />
             <template x-if="search.length > 0">
                 <button
                     type="button"
                     @click="search = ''"
-                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
+                    class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
                 >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
@@ -31,75 +29,58 @@
         </div>
 
         {{-- Live counter --}}
-        <div class="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 text-xs font-medium text-gray-600 dark:text-gray-400">
+        <div class="flex-shrink-0 flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 text-xs font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap">
             <span
-                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-500 text-white text-[10px] font-bold"
+                class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600 text-white text-[10px] font-bold leading-none tabular-nums"
                 x-text="enabledCount"
             ></span>
             <span>active</span>
             <span class="text-gray-300 dark:text-gray-600">/</span>
-            <span x-text="widgets.length"></span>
+            <span x-text="widgets.length" class="tabular-nums"></span>
         </div>
     </div>
 
     {{-- Widget grid --}}
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 overflow-y-auto max-h-[420px] pr-1 scrollbar-thin">
+    <div class="grid grid-cols-2 gap-2 overflow-y-auto max-h-64 pr-1" style="max-height:260px;overflow-y:auto">
         <template x-for="widget in filteredWidgets" :key="widget.id">
             <div
                 @click="toggleWidget(widget.id)"
-                class="relative flex flex-col p-3 rounded-xl border cursor-pointer select-none transition-all duration-150"
+                class="flex items-center gap-2.5 px-3 py-2.5 border rounded-md cursor-pointer select-none transition-colors duration-100"
                 :class="isEnabled(widget.id)
-                    ? 'bg-amber-50/60 dark:bg-amber-950/25 border-amber-400 dark:border-amber-500 ring-1 ring-amber-400/40 shadow-sm'
-                    : 'bg-white dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 hover:border-amber-300 dark:hover:border-amber-600/60 hover:shadow-sm'"
+                    ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-400 dark:border-amber-400'
+                    : 'bg-white dark:bg-slate-800/60 border-gray-200 dark:border-slate-700 hover:border-amber-400 dark:hover:border-amber-600/50'"
             >
-                {{-- Checkbox --}}
-                <div class="absolute top-2.5 right-2.5">
-                    <div
-                        class="w-5 h-5 rounded flex items-center justify-center border-2 transition-all"
-                        :class="isEnabled(widget.id)
-                            ? 'bg-amber-500 border-amber-500'
-                            : 'bg-white dark:bg-slate-700 border-gray-300 dark:border-slate-500'"
-                    >
-                        <svg
-                            x-show="isEnabled(widget.id)"
-                            class="w-3 h-3 text-white"
-                            fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="3"
-                        >
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                        </svg>
-                    </div>
-                </div>
-
-                {{-- Icon --}}
+                {{-- Small icon --}}
                 <div
-                    class="flex items-center justify-center w-9 h-9 rounded-lg mb-2.5 flex-shrink-0 transition-colors"
+                    class="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded transition-colors overflow-hidden"
                     :class="isEnabled(widget.id)
-                        ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400'
+                        ? 'bg-amber-100 dark:bg-amber-800/40 text-amber-600 dark:text-amber-400'
                         : 'bg-gray-100 dark:bg-slate-700 text-gray-400 dark:text-gray-500'"
                 >
-                    <span x-html="widget.icon"></span>
+                    <span x-html="widget.icon" class="flex items-center justify-center w-5 h-5"></span>
                 </div>
 
                 {{-- Label + description --}}
-                <div class="flex-1 pr-5">
+                <div class="flex-1 min-w-0">
                     <p
-                        class="text-xs font-semibold leading-snug transition-colors"
-                        :class="isEnabled(widget.id) ? 'text-amber-900 dark:text-amber-200' : 'text-gray-800 dark:text-gray-200'"
+                        class="text-xs font-medium leading-tight truncate transition-colors"
+                        :class="isEnabled(widget.id) ? 'text-amber-800 dark:text-amber-200' : 'text-gray-800 dark:text-gray-200'"
                         x-text="widget.label"
                     ></p>
                     <p
-                        class="text-[10px] leading-snug mt-0.5 line-clamp-2 text-gray-400 dark:text-gray-500"
+                        class="text-[10px] leading-tight mt-0.5 truncate text-gray-400 dark:text-gray-500"
                         x-text="widget.description"
                     ></p>
                 </div>
 
-                {{-- Active pill --}}
-                <div class="mt-2" x-show="isEnabled(widget.id)">
-                    <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-100 dark:bg-amber-900/40 px-2 py-0.5 rounded-full">
-                        <svg class="w-2 h-2 fill-amber-500" viewBox="0 0 6 6"><circle cx="3" cy="3" r="3"/></svg>
-                        Active
-                    </span>
+                {{-- Toggle indicator --}}
+                <div class="flex-shrink-0">
+                    <svg x-show="isEnabled(widget.id)" class="w-4 h-4 text-amber-600 dark:text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg x-show="!isEnabled(widget.id)" class="w-4 h-4 text-gray-300 dark:text-slate-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16z" clip-rule="evenodd"/>
+                    </svg>
                 </div>
             </div>
         </template>
@@ -116,7 +97,7 @@
 </div>
 
 <script>
-function widgetManager(widgets) {
+window.widgetManager = function widgetManager(widgets) {
     return {
         widgets: widgets,
         search: '',
@@ -154,4 +135,5 @@ function widgetManager(widgets) {
         },
     };
 }
+</script>
 </script>

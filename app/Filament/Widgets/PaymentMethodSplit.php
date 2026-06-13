@@ -54,8 +54,8 @@ class PaymentMethodSplit extends ChartWidget implements \App\Filament\Support\Dr
         });
 
         $colors = [
-            PaymentMethod::Card->value => '#0B3A68',
-            PaymentMethod::BankTransfer->value => '#F59E0B',
+            PaymentMethod::Card->value => '#6366F1',
+            PaymentMethod::BankTransfer->value => '#22D3EE',
         ];
 
         return [
@@ -64,7 +64,7 @@ class PaymentMethodSplit extends ChartWidget implements \App\Filament\Support\Dr
                     'data' => $cached['counts'],
                     'backgroundColor' => array_map(fn (string $m) => $colors[$m] ?? '#94A3B8', $cached['methods']),
                     'borderWidth' => 2,
-                    'borderColor' => '#FFFFFF',
+                    'borderColor' => '#1e293b',
                 ],
             ],
             'labels' => array_map(
@@ -85,7 +85,7 @@ class PaymentMethodSplit extends ChartWidget implements \App\Filament\Support\Dr
                         'usePointStyle' => true,
                         'pointStyleWidth' => 10,
                         'font' => ['family' => 'Geist Sans, sans-serif', 'size' => 11],
-                        'color' => '#64748b',
+                        'color' => '#94a3b8',
                     ],
                 ],
                 'tooltip' => [

@@ -102,15 +102,34 @@
     --color-ring: rgba(10, 18, 40, 0.35);
     --color-ring-offset: #FAF8F4;
 
-    /* Chart palette (8 categorical) */
-    --chart-c-1: #0A1228;
-    --chart-c-2: #F59E0B;
-    --chart-c-3: #10B981;
-    --chart-c-4: #6366F1;
-    --chart-c-5: #EC4899;
-    --chart-c-6: #14B8A6;
-    --chart-c-7: #F97316;
-    --chart-c-8: #718096;
+    /* Aurora Neon — vibrant accent layer (indigo→violet→cyan) */
+    --aurora-indigo: #6366F1;
+    --aurora-violet: #8B5CF6;
+    --aurora-cyan: #22D3EE;
+    --aurora-blue: #3B82F6;
+    --aurora-pink: #EC4899;
+    --aurora-emerald: #10B981;
+    --aurora-rose: #F43F5E;
+    --aurora-sky: #0EA5E9;
+    --aurora-gradient: linear-gradient(135deg, #6366F1, #8B5CF6, #22D3EE);
+    --aurora-gradient-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08), rgba(34, 211, 238, 0.05));
+
+    /* Glassmorphism tokens — frosted/translucent effect */
+    --glass-bg: rgba(250, 248, 244, 0.65);
+    --glass-border: rgba(99, 102, 241, 0.2);
+    --glass-blur: blur(10px);
+    --glass-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
+    --glass-glow: 0 0 30px rgba(99, 102, 241, 0.15);
+
+    /* Chart palette (8 categorical) — Aurora spectrum */
+    --chart-c-1: #8B5CF6;
+    --chart-c-2: #22D3EE;
+    --chart-c-3: #6366F1;
+    --chart-c-4: #10B981;
+    --chart-c-5: #F59E0B;
+    --chart-c-6: #F43F5E;
+    --chart-c-7: #14B8A6;
+    --chart-c-8: #0EA5E9;
     --chart-grid: rgba(10, 18, 40, 0.06);
     --chart-axis: #A0AEC0;
     --chart-tooltip-bg: #0A1228;
@@ -403,14 +422,34 @@
     --color-ring: rgba(96, 165, 250, 0.45);
     --color-ring-offset: #0C0F15;
 
-    --chart-c-1: #7DA3D0;
-    --chart-c-2: #FBBF24;
-    --chart-c-3: #34D399;
-    --chart-c-4: #818CF8;
-    --chart-c-5: #F472B6;
-    --chart-c-6: #2DD4BF;
-    --chart-c-7: #FB923C;
-    --chart-c-8: #94A3B8;
+    /* Aurora Neon — vibrant accent layer (dark mode) */
+    --aurora-indigo: #818CF8;
+    --aurora-violet: #A78BFA;
+    --aurora-cyan: #67E8F9;
+    --aurora-blue: #60A5FA;
+    --aurora-pink: #F472B6;
+    --aurora-emerald: #34D399;
+    --aurora-rose: #FB7185;
+    --aurora-sky: #38BDF8;
+    --aurora-gradient: linear-gradient(135deg, #818CF8, #A78BFA, #67E8F9);
+    --aurora-gradient-soft: linear-gradient(135deg, rgba(129, 140, 248, 0.15), rgba(167, 139, 250, 0.1), rgba(103, 232, 249, 0.08));
+
+    /* Glassmorphism tokens — dark mode (deep translucent) */
+    --glass-bg: rgba(21, 24, 33, 0.7);
+    --glass-border: rgba(129, 140, 248, 0.25);
+    --glass-blur: blur(12px);
+    --glass-shadow: 0 8px 32px rgba(129, 140, 248, 0.15);
+    --glass-glow: 0 0 30px rgba(129, 140, 248, 0.2);
+
+    /* Chart palette (8 categorical) — Aurora spectrum (dark mode) */
+    --chart-c-1: #A78BFA;
+    --chart-c-2: #67E8F9;
+    --chart-c-3: #818CF8;
+    --chart-c-4: #34D399;
+    --chart-c-5: #FBBF24;
+    --chart-c-6: #FB7185;
+    --chart-c-7: #2DD4BF;
+    --chart-c-8: #38BDF8;
     --chart-grid: rgba(148, 163, 184, 0.08);
     --chart-axis: #64748B;
     --chart-tooltip-bg: #F1F5F9;

@@ -1,12 +1,13 @@
 <x-filament-widgets::widget class="fi-wi-dashboard-header op-fade-in">
-    <div class="relative overflow-hidden p-6" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-1);">
-        <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(135deg, var(--color-accent-50) 0%, transparent 50%);"></div>
+    <div class="relative overflow-hidden p-6" style="background: var(--glass-bg); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-top: 3px solid var(--aurora-indigo); border-radius: 20px; box-shadow: var(--glass-shadow); transition: all 300ms ease;">
+        <div class="absolute inset-0 pointer-events-none" style="background: var(--aurora-gradient-soft);"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 pointer-events-none opacity-10" style="background: radial-gradient(circle, var(--aurora-indigo) 0%, transparent 70%); transform: translate(50%, -50%);"></div>
 
         <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4 z-10">
             <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-3 mb-2">
-                    <h1 class="text-2xl font-bold tracking-tight" style="color: var(--color-text-primary); font-family: var(--font-display); letter-spacing: var(--tracking-tight);">
-                        {{ $greeting }}, <span style="color: var(--color-accent-600);">{{ $adminName }}</span>
+                    <h1 class="text-2xl font-bold tracking-tight" style="background: var(--aurora-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-family: var(--font-display); letter-spacing: var(--tracking-tight);">
+                        {{ $greeting }}, <span style="color: var(--aurora-violet);">{{ $adminName }}</span>
                     </h1>
                     <div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest"
                         @if($systemHealth === 'healthy')
@@ -69,8 +70,10 @@
                     <kbd class="px-1.5 py-0.5 text-[9px] font-mono font-bold rounded" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default); color: var(--color-text-muted);">&#8984;K</kbd>
                 </button>
 
-                <a href="{{ \App\Filament\Resources\ProductResource::getUrl('create') }}" wire:navigate class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2 font-medium text-sm rounded-lg transition-all"
-                    style="background: var(--color-brand-600); color: var(--color-text-on-accent, white); box-shadow: var(--shadow-1);"
+                <a href="{{ \App\Filament\Resources\ProductResource::getUrl('create') }}" wire:navigate class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2 font-medium text-sm rounded-lg transition-all hover:shadow-lg"
+                    style="background: var(--aurora-gradient); color: white; box-shadow: var(--glass-shadow); border: 1px solid rgba(255,255,255,0.2);"
+                    onmouseover="this.style.boxShadow='var(--glass-shadow), var(--glass-glow)'"
+                    onmouseout="this.style.boxShadow='var(--glass-shadow)'"
                 >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />

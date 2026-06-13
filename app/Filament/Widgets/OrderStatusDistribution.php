@@ -55,13 +55,13 @@ class OrderStatusDistribution extends ChartWidget implements \App\Filament\Suppo
 
         $colors = [
             OrderStatus::Pending->value => '#F59E0B',
-            OrderStatus::Paid->value => '#3B82F6',
-            OrderStatus::Processing->value => '#0B3A68',
+            OrderStatus::Paid->value => '#22D3EE',
+            OrderStatus::Processing->value => '#8B5CF6',
             OrderStatus::Shipped->value => '#10B981',
-            OrderStatus::Delivered->value => '#059669',
-            OrderStatus::Cancelled->value => '#EF4444',
-            OrderStatus::RefundRequested->value => '#F97316',
-            OrderStatus::Refunded->value => '#6B7280',
+            OrderStatus::Delivered->value => '#34D399',
+            OrderStatus::Cancelled->value => '#F43F5E',
+            OrderStatus::RefundRequested->value => '#FB7185',
+            OrderStatus::Refunded->value => '#94A3B8',
         ];
 
         return [
@@ -70,7 +70,7 @@ class OrderStatusDistribution extends ChartWidget implements \App\Filament\Suppo
                     'data' => $cached['counts'],
                     'backgroundColor' => array_map(fn (string $s) => $colors[$s] ?? '#94A3B8', $cached['statuses']),
                     'borderWidth' => 2,
-                    'borderColor' => '#FFFFFF',
+                    'borderColor' => '#1e293b',
                 ],
             ],
             'labels' => array_map(fn (string $s) => ucfirst(str_replace('_', ' ', $s)), $cached['statuses']),
@@ -88,7 +88,7 @@ class OrderStatusDistribution extends ChartWidget implements \App\Filament\Suppo
                         'usePointStyle' => true,
                         'pointStyleWidth' => 10,
                         'font' => ['family' => 'Geist Sans, sans-serif', 'size' => 11],
-                        'color' => '#64748b',
+                        'color' => '#94a3b8',
                     ],
                 ],
                 'tooltip' => [
