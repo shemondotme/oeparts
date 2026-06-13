@@ -26,6 +26,18 @@ function livewireComponent(el) {
     return window.Livewire.find(root.getAttribute('wire:id'));
 }
 
+function triggerChartResizes() {
+    // Dispatch a custom event so lazy-loaded charts can re-render
+    document.querySelectorAll('[wire\\:id]').forEach((el) => {
+        el.dispatchEvent(new CustomEvent('gridstack-resized', { detail: { grid } }));
+    });
+
+    // Trigger canvas resize event for Chart.js
+    if (window.dispatchEvent) {
+        window.dispatchEvent(new Event('resize'));
+    }
+}
+
 function persistLayout() {
     const el = canvasEl();
     if (!grid || !el) return;
@@ -70,6 +82,9 @@ function initCanvas() {
     grid.on('change', () => {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(persistLayout, 500);
+
+        // Trigger chart re-renders after layout change to prevent clipping
+        triggerChartResizes();
     });
 }
 
@@ -99,4 +114,19 @@ window.addEventListener('dashboard-edit-mode', (event) => {
 
     if (!grid) initCanvas();
     if (grid) grid.setStatic(!enabled);
+
+    // Suspend polling during edit mode to prevent re-render churn
+    if (enabled) {
+        document.querySelectorAll('[wire\\:poll]').forEach((el) => {
+            el.removeAttribute('wire:poll');
+            el.setAttribute('data-poll-suspended', 'true');
+        });
+    } else {
+        // Resume polling after exiting edit mode
+        document.querySelectorAll('[data-poll-suspended="true"]').forEach((el) => {
+            const interval = el.getAttribute('data-poll-interval') || '60s';
+            el.setAttribute('wire:poll.' + interval, 'updateChartData');
+            el.removeAttribute('data-poll-suspended');
+        });
+    }
 });

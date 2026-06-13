@@ -27,6 +27,14 @@ class CheckoutDropoffChart extends ChartWidget implements \App\Filament\Support\
 
     protected static ?int $sort = -27;
 
+    protected static bool $isLazy = true;
+
+    #[\Livewire\Attributes\Renderless]
+    public function getPlaceholder(): string
+    {
+        return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
+    }
+
     protected static ?string $maxWidth = '1/2';
 
     public function getDrilldownUrl(): ?string
