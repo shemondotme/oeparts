@@ -295,7 +295,7 @@ class Dashboard extends BaseDashboard
                                 )),
 
                             Toggle::make('enabled')
-                                ->label('Enabled')
+                                ->label('')
                                 ->inline(false)
                                 ->columnSpan('full'),
 
