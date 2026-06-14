@@ -38,6 +38,15 @@ class NewsletterGrowthWidget extends StatsOverviewWidget
                 ->count(),
         ]);
 
+        if ($d['total'] === 0) {
+            return [
+                Stat::make('No subscribers yet', '0')
+                    ->description('Launch your first campaign')
+                    ->descriptionIcon('heroicon-o-envelope')
+                    ->color('gray'),
+            ];
+        }
+
         return [
             Stat::make('Active Subscribers', number_format($d['total']))
                 ->description("+{$d['inPeriod']} " . $this->periodLabel())
@@ -49,8 +58,9 @@ class NewsletterGrowthWidget extends StatsOverviewWidget
                 ->color('info')
                 ->url(NewsletterSubscriberResource::getUrl('index')),
             Stat::make('Unsubscribed (' . $this->periodLabel() . ')', $d['unsubscribed'])
+                ->description('Rate: ' . ($d['inPeriod'] > 0 ? round(($d['unsubscribed'] / max($d['inPeriod'], 1)) * 100, 1) . '%' : '0%'))
                 ->descriptionIcon('heroicon-o-arrow-trending-down')
-                ->color('warning')
+                ->color($d['unsubscribed'] > 0 ? 'warning' : 'success')
                 ->url($d['unsubscribed'] > 0 ? NewsletterSubscriberResource::getUrl('index') : null),
         ];
     }

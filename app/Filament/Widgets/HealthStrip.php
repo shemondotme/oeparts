@@ -20,7 +20,7 @@ class HealthStrip extends BaseWidget
 
     protected static bool $isLazy = false;
 
-    protected static ?int $sort = -30;
+    protected static ?int $sort = -13;
 
     protected ?string $heading = 'System Health';
 
@@ -53,32 +53,38 @@ class HealthStrip extends BaseWidget
                 ->description($dbStatus['detail'])
                 ->descriptionColor($dbStatus['color'])
                 ->color($dbStatus['color'])
-                ->icon($dbStatus['icon']),
+                ->icon($dbStatus['icon'])
+                ->extraAttributes(['data-stat-status' => $dbStatus['color']]),
             Stat::make('Redis', $redisStatus['label'])
                 ->description($redisStatus['detail'])
                 ->descriptionColor($redisStatus['color'])
                 ->color($redisStatus['color'])
-                ->icon($redisStatus['icon']),
+                ->icon($redisStatus['icon'])
+                ->extraAttributes(['data-stat-status' => $redisStatus['color']]),
             Stat::make('Queue', $queueStatus['label'])
                 ->description($queueStatus['detail'])
                 ->descriptionColor($queueStatus['color'])
                 ->color($queueStatus['color'])
-                ->icon($queueStatus['icon']),
+                ->icon($queueStatus['icon'])
+                ->extraAttributes(['data-stat-status' => $queueStatus['color']]),
             Stat::make('Storage', $storageStatus['label'])
                 ->description($storageStatus['detail'])
                 ->descriptionColor($storageStatus['color'])
                 ->color($storageStatus['color'])
-                ->icon($storageStatus['icon']),
+                ->icon($storageStatus['icon'])
+                ->extraAttributes(['data-stat-status' => $storageStatus['color']]),
             Stat::make('Scheduler', $schedulerStatus['label'])
                 ->description($schedulerStatus['detail'])
                 ->descriptionColor($schedulerStatus['color'])
                 ->color($schedulerStatus['color'])
-                ->icon($schedulerStatus['icon']),
+                ->icon($schedulerStatus['icon'])
+                ->extraAttributes(['data-stat-status' => $schedulerStatus['color']]),
             Stat::make('Cache', $cacheStatus['label'])
                 ->description($cacheStatus['detail'])
                 ->descriptionColor($cacheStatus['color'])
                 ->color($cacheStatus['color'])
-                ->icon($cacheStatus['icon']),
+                ->icon($cacheStatus['icon'])
+                ->extraAttributes(['data-stat-status' => $cacheStatus['color']]),
         ];
     }
 

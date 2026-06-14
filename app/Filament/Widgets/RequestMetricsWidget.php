@@ -66,17 +66,21 @@ class RequestMetricsWidget extends BaseWidget
             ];
         });
 
+        $hasAnomaly = $metrics['failed_jobs'] > 5;
+        $anomalyColor = $hasAnomaly ? 'danger' : '';
+
         return [
             Stat::make('Pending Jobs', number_format($metrics['pending_jobs']))
-                ->description('In queue')
+                ->description($metrics['pending_jobs'] > 0 ? 'In queue' : 'All clear')
                 ->descriptionIcon('heroicon-o-clock')
                 ->color($metrics['pending_jobs'] > 50 ? 'warning' : 'gray'),
             Stat::make('Failed (1h)', number_format($metrics['failed_jobs']))
-                ->description('Last hour')
+                ->description($metrics['failed_jobs'] > 0 ? 'Needs attention' : 'No failures')
                 ->descriptionIcon('heroicon-o-x-circle')
-                ->color($metrics['failed_jobs'] > 0 ? 'danger' : 'success'),
+                ->color($metrics['failed_jobs'] > 0 ? 'danger' : 'success')
+                ->extraAttributes($hasAnomaly ? ['class' => 'op-anomaly-bg'] : []),
             Stat::make('Emails Sent (1h)', number_format($metrics['emails_sent']))
-                ->description('Queued emails')
+                ->description('Last hour')
                 ->descriptionIcon('heroicon-o-envelope')
                 ->color('info'),
             Stat::make('Searches (1h)', number_format($metrics['searches']))

@@ -34,15 +34,30 @@ class DashboardLayoutService
         $existing = AdminDashboard::where('admin_id', $admin->id)->count();
 
         if ($existing === 0) {
-            $ids = $this->seedWidgetIds($admin);
+            $legacyIds = $this->legacySeedWidgetIds($admin);
 
-            AdminDashboard::create([
-                'admin_id' => $admin->id,
-                'name' => 'My Dashboard',
-                'slug' => 'my-dashboard',
-                'layout' => $this->packLayout($ids),
-                'is_default' => true,
-            ]);
+            if ($legacyIds !== null) {
+                AdminDashboard::create([
+                    'admin_id' => $admin->id,
+                    'name' => 'My Dashboard',
+                    'slug' => 'my-dashboard',
+                    'layout' => $this->packLayout($legacyIds),
+                    'is_default' => true,
+                ]);
+            } else {
+                $tabs = $this->preferences->roleDefaultTabs($admin);
+                $defaultName = array_key_first($tabs);
+
+                foreach ($tabs as $name => $ids) {
+                    AdminDashboard::create([
+                        'admin_id' => $admin->id,
+                        'name' => $name,
+                        'slug' => Str::slug($name),
+                        'layout' => $this->packLayout($ids),
+                        'is_default' => $name === $defaultName,
+                    ]);
+                }
+            }
         }
 
         return $this->activeDashboard($admin);
@@ -70,8 +85,7 @@ class DashboardLayoutService
     public function listFor(Admin $admin): Collection
     {
         return AdminDashboard::where('admin_id', $admin->id)
-            ->orderByDesc('is_default')
-            ->orderBy('name')
+            ->orderBy('id')
             ->get();
     }
 
@@ -182,7 +196,7 @@ class DashboardLayoutService
      * Canvas items for rendering: active layout filtered to widgets the role
      * may view, with the widget class attached.
      *
-     * @return list<array{id:string,class:string,x:int,y:int,w:int,h:int}>
+     * @return list<array{id:string,class:string,x:int,y:int,w:int,h:int,minW:int,minH:int}>
      */
     public function canvasItems(Admin $admin, AdminDashboard $dashboard): array
     {
@@ -200,13 +214,18 @@ class DashboardLayoutService
                 continue;
             }
 
+            $defaultLayout = $config['default_layout'];
+
             $items[] = [
                 'id' => $id,
                 'class' => $config['class'],
+                'type' => $config['type'] ?? 'widget',
                 'x' => (int) ($item['x'] ?? 0),
                 'y' => (int) ($item['y'] ?? 0),
-                'w' => (int) ($item['w'] ?? $config['default_layout']['w']),
-                'h' => (int) ($item['h'] ?? $config['default_layout']['h']),
+                'w' => (int) ($item['w'] ?? $defaultLayout['w']),
+                'h' => max((int) ($item['h'] ?? $defaultLayout['h']), (int) $defaultLayout['h']),
+                'minW' => min((int) $defaultLayout['w'], 4),
+                'minH' => (int) $defaultLayout['h'],
             ];
         }
 
@@ -290,12 +309,12 @@ class DashboardLayoutService
      *
      * @return list<string>
      */
-    private function seedWidgetIds(Admin $admin): array
+    private function legacySeedWidgetIds(Admin $admin): ?array
     {
         $legacy = $this->preferences->getPreferences();
 
         if (empty($legacy)) {
-            return $this->preferences->roleDefaultWidgetIds($admin);
+            return null;
         }
 
         return array_values(array_map(

@@ -68,22 +68,20 @@ class AdminSmokeTest extends TestCase
         $this->assertCount(count($visibleIds), $enabled, 'Only default-visible widgets should be enabled');
 
         // Essential widgets are visible
-        $this->assertContains(\App\Filament\Widgets\DashboardKpiStats::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\RevenueKpi::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\RevenueChart::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\RecentOrdersList::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\TopSearchedOems::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\FailedSearchesWidget::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\DashboardAlerts::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\CacheStatusWidget::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\HealthStrip::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\CheckoutDropoffChart::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\SalesByCountryChart::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\OrderStatusDistribution::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\OrderVolumeChart::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\TopManufacturersRevenue::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\NewOrdersKpi::class, $enabled);
 
         // Non-essential widgets are hidden by default
-        $this->assertNotContains(\App\Filament\Widgets\TopManufacturersRevenue::class, $enabled);
-        $this->assertNotContains(\App\Filament\Widgets\CustomerGrowthChart::class, $enabled);
-        $this->assertNotContains(\App\Filament\Widgets\PaymentMethodSplit::class, $enabled);
-        $this->assertNotContains(\App\Filament\Widgets\RecentActivityLog::class, $enabled);
+        $this->assertNotContains(\App\Filament\Widgets\NewsletterGrowthWidget::class, $enabled);
+        $this->assertNotContains(\App\Filament\Widgets\ManufacturingStatsWidget::class, $enabled);
     }
 
     #[Test]
@@ -96,10 +94,10 @@ class AdminSmokeTest extends TestCase
 
         $this->assertFalse($service->isEnabled(\App\Filament\Widgets\TopManufacturersRevenue::class));
 
-        // Set sort order
+        // Set sort order via legacy ID (maps to revenue_kpi)
         $service->setSortOrder('kpi_stats', 10);
         $sorted = $service->getSortedWidgets();
-        $kpi = current(array_filter($sorted, fn ($w) => $w['id'] === 'kpi_stats'));
+        $kpi = current(array_filter($sorted, fn ($w) => $w['id'] === 'revenue_kpi'));
         $this->assertEquals(10, $kpi['sort']);
     }
 
@@ -355,13 +353,13 @@ class AdminSmokeTest extends TestCase
         $dashboard = $service->ensureDefaultDashboard($this->admin);
 
         $result = $service->saveLayout($this->admin, $dashboard->id, [
-            ['id' => 'kpi_stats',         'x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
+            ['id' => 'dashboard_header',  'x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
             ['id' => 'totally_fake',      'x' => 0, 'y' => 4, 'w' => 6,  'h' => 4],
             ['id' => 'revenue_chart',     'x' => 0, 'y' => 2, 'w' => 8,  'h' => 4],
         ]);
 
         $ids = array_column($result, 'id');
-        $this->assertContains('kpi_stats', $ids);
+        $this->assertContains('dashboard_header', $ids);
         $this->assertContains('revenue_chart', $ids);
         $this->assertNotContains('totally_fake', $ids);
     }

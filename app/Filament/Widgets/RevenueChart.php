@@ -3,6 +3,7 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
+use App\Filament\Concerns\HasWidgetExport;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
@@ -15,6 +16,7 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
     use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetExport;
 
     public function getDescription(): ?string
     {
@@ -35,13 +37,52 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
         return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
     }
 
-    protected static ?int $sort = -37;
+    protected static ?int $sort = -38;
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+
+    public ?string $dateFrom = null;
+    public ?string $dateTo = null;
+
+    #[\Livewire\Attributes\On('date-range-changed')]
+    public function onDateRangeChanged(?string $dateFrom, ?string $dateTo): void
+    {
+        $this->dateFrom = $dateFrom;
+        $this->dateTo   = $dateTo;
+    }
 
     public function getDrilldownUrl(): ?string
     {
         return OrderResource::getUrl('index');
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('date_filter')
+                ->label($this->dateFrom ? 'Custom Range' : 'Filter Dates')
+                ->icon('heroicon-o-calendar-days')
+                ->color($this->dateFrom ? 'primary' : 'gray')
+                ->size(\Filament\Support\Enums\Size::Small)
+                ->button()
+                ->modalHeading('Custom Date Range')
+                ->form([
+                    \Filament\Forms\Components\DatePicker::make('date_from')
+                        ->label('From')
+                        ->default($this->dateFrom)
+                        ->maxDate(today()),
+                    \Filament\Forms\Components\DatePicker::make('date_to')
+                        ->label('To')
+                        ->default($this->dateTo)
+                        ->maxDate(today()),
+                ])
+                ->action(function (array $data): void {
+                    $this->dateFrom = $data['date_from'] ?? null;
+                    $this->dateTo   = $data['date_to'] ?? null;
+                    $this->dispatch('date-range-changed', dateFrom: $this->dateFrom, dateTo: $this->dateTo);
+                }),
+            $this->getExportActions(chartOnly: true),
+        ];
     }
 
     protected function getType(): string
@@ -51,7 +92,14 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
 
     protected function getData(): array
     {
-        $cached = $this->cachedWidgetData(function (): array {
+        $start = $this->dateFrom
+            ? \Carbon\Carbon::parse($this->dateFrom)->startOfDay()
+            : $this->periodStart();
+        $end = $this->dateTo
+            ? \Carbon\Carbon::parse($this->dateTo)->endOfDay()
+            : now();
+
+        $fetch = function () use ($start, $end): array {
             $paidStatuses = [
                 OrderStatus::Paid->value,
                 OrderStatus::Processing->value,
@@ -60,10 +108,7 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
             ];
 
             $data = Trend::query(Order::whereIn('status', $paidStatuses))
-                ->between(
-                    start: $this->periodStart(),
-                    end: now(),
-                )
+                ->between(start: $start, end: $end)
                 ->perDay()
                 ->sum('grand_total');
 
@@ -71,7 +116,9 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
                 'values' => $data->map(fn (TrendValue $v) => bcadd((string) $v->aggregate, '0', 2))->all(),
                 'labels' => $data->map(fn (TrendValue $v) => $v->date)->all(),
             ];
-        });
+        };
+
+        $cached = ($this->dateFrom || $this->dateTo) ? $fetch() : $this->cachedWidgetData($fetch);
 
         return [
             'datasets' => [
@@ -79,7 +126,7 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
                     'label' => 'Revenue (€)',
                     'data' => $cached['values'],
                     'borderColor' => '#8B5CF6',
-                    'backgroundColor' => 'function(ctx){const c=ctx.chart.ctx;const g=c.createLinearGradient(0,0,0,300);g.addColorStop(0,"rgba(139,92,246,0.35)");g.addColorStop(1,"rgba(34,211,238,0.08)");return g;}',
+                    'backgroundColor' => 'rgba(139, 92, 246, 0.18)',
                     'fill' => true,
                     'tension' => 0.4,
                     'pointRadius' => 3,
@@ -108,7 +155,7 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
                     ],
                 ],
                 'y' => [
-                    'grid' => ['color' => 'rgba(255,255,255,0.06)', 'drawBorder' => false],
+                    'grid' => ['color' => 'rgba(10, 18, 40, 0.06)', 'drawBorder' => false],
                     'ticks' => [
                         'callback' => 'function(value) { return "€" + value; }',
                         'font' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],

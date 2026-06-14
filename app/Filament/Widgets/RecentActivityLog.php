@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
 use Filament\Tables;
@@ -10,12 +11,13 @@ use Filament\Widgets\TableWidget;
 
 class RecentActivityLog extends TableWidget
 {
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+    use HasWidgetExport;
+
     public function getDescription(): ?string
     {
         return 'Latest audit trail entries';
     }
-
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
 
     protected ?string $pollingInterval = '60s';
 
@@ -27,6 +29,30 @@ class RecentActivityLog extends TableWidget
 
     protected static ?string $maxWidth = 'full';
 
+    protected function getExportHeaders(): array
+    {
+        return ['Admin', 'Action', 'IP Address', 'Timestamp'];
+    }
+
+    protected function getExportRows(): iterable
+    {
+        return ActivityLog::query()
+            ->with('admin')
+            ->latest()
+            ->get()
+            ->map(fn (ActivityLog $log) => [
+                $log->admin?->name ?? 'System',
+                $log->action,
+                $log->ip_address ?? '—',
+                $log->created_at?->format('d M Y H:i') ?? '—',
+            ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [$this->getExportActions()];
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -34,41 +60,61 @@ class RecentActivityLog extends TableWidget
                 ActivityLog::query()
                     ->with('admin')
                     ->latest()
-                    ->limit(10)
+                    ->limit(6)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('admin.name')
                     ->label('Admin')
                     ->searchable()
                     ->getStateUsing(fn (ActivityLog $record): string => $record->admin?->name ?? 'System')
-                    ->limit(20),
+                    ->limit(18),
                 Tables\Columns\TextColumn::make('action')
                     ->label('Action')
                     ->badge()
                     ->color('gray')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('model_type')
-                    ->label('Model')
-                    ->getStateUsing(fn (ActivityLog $record): string => $record->model_type
-                        ? class_basename($record->model_type)
-                        : '—')
-                    ->limit(20),
+                // Model + IP live in the full Activity Log resource (via the row
+                // action) — omitted here so 5 columns don't overflow the half-width cell.
                 Tables\Columns\TextColumn::make('ip_address')
                     ->label('IP')
                     ->copyable()
                     ->copyMessage('IP address copied')
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->extraAttributes(['class' => 'oem-number']),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Timestamp')
-                    ->dateTime('M j, Y H:i')
+                    ->dateTime('M j, H:i')
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->url(fn (ActivityLog $record): string => ActivityLogResource::getUrl('view', ['record' => $record]))
+                Tables\Actions\Action::make('audit_detail')
+                    ->label('Diff')
+                    ->icon('heroicon-o-document-magnifying-glass')
                     ->size('sm')
-                    ->icon('heroicon-m-eye'),
+                    ->color('primary')
+                    ->modalHeading(fn (ActivityLog $record): string => 'Audit Trail — ' . $record->action)
+                    ->modalContent(fn (ActivityLog $record): \Illuminate\Contracts\View\View => view(
+                        'filament.modals.audit-trail-detail',
+                        ['record' => $record]
+                    ))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close'),
+                Tables\Actions\Action::make('view_details')
+                    ->label('Full Log')
+                    ->icon('heroicon-o-chevron-right')
+                    ->size('sm')
+                    ->color('gray')
+                    ->url(fn (ActivityLog $record): string => ActivityLogResource::getUrl('view', ['record' => $record])),
             ])
+            ->emptyState(
+                view('filament.widgets.empty-state', [
+                    'icon' => 'heroicon-o-moon',
+                    'heading' => 'No recent activity',
+                    'description' => 'System is quiet.',
+                    'ctaLabel' => '',
+                    'ctaUrl' => '',
+                ])
+            )
             ->searchable(false)
             ->paginated(false);
     }

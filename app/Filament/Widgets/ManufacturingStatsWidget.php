@@ -33,22 +33,42 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
                 ->orderByDesc('order_items_count')
                 ->first();
 
+            $productCount = \App\Models\Product::where('is_active', true)->count();
+            $defective = \App\Models\Product::where('is_in_stock', false)->count();
+            $defectRate = $productCount > 0 ? round(($defective / $productCount) * 100, 1) : 0;
+
             return [
                 'manufacturers' => \App\Models\Manufacturer::count(),
                 'activeManufacturers' => \App\Models\Manufacturer::where('is_active', true)->count(),
+                'products' => $productCount,
+                'defectRate' => $defectRate,
                 'topId' => $top?->id,
                 'topName' => $top ? \App\Filament\Support\AdminUi::localizedName($top->name, '—') : null,
                 'topOrders' => $top?->order_items_count ?? 0,
             ];
         });
 
+        if ($d['manufacturers'] === 0) {
+            return [
+                Stat::make('No manufacturers yet', '—')
+                    ->description('Add manufacturers and products to track performance')
+                    ->descriptionIcon('heroicon-o-building-office-2')
+                    ->color('gray')
+                    ->url(ManufacturerResource::getUrl('create')),
+            ];
+        }
+
         return [
-            Stat::make('Total Manufacturers', $d['manufacturers'])
+            Stat::make('Manufacturers', $d['manufacturers'])
                 ->description("{$d['activeManufacturers']} active")
                 ->descriptionIcon('heroicon-o-building-office-2')
                 ->color('info')
                 ->url(ManufacturerResource::getUrl('index')),
-            Stat::make('Top Manufacturer (' . $this->periodLabel() . ')', $d['topName'] ?? '—')
+            Stat::make('Products', number_format($d['products']))
+                ->description("Defect rate: {$d['defectRate']}%")
+                ->descriptionIcon('heroicon-o-cube')
+                ->color($d['defectRate'] > 5 ? 'danger' : 'success'),
+            Stat::make('Top Mfr (' . $this->periodLabel() . ')', $d['topName'] ?? '—')
                 ->description($d['topOrders'] . ' orders')
                 ->descriptionIcon('heroicon-o-trophy')
                 ->color('warning')

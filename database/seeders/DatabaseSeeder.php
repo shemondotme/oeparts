@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             SectionsSeeder::class,
             ShippingZonesAndMethodsSeeder::class,
             DemoDataSeeder::class,
+            // DashboardDemoSeeder::class, // Run manually to seed rich metrics/charts demo data for the admin dashboard: php artisan db:seed --class=DashboardDemoSeeder
             CmsFooterPagesSeeder::class,
             TestimonialsAndFaqsSeeder::class,
         ]);

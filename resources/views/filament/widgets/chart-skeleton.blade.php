@@ -1,9 +1,17 @@
 <x-filament-widgets::widget class="fi-wi-chart">
-    <x-filament::section :heading="$heading ?? 'Loading...'">
-        <div class="op-chart-skeleton">
-            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;">
-                <span style="color: var(--color-text-muted); font-size: 0.875rem;">Loading chart data...</span>
+    <x-filament::section>
+        <x-slot name="header">
+            <div class="op-chart-frame-header">
+                <div class="op-chart-frame-header-start">
+                    <h4 class="op-chart-frame-title">{{ $heading ?? 'Loading…' }}</h4>
+                </div>
             </div>
+        </x-slot>
+
+        <div class="op-chart-skel" role="status" aria-label="Loading chart data">
+            @foreach ([58, 82, 44, 72, 92, 52, 66] as $h)
+                <div class="op-chart-skel-bar" style="height: {{ $h }}%;"></div>
+            @endforeach
         </div>
     </x-filament::section>
 </x-filament-widgets::widget>

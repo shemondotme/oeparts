@@ -1,4 +1,4 @@
-﻿@php
+@php
     $lang     = app()->getLocale();
     $siteName = settings('general.site_name', 'OeParts');
     $tagline  = settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.');
@@ -99,7 +99,7 @@
                         [route('frontend.search.console', ['lang' => $lang]), __('Search by OEM')],
                         [url('/'.$lang.'/brands'),  __('Browse Brands')],
                         [url('/'.$lang.'/blog'),    __('Journal')],
-                        [url('/'.$lang.'/contact'), __('Contact')],
+                        [url('/'.$lang.'/contact'), __('navbar.label_contact')],
                     ] as [$href, $label])
                         <li>
                             <a href="{{ $href }}"
@@ -164,7 +164,7 @@
             <div class="sm:border-r border-white/15 py-10 sm:pr-8 lg:pr-10 lg:pl-10 border-t lg:border-t-0">
                 <div class="flex items-baseline gap-3 mb-5">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">03</span>
-                    <h3 class="bp-spec-light">{{ __('Contact') }}</h3>
+                    <h3 class="bp-spec-light">{{ __('navbar.label_contact') }}</h3>
                 </div>
 
                 <dl class="space-y-4 text-sm">

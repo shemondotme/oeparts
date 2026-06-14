@@ -64,6 +64,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\PartInquiryReceived::class => [
             \App\Listeners\NotifyAdminOfPartInquiry::class,
         ],
+        \Illuminate\Queue\Events\JobFailed::class => [
+            \App\Listeners\NotifyAdminsOnJobFailure::class,
+        ],
     ];
 
     /**

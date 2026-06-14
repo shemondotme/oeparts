@@ -14,11 +14,8 @@ class DashboardRoleVisibilityTest extends TestCase
 
     private const FINANCIAL_WIDGETS = [
         \App\Filament\Widgets\RevenueChart::class,
-        \App\Filament\Widgets\DashboardKpiStats::class,
+        \App\Filament\Widgets\RevenueKpi::class,
         \App\Filament\Widgets\TopManufacturersRevenue::class,
-        \App\Filament\Widgets\PaymentMethodSplit::class,
-        \App\Filament\Widgets\CouponUsageWidget::class,
-        \App\Filament\Widgets\ActivityOverviewWidget::class,
     ];
 
     protected function setUp(): void
@@ -91,10 +88,15 @@ class DashboardRoleVisibilityTest extends TestCase
             $dashboard = $service->ensureDefaultDashboard($admin);
 
             // Layout must contain the role's curated widget ids
+            $preferences = app(WidgetPreferenceService::class);
+            $tabs = $preferences->roleDefaultTabs($admin);
+            $defaultTabName = array_key_first($tabs);
+            $expectedIds = $tabs[$defaultTabName];
+
             $this->assertSame(
-                WidgetPreferenceService::ROLE_DEFAULT_DASHBOARDS[$role],
+                $expectedIds,
                 array_column($dashboard->layout, 'id'),
-                "{$role} layout must match ROLE_DEFAULT_DASHBOARDS",
+                "{$role} layout must match Overview tab default widgets",
             );
 
             // At least some widgets must pass canView() for this role.

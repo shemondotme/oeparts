@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\ProductResource;
 use App\Models\Product;
 use Filament\Tables;
@@ -10,12 +11,13 @@ use Filament\Widgets\TableWidget;
 
 class StockAlertWidget extends TableWidget
 {
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+    use HasWidgetExport;
+
     public function getDescription(): ?string
     {
         return 'Products currently out of stock';
     }
-
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
 
     protected ?string $pollingInterval = '60s';
 
@@ -24,6 +26,35 @@ class StockAlertWidget extends TableWidget
     protected static ?string $heading = 'Out of Stock';
 
     protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
+
+    protected function getExportHeaders(): array
+    {
+        return ['OEM Number', 'Manufacturer', 'Price'];
+    }
+
+    protected function getExportRows(): iterable
+    {
+        return Product::query()
+            ->where('is_in_stock', false)
+            ->where('is_active', true)
+            ->with('manufacturer')
+            ->latest()
+            ->get()
+            ->map(fn (Product $p) => [
+                $p->oem_number,
+                $p->manufacturer
+                    ? (is_array($p->manufacturer->name)
+                        ? ($p->manufacturer->name['en'] ?? reset($p->manufacturer->name))
+                        : $p->manufacturer->name)
+                    : '—',
+                format_money($p->price),
+            ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [$this->getExportActions()];
+    }
 
     public function table(Table $table): Table
     {
@@ -59,11 +90,29 @@ class StockAlertWidget extends TableWidget
                     ->size('sm'),
             ])
             ->actions([
+                Tables\Actions\Action::make('reorder')
+                    ->label('Reorder')
+                    ->icon('heroicon-o-truck')
+                    ->color('warning')
+                    ->size(\Filament\Support\Enums\ActionSize::ExtraSmall)
+                    ->iconButton()
+                    ->url(fn (Product $record): string => ProductResource::getUrl('edit', ['record' => $record])),
                 Tables\Actions\ViewAction::make()
                     ->url(fn (Product $record): string => ProductResource::getUrl('view', ['record' => $record]))
-                    ->size('sm')
+                    ->size(\Filament\Support\Enums\ActionSize::ExtraSmall)
+                    ->iconButton()
                     ->icon('heroicon-m-eye'),
             ])
-            ->paginated(false);
+            ->emptyState(
+                view('filament.widgets.empty-state', [
+                    'icon' => 'heroicon-o-check-badge',
+                    'heading' => 'Stock levels healthy',
+                    'description' => 'No items below reorder point.',
+                    'ctaLabel' => '',
+                    'ctaUrl' => '',
+                ])
+            )
+            ->paginated(false)
+            ->searchable(false);
     }
 }
