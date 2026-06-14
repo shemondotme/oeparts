@@ -27,304 +27,346 @@ class WidgetPreferenceService
     /** System/observability widgets — operators only. */
     private const SYSTEM = ['super_admin', 'admin'];
 
-    private const LEGACY_ID_MAP = [
-        'stock-alert' => 'stock_alert',
-        'abandoned-carts' => 'abandoned_carts',
-        'coupon-usage' => 'coupon_usage',
-        'parts-inquiry' => 'parts_inquiry',
-        'latest-customers' => 'latest_customers',
-        'manufacturing-stats' => 'manufacturing_stats',
-        'newsletter-growth' => 'newsletter_growth',
-        'disk-space' => 'disk_space',
-        'request-metrics' => 'request_metrics',
-    ];
+    /** Catalog roles */
+    private const CATALOG = ['super_admin', 'admin', 'manager', 'catalog_admin'];
 
     public const WIDGETS = [
+
+        // ── Command Center ──────────────────────────────────────────────
+
         'dashboard_header' => [
             'class' => \App\Filament\Widgets\DashboardHeader::class,
-            'label' => 'Dashboard Welcome Header',
+            'label' => 'Welcome Header',
             'default_visible' => true,
             'default_sort' => 1,
             'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin', 'support'],
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'header',
             'default_layout' => ['w' => 12, 'h' => 2],
         ],
-        'kpi_stats' => [
-            'class' => \App\Filament\Widgets\DashboardKpiStats::class,
-            'label' => 'KPI Statistics',
+        'health_strip' => [
+            'class' => \App\Filament\Widgets\HealthStrip::class,
+            'label' => 'System Health',
             'default_visible' => true,
             'default_sort' => 2,
-            'roles' => self::MGMT,
-            'financial' => true,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 12, 'h' => 2],
+            'roles' => self::SYSTEM,
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::SHORT_TTL,
+            'type' => 'strip',
+            'default_layout' => ['w' => 12, 'h' => 1],
         ],
-        'revenue_chart' => [
-            'class' => \App\Filament\Widgets\RevenueChart::class,
-            'label' => 'Revenue Chart',
+        'revenue_kpi' => [
+            'class' => \App\Filament\Widgets\RevenueKpi::class,
+            'label' => "Today's Revenue",
             'default_visible' => true,
             'default_sort' => 3,
             'roles' => self::MGMT,
             'financial' => true,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 8, 'h' => 4],
+            'type' => 'kpi',
+            'default_layout' => ['w' => 4, 'h' => 2],
         ],
-        'activity_overview' => [
-            'class' => \App\Filament\Widgets\ActivityOverviewWidget::class,
-            'label' => 'Activity Overview Sidebar',
+        'new_orders_kpi' => [
+            'class' => \App\Filament\Widgets\NewOrdersKpi::class,
+            'label' => 'New Orders',
             'default_visible' => true,
             'default_sort' => 4,
+            'roles' => self::MGMT,
+            'financial' => false,
+            'period' => true,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'kpi',
+            'default_layout' => ['w' => 4, 'h' => 2],
+        ],
+        'pending_orders_kpi' => [
+            'class' => \App\Filament\Widgets\PendingOrdersKpi::class,
+            'label' => 'Pending Orders',
+            'default_visible' => true,
+            'default_sort' => 5,
+            'roles' => self::MGMT,
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'kpi',
+            'default_layout' => ['w' => 4, 'h' => 2],
+        ],
+        'revenue_chart' => [
+            'class' => \App\Filament\Widgets\RevenueChart::class,
+            'label' => 'Revenue Trend',
+            'default_visible' => true,
+            'default_sort' => 6,
             'roles' => self::MGMT,
             'financial' => true,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'type' => 'chart',
+            'default_layout' => ['w' => 8, 'h' => 4],
         ],
+        'order_volume_chart' => [
+            'class' => \App\Filament\Widgets\OrderVolumeChart::class,
+            'label' => 'Order Volume',
+            'default_visible' => true,
+            'default_sort' => 7,
+            'roles' => self::MGMT,
+            'financial' => false,
+            'period' => true,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'chart',
+            'default_layout' => ['w' => 4, 'h' => 4],
+        ],
+
+        // ── Operations ──────────────────────────────────────────────────
+
         'recent_orders' => [
             'class' => \App\Filament\Widgets\RecentOrdersList::class,
             'label' => 'Recent Orders',
             'default_visible' => true,
-            'default_sort' => 5,
+            'default_sort' => 8,
             'roles' => ['super_admin', 'admin', 'manager', 'support'],
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 8, 'h' => 4],
+            'type' => 'table',
+            'default_layout' => ['w' => 12, 'h' => 4],
         ],
-        'quick_actions' => [
-            'class' => \App\Filament\Widgets\QuickActionsWidget::class,
-            'label' => 'Quick Actions Shortcuts',
+        'abandoned_carts' => [
+            'class' => \App\Filament\Widgets\AbandonedCartWidget::class,
+            'label' => 'Abandoned Carts',
             'default_visible' => true,
-            'default_sort' => 6,
-            'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin', 'support'],
+            'default_sort' => 9,
+            'roles' => ['super_admin', 'admin', 'manager', 'support'],
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 4, 'h' => 4],
+            'type' => 'table',
+            'default_layout' => ['w' => 6, 'h' => 4],
+        ],
+        'awaiting_confirmation' => [
+            'class' => \App\Filament\Widgets\AwaitingConfirmationList::class,
+            'label' => 'Awaiting Confirmation',
+            'default_visible' => true,
+            'default_sort' => 10,
+            'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin'],
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 6, 'h' => 4],
+        ],
+        'refunds_pending' => [
+            'class' => \App\Filament\Widgets\RefundsPendingList::class,
+            'label' => 'Refunds Pending',
+            'default_visible' => true,
+            'default_sort' => 11,
+            'roles' => ['super_admin', 'admin', 'manager', 'support'],
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 6, 'h' => 4],
+        ],
+        'new_messages' => [
+            'class' => \App\Filament\Widgets\NewMessagesInbox::class,
+            'label' => 'New Messages',
+            'default_visible' => true,
+            'default_sort' => 12,
+            'roles' => ['super_admin', 'admin', 'manager', 'support'],
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 6, 'h' => 4],
+        ],
+        'failed_queue_jobs' => [
+            'class' => \App\Filament\Widgets\FailedQueueJobsMonitor::class,
+            'label' => 'Failed Queue Jobs',
+            'default_visible' => true,
+            'default_sort' => 13,
+            'roles' => self::SYSTEM,
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::SHORT_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 6, 'h' => 4],
+        ],
+
+        // ── Inventory & Sourcing ────────────────────────────────────────
+
+        'manufacturer_revenue' => [
+            'class' => \App\Filament\Widgets\TopManufacturersRevenue::class,
+            'label' => 'Top Manufacturers by Revenue',
+            'default_visible' => true,
+            'default_sort' => 14,
+            'roles' => self::MGMT,
+            'financial' => true,
+            'period' => true,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 8, 'h' => 4],
         ],
         'top_searches' => [
             'class' => \App\Filament\Widgets\TopSearchedOems::class,
             'label' => 'Top Searched OEMs',
             'default_visible' => true,
-            'default_sort' => 7,
-            'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin'],
+            'default_sort' => 15,
+            'roles' => self::CATALOG,
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 8, 'h' => 4],
+            'type' => 'table',
+            'default_layout' => ['w' => 6, 'h' => 4],
         ],
         'failed_searches' => [
             'class' => \App\Filament\Widgets\FailedSearchesWidget::class,
             'label' => 'Failed Searches (Sourcing)',
             'default_visible' => true,
-            'default_sort' => 8,
-            'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin'],
-            'financial' => false,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 4, 'h' => 4],
-        ],
-        'alerts' => [
-            'class' => \App\Filament\Widgets\DashboardAlerts::class,
-            'label' => 'System Alerts',
-            'default_visible' => true,
-            'default_sort' => 9,
-            'roles' => self::SYSTEM,
-            'financial' => false,
-            'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
-        ],
-        'health_strip' => [
-            'class' => \App\Filament\Widgets\HealthStrip::class,
-            'label' => 'System Health',
-            'default_visible' => true,
-            'default_sort' => 10,
-            'roles' => self::SYSTEM,
-            'financial' => false,
-            'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
-        ],
-        'manufacturer_revenue' => [
-            'class' => \App\Filament\Widgets\TopManufacturersRevenue::class,
-            'label' => 'Top Manufacturers by Revenue',
-            'default_visible' => false,
-            'default_sort' => 11,
-            'roles' => self::MGMT,
-            'financial' => true,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 8, 'h' => 4],
-        ],
-        'customer_growth' => [
-            'class' => \App\Filament\Widgets\CustomerGrowthChart::class,
-            'label' => 'Customer Growth',
-            'default_visible' => false,
-            'default_sort' => 12,
-            'roles' => self::MGMT,
-            'financial' => false,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
-        ],
-        'checkout_dropoff' => [
-            'class' => \App\Filament\Widgets\CheckoutDropoffChart::class,
-            'label' => 'Checkout Drop-off',
-            'default_visible' => true,
-            'default_sort' => 13,
-            'roles' => ['super_admin', 'admin', 'manager', 'support'],
-            'financial' => false,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
-        ],
-        'sales_by_country' => [
-            'class' => \App\Filament\Widgets\SalesByCountryChart::class,
-            'label' => 'Sales by Country',
-            'default_visible' => true,
-            'default_sort' => 14,
-            'roles' => self::MGMT,
-            'financial' => false,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 4, 'h' => 4],
-        ],
-        'order_status_distribution' => [
-            'class' => \App\Filament\Widgets\OrderStatusDistribution::class,
-            'label' => 'Order Status Distribution',
-            'default_visible' => true,
-            'default_sort' => 15,
-            'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin', 'support'],
-            'financial' => false,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 4, 'h' => 4],
-        ],
-        'payment_method_split' => [
-            'class' => \App\Filament\Widgets\PaymentMethodSplit::class,
-            'label' => 'Payment Method Split',
-            'default_visible' => false,
             'default_sort' => 16,
-            'roles' => self::MGMT,
-            'financial' => true,
+            'roles' => self::CATALOG,
+            'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
-        ],
-        'recent_activity' => [
-            'class' => \App\Filament\Widgets\RecentActivityLog::class,
-            'label' => 'Recent Activity Log',
-            'default_visible' => false,
-            'default_sort' => 17,
-            'roles' => self::SYSTEM,
-            'financial' => false,
-            'period' => false,
-            'ttl' => AdminCacheService::LONG_TTL,
+            'type' => 'table',
             'default_layout' => ['w' => 6, 'h' => 4],
         ],
         'stock_alert' => [
             'class' => \App\Filament\Widgets\StockAlertWidget::class,
             'label' => 'Stock Alerts',
             'default_visible' => true,
-            'default_sort' => 18,
-            'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin'],
+            'default_sort' => 17,
+            'roles' => self::CATALOG,
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
+            'type' => 'table',
+            'default_layout' => ['w' => 4, 'h' => 4],
         ],
-        'abandoned_carts' => [
-            'class' => \App\Filament\Widgets\AbandonedCartWidget::class,
-            'label' => 'Abandoned Carts',
+        'new_products_added' => [
+            'class' => \App\Filament\Widgets\NewProductsAdded::class,
+            'label' => 'New Products Added',
+            'default_visible' => true,
+            'default_sort' => 18,
+            'roles' => self::CATALOG,
+            'financial' => false,
+            'period' => true,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 4, 'h' => 4],
+        ],
+        'parts_inquiry' => [
+            'class' => \App\Filament\Widgets\PartsInquiryWidget::class,
+            'label' => 'Part Inquiries',
             'default_visible' => true,
             'default_sort' => 19,
             'roles' => ['super_admin', 'admin', 'manager', 'support'],
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
-        ],
-        'coupon_usage' => [
-            'class' => \App\Filament\Widgets\CouponUsageWidget::class,
-            'label' => 'Coupon Usage',
-            'default_visible' => false,
-            'default_sort' => 20,
-            'roles' => self::MGMT,
-            'financial' => true,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
-        ],
-        'parts_inquiry' => [
-            'class' => \App\Filament\Widgets\PartsInquiryWidget::class,
-            'label' => 'Part Inquiries',
-            'default_visible' => true,
-            'default_sort' => 21,
-            'roles' => ['super_admin', 'admin', 'manager', 'support'],
-            'financial' => false,
-            'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'kpi',
             'default_layout' => ['w' => 4, 'h' => 2],
-        ],
-        'latest_customers' => [
-            'class' => \App\Filament\Widgets\LatestCustomersWidget::class,
-            'label' => 'Latest Customers',
-            'default_visible' => true,
-            'default_sort' => 22,
-            'roles' => ['super_admin', 'admin', 'manager', 'support'],
-            'financial' => false,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 4],
         ],
         'manufacturing_stats' => [
             'class' => \App\Filament\Widgets\ManufacturingStatsWidget::class,
             'label' => 'Manufacturing Stats',
             'default_visible' => false,
-            'default_sort' => 23,
-            'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin'],
+            'default_sort' => 20,
+            'roles' => self::CATALOG,
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'kpi',
             'default_layout' => ['w' => 4, 'h' => 2],
+        ],
+
+        'supplier_scorecard' => [
+            'class' => \App\Filament\Widgets\SupplierPerformanceScorecardWidget::class,
+            'label' => 'Supplier Performance',
+            'default_visible' => true,
+            'default_sort' => 21,
+            'roles' => [...self::MGMT, ...self::CATALOG],
+            'financial' => false,
+            'period' => true,
+            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 6, 'h' => 4],
+        ],
+
+        // ── System & Admin ──────────────────────────────────────────────
+
+        'recent_activity' => [
+            'class' => \App\Filament\Widgets\RecentActivityLog::class,
+            'label' => 'Admin Activity Feed',
+            'default_visible' => true,
+            'default_sort' => 21,
+            'roles' => self::SYSTEM,
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::LONG_TTL,
+            'type' => 'table',
+            'default_layout' => ['w' => 8, 'h' => 4],
+        ],
+        'disk_space' => [
+            'class' => \App\Filament\Widgets\DiskSpaceWidget::class,
+            'label' => 'Disk Usage',
+            'default_visible' => true,
+            'default_sort' => 22,
+            'roles' => self::SYSTEM,
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::SHORT_TTL,
+            'type' => 'chart',
+            'default_layout' => ['w' => 4, 'h' => 4],
+        ],
+        'cache_status' => [
+            'class' => \App\Filament\Widgets\CacheStatusWidget::class,
+            'label' => 'Cache Status',
+            'default_visible' => true,
+            'default_sort' => 23,
+            'roles' => self::SYSTEM,
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::SHORT_TTL,
+            'type' => 'kpi',
+            'default_layout' => ['w' => 4, 'h' => 2],
+        ],
+        'queue_worker_status' => [
+            'class' => \App\Filament\Widgets\QueueWorkerStatusWidget::class,
+            'label' => 'Queue Worker Status',
+            'default_visible' => true,
+            'default_sort' => 24,
+            'roles' => self::SYSTEM,
+            'financial' => false,
+            'period' => false,
+            'ttl' => AdminCacheService::SHORT_TTL,
+            'type' => 'kpi',
+            'default_layout' => ['w' => 4, 'h' => 4],
         ],
         'newsletter_growth' => [
             'class' => \App\Filament\Widgets\NewsletterGrowthWidget::class,
             'label' => 'Newsletter Growth',
             'default_visible' => false,
-            'default_sort' => 24,
+            'default_sort' => 25,
             'roles' => ['super_admin', 'admin', 'manager', 'support'],
             'financial' => false,
             'period' => true,
             'ttl' => AdminCacheService::LONG_TTL,
-            'default_layout' => ['w' => 4, 'h' => 2],
-        ],
-        'disk_space' => [
-            'class' => \App\Filament\Widgets\DiskSpaceWidget::class,
-            'label' => 'Disk Space Usage',
-            'default_visible' => false,
-            'default_sort' => 25,
-            'roles' => self::SYSTEM,
-            'financial' => false,
-            'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
-            'default_layout' => ['w' => 12, 'h' => 2],
+            'type' => 'chart',
+            'default_layout' => ['w' => 8, 'h' => 4],
         ],
         'request_metrics' => [
             'class' => \App\Filament\Widgets\RequestMetricsWidget::class,
             'label' => 'Request Metrics',
-            'default_visible' => false,
+            'default_visible' => true,
             'default_sort' => 26,
             'roles' => self::SYSTEM,
             'financial' => false,
             'period' => false,
             'ttl' => AdminCacheService::DEFAULT_TTL,
-            'default_layout' => ['w' => 6, 'h' => 2],
+            'type' => 'kpi',
+            'default_layout' => ['w' => 12, 'h' => 1],
         ],
     ];
 
@@ -334,102 +376,137 @@ class WidgetPreferenceService
      * DashboardLayoutService::ensureDefaultDashboard().
      */
     public const ROLE_DEFAULT_DASHBOARDS = [
-        // Zone layout for super_admin / admin (all 26 widgets):
-        // Row  1: dashboard_header (w12)
-        // Row  2: alerts (w6) + health_strip (w6)
-        // Row  3: kpi_stats (w12)
-        // Row  4: recent_orders (w8) + quick_actions (w4)
-        // Row  5: revenue_chart (w8) + order_status_distribution (w4)
-        // Row  6: abandoned_carts (w6) + checkout_dropoff (w6)
-        // Row  7: customer_growth (w6) + payment_method_split (w6)
-        // Row  8: top_searches (w8) + failed_searches (w4)
-        // Row  9: manufacturer_revenue (w8) + sales_by_country (w4)
-        // Row 10: manufacturing_stats (w4) + parts_inquiry (w4) + newsletter_growth (w4)
-        // Row 11: latest_customers (w6) + recent_activity (w6)
-        // Row 12: coupon_usage (w6) + stock_alert (w6)
-        // Row 13: activity_overview (w6) + request_metrics (w6)
-        // Row 14: disk_space (w12)
         'super_admin' => [
+            // Row 1: dashboard_header (w12)
+            // Row 2: health_strip (w12)
+            // Row 3: revenue_kpi (w4) + new_orders_kpi (w4) + pending_orders_kpi (w4)
+            // Row 4: revenue_chart (w8) + order_volume_chart (w4)
             'dashboard_header',
-            'alerts', 'health_strip',
-            'kpi_stats',
-            'recent_orders', 'quick_actions',
-            'revenue_chart', 'order_status_distribution',
-            'abandoned_carts', 'checkout_dropoff',
-            'customer_growth', 'payment_method_split',
-            'top_searches', 'failed_searches',
-            'manufacturer_revenue', 'sales_by_country',
-            'manufacturing_stats', 'parts_inquiry', 'newsletter_growth',
-            'latest_customers', 'recent_activity',
-            'coupon_usage', 'stock_alert',
-            'activity_overview', 'request_metrics',
-            'disk_space',
+            'health_strip',
+            'revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi',
+            'revenue_chart', 'order_volume_chart',
+            // Operations
+            'recent_orders',
+            'abandoned_carts', 'awaiting_confirmation',
+            'refunds_pending', 'new_messages',
+            'failed_queue_jobs',
+            // Inventory & Sourcing
+            'manufacturer_revenue', 'failed_searches',
+            'top_searches', 'new_products_added',
+            'stock_alert', 'parts_inquiry',
+            'manufacturing_stats', 'supplier_scorecard',
+            // System & Admin
+            'recent_activity', 'newsletter_growth',
+            'disk_space', 'cache_status', 'queue_worker_status',
+            'request_metrics',
         ],
         'admin' => [
             'dashboard_header',
-            'alerts', 'health_strip',
-            'kpi_stats',
-            'recent_orders', 'quick_actions',
-            'revenue_chart', 'order_status_distribution',
-            'abandoned_carts', 'checkout_dropoff',
-            'customer_growth', 'payment_method_split',
-            'top_searches', 'failed_searches',
-            'manufacturer_revenue', 'sales_by_country',
-            'manufacturing_stats', 'parts_inquiry', 'newsletter_growth',
-            'latest_customers', 'recent_activity',
-            'coupon_usage', 'stock_alert',
-            'activity_overview', 'request_metrics',
-            'disk_space',
+            'health_strip',
+            'revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi',
+            'revenue_chart', 'order_volume_chart',
+            'recent_orders',
+            'abandoned_carts', 'awaiting_confirmation',
+            'refunds_pending', 'new_messages',
+            'failed_queue_jobs',
+            'manufacturer_revenue', 'failed_searches',
+            'top_searches', 'new_products_added',
+            'stock_alert', 'parts_inquiry',
+            'manufacturing_stats', 'supplier_scorecard',
+            'recent_activity', 'newsletter_growth',
+            'disk_space', 'cache_status', 'queue_worker_status',
+            'request_metrics',
         ],
-        // Zone layout for manager (22 widgets, no system widgets):
-        // Row  1: dashboard_header (w12)
-        // Row  2: kpi_stats (w12)
-        // Row  3: recent_orders (w8) + quick_actions (w4)
-        // Row  4: revenue_chart (w8) + order_status_distribution (w4)
-        // Row  5: abandoned_carts (w6) + checkout_dropoff (w6)
-        // Row  6: customer_growth (w6) + payment_method_split (w6)
-        // Row  7: top_searches (w8) + failed_searches (w4)
-        // Row  8: manufacturer_revenue (w8) + sales_by_country (w4)
-        // Row  9: manufacturing_stats (w4) + parts_inquiry (w4) + newsletter_growth (w4)
-        // Row 10: latest_customers (w6) + coupon_usage (w6)
-        // Row 11: stock_alert (w6) + activity_overview (w6)
         'manager' => [
             'dashboard_header',
-            'kpi_stats',
-            'recent_orders', 'quick_actions',
-            'revenue_chart', 'order_status_distribution',
-            'abandoned_carts', 'checkout_dropoff',
-            'customer_growth', 'payment_method_split',
-            'top_searches', 'failed_searches',
-            'manufacturer_revenue', 'sales_by_country',
-            'manufacturing_stats', 'parts_inquiry', 'newsletter_growth',
-            'latest_customers', 'coupon_usage',
-            'stock_alert', 'activity_overview',
+            'revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi',
+            'revenue_chart', 'order_volume_chart',
+            'recent_orders',
+            'abandoned_carts', 'awaiting_confirmation',
+            'refunds_pending', 'new_messages',
+            'manufacturer_revenue', 'failed_searches',
+            'top_searches', 'new_products_added',
+            'stock_alert', 'parts_inquiry',
+            'manufacturing_stats', 'supplier_scorecard',
+            'newsletter_growth',
         ],
-        // Zone layout for catalog_admin (7 widgets):
-        // Row 1: dashboard_header (w12)
-        // Row 2: quick_actions (w4) + stock_alert (w6)
-        // Row 3: top_searches (w8) + failed_searches (w4)
-        // Row 4: manufacturing_stats (w4) + order_status_distribution (w4)
         'catalog_admin' => [
             'dashboard_header',
-            'quick_actions', 'stock_alert',
-            'top_searches', 'failed_searches',
-            'manufacturing_stats', 'order_status_distribution',
+            'awaiting_confirmation',
+            'failed_searches',
+            'top_searches', 'new_products_added',
+            'stock_alert', 'parts_inquiry',
+            'manufacturing_stats', 'supplier_scorecard',
         ],
-        // Zone layout for support (9 widgets):
-        // Row 1: dashboard_header (w12)
-        // Row 2: recent_orders (w8) + quick_actions (w4)
-        // Row 3: abandoned_carts (w6) + checkout_dropoff (w6)
-        // Row 4: order_status_distribution (w4) + parts_inquiry (w4) + newsletter_growth (w4)
-        // Row 5: latest_customers (w6)
         'support' => [
             'dashboard_header',
-            'recent_orders', 'quick_actions',
-            'abandoned_carts', 'checkout_dropoff',
-            'order_status_distribution', 'parts_inquiry', 'newsletter_growth',
-            'latest_customers',
+            'recent_orders',
+            'abandoned_carts',
+            'refunds_pending', 'new_messages',
+            'parts_inquiry',
         ],
+    ];
+
+    public const WIDGET_TABS = [
+        'Command Center' => [
+            'dashboard_header',
+            'health_strip',
+            'revenue_kpi',
+            'new_orders_kpi',
+            'pending_orders_kpi',
+            'revenue_chart',
+            'order_volume_chart',
+        ],
+        'Operations' => [
+            'recent_orders',
+            'abandoned_carts',
+            'awaiting_confirmation',
+            'refunds_pending',
+            'new_messages',
+            'failed_queue_jobs',
+        ],
+        'Inventory & Sourcing' => [
+            'manufacturer_revenue',
+            'top_searches',
+            'failed_searches',
+            'stock_alert',
+            'new_products_added',
+            'parts_inquiry',
+            'manufacturing_stats',
+            'supplier_scorecard',
+        ],
+        'System & Admin' => [
+            'recent_activity',
+            'disk_space',
+            'cache_status',
+            'queue_worker_status',
+            'newsletter_growth',
+            'request_metrics',
+        ],
+    ];
+
+    /** Map legacy retired widget IDs to their closest new equivalent. */
+    private const LEGACY_ID_MAP = [
+        'kpi_stats' => 'revenue_kpi',
+        'quick_actions' => 'dashboard_header',
+        'activity_overview' => 'recent_activity',
+        'alerts' => 'health_strip',
+        'customer_growth' => 'newsletter_growth',
+        'checkout_dropoff' => 'recent_orders',
+        'sales_by_country' => 'manufacturer_revenue',
+        'order_status_distribution' => 'order_volume_chart',
+        'payment_method_split' => 'revenue_chart',
+        'coupon_usage' => 'revenue_kpi',
+        'latest_customers' => 'new_orders_kpi',
+        'stock-alert' => 'stock_alert',
+        'abandoned-carts' => 'abandoned_carts',
+        'coupon-usage' => 'revenue_kpi',
+        'parts-inquiry' => 'parts_inquiry',
+        'latest-customers' => 'new_orders_kpi',
+        'manufacturing-stats' => 'manufacturing_stats',
+        'newsletter-growth' => 'newsletter_growth',
+        'disk-space' => 'disk_space',
+        'request-metrics' => 'request_metrics',
     ];
 
     // ── Registry accessors ──────────────────────────────────────────────
@@ -449,8 +526,7 @@ class WidgetPreferenceService
             }
         }
 
-        // Unknown widget: restrict to management rather than failing open.
-        return self::MGMT;
+        return ['super_admin', 'admin', 'manager'];
     }
 
     public static function ttlFor(string $widgetClass): int
@@ -493,6 +569,38 @@ class WidgetPreferenceService
         return self::ROLE_DEFAULT_DASHBOARDS['support'];
     }
 
+    /** @return array<string, list<string>> */
+    public function roleDefaultTabs(Admin $admin): array
+    {
+        $tabs = [];
+
+        foreach (self::WIDGET_TABS as $label => $ids) {
+            $viewable = array_values(array_filter(
+                $ids,
+                fn (string $id): bool => isset(static::WIDGETS[$id])
+                    && $admin->hasAnyRole(static::WIDGETS[$id]['roles'])
+            ));
+
+            if ($viewable !== []) {
+                $tabs[$label] = $viewable;
+            }
+        }
+
+        return $tabs;
+    }
+
+    /** @return list<string>|null */
+    public function roleDefaultTabWidgetIds(Admin $admin, string $slug): ?array
+    {
+        foreach ($this->roleDefaultTabs($admin) as $label => $ids) {
+            if (\Illuminate\Support\Str::slug($label) === $slug) {
+                return $ids;
+            }
+        }
+
+        return null;
+    }
+
     // ── Global period (persisted in _meta) ──────────────────────────────
 
     public function getPeriod(): string
@@ -525,6 +633,18 @@ class WidgetPreferenceService
     public function saveActiveDashboardId(int $dashboardId): void
     {
         $this->saveMeta(['active_dashboard' => $dashboardId]);
+    }
+
+    // ── Active tab (persisted in _meta) ─────────────────────────────────
+
+    public function getActiveTab(): string
+    {
+        return $this->getMeta()['active_tab'] ?? 'Command Center';
+    }
+
+    public function saveActiveTab(string $tab): void
+    {
+        $this->saveMeta(['active_tab' => $tab]);
     }
 
     // ── Visibility & ordering (legacy flat preferences) ─────────────────

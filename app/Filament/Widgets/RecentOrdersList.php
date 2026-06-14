@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Concerns\HasWidgetExport;
 use App\Models\Order;
 use Filament\Actions\ViewAction;
 use Filament\Tables;
@@ -10,19 +11,46 @@ use Filament\Widgets\TableWidget;
 
 class RecentOrdersList extends TableWidget
 {
+    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+    use HasWidgetExport;
+
     public function getDescription(): ?string
     {
         return 'Most recent orders placed';
     }
 
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-
     protected ?string $pollingInterval = '60s';
 
-    protected static ?int $sort = -35;
+    protected static ?int $sort = -20;
 
     protected static ?string $heading = 'Recent Orders';
+
+    protected function getExportHeaders(): array
+    {
+        return ['Order #', 'Customer', 'Total', 'Status', 'Date'];
+    }
+
+    protected function getExportRows(): iterable
+    {
+        return Order::query()
+            ->with(['user'])
+            ->where('created_at', '>=', $this->periodStart())
+            ->latest()
+            ->get()
+            ->map(fn (Order $o) => [
+                $o->order_number,
+                $o->shipping_name ?? $o->user?->name ?? $o->guest_email ?? '—',
+                format_money($o->grand_total),
+                $o->status instanceof \App\Enums\OrderStatus ? $o->status->value : ($o->status ?? '—'),
+                $o->created_at?->format('d M Y H:i') ?? '—',
+            ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [$this->getExportActions()];
+    }
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
@@ -73,6 +101,16 @@ class RecentOrdersList extends TableWidget
                 ViewAction::make()
                     ->url(fn (Order $record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record])),
             ])
+            ->emptyState(
+                view('filament.widgets.empty-state', [
+                    'icon' => 'heroicon-o-shopping-bag',
+                    'heading' => 'No recent orders',
+                    'description' => 'Create your first order to see metrics here.',
+                    'ctaLabel' => 'Create Order',
+                    'ctaUrl' => \App\Filament\Resources\OrderResource::getUrl('create'),
+                ])
+            )
+            ->emptyStateDescription('')
             ->searchable(false)
             ->paginated(false);
     }

@@ -86,7 +86,7 @@ class DashboardPeriodTest extends TestCase
     public function meta_period_survives_sort_order_change(): void
     {
         $this->service->savePeriod('365');
-        $this->service->setSortOrder('kpi_stats', 5);
+        $this->service->setSortOrder('revenue_kpi', 5);
 
         $this->assertSame('365', $this->service->getPeriod());
     }
@@ -139,15 +139,21 @@ class DashboardPeriodTest extends TestCase
     public function exempt_widgets_do_not_use_has_dashboard_period(): void
     {
         $exemptClasses = [
-            \App\Filament\Widgets\DashboardAlerts::class,
+            \App\Filament\Widgets\DashboardHeader::class,
             \App\Filament\Widgets\HealthStrip::class,
-            \App\Filament\Widgets\QuickActionsWidget::class,
+            \App\Filament\Widgets\PendingOrdersKpi::class,
             \App\Filament\Widgets\StockAlertWidget::class,
             \App\Filament\Widgets\RecentActivityLog::class,
             \App\Filament\Widgets\DiskSpaceWidget::class,
             \App\Filament\Widgets\RequestMetricsWidget::class,
             \App\Filament\Widgets\AbandonedCartWidget::class,
             \App\Filament\Widgets\PartsInquiryWidget::class,
+            \App\Filament\Widgets\AwaitingConfirmationList::class,
+            \App\Filament\Widgets\RefundsPendingList::class,
+            \App\Filament\Widgets\NewMessagesInbox::class,
+            \App\Filament\Widgets\FailedQueueJobsMonitor::class,
+            \App\Filament\Widgets\CacheStatusWidget::class,
+            \App\Filament\Widgets\QueueWorkerStatusWidget::class,
         ];
 
         foreach ($exemptClasses as $class) {

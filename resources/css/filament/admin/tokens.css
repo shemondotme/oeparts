@@ -13,6 +13,17 @@
 
 /* ─── FORGE (light) — Industrial Blueprint Pro ──────────────────────────── */
 :root {
+    /* Semantic alias tokens (user-facing) */
+    --surface-base: var(--color-bg-canvas);
+    --surface-card: var(--card-bg);
+    --surface-card-dark: #27272A;
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --accent-success: var(--color-success-500);
+    --accent-warning: var(--color-warning-500);
+    --accent-danger: var(--color-danger-500);
+    --accent-brand: var(--aurora-indigo);
+
     /* Surfaces */
     --color-bg-canvas: #F4F2ED;
     --color-bg-surface: #FAF8F4;
@@ -28,7 +39,7 @@
     /* Text */
     --color-text-primary: #0A1228;
     --color-text-secondary: #2D3748;
-    --color-text-muted: #718096;
+    --color-text-muted: #5A6A7A;
     --color-text-disabled: #A0AEC0;
     --color-text-inverse: #FAF8F4;
     --color-text-link: #0A1228;
@@ -111,15 +122,28 @@
     --aurora-emerald: #10B981;
     --aurora-rose: #F43F5E;
     --aurora-sky: #0EA5E9;
+    --aurora-amber: #F59E0B;
     --aurora-gradient: linear-gradient(135deg, #6366F1, #8B5CF6, #22D3EE);
     --aurora-gradient-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08), rgba(34, 211, 238, 0.05));
 
-    /* Glassmorphism tokens — frosted/translucent effect */
-    --glass-bg: rgba(250, 248, 244, 0.65);
-    --glass-border: rgba(99, 102, 241, 0.2);
-    --glass-blur: blur(10px);
-    --glass-shadow: 0 8px 32px rgba(99, 102, 241, 0.1);
-    --glass-glow: 0 0 30px rgba(99, 102, 241, 0.15);
+    /* Glassmorphism tokens — frosted/translucent effect (real backdrop blur) */
+    --glass-bg: rgba(250, 248, 244, 0.72);
+    --glass-border: rgba(99, 102, 241, 0.18);
+    --glass-blur: blur(14px) saturate(140%);
+    --glass-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 12px 32px -10px rgba(15, 23, 42, 0.14);
+    --glass-glow: 0 0 0 1px rgba(99, 102, 241, 0.30), 0 10px 34px -8px rgba(99, 102, 241, 0.28);
+    /* Opaque fallback for browsers without backdrop-filter support */
+    --glass-bg-solid: #FAF8F4;
+
+    /* Per-widget semantic accent — set per gs-id / per stat in theme.css.
+       Defaults to indigo; every card derives its chrome from this. */
+    --widget-accent: var(--aurora-indigo);
+    --widget-accent-2: var(--aurora-cyan);
+
+    /* Living aurora-mesh background (behind dashboard canvas) */
+    --mesh-blob-1: rgba(139, 92, 246, 0.30);
+    --mesh-blob-2: rgba(34, 211, 238, 0.26);
+    --mesh-blob-3: rgba(99, 102, 241, 0.28);
 
     /* Chart palette (8 categorical) — Aurora spectrum */
     --chart-c-1: #8B5CF6;
@@ -299,7 +323,7 @@
     --widget-header-height: 2.75rem;
     --widget-body-padding: 1.25rem;
 
-    --kpi-value-size: 1.75rem;
+    --kpi-value-size: 1.7rem;
     --kpi-value-weight: 800;
     --kpi-icon-size: 2.25rem;
     --kpi-icon-bg: rgba(245, 158, 11, 0.10);
@@ -339,6 +363,16 @@
 
 /* ─── PULSE (dark mode) ──────────────────────────────────────────────────── */
 .dark {
+    /* Semantic alias tokens (dark mode) */
+    --surface-base: #18181B;
+    --surface-card: #27272A;
+    --text-primary: #FAFAFA;
+    --text-secondary: #A1A1AA;
+    --accent-success: #34D399;
+    --accent-warning: #FBBF24;
+    --accent-danger: #FB7185;
+    --accent-brand: #60A5FA;
+
     --color-bg-canvas: #0C0F15;
     --color-bg-surface: #151821;
     --color-bg-surface-raised: #1A1E2A;
@@ -431,15 +465,22 @@
     --aurora-emerald: #34D399;
     --aurora-rose: #FB7185;
     --aurora-sky: #38BDF8;
+    --aurora-amber: #FBBF24;
     --aurora-gradient: linear-gradient(135deg, #818CF8, #A78BFA, #67E8F9);
     --aurora-gradient-soft: linear-gradient(135deg, rgba(129, 140, 248, 0.15), rgba(167, 139, 250, 0.1), rgba(103, 232, 249, 0.08));
 
-    /* Glassmorphism tokens — dark mode (deep translucent) */
-    --glass-bg: rgba(21, 24, 33, 0.7);
-    --glass-border: rgba(129, 140, 248, 0.25);
-    --glass-blur: blur(12px);
-    --glass-shadow: 0 8px 32px rgba(129, 140, 248, 0.15);
-    --glass-glow: 0 0 30px rgba(129, 140, 248, 0.2);
+    /* Glassmorphism tokens — dark mode (deep translucent, real blur) */
+    --glass-bg: rgba(32, 38, 56, 0.72);
+    --glass-border: rgba(129, 140, 248, 0.42);
+    --glass-blur: blur(16px) saturate(150%);
+    --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), 0 16px 42px -12px rgba(0, 0, 0, 0.6);
+    --glass-glow: 0 0 0 1px rgba(129, 140, 248, 0.5), 0 12px 44px -8px rgba(129, 140, 248, 0.45);
+    --glass-bg-solid: #1E2433;
+
+    /* Living aurora-mesh background — brighter neon on dark */
+    --mesh-blob-1: rgba(167, 139, 250, 0.42);
+    --mesh-blob-2: rgba(103, 232, 249, 0.32);
+    --mesh-blob-3: rgba(129, 140, 248, 0.40);
 
     /* Chart palette (8 categorical) — Aurora spectrum (dark mode) */
     --chart-c-1: #A78BFA;

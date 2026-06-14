@@ -40,11 +40,15 @@ class DashboardCanvasTest extends TestCase
         $dashboard = $this->service->ensureDefaultDashboard($this->admin);
 
         $this->assertTrue($dashboard->is_default);
-        $this->assertSame('My Dashboard', $dashboard->name);
+        $this->assertSame('Command Center', $dashboard->name);
 
         $ids = array_column($dashboard->layout, 'id');
+        $expectedIds = array_values(array_filter(
+            WidgetPreferenceService::WIDGET_TABS['Command Center'],
+            fn (string $id): bool => $this->admin->hasAnyRole(WidgetPreferenceService::WIDGETS[$id]['roles'] ?? [])
+        ));
         $this->assertSame(
-            WidgetPreferenceService::ROLE_DEFAULT_DASHBOARDS['super_admin'],
+            $expectedIds,
             $ids,
         );
     }
@@ -56,7 +60,7 @@ class DashboardCanvasTest extends TestCase
         $second = $this->service->ensureDefaultDashboard($this->admin);
 
         $this->assertSame($first->id, $second->id);
-        $this->assertSame(1, AdminDashboard::where('admin_id', $this->admin->id)->count());
+        $this->assertSame(4, AdminDashboard::where('admin_id', $this->admin->id)->count());
     }
 
     #[Test]
@@ -69,7 +73,7 @@ class DashboardCanvasTest extends TestCase
 
         $ids = array_column($dashboard->layout, 'id');
         $this->assertNotContains('revenue_chart', $ids);
-        $this->assertContains('kpi_stats', $ids);
+        $this->assertContains('recent_orders', $ids);
     }
 
     #[Test]
@@ -95,9 +99,16 @@ class DashboardCanvasTest extends TestCase
     #[Test]
     public function the_last_dashboard_cannot_be_deleted(): void
     {
-        $dashboard = $this->service->ensureDefaultDashboard($this->admin);
+        $this->service->ensureDefaultDashboard($this->admin);
 
-        $this->assertFalse($this->service->delete($this->admin, $dashboard->id));
+        // Delete all except one
+        $dashboards = AdminDashboard::where('admin_id', $this->admin->id)->get();
+        foreach ($dashboards->skip(1) as $d) {
+            $this->assertTrue($this->service->delete($this->admin, $d->id));
+        }
+
+        $last = $dashboards->first();
+        $this->assertFalse($this->service->delete($this->admin, $last->id));
         $this->assertSame(1, AdminDashboard::where('admin_id', $this->admin->id)->count());
     }
 
@@ -107,7 +118,7 @@ class DashboardCanvasTest extends TestCase
         $dashboard = $this->service->ensureDefaultDashboard($this->admin);
 
         $saved = $this->service->saveLayout($this->admin, $dashboard->id, [
-            ['id' => 'kpi_stats', 'x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
+            ['id' => 'dashboard_header', 'x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
             // Out of bounds: x+w > 12 → x is pulled back.
             ['id' => 'revenue_chart', 'x' => 10, 'y' => 2, 'w' => 8, 'h' => 4],
             // Oversized h is clamped to 12.
@@ -158,17 +169,17 @@ class DashboardCanvasTest extends TestCase
         $dashboard = $this->service->ensureDefaultDashboard($this->admin);
 
         $this->service->saveLayout($this->admin, $dashboard->id, [
-            ['id' => 'kpi_stats', 'x' => 3, 'y' => 5, 'w' => 9, 'h' => 2],
+            ['id' => 'revenue_chart', 'x' => 3, 'y' => 5, 'w' => 9, 'h' => 4],
         ]);
 
-        $this->service->setWidgets($this->admin, $dashboard->id, ['kpi_stats', 'revenue_chart']);
+        $this->service->setWidgets($this->admin, $dashboard->id, ['revenue_chart', 'recent_orders']);
 
         $layout = collect($dashboard->fresh()->layout)->keyBy('id');
 
-        $this->assertSame(3, $layout['kpi_stats']['x']);
-        $this->assertSame(5, $layout['kpi_stats']['y']);
-        $this->assertTrue($layout->has('revenue_chart'));
+        $this->assertSame(3, $layout['revenue_chart']['x']);
+        $this->assertSame(5, $layout['revenue_chart']['y']);
+        $this->assertTrue($layout->has('recent_orders'));
         // Appended widget lands below the retained block.
-        $this->assertGreaterThanOrEqual(7, $layout['revenue_chart']['y']);
+        $this->assertGreaterThanOrEqual(9, $layout['recent_orders']['y']);
     }
 }

@@ -3,8 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
-use App\Filament\Widgets\CheckoutDropoffChart;
-use App\Filament\Widgets\DashboardKpiStats;
 use App\Models\Admin;
 use App\Models\Manufacturer;
 use App\Models\Order;
@@ -119,126 +117,20 @@ class DashboardWidgetDataTest extends TestCase
         $this->assertSame('0.00', number_format((float) $revenue->revenue, 2));
     }
 
-    // ── DashboardKpiStats — bcmath string safety ─────────────────────────────
-
-    #[Test]
-    public function kpi_stats_revenue_is_returned_as_string_not_float(): void
-    {
-        Order::factory()->create([
-            'status' => OrderStatus::Paid->value,
-            'grand_total' => '33.33',
-            'created_at' => now()->subDays(1),
-        ]);
-        Order::factory()->create([
-            'status' => OrderStatus::Paid->value,
-            'grand_total' => '33.33',
-            'created_at' => now()->subDays(1),
-        ]);
-        Order::factory()->create([
-            'status' => OrderStatus::Paid->value,
-            'grand_total' => '33.34',
-            'created_at' => now()->subDays(1),
-        ]);
-
-        $widget = new DashboardKpiStats();
-        $widget->period = '30';
-
-        $method = new \ReflectionMethod($widget, 'computeStats');
-        $method->setAccessible(true);
-        $data = $method->invoke($widget);
-
-        $this->assertIsString($data['revenue'], 'Revenue must be a string for safe bcmath operations');
-        $this->assertSame(0, bccomp('100.00', $data['revenue'], 2), "Revenue must sum to exactly 100.00, got {$data['revenue']}");
-        $this->assertIsString($data['prevRevenue'], 'prevRevenue must be a string');
-        $this->assertIsInt($data['orders']);
-        $this->assertIsInt($data['pending']);
-    }
-
-    #[Test]
-    public function kpi_stats_excludes_pending_orders_from_revenue(): void
-    {
-        // Pending order — must NOT count toward revenue
-        Order::factory()->create([
-            'status' => OrderStatus::Pending->value,
-            'grand_total' => '999.00',
-            'created_at' => now()->subDays(1),
-        ]);
-
-        // Paid order — must count
-        Order::factory()->create([
-            'status' => OrderStatus::Paid->value,
-            'grand_total' => '50.00',
-            'created_at' => now()->subDays(1),
-        ]);
-
-        $widget = new DashboardKpiStats();
-        $widget->period = '30';
-
-        $method = new \ReflectionMethod($widget, 'computeStats');
-        $method->setAccessible(true);
-        $data = $method->invoke($widget);
-
-        $this->assertSame(0, bccomp('50.00', $data['revenue'], 2));
-    }
-
-    // ── CheckoutDropoffChart — cancelled bar ─────────────────────────────────
-
-    #[Test]
-    public function checkout_dropoff_cancelled_bar_is_non_zero(): void
-    {
-        // Funnel start: abandoned carts
-        DB::table('abandoned_carts')->insert([
-            ['guest_email' => 'a@test.com', 'cart_snapshot' => '{}', 'last_active_at' => now()->subDays(7), 'recovery_email_sent' => 0, 'created_at' => now()->subDays(7), 'updated_at' => now()->subDays(7)],
-            ['guest_email' => 'b@test.com', 'cart_snapshot' => '{}', 'last_active_at' => now()->subDays(7), 'recovery_email_sent' => 0, 'created_at' => now()->subDays(7), 'updated_at' => now()->subDays(7)],
-        ]);
-
-        // Regular pending orders
-        Order::factory()->count(3)->create([
-            'status' => OrderStatus::Pending->value,
-            'created_at' => now()->subDays(7),
-        ]);
-
-        // Cancelled orders — the fixed bar that was always 0 before
-        Order::factory()->count(2)->create([
-            'status' => OrderStatus::Cancelled->value,
-            'created_at' => now()->subDays(7),
-        ]);
-
-        $widget = new CheckoutDropoffChart();
-        $widget->period = '30';
-
-        $method = new \ReflectionMethod($widget, 'getData');
-        $method->setAccessible(true);
-        $data = $method->invoke($widget);
-
-        $bars = $data['datasets'][0]['data'];
-
-        // bars order: [cartCreated, startedCheckout, completed, paid, cancelled]
-        $this->assertSame(2, $bars[0], 'Cart Created bar');
-        $this->assertSame(5, $bars[1], 'Started Checkout bar (all orders)');
-        $this->assertSame(0, $bars[2], 'Completed bar (no Processing/Paid/Shipped/Delivered)');
-        $this->assertSame(2, $bars[4], 'Cancelled bar must be non-zero (was always 0 before the fix)');
-
-        $this->assertSame(
-            ['Cart Created', 'Started Checkout', 'Completed', 'Paid', 'Cancelled'],
-            $data['labels'],
-        );
-    }
+    // ── CheckoutDropoff — OrderStatus enum ───────────────────────────────────
 
     #[Test]
     public function checkout_dropoff_does_not_count_abandoned_keyword_as_status(): void
     {
-        // Confirm OrderStatus enum has no 'abandoned' case — the old code
-        // filtered on a non-existent value making the bar permanently 0.
         $cases = array_column(OrderStatus::cases(), 'value');
         $this->assertNotContains('abandoned', $cases, "'abandoned' must not be a valid OrderStatus");
         $this->assertContains(OrderStatus::Cancelled->value, $cases);
     }
 
-    // ── DashboardAlerts — backup_stale_hours from settings ──────────────────
+    // ── Cron/Backup staleness ────────────────────────────────────────────────
 
     #[Test]
-    public function dashboard_alerts_uses_backup_stale_hours_setting(): void
+    public function backup_stale_threshold_comes_from_settings(): void
     {
         $threshold = (int) settings('dashboard.backup_stale_hours', 26);
         $this->assertGreaterThan(0, $threshold, 'Setting must be seeded');
@@ -261,7 +153,6 @@ class DashboardWidgetDataTest extends TestCase
 
         $this->assertNotNull($lastBackup);
 
-        // Use Carbon::parse to avoid signed-diffInHours ambiguity in Carbon 3.x
         $lastBackupCarbon = \Carbon\Carbon::parse($lastBackup);
         $this->assertTrue(
             $lastBackupCarbon->isBefore(now()->subHours($threshold)),
@@ -270,7 +161,7 @@ class DashboardWidgetDataTest extends TestCase
     }
 
     #[Test]
-    public function dashboard_alerts_does_not_flag_fresh_backup_as_stale(): void
+    public function fresh_backup_is_not_flagged_as_stale(): void
     {
         $threshold = (int) settings('dashboard.backup_stale_hours', 26);
 

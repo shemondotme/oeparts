@@ -8,5 +8,6 @@ return [
     'label_brands' => 'Marcas',
     'label_journal' => 'Diario',
     'label_about' => 'Nosotros',
+    'label_contact' => 'Contacto',
     'logo_subline' => 'Índice de piezas genuinas',
 ];

@@ -8,5 +8,6 @@ return [
     'label_brands' => 'Markės',
     'label_journal' => 'Žurnalas',
     'label_about' => 'Apie',
+    'label_contact' => 'Kontaktai',
     'logo_subline' => 'Originalių dalių rodyklė',
 ];

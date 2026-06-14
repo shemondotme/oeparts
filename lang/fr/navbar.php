@@ -8,5 +8,6 @@ return [
     'label_brands' => 'Marques',
     'label_journal' => 'Journal',
     'label_about' => 'À propos',
+    'label_contact' => 'Contact',
     'logo_subline' => 'Index pièces d\'origine',
 ];

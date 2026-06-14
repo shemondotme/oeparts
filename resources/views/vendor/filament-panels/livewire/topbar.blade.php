@@ -117,12 +117,7 @@
             {{-- Quick-create dropdown (role-aware) --}}
             <x-admin.quick-create />
 
-            {{-- Database notification bell --}}
-            @if (filament()->auth()->check() && filament()->hasDatabaseNotifications() && filament()->getDatabaseNotificationsPosition() === \Filament\Enums\DatabaseNotificationsPosition::Topbar)
-                @livewire(filament()->getDatabaseNotificationsLivewireComponent(), [
-                    'lazy' => filament()->hasLazyLoadedDatabaseNotifications(),
-                ])
-            @endif
+            {{-- Custom notification center rendered via TOPBAR_END hook --}}
 
             {{-- Environment indicator --}}
             <x-admin.environment-indicator />

@@ -68,9 +68,21 @@ class DashboardHeader extends Widget
         // itself is visible to every role (see registry 'roles').
         $showRevenue = $admin?->hasAnyRole(['super_admin', 'admin', 'manager']) ?? false;
 
+        $roleBadge = $admin?->getRoleNames()?->first() ?? 'Admin';
+        $roleColors = [
+            'super_admin' => 'var(--accent-danger)',
+            'admin' => 'var(--accent-brand)',
+            'manager' => 'var(--accent-warning)',
+            'catalog_admin' => 'var(--accent-success)',
+            'support' => 'var(--text-secondary)',
+        ];
+        $badgeColor = $roleColors[$roleBadge] ?? 'var(--accent-brand)';
+
         return [
             'greeting' => $greeting,
             'adminName' => $admin ? $admin->name : 'Demo Admin',
+            'roleBadge' => ucwords(str_replace('_', ' ', $roleBadge)),
+            'badgeColor' => $badgeColor,
             'currentDate' => now()->format('l, F j, Y'),
             'showRevenue' => $showRevenue,
             'todayRevenue' => $showRevenue ? format_money($d['todayRevenue']) : null,

@@ -52,11 +52,13 @@ class DiskSpaceWidget extends BaseWidget
                 default => 'success',
             };
 
+            $level = $usedPercent > 90 ? 'danger' : ($usedPercent > 70 ? 'warning' : 'success');
+
             return [
-                Stat::make('Disk Usage', "{$usedGB} / {$totalGB} GB")
-                    ->description("{$usedPercent}% used · {$freeGB} GB free")
+                Stat::make('Disk Usage', "{$usedPercent}%")
+                    ->description("{$usedGB} / {$totalGB} GB · {$freeGB} GB free" . ($usedPercent > 90 ? ' — Critical' : ''))
                     ->descriptionIcon('heroicon-o-server-stack')
-                    ->color($color),
+                    ->color($level),
             ];
         } catch (\Exception $e) {
             report($e);

@@ -36,7 +36,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->authGuard('admin')
             ->login(\App\Filament\Pages\Auth\CustomLogin::class)
-            ->databaseNotifications()
             ->simplePageMaxContentWidth(Width::Medium)
             ->colors([
                 'primary' => Color::hex('#0A1228'),
@@ -74,6 +73,12 @@ class AdminPanelProvider extends PanelProvider
             // env badge + theme toggle are now inlined in livewire/topbar.blade.php (Zone C)
             // sidebar search moved to topbar Zone B (Spotlight)
             // sidebar footer is inlined in livewire/sidebar.blade.php rail footer
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_END,
+                fn (): string => filament()->auth()->check()
+                    ? Blade::render('@livewire(\'notification-center\')')
+                    : '',
+            )
             ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => Blade::render('<x-admin.loading-bar /><x-admin.toast /><x-admin.keyboard-shortcuts />'),
