@@ -42,13 +42,13 @@
                 <h3 class="text-sm font-bold" style="color: var(--color-text-primary); font-family: var(--font-display);">
                     Setup Progress
                 </h3>
-                <span class="text-lg font-black font-mono" style="color: {{ $progress >= 80 ? 'var(--color-success-500)' : $progress >= 50 ? 'var(--color-warning-500)' : 'var(--color-danger-500)' }};">
+                <span class="text-lg font-black font-mono" style="color: {{ $progress >= 80 ? 'var(--color-success-500)' : ($progress >= 50 ? 'var(--color-warning-500)' : 'var(--color-danger-500)') }};">
                     {{ $progress }}%
                 </span>
             </div>
             <div class="w-full h-3 rounded-full overflow-hidden" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                 <div class="h-full rounded-full transition-all duration-700 ease-out"
-                    style="width: {{ $progress }}%; background: {{ $progress >= 80 ? 'var(--color-success-500)' : $progress >= 50 ? 'var(--color-warning-500)' : 'var(--color-danger-500)' }};">
+                    style="width: {{ $progress }}%; background: {{ $progress >= 80 ? 'var(--color-success-500)' : ($progress >= 50 ? 'var(--color-warning-500)' : 'var(--color-danger-500)') }};">
                 </div>
             </div>
             <p class="mt-2 text-xs font-mono" style="color: var(--color-text-muted);">

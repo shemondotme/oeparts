@@ -191,7 +191,7 @@ class HealthCheckDashboard extends Page
             'scheduler' => [
                 'label' => 'Reset Heartbeat',
                 'action' => 'resetSchedulerHeartbeat',
-                'icon' => 'heroicono-arrow-path',
+                'icon' => 'heroicon-o-arrow-path',
                 'color' => 'warning',
                 'needsConfirmation' => true,
                 'confirmMessage' => 'Reset the scheduler heartbeat timestamp. This will not start the scheduler if it is not running.',

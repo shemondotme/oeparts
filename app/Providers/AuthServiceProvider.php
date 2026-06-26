@@ -8,6 +8,7 @@ use App\Models\AbandonedCart;
 use App\Models\ActivityLog;
 use App\Models\Admin;
 use App\Models\BlogPost;
+use App\Models\BlogTag;
 use App\Models\CarModel;
 use App\Models\Carrier;
 use App\Models\Category;
@@ -20,10 +21,12 @@ use App\Models\FailedSearchLog;
 use App\Models\Faq;
 use App\Models\IpBlocklist;
 use App\Models\Language;
+use App\Models\LanguageString;
 use App\Models\LoginLog;
 use App\Models\Manufacturer;
 use App\Models\MediaFile;
 use App\Models\Menu;
+use App\Models\MenuItem;
 use App\Models\NewsletterCampaign;
 use App\Models\NewsletterSubscriber;
 use App\Models\Order;
@@ -39,12 +42,12 @@ use App\Models\SeoMeta;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\Testimonial;
-use App\Models\Translation;
 use App\Models\User;
 use App\Policies\AbandonedCartPolicy;
 use App\Policies\ActivityLogPolicy;
 use App\Policies\AdminPolicy;
 use App\Policies\BlogPostPolicy;
+use App\Policies\BlogTagPolicy;
 use App\Policies\CarModelPolicy;
 use App\Policies\CarrierPolicy;
 use App\Policies\CategoryPolicy;
@@ -60,6 +63,7 @@ use App\Policies\LanguagePolicy;
 use App\Policies\LoginLogPolicy;
 use App\Policies\ManufacturerPolicy;
 use App\Policies\MediaFilePolicy;
+use App\Policies\MenuItemPolicy;
 use App\Policies\MenuPolicy;
 use App\Policies\NewsletterCampaignPolicy;
 use App\Policies\NewsletterSubscriberPolicy;
@@ -89,6 +93,7 @@ class AuthServiceProvider extends ServiceProvider
         ActivityLog::class => ActivityLogPolicy::class,
         Admin::class => AdminPolicy::class,
         BlogPost::class => BlogPostPolicy::class,
+        BlogTag::class => BlogTagPolicy::class,
         CarModel::class => CarModelPolicy::class,
         Carrier::class => CarrierPolicy::class,
         Category::class => CategoryPolicy::class,
@@ -101,10 +106,12 @@ class AuthServiceProvider extends ServiceProvider
         Faq::class => FaqPolicy::class,
         IpBlocklist::class => IpBlocklistPolicy::class,
         Language::class => LanguagePolicy::class,
+        LanguageString::class => TranslationPolicy::class,
         LoginLog::class => LoginLogPolicy::class,
         Manufacturer::class => ManufacturerPolicy::class,
         MediaFile::class => MediaFilePolicy::class,
         Menu::class => MenuPolicy::class,
+        MenuItem::class => MenuItemPolicy::class,
         NewsletterCampaign::class => NewsletterCampaignPolicy::class,
         NewsletterSubscriber::class => NewsletterSubscriberPolicy::class,
         Order::class => OrderPolicy::class,
@@ -121,7 +128,6 @@ class AuthServiceProvider extends ServiceProvider
         ShippingMethod::class => ShippingMethodPolicy::class,
         ShippingZone::class => ShippingZonePolicy::class,
         Testimonial::class => TestimonialPolicy::class,
-        Translation::class => TranslationPolicy::class,
         User::class => UserPolicy::class,
     ];
 

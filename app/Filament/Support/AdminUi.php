@@ -420,7 +420,14 @@ final class AdminUi
                     'heading' => count($changes) . ' ' . lcfirst($label),
                 ]);
             })
-            ->action(fn (Collection $records, array $data) => $action($records, $data));
+            ->action(fn (Collection $records, array $data) => $action($records, $data))
+            // Gate::callPolicyMethod() strips a lone leading string argument,
+            // assuming it's just a class hint for an ability like 'create' —
+            // that collapses BasePolicy::update($admin, $record)'s call to 1
+            // arg and throws. Passing the class twice survives the strip
+            // (one copy is removed, one remains as the $record argument),
+            // which BasePolicy never dereferences anyway.
+            ->authorize(fn (?string $model): bool => $model === null || (auth('admin')->user()?->can('update', [$model, $model]) ?? false));
     }
 
     /**
@@ -447,6 +454,7 @@ final class AdminUi
 
                 return Response::streamDownload(fn () => print($csv), 'export-' . now()->format('Y-m-d-His') . '.csv');
             })
+            ->authorize(fn (?string $model): bool => $model === null || (auth('admin')->user()?->can('viewAny', $model) ?? false))
             ->deselectRecordsAfterCompletion();
     }
 

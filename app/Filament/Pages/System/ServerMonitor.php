@@ -19,7 +19,9 @@ class ServerMonitor extends Page
 
     public static function canAccess(): bool
     {
-        return auth('admin')->user()->hasPermissionTo('view system information');
+        $admin = auth('admin')->user();
+
+        return $admin->hasRole('super_admin') || $admin->hasPermissionTo('view system information');
     }
 
     public static function getNavigationIcon(): string|\BackedEnum|null
@@ -44,7 +46,10 @@ class ServerMonitor extends Page
 
     public function getCpuLoad(): array
     {
-        $load = sys_getloadavg();
+        // sys_getloadavg() doesn't exist on Windows and can be disabled on
+        // some Linux hosts — guard rather than assume availability.
+        $load = function_exists('sys_getloadavg') ? sys_getloadavg() : [0, 0, 0];
+
         return [
             '1min' => round($load[0] ?? 0, 2),
             '5min' => round($load[1] ?? 0, 2),

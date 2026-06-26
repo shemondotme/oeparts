@@ -6,10 +6,13 @@ use App\Enums\ContactStatus;
 use App\Enums\PartInquiryStatus;
 use App\Enums\SectionStatus;
 use App\Filament\Resources\AbandonedCartResource\Pages\ListAbandonedCarts;
+use App\Filament\Resources\AdminResource\Pages\ListAdmins;
 use App\Filament\Resources\BlogPostResource\Pages\ListBlogPosts;
+use App\Filament\Resources\CarrierResource\Pages\ListCarriers;
 use App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages;
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
 use App\Filament\Resources\FaqResource\Pages\ListFaqs;
+use App\Filament\Resources\ManufacturerResource\Pages\ListManufacturers;
 use App\Filament\Resources\NewsletterCampaignResource\Pages\ListNewsletterCampaigns;
 use App\Filament\Resources\NewsletterSubscriberResource\Pages\ListNewsletterSubscribers;
 use App\Filament\Resources\PartInquiryResource\Pages\ListPartInquiries;
@@ -19,15 +22,23 @@ use App\Filament\Resources\TestimonialResource\Pages\ListTestimonials;
 use App\Models\AbandonedCart;
 use App\Models\Admin;
 use App\Models\BlogPost;
+use App\Models\BlogTag;
+use App\Models\Carrier;
 use App\Models\Category;
 use App\Models\Condition;
 use App\Models\ContactMessage;
+use App\Models\EmailLog;
 use App\Models\Faq;
+use App\Models\FailedSearchLog;
+use App\Models\LanguageString;
 use App\Models\Manufacturer;
+use App\Models\Menu;
+use App\Models\MenuItem;
 use App\Models\NewsletterCampaign;
 use App\Models\NewsletterSubscriber;
 use App\Models\PartInquiry;
 use App\Models\Product;
+use App\Models\SearchLog;
 use App\Models\Section;
 use App\Models\Testimonial;
 use App\Models\User;
@@ -471,5 +482,192 @@ class ExtendedAuthorizationTest extends TestCase
             ->assertTableBulkActionVisible('bulkToggleActive')
             ->callTableBulkAction('bulkToggleActive', [$subscriber]);
         $this->assertFalse($subscriber->refresh()->is_active);
+    }
+
+    // ── System module deep gap analysis (Option Z) ──────────────────────────
+
+    // TranslationResource had zero enforced authorization: AuthServiceProvider
+    // mapped a Policy to a model class (Translation::class) that doesn't exist
+    // anywhere in the codebase, while the resource's real model (LanguageString)
+    // had no policy registered at all — same "no policy → Filament allows by
+    // default" bug class as the Catalog module's ConditionPolicy finding.
+
+    #[Test]
+    public function translation_resource_now_enforces_authorization(): void
+    {
+        $string = LanguageString::create(['lang_code' => 'en', 'group' => 'test', 'key' => 'greeting', 'value' => 'Hello']);
+        $unprivileged = $this->adminWithPermissions('translations_none_test', []);
+        $editor = $this->adminWithPermissions('translations_editor_test', ['view translations', 'edit translations']);
+
+        $this->assertFalse($unprivileged->can('viewAny', LanguageString::class));
+        $this->assertFalse($unprivileged->can('update', $string));
+
+        $this->assertTrue($editor->can('viewAny', LanguageString::class));
+        $this->assertTrue($editor->can('update', $string));
+        $this->assertFalse($editor->can('delete', $string), 'edit translations does not imply delete');
+    }
+
+    // EmailLogPolicy/SearchLogPolicy/FailedSearchLogPolicy all extended the
+    // shared LogPolicy without overriding $permissionKey, so getKey() fell back
+    // to the underscored $model name (e.g. 'email_logs') while RolesSeeder only
+    // ever seeds the space-separated form ('view email logs') — same
+    // permission-key-mismatch bug class as Options K/Q/R, just on the 3 log
+    // policies that never got the override ActivityLog/LoginLog/CronLog already had.
+
+    #[Test]
+    public function email_log_policy_resolves_to_seeded_space_separated_permission(): void
+    {
+        $log = EmailLog::factory()->create();
+        $viewer = $this->adminWithPermissions('email_logs_viewer_test', ['view email logs']);
+        $superAdmin = $this->adminWithRole('super_admin');
+
+        $this->assertTrue($viewer->can('view', $log));
+        $this->assertTrue($superAdmin->can('view', $log));
+    }
+
+    #[Test]
+    public function search_log_policy_resolves_to_seeded_space_separated_permission(): void
+    {
+        $log = SearchLog::factory()->create();
+        $viewer = $this->adminWithPermissions('search_logs_viewer_test', ['view search logs']);
+
+        $this->assertTrue($viewer->can('view', $log));
+    }
+
+    #[Test]
+    public function failed_search_log_policy_resolves_to_seeded_space_separated_permission(): void
+    {
+        $log = FailedSearchLog::factory()->create();
+        $viewer = $this->adminWithPermissions('failed_search_logs_viewer_test', ['view failed search logs']);
+
+        $this->assertTrue($viewer->can('view', $log));
+    }
+
+    // AdminUi::exportCsvBulkAction() (used by 39 resources) had zero
+    // ->authorize() at all — fixed at the shared-helper level by deriving the
+    // owning table's model and checking 'viewAny' against it, with zero
+    // per-call-site changes required. Verified on 2 representative resources.
+
+    #[Test]
+    public function export_csv_bulk_action_requires_viewany_permission(): void
+    {
+        $admin = Admin::factory()->create();
+        $viewer = $this->adminWithPermissions('admins_export_viewer_test', ['view admins']);
+
+        $this->actingAs($viewer, 'admin');
+        Livewire::test(ListAdmins::class)
+            ->assertTableBulkActionVisible('exportCsv')
+            ->callTableBulkAction('exportCsv', [$admin]);
+    }
+
+    #[Test]
+    public function export_csv_bulk_action_resolves_correct_model_on_a_second_resource(): void
+    {
+        // Proves the shared helper's authorize closure genuinely derives the
+        // model from each table it's attached to (Admin::class above,
+        // Carrier::class here) rather than being coincidentally correct for
+        // one resource only.
+        $carrier = Carrier::create(['name' => 'Test Carrier', 'tracking_url' => 'https://example.test/{tracking_no}']);
+        $viewer = $this->adminWithPermissions('carriers_export_viewer_test', ['view carriers']);
+
+        $this->actingAs($viewer, 'admin');
+        Livewire::test(ListCarriers::class)
+            ->assertTableBulkActionVisible('exportCsv')
+            ->callTableBulkAction('exportCsv', [$carrier]);
+    }
+
+    // ── Content module deep gap analysis (Option Y) ─────────────────────────
+
+    // BlogTag/MenuItem had zero registered Policy anywhere — reachable only
+    // via TagsRelationManager/MenuItemRelationManager (no standalone
+    // resource), so any authenticated admin of any role could manage them.
+    // Same bug class as the Catalog module's ConditionPolicy finding.
+
+    #[Test]
+    public function blog_tag_policy_resolves_to_the_blog_permission(): void
+    {
+        $tag = BlogTag::create(['name' => ['en' => 'Test Tag'], 'slug' => 'test-tag-'.uniqid()]);
+        $unprivileged = $this->adminWithPermissions('blog_tags_none_test', []);
+        $editor = $this->adminWithPermissions('blog_tags_editor_test', ['view blog', 'edit blog']);
+
+        $this->assertFalse($unprivileged->can('viewAny', BlogTag::class));
+        $this->assertFalse($unprivileged->can('update', $tag));
+
+        $this->assertTrue($editor->can('viewAny', BlogTag::class));
+        $this->assertTrue($editor->can('update', $tag));
+    }
+
+    #[Test]
+    public function menu_item_policy_resolves_to_the_menus_permission(): void
+    {
+        $menu = Menu::create(['name' => 'Test Menu', 'location' => 'header', 'lang' => 'en']);
+        $item = MenuItem::create(['menu_id' => $menu->id, 'label' => ['en' => 'Test'], 'url' => '/test', 'sort_order' => 0]);
+        $unprivileged = $this->adminWithPermissions('menu_items_none_test', []);
+        $editor = $this->adminWithPermissions('menu_items_editor_test', ['view menus', 'edit menus']);
+
+        $this->assertFalse($unprivileged->can('viewAny', MenuItem::class));
+        $this->assertFalse($unprivileged->can('update', $item));
+
+        $this->assertTrue($editor->can('viewAny', MenuItem::class));
+        $this->assertTrue($editor->can('update', $item));
+    }
+
+    // AdminUi::impactBulkAction() (18 call sites across Catalog + Content +
+    // Commerce + Marketing) had zero authorization built in — 12 of those 18
+    // never added their own ->authorize() at the call site either. Fixed at
+    // the shared-helper level (same pattern as exportCsvBulkAction in Option
+    // Z); verified the fix doesn't disturb the 6 call sites that already
+    // chain their own ->authorize() (Filament's authorize() replaces, not
+    // merges, so the more specific call-site override always wins).
+
+    #[Test]
+    public function impact_bulk_action_default_gate_protects_a_previously_unprotected_content_action(): void
+    {
+        $post = BlogPost::factory()->create(['status' => 'draft']);
+        $viewOnly = $this->adminWithPermissions('blog_bulk_view_only_test', ['view blog']);
+        $editor = $this->adminWithPermissions('blog_bulk_editor_test', ['view blog', 'edit blog']);
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListBlogPosts::class)->assertTableBulkActionHidden('bulkPublish');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListBlogPosts::class)
+            ->assertTableBulkActionVisible('bulkPublish')
+            ->callTableBulkAction('bulkPublish', [$post]);
+        $this->assertSame('published', $post->refresh()->status->value);
+    }
+
+    #[Test]
+    public function impact_bulk_action_default_gate_protects_a_previously_unprotected_catalog_action(): void
+    {
+        $manufacturer = Manufacturer::factory()->create(['is_active' => false]);
+        $viewOnly = $this->adminWithPermissions('manufacturers_bulk_view_only_test', ['view manufacturers']);
+        $editor = $this->adminWithPermissions('manufacturers_bulk_editor_test', ['view manufacturers', 'edit manufacturers']);
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListManufacturers::class)->assertTableBulkActionHidden('bulkActivate');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListManufacturers::class)
+            ->assertTableBulkActionVisible('bulkActivate')
+            ->callTableBulkAction('bulkActivate', [$manufacturer]);
+        $this->assertTrue($manufacturer->refresh()->is_active);
+    }
+
+    // RolesSeeder only ever seeded 'view'/'edit testimonials' — 'create'/
+    // 'delete testimonials' didn't exist under any spelling, so no role
+    // could ever be granted them even though TestimonialPolicy (via
+    // BasePolicy) checks for exactly those abilities.
+
+    #[Test]
+    public function testimonial_create_and_delete_permissions_are_now_grantable(): void
+    {
+        $testimonial = Testimonial::factory()->create();
+        $editor = $this->adminWithPermissions('testimonials_full_test', [
+            'view testimonials', 'create testimonials', 'edit testimonials', 'delete testimonials',
+        ]);
+
+        $this->assertTrue($editor->can('create', Testimonial::class));
+        $this->assertTrue($editor->can('delete', $testimonial));
     }
 }

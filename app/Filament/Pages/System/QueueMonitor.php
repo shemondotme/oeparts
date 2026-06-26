@@ -21,7 +21,9 @@ class QueueMonitor extends Page
 
     public static function canAccess(): bool
     {
-        return auth('admin')->user()->hasPermissionTo('view system information');
+        $admin = auth('admin')->user();
+
+        return $admin->hasRole('super_admin') || $admin->hasPermissionTo('view system information');
     }
 
     public static function getNavigationIcon(): string|\BackedEnum|null

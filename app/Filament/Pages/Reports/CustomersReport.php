@@ -107,23 +107,6 @@ class CustomersReport extends Page
             ->count();
     }
 
-    public function getCustomerGrowth(): array
-    {
-        $start = Carbon::now()->subDays((int) $this->period);
-
-        $data = User::where('created_at', '>=', $start)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('count', 'date')
-            ->toArray();
-
-        return [
-            'labels' => array_keys($data),
-            'values' => array_values($data),
-        ];
-    }
-
     public function getTopCustomers(): array
     {
         $start = Carbon::now()->subDays((int) $this->period);
