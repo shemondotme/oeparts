@@ -160,4 +160,32 @@ class NewsletterCampaignJobTest extends TestCase
             'sent_at'     => null,
         ]);
     }
+
+    // -------------------------------------------------------------------------
+    // Eloquent relationship FK correctness (Marketing module audit, Option W):
+    // NewsletterCampaign::recipients(), NewsletterCampaignRecipient::campaign()/
+    // subscriber(), and NewsletterSubscriber::campaignRecipients() all used
+    // hasMany()/belongsTo() with no explicit foreign key, so Laravel guessed
+    // 'newsletter_campaign_id'/'newsletter_subscriber_id' — but the migration
+    // uses the short 'campaign_id'/'subscriber_id' columns. Every prior test
+    // here only asserted via raw assertDatabaseHas(), never through the actual
+    // relationship methods, so this was never caught — it crashed
+    // NewsletterSubscriberResource's entire index page (withCount(
+    // 'campaignRecipients')) and NewsletterCampaignResource's Recipients tab.
+
+    #[Test]
+    public function campaign_recipients_relationship_resolves_correctly(): void
+    {
+        Mail::fake();
+
+        $subscriber = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $campaign = NewsletterCampaign::factory()->create(['status' => 'draft']);
+
+        (new SendNewsletterCampaign($campaign))->handle();
+
+        $this->assertCount(1, $campaign->recipients);
+        $this->assertTrue($campaign->recipients->first()->subscriber->is($subscriber));
+        $this->assertCount(1, $subscriber->campaignRecipients);
+        $this->assertTrue($subscriber->campaignRecipients->first()->campaign->is($campaign));
+    }
 }

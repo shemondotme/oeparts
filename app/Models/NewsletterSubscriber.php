@@ -15,7 +15,7 @@ class NewsletterSubscriber extends Model
 
     public function campaignRecipients(): HasMany
     {
-        return $this->hasMany(NewsletterCampaignRecipient::class);
+        return $this->hasMany(NewsletterCampaignRecipient::class, 'subscriber_id');
     }
 
     protected $fillable = [

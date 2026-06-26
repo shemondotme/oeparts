@@ -25,11 +25,11 @@ class NewsletterCampaignRecipient extends Model
 
     public function campaign(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(NewsletterCampaign::class);
+        return $this->belongsTo(NewsletterCampaign::class, 'campaign_id');
     }
 
     public function subscriber(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(NewsletterSubscriber::class);
+        return $this->belongsTo(NewsletterSubscriber::class, 'subscriber_id');
     }
 }

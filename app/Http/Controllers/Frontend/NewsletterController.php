@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Models\NewsletterSubscriber;
-use App\Jobs\SendNewsletterConfirmation;
+use App\Jobs\SendNewsletterConfirmationEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
@@ -67,7 +67,8 @@ class NewsletterController extends Controller
             ]);
 
             // Send confirmation email
-            dispatch(new SendNewsletterConfirmation($subscriber));
+            $confirmUrl = route('frontend.newsletter.confirm', ['lang' => $locale, 'token' => $unsubscribeToken]);
+            dispatch(new SendNewsletterConfirmationEmail($subscriber, $confirmUrl, $locale));
         }
 
         return response()->json([
@@ -97,5 +98,26 @@ class NewsletterController extends Controller
 
         return redirect()->route('frontend.home', compact('lang'))
             ->with('success', __('You have been unsubscribed from our newsletter.'));
+    }
+
+    /**
+     * Confirm a pending newsletter subscription (double opt-in).
+     */
+    public function confirm(Request $request, string $lang, string $token)
+    {
+        $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
+
+        if (!$subscriber) {
+            return redirect()->route('frontend.home', compact('lang'))
+                ->with('error', __('Invalid confirmation link.'));
+        }
+
+        $subscriber->update([
+            'is_active' => true,
+            'unsubscribed_at' => null,
+        ]);
+
+        return redirect()->route('frontend.home', compact('lang'))
+            ->with('success', __('Your newsletter subscription has been confirmed!'));
     }
 }

@@ -184,7 +184,7 @@ class NewsletterSubscriberResource extends Resource
                                 ->success()
                                 ->send();
                         },
-                    ),
+                    )->authorize('update', NewsletterSubscriber::class),
                 AdminUi::exportCsvBulkAction('Export Subscribers', [
                     'email' => 'Email',
                     'lang' => 'Language',
