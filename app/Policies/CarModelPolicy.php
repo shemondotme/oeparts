@@ -7,4 +7,5 @@ namespace App\Policies;
 class CarModelPolicy extends BasePolicy
 {
     protected string $model = 'car_models';
+    protected ?string $permissionKey = 'car models';
 }

@@ -650,22 +650,30 @@ class OrderResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth('admin')->user()?->hasPermissionTo('view orders') ?? false;
+        $admin = auth('admin')->user();
+
+        return $admin && ($admin->hasRole('super_admin') || $admin->hasPermissionTo('view orders'));
     }
 
     public static function canCreate(): bool
     {
-        return auth('admin')->user()?->hasPermissionTo('edit orders') ?? false;
+        $admin = auth('admin')->user();
+
+        return $admin && ($admin->hasRole('super_admin') || $admin->hasPermissionTo('edit orders'));
     }
 
     public static function canEdit($record): bool
     {
-        return auth('admin')->user()?->hasPermissionTo('edit orders') ?? false;
+        $admin = auth('admin')->user();
+
+        return $admin && ($admin->hasRole('super_admin') || $admin->hasPermissionTo('edit orders'));
     }
 
     public static function canDelete($record): bool
     {
-        return auth('admin')->user()?->hasPermissionTo('edit orders') ?? false;
+        $admin = auth('admin')->user();
+
+        return $admin && ($admin->hasRole('super_admin') || $admin->hasPermissionTo('edit orders'));
     }
 
     public static function getNavigationBadge(): ?string

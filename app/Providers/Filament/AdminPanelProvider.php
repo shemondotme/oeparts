@@ -69,10 +69,6 @@ class AdminPanelProvider extends PanelProvider
                     ? Blade::render("@vite('resources/js/filament/admin/login.js')")
                     : '',
             )
-            // TOPBAR_END, SIDEBAR_NAV_START, SIDEBAR_FOOTER render hooks removed:
-            // env badge + theme toggle are now inlined in livewire/topbar.blade.php (Zone C)
-            // sidebar search moved to topbar Zone B (Spotlight)
-            // sidebar footer is inlined in livewire/sidebar.blade.php rail footer
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
                 fn (): string => filament()->auth()->check()
@@ -89,6 +85,12 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::SIDEBAR_NAV_START,
                 fn (): string => filament()->auth()->check()
                     ? Blade::render('@livewire(\'sidebar-pinned-nav\')')
+                    : '',
+            )
+            ->renderHook(
+                PanelsRenderHook::SIDEBAR_NAV_END,
+                fn (): string => filament()->auth()->check()
+                    ? Blade::render('@livewire(\'sidebar-recent-nav\')')
                     : '',
             )
             ->renderHook(
@@ -146,6 +148,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\RecordsAdminPageVisit::class,
             ]);
     }
 }
