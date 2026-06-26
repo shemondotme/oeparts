@@ -4,7 +4,7 @@ namespace App\Filament\Pages\Settings;
 
 use Filament\Forms;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Placeholder;
+use Filament\Forms\Components\Placeholder;
 use Filament\Schemas\Components\Section;
 
 class StoreSettings extends SettingsPage

@@ -53,7 +53,7 @@ class AboutLicenseSettings extends SettingsPage
                             ->label('MySQL Version')
                             ->disabled()
                             ->dehydrated(false)
-                            ->default(\DB::select('SELECT VERSION() as ver')[0]->ver ?? 'Unknown'),
+                            ->default(static::databaseVersion()),
                     ])->columns(2),
 
                 Section::make('License')
@@ -88,5 +88,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.'),
                     ]),
             ]);
+    }
+
+    /**
+     * The prior implementation ran the literal SQL `SELECT VERSION()`, which
+     * is MySQL-specific syntax — it throws a QueryException (not a graceful
+     * null) under any other PDO driver, including the test suite's sqlite
+     * connection. PDO::ATTR_SERVER_VERSION is portable across drivers and
+     * returns the same value MySQL's VERSION() would in production.
+     */
+    private static function databaseVersion(): string
+    {
+        try {
+            return \DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION) ?? 'Unknown';
+        } catch (\Throwable $e) {
+            return 'Unknown';
+        }
     }
 }

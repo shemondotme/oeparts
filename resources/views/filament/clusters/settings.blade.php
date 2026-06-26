@@ -24,75 +24,7 @@
         @include('filament.components.cluster-search', ['placeholder' => 'Search settings... (e.g. SMTP, payment, cache)'])
 
         @php
-            $sections = [
-                'General & Brand' => [
-                    'icon' => 'heroicon-o-identification',
-                    'keywords' => 'general brand appearance contact announcement logo name theme',
-                    'items' => [
-                        ['General Settings', '/admin/settings/general-settings', 'Store name, logo, basic details', 'heroicon-o-cog-6-tooth'],
-                        ['Appearance', '/admin/settings/appearance-settings', 'Custom colors, theme styling', 'heroicon-o-paint-brush'],
-                        ['Contact Info', '/admin/settings/contact-settings', 'Store location, support email, phone', 'heroicon-o-phone'],
-                        ['Announcement', '/admin/settings/announcement-settings', 'Site-wide marquee promo bar', 'heroicon-o-megaphone'],
-                    ]
-                ],
-                'Store Operations' => [
-                    'icon' => 'heroicon-o-cog',
-                    'keywords' => 'orders cart shipping payment tax email smtp bank transfer airwallex company store checkout',
-                    'items' => [
-                        ['Company Info', '/admin/settings/company-settings', 'Company details for invoices, legal, and emails', 'heroicon-o-building-office-2'],
-                        ['Store Currency', '/admin/settings/store-settings', 'Currency, symbol, locale formatting', 'heroicon-o-banknotes'],
-                        ['Orders Policy', '/admin/settings/orders-settings', 'Order expiry, prefix formats, status defaults', 'heroicon-o-shopping-bag'],
-                        ['Cart Rules', '/admin/settings/cart-settings', 'Cart duration, timeout limits', 'heroicon-o-shopping-cart'],
-                        ['Shipping Engine', '/admin/settings/shipping-settings', 'Delivery zones, flat rates, thresholds', 'heroicon-o-truck'],
-                        ['Payment Gateways', '/admin/settings/payment-settings', 'Airwallex card processing, B2B bank details', 'heroicon-o-credit-card'],
-                        ['Tax Configurations', '/admin/settings/tax-settings', 'EU VAT rates, company VAT verification', 'heroicon-o-calculator'],
-                        ['Email Setup', '/admin/settings/email-settings', 'SMTP servers, from headers, admin alerts', 'heroicon-o-envelope'],
-                    ]
-                ],
-                'SEO & Marketing' => [
-                    'icon' => 'heroicon-o-globe-alt',
-                    'keywords' => 'seo search engine performance cache redis stats counter meta opengraph preloader newsletter sections ui hero homepage',
-                    'items' => [
-                        ['Search Engine', '/admin/settings/search-settings', 'OEM normalized search query controls', 'heroicon-o-magnifying-glass'],
-                        ['SEO & Meta', '/admin/settings/seo-settings', 'Global OpenGraph, robots tags, sitemap ping', 'heroicon-o-globe-alt'],
-                        ['Performance', '/admin/settings/performance-settings', 'Redis caching timeouts, optimization toggles', 'heroicon-o-cpu-chip'],
-                        ['Stats Counter', '/admin/settings/stats-counter-settings', 'Fake frontend counters (parts, clients)', 'heroicon-o-presentation-chart-line'],
-                        ['Preloader', '/admin/settings/preloader-settings', 'Full-screen loading animation settings', 'heroicon-o-arrow-path'],
-                        ['Newsletter', '/admin/settings/newsletter-settings', 'Subscription rate limits and opt-in settings', 'heroicon-o-envelope'],
-                        ['Sections', '/admin/settings/sections-settings', 'Homepage content section display limits', 'heroicon-o-squares-2x2'],
-                        ['Homepage Hero & UI Text', '/admin/settings/ui-settings', 'Hero banner, spec table, and footer pill copy', 'heroicon-o-paint-brush'],
-                    ]
-                ],
-                'System & Security' => [
-                    'icon' => 'heroicon-o-shield-check',
-                    'keywords' => 'auth security firewall ip ban otp password maintenance backup api integration gtm checkout inquiry activity log audit',
-                    'items' => [
-                        ['Auth & Security', '/admin/settings/auth-security-settings', 'OTP login limits, password complexity rules', 'heroicon-o-lock-closed'],
-                        ['Firewall & Security', '/admin/settings/security-settings', 'Max attempts, IP bans, honeypot settings', 'heroicon-o-shield-check'],
-                        ['Checkout', '/admin/settings/checkout-settings', 'Payment methods, timeouts, customer messages', 'heroicon-o-credit-card'],
-                        ['Part Inquiry', '/admin/settings/part-inquiry-settings', 'Response time SLA, guest inquiry limits', 'heroicon-o-chat-bubble-left-ellipsis'],
-                        ['Third-party APIs', '/admin/settings/integrations-settings', 'GTM, Google Search Console trackers', 'heroicon-o-puzzle-piece'],
-                        ['Maintenance & Backups', '/admin/settings/maintenance-settings', 'Maintenance display, backup triggers', 'heroicon-o-wrench-screwdriver'],
-                        ['Settings Activity Log', '/admin/settings/settings-activity-log', 'Track who changed settings and when', 'heroicon-o-clock'],
-                    ]
-                ],
-                'Menus & Social' => [
-                    'icon' => 'heroicon-o-globe-alt',
-                    'keywords' => 'menu navigation footer social facebook instagram twitter links',
-                    'items' => [
-                        ['Menu Settings', '/admin/settings/menu-settings', 'Configure storefront header and footer navigation', 'heroicon-o-bars-3'],
-                        ['Social Links', '/admin/settings/social-link-settings', 'Social media profile URLs for footer and sharing', 'heroicon-o-globe-alt'],
-                    ]
-                ],
-                'About & Info' => [
-                    'icon' => 'heroicon-o-information-circle',
-                    'keywords' => 'about license version database info system',
-                    'items' => [
-                        ['About & License', '/admin/settings/about-license-settings', 'Platform version, PHP/MySQL info, MIT license', 'heroicon-o-information-circle'],
-                        ['Database Info', '/admin/settings/database-settings', 'Connection status, table summary, maintenance', 'heroicon-o-server-stack'],
-                    ]
-                ],
-            ];
+            $sections = \App\Filament\Support\SettingsRegistry::sections();
         @endphp
 
         @foreach ($sections as $heading => $sectionData)
