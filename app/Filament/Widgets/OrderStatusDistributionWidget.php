@@ -29,7 +29,7 @@ class OrderStatusDistributionWidget extends ChartWidget implements DrilldownCont
 
     protected static bool $isLazy = true;
 
-    protected static ?int $sort = -35;
+    protected static ?int $sort = -24;
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 

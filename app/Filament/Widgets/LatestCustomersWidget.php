@@ -24,7 +24,7 @@ class LatestCustomersWidget extends TableWidget
 
     protected ?string $pollingInterval = '60s';
 
-    protected static ?int $sort = -21;
+    protected static ?int $sort = -12;
 
     protected static ?string $heading = 'Latest Customers';
 

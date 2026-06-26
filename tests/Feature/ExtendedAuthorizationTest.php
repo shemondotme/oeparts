@@ -8,6 +8,7 @@ use App\Enums\SectionStatus;
 use App\Filament\Resources\AbandonedCartResource\Pages\ListAbandonedCarts;
 use App\Filament\Resources\AdminResource\Pages\ListAdmins;
 use App\Filament\Resources\BlogPostResource\Pages\ListBlogPosts;
+use App\Filament\Resources\CarModelResource\Pages\ListCarModels;
 use App\Filament\Resources\CarrierResource\Pages\ListCarriers;
 use App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages;
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
@@ -23,6 +24,7 @@ use App\Models\AbandonedCart;
 use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\BlogTag;
+use App\Models\CarModel;
 use App\Models\Carrier;
 use App\Models\Category;
 use App\Models\Condition;
@@ -669,5 +671,41 @@ class ExtendedAuthorizationTest extends TestCase
 
         $this->assertTrue($editor->can('create', Testimonial::class));
         $this->assertTrue($editor->can('delete', $testimonial));
+    }
+
+    // Option CC — CarModelResource's table was reported to throw a fatal
+    // error during ANY bulk-action visibility/authorization check for ANY
+    // non-super_admin role, reproducing even on the stock DeleteBulkAction
+    // and AdminUi::exportCsvBulkAction() (i.e. unrelated to the
+    // impactBulkAction() authorization-closure fix above). Root cause:
+    // CarModelPolicy's $model = 'car_models' (underscore) had no
+    // $permissionKey override, so every ability check called
+    // $admin->can('edit car_models') / 'delete car_models' — but
+    // RolesSeeder only ever seeds the space-separated 'edit car models' /
+    // 'delete car models'. Same bug class as EmailLogPolicy/SearchLogPolicy/
+    // FailedSearchLogPolicy (Option Z) and NewsletterSubscriberPolicy
+    // (Option R).
+
+    #[Test]
+    public function car_model_bulk_actions_do_not_crash_for_non_super_admin_roles(): void
+    {
+        $carModel = CarModel::factory()->create(['is_active' => false]);
+        $viewOnly = $this->adminWithPermissions('car_models_bulk_view_only_test', ['view car models']);
+        $editor = $this->adminWithPermissions('car_models_bulk_editor_test', ['view car models', 'edit car models', 'delete car models']);
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListCarModels::class)
+            ->assertTableBulkActionHidden('activate')
+            ->assertTableBulkActionHidden('delete')
+            ->assertTableBulkActionVisible('exportCsv');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListCarModels::class)
+            ->assertTableBulkActionVisible('activate')
+            ->callTableBulkAction('activate', [$carModel])
+            ->assertTableBulkActionVisible('delete')
+            ->callTableBulkAction('delete', [$carModel]);
+
+        $this->assertModelMissing($carModel);
     }
 }
