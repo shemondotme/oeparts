@@ -4,14 +4,14 @@ namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
 use App\Filament\Concerns\HasWidgetExport;
+use App\Filament\Resources\OrderResource;
+use App\Filament\Support\DrilldownContract;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
 
-use App\Filament\Resources\OrderResource;
-
-class RevenueChart extends ChartWidget implements \App\Filament\Support\DrilldownContract
+class RevenueChart extends ChartWidget implements DrilldownContract
 {
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
@@ -25,11 +25,18 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
 
     protected string $view = 'filament.widgets.chart-with-drilldown';
 
-    protected ?string $heading = 'Revenue Trend over Time';
+    protected ?string $heading = 'Revenue Trend';
 
     protected ?string $pollingInterval = '120s';
 
     protected static bool $isLazy = true;
+
+    protected static ?int $sort = -38;
+
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+
+    // Default to 30-day view; synced with the segmented control
+    public ?string $filter = '30';
 
     #[\Livewire\Attributes\Renderless]
     public function getPlaceholder(): string
@@ -37,52 +44,44 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
         return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
     }
 
-    protected static ?int $sort = -38;
-
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
-
-    public ?string $dateFrom = null;
-    public ?string $dateTo = null;
-
-    #[\Livewire\Attributes\On('date-range-changed')]
-    public function onDateRangeChanged(?string $dateFrom, ?string $dateTo): void
-    {
-        $this->dateFrom = $dateFrom;
-        $this->dateTo   = $dateTo;
-    }
-
     public function getDrilldownUrl(): ?string
     {
         return OrderResource::getUrl('index');
     }
 
-    protected function getHeaderActions(): array
+    /** Segmented date-range control (Today / 7d / 30d / 90d / 1y). */
+    protected function getFilters(): ?array
     {
         return [
-            \Filament\Actions\Action::make('date_filter')
-                ->label($this->dateFrom ? 'Custom Range' : 'Filter Dates')
-                ->icon('heroicon-o-calendar-days')
-                ->color($this->dateFrom ? 'primary' : 'gray')
-                ->size(\Filament\Support\Enums\Size::Small)
-                ->button()
-                ->modalHeading('Custom Date Range')
-                ->form([
-                    \Filament\Forms\Components\DatePicker::make('date_from')
-                        ->label('From')
-                        ->default($this->dateFrom)
-                        ->maxDate(today()),
-                    \Filament\Forms\Components\DatePicker::make('date_to')
-                        ->label('To')
-                        ->default($this->dateTo)
-                        ->maxDate(today()),
-                ])
-                ->action(function (array $data): void {
-                    $this->dateFrom = $data['date_from'] ?? null;
-                    $this->dateTo   = $data['date_to'] ?? null;
-                    $this->dispatch('date-range-changed', dateFrom: $this->dateFrom, dateTo: $this->dateTo);
-                }),
-            $this->getExportActions(chartOnly: true),
+            '1'   => 'Today',
+            '7'   => '7d',
+            '30'  => '30d',
+            '90'  => '90d',
+            '365' => '1y',
         ];
+    }
+
+    /** Sync global period and notify OrderVolumeChart when the filter changes. */
+    public function updatedFilter(string $value): void
+    {
+        $this->period = $value;
+        $this->dispatch('cc-date-range-changed', range: $value);
+    }
+
+    /** Keep filter in sync when the sibling chart (W8) drives the change. */
+    #[\Livewire\Attributes\On('cc-date-range-changed')]
+    public function onCcDateRangeChanged(string $range): void
+    {
+        if ($this->filter !== $range) {
+            $this->filter = $range;
+            $this->period = $range;
+            $this->updateChartData();
+        }
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [$this->getExportActions(chartOnly: true)];
     }
 
     protected function getType(): string
@@ -92,14 +91,10 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
 
     protected function getData(): array
     {
-        $start = $this->dateFrom
-            ? \Carbon\Carbon::parse($this->dateFrom)->startOfDay()
-            : $this->periodStart();
-        $end = $this->dateTo
-            ? \Carbon\Carbon::parse($this->dateTo)->endOfDay()
-            : now();
+        $start = $this->periodStart();
+        $end   = now();
 
-        $fetch = function () use ($start, $end): array {
+        $cached = $this->cachedWidgetData(function () use ($start, $end): array {
             $paidStatuses = [
                 OrderStatus::Paid->value,
                 OrderStatus::Processing->value,
@@ -116,26 +111,25 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
                 'values' => $data->map(fn (TrendValue $v) => bcadd((string) $v->aggregate, '0', 2))->all(),
                 'labels' => $data->map(fn (TrendValue $v) => $v->date)->all(),
             ];
-        };
-
-        $cached = ($this->dateFrom || $this->dateTo) ? $fetch() : $this->cachedWidgetData($fetch);
+        });
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Revenue (€)',
-                    'data' => $cached['values'],
-                    'borderColor' => '#8B5CF6',
-                    'backgroundColor' => 'rgba(139, 92, 246, 0.18)',
-                    'fill' => true,
-                    'tension' => 0.4,
-                    'pointRadius' => 3,
-                    'pointHoverRadius' => 6,
-                    'pointBackgroundColor' => '#8B5CF6',
-                    'pointBorderColor' => '#22D3EE',
-                    'pointBorderWidth' => 3,
-                    'pointHoverBackgroundColor' => '#A78BFA',
-                    'pointHoverBorderColor' => '#67E8F9',
+                    'label'                  => 'Revenue (€)',
+                    'data'                   => $cached['values'],
+                    'borderColor'            => 'var(--aurora-violet)',
+                    'backgroundColor'        => 'transparent',
+                    'op_gradient'            => ['rgba(139,92,246,0.42)', 'rgba(139,92,246,0.01)'],
+                    'fill'                   => true,
+                    'tension'                => 0.4,
+                    'pointRadius'            => 3,
+                    'pointHoverRadius'       => 6,
+                    'pointBackgroundColor'   => 'var(--aurora-violet)',
+                    'pointBorderColor'       => 'var(--aurora-cyan)',
+                    'pointBorderWidth'       => 2,
+                    'pointHoverBorderWidth'  => 3,
+                    'borderWidth'            => 2,
                 ],
             ],
             'labels' => $cached['labels'],
@@ -147,36 +141,41 @@ class RevenueChart extends ChartWidget implements \App\Filament\Support\Drilldow
         return [
             'scales' => [
                 'x' => [
-                    'grid' => ['display' => false],
+                    'grid'  => ['display' => false],
                     'ticks' => [
                         'maxTicksLimit' => 7,
-                        'font' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
-                        'color' => '#94a3b8',
+                        'font'          => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
+                        'color'         => 'var(--color-text-muted)',
                     ],
                 ],
                 'y' => [
-                    'grid' => ['color' => 'rgba(10, 18, 40, 0.06)', 'drawBorder' => false],
+                    'grid'  => [
+                        'color'       => 'var(--chart-grid)',
+                        'borderDash'  => [4, 4],
+                        'drawBorder'  => false,
+                    ],
                     'ticks' => [
-                        'callback' => 'function(value) { return "€" + value; }',
-                        'font' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
-                        'color' => '#94a3b8',
+                        'callback' => 'function(v){return "€"+Number(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}',
+                        'font'     => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
+                        'color'    => 'var(--color-text-muted)',
+                        'maxTicksLimit' => 5,
                     ],
                 ],
             ],
             'plugins' => [
-                'legend' => ['display' => false],
+                'legend'  => ['display' => false],
                 'tooltip' => [
-                    'titleFont' => ['family' => 'Geist Sans, sans-serif', 'size' => 12, 'weight' => 'bold'],
-                    'bodyFont' => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 12],
-                    'backgroundColor' => '#0f172a',
-                    'titleColor' => '#f8fafc',
-                    'bodyColor' => '#cbd5e1',
-                    'borderColor' => '#1e293b',
-                    'borderWidth' => 1,
+                    'titleFont'    => ['family' => 'Geist Sans, sans-serif', 'size' => 12, 'weight' => '600'],
+                    'bodyFont'     => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 12],
+                    'backgroundColor' => 'var(--chart-tooltip-bg)',
+                    'titleColor'   => 'var(--chart-tooltip-text)',
+                    'bodyColor'    => 'var(--chart-tooltip-text)',
+                    'borderColor'  => 'var(--color-border-default)',
+                    'borderWidth'  => 1,
                     'cornerRadius' => 8,
-                    'padding' => 10,
-                    'callbacks' => [
-                        'label' => 'function(ctx) { return "€" + Number(ctx.parsed.y).toLocaleString("en-US", {minimumFractionDigits: 2}); }',
+                    'padding'      => 10,
+                    'callbacks'    => [
+                        'label' => 'function(ctx){return "€"+Number(ctx.parsed.y).toLocaleString("en-US",{minimumFractionDigits:2})}',
                     ],
                 ],
             ],

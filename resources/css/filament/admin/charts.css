@@ -15,13 +15,11 @@
 
 .op-chart-frame {
     position: relative;
-    background: var(--glass-bg);
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
     border-top: 2px solid var(--widget-accent);
-    border-radius: 20px;
-    box-shadow: var(--glass-shadow);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
     transition: all var(--duration-200) var(--ease-out-quint);
     display: flex;
     flex-direction: column;
@@ -29,7 +27,7 @@
 }
 
 .op-chart-frame:hover {
-    box-shadow: var(--glass-shadow), var(--glass-glow);
+    box-shadow: var(--shadow-3);
     transform: translateY(-2px);
     border-color: var(--widget-accent);
 }
@@ -137,7 +135,7 @@
 }
 
 .op-chart-frame-footer {
-    border-top: 1px solid var(--glass-border);
+    border-top: 1px solid var(--color-border-default);
     padding: 0.5rem 1rem;
     display: flex;
     align-items: center;

@@ -34,11 +34,14 @@ class SettingsActivityLog extends Page
         return 99;
     }
 
+    /**
+     * This page extends Filament\Pages\Page directly (not SettingsPage, since
+     * it's a table/InteractsWithTable page, not a form), so it can't inherit
+     * SettingsPage::canAccess() — kept as its own override, same role check.
+     */
     public static function canAccess(): bool
     {
-        $user = auth('admin')->user();
-
-        return $user->hasRole(['super_admin', 'admin']);
+        return auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
     }
 
     public function table(Table $table): Table

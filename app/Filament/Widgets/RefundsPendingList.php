@@ -89,6 +89,9 @@ class RefundsPendingList extends TableWidget
                     ->url(fn (Order $record): string => \App\Filament\Resources\OrderResource::getUrl('edit', ['record' => $record])),
             ])
             ->paginated(false)
-            ->searchable(false);
+            ->searchable(false)
+            ->emptyStateIcon('heroicon-o-currency-euro')
+            ->emptyStateHeading('No pending refunds')
+            ->emptyStateDescription('All refund requests have been processed.');
     }
 }

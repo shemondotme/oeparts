@@ -16,8 +16,6 @@ use Illuminate\Database\Eloquent\Model;
 use Filament\Schemas\Components\Section as UiSection;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -103,21 +101,12 @@ class SectionResource extends Resource
                                 UiSection::make('Multilingual Title')
                                     ->icon('heroicon-o-language')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("title.$code")
-                                                                ->label('Title')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(255),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'title' => [
+                                                'label' => 'Title',
+                                                'required' => true,
+                                            ],
+                                        ]),
                                     ]),
 
                                 UiSection::make('Content (JSON Config)')
@@ -259,6 +248,7 @@ class SectionResource extends Resource
                         ->label('Publish')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
+                        ->authorize('update')
                         ->requiresConfirmation()
                         ->visible(fn (Section $record): bool => $record->status !== SectionStatus::Published)
                         ->action(function (Section $record): void {
@@ -273,6 +263,7 @@ class SectionResource extends Resource
                         ->label('Archive')
                         ->icon('heroicon-o-archive-box')
                         ->color('gray')
+                        ->authorize('update')
                         ->requiresConfirmation()
                         ->visible(fn (Section $record): bool => $record->status !== SectionStatus::Archived)
                         ->action(function (Section $record): void {
@@ -327,7 +318,7 @@ class SectionResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'success';
+        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

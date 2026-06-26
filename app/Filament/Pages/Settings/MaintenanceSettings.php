@@ -2,12 +2,11 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Illuminate\Support\Facades\Artisan;
 
 class MaintenanceSettings extends SettingsPage
@@ -38,51 +37,20 @@ class MaintenanceSettings extends SettingsPage
                             ->helperText('Shown on the maintenance page for contact inquiries')
                             ->default(null),
 
-                        Tabs::make('Maintenance Message')
-                            ->statePath('message')
-                            ->columnSpanFull()
-                            ->tabs([
-                                Tab::make('English')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('en')
-                                            ->label('Message (EN)')
-                                            ->rows(2)
-                                            ->placeholder("We're performing scheduled maintenance. We'll be back shortly."),
-                                    ]),
-                                Tab::make('Deutsch')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('de')
-                                            ->label('Message (DE)')
-                                            ->rows(2)
-                                            ->placeholder("Wir führen planmäßige Wartungsarbeiten durch. Wir sind in Kürze wieder da."),
-                                    ]),
-                                Tab::make('Lietuvių')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('lt')
-                                            ->label('Message (LT)')
-                                            ->rows(2)
-                                            ->placeholder("Atliekami profilaktiniai darbai. Netrukus grįšime."),
-                                    ]),
-                                Tab::make('Français')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('fr')
-                                            ->label('Message (FR)')
-                                            ->rows(2)
-                                            ->placeholder("Nous effectuons une maintenance programmée. Nous serons de retour sous peu."),
-                                    ]),
-                                Tab::make('Español')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('es')
-                                            ->label('Message (ES)')
-                                            ->rows(2)
-                                            ->placeholder("Estamos realizando tareas de mantenimiento programadas. Volveremos pronto."),
-                                    ]),
-                            ]),
+                        AdminUi::translatableTabs('Maintenance Message', [
+                            'message' => [
+                                'label' => 'Message',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'placeholders' => [
+                                    'en' => "We're performing scheduled maintenance. We'll be back shortly.",
+                                    'de' => 'Wir führen planmäßige Wartungsarbeiten durch. Wir sind in Kürze wieder da.',
+                                    'lt' => 'Atliekami profilaktiniai darbai. Netrukus grįšime.',
+                                    'fr' => 'Nous effectuons une maintenance programmée. Nous serons de retour sous peu.',
+                                    'es' => 'Estamos realizando tareas de mantenimiento programadas. Volveremos pronto.',
+                                ],
+                            ],
+                        ]),
 
                         Forms\Components\Textarea::make('allowed_ips')
                             ->label('Bypass IP Whitelist')

@@ -270,7 +270,8 @@ class Dashboard extends BaseDashboard
                         $preferences = app(WidgetPreferenceService::class);
                         $defaultWidgetIds = $preferences->roleDefaultTabWidgetIds($admin, $dashboard->slug)
                             ?? $preferences->roleDefaultWidgetIds($admin);
-                        $defaultLayout = $service->packLayout($defaultWidgetIds);
+                        $defaultLayout = $service->blueprintLayoutFor($admin, $dashboard->slug)
+                            ?? $service->packLayout($defaultWidgetIds);
 
                         $dashboard->update(['layout' => $defaultLayout]);
 

@@ -29,6 +29,20 @@
     --font-sans: 'Geist Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
     --font-display: 'Plus Jakarta Sans', 'Geist Sans', ui-sans-serif, system-ui, sans-serif;
     --font-mono-oem: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, monospace;
+
+    /* Semantic aliases — referenced by widget blade views */
+    --surface-base:    var(--color-bg-canvas);
+    --surface-card:    var(--color-bg-surface);
+    --text-primary:    var(--color-text-primary);
+    --text-secondary:  var(--color-text-secondary);
+    --text-muted:      var(--color-text-muted);
+    --border-primary:  var(--color-border-default);
+    --border-subtle:   var(--color-rule);
+    --accent-brand:    var(--color-brand-500);
+    --accent-success:  var(--color-success-500);
+    --accent-warning:  var(--color-warning-500);
+    --accent-danger:   var(--color-danger-500);
 }
 
 /* ─── Typography ──────────────────────────────────────────────────────────── */
@@ -61,7 +75,7 @@ body {
 /* ─── Widget typography scale (spec-aligned utilities) ───────────────────── */
 
 .op-kpi-value {
-    font-size: 1.875rem;
+    font-size: 2rem;
     font-weight: 700;
     letter-spacing: var(--tracking-tight);
     line-height: var(--leading-tight);
@@ -619,7 +633,7 @@ a.fi-breadcrumbs-item-label:hover {
 }
 
 .fi-wi .fi-section-header {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--widget-accent) 12%, transparent) 0%, transparent 70%) !important;
+    background: var(--color-bg-surface) !important;
     border-bottom: 1px solid color-mix(in srgb, var(--widget-accent) 18%, transparent) !important;
     position: relative;
 }
@@ -812,28 +826,10 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
 .fi-wi-stats-overview-stat:nth-child(8n + 7) { --widget-accent: var(--aurora-cyan);    --widget-accent-2: var(--aurora-sky); }
 .fi-wi-stats-overview-stat:nth-child(8n + 8) { --widget-accent: var(--aurora-pink);    --widget-accent-2: var(--aurora-violet); }
 
-/* Soft accent glow in the top-right corner */
-.fi-wi-stats-overview-stat::before {
-    content: '';
-    position: absolute;
-    top: -40%;
-    right: -20%;
-    width: 11rem;
-    height: 11rem;
-    background: radial-gradient(circle, var(--widget-accent) 0%, transparent 68%);
-    opacity: 0.2;
-    pointer-events: none;
-    transition: opacity 220ms ease;
-}
-
 .fi-wi-stats-overview-stat:hover {
-    box-shadow: var(--glass-shadow), var(--glass-glow);
+    box-shadow: var(--shadow-3);
     border-color: var(--widget-accent);
     transform: translateY(-3px);
-}
-
-.fi-wi-stats-overview-stat:hover::before {
-    opacity: 0.34;
 }
 
 .fi-wi-stats-overview-stat::after {
@@ -866,10 +862,7 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
     font-size: clamp(1.15rem, 1rem + 0.55vw, var(--kpi-value-size));
     font-weight: 800;
     font-family: var(--font-display);
-    background: linear-gradient(135deg, var(--widget-accent) 0%, var(--widget-accent-2) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: var(--widget-accent);
     line-height: 1.1;
     margin-top: 0.3rem;
     letter-spacing: -0.4px;
@@ -924,12 +917,12 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
 }
 
 .fi-wi-stats-overview-stat-label-ctn svg {
-    border-radius: 10px;
+    border-radius: var(--radius-md);
     padding: 6px;
     width: var(--kpi-icon-size);
     height: var(--kpi-icon-size);
     flex-shrink: 0;
-    background: linear-gradient(135deg, color-mix(in srgb, var(--widget-accent) 22%, transparent) 0%, color-mix(in srgb, var(--widget-accent-2) 16%, transparent) 100%);
+    background: color-mix(in srgb, var(--widget-accent) 18%, transparent);
     color: var(--widget-accent);
     border: 1px solid color-mix(in srgb, var(--widget-accent) 35%, transparent);
     box-shadow: 0 2px 10px -2px color-mix(in srgb, var(--widget-accent) 40%, transparent);
@@ -1286,7 +1279,7 @@ tr.op-order-row-urgent .fi-icon-btn[wire\:key*="urgent"] svg {
 
 .fi-global-search-input .fi-input-wrp {
     background: var(--color-bg-surface);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     transition: border-color 200ms cubic-bezier(0.22, 1, 0.36, 1),
                 box-shadow 200ms cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1942,72 +1935,81 @@ select.fi-select-input {
 #dashboard-canvas.grid-stack {
     margin-inline: -4px;
     padding-block-end: 1.5rem;
+    padding: 8px 12px;
+}
+
+#dashboard-canvas .op-card {
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--color-border-default) !important;
+    border-top: 3px solid var(--widget-accent, var(--accent-brand)) !important;
+    background: var(--color-bg-surface) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: var(--shadow-1) !important;
+    transition: box-shadow 220ms var(--ease-out-quint), border-color 220ms ease, transform 220ms var(--ease-out-quint) !important;
+}
+
+#dashboard-canvas .op-card:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: var(--shadow-3) !important;
+    border-color: var(--widget-accent, var(--accent-brand)) !important;
+    border-top-color: var(--widget-accent, var(--accent-brand)) !important;
 }
 
 #dashboard-canvas .grid-stack-item-content {
     overflow: hidden;
-    border-radius: 16px;
-    position: relative;
+    border-radius: var(--radius-md);
+    /* position: absolute is set by gridstack — do NOT override to relative,
+       that breaks height containment and lets content overflow the cell */
 }
 
-/* One-time diagonal sheen sweep on first paint */
-#dashboard-canvas .grid-stack-item-content::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 45%;
-    pointer-events: none;
-    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.16) 50%, transparent 100%);
-    animation: op-sheen 1.5s var(--ease-out-quint) 0.25s both;
-    z-index: 3;
+#dashboard-canvas .grid-stack-item-content > div,
+#dashboard-canvas .grid-stack-item-content > div > div,
+#dashboard-canvas .fi-wi-widget,
+#dashboard-canvas .fi-wi-chart {
+    height: 100% !important;
 }
 
-.dark #dashboard-canvas .grid-stack-item-content::after {
-    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%);
+#dashboard-canvas .grid-stack-item[data-widget-type="kpi"] .op-card {
+    height: 100% !important;
 }
 
-/* Sheen should not replay while dragging */
-#dashboard-canvas[data-edit-mode="1"] .grid-stack-item-content::after {
-    animation: none;
-    display: none;
+#dashboard-canvas .grid-stack-item[data-widget-type="chart"] .fi-section {
+    height: 100% !important;
 }
 
-#dashboard-canvas .fi-wi,
-#dashboard-canvas .fi-wi > *,
-#dashboard-canvas .fi-wi .fi-section,
-#dashboard-canvas .fi-wi .fi-section > .fi-section-content-ctn,
-#dashboard-canvas .fi-wi .fi-section > .fi-section-content-ctn > .fi-section-content {
+#dashboard-canvas .fi-section,
+#dashboard-canvas .fi-section > .fi-section-content-ctn,
+#dashboard-canvas .fi-section > .fi-section-content-ctn > .fi-section-content {
     min-height: 0;
 }
 
-#dashboard-canvas .fi-wi .fi-section,
+#dashboard-canvas .fi-section,
 #dashboard-canvas .fi-wi-dashboard-header > div,
 #dashboard-canvas .fi-wi-activity-overview > div,
 #dashboard-canvas .fi-wi-quick-actions > div {
-    border-radius: 16px !important;
-    border: 1px solid var(--glass-border) !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--color-border-default) !important;
     border-top: 3px solid var(--widget-accent) !important;
-    background: var(--glass-bg) !important;
-    -webkit-backdrop-filter: var(--glass-blur);
-    backdrop-filter: var(--glass-blur);
-    box-shadow: var(--glass-shadow) !important;
+    background: var(--color-bg-surface) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: var(--shadow-1) !important;
     transition: box-shadow 220ms var(--ease-out-quint), border-color 220ms ease, transform 220ms var(--ease-out-quint) !important;
 }
 
-#dashboard-canvas .fi-wi .fi-section:hover,
+#dashboard-canvas .fi-section:hover,
 #dashboard-canvas .fi-wi-dashboard-header > div:hover,
 #dashboard-canvas .fi-wi-activity-overview > div:hover,
 #dashboard-canvas .fi-wi-quick-actions > div:hover {
     transform: translateY(-3px) !important;
-    box-shadow: var(--glass-shadow), var(--glass-glow) !important;
+    box-shadow: var(--shadow-3) !important;
     border-color: var(--widget-accent) !important;
     border-top-color: var(--widget-accent) !important;
 }
 
 /* While dragging/resizing, kill the lift so it doesn't fight GridStack */
-#dashboard-canvas[data-edit-mode="1"] .fi-wi .fi-section,
+#dashboard-canvas[data-edit-mode="1"] .fi-section,
 #dashboard-canvas[data-edit-mode="1"] .fi-wi-dashboard-header > div,
 #dashboard-canvas[data-edit-mode="1"] .fi-wi-activity-overview > div,
 #dashboard-canvas[data-edit-mode="1"] .fi-wi-quick-actions > div {
@@ -2015,11 +2017,11 @@ select.fi-select-input {
     transition: none !important;
 }
 
-#dashboard-canvas .fi-wi .fi-section > .fi-section-content-ctn > .fi-section-content {
+#dashboard-canvas .fi-section > .fi-section-content-ctn > .fi-section-content {
     overflow: hidden !important;
 }
 
-#dashboard-canvas .fi-wi .fi-ta-ctn {
+#dashboard-canvas .fi-ta-ctn {
     overflow: hidden;
 }
 
@@ -2028,8 +2030,13 @@ select.fi-select-input {
 }
 
 #dashboard-canvas .fi-wi-stats-overview-stat {
-    border-radius: 16px;
-    box-shadow: var(--glass-shadow);
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--color-border-default) !important;
+    border-top: 3px solid var(--widget-accent) !important;
+    background: var(--color-bg-surface) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    box-shadow: var(--shadow-1) !important;
     padding: 0.8rem 1rem;
 }
 
@@ -2061,7 +2068,6 @@ select.fi-select-input {
 #dashboard-canvas .grid-stack-item { --widget-accent: var(--aurora-indigo); --widget-accent-2: var(--aurora-violet); }
 
 /* Revenue/money group */
-#dashboard-canvas .grid-stack-item[gs-id="revenue_chart"],
 #dashboard-canvas .grid-stack-item[gs-id="manufacturer_revenue"],
 #dashboard-canvas .grid-stack-item[gs-id="revenue_kpi"]               { --widget-accent: var(--aurora-emerald); --widget-accent-2: var(--aurora-cyan); }
 
@@ -2069,7 +2075,6 @@ select.fi-select-input {
 #dashboard-canvas .grid-stack-item[gs-id="recent_orders"],
 #dashboard-canvas .grid-stack-item[gs-id="order_volume_chart"],
 #dashboard-canvas .grid-stack-item[gs-id="new_orders_kpi"],
-#dashboard-canvas .grid-stack-item[gs-id="pending_orders_kpi"],
 #dashboard-canvas .grid-stack-item[gs-id="awaiting_confirmation"],
 #dashboard-canvas .grid-stack-item[gs-id="refunds_pending"]           { --widget-accent: var(--aurora-sky); --widget-accent-2: var(--aurora-indigo); }
 
@@ -2080,8 +2085,7 @@ select.fi-select-input {
 /* Inventory group */
 #dashboard-canvas .grid-stack-item[gs-id="stock_alert"],
 #dashboard-canvas .grid-stack-item[gs-id="manufacturing_stats"],
-#dashboard-canvas .grid-stack-item[gs-id="new_products_added"],
-#dashboard-canvas .grid-stack-item[gs-id="parts_inquiry"]             { --widget-accent: var(--aurora-amber); --widget-accent-2: var(--aurora-rose); }
+#dashboard-canvas .grid-stack-item[gs-id="new_products_added"]        { --widget-accent: var(--aurora-amber); --widget-accent-2: var(--aurora-rose); }
 
 /* Search group */
 #dashboard-canvas .grid-stack-item[gs-id="top_searches"],
@@ -2099,6 +2103,13 @@ select.fi-select-input {
 
 /* Abandoned carts */
 #dashboard-canvas .grid-stack-item[gs-id="abandoned_carts"]           { --widget-accent: var(--aurora-rose); --widget-accent-2: var(--aurora-pink); }
+
+/* ── Tab 1 Command Center: per-blueprint accent assignment (2026) ── */
+#dashboard-canvas .grid-stack-item[gs-id="dashboard_header"]    { --widget-accent: var(--aurora-indigo);  --widget-accent-2: var(--aurora-violet); }
+#dashboard-canvas .grid-stack-item[gs-id="health_strip"]        { --widget-accent: var(--aurora-cyan);    --widget-accent-2: var(--aurora-sky); }
+#dashboard-canvas .grid-stack-item[gs-id="pending_orders_kpi"]  { --widget-accent: var(--aurora-amber);   --widget-accent-2: var(--aurora-rose); }
+#dashboard-canvas .grid-stack-item[gs-id="parts_inquiry"]       { --widget-accent: var(--aurora-violet);  --widget-accent-2: var(--aurora-pink); }
+#dashboard-canvas .grid-stack-item[gs-id="revenue_chart"]       { --widget-accent: var(--aurora-indigo);  --widget-accent-2: var(--aurora-violet); }
 
 /* Semantic Health & Alert overrides:
    When HealthStrip or DashboardAlerts items render, override the nth-child cycle
@@ -2135,63 +2146,12 @@ select.fi-select-input {
     position: relative;
 }
 
-.fi-dashboard .fi-page-content > .op-dashboard-aurora {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.fi-dashboard .fi-page-content > .op-dashboard-aurora::before,
-.fi-dashboard .fi-page-content > .op-dashboard-aurora::after {
-    content: '';
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(70px);
-    will-change: transform;
-}
-
-/* Top-left + lower-left blobs */
-.fi-dashboard .fi-page-content > .op-dashboard-aurora::before {
-    top: -12%;
-    left: -8%;
-    width: 60vw;
-    height: 60vw;
-    max-width: 900px;
-    max-height: 900px;
-    background:
-        radial-gradient(circle at 28% 26%, var(--mesh-blob-1) 0%, transparent 58%),
-        radial-gradient(circle at 60% 82%, var(--mesh-blob-3) 0%, transparent 52%);
-    animation: op-aurora-drift 26s var(--ease-in-out-cubic) infinite alternate;
-}
-
-/* Right-side blob spanning the viewport height */
-.fi-dashboard .fi-page-content > .op-dashboard-aurora::after {
-    top: 18%;
-    right: -12%;
-    width: 52vw;
-    height: 52vw;
-    max-width: 820px;
-    max-height: 820px;
-    background:
-        radial-gradient(circle at 60% 40%, var(--mesh-blob-2) 0%, transparent 58%),
-        radial-gradient(circle at 30% 80%, var(--mesh-blob-1) 0%, transparent 50%);
-    animation: op-aurora-drift-2 32s var(--ease-in-out-cubic) infinite alternate;
-}
-
-/* Keep all real content above the mesh */
-.fi-dashboard .fi-page-content > *:not(.op-dashboard-aurora) {
-    position: relative;
-    z-index: 1;
-}
-
 /* Graceful fallback where backdrop-filter is unsupported — go near-opaque
    so glass cards never become unreadable. */
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-    .fi-wi .fi-section,
+    .fi-section,
     .fi-wi-stats-overview-stat,
-    #dashboard-canvas .fi-wi .fi-section,
+    #dashboard-canvas .fi-section,
     #dashboard-canvas .fi-wi-dashboard-header > div,
     #dashboard-canvas .fi-wi-activity-overview > div,
     #dashboard-canvas .fi-wi-quick-actions > div {
@@ -2499,6 +2459,63 @@ select.fi-select-input {
 }
 
 .dark .op-quick-create-dropdown {
+    background: var(--color-bg-surface);
+    border-color: var(--color-border-default);
+}
+
+/* ── Chrome: Jump to OEM ──────────────────────────────────────────────────── */
+
+.op-jump-oem-dropdown {
+    position: absolute;
+    top: calc(100% + 0.375rem);
+    right: 0;
+    z-index: var(--z-dropdown, 30);
+    width: 16rem;
+    padding: 0.625rem;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-2);
+}
+
+.op-jump-oem-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.8125rem;
+    color: var(--color-text-primary);
+}
+
+.op-jump-oem-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: none;
+    color: var(--color-accent-500);
+    cursor: pointer;
+    transition: background-color 150ms ease;
+}
+
+.op-jump-oem-submit:hover {
+    background: var(--color-bg-inset);
+}
+
+.op-jump-oem-error {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-danger-600);
+}
+
+.dark .op-jump-oem-dropdown {
     background: var(--color-bg-surface);
     border-color: var(--color-border-default);
 }
@@ -3233,6 +3250,185 @@ select.fi-select-input {
     }
 }
 
+/* ── Pinned Nav (top of flyout panel, persists across group switches) ──────── */
+
+.op-sidebar-pinned {
+    flex-shrink: 0;
+    padding: 0.125rem 0.125rem 0.5rem;
+    margin-bottom: 0.375rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.op-sidebar-pinned-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.25rem 0.375rem 0.3125rem;
+}
+
+.op-sidebar-pinned-title {
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+.op-sidebar-pinned-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: var(--radius-xs);
+    border: none;
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background 100ms ease, color 100ms ease;
+}
+
+.op-sidebar-pinned-add-btn:hover {
+    background: var(--color-bg-inset);
+    color: var(--color-text-primary);
+}
+
+.op-sidebar-pinned-add-menu {
+    position: absolute;
+    inset-inline-start: 0.375rem;
+    top: 100%;
+    z-index: 3;
+    width: 14rem;
+    max-height: 16rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 0.25rem;
+    background: var(--color-bg-surface-raised);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 8px 24px -8px rgba(0,0,0,0.25);
+}
+
+.op-sidebar-pinned-add-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.375rem;
+    padding: 0.375rem 0.5rem;
+    border: none;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 0.8125rem;
+    text-align: start;
+    cursor: pointer;
+}
+
+.op-sidebar-pinned-add-item:hover {
+    background: var(--color-bg-inset);
+}
+
+.op-sidebar-pinned-add-group {
+    flex-shrink: 0;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+.op-sidebar-pinned-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.op-sidebar-pinned-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: var(--sidebar-item-radius);
+}
+
+.op-sidebar-pinned-item:hover {
+    background: var(--color-bg-inset);
+}
+
+.op-sidebar-pinned-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    padding-block: 0.4375rem;
+    padding-inline-start: 0.625rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-sidebar-pinned-icon {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+    color: var(--color-text-muted);
+}
+
+.op-sidebar-pinned-unpin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-inline-end: 0.375rem;
+    flex-shrink: 0;
+    border: none;
+    border-radius: var(--radius-xs);
+    background: transparent;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 100ms ease, background 100ms ease, color 100ms ease;
+}
+
+.op-sidebar-pinned-item:hover .op-sidebar-pinned-unpin {
+    opacity: 1;
+}
+
+.op-sidebar-pinned-unpin:hover {
+    background: var(--color-bg-surface);
+    color: var(--color-text-primary);
+}
+
+.op-sidebar-pinned-empty {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    font-style: italic;
+}
+
+/* ── Sub-navigation sidebar (resource detail pages) — parity with the main
+   rail+panel design tokens, in case a future resource adopts sub-navigation */
+
+.op-subnav-sidebar .fi-sidebar-item-button,
+.op-subnav-sidebar .fi-sidebar-item-btn {
+    border-radius: var(--sidebar-item-radius);
+}
+
+.op-subnav-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-button,
+.op-subnav-sidebar .fi-sidebar-item.fi-active .fi-sidebar-item-btn {
+    background: var(--sidebar-active-bg);
+}
+
+.op-subnav-sidebar .fi-sidebar-group-items {
+    border-radius: var(--radius-sm);
+}
+
 /* ─── Widget Management Modal Styling ─────────────────────────────────────── */
 
 .fi-form-field-wrapper.fi-repeater-field .fi-repeater-item {
@@ -3677,10 +3873,110 @@ select.fi-select-input {
     }
 }
 
+/* ─── Tab-switch skeleton overlay ────────────────────────────────────────── */
+
+.op-canvas-skeleton {
+    display: none;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 10px;
+    padding: 2px;
+    margin-bottom: 1rem;
+}
+
+body.op-tab-switching .op-canvas-skeleton {
+    display: grid;
+}
+
+body.op-tab-switching #dashboard-canvas {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+}
+
+body:not(.op-tab-switching) #dashboard-canvas {
+    transition: opacity 200ms ease;
+    opacity: 1;
+}
+
+/* ─── Equal-height widget rows ─────────────────────────────────────────── */
+/* GridStack already makes .grid-stack-item-content fill the cell (absolute).
+   These rules ensure the Livewire wrapper and Filament inner components
+   also stretch so paired widgets always share the same visible height. */
+
+#dashboard-canvas .grid-stack-item-content > [wire\:id] {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#dashboard-canvas .grid-stack-item-content .fi-section,
+#dashboard-canvas .grid-stack-item-content .fi-wi-table,
+#dashboard-canvas .grid-stack-item-content .fi-wi-chart,
+#dashboard-canvas .grid-stack-item-content .fi-ta-ctn,
+#dashboard-canvas .grid-stack-item-content .fi-wi-stats-overview {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* ─── KPI value — enforce 32px bold across all tabs ──────────────────── */
+
+#dashboard-canvas .grid-stack-item[data-widget-type="kpi"] .fi-wi-stats-overview-stat-value,
+#dashboard-canvas .grid-stack-item[gs-id$="_kpi"] .fi-wi-stats-overview-stat-value,
+#dashboard-canvas .grid-stack-item[gs-id="parts_inquiry"] .fi-wi-stats-overview-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+}
+
+/* ─── System Health Strip — custom Widget (horizontal flex row) ─────────── */
+
+/* No hover lift on the strip itself */
+#dashboard-canvas .grid-stack-item[gs-id="health_strip"] .fi-wi {
+    height: 100%;
+}
+#dashboard-canvas .grid-stack-item[gs-id="health_strip"] .fi-wi:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Ensure the inner wrapper fills the grid cell */
+#dashboard-canvas .grid-stack-item[gs-id="health_strip"] .fi-wi-health-strip {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ─── Export buttons — consistent small icon+label, top-right ──────────── */
+
+#dashboard-canvas .fi-wi-header .fi-actions button.fi-btn-size-sm,
+#dashboard-canvas .fi-wi-header .fi-actions button[data-size="sm"] {
+    font-size: 0.6875rem;
+    padding-block: 0.25rem;
+    padding-inline: 0.5rem;
+    gap: 0.25rem;
+}
+
+/* ─── Empty states — enforce standard Icon + Heading + Subtext + CTA ───── */
+
+/* Filament native table empty state alignment */
+#dashboard-canvas .fi-ta-empty-state {
+    padding-block: var(--space-10, 2.5rem);
+}
+
+#dashboard-canvas .fi-ta-empty-state-icon {
+    opacity: 0.25;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 0.75rem;
+}
+
 /* ─── Staggered widget fade-in on tab load ────────────────────────────────── */
 
 #dashboard-canvas .grid-stack-item-content > [wire\:id] {
     animation: op-content-fade-in 0.35s var(--ease-out-quint) both;
+    /* height/flex already declared in equal-height block above */
 }
 
 #dashboard-canvas .grid-stack-item:nth-child(1)  .grid-stack-item-content > [wire\:id]  { animation-delay:   0ms; }
@@ -3727,4 +4023,35 @@ select.fi-select-input {
 .fi-ta-row[data-revenue="0"] .fi-ta-col-revenue {
     color: var(--color-text-muted);
     font-style: italic;
+}
+
+/* ─── Welcome Header (h:2, 168px) — no compaction needed ─────────────────── */
+
+/* Fill the grid cell and strip default widget padding */
+#dashboard-canvas .grid-stack-item[gs-id="dashboard_header"] .fi-wi-dashboard-header,
+#dashboard-canvas .grid-stack-item[gs-id="dashboard_header"] .fi-wi-dashboard-header > div {
+    height: 100%;
+    padding: 0;
+}
+
+/* Card wrapper fills full height with no hover lift (header is not a card) */
+#dashboard-canvas .grid-stack-item[gs-id="dashboard_header"] .fi-wi-dashboard-header > div {
+    border-radius: 12px;
+}
+#dashboard-canvas .grid-stack-item[gs-id="dashboard_header"] .fi-wi:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ─── 2026 Command Center — new animations and utility classes ─────────── */
+
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.op-kpi-threshold-glow,
+#dashboard-canvas .op-card.op-kpi-threshold-glow {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-success-500) 30%, transparent),
+                0 0 16px -4px color-mix(in srgb, var(--color-success-500) 25%, transparent) !important;
 }

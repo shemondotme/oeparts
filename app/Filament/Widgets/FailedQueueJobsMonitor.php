@@ -111,6 +111,9 @@ class FailedQueueJobsMonitor extends TableWidget
                     ->action(fn ($record) => DB::table('failed_jobs')->where('id', $record->id)->delete()),
             ])
             ->paginated(false)
-            ->searchable(false);
+            ->searchable(false)
+            ->emptyStateIcon('heroicon-o-check-badge')
+            ->emptyStateHeading('Queue is healthy')
+            ->emptyStateDescription('No failed jobs — all workers are processing normally.');
     }
 }

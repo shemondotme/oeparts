@@ -89,6 +89,9 @@ class NewMessagesInbox extends TableWidget
                     ->url(fn (ContactMessage $record): string => \App\Filament\Resources\ContactMessageResource::getUrl('view', ['record' => $record])),
             ])
             ->paginated(false)
-            ->searchable(false);
+            ->searchable(false)
+            ->emptyStateIcon('heroicon-o-envelope-open')
+            ->emptyStateHeading('Inbox is empty')
+            ->emptyStateDescription('No new messages from customers.');
     }
 }

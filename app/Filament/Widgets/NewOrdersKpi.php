@@ -45,10 +45,16 @@ class NewOrdersKpi extends Widget
                 ->pluck('count', 'hour')
                 ->toArray();
 
+            // 7-day daily bar counts (oldest → newest)
+            $bars = collect(range(6, 0))->map(
+                fn ($i) => Order::whereDate('created_at', now()->subDays($i))->count()
+            )->values()->toArray();
+
             return [
-                'count' => $current,
-                'previous' => $previous,
-                'hourly' => $hourly,
+                'count'     => $current,
+                'previous'  => $previous,
+                'hourly'    => $hourly,
+                'bars'      => $bars,
                 'threshold' => (int) settings('dashboard.orders_threshold', 50),
             ];
         });

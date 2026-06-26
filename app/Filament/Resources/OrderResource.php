@@ -9,9 +9,12 @@ use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Support\AdminUi;
+use App\Jobs\GenerateInvoicePdf;
 use App\Jobs\SendTrackingUpdateEmail;
 use App\Models\Order;
-use App\Models\OrderStatusHistory;
+use App\Services\OrderService;
+use App\Services\PaymentService;
+use App\Services\SequenceService;
 use Filament\Forms;
 use Filament\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
@@ -29,7 +32,7 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $slug = 'filament/orders';
+    protected static ?string $slug = 'orders';
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
@@ -444,13 +447,25 @@ class OrderResource extends Resource
                         ->label('Print Invoice')
                         ->icon('heroicon-o-document-text')
                         ->color('gray')
-                        ->url(fn (Order $record): string => route('admin.orders.invoice', $record->id))
-                        ->openUrlInNewTab()
+                        ->authorize('update')
+                        ->action(function (Order $record): void {
+                            if (! $record->invoice_number) {
+                                $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
+                                $record->save();
+                            }
+                            GenerateInvoicePdf::dispatch($record);
+                            Notification::make()
+                                ->title('Invoice queued')
+                                ->body("Invoice {$record->invoice_number} is being generated.")
+                                ->success()
+                                ->send();
+                        })
                         ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped, OrderStatus::Delivered])),
                     Actions\Action::make('sendTracking')
                         ->label('Send Tracking')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
+                        ->authorize('update')
                         ->requiresConfirmation()
                         ->modalHeading('Send Tracking Email')
                         ->modalDescription('Send the tracking number and carrier information to the customer via email.')
@@ -487,6 +502,7 @@ class OrderResource extends Resource
                         ->label('Confirm Payment')
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
+                        ->authorize('update')
                         ->requiresConfirmation()
                         ->modalHeading('Confirm Bank Transfer Payment')
                         ->modalDescription('Mark this order as paid after verifying the bank transfer has been received in your account.')
@@ -498,27 +514,39 @@ class OrderResource extends Resource
                                 ->helperText('Enter the payment reference from your bank statement for reconciliation.'),
                         ])
                         ->action(function (Order $record, array $data): void {
-                            $record->update(['payment_status' => PaymentStatus::Paid]);
-
-                            if ($record->status === OrderStatus::Pending) {
-                                $record->update(['status' => OrderStatus::Paid]);
-                            }
-
-                            \App\Models\Payment::updateOrCreate(
+                            $payment = \App\Models\Payment::firstOrCreate(
                                 ['order_id' => $record->id],
                                 [
-                                    'gateway' => PaymentGateway::BankTransfer,
+                                    'gateway'        => PaymentGateway::BankTransfer,
                                     'transaction_id' => $data['transaction_id'] ?? null,
-                                    'status' => PaymentTransactionStatus::Captured,
-                                    'amount' => $record->grand_total,
+                                    'status'         => PaymentTransactionStatus::Pending,
+                                    'amount'         => $record->grand_total,
                                 ]
                             );
 
-                            Notification::make()
-                                ->title('Payment confirmed')
-                                ->body("Order {$record->order_number} marked as paid.")
-                                ->success()
-                                ->send();
+                            if (! empty($data['transaction_id']) && ! $payment->transaction_id) {
+                                $payment->update(['transaction_id' => $data['transaction_id']]);
+                            }
+
+                            try {
+                                app(PaymentService::class)->confirmBankTransferPayment(
+                                    $payment,
+                                    $data['transaction_id'] ?? '',
+                                    auth('admin')->id(),
+                                );
+
+                                Notification::make()
+                                    ->title('Payment confirmed')
+                                    ->body("Order {$record->order_number} marked as paid.")
+                                    ->success()
+                                    ->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()
+                                    ->title('Confirmation failed')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
                         })
                         ->visible(fn (Order $record): bool =>
                             $record->payment_method === PaymentMethod::BankTransfer
@@ -542,27 +570,38 @@ class OrderResource extends Resource
                             ],
                         visible: fn ($records): bool => $records->contains(fn ($r) => $r->status === OrderStatus::Paid),
                         action: function ($records): void {
+                            $service = app(OrderService::class);
+                            $failed = [];
+
                             foreach ($records as $record) {
                                 if ($record->status === OrderStatus::Paid) {
-                                    $record->status = OrderStatus::Processing;
-                                    $record->save();
-
-                                    OrderStatusHistory::create([
-                                        'order_id'   => $record->id,
-                                        'admin_id'   => auth('admin')->id(),
-                                        'old_status' => OrderStatus::Paid->value,
-                                        'new_status' => OrderStatus::Processing->value,
-                                        'note'       => 'Bulk status update',
-                                    ]);
+                                    try {
+                                        $service->transitionStatus(
+                                            $record,
+                                            OrderStatus::Processing,
+                                            'Bulk status update',
+                                            auth('admin')->id(),
+                                        );
+                                    } catch (\InvalidArgumentException) {
+                                        $failed[] = $record->order_number;
+                                    }
                                 }
                             }
 
-                            Notification::make()
-                                ->title('Orders marked as processing')
-                                ->success()
-                                ->send();
+                            if (empty($failed)) {
+                                Notification::make()
+                                    ->title('Orders marked as processing')
+                                    ->success()
+                                    ->send();
+                            } else {
+                                Notification::make()
+                                    ->title('Some orders could not be updated')
+                                    ->body('Failed: ' . implode(', ', $failed))
+                                    ->warning()
+                                    ->send();
+                            }
                         },
-                    ),
+                    )->authorize('update'),
                     AdminUi::exportCsvBulkAction('Export Orders', [
                         'order_number' => 'Order Number',
                         'shipping_name' => 'Customer',
@@ -609,6 +648,26 @@ class OrderResource extends Resource
         ];
     }
 
+    public static function canViewAny(): bool
+    {
+        return auth('admin')->user()?->hasPermissionTo('view orders') ?? false;
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth('admin')->user()?->hasPermissionTo('edit orders') ?? false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth('admin')->user()?->hasPermissionTo('edit orders') ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth('admin')->user()?->hasPermissionTo('edit orders') ?? false;
+    }
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::where('status', OrderStatus::Pending)->count() ?: null;
@@ -627,6 +686,7 @@ class OrderResource extends Resource
             ->label('Change Status')
             ->icon('heroicon-o-arrow-path')
             ->color('warning')
+            ->authorize('update')
             ->modalHeading('Update Order Status')
             ->modalDescription('Change the current status of this order. A status history record will be created automatically.')
             ->schema([
@@ -643,22 +703,25 @@ class OrderResource extends Resource
                     ->helperText('Internal note explaining why this status change was made.'),
             ])
             ->action(function (Order $record, array $data): void {
-                $oldStatus = $record->status;
-                $record->status = OrderStatus::from($data['new_status']);
-                $record->save();
+                try {
+                    app(OrderService::class)->transitionStatus(
+                        $record,
+                        $data['new_status'],
+                        $data['note'],
+                        auth('admin')->id(),
+                    );
 
-                OrderStatusHistory::create([
-                    'order_id' => $record->id,
-                    'admin_id' => auth('admin')->id(),
-                    'old_status' => $oldStatus->value,
-                    'new_status' => $data['new_status'],
-                    'note' => $data['note'],
-                ]);
-
-                Notification::make()
-                    ->title('Order status updated')
-                    ->success()
-                    ->send();
+                    Notification::make()
+                        ->title('Order status updated')
+                        ->success()
+                        ->send();
+                } catch (\InvalidArgumentException $e) {
+                    Notification::make()
+                        ->title('Invalid status transition')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
             });
     }
 

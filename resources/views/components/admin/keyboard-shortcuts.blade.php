@@ -36,6 +36,11 @@
             return groups;
         },
         init() {
+            window.addEventListener('open-keyboard-shortcuts', () => {
+                this.showPanel = true;
+                this.query = '';
+            });
+
             window.addEventListener('keydown', (e) => {
                 const isMeta = e.metaKey || e.ctrlKey;
 

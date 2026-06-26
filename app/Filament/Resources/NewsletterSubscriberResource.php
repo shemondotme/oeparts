@@ -231,7 +231,7 @@ class NewsletterSubscriberResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'success';
+        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

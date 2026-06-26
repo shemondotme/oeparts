@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Log;
  * Provides:
  *  - Pinned items (admin-specific, persisted in dashboard_preferences JSON on admins table)
  *  - Recent items (last 8 visited resources, also stored in dashboard_preferences)
- *  - Quick action verbs (for command palette)
+ *
+ * "Create X" / "Go to X" quick actions live in AdminUi::QUICK_CREATE_REGISTRY instead —
+ * do not reintroduce a second registry here.
  *
  * Per CLAUDE.md: never Cache::flush(); use specific Cache::forget() only.
  */
@@ -132,24 +134,4 @@ final class AdminNavService
         }
     }
 
-    /**
-     * Quick action verbs for command palette.
-     * Returns array of [key, label, hint, url, group, icon].
-     */
-    public static function quickActions(): array
-    {
-        return [
-            ['key' => 'new.product',  'label' => 'Create new product',    'group' => 'Create',  'icon' => 'heroicon-o-cube',                'url' => '/admin/products/create'],
-            ['key' => 'new.order',    'label' => 'Create new order',      'group' => 'Create',  'icon' => 'heroicon-o-shopping-bag',        'url' => '/admin/orders/create'],
-            ['key' => 'new.coupon',   'label' => 'Create new coupon',     'group' => 'Create',  'icon' => 'heroicon-o-ticket',              'url' => '/admin/coupons/create'],
-            ['key' => 'new.blog',     'label' => 'Create new blog post',  'group' => 'Create',  'icon' => 'heroicon-o-document-text',       'url' => '/admin/blog-posts/create'],
-            ['key' => 'new.page',     'label' => 'Create new page',       'group' => 'Create',  'icon' => 'heroicon-o-document',            'url' => '/admin/pages/create'],
-            ['key' => 'new.customer', 'label' => 'Create new customer',   'group' => 'Create',  'icon' => 'heroicon-o-user-plus',           'url' => '/admin/customers/create'],
-            ['key' => 'go.orders',    'label' => 'Go to Orders',          'group' => 'Navigate', 'icon' => 'heroicon-o-shopping-bag',        'url' => '/admin/orders'],
-            ['key' => 'go.products',  'label' => 'Go to Products',        'group' => 'Navigate', 'icon' => 'heroicon-o-cube',                'url' => '/admin/products'],
-            ['key' => 'go.reports',   'label' => 'Go to Reports',         'group' => 'Navigate', 'icon' => 'heroicon-o-presentation-chart-line','url' => '/admin/reports'],
-            ['key' => 'go.settings',  'label' => 'Go to Settings',        'group' => 'Navigate', 'icon' => 'heroicon-o-cog-6-tooth',         'url' => '/admin/settings'],
-            ['key' => 'go.health',    'label' => 'Go to Health Check',    'group' => 'Navigate', 'icon' => 'heroicon-o-heart',               'url' => '/admin/system/health-check'],
-        ];
-    }
 }

@@ -39,7 +39,7 @@
 
                                         {{-- Dynamic Status Chip based on status string --}}
                                         @php
-                                            $status = strtolower($refund->status ?? 'pending');
+                                            $status = strtolower($refund->status?->value ?? 'pending');
                                             $chipBg = '#F1F5F9'; // default gray
                                             $chipText = '#64748B';
 
@@ -53,7 +53,7 @@
                                         @endphp
 
                                         <span style="display: inline-block; padding: 6px 12px; background-color: {{ $chipBg }}; color: {{ $chipText }}; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 2px;">
-                                            {{ strtoupper($refund->status ?? 'Unknown') }}
+                                            {{ strtoupper($refund->status?->value ?? 'Unknown') }}
                                         </span>
                                     </td>
                                 </tr>
@@ -75,14 +75,14 @@
         </tr>
 
         {{-- ═══ CONTEXT / MESSAGE ═══ --}}
-        @if(isset($message) && !empty($message))
+        @if(filled($refund->admin_note))
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
                     NOTE FROM SUPPORT
                 </p>
                 <div style="background-color: #FFFFFF; border-left: 4px solid #F59E0B; padding: 16px; font-size: 14px; line-height: 22px; color: #0A1228;">
-                    {!! nl2br(e($message)) !!}
+                    {!! nl2br(e($refund->admin_note)) !!}
                 </div>
             </td>
         </tr>
@@ -94,7 +94,7 @@
                 <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
                     View full refund details and history.
                 </p>
-                <a href="{{ route('frontend.account.refunds.show', ['lang' => $locale, 'refund' => $refund->id]) }}"
+                <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $refund->order_id]) }}"
                    class="btn-primary"
                    style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
                     VIEW REFUND DETAILS →

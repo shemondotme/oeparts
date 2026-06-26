@@ -35,7 +35,7 @@ class IpBlocklistResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'danger';
+        return 'gray';
     }
 
     public static function getNavigationGroup(): ?string

@@ -80,6 +80,18 @@ class AdminPanelProvider extends PanelProvider
                     : '',
             )
             ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn (): string => filament()->auth()->check()
+                    ? Blade::render('@livewire(\'jump-to-oem\')')
+                    : '',
+            )
+            ->renderHook(
+                PanelsRenderHook::SIDEBAR_NAV_START,
+                fn (): string => filament()->auth()->check()
+                    ? Blade::render('@livewire(\'sidebar-pinned-nav\')')
+                    : '',
+            )
+            ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => Blade::render('<x-admin.loading-bar /><x-admin.toast /><x-admin.keyboard-shortcuts />'),
             )
@@ -91,28 +103,27 @@ class AdminPanelProvider extends PanelProvider
             ->profile(isSimple: false)
             ->sidebarWidth('3.5rem') // Rail-only width; flyout panel is position:absolute
             ->spa()
+            ->darkMode()
             ->plugins([
                 SpotlightPlugin::make(),
             ])
+            // ->collapsible() intentionally omitted: the custom rail+panel sidebar
+            // (livewire/sidebar.blade.php) ignores it entirely, using Alpine
+            // activeGroup state instead. It only affects Filament's stock
+            // sub-navigation sidebar, which no resource currently uses.
             ->navigationGroups([
                 NavigationGroup::make('Commerce')
-                    ->icon('heroicon-o-shopping-bag')
-                    ->collapsible(),
+                    ->icon('heroicon-o-shopping-bag'),
                 NavigationGroup::make('Catalog')
-                    ->icon('heroicon-o-book-open')
-                    ->collapsible(),
+                    ->icon('heroicon-o-book-open'),
                 NavigationGroup::make('Customers')
-                    ->icon('heroicon-o-user-group')
-                    ->collapsible(),
+                    ->icon('heroicon-o-user-group'),
                 NavigationGroup::make('Marketing')
-                    ->icon('heroicon-o-megaphone')
-                    ->collapsible(),
+                    ->icon('heroicon-o-megaphone'),
                 NavigationGroup::make('Content')
-                    ->icon('heroicon-o-document-text')
-                    ->collapsible(),
+                    ->icon('heroicon-o-document-text'),
                 NavigationGroup::make('System')
-                    ->icon('heroicon-o-server-stack')
-                    ->collapsible(),
+                    ->icon('heroicon-o-server-stack'),
             ])
             ->navigationItems([])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

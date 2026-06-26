@@ -96,39 +96,26 @@ class BlogPostResource extends Resource
                                     ->icon('heroicon-o-language')
                                     ->description('Translate the post title, excerpt, and content body for each supported language.')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("title.$code")
-                                                                ->label('Post Title')
-                                                                ->placeholder('e.g. How to Choose the Right Brake Pads')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(255)
-                                                                ->live(onBlur: true)
-                                                                ->afterStateUpdated(function ($state, callable $set, ?string $operation) use ($code) {
-                                                                    if ($code === 'en' && $operation === 'create' && is_string($state) && filled($state)) {
-                                                                        $set('slug', \Illuminate\Support\Str::slug($state));
-                                                                    }
-                                                                })
-                                                                ->helperText($code === 'en' ? 'English title is required and used as the default fallback.' : null),
-                                                            Forms\Components\Textarea::make("excerpt.$code")
-                                                                ->label('Excerpt')
-                                                                ->placeholder('Brief summary for blog listings and social sharing...')
-                                                                ->rows(3)
-                                                                ->nullable()
-                                                                ->helperText('Short summary shown in blog listings. Leave empty to auto-generate from content.'),
-                                                            Forms\Components\RichEditor::make("content.$code")
-                                                                ->label('Content Body')
-                                                                ->nullable()
-                                                                ->columnSpanFull(),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'title' => [
+                                                'label' => 'Post Title',
+                                                'placeholder' => 'e.g. How to Choose the Right Brake Pads',
+                                                'required' => true,
+                                                'helperText' => 'English title is required and used as the default fallback.',
+                                                'slugSync' => true,
+                                            ],
+                                            'excerpt' => [
+                                                'label' => 'Excerpt',
+                                                'type' => 'textarea',
+                                                'rows' => 3,
+                                                'placeholder' => 'Brief summary for blog listings and social sharing...',
+                                                'helperText' => 'Short summary shown in blog listings. Leave empty to auto-generate from content.',
+                                            ],
+                                            'content' => [
+                                                'label' => 'Content Body',
+                                                'type' => 'richeditor',
+                                            ],
+                                        ], slugSyncTarget: 'slug', slugSyncMode: 'create-only'),
                                     ]),
 
                                 Section::make('SEO & Metadata')
@@ -272,6 +259,7 @@ class BlogPostResource extends Resource
                     ->label(fn (BlogPost $record): string => $record->status === ContentStatus::Published ? 'Unpublish' : 'Publish')
                     ->icon(fn (BlogPost $record): string => $record->status === ContentStatus::Published ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                     ->color(fn (BlogPost $record): string => $record->status === ContentStatus::Published ? 'warning' : 'success')
+                    ->authorize('update')
                     ->requiresConfirmation()
                     ->modalHeading(fn (BlogPost $record): string => $record->status === ContentStatus::Published ? 'Unpublish Post' : 'Publish Post')
                     ->modalDescription(fn (BlogPost $record): string => $record->status === ContentStatus::Published

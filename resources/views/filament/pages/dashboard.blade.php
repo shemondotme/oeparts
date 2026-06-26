@@ -1,7 +1,4 @@
 <x-filament-panels::page class="fi-dashboard">
-    {{-- Living aurora-mesh backdrop --}}
-    <div class="op-dashboard-aurora" aria-hidden="true"></div>
-
     @php($dashboards = $this->getDashboardList())
 
     @if (count($dashboards) > 1)
@@ -12,7 +9,7 @@
             'System & Admin' => 'heroicon-o-wrench-screwdriver',
         ])
         <nav class="op-dashboard-tabs flex items-center gap-1 mb-6 overflow-x-auto" aria-label="Dashboard sections"
-            style="padding: 4px; border-radius: 12px; background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border);"
+            style="padding: 4px; border-radius: var(--radius-md); background: var(--color-bg-surface); border: 1px solid var(--color-border-default);"
             x-data x-init="$nextTick(() => { const a = $el.querySelector('.is-active'); if (a) a.scrollIntoView({ behavior: 'instant', inline: 'nearest', block: 'nearest' }); })">
             @foreach ($dashboards as $dashboard)
                 @php($icon = $tabIcons[$dashboard['name']] ?? 'heroicon-o-squares-2x2')
@@ -20,11 +17,11 @@
                     type="button"
                     wire:click="switchDashboard({{ $dashboard['id'] }})"
                     @class([
-                        'op-dashboard-tab inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all duration-200 whitespace-nowrap',
+                        'op-dashboard-tab inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-md transition-all duration-200 whitespace-nowrap',
                         'is-active' => $dashboard['id'] === $this->activeDashboardId,
                     ])
                     @style([
-                        'background: linear-gradient(135deg, var(--aurora-indigo) 0%, var(--aurora-violet) 100%); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);' => $dashboard['id'] === $this->activeDashboardId,
+                        'background: var(--color-brand-500); color: white;' => $dashboard['id'] === $this->activeDashboardId,
                         'color: var(--color-text-muted);' => $dashboard['id'] !== $this->activeDashboardId,
                     ])
                     aria-current="{{ $dashboard['id'] === $this->activeDashboardId ? 'page' : 'false' }}"
@@ -42,9 +39,9 @@
         <div x-show="loading" class="op-period-loading" x-transition:enter="transition-opacity duration-100" x-transition:leave="transition-opacity duration-300" aria-hidden="true"></div>
 
         <p class="text-xs" style="color: var(--color-text-muted);">
-            Showing data for: <span class="font-bold" style="background: linear-gradient(90deg, var(--aurora-indigo) 0%, var(--aurora-violet) 50%, var(--aurora-cyan) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;" x-text="({'1':'Today','7':'Last 7 days','30':'Last 30 days','90':'Last 90 days','365':'Last year'})[period]"></span>
+            Showing data for: <span class="font-bold" style="color: var(--color-brand-500);" x-text="({'1':'Today','7':'Last 7 days','30':'Last 30 days','90':'Last 90 days','365':'Last year'})[period]"></span>
         </p>
-        <div class="flex items-center gap-1.5" style="padding: 5px; border-radius: 12px; background: var(--glass-bg); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);">
+        <div class="flex items-center gap-1.5" style="padding: 5px; border-radius: var(--radius-md); background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
             @foreach(['1' => 'Today', '7' => '7d', '30' => '30d', '90' => '90d', '365' => '1y'] as $value => $label)
                 <button
                     type="button"
@@ -52,8 +49,8 @@
                     :aria-pressed="period === '{{ $value }}'"
                     aria-label="Show data for {{ $label }}"
                     :style="period === '{{ $value }}'
-                        ? 'background: linear-gradient(135deg, var(--aurora-indigo) 0%, var(--aurora-violet) 100%); color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); border-radius: 7px; font-weight: 700;'
-                        : 'color: var(--color-text-muted); border-radius: 7px; transition: all 150ms ease;'"
+                        ? 'background: var(--color-brand-500); color: white; border-radius: 5px; font-weight: 700;'
+                        : 'color: var(--color-text-muted); border-radius: 5px; transition: all 150ms ease;'"
                     class="px-2.5 py-1 text-xs font-semibold transition-all duration-150"
                 >{{ $label }}</button>
             @endforeach
@@ -61,7 +58,7 @@
     </div>
 
     @if ($this->editMode)
-        <div class="mb-4 px-4 py-2.5 rounded-lg text-sm flex items-center gap-2 flex-wrap"
+        <div class="mb-4 px-4 py-2.5 rounded-md text-sm flex items-center gap-2 flex-wrap"
              style="background: var(--color-warning-50, #fffbeb); border: 1px dashed var(--color-warning-400, #fbbf24); color: var(--color-warning-700, #b45309);">
             <x-heroicon-o-arrows-pointing-out class="w-4 h-4 shrink-0" />
             <span>Edit mode — drag widgets to move, resize with the corner handle. Changes save automatically.</span>

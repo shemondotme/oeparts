@@ -98,6 +98,16 @@ class NewProductsAdded extends TableWidget
                     ->url(fn (Product $record): string => \App\Filament\Resources\ProductResource::getUrl('edit', ['record' => $record])),
             ])
             ->paginated(false)
-            ->searchable(false);
+            ->searchable(false)
+            ->emptyStateIcon('heroicon-o-cube-transparent')
+            ->emptyStateHeading('No new products')
+            ->emptyStateDescription('No products have been added recently. Add a product to see it here.')
+            ->emptyStateActions([
+                Tables\Actions\Action::make('add_product')
+                    ->label('Add Product')
+                    ->url(\App\Filament\Resources\ProductResource::getUrl('create'))
+                    ->icon('heroicon-o-plus')
+                    ->color('primary'),
+            ]);
     }
 }

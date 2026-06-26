@@ -32,7 +32,8 @@ class PaymentService
     private const AIRWALLEX_API_BASE_LIVE = 'https://api.airwallex.com/api/v1';
 
     public function __construct(
-        private SettingsService $settings
+        private SettingsService $settings,
+        private OrderService $orderService,
     ) {}
 
     /**
@@ -249,20 +250,18 @@ class PaymentService
 
             // Update order
             $order = $payment->order;
-            $oldStatus = $order->status;
             $order->update([
                 'payment_status' => \App\Enums\PaymentStatus::Paid,
-                'status' => \App\Enums\OrderStatus::Processing,
                 'payment_reference' => $paymentIntentId,
             ]);
 
-            // Log status change
-            \App\Models\OrderStatusHistory::create([
-                'order_id' => $order->id,
-                'old_status' => $oldStatus,
-                'new_status' => \App\Enums\OrderStatus::Processing,
-                'note' => 'Payment confirmed via Airwallex webhook',
-            ]);
+            $this->orderService->transitionStatus(
+                $order,
+                \App\Enums\OrderStatus::Processing,
+                'Payment confirmed via Airwallex webhook',
+                null,
+                notifyCustomer: false,
+            );
 
             dispatch(new SendOrderConfirmationEmail($order));
 
@@ -313,31 +312,30 @@ class PaymentService
     /**
      * Manually confirm a bank transfer payment (admin action).
      */
-    public function confirmBankTransferPayment(Payment $payment, string $referenceNote = ''): void
+    public function confirmBankTransferPayment(Payment $payment, string $referenceNote = '', ?int $adminId = null): void
     {
         if ($payment->gateway !== PaymentGateway::BankTransfer) {
             throw new \RuntimeException('Payment is not a bank transfer.');
         }
 
-        DB::transaction(function () use ($payment, $referenceNote) {
+        DB::transaction(function () use ($payment, $referenceNote, $adminId) {
             $payment->update([
                 'status' => PaymentTransactionStatus::Captured,
             ]);
 
             $order = $payment->order;
-            $oldStatus = $order->status;
             $order->update([
                 'payment_status' => \App\Enums\PaymentStatus::Paid,
-                'status' => \App\Enums\OrderStatus::Processing,
                 'payment_reference' => $referenceNote ?: $payment->transaction_id,
             ]);
 
-            \App\Models\OrderStatusHistory::create([
-                'order_id' => $order->id,
-                'old_status' => $oldStatus,
-                'new_status' => \App\Enums\OrderStatus::Processing,
-                'note' => 'Bank transfer confirmed manually' . ($referenceNote ? ": {$referenceNote}" : ''),
-            ]);
+            $this->orderService->transitionStatus(
+                $order,
+                \App\Enums\OrderStatus::Processing,
+                'Bank transfer confirmed manually' . ($referenceNote ? ": {$referenceNote}" : ''),
+                $adminId,
+                notifyCustomer: false,
+            );
 
             dispatch(new SendOrderConfirmationEmail($order));
 

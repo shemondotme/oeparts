@@ -2,11 +2,10 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 
 class ShippingSettings extends SettingsPage
 {
@@ -53,51 +52,20 @@ class ShippingSettings extends SettingsPage
                             ->helperText('Trigger nudge only when remaining amount is below this value')
                             ->default(10),
 
-                        Tabs::make('Free Shipping Nudge Text')
-                            ->statePath('nudge_text')
-                            ->columnSpanFull()
-                            ->tabs([
-                                Tab::make('English')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('en')
-                                            ->label('Nudge (EN)')
-                                            ->rows(2)
-                                            ->placeholder('Add only €{amount} more to get free shipping!'),
-                                    ]),
-                                Tab::make('Deutsch')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('de')
-                                            ->label('Nudge (DE)')
-                                            ->rows(2)
-                                            ->placeholder('Fügen Sie noch €{amount} hinzu, um kostenlosen Versand zu erhalten!'),
-                                    ]),
-                                Tab::make('Lietuvių')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('lt')
-                                            ->label('Nudge (LT)')
-                                            ->rows(2)
-                                            ->placeholder('Pridėkite dar €{amount} nemokamam pristatymui!'),
-                                    ]),
-                                Tab::make('Français')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('fr')
-                                            ->label('Nudge (FR)')
-                                            ->rows(2)
-                                            ->placeholder('Ajoutez €{amount} de plus pour la livraison gratuite !'),
-                                    ]),
-                                Tab::make('Español')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('es')
-                                            ->label('Nudge (ES)')
-                                            ->rows(2)
-                                            ->placeholder('¡Añade €{amount} más para conseguir envío gratis!'),
-                                    ]),
-                            ]),
+                        AdminUi::translatableTabs('Free Shipping Nudge Text', [
+                            'nudge_text' => [
+                                'label' => 'Nudge',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'placeholders' => [
+                                    'en' => 'Add only €{amount} more to get free shipping!',
+                                    'de' => 'Fügen Sie noch €{amount} hinzu, um kostenlosen Versand zu erhalten!',
+                                    'lt' => 'Pridėkite dar €{amount} nemokamam pristatymui!',
+                                    'fr' => 'Ajoutez €{amount} de plus pour la livraison gratuite !',
+                                    'es' => '¡Añade €{amount} más para conseguir envío gratis!',
+                                ],
+                            ],
+                        ]),
                     ])->columns(2),
 
                 Section::make('Business Days & Origin')

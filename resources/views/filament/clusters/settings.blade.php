@@ -3,7 +3,6 @@
     <div class="space-y-6" x-data="{ search: '' }">
         {{-- Settings Header --}}
         <div class="op-card relative overflow-hidden p-6 page-header-gradient page-header-border">
-            <div class="absolute inset-0" style="background: radial-gradient(circle at 30% 30%, rgba(245, 158, 11, 0.08), transparent 50%);"></div>
             <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold tracking-tight flex items-center gap-2" style="font-family: var(--font-display); color: var(--color-text-on-accent);">
@@ -52,7 +51,7 @@
                 ],
                 'SEO & Marketing' => [
                     'icon' => 'heroicon-o-globe-alt',
-                    'keywords' => 'seo search engine performance cache redis stats counter meta opengraph preloader newsletter sections',
+                    'keywords' => 'seo search engine performance cache redis stats counter meta opengraph preloader newsletter sections ui hero homepage',
                     'items' => [
                         ['Search Engine', '/admin/settings/search-settings', 'OEM normalized search query controls', 'heroicon-o-magnifying-glass'],
                         ['SEO & Meta', '/admin/settings/seo-settings', 'Global OpenGraph, robots tags, sitemap ping', 'heroicon-o-globe-alt'],
@@ -61,6 +60,7 @@
                         ['Preloader', '/admin/settings/preloader-settings', 'Full-screen loading animation settings', 'heroicon-o-arrow-path'],
                         ['Newsletter', '/admin/settings/newsletter-settings', 'Subscription rate limits and opt-in settings', 'heroicon-o-envelope'],
                         ['Sections', '/admin/settings/sections-settings', 'Homepage content section display limits', 'heroicon-o-squares-2x2'],
+                        ['Homepage Hero & UI Text', '/admin/settings/ui-settings', 'Hero banner, spec table, and footer pill copy', 'heroicon-o-paint-brush'],
                     ]
                 ],
                 'System & Security' => [
@@ -119,7 +119,7 @@
                         @foreach ($sectionData['items'] as $item)
                             <a href="{{ url($item[1]) }}"
                                x-show="search === '' || '{{ strtolower($item[0] . ' ' . $item[2]) }}'.includes(search.toLowerCase())"
-                               class="settings-link op-focus-ring op-press flex items-start gap-4 p-4 rounded-xl transition-all duration-200 no-underline group"
+                               class="settings-link op-focus-ring op-press flex items-start gap-4 p-4 rounded-md transition-all duration-200 no-underline group"
                                style="border: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);"
                             >
                                 <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110"

@@ -14,8 +14,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -86,25 +84,16 @@ class FaqResource extends Resource
                                     ->icon('heroicon-o-language')
                                     ->description('Translate the FAQ question and answer in supported languages.')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("question.$code")
-                                                                ->label('Question')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(255),
-                                                            Forms\Components\RichEditor::make("answer.$code")
-                                                                ->label('Answer')
-                                                                ->nullable()
-                                                                ->columnSpanFull(),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'question' => [
+                                                'label' => 'Question',
+                                                'required' => true,
+                                            ],
+                                            'answer' => [
+                                                'label' => 'Answer',
+                                                'type' => 'richeditor',
+                                            ],
+                                        ]),
                                     ]),
                             ]),
 
@@ -190,6 +179,7 @@ class FaqResource extends Resource
                     ->label(fn (Faq $record): string => $record->is_active ? 'Deactivate' : 'Activate')
                     ->icon(fn (Faq $record): string => $record->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                     ->color(fn (Faq $record): string => $record->is_active ? 'warning' : 'success')
+                    ->authorize('update')
                     ->action(function (Faq $record) {
                         $record->update(['is_active' => !$record->is_active]);
 
@@ -268,7 +258,7 @@ class FaqResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'success';
+        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

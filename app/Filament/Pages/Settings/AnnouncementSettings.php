@@ -2,11 +2,10 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 
 class AnnouncementSettings extends SettingsPage
 {
@@ -38,93 +37,35 @@ class AnnouncementSettings extends SettingsPage
                             ->helperText('Allow visitors to close the announcement bar during their session')
                             ->default(true),
 
-                        Tabs::make('Announcement Text')
-                            ->statePath('text')
-                            ->columnSpanFull()
-                            ->tabs([
-                                Tab::make('English')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('en')
-                                            ->label('Text (EN)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Special offer: Free shipping on orders over €150!'),
-                                    ]),
-                                Tab::make('Deutsch')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('de')
-                                            ->label('Text (DE)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Sonderangebot: Kostenloser Versand ab 150 €!'),
-                                    ]),
-                                Tab::make('Lietuvių')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('lt')
-                                            ->label('Text (LT)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Specialus pasiūlymas: Nemokamas pristatymas nuo 150 €!'),
-                                    ]),
-                                Tab::make('Français')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('fr')
-                                            ->label('Text (FR)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Offre spéciale : Livraison gratuite à partir de 150 € !'),
-                                    ]),
-                                Tab::make('Español')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('es')
-                                            ->label('Text (ES)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. ¡Oferta especial: Envío gratis en pedidos superiores a 150 €!'),
-                                    ]),
-                            ]),
+                        AdminUi::translatableTabs('Announcement Text', [
+                            'text' => [
+                                'label' => 'Text',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'helperText' => '',
+                                'placeholders' => [
+                                    'en' => 'e.g. Special offer: Free shipping on orders over €150!',
+                                    'de' => 'e.g. Sonderangebot: Kostenloser Versand ab 150 €!',
+                                    'lt' => 'e.g. Specialus pasiūlymas: Nemokamas pristatymas nuo 150 €!',
+                                    'fr' => 'e.g. Offre spéciale : Livraison gratuite à partir de 150 € !',
+                                    'es' => 'e.g. ¡Oferta especial: Envío gratis en pedidos superiores a 150 €!',
+                                ],
+                            ],
+                        ]),
 
-                        Tabs::make('CTA Button Text')
-                            ->statePath('cta_text')
-                            ->columnSpanFull()
-                            ->helperText('Optional call-to-action button text displayed on the announcement bar.')
-                            ->tabs([
-                                Tab::make('English')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('en')
-                                            ->label('CTA (EN)')
-                                            ->placeholder('e.g. Shop Now'),
-                                    ]),
-                                Tab::make('Deutsch')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('de')
-                                            ->label('CTA (DE)')
-                                            ->placeholder('e.g. Jetzt kaufen'),
-                                    ]),
-                                Tab::make('Lietuvių')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('lt')
-                                            ->label('CTA (LT)')
-                                            ->placeholder('e.g. Pirkite dabar'),
-                                    ]),
-                                Tab::make('Français')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('fr')
-                                            ->label('CTA (FR)')
-                                            ->placeholder('e.g. Acheter maintenant'),
-                                    ]),
-                                Tab::make('Español')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('es')
-                                            ->label('CTA (ES)')
-                                            ->placeholder('e.g. Comprar ahora'),
-                                    ]),
-                            ]),
+                        AdminUi::translatableTabs('CTA Button Text', [
+                            'cta_text' => [
+                                'label' => 'CTA',
+                                'helperText' => '',
+                                'placeholders' => [
+                                    'en' => 'e.g. Shop Now',
+                                    'de' => 'e.g. Jetzt kaufen',
+                                    'lt' => 'e.g. Pirkite dabar',
+                                    'fr' => 'e.g. Acheter maintenant',
+                                    'es' => 'e.g. Comprar ahora',
+                                ],
+                            ],
+                        ])->helperText('Optional call-to-action button text displayed on the announcement bar.'),
 
                         Forms\Components\ColorPicker::make('color')
                             ->label('Background Color')
