@@ -205,6 +205,7 @@ class RolesSeeder extends Seeder
             'view manufacturers', 'create manufacturers', 'edit manufacturers', 'delete manufacturers',
             'view car models', 'create car models', 'edit car models', 'delete car models',
             'view conditions', 'create conditions', 'edit conditions', 'delete conditions',
+            'view categories', 'create categories', 'edit categories', 'delete categories',
             'view media', 'upload media',
         ]);
 

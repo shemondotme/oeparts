@@ -18,6 +18,7 @@ use App\Filament\Resources\TestimonialResource\Pages\ListTestimonials;
 use App\Models\AbandonedCart;
 use App\Models\Admin;
 use App\Models\BlogPost;
+use App\Models\Category;
 use App\Models\Condition;
 use App\Models\ContactMessage;
 use App\Models\Faq;
@@ -358,5 +359,21 @@ class ExtendedAuthorizationTest extends TestCase
             $this->assertTrue($roleAdmin->can('update', $condition), "{$role} should be able to update conditions");
             $this->assertFalse($roleAdmin->can('delete', $condition), "{$role} should NOT be able to delete conditions");
         }
+    }
+
+    // ── Option T: catalog_admin was missing category permissions despite
+    // CategoryResource living in the Catalog nav group (a missing grant, not
+    // a Policy bug — CategoryPolicy was already correctly shaped).
+
+    #[Test]
+    public function catalog_admin_now_has_full_category_crud(): void
+    {
+        $category = Category::factory()->create();
+        $catalogAdmin = $this->adminWithRole('catalog_admin');
+
+        $this->assertTrue($catalogAdmin->can('viewAny', Category::class));
+        $this->assertTrue($catalogAdmin->can('create', Category::class));
+        $this->assertTrue($catalogAdmin->can('update', $category));
+        $this->assertTrue($catalogAdmin->can('delete', $category));
     }
 }
