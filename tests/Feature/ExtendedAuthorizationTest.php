@@ -376,4 +376,76 @@ class ExtendedAuthorizationTest extends TestCase
         $this->assertTrue($catalogAdmin->can('update', $category));
         $this->assertTrue($catalogAdmin->can('delete', $category));
     }
+
+    // ── Customers module deep gap analysis (Option V): 4 bulk actions
+    // (PartInquiry's bulkMarkSourced/bulkMarkUnavailable, ContactMessage's
+    // bulkMarkRead/bulkMarkResolved) plus CustomerResource::sendEmail had zero
+    // ->authorize(). None were exploitable by any seeded role (every role with
+    // 'view inquiries'/'view contact messages' also has the matching 'edit'
+    // permission), so these are Tier 2 defense-in-depth, same as the row-action
+    // tests above — a synthetic view-only role proves the gate now blocks them.
+
+    #[Test]
+    public function part_inquiry_bulk_actions_require_update_permission(): void
+    {
+        $inquiry = PartInquiry::factory()->create(['status' => PartInquiryStatus::New]);
+        $viewOnly = $this->adminWithPermissions('inquiries_bulk_view_only_test', ['view inquiries']);
+        $editor = $this->adminWithRole('manager');
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListPartInquiries::class)->assertTableBulkActionHidden('bulkMarkUnavailable');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListPartInquiries::class)
+            ->assertTableBulkActionVisible('bulkMarkUnavailable')
+            ->callTableBulkAction('bulkMarkUnavailable', [$inquiry]);
+        $this->assertSame(PartInquiryStatus::Unavailable, $inquiry->refresh()->status);
+    }
+
+    #[Test]
+    public function contact_message_bulk_actions_require_update_permission(): void
+    {
+        $message = ContactMessage::factory()->create(['status' => ContactStatus::Unread]);
+        $viewOnly = $this->adminWithPermissions('contact_bulk_view_only_test', ['view contact messages']);
+        $editor = $this->adminWithRole('support');
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListContactMessages::class)->assertTableBulkActionHidden('bulkMarkResolved');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListContactMessages::class)
+            ->assertTableBulkActionVisible('bulkMarkResolved')
+            ->callTableBulkAction('bulkMarkResolved', [$message]);
+        $this->assertSame('resolved', $message->refresh()->status->value);
+    }
+
+    #[Test]
+    public function customer_send_email_action_requires_update_permission(): void
+    {
+        $user = User::factory()->create();
+        $viewOnly = $this->adminWithPermissions('customers_send_email_view_only_test', ['view customers']);
+        $editor = $this->adminWithRole('manager');
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListCustomers::class)->assertTableActionHidden('sendEmail', $user);
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListCustomers::class)->assertTableActionVisible('sendEmail', $user);
+    }
+
+    // ── Customers module deep gap analysis (Option V): admin/manager could not
+    // manage Contact Messages at all (only support could), despite both roles
+    // already holding full customer/inquiry CRUD in the same nav group.
+
+    #[Test]
+    public function manager_and_admin_now_have_contact_message_permissions(): void
+    {
+        $message = ContactMessage::factory()->create();
+
+        foreach (['manager', 'admin'] as $role) {
+            $roleAdmin = $this->adminWithRole($role);
+            $this->assertTrue($roleAdmin->can('viewAny', ContactMessage::class), "{$role} should be able to view contact messages");
+            $this->assertTrue($roleAdmin->can('update', $message), "{$role} should be able to update contact messages");
+        }
+    }
 }

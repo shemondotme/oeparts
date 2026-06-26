@@ -312,7 +312,7 @@ class ContactMessageResource extends Resource
                                 ->success()
                                 ->send();
                         },
-                    ),
+                    )->authorize('update', ContactMessage::class),
                     AdminUi::impactBulkAction(
                         name: 'bulkMarkResolved',
                         label: 'Mark Resolved',
@@ -335,7 +335,7 @@ class ContactMessageResource extends Resource
                                 ->success()
                                 ->send();
                         },
-                    ),
+                    )->authorize('update', ContactMessage::class),
                     AdminUi::exportCsvBulkAction('Export Contact Messages', [
                         'name' => 'Name',
                         'email' => 'Email',

@@ -274,6 +274,7 @@ class CustomerResource extends Resource
                     ->label('Send Email')
                     ->icon('heroicon-o-envelope')
                     ->color('info')
+                    ->authorize('update')
                     ->url(fn (User $record): string => "mailto:{$record->email}")
                     ->openUrlInNewTab(),
                 Actions\Action::make('toggleActive')
