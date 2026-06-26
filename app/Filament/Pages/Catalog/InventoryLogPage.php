@@ -4,12 +4,14 @@ namespace App\Filament\Pages\Catalog;
 
 use App\Enums\InventoryChangeType;
 use App\Models\InventoryLog;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 
-class InventoryLogPage extends Page
+class InventoryLogPage extends Page implements HasTable
 {
     use InteractsWithTable;
 
@@ -130,7 +132,7 @@ class InventoryLogPage extends Page
                 Tables\Filters\Filter::make('created_at')
                     ->label('Date Range')
                     ->form([
-                        Tables\Filters\SelectFilter::make('created_at')
+                        Select::make('created_at')
                             ->options([
                                 'today' => 'Today',
                                 'yesterday' => 'Yesterday',

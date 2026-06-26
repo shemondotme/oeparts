@@ -233,6 +233,31 @@ class AdminSmokeTest extends TestCase
         $this->actingAs($this->admin, 'admin');
     }
 
+    // ── Custom Table Pages ──────────────────────────────────────────────────────
+
+    #[Test]
+    public function catalog_and_content_log_pages_return_200(): void
+    {
+        // Regression test for a bug class found while fixing SettingsActivityLog
+        // in the Settings Option C chunk: a Filament Page using
+        // Tables\Concerns\InteractsWithTable without declaring
+        // `implements Tables\Contracts\HasTable` throws a fatal TypeError on
+        // every load (Table::make() type-checks $livewire against that
+        // interface). These 3 pages had the identical pattern and zero prior
+        // test coverage — confirmed via `php artisan route:list` rather than
+        // guessed from class names.
+        $pages = [
+            '/admin/inventory-log-page',
+            '/admin/bulk-update-log-page',
+            '/admin/content/content-revision-page',
+        ];
+
+        foreach ($pages as $url) {
+            $response = $this->get($url);
+            $response->assertStatus(200);
+        }
+    }
+
     // ── Report Pages ────────────────────────────────────────────────────────────
 
     #[Test]

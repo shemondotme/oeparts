@@ -4,12 +4,14 @@ namespace App\Filament\Pages\Catalog;
 
 use App\Enums\BulkUpdateAction;
 use App\Models\BulkUpdateLog;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 
-class BulkUpdateLogPage extends Page
+class BulkUpdateLogPage extends Page implements HasTable
 {
     use InteractsWithTable;
 
@@ -129,7 +131,7 @@ class BulkUpdateLogPage extends Page
                 Tables\Filters\Filter::make('created_at')
                     ->label('Date Range')
                     ->form([
-                        Tables\Filters\SelectFilter::make('created_at')
+                        Select::make('created_at')
                             ->options([
                                 'today' => 'Today',
                                 'yesterday' => 'Yesterday',

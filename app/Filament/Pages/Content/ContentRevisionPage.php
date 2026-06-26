@@ -4,12 +4,14 @@ namespace App\Filament\Pages\Content;
 
 use App\Filament\Clusters\Content as ContentCluster;
 use App\Models\ContentRevision;
+use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 
-class ContentRevisionPage extends Page
+class ContentRevisionPage extends Page implements HasTable
 {
     use InteractsWithTable;
 
@@ -107,7 +109,7 @@ class ContentRevisionPage extends Page
                 Tables\Filters\Filter::make('created_at')
                     ->label('Date Range')
                     ->form([
-                        Tables\Filters\SelectFilter::make('created_at')
+                        Select::make('created_at')
                             ->options([
                                 'today' => 'Today',
                                 'yesterday' => 'Yesterday',
