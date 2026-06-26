@@ -587,11 +587,15 @@ class ProductResource extends Resource
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),
-                Actions\Action::make('import')
-                    ->label('Import CSV')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('gray')
-                    ->outlined(),
+                AdminUi::importCsvHeaderAction(
+                    ProcessCsvImport::class,
+                    'Import Products via CSV',
+                    'Upload a CSV file to bulk import or update products. A background job will process the file asynchronously.',
+                    'Upload a CSV with columns: oem_number, manufacturer, price, condition, etc.',
+                )
+                    ->name('importCsvEmpty')
+                    ->outlined()
+                    ->authorize(fn (): bool => auth('admin')->user()?->can('import products') ?? false),
             ]);
     }
 

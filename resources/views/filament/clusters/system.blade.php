@@ -2,7 +2,6 @@
 <x-filament-panels::page>
     <div class="space-y-6" x-data="{ search: '' }">
         <div class="op-card relative overflow-hidden p-6 page-header-gradient page-header-border">
-            <div class="absolute inset-0" style="background: radial-gradient(circle at 30% 30%, rgba(99, 102, 241, 0.08), transparent 50%);"></div>
             <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold tracking-tight flex items-center gap-2" style="font-family: var(--font-display); color: var(--color-text-on-accent);">
