@@ -6,8 +6,6 @@ use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Actions;
@@ -23,25 +21,17 @@ class MethodsRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Tabs::make('Locales')
-                    ->schema(
-                        collect(AdminUi::LOCALES)
-                            ->map(fn (string $label, string $code) => Tab::make($label)
-                                ->badge($code === 'en' ? 'Primary' : null)
-                                ->schema([
-                                    Forms\Components\TextInput::make("name.$code")
-                                        ->label('Method Name')
-                                        ->required($code === 'en')
-                                        ->maxLength(255),
-                                    Forms\Components\Textarea::make("description.$code")
-                                        ->label('Description')
-                                        ->rows(2)
-                                        ->nullable(),
-                                ]))
-                            ->values()
-                            ->all()
-                    )
-                    ->columnSpanFull(),
+                AdminUi::translatableTabs('Locales', [
+                    'name' => [
+                        'label' => 'Method Name',
+                        'required' => true,
+                    ],
+                    'description' => [
+                        'label' => 'Description',
+                        'type' => 'textarea',
+                        'rows' => 2,
+                    ],
+                ]),
                 Forms\Components\TextInput::make('flat_rate')
                     ->label('Flat Rate (€)')
                     ->numeric()

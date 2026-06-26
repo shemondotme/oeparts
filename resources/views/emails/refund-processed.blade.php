@@ -154,7 +154,7 @@
                 <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
                     View the full details of this refund in your account.
                 </p>
-                <a href="{{ route('frontend.account.refunds.show', ['lang' => $locale, 'refund' => $refund->id]) }}"
+                <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $refund->order_id]) }}"
                    class="btn-primary"
                    style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
                     VIEW REFUND DETAILS →

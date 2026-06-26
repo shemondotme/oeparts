@@ -9,8 +9,7 @@ use App\Services\InvoiceService;
 use App\Enums\OrderStatus;
 use App\Models\RefundRequest;
 use App\Jobs\SendRefundStatusEmail;
-use App\Jobs\SendOrderStatusEmail;
-use App\Models\OrderStatusHistory;
+use App\Services\OrderService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,18 +31,7 @@ class AccountController extends Controller
                 ->with('error', 'This order cannot be cancelled.');
         }
 
-        $oldStatus = $order->status;  // capture BEFORE update
-        $order->update(['status' => OrderStatus::Cancelled]);
-
-        OrderStatusHistory::create([
-            'order_id'   => $order->id,
-            'admin_id'   => null,
-            'old_status' => $oldStatus,
-            'new_status' => OrderStatus::Cancelled,
-            'note'       => 'Cancelled by customer.',
-        ]);
-
-        dispatch(new SendOrderStatusEmail($order, OrderStatus::Cancelled))->onQueue('default');
+        app(OrderService::class)->transitionStatus($order, OrderStatus::Cancelled, 'Cancelled by customer.');
 
         return redirect()->route('frontend.account.orders', ['lang' => $lang])
             ->with('success', 'Your order has been cancelled.');
@@ -359,16 +347,13 @@ class AccountController extends Controller
             }
         }
 
-        $oldStatus = $order->status;  // capture BEFORE update
-        $order->update(['status' => OrderStatus::RefundRequested]);
-
-        \App\Models\OrderStatusHistory::create([
-            'order_id'   => $order->id,
-            'admin_id'   => null,
-            'old_status' => $oldStatus,
-            'new_status' => OrderStatus::RefundRequested,
-            'note'       => 'Customer submitted refund request.',
-        ]);
+        app(OrderService::class)->transitionStatus(
+            $order,
+            OrderStatus::RefundRequested,
+            'Customer submitted refund request.',
+            null,
+            notifyCustomer: false,
+        );
 
         $refund = RefundRequest::create([
             'order_id'         => $order->id,

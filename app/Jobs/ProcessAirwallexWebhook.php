@@ -124,18 +124,15 @@ class ProcessAirwallexWebhook implements ShouldQueue
             ]);
 
             $order = $payment->order;
-            $oldStatus = $order->status;
             $order->update([
                 'payment_status' => \App\Enums\PaymentStatus::Failed,
-                'status' => \App\Enums\OrderStatus::Cancelled,
             ]);
 
-            \App\Models\OrderStatusHistory::create([
-                'order_id' => $order->id,
-                'old_status' => $oldStatus,
-                'new_status' => \App\Enums\OrderStatus::Cancelled,
-                'note' => 'Payment canceled via Airwallex webhook',
-            ]);
+            app(\App\Services\OrderService::class)->transitionStatus(
+                $order,
+                \App\Enums\OrderStatus::Cancelled,
+                'Payment canceled via Airwallex webhook',
+            );
 
             Log::warning('Payment canceled via webhook', [
                 'order_id' => $order->id,

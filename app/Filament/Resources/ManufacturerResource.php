@@ -13,14 +13,11 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Str;
 
 class ManufacturerResource extends Resource
 {
@@ -60,29 +57,16 @@ class ManufacturerResource extends Resource
                                     ->description('How this manufacturer appears in the catalog and storefront.')
                                     ->icon('heroicon-o-building-office-2')
                                     ->schema([
-                                        Tabs::make('Names')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("name.{$code}")
-                                                                ->label('Manufacturer Name')
-                                                                ->placeholder('e.g. Bosch, Continental, ZF')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(200)
-                                                                ->live(onBlur: true)
-                                                                ->afterStateUpdated(function ($state, callable $set, callable $get) use ($code): void {
-                                                                    if ($code === 'en' && filled($state) && blank($get('slug'))) {
-                                                                        $set('slug', Str::slug($state));
-                                                                    }
-                                                                })
-                                                                ->helperText($code === 'en' ? 'English name is required and used as the default fallback.' : null),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Names', [
+                                            'name' => [
+                                                'label' => 'Manufacturer Name',
+                                                'placeholder' => 'e.g. Bosch, Continental, ZF',
+                                                'required' => true,
+                                                'maxLength' => 200,
+                                                'helperText' => 'English name is required and used as the default fallback.',
+                                                'slugSync' => true,
+                                            ],
+                                        ], slugSyncTarget: 'slug'),
                                         Forms\Components\TextInput::make('slug')
                                             ->label('URL Slug')
                                             ->placeholder('e.g. bosch, continental')
@@ -311,11 +295,20 @@ class ManufacturerResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'success';
+        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name.en', 'slug'];
+        // 'name.en' removed — see ProductResource::getGloballySearchableAttributes()
+        // and CLAUDE.md FILAMENT rule #26. Filament's dot notation means
+        // relationship.column, never JSON-column.key; 'name.en' made every
+        // search throw (Manufacturer has no name() relationship).
+        return ['slug'];
+    }
+
+    public static function modifyGlobalSearchQuery(Builder $query, string $search): void
+    {
+        $query->orWhere('name->en', 'like', "%{$search}%");
     }
 }

@@ -13,13 +13,10 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Support\Str;
 
 class CategoryResource extends Resource
 {
@@ -53,29 +50,15 @@ class CategoryResource extends Resource
                                     ->description('Multilingual names displayed on the blog and category pages.')
                                     ->icon('heroicon-o-language')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("name.{$code}")
-                                                                ->label('Category Name')
-                                                                ->placeholder('e.g. Brake Parts, Engine, Suspension')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(255)
-                                                                ->live(onBlur: true)
-                                                                ->afterStateUpdated(function ($state, callable $set, callable $get) use ($code): void {
-                                                                    if ($code === 'en' && filled($state) && blank($get('slug'))) {
-                                                                        $set('slug', Str::slug($state));
-                                                                    }
-                                                                })
-                                                                ->helperText($code === 'en' ? 'English name is required and used as the default fallback.' : null),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'name' => [
+                                                'label' => 'Category Name',
+                                                'placeholder' => 'e.g. Brake Parts, Engine, Suspension',
+                                                'required' => true,
+                                                'helperText' => 'English name is required and used as the default fallback.',
+                                                'slugSync' => true,
+                                            ],
+                                        ], slugSyncTarget: 'slug'),
                                     ]),
                             ]),
 
@@ -188,7 +171,7 @@ class CategoryResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'info';
+        return 'gray';
     }
 
     public static function getRelations(): array

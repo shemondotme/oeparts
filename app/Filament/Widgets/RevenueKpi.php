@@ -47,10 +47,18 @@ class RevenueKpi extends Widget
                 ->whereBetween('created_at', [$prevStart, $start])
                 ->sum('grand_total');
 
+            // 7-day daily totals for the sparkline (oldest → newest)
+            $sparkline = collect(range(6, 0))->map(
+                fn ($i) => (string) Order::whereIn('status', $paidStatuses)
+                    ->whereDate('created_at', now()->subDays($i))
+                    ->sum('grand_total')
+            )->values()->toArray();
+
             return [
-                'current' => (string) $current,
-                'previous' => (string) $previous,
-                'hasData' => bccomp((string) $current, '0', 2) === 1 || bccomp((string) $previous, '0', 2) === 1,
+                'current'   => (string) $current,
+                'previous'  => (string) $previous,
+                'hasData'   => bccomp((string) $current, '0', 2) === 1 || bccomp((string) $previous, '0', 2) === 1,
+                'sparkline' => $sparkline,
             ];
         });
 

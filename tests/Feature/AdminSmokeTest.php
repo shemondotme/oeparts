@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\ProductResource\Pages\ListProducts;
 use App\Models\Admin;
 use App\Models\Condition;
 use App\Models\Product;
 use App\Models\Section;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -204,12 +206,49 @@ class AdminSmokeTest extends TestCase
             '/admin/settings/security-settings',
             '/admin/settings/integrations-settings',
             '/admin/settings/maintenance-settings',
+            '/admin/settings/ui-settings',
+            '/admin/settings/preloader-settings',
         ];
 
         foreach ($pages as $url) {
             $response = $this->get($url);
             $response->assertStatus(200);
         }
+    }
+
+    #[Test]
+    public function settings_pages_reject_non_admin_roles(): void
+    {
+        // Regression test for the Settings Framework chunk's security fix:
+        // SettingsPage::canAccess() previously didn't exist, so any
+        // authenticated admin of any role could load/save settings pages
+        // directly by URL despite the Settings cluster itself being gated to
+        // super_admin/admin. Confirm every non-admin role is now rejected.
+        $pages = [
+            '/admin/settings/general-settings',
+            '/admin/settings/payment-settings',
+            '/admin/settings/security-settings',
+        ];
+
+        foreach (['manager', 'catalog_admin', 'support'] as $role) {
+            $roleAdmin = Admin::create([
+                'name' => ucfirst($role) . ' Test',
+                'email' => $role . '@oeparts.test',
+                'password' => bcrypt('password'),
+            ]);
+            $roleAdmin->assignRole($role);
+
+            auth('admin')->login($roleAdmin);
+
+            foreach ($pages as $url) {
+                $response = $this->get($url);
+                $response->assertStatus(403, "Role '{$role}' should be denied {$url}");
+            }
+
+            auth('admin')->logout();
+        }
+
+        $this->actingAs($this->admin, 'admin');
     }
 
     // ── Report Pages ────────────────────────────────────────────────────────────
@@ -291,6 +330,85 @@ class AdminSmokeTest extends TestCase
             $response = $this->get($url);
             $response->assertStatus(200);
         }
+    }
+
+    // ── Inline Editable Columns ─────────────────────────────────────────────────
+
+    #[Test]
+    public function product_price_inline_edit_persists_for_authorized_role(): void
+    {
+        $manufacturer = \App\Models\Manufacturer::create([
+            'name' => json_encode(['en' => 'Test Mfr']),
+            'slug' => 'test-mfr-' . uniqid(),
+            'country_code' => 'DE',
+        ]);
+        $condition = Condition::first() ?? Condition::create([
+            'name' => 'New',
+            'slug' => 'new',
+            'bg_color' => '#DCFCE7',
+            'text_color' => '#16A34A',
+        ]);
+        $product = Product::factory()->create([
+            'name'            => json_encode(['en' => 'Test Product']),
+            'normalized_oem'  => app(\App\Services\OemNormalizerService::class)->normalize('99999'),
+            'condition_id'    => $condition->id,
+            'is_in_stock'     => true,
+            'is_active'       => true,
+            'price'           => '10.00',
+            'oem_number'      => '99999',
+            'manufacturer_id' => $manufacturer->id,
+        ]);
+
+        Livewire::test(ListProducts::class)
+            ->call('updateTableColumnState', 'price', (string) $product->getKey(), '199.99');
+
+        $this->assertSame('199.99', $product->refresh()->price);
+    }
+
+    #[Test]
+    public function product_price_inline_edit_rejected_for_unauthorized_role(): void
+    {
+        // Regression test for the inline-price-edit chunk: TextInputColumn
+        // saves directly without checking Model Policies — `disabled()` is
+        // the only gate Filament checks server-side, so confirm a role
+        // without `edit products` cannot persist a change through it.
+        $manufacturer = \App\Models\Manufacturer::create([
+            'name' => json_encode(['en' => 'Test Mfr']),
+            'slug' => 'test-mfr-' . uniqid(),
+            'country_code' => 'DE',
+        ]);
+        $condition = Condition::first() ?? Condition::create([
+            'name' => 'New',
+            'slug' => 'new',
+            'bg_color' => '#DCFCE7',
+            'text_color' => '#16A34A',
+        ]);
+        $product = Product::factory()->create([
+            'name'            => json_encode(['en' => 'Test Product']),
+            'normalized_oem'  => app(\App\Services\OemNormalizerService::class)->normalize('88888'),
+            'condition_id'    => $condition->id,
+            'is_in_stock'     => true,
+            'is_active'       => true,
+            'price'           => '10.00',
+            'oem_number'      => '88888',
+            'manufacturer_id' => $manufacturer->id,
+        ]);
+
+        $supportAdmin = Admin::create([
+            'name' => 'Support Test',
+            'email' => 'support-inline@oeparts.test',
+            'password' => bcrypt('password'),
+        ]);
+        $supportAdmin->assignRole('support');
+
+        $this->actingAs($supportAdmin, 'admin');
+
+        Livewire::test(ListProducts::class)
+            ->call('updateTableColumnState', 'price', (string) $product->getKey(), '199.99');
+
+        $this->assertSame('10.00', $product->refresh()->price);
+
+        $this->actingAs($this->admin, 'admin');
     }
 
     // ── Widget Sort Uniqueness ──────────────────────────────────────────────────

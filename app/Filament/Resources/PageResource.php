@@ -86,31 +86,17 @@ class PageResource extends Resource
                                     ->icon('heroicon-o-language')
                                     ->description('Translate the page title, content, and SEO meta fields in supported languages.')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("title.$code")
-                                                                ->label('Title')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(255)
-                                                                ->live(onBlur: true)
-                                                                ->afterStateUpdated(function ($state, callable $set, ?string $operation) use ($code) {
-                                                                    if ($code === 'en' && $operation === 'create' && is_string($state) && filled($state)) {
-                                                                        $set('slug', \Illuminate\Support\Str::slug($state));
-                                                                    }
-                                                                }),
-                                                            Forms\Components\RichEditor::make("content.$code")
-                                                                ->label('Content Body')
-                                                                ->nullable()
-                                                                ->columnSpanFull(),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'title' => [
+                                                'label' => 'Title',
+                                                'required' => true,
+                                                'slugSync' => true,
+                                            ],
+                                            'content' => [
+                                                'label' => 'Content Body',
+                                                'type' => 'richeditor',
+                                            ],
+                                        ], slugSyncTarget: 'slug', slugSyncMode: 'create-only'),
                                     ]),
 
                                 Section::make('SEO & Meta')
@@ -289,7 +275,7 @@ class PageResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'success';
+        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

@@ -8,8 +8,6 @@ use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,21 +23,12 @@ class MenuItemRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                Tabs::make('Locales')
-                    ->schema(
-                        collect(AdminUi::LOCALES)
-                            ->map(fn (string $label, string $code) => Tab::make($label)
-                                ->badge($code === 'en' ? 'Primary' : null)
-                                ->schema([
-                                    Forms\Components\TextInput::make("label.$code")
-                                        ->label('Label')
-                                        ->required($code === 'en')
-                                        ->maxLength(255),
-                                ]))
-                            ->values()
-                            ->all()
-                    )
-                    ->columnSpanFull(),
+                AdminUi::translatableTabs('Locales', [
+                    'label' => [
+                        'label' => 'Label',
+                        'required' => true,
+                    ],
+                ]),
                 Forms\Components\Select::make('type')
                     ->options([
                         'url'  => 'Custom URL',
@@ -97,6 +86,11 @@ class MenuItemRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
+        // Intentionally does not call AdminUi::configureTable() — this is a
+        // small, non-paginated, drag-reorderable list (->paginated(false)
+        // + ->reorderable('sort_order') below), a deliberately different UI
+        // pattern from the persisted-filter/sort/search paginated tables
+        // every other resource/relation manager uses.
         return $table
             ->recordTitleAttribute('label')
             ->columns([

@@ -20,7 +20,7 @@ class System extends Cluster
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
-        return 'heroicon-o-wrench-screwdriver';
+        return 'heroicon-o-server-stack';
     }
 
     public static function getNavigationGroup(): ?string

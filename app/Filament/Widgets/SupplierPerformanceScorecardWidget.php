@@ -197,12 +197,27 @@ class SupplierPerformanceScorecardWidget extends TableWidget
 
                 Tables\Columns\ViewColumn::make('on_time_rate')
                     ->label('On-Time')
-                    ->view('filament.widgets.partials.on-time-bar')
+                    ->view('filament.widgets.partials.rate-bar')
+                    ->viewData([
+                        'colorFor' => fn (float $rate): string => $rate >= 90
+                            ? 'var(--accent-success)'
+                            : ($rate >= 70 ? 'var(--accent-warning)' : 'var(--accent-danger)'),
+                        'decimals' => 0,
+                        'widthScale' => 1,
+                    ])
                     ->alignCenter(),
 
                 Tables\Columns\ViewColumn::make('return_rate')
                     ->label('Returns')
-                    ->view('filament.widgets.partials.return-rate-bar')
+                    ->view('filament.widgets.partials.rate-bar')
+                    ->viewData([
+                        // Lower return rate is better — red above 10%, amber 5-10%, green < 5%
+                        'colorFor' => fn (float $rate): string => $rate >= 10
+                            ? 'var(--accent-danger)'
+                            : ($rate >= 5 ? 'var(--accent-warning)' : 'var(--accent-success)'),
+                        'decimals' => 1,
+                        'widthScale' => 5,
+                    ])
                     ->alignCenter(),
             ])
             ->emptyState(

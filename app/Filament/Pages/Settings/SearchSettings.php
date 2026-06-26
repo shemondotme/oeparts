@@ -12,7 +12,7 @@ class SearchSettings extends SettingsPage
 
     protected static string $settingsGroup = 'search';
 
-    protected static ?int $navigationSort = 16;
+    protected static ?int $navigationSort = 21;
 
     public function form(Schema $schema): Schema
     {

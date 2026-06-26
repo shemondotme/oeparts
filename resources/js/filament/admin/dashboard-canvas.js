@@ -47,12 +47,12 @@ function canvasEl() {
 
 /** Widget type constraints for bento grid validation. */
 const WIDGET_CONSTRAINTS = {
-    kpi: { minW: 4, maxW: 4, minH: 2 },
-    chart: { minW: 8, maxW: 12, minH: 4 },
-    table: { minW: 4, maxW: 12, minH: 3 },
-    strip: { minW: 12, maxW: 12, minH: 1, maxH: 1 },
+    kpi:    { minW: 2, maxW: 6,  minH: 2 },
+    chart:  { minW: 4, maxW: 12, minH: 4 },
+    table:  { minW: 2, maxW: 12, minH: 2 },
+    strip:  { minW: 12, maxW: 12, minH: 1 },
     header: { minW: 12, maxW: 12, minH: 2, maxH: 2 },
-    widget: { minW: 4, maxW: 12, minH: 2 },
+    widget: { minW: 2, maxW: 12, minH: 2 },
 };
 
 function getWidgetType(el) {
@@ -197,8 +197,8 @@ function initCanvas() {
     grid = GridStack.init(
         {
             column: 12,
-            cellHeight: 112,
-            margin: 10,
+            cellHeight: 84,
+            margin: '20px 12px',
             float: false,
             staticGrid: !editing,
             animate: true,
@@ -237,6 +237,16 @@ function initCanvas() {
             item.classList.add('op-fade-in');
         });
     }, 50);
+
+    // Staggered entry for Tab 1 KPI cards (fade-in-up, 50ms apart)
+    const ccKpiIds = ['revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi', 'parts_inquiry'];
+    ccKpiIds.forEach((id, i) => {
+        const inner = el.querySelector(`[gs-id="${id}"] .fi-wi`);
+        if (inner) {
+            inner.style.opacity = '0';
+            inner.style.animation = `fade-in-up 0.3s ease-out ${100 + i * 60}ms forwards`;
+        }
+    });
 
     // Count-up the KPI numbers once the widgets have rendered.
     setTimeout(runCountUps, 200);

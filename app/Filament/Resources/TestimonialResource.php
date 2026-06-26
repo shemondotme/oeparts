@@ -13,8 +13,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -89,23 +87,16 @@ class TestimonialResource extends Resource
                                     ->icon('heroicon-o-chat-bubble-bottom-center-text')
                                     ->description('The customer quote translated in each supported language.')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\Textarea::make("quote.$code")
-                                                                ->label('Testimonial Quote')
-                                                                ->placeholder('e.g. Excellent service and fast delivery. The parts fit perfectly!')
-                                                                ->required($code === 'en')
-                                                                ->rows(4)
-                                                                ->helperText($code === 'en' ? 'English quote is required and used as the default fallback.' : null),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'quote' => [
+                                                'label' => 'Testimonial Quote',
+                                                'type' => 'textarea',
+                                                'required' => true,
+                                                'rows' => 4,
+                                                'placeholder' => 'e.g. Excellent service and fast delivery. The parts fit perfectly!',
+                                                'helperText' => 'English quote is required and used as the default fallback.',
+                                            ],
+                                        ]),
                                     ]),
                             ]),
 
@@ -217,6 +208,7 @@ class TestimonialResource extends Resource
                     ->label(fn (Testimonial $record): string => $record->is_active ? 'Deactivate' : 'Activate')
                     ->icon(fn (Testimonial $record): string => $record->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                     ->color(fn (Testimonial $record): string => $record->is_active ? 'warning' : 'success')
+                    ->authorize('update')
                     ->action(function (Testimonial $record) {
                         $record->update(['is_active' => !$record->is_active]);
 
@@ -297,6 +289,6 @@ class TestimonialResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'success';
+        return 'gray';
     }
 }

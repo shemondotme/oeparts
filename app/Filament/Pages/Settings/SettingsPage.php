@@ -25,6 +25,15 @@ abstract class SettingsPage extends Page
 
     protected static ?string $cluster = SettingsCluster::class;
 
+    /**
+     * Note: $navigationSort on subclasses is NOT consulted for display order.
+     * shouldRegisterNavigation=false hides every settings page from Filament's
+     * nav tree entirely; the actual (and only) display order is the hardcoded
+     * $sections array in resources/views/filament/clusters/settings.blade.php.
+     * Keep each subclass's $navigationSort unique anyway for documentation
+     * accuracy, but a new settings page must be added to that Blade array to
+     * be reachable at all — see ARCHITECTURE.md's Settings Architecture section.
+     */
     protected static string $settingsGroup;
 
     protected static bool $shouldRegisterNavigation = false;
@@ -39,6 +48,18 @@ abstract class SettingsPage extends Page
     {
         $this->fillForm();
         $this->mountHasUnsavedDataChangesAlert();
+    }
+
+    /**
+     * Mirrors SettingsCluster::canAccess() — the cluster's own gate does not
+     * cascade to child pages (Filament only consults it to decide whether the
+     * cluster itself appears in navigation), so every subclass must inherit
+     * this override rather than rely on Filament's CanAuthorizeAccess default
+     * (which allows any authenticated panel user).
+     */
+    public static function canAccess(): bool
+    {
+        return auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
     }
 
     public function defaultForm(Schema $schema): Schema

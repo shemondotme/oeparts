@@ -44,7 +44,7 @@ class ConditionResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'info';
+        return 'gray';
     }
 
     public static function getRecordTitleAttribute(): ?string

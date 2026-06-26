@@ -10,8 +10,8 @@ use App\Enums\PaymentTransactionStatus;
 use App\Filament\Support\AdminUi;
 use App\Filament\Resources\OrderResource;
 use App\Models\OrderNote;
-use App\Models\OrderStatusHistory;
 use App\Jobs\GenerateInvoicePdf;
+use App\Services\PaymentService;
 use App\Services\SequenceService;
 use Filament\Actions;
 use Filament\Forms;
@@ -114,34 +114,41 @@ class ViewOrder extends ViewRecord
                 ])
                 ->action(function (array $data): void {
                     $record = $this->getRecord();
-                    $record->update(['payment_status' => PaymentStatus::Paid]);
 
-                    if ($record->status === OrderStatus::Pending) {
-                        $record->update(['status' => OrderStatus::Paid]);
-                    }
-
-                    \App\Models\Payment::updateOrCreate(
+                    $payment = \App\Models\Payment::firstOrCreate(
                         ['order_id' => $record->id],
                         [
-                            'gateway' => PaymentGateway::BankTransfer,
+                            'gateway'        => PaymentGateway::BankTransfer,
                             'transaction_id' => $data['transaction_id'] ?? null,
-                            'status' => PaymentTransactionStatus::Captured,
-                            'amount' => $record->grand_total,
+                            'status'         => PaymentTransactionStatus::Pending,
+                            'amount'         => $record->grand_total,
                         ]
                     );
 
-                    $payment = $record->payment;
-                    if ($payment) {
-                        \App\Events\PaymentReceived::dispatch($record, $payment);
+                    if (! empty($data['transaction_id']) && ! $payment->transaction_id) {
+                        $payment->update(['transaction_id' => $data['transaction_id']]);
                     }
 
-                    Notification::make()
-                        ->title('Payment confirmed')
-                        ->body("Order {$record->order_number} marked as paid.")
-                        ->success()
-                        ->send();
+                    try {
+                        app(PaymentService::class)->confirmBankTransferPayment(
+                            $payment,
+                            $data['transaction_id'] ?? '',
+                        );
 
-                    $this->dispatch('$refresh');
+                        Notification::make()
+                            ->title('Payment confirmed')
+                            ->body("Order {$record->order_number} marked as paid.")
+                            ->success()
+                            ->send();
+
+                        $this->dispatch('$refresh');
+                    } catch (\RuntimeException $e) {
+                        Notification::make()
+                            ->title('Confirmation failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
                 })
                 ->visible(fn (): bool =>
                     $this->getRecord()->payment_method === PaymentMethod::BankTransfer

@@ -11,6 +11,7 @@ use App\Models\BlogPost;
 use App\Models\CarModel;
 use App\Models\Carrier;
 use App\Models\Category;
+use App\Models\Condition;
 use App\Models\ContactMessage;
 use App\Models\Coupon;
 use App\Models\CronLog;
@@ -47,6 +48,7 @@ use App\Policies\BlogPostPolicy;
 use App\Policies\CarModelPolicy;
 use App\Policies\CarrierPolicy;
 use App\Policies\CategoryPolicy;
+use App\Policies\ConditionPolicy;
 use App\Policies\ContactMessagePolicy;
 use App\Policies\CouponPolicy;
 use App\Policies\CronLogPolicy;
@@ -90,6 +92,7 @@ class AuthServiceProvider extends ServiceProvider
         CarModel::class => CarModelPolicy::class,
         Carrier::class => CarrierPolicy::class,
         Category::class => CategoryPolicy::class,
+        Condition::class => ConditionPolicy::class,
         ContactMessage::class => ContactMessagePolicy::class,
         Coupon::class => CouponPolicy::class,
         CronLog::class => CronLogPolicy::class,

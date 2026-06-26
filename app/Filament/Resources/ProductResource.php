@@ -17,10 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
-use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -108,28 +105,21 @@ class ProductResource extends Resource
                                     ->description('Names and descriptions shown to customers in each language.')
                                     ->icon('heroicon-o-language')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("name.{$code}")
-                                                                ->label('Product Name')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(255)
-                                                                ->placeholder($code === 'en' ? 'e.g. Turbocharger Assembly' : null)
-                                                                ->helperText($code === 'en' ? 'Primary product name displayed on the storefront.' : 'Leave blank to fall back to the English name.'),
-                                                            Forms\Components\Textarea::make("description.{$code}")
-                                                                ->label('Description')
-                                                                ->rows(5)
-                                                                ->placeholder('Detailed product description including specifications, features, and compatibility...')
-                                                                ->helperText('Product description visible to customers. Include key specifications and fitment details.'),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'name' => [
+                                                'label' => 'Product Name',
+                                                'required' => true,
+                                                'placeholder' => 'e.g. Turbocharger Assembly',
+                                                'helperText' => 'Primary product name displayed on the storefront.',
+                                            ],
+                                            'description' => [
+                                                'label' => 'Description',
+                                                'type' => 'textarea',
+                                                'rows' => 5,
+                                                'placeholder' => 'Detailed product description including specifications, features, and compatibility...',
+                                                'helperText' => 'Product description visible to customers. Include key specifications and fitment details.',
+                                            ],
+                                        ]),
                                     ]),
 
                                 Section::make('Compatibility & Cross-References')
@@ -302,12 +292,21 @@ class ProductResource extends Resource
                         'style' => "background-color: {$record->condition->bg_color} !important; color: {$record->condition->text_color} !important;",
                     ] : [])
                     ->sortable(),
-                Tables\Columns\TextColumn::make('price')
+                Tables\Columns\TextInputColumn::make('price')
                     ->label('Price')
-                    ->getStateUsing(fn (Product $record): string => format_money($record->price))
+                    ->type('number')
+                    ->step(0.01)
+                    ->prefix('€')
+                    ->rules(['required', 'numeric', 'min:0', 'decimal:0,2'])
+                    ->disabled(fn (Product $record): bool => ! auth('admin')->user()?->can('update', $record))
+                    ->afterStateUpdated(function (Product $record): void {
+                        Notification::make()
+                            ->title('Price updated')
+                            ->success()
+                            ->send();
+                    })
                     ->alignEnd()
-                    ->fontMono()
-                    ->weight(FontWeight::Medium)
+                    ->extraInputAttributes(['class' => 'font-mono'])
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('delivery_time')
@@ -413,6 +412,7 @@ class ProductResource extends Resource
                     ->label(fn (Product $record): string => $record->is_in_stock ? 'Mark Out of Stock' : 'Mark In Stock')
                     ->icon(fn (Product $record): string => $record->is_in_stock ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
                     ->color(fn (Product $record): string => $record->is_in_stock ? 'danger' : 'success')
+                    ->authorize('update')
                     ->requiresConfirmation()
                     ->action(function (Product $record): void {
                         $record->is_in_stock = !$record->is_in_stock;
@@ -567,37 +567,12 @@ class ProductResource extends Resource
                 ]),
             ])
             ->headerActions([
-                Actions\Action::make('importCsv')
-                    ->label('Import CSV')
-                    ->icon('heroicon-o-arrow-up-tray')
-                    ->color('gray')
-                    ->modalHeading('Import Products via CSV')
-                    ->modalDescription('Upload a CSV file to bulk import or update products. A background job will process the file asynchronously.')
-                    ->schema([
-                        Forms\Components\FileUpload::make('csv_file')
-                            ->label('CSV File')
-                            ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel'])
-                            ->required()
-                            ->helperText('Upload a CSV with columns: oem_number, manufacturer, price, condition, etc.'),
-                        Forms\Components\Toggle::make('update_existing')
-                            ->label('Update Existing Products')
-                            ->helperText('When enabled, products with matching OEM numbers will be updated instead of skipped.'),
-                    ])
-                    ->action(function (array $data): void {
-                        $csvPath = $data['csv_file'];
-
-                        dispatch(new ProcessCsvImport(
-                            $csvPath,
-                            auth('admin')->id(),
-                            $data['update_existing'] ?? false,
-                        ));
-
-                        Notification::make()
-                            ->title('CSV import started')
-                            ->body('Processing in background')
-                            ->success()
-                            ->send();
-                    }),
+                AdminUi::importCsvHeaderAction(
+                    ProcessCsvImport::class,
+                    'Import Products via CSV',
+                    'Upload a CSV file to bulk import or update products. A background job will process the file asynchronously.',
+                    'Upload a CSV with columns: oem_number, manufacturer, price, condition, etc.',
+                )->authorize(fn (): bool => auth('admin')->user()?->can('import products') ?? false),
             ])
             ->defaultSort('created_at', 'desc')
             ->striped()
@@ -660,6 +635,29 @@ class ProductResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['oem_number', 'name.en', 'manufacturer.name'];
+        // NOTE: 'name.en' was previously listed here, but Filament's dot
+        // notation always means "relationship.column" (e.g. manufacturer.name
+        // below), never "JSON-column.key". Product has no name() relationship,
+        // so that entry made every global search throw a BadMethodCallException
+        // ("Call to undefined method Product::name()"). Product name is matched
+        // via the JSON-aware orWhere in modifyGlobalSearchQuery() below instead.
+        return ['oem_number', 'manufacturer.name'];
+    }
+
+    /**
+     * Also match on the JSON `name->en` column and on normalized_oem, so
+     * admins can find a part by its English name or by an OEM number typed
+     * with dashes/spaces/dots (e.g. "06L-906-036-L") — the same way the
+     * storefront search always matches on normalized_oem.
+     */
+    public static function modifyGlobalSearchQuery(Builder $query, string $search): void
+    {
+        $query->orWhere('name->en', 'like', "%{$search}%");
+
+        $normalized = app(OemNormalizerService::class)->normalize($search);
+
+        if ($normalized !== '') {
+            $query->orWhere('normalized_oem', 'like', "%{$normalized}%");
+        }
     }
 }

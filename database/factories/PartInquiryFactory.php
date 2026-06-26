@@ -25,7 +25,7 @@ class PartInquiryFactory extends Factory
             'year'                 => fake()->numberBetween(2005, 2025),
             'vin_number'           => null,
             'quantity'             => fake()->numberBetween(1, 10),
-            'urgency'              => fake()->randomElement(['low', 'medium', 'high']),
+            'urgency'              => fake()->randomElement(['normal', 'soon', 'urgent']),
             'notes'                => fake()->optional()->sentence(),
             'status'               => PartInquiryStatus::New,
             'admin_note'           => null,

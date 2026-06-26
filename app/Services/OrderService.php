@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Jobs\SendOrderStatusEmail;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
@@ -159,11 +160,13 @@ class OrderService
      * @param OrderStatus $newStatus
      * @param string|null $note
      * @param int|null $adminId
+     * @param bool $notifyCustomer  Set false when the caller already sends its own,
+     *                              more specific email for this exact transition.
      * @return bool  True if transition was applied
      *
      * @throws \InvalidArgumentException if the transition is not allowed
      */
-    public function transitionStatus(Order $order, OrderStatus $newStatus, ?string $note = null, ?int $adminId = null): bool
+    public function transitionStatus(Order $order, OrderStatus $newStatus, ?string $note = null, ?int $adminId = null, bool $notifyCustomer = true): bool
     {
         $oldStatus = $order->status;
 
@@ -173,12 +176,16 @@ class OrderService
             );
         }
 
-        return DB::transaction(function () use ($order, $oldStatus, $newStatus, $note, $adminId) {
+        return DB::transaction(function () use ($order, $oldStatus, $newStatus, $note, $adminId, $notifyCustomer) {
             $order->update(['status' => $newStatus]);
 
             $this->logStatusChange($order, $oldStatus, $newStatus, $note, $adminId);
 
             \App\Events\OrderStatusChanged::dispatch($order, $oldStatus, $newStatus);
+
+            if ($notifyCustomer) {
+                SendOrderStatusEmail::dispatch($order, $oldStatus, $newStatus);
+            }
 
             // Auto-generate invoice number when order becomes paid
             if ($newStatus === OrderStatus::Paid && !$order->invoice_number) {
@@ -251,25 +258,25 @@ class OrderService
     public function isTransitionAllowed(OrderStatus $oldStatus, OrderStatus $newStatus): bool
     {
         $allowed = [
-            OrderStatus::Pending  => [
+            OrderStatus::Pending->value  => [
                 OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped,
                 OrderStatus::Delivered, OrderStatus::Cancelled,
             ],
-            OrderStatus::Paid     => [
+            OrderStatus::Paid->value     => [
                 OrderStatus::Processing, OrderStatus::Shipped,
                 OrderStatus::Delivered, OrderStatus::Cancelled,
             ],
-            OrderStatus::Processing => [
+            OrderStatus::Processing->value => [
                 OrderStatus::Shipped, OrderStatus::Delivered, OrderStatus::Cancelled,
             ],
-            OrderStatus::Shipped  => [OrderStatus::Delivered],
-            OrderStatus::Delivered => [OrderStatus::RefundRequested],
-            OrderStatus::RefundRequested => [OrderStatus::Refunded],
-            OrderStatus::Refunded => [],
-            OrderStatus::Cancelled => [],
+            OrderStatus::Shipped->value  => [OrderStatus::Delivered],
+            OrderStatus::Delivered->value => [OrderStatus::RefundRequested],
+            OrderStatus::RefundRequested->value => [OrderStatus::Refunded],
+            OrderStatus::Refunded->value => [],
+            OrderStatus::Cancelled->value => [],
         ];
 
-        return in_array($newStatus, $allowed[$oldStatus] ?? [], true);
+        return in_array($newStatus, $allowed[$oldStatus->value] ?? [], true);
     }
 
     /**

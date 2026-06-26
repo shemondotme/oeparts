@@ -54,7 +54,7 @@ class DrilldownCorrectnessTest extends TestCase
 
         $url = OrderResource::getUrl('view', ['record' => $order]);
 
-        $this->assertStringContainsString('/admin/filament/orders/' . $order->getKey(), $url);
+        $this->assertStringContainsString('/admin/orders/' . $order->getKey(), $url);
     }
 
     // ── TopSearchedOems Widget ─────────────────────────────────────────────
@@ -77,7 +77,7 @@ class DrilldownCorrectnessTest extends TestCase
     {
         $url = OrderResource::getUrl('index', ['tableFilters' => ['status' => ['value' => 'pending']]]);
 
-        $this->assertStringContainsString('/admin/filament/orders', $url);
+        $this->assertStringContainsString('/admin/orders', $url);
         $this->assertStringContainsString('tableFilters', $url);
         $this->assertStringContainsString('status', $url);
         $this->assertStringContainsString('pending', $url);
@@ -172,7 +172,7 @@ class DrilldownCorrectnessTest extends TestCase
     {
         $url = OrderResource::getUrl('create');
 
-        $this->assertStringContainsString('/admin/filament/orders/create', $url);
+        $this->assertStringContainsString('/admin/orders/create', $url);
     }
 
     #[Test]

@@ -5,6 +5,8 @@ namespace App\Filament\Widgets;
 use App\Enums\OrderStatus;
 use App\Filament\Concerns\HasWidgetExport;
 use App\Models\Order;
+use App\Services\OrderService;
+use Filament\Notifications\Notification;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -91,16 +93,43 @@ class AwaitingConfirmationList extends TableWidget
                     ->label('Approve')
                     ->icon('heroicon-o-check')
                     ->color('success')
-                    ->action(fn (Order $record) => $record->update(['status' => OrderStatus::Shipped]))
-                    ->requiresConfirmation(),
+                    ->requiresConfirmation()
+                    ->action(function (Order $record): void {
+                        app(OrderService::class)->transitionStatus(
+                            $record,
+                            OrderStatus::Shipped,
+                            'Approved via Awaiting Confirmation widget.',
+                            auth('admin')->id(),
+                        );
+
+                        Notification::make()
+                            ->title('Order approved')
+                            ->success()
+                            ->send();
+                    }),
                 Tables\Actions\Action::make('reject')
                     ->label('Reject')
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
-                    ->action(fn (Order $record) => $record->update(['status' => OrderStatus::Cancelled]))
-                    ->requiresConfirmation(),
+                    ->requiresConfirmation()
+                    ->action(function (Order $record): void {
+                        app(OrderService::class)->transitionStatus(
+                            $record,
+                            OrderStatus::Cancelled,
+                            'Rejected via Awaiting Confirmation widget.',
+                            auth('admin')->id(),
+                        );
+
+                        Notification::make()
+                            ->title('Order cancelled')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->paginated(false)
-            ->searchable(false);
+            ->searchable(false)
+            ->emptyStateIcon('heroicon-o-check-circle')
+            ->emptyStateHeading('All clear')
+            ->emptyStateDescription('No orders awaiting confirmation in the last 7 days.');
     }
 }

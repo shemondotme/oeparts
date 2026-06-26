@@ -13,8 +13,6 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -78,29 +76,20 @@ class ShippingMethodResource extends Resource
                                     ->icon('heroicon-o-language')
                                     ->description('Method names and descriptions displayed per language on the storefront.')
                                     ->schema([
-                                        Tabs::make('Locales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->badge($code === 'en' ? 'Primary' : null)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("name.$code")
-                                                                ->label('Method Name')
-                                                                ->placeholder('e.g. Standard Delivery, Express Shipping')
-                                                                ->required($code === 'en')
-                                                                ->maxLength(255)
-                                                                ->helperText($code === 'en' ? 'English name is required and used as the default fallback.' : null),
-                                                            Forms\Components\Textarea::make("description.$code")
-                                                                ->label('Description')
-                                                                ->placeholder('e.g. Delivered within 3-5 business days via DHL.')
-                                                                ->rows(4)
-                                                                ->nullable()
-                                                                ->helperText('Optional customer-facing description shown during checkout.'),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        AdminUi::translatableTabs('Locales', [
+                                            'name' => [
+                                                'label' => 'Method Name',
+                                                'required' => true,
+                                                'placeholder' => 'e.g. Standard Delivery, Express Shipping',
+                                                'helperText' => 'English name is required and used as the default fallback.',
+                                            ],
+                                            'description' => [
+                                                'label' => 'Description',
+                                                'type' => 'textarea',
+                                                'rows' => 4,
+                                                'placeholder' => 'e.g. Delivered within 3-5 business days via DHL.',
+                                            ],
+                                        ]),
                                     ]),
                                 Section::make('Delivery & Pricing')
                                     ->icon('heroicon-o-truck')
@@ -303,7 +292,7 @@ class ShippingMethodResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'success';
+        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

@@ -163,6 +163,7 @@ class AbandonedCartResource extends Resource
                     ->label('Send Recovery')
                     ->icon('heroicon-o-paper-airplane')
                     ->color('info')
+                    ->authorize('update')
                     ->requiresConfirmation()
                     ->modalHeading('Send Recovery Email')
                     ->modalDescription('Send a cart recovery email to the customer. This will remind them of the items left in their cart.')

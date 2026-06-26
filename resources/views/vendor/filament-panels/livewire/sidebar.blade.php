@@ -19,6 +19,16 @@
 
         // Sidebar footer user data
         $footerUser    = filament()->auth()->user();
+
+        // Role-default fallback: when the current page belongs to no nav
+        // group (e.g. the Dashboard), open to the signed-in admin's most
+        // relevant group instead of leaving the panel closed. Computed
+        // server-side -- alongside $serverActiveGroup, which Alpine's init()
+        // below always snaps to -- so the first paint is already correct
+        // and there's no client-only flash-of-wrong-group.
+        if ($serverActiveGroup === '' && $footerUser) {
+            $serverActiveGroup = \App\Filament\Support\AdminUi::defaultNavGroupFor($footerUser);
+        }
         $footerRoles   = $footerUser?->roles ?? collect();
         $footerRole    = $footerRoles->first();
         $footerLabel   = $footerRole?->name ?? 'Admin';

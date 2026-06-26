@@ -20,6 +20,82 @@ class DashboardLayoutService
 
     public const MAX_CELL_SIZE = 12;
 
+    /**
+     * Pixel-perfect blueprint layouts per tab slug. When a slug matches,
+     * this exact x/y/w/h grid is used INSTEAD OF WidgetPreferenceService::
+     * WIDGET_TABS + auto packLayout() — see ensureDefaultDashboard() below.
+     * Widgets not accessible to the current admin role are filtered out.
+     *
+     * IMPORTANT: a widget id listed here for a slug must also be listed
+     * under the matching tab name in WidgetPreferenceService::WIDGET_TABS,
+     * and nowhere else — the blueprint silently wins over WIDGET_TABS for
+     * any slug present here, so a mismatch makes a widget render in two
+     * tabs (or never reseed correctly) for newly-seeded admins. See
+     * CLAUDE.md's dashboard dual-source-of-truth rule.
+     */
+    public const TAB_BLUEPRINT_LAYOUTS = [
+        // TAB 1: COMMAND CENTER — Executive View (10 widgets)
+        // Row 0 — Welcome Header  (w:12, h:2)
+        // Row 1 — Health Strip    (w:12, h:1)
+        // Row 2 — 4 KPI cards     (w:3 each, h:2)
+        // Row 3 — Revenue + Volume charts (w:8+4, h:5)
+        // Row 4 — Order status distribution + Latest customers (w:6+6, h:5/3)
+        'command-center' => [
+            ['id' => 'dashboard_header',          'x' => 0, 'y' => 0,  'w' => 12, 'h' => 2],
+            ['id' => 'health_strip',              'x' => 0, 'y' => 2,  'w' => 12, 'h' => 1],
+            ['id' => 'revenue_kpi',               'x' => 0, 'y' => 3,  'w' => 3,  'h' => 2],
+            ['id' => 'new_orders_kpi',            'x' => 3, 'y' => 3,  'w' => 3,  'h' => 2],
+            ['id' => 'pending_orders_kpi',        'x' => 6, 'y' => 3,  'w' => 3,  'h' => 2],
+            ['id' => 'parts_inquiry',             'x' => 9, 'y' => 3,  'w' => 3,  'h' => 2],
+            ['id' => 'revenue_chart',             'x' => 0, 'y' => 5,  'w' => 8,  'h' => 5],
+            ['id' => 'order_volume_chart',        'x' => 8, 'y' => 5,  'w' => 4,  'h' => 5],
+            ['id' => 'order_status_distribution', 'x' => 0, 'y' => 10, 'w' => 6,  'h' => 5],
+            ['id' => 'latest_customers',          'x' => 6, 'y' => 10, 'w' => 6,  'h' => 3],
+        ],
+
+        // TAB 2: OPERATIONS — Action queue (6 widgets)
+        // Row 0 — Recent orders, full width
+        // Row 1 — Abandoned carts + Awaiting confirmation
+        // Row 2 — Refunds pending + New messages
+        // Row 3 — Newsletter growth, full width
+        'operations' => [
+            ['id' => 'recent_orders',         'x' => 0, 'y' => 0,  'w' => 12, 'h' => 4],
+            ['id' => 'abandoned_carts',       'x' => 0, 'y' => 4,  'w' => 6,  'h' => 4],
+            ['id' => 'awaiting_confirmation', 'x' => 6, 'y' => 4,  'w' => 6,  'h' => 4],
+            ['id' => 'refunds_pending',       'x' => 0, 'y' => 8,  'w' => 6,  'h' => 4],
+            ['id' => 'new_messages',          'x' => 6, 'y' => 8,  'w' => 6,  'h' => 4],
+            ['id' => 'newsletter_growth',     'x' => 0, 'y' => 12, 'w' => 12, 'h' => 4],
+        ],
+
+        // TAB 3: INVENTORY & SOURCING — Analytics grid (7 widgets)
+        // Row 0 — Manufacturer revenue + Stock alerts
+        // Row 1 — Top searches + Failed searches
+        // Row 2 — New products + Supplier scorecard
+        // Row 3 — Manufacturing stats, full width
+        'inventory-sourcing' => [
+            ['id' => 'manufacturer_revenue', 'x' => 0, 'y' => 0,  'w' => 8,  'h' => 4],
+            ['id' => 'stock_alert',          'x' => 8, 'y' => 0,  'w' => 4,  'h' => 4],
+            ['id' => 'top_searches',         'x' => 0, 'y' => 4,  'w' => 6,  'h' => 4],
+            ['id' => 'failed_searches',      'x' => 6, 'y' => 4,  'w' => 6,  'h' => 4],
+            ['id' => 'new_products_added',   'x' => 0, 'y' => 8,  'w' => 6,  'h' => 4],
+            ['id' => 'supplier_scorecard',   'x' => 6, 'y' => 8,  'w' => 6,  'h' => 4],
+            ['id' => 'manufacturing_stats',  'x' => 0, 'y' => 12, 'w' => 12, 'h' => 2],
+        ],
+
+        // TAB 4: SYSTEM & ADMIN — Infra status grid (6 widgets)
+        // Row 0 — Admin activity feed + Failed queue jobs
+        // Row 1 — Disk usage + Cache status + Queue worker status
+        // Row 2 — Request metrics, full width
+        'system-admin' => [
+            ['id' => 'recent_activity',     'x' => 0, 'y' => 0, 'w' => 8,  'h' => 4],
+            ['id' => 'failed_queue_jobs',   'x' => 8, 'y' => 0, 'w' => 4,  'h' => 4],
+            ['id' => 'disk_space',          'x' => 0, 'y' => 4, 'w' => 4,  'h' => 4],
+            ['id' => 'cache_status',        'x' => 4, 'y' => 4, 'w' => 4,  'h' => 2],
+            ['id' => 'queue_worker_status', 'x' => 8, 'y' => 4, 'w' => 4,  'h' => 4],
+            ['id' => 'request_metrics',     'x' => 0, 'y' => 8, 'w' => 12, 'h' => 1],
+        ],
+    ];
+
     public function __construct(
         private readonly WidgetPreferenceService $preferences,
     ) {
@@ -49,11 +125,15 @@ class DashboardLayoutService
                 $defaultName = array_key_first($tabs);
 
                 foreach ($tabs as $name => $ids) {
+                    $slug = Str::slug($name);
+                    $layout = $this->blueprintLayoutFor($admin, $slug)
+                        ?? $this->packLayout($ids);
+
                     AdminDashboard::create([
                         'admin_id' => $admin->id,
                         'name' => $name,
-                        'slug' => Str::slug($name),
-                        'layout' => $this->packLayout($ids),
+                        'slug' => $slug,
+                        'layout' => $layout,
                         'is_default' => $name === $defaultName,
                     ]);
                 }
@@ -216,15 +296,18 @@ class DashboardLayoutService
 
             $defaultLayout = $config['default_layout'];
 
+            $actualW = (int) ($item['w'] ?? $defaultLayout['w']);
+            $actualH = max((int) ($item['h'] ?? $defaultLayout['h']), (int) $defaultLayout['h']);
+
             $items[] = [
                 'id' => $id,
                 'class' => $config['class'],
                 'type' => $config['type'] ?? 'widget',
                 'x' => (int) ($item['x'] ?? 0),
                 'y' => (int) ($item['y'] ?? 0),
-                'w' => (int) ($item['w'] ?? $defaultLayout['w']),
-                'h' => max((int) ($item['h'] ?? $defaultLayout['h']), (int) $defaultLayout['h']),
-                'minW' => min((int) $defaultLayout['w'], 4),
+                'w' => $actualW,
+                'h' => $actualH,
+                'minW' => min($actualW, 4),
                 'minH' => (int) $defaultLayout['h'],
             ];
         }
@@ -266,6 +349,36 @@ class DashboardLayoutService
         $dashboard->update([
             'layout' => array_merge($kept, $this->packLayout($new, $maxY)),
         ]);
+    }
+
+    /**
+     * Returns the predefined blueprint layout for a tab slug, filtered to only
+     * include widgets the given admin has permission to view.
+     *
+     * @return list<array{id:string,x:int,y:int,w:int,h:int}>|null
+     */
+    public function blueprintLayoutFor(Admin $admin, string $slug): ?array
+    {
+        $blueprint = self::TAB_BLUEPRINT_LAYOUTS[$slug] ?? null;
+
+        if ($blueprint === null) {
+            return null;
+        }
+
+        $layout = [];
+
+        foreach ($blueprint as $item) {
+            $id = $item['id'];
+            $config = WidgetPreferenceService::WIDGETS[$id] ?? null;
+
+            if ($config === null || ! $admin->hasAnyRole($config['roles'])) {
+                continue;
+            }
+
+            $layout[] = $item;
+        }
+
+        return $layout;
     }
 
     /**

@@ -156,6 +156,7 @@ class NewsletterCampaignResource extends Resource
                         ->label('Send Now')
                         ->icon('heroicon-o-paper-airplane')
                         ->color('success')
+                        ->authorize('update')
                         ->requiresConfirmation()
                         ->modalHeading('Send Campaign')
                         ->modalDescription(fn (NewsletterCampaign $record): string =>
@@ -177,6 +178,7 @@ class NewsletterCampaignResource extends Resource
                         ->label('Duplicate')
                         ->icon('heroicon-o-document-duplicate')
                         ->color('gray')
+                        ->authorize('update')
                         ->action(function (NewsletterCampaign $record) {
                             $duplicate = $record->replicate(['status', 'sent_count', 'failed_count', 'sent_at']);
                             $duplicate->created_by = auth('admin')->user()->id;

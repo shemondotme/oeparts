@@ -2,11 +2,10 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 
 class ContactSettings extends SettingsPage
 {
@@ -57,51 +56,21 @@ class ContactSettings extends SettingsPage
                 Section::make('Business Hours')
                     ->description('Operating hours rendered across footer and contact pages.')
                     ->schema([
-                        Tabs::make('Business Hours')
-                            ->statePath('hours')
-                            ->columnSpanFull()
-                            ->tabs([
-                                Tab::make('English')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('en')
-                                            ->label('Hours (EN)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Mon-Fri: 8:00 - 17:00, Sat: Closed'),
-                                    ]),
-                                Tab::make('Deutsch')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('de')
-                                            ->label('Hours (DE)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Mo-Fr: 8:00 - 17:00, Sa: Geschlossen'),
-                                    ]),
-                                Tab::make('Lietuvių')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('lt')
-                                            ->label('Hours (LT)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. I-V: 8:00 - 17:00, VI: Nedirbame'),
-                                    ]),
-                                Tab::make('Français')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('fr')
-                                            ->label('Hours (FR)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Lun-Ven: 8h00 - 17h00, Sam: Fermé'),
-                                    ]),
-                                Tab::make('Español')
-                                    ->icon('heroicon-m-language')
-                                    ->schema([
-                                        Forms\Components\Textarea::make('es')
-                                            ->label('Hours (ES)')
-                                            ->rows(2)
-                                            ->placeholder('e.g. Lun-Vie: 8:00 - 17:00, Sáb: Cerrado'),
-                                    ]),
-                            ]),
+                        AdminUi::translatableTabs('Business Hours', [
+                            'hours' => [
+                                'label' => 'Hours',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'helperText' => '',
+                                'placeholders' => [
+                                    'en' => 'e.g. Mon-Fri: 8:00 - 17:00, Sat: Closed',
+                                    'de' => 'e.g. Mo-Fr: 8:00 - 17:00, Sa: Geschlossen',
+                                    'lt' => 'e.g. I-V: 8:00 - 17:00, VI: Nedirbame',
+                                    'fr' => 'e.g. Lun-Ven: 8h00 - 17h00, Sam: Fermé',
+                                    'es' => 'e.g. Lun-Vie: 8:00 - 17:00, Sáb: Cerrado',
+                                ],
+                            ],
+                        ]),
                     ]),
 
                 Section::make('Messaging Channels')

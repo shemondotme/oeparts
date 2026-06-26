@@ -94,12 +94,12 @@ class StockAlertWidget extends TableWidget
                     ->label('Reorder')
                     ->icon('heroicon-o-truck')
                     ->color('warning')
-                    ->size(\Filament\Support\Enums\ActionSize::ExtraSmall)
+                    ->size(\Filament\Support\Enums\Size::Small)
                     ->iconButton()
                     ->url(fn (Product $record): string => ProductResource::getUrl('edit', ['record' => $record])),
                 Tables\Actions\ViewAction::make()
                     ->url(fn (Product $record): string => ProductResource::getUrl('view', ['record' => $record]))
-                    ->size(\Filament\Support\Enums\ActionSize::ExtraSmall)
+                    ->size(\Filament\Support\Enums\Size::Small)
                     ->iconButton()
                     ->icon('heroicon-m-eye'),
             ])

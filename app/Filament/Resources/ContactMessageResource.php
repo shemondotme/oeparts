@@ -231,6 +231,7 @@ class ContactMessageResource extends Resource
                     ->label('Reply')
                     ->icon('heroicon-o-reply')
                     ->color('info')
+                    ->authorize('update')
                     ->requiresConfirmation()
                     ->modalHeading('Reply to Contact Message')
                     ->modalDescription(fn (ContactMessage $record): string => "Send a reply to {$record->email}. The message status will be updated to 'Read'.")
@@ -257,6 +258,7 @@ class ContactMessageResource extends Resource
                     ->label('Mark Read')
                     ->icon('heroicon-o-eye')
                     ->color('warning')
+                    ->authorize('update')
                     ->action(function (ContactMessage $record) {
                         $record->update(['status' => 'read']);
                         
@@ -270,6 +272,7 @@ class ContactMessageResource extends Resource
                     ->label('Resolve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
+                    ->authorize('update')
                     ->action(function (ContactMessage $record) {
                         $record->update(['status' => 'resolved']);
                         

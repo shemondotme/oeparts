@@ -10,7 +10,7 @@
     $type = $this->getType();
     $maxHeight = $this->getMaxHeight();
     $hasMaxHeight = filled($maxHeight) && $maxHeight !== '100%';
-    $drilldownUrl = $this->getDrilldownUrl();
+    $drilldownUrl = method_exists($this, 'getDrilldownUrl') ? $this->getDrilldownUrl() : null;
     $hasExport = method_exists($this, 'exportPng');
 
     $cachedData = $this->getCachedData();
@@ -37,7 +37,7 @@
                             wire:click="exportPng"
                             wire:loading.attr="disabled"
                             type="button"
-                            class="fi-btn fi-btn-color-gray fi-btn-size-sm fi-btn-outlined inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition"
+                            class="fi-btn fi-btn-color-gray fi-btn-size-sm fi-btn-outlined inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 text-xs font-medium transition"
                             title="Download chart as PNG"
                         >
                             <x-heroicon-o-arrow-down-tray class="h-4 w-4" />
@@ -52,22 +52,28 @@
                     @endif
 
                     @if ($filters)
-                        <x-filament::input.wrapper
-                            inline-prefix
-                            wire:target="filter"
-                            class="fi-wi-chart-filter"
-                        >
-                            <x-filament::input.select
-                                inline-prefix
-                                wire:model.live="filter"
-                            >
-                                @foreach ($filters as $value => $label)
-                                    <option value="{{ $value }}">
-                                        {{ $label }}
-                                    </option>
-                                @endforeach
-                            </x-filament::input.select>
-                        </x-filament::input.wrapper>
+                        {{-- Segmented date-range control --}}
+                        <div class="flex rounded-md overflow-hidden op-chart-filter-pills"
+                             style="border: 1px solid var(--color-border-default);"
+                             role="group"
+                             aria-label="Date range">
+                            @foreach ($filters as $value => $label)
+                                @php $active = ($this->filter ?? '30') === (string) $value; @endphp
+                                <button
+                                    type="button"
+                                    wire:click="$set('filter', '{{ $value }}')"
+                                    wire:key="filter-{{ $value }}"
+                                    class="px-3 py-1.5 text-xs font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-inset"
+                                    style="
+                                        {{ $active
+                                            ? 'background: var(--color-brand-500); color: #ffffff;'
+                                            : 'background: transparent; color: var(--color-text-muted);' }}
+                                        focus-ring-color: var(--color-brand-500);
+                                    "
+                                    aria-pressed="{{ $active ? 'true' : 'false' }}"
+                                >{{ $label }}</button>
+                            @endforeach
+                        </div>
                     @endif
 
                     @if (method_exists($this, 'getFiltersSchema'))

@@ -213,11 +213,18 @@ final class AdminUi
     /**
      * Standard multilingual tabs for translatable JSON content.
      *
-     * @param  array<string, array{label: string, required: bool, placeholder?: string, helperText?: string}>  $fields  Field definitions
+     * @param  array<string, array{label: string, required: bool, placeholder?: string, placeholders?: array<string, string>, helperText?: string, slugSync?: bool}>  $fields  Field definitions. Set slugSync=>true on a text field to auto-fill $slugSyncTarget from its English value. `placeholders` (keyed by locale code) overrides `placeholder` per-locale when a field needs a localized example value; falls back to `placeholder` on the English tab only when absent.
      * @param  array<string, string>|null  $locales  Locale map (defaults to AdminUi::LOCALES)
+     * @param  string|null  $slugSyncTarget  Field name to auto-fill (e.g. 'slug') from the field(s) marked slugSync=>true. Null = no autofill (default).
+     * @param  string  $slugSyncMode  'fill-if-blank' (default; fills any time the target is currently empty) or 'create-only' (fills only while $operation === 'create', regardless of the target's current value)
      */
-    public static function translatableTabs(string $tabsLabel, array $fields, ?array $locales = null): Tabs
-    {
+    public static function translatableTabs(
+        string $tabsLabel,
+        array $fields,
+        ?array $locales = null,
+        ?string $slugSyncTarget = null,
+        string $slugSyncMode = 'fill-if-blank',
+    ): Tabs {
         $locales ??= static::LOCALES;
 
         return Tabs::make($tabsLabel)
@@ -227,30 +234,56 @@ final class AdminUi
                         ->badge($code === 'en' ? 'Primary' : null)
                         ->schema(
                             collect($fields)
-                                ->map(function (array $config, string $fieldName) use ($code) {
+                                ->map(function (array $config, string $fieldName) use ($code, $slugSyncTarget, $slugSyncMode) {
                                     $required = ($config['required'] ?? false) && $code === 'en';
                                     $maxLength = $config['maxLength'] ?? 255;
                                     $rows = $config['rows'] ?? null;
+                                    $syncsSlug = $slugSyncTarget !== null && $code === 'en' && ($config['slugSync'] ?? false);
 
                                     if (($config['type'] ?? 'text') === 'textarea') {
                                         return \Filament\Forms\Components\Textarea::make("{$fieldName}.{$code}")
                                             ->label($config['label'])
                                             ->required($required)
                                             ->rows($rows ?? 5)
-                                            ->placeholder($code === 'en' ? ($config['placeholder'] ?? null) : null)
+                                            ->placeholder($config['placeholders'][$code] ?? ($code === 'en' ? ($config['placeholder'] ?? null) : null))
                                             ->helperText($code === 'en'
                                                 ? ($config['helperText'] ?? null)
                                                 : 'Leave blank to fall back to the English value.');
                                     }
 
-                                    return \Filament\Forms\Components\TextInput::make("{$fieldName}.{$code}")
+                                    if (($config['type'] ?? 'text') === 'richeditor') {
+                                        return \Filament\Forms\Components\RichEditor::make("{$fieldName}.{$code}")
+                                            ->label($config['label'])
+                                            ->nullable()
+                                            ->columnSpanFull();
+                                    }
+
+                                    $field = \Filament\Forms\Components\TextInput::make("{$fieldName}.{$code}")
                                         ->label($config['label'])
                                         ->required($required)
                                         ->maxLength($maxLength)
-                                        ->placeholder($code === 'en' ? ($config['placeholder'] ?? null) : null)
+                                        ->placeholder($config['placeholders'][$code] ?? ($code === 'en' ? ($config['placeholder'] ?? null) : null))
                                         ->helperText($code === 'en'
                                             ? ($config['helperText'] ?? 'English value is required and used as the default fallback.')
                                             : 'Leave blank to fall back to the English value.');
+
+                                    if ($syncsSlug) {
+                                        $field->live(onBlur: true);
+
+                                        $field->afterStateUpdated($slugSyncMode === 'create-only'
+                                            ? function ($state, callable $set, ?string $operation) use ($slugSyncTarget): void {
+                                                if ($operation === 'create' && is_string($state) && filled($state)) {
+                                                    $set($slugSyncTarget, Str::slug($state));
+                                                }
+                                            }
+                                            : function ($state, callable $set, callable $get) use ($slugSyncTarget): void {
+                                                if (filled($state) && blank($get($slugSyncTarget))) {
+                                                    $set($slugSyncTarget, Str::slug($state));
+                                                }
+                                            });
+                                    }
+
+                                    return $field;
                                 })
                                 ->values()
                                 ->all()
@@ -415,6 +448,49 @@ final class AdminUi
                 return Response::streamDownload(fn () => print($csv), 'export-' . now()->format('Y-m-d-His') . '.csv');
             })
             ->deselectRecordsAfterCompletion();
+    }
+
+    /**
+     * Reusable "Import CSV" header action — file upload + update-existing
+     * toggle, dispatches the given queued job. The job class must accept
+     * (string $storagePath, int $adminId, bool $updateExisting) as its
+     * constructor arguments (matching App\Jobs\ProcessCsvImport's shape).
+     */
+    public static function importCsvHeaderAction(
+        string $jobClass,
+        string $modalHeading = 'Import via CSV',
+        string $modalDescription = 'Upload a CSV file to bulk import or update records. A background job will process the file asynchronously.',
+        string $csvHelperText = 'Upload a CSV file.',
+    ): Actions\Action {
+        return Actions\Action::make('importCsv')
+            ->label('Import CSV')
+            ->icon('heroicon-o-arrow-up-tray')
+            ->color('gray')
+            ->modalHeading($modalHeading)
+            ->modalDescription($modalDescription)
+            ->schema([
+                \Filament\Forms\Components\FileUpload::make('csv_file')
+                    ->label('CSV File')
+                    ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel'])
+                    ->required()
+                    ->helperText($csvHelperText),
+                Toggle::make('update_existing')
+                    ->label('Update Existing Records')
+                    ->helperText('When enabled, records with matching identifiers will be updated instead of skipped.'),
+            ])
+            ->action(function (array $data) use ($jobClass): void {
+                dispatch(new $jobClass(
+                    $data['csv_file'],
+                    auth('admin')->id(),
+                    $data['update_existing'] ?? false,
+                ));
+
+                \Filament\Notifications\Notification::make()
+                    ->title('CSV import started')
+                    ->body('Processing in background')
+                    ->success()
+                    ->send();
+            });
     }
 
     /**
@@ -611,5 +687,142 @@ final class AdminUi
         }
 
         return '#';
+    }
+
+    /**
+     * Topbar Quick-Create registry: key => [label, url, icon, permission].
+     *
+     * 'permission' preserves the exact checks the old hardcoded quick-create
+     * partial used — NOT Filament's canCreate() / Policy 'create' ability,
+     * because RolesSeeder has no "create orders" / "create customers"
+     * permission (edit implies create-access for those two by design). Using
+     * canCreate() here would silently hide Order/Customer quick-create from
+     * every non-super_admin role.
+     *
+     * @var array<string, array{label: string, url: string, icon: string, permission: string}>
+     */
+    public const QUICK_CREATE_REGISTRY = [
+        'order' => [
+            'label' => 'Order',
+            'url' => '/admin/filament/orders/create',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />',
+            'permission' => 'edit orders',
+        ],
+        'product' => [
+            'label' => 'Product',
+            'url' => '/admin/products/create',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-2.25-1.313M21 7.5v2.25m0-2.25l-2.25 1.313M3 7.5l2.25-1.313M3 7.5l2.25 1.313M3 7.5v2.25m9 3l2.25-1.313M12 12.75l-2.25-1.313M12 12.75V15m0 6.75l2.25-1.313M12 21.75V19.5m0 2.25l-2.25-1.313m0-16.875L12 2.25l2.25 1.313M21 14.25v2.25l-2.25 1.313m-13.5 0L3 16.5v-2.25" />',
+            'permission' => 'create products',
+        ],
+        'customer' => [
+            'label' => 'Customer',
+            'url' => '/admin/customers/create',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />',
+            'permission' => 'edit customers',
+        ],
+        'coupon' => [
+            'label' => 'Coupon',
+            'url' => '/admin/coupons/create',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />',
+            'permission' => 'create coupons',
+        ],
+        'manufacturer' => [
+            'label' => 'Manufacturer',
+            'url' => '/admin/manufacturers/create',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />',
+            'permission' => 'create manufacturers',
+        ],
+        'car_model' => [
+            'label' => 'Car Model',
+            'url' => '/admin/car-models/create',
+            'icon' => '<path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 10-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V11.25c0-.418-.232-.79-.6-.975l-3.75-1.875a1.125 1.125 0 00-.5-.12H14.25M5.25 18.75h-1.5m1.5 0V12m0 6.75h6m6-12V9.75m0-3.75H6.375a1.125 1.125 0 00-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h.75m6-9.75h1.875c.341 0 .67.136.91.378l3.387 3.388c.24.24.378.567.378.909V18a1.125 1.125 0 01-1.125 1.125H18.75" />',
+            'permission' => 'create car models',
+        ],
+    ];
+
+    /**
+     * Role-default Quick-Create item keys, most-privileged role first.
+     * Mirrors WidgetPreferenceService::ROLE_DEFAULT_DASHBOARDS's exact shape
+     * and first-matching-role-wins resolution pattern.
+     *
+     * @var array<string, list<string>>
+     */
+    public const ROLE_DEFAULT_QUICK_CREATE = [
+        'super_admin' => ['order', 'product', 'customer', 'coupon', 'manufacturer', 'car_model'],
+        'admin' => ['order', 'product', 'customer', 'coupon'],
+        'manager' => ['order', 'product', 'customer', 'coupon'],
+        'catalog_admin' => ['product', 'manufacturer', 'car_model'],
+        'support' => ['order', 'customer'],
+    ];
+
+    /**
+     * Resolve the role-appropriate Quick-Create items for an admin, gating
+     * each item on its actual registered permission (super_admin bypasses
+     * all checks, matching BasePolicy's convention).
+     *
+     * @return list<array{label: string, url: string, icon: string}>
+     */
+    public static function quickCreateItemsFor(\App\Models\Admin $admin): array
+    {
+        $keys = self::ROLE_DEFAULT_QUICK_CREATE['support'];
+
+        foreach (array_keys(self::ROLE_DEFAULT_QUICK_CREATE) as $role) {
+            if ($admin->hasRole($role)) {
+                $keys = self::ROLE_DEFAULT_QUICK_CREATE[$role];
+                break;
+            }
+        }
+
+        $items = [];
+
+        foreach ($keys as $key) {
+            $entry = self::QUICK_CREATE_REGISTRY[$key] ?? null;
+
+            if ($entry === null) {
+                continue;
+            }
+
+            if (! $admin->hasRole('super_admin') && ! $admin->hasPermissionTo($entry['permission'])) {
+                continue;
+            }
+
+            $items[] = [
+                'label' => $entry['label'],
+                'url' => $entry['url'],
+                'icon' => $entry['icon'],
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Role-default sidebar nav group to auto-open on first visit (when the
+     * client has no persisted oeparts.navGroup yet). Mirrors
+     * ROLE_DEFAULT_QUICK_CREATE / WidgetPreferenceService::ROLE_DEFAULT_DASHBOARDS'
+     * exact shape and first-matching-role-wins resolution pattern.
+     *
+     * @var array<string, string>
+     */
+    public const ROLE_DEFAULT_NAV_GROUP = [
+        'super_admin' => 'Commerce',
+        'admin' => 'Commerce',
+        'manager' => 'Commerce',
+        'catalog_admin' => 'Catalog',
+        'support' => 'Customers',
+    ];
+
+    /**
+     * Resolve the role-appropriate default-open sidebar nav group label.
+     */
+    public static function defaultNavGroupFor(\App\Models\Admin $admin): string
+    {
+        foreach (array_keys(self::ROLE_DEFAULT_NAV_GROUP) as $role) {
+            if ($admin->hasRole($role)) {
+                return self::ROLE_DEFAULT_NAV_GROUP[$role];
+            }
+        }
+
+        return self::ROLE_DEFAULT_NAV_GROUP['support'];
     }
 }

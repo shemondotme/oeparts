@@ -226,26 +226,6 @@
 .op-stagger > *:nth-child(11) { animation-delay: 330ms; }
 .op-stagger > *:nth-child(12) { animation-delay: 360ms; }
 
-/* ─── Living aurora-mesh background drift (dashboard) ────────────────── */
-@keyframes op-aurora-drift {
-    0%   { transform: translate3d(0, 0, 0) scale(1); }
-    50%  { transform: translate3d(6%, 4%, 0) scale(1.12); }
-    100% { transform: translate3d(-4%, 8%, 0) scale(1.05); }
-}
-
-@keyframes op-aurora-drift-2 {
-    0%   { transform: translate3d(0, 0, 0) scale(1.05); }
-    50%  { transform: translate3d(-7%, 6%, 0) scale(0.95); }
-    100% { transform: translate3d(5%, -4%, 0) scale(1.1); }
-}
-
-/* ─── One-time sheen sweep across cards on first paint ───────────────── */
-@keyframes op-sheen {
-    0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
-    18%  { opacity: 0.5; }
-    100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
-}
-
 /* ─── Live indicator dot ────────────────────────────────────────────── */
 @keyframes op-live-pulse {
     0%, 100% { box-shadow: 0 0 0 0 var(--color-success-500); }

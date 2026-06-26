@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -56,9 +57,7 @@ class OrderItemsRelationManager extends RelationManager
     {
         return AdminUi::configureTable($table)->recordTitleAttribute('oem_number_snapshot')
             ->columns([
-                Tables\Columns\TextColumn::make('oem_number_snapshot')
-                    ->label('OEM Number')
-                    ->extraAttributes(['class' => 'oem-number']),
+                AdminUi::oemColumn('oem_number_snapshot'),
                 Tables\Columns\TextColumn::make('manufacturer_snapshot')
                     ->label('Manufacturer'),
                 Tables\Columns\TextColumn::make('condition_snapshot')

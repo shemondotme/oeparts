@@ -251,6 +251,7 @@ class CustomerResource extends Resource
                 Actions\Action::make('resetPassword')
                     ->label('Reset Password')
                     ->icon('heroicon-o-key')
+                    ->authorize('update')
                     ->requiresConfirmation()
                     ->modalHeading('Reset Customer Password')
                     ->modalDescription('Set a new password for this customer. They will need to use this new password on their next login.')
@@ -279,6 +280,7 @@ class CustomerResource extends Resource
                     ->label(fn (User $record): string => $record->is_active ? 'Deactivate' : 'Activate')
                     ->icon(fn (User $record): string => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
                     ->color(fn (User $record): string => $record->is_active ? 'danger' : 'success')
+                    ->authorize('update')
                     ->requiresConfirmation()
                     ->modalHeading(fn (User $record): string => $record->is_active ? 'Deactivate Customer' : 'Activate Customer')
                     ->modalDescription(fn (User $record): ?string => $record->is_active
@@ -348,7 +350,7 @@ class CustomerResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'info';
+        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

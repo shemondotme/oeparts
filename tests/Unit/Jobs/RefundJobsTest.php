@@ -157,4 +157,71 @@ class RefundJobsTest extends TestCase
             return $mail->hasTo('refund-status@example.com');
         });
     }
+
+    // ── Regression tests for Option P: broken refund-email route reference ──
+    // Every test above uses Mail::fake(), which intercepts the Mailable
+    // before it renders its Blade view — none of them could ever have
+    // caught a broken route() call inside the view itself. These tests
+    // actually render the Mailable, which is what surfaces the bug.
+
+    #[Test]
+    public function refund_processed_mailable_renders_without_throwing(): void
+    {
+        $order = Order::factory()->create();
+        $refund = RefundRequest::factory()->create(['order_id' => $order->id]);
+
+        $html = (new RefundProcessed($refund))->render();
+
+        $this->assertStringContainsString(
+            route('frontend.account.order.detail', ['lang' => 'en', 'order' => $order->id]),
+            $html,
+        );
+    }
+
+    #[Test]
+    public function refund_status_update_mailable_renders_without_throwing(): void
+    {
+        $order = Order::factory()->create();
+        $refund = RefundRequest::factory()->create(['order_id' => $order->id]);
+
+        $html = (new RefundStatusUpdate($refund, RefundStatus::Pending, RefundStatus::Approved))->render();
+
+        $this->assertStringContainsString(
+            route('frontend.account.order.detail', ['lang' => 'en', 'order' => $order->id]),
+            $html,
+        );
+    }
+
+    #[Test]
+    public function refund_status_update_shows_admin_note_when_present(): void
+    {
+        // Regression test for a second bug found in the same template while
+        // fixing the route: the "NOTE FROM SUPPORT" block read a `$message`
+        // variable that was never passed by the Mailable — it collided with
+        // Laravel's own auto-injected Illuminate\Mail\Message view variable,
+        // crashing on every render. Fixed to read $refund->admin_note directly.
+        $order = Order::factory()->create();
+        $refund = RefundRequest::factory()->create([
+            'order_id' => $order->id,
+            'admin_note' => 'Return window expired.',
+        ]);
+
+        $html = (new RefundStatusUpdate($refund, RefundStatus::Pending, RefundStatus::Rejected))->render();
+
+        $this->assertStringContainsString('Return window expired.', $html);
+    }
+
+    #[Test]
+    public function refund_status_update_omits_note_block_when_admin_note_blank(): void
+    {
+        $order = Order::factory()->create();
+        $refund = RefundRequest::factory()->create([
+            'order_id' => $order->id,
+            'admin_note' => null,
+        ]);
+
+        $html = (new RefundStatusUpdate($refund, RefundStatus::Pending, RefundStatus::Approved))->render();
+
+        $this->assertStringNotContainsString('NOTE FROM SUPPORT', $html);
+    }
 }

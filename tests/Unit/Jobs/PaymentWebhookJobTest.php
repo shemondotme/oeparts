@@ -114,6 +114,11 @@ class PaymentWebhookJobTest extends TestCase
     #[Test]
     public function payment_webhook_job_processes_canceled_event(): void
     {
+        // Regression test for Option O's consolidation: this handler used to
+        // call $order->update(['status' => ...]) directly with zero
+        // OrderStatusHistory logging and zero customer email.
+        Queue::fake();
+
         $user = User::factory()->create();
         $order = Order::factory()->create([
             'user_id' => $user->id,
@@ -144,6 +149,13 @@ class PaymentWebhookJobTest extends TestCase
         $order->refresh();
         $this->assertEquals(OrderStatus::Cancelled, $order->status);
         $this->assertEquals(PaymentStatus::Failed, $order->payment_status);
+        $this->assertSame(1, \App\Models\OrderStatusHistory::where('order_id', $order->id)->count());
+
+        Queue::assertPushed(\App\Jobs\SendOrderStatusEmail::class, function ($job) use ($order) {
+            return $job->order->is($order)
+                && $job->oldStatus === OrderStatus::Processing
+                && $job->newStatus === OrderStatus::Cancelled;
+        });
     }
 
     #[Test]
