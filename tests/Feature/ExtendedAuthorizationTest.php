@@ -11,6 +11,7 @@ use App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages;
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
 use App\Filament\Resources\FaqResource\Pages\ListFaqs;
 use App\Filament\Resources\NewsletterCampaignResource\Pages\ListNewsletterCampaigns;
+use App\Filament\Resources\NewsletterSubscriberResource\Pages\ListNewsletterSubscribers;
 use App\Filament\Resources\PartInquiryResource\Pages\ListPartInquiries;
 use App\Filament\Resources\ProductResource\Pages\ListProducts;
 use App\Filament\Resources\SectionResource\Pages\ListSections;
@@ -447,5 +448,28 @@ class ExtendedAuthorizationTest extends TestCase
             $this->assertTrue($roleAdmin->can('viewAny', ContactMessage::class), "{$role} should be able to view contact messages");
             $this->assertTrue($roleAdmin->can('update', $message), "{$role} should be able to update contact messages");
         }
+    }
+
+    // ── Marketing module deep gap analysis (Option W): NewsletterSubscriberResource's
+    // bulkToggleActive had zero ->authorize(). No seeded role holds any 'newsletters'
+    // permission today (the resource is super_admin-only in practice), so this is
+    // Tier 2 defense-in-depth, same as the row/bulk-action gaps fixed in Option V — a
+    // synthetic editor role proves the gate now genuinely blocks an unauthorized one.
+
+    #[Test]
+    public function newsletter_subscriber_bulk_toggle_active_requires_update_permission(): void
+    {
+        $subscriber = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $viewOnly = $this->adminWithPermissions('newsletter_sub_bulk_view_only_test', ['view newsletters']);
+        $editor = $this->adminWithPermissions('newsletter_sub_bulk_editor_test', ['view newsletters', 'edit newsletters']);
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListNewsletterSubscribers::class)->assertTableBulkActionHidden('bulkToggleActive');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListNewsletterSubscribers::class)
+            ->assertTableBulkActionVisible('bulkToggleActive')
+            ->callTableBulkAction('bulkToggleActive', [$subscriber]);
+        $this->assertFalse($subscriber->refresh()->is_active);
     }
 }

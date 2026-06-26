@@ -32,7 +32,7 @@ class NewsletterCampaign extends Model
 
     public function recipients(): HasMany
     {
-        return $this->hasMany(NewsletterCampaignRecipient::class);
+        return $this->hasMany(NewsletterCampaignRecipient::class, 'campaign_id');
     }
 
     public function isDraft(): bool
