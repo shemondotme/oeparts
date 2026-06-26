@@ -24,16 +24,6 @@ class ContactMessage extends Model
         'otp_verified' => 'boolean',
     ];
 
-    public function sender(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(User::class, 'sender_id');
-    }
-
-    public function admin(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Admin::class, 'admin_id');
-    }
-
     public function scopeUnread(Builder $q): Builder
     {
         return $q->where('status', ContactStatus::Unread->value);

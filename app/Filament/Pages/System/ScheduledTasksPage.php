@@ -52,24 +52,46 @@ class ScheduledTasksPage extends Page
 
             $description = Artisan::all()[$command]->description ?? $command;
 
+            $frequency = $this->inferFrequencyTag($event->getExpression());
+
             $tasks[] = [
                 'command' => $command,
                 'description' => $description,
-                'schedule' => $this->getScheduleDescription($event),
-                'frequency' => $event->getFrequency(),
+                'schedule' => $this->getScheduleDescription($event->command, $frequency),
+                'frequency' => $frequency,
             ];
         }
 
         return $tasks;
     }
 
-    private function getScheduleDescription($event): string
+    /**
+     * Illuminate\Console\Scheduling\Event has no public method exposing which
+     * frequency helper (->daily(), ->hourly(), etc.) built the event — only
+     * the resulting cron expression. Map known cron patterns back to a tag.
+     */
+    private function inferFrequencyTag(string $expression): ?string
     {
-        if ($event->command === null) {
+        return match ($expression) {
+            '* * * * *' => 'everyMinute',
+            '*/5 * * * *' => 'everyFiveMinutes',
+            '*/10 * * * *' => 'everyTenMinutes',
+            '*/15 * * * *' => 'everyFifteenMinutes',
+            '*/30 * * * *' => 'everyThirtyMinutes',
+            '0 * * * *' => 'hourly',
+            '0 0 * * *' => 'daily',
+            '0 0 * * 0' => 'weekly',
+            '0 0 1 * *' => 'monthly',
+            '0 0 1 1 *' => 'yearly',
+            default => null,
+        };
+    }
+
+    private function getScheduleDescription(?string $command, ?string $frequency): string
+    {
+        if ($command === null) {
             return 'Unknown';
         }
-
-        $frequency = $event->getFrequency();
 
         if ($frequency === null) {
             return 'Custom';

@@ -51,13 +51,13 @@ class LogViewerPage extends Page
 
         $files = collect(File::files($logPath))
             ->filter(fn ($file) => $file->getExtension() === 'log')
-            ->sortByDesc('lastModified')
+            ->sortByDesc(fn ($file) => $file->getMTime())
             ->values();
 
         return $files->map(fn ($file) => [
             'name' => $file->getFilename(),
             'size' => $this->formatBytes($file->getSize()),
-            'last_modified' => $file->lastModified(),
+            'last_modified' => $file->getMTime(),
         ])->toArray();
     }
 

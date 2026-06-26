@@ -82,10 +82,10 @@ class AdminResource extends Resource
                                             ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
                                             ->dehydrated(fn (?string $state): bool => filled($state))
                                             ->required(fn (string $operation): bool => $operation === 'create')
-                                            ->minLength(8)
+                                            ->minLength(fn (): int => (int) settings('auth.admin_password_min', 12))
                                             ->rules(['regex:/^(?=.*[A-Z])(?=.*\d).+$/'])
                                             ->placeholder(fn (string $operation): string => $operation === 'create' ? 'Enter a strong password' : 'Leave empty to keep current password')
-                                            ->helperText('Minimum 8 characters with at least one uppercase letter and one number.'),
+                                            ->helperText(fn (): string => 'Minimum '.settings('auth.admin_password_min', 12).' characters with at least one uppercase letter and one number.'),
                                         Forms\Components\Select::make('roles')
                                             ->label('Assigned Roles')
                                             ->relationship('roles', 'name')

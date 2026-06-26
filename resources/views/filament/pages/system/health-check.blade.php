@@ -104,7 +104,7 @@
                         <div class="flex items-end gap-0.5 h-6 opacity-40">
                             @for($i = 0; $i < 8; $i++)
                                 <div class="w-0.5 rounded-full"
-                                    style="background: {{ $status === 'ok' ? 'var(--color-success-400)' : $status === 'fail' ? 'var(--color-danger-400)' : 'var(--color-warning-400)' }};"></div>
+                                    style="background: {{ $status === 'ok' ? 'var(--color-success-400)' : ($status === 'fail' ? 'var(--color-danger-400)' : 'var(--color-warning-400)') }};"></div>
                             @endfor
                         </div>
                     </div>
@@ -168,17 +168,17 @@
                             <div class="flex items-center gap-3 py-2 px-3 rounded-lg transition-colors duration-200"
                                 style="border: 1px solid var(--color-border-subtle); {{ $i === 0 ? 'background: var(--color-bg-inset);' : '' }}">
                                 <span class="w-1.5 h-1.5 rounded-full shrink-0"
-                                    style="background: {{ $entry['status'] === 'ok' ? 'var(--color-success-500)' : $entry['status'] === 'degraded' ? 'var(--color-warning-500)' : 'var(--color-danger-500)' }};"></span>
+                                    style="background: {{ $entry['status'] === 'ok' ? 'var(--color-success-500)' : ($entry['status'] === 'degraded' ? 'var(--color-warning-500)' : 'var(--color-danger-500)') }};"></span>
                                 <span class="text-xs font-mono" style="color: var(--color-text-muted);">{{ $entry['time'] }}</span>
                                 <span class="text-xs font-bold font-mono uppercase"
-                                    style="color: {{ $entry['status'] === 'ok' ? 'var(--color-success-500)' : $entry['status'] === 'degraded' ? 'var(--color-warning-500)' : 'var(--color-danger-500)' }};">
+                                    style="color: {{ $entry['status'] === 'ok' ? 'var(--color-success-500)' : ($entry['status'] === 'degraded' ? 'var(--color-warning-500)' : 'var(--color-danger-500)') }};">
                                     {{ $entry['status'] }}
                                 </span>
                                 <span class="text-xs font-mono ml-auto" style="color: var(--color-text-muted);">
                                     @foreach($entry['checks'] as $name => $val)
                                         <span class="inline-flex items-center gap-0.5 mr-2">
                                             {{ $name }}:
-                                            <span class="font-bold" style="color: {{ $val === 'ok' ? 'var(--color-success-500)' : $val === 'fail' ? 'var(--color-danger-500)' : 'var(--color-warning-500)' }};">{{ $val }}</span>
+                                            <span class="font-bold" style="color: {{ $val === 'ok' ? 'var(--color-success-500)' : ($val === 'fail' ? 'var(--color-danger-500)' : 'var(--color-warning-500)') }};">{{ $val }}</span>
                                         </span>
                                     @endforeach
                                 </span>

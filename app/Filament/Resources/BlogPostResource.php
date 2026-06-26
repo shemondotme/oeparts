@@ -291,7 +291,7 @@ class BlogPostResource extends Resource
                         summary: fn ($record): ?array => $record->status === ContentStatus::Published
                             ? null
                             : [
-                                'key' => $record->title,
+                                'key' => trans_field($record->title),
                                 'old' => $record->status->value,
                                 'new' => ContentStatus::Published->value,
                             ],
@@ -317,7 +317,7 @@ class BlogPostResource extends Resource
                         summary: fn ($record): ?array => $record->status !== ContentStatus::Published
                             ? null
                             : [
-                                'key' => $record->title,
+                                'key' => trans_field($record->title),
                                 'old' => $record->status->value,
                                 'new' => ContentStatus::Draft->value,
                             ],

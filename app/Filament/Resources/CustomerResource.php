@@ -6,7 +6,9 @@ use App\Enums\OrderStatus;
 use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Filament\Support\AdminUi;
+use App\Models\ActivityLog;
 use App\Models\User;
+use App\Services\GdprExportService;
 use Filament\Forms;
 use Filament\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
@@ -20,6 +22,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Response;
 
 class CustomerResource extends Resource
 {
@@ -277,6 +280,32 @@ class CustomerResource extends Resource
                     ->authorize('update')
                     ->url(fn (User $record): string => "mailto:{$record->email}")
                     ->openUrlInNewTab(),
+                Actions\Action::make('exportGdprData')
+                    ->label('Export Data (GDPR)')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('gray')
+                    ->authorize('update')
+                    ->action(function (User $record) {
+                        $data = app(GdprExportService::class)->exportForUser($record);
+
+                        ActivityLog::create([
+                            'admin_id' => auth('admin')->id(),
+                            'action' => 'gdpr_export',
+                            'model_type' => User::class,
+                            'model_id' => $record->id,
+                            'old_values' => [],
+                            'new_values' => ['description' => "Exported GDPR data for {$record->email}"],
+                            'ip_address' => request()->ip(),
+                        ]);
+
+                        $filename = "gdpr-export-{$record->id}-" . now()->format('Y-m-d-His') . '.json';
+
+                        return Response::streamDownload(
+                            fn () => print(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)),
+                            $filename,
+                            ['Content-Type' => 'application/json']
+                        );
+                    }),
                 Actions\Action::make('toggleActive')
                     ->label(fn (User $record): string => $record->is_active ? 'Deactivate' : 'Activate')
                     ->icon(fn (User $record): string => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')

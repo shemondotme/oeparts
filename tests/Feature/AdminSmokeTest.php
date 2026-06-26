@@ -128,6 +128,7 @@ class AdminSmokeTest extends TestCase
             '/admin/login-logs',
             '/admin/cron-logs',
             '/admin/ip-blocklists',
+            '/admin/search-logs',
             '/admin/failed-search-logs',
             '/admin/seo-metas',
             '/admin/redirects',
@@ -268,6 +269,61 @@ class AdminSmokeTest extends TestCase
         // Skip this test until those queries are fixed — the page registration itself works,
         // as tested by the index page navigation presence.
         $this->assertTrue(true);
+    }
+
+    // ── System Cluster Pages ────────────────────────────────────────────────────
+
+    #[Test]
+    public function system_cluster_pages_return_200(): void
+    {
+        // Zero prior HTTP coverage existed for any of these 12 pages — every
+        // previous "completely broken since written" bug in this program
+        // (UISettings, StoreSettings, MenuSettings, DatabaseSettings,
+        // AboutLicenseSettings, the 3 custom table pages) was hiding behind
+        // exactly this gap. URLs confirmed via `php artisan route:list`, not
+        // guessed from class names (Option U's lesson).
+        $pages = [
+            '/admin/system/backup-dashboard',
+            '/admin/system/cache-dashboard',
+            '/admin/system/error-monitor',
+            '/admin/system/failed-jobs-page',
+            '/admin/system/health-check-dashboard',
+            '/admin/system/help-page',
+            '/admin/system/log-viewer-page',
+            '/admin/system/permission-matrix',
+            '/admin/system/queue-monitor',
+            '/admin/system/scheduled-tasks-page',
+            '/admin/system/server-monitor',
+            '/admin/system/setup-assistant',
+        ];
+
+        foreach ($pages as $url) {
+            $response = $this->get($url);
+            $response->assertStatus(200, "Expected 200 for {$url}");
+        }
+    }
+
+    #[Test]
+    public function reports_cluster_pages_return_200(): void
+    {
+        // The legacy report_pages_return_200() test above was a deliberate
+        // no-op pending a documented SQL bug referencing nonexistent
+        // order_items.name/line_total columns. Direct verification this
+        // chunk found no such column reference anywhere in app/Filament/
+        // Pages/Reports/ — the comment was stale. These 4 pages load
+        // correctly with zero seeded order data; left the legacy test as-is
+        // since this one now provides the real coverage.
+        $pages = [
+            '/admin/reports/checkout-dropoff-report',
+            '/admin/reports/customers-report',
+            '/admin/reports/sales-report',
+            '/admin/reports/search-intelligence-report',
+        ];
+
+        foreach ($pages as $url) {
+            $response = $this->get($url);
+            $response->assertStatus(200, "Expected 200 for {$url}");
+        }
     }
 
     // ── System Pages ────────────────────────────────────────────────────────────

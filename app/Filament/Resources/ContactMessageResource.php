@@ -134,7 +134,6 @@ class ContactMessageResource extends Resource
     public static function table(Table $table): Table
     {
         return AdminUi::configureTable($table)
-            ->modifyQueryUsing(fn ($query) => $query->with('sender'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')

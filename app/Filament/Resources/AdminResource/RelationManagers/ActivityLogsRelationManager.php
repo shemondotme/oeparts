@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AdminResource\RelationManagers;
 
+use App\Filament\Support\AdminUi;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;

@@ -71,7 +71,7 @@
                 </div>
                 <div>
                     <p class="text-xs uppercase tracking-widest" style="color: var(--color-text-muted);">Filament</p>
-                    <p class="text-lg font-bold font-mono" style="color: var(--color-text-primary);">{{ class_basename(\Filament\FilamentManager::class) ? \Filament\FilamentManager::getVersion() : config('filament.version', '5.x') }}</p>
+                    <p class="text-lg font-bold font-mono" style="color: var(--color-text-primary);">{{ \Composer\InstalledVersions::getPrettyVersion('filament/filament') ?? config('filament.version', '5.x') }}</p>
                 </div>
                 <div>
                     <p class="text-xs uppercase tracking-widest" style="color: var(--color-text-muted);">Environment</p>
