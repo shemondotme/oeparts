@@ -402,7 +402,7 @@ final class AdminUi
             })
             ->modalContent(function (Collection $records) use ($label, $summary, $form) {
                 if (! empty($form) || $summary === null) {
-                    return '';
+                    return null;
                 }
 
                 $changes = $records
@@ -412,13 +412,13 @@ final class AdminUi
                     ->toArray();
 
                 if (empty($changes)) {
-                    return '';
+                    return null;
                 }
 
                 return view('components.impact-summary', [
                     'changes' => $changes,
                     'heading' => count($changes) . ' ' . lcfirst($label),
-                ])->render();
+                ]);
             })
             ->action(fn (Collection $records, array $data) => $action($records, $data));
     }

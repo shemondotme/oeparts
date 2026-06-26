@@ -295,7 +295,7 @@ class PartInquiryResource extends Resource
                                 ->success()
                                 ->send();
                         },
-                    ),
+                    )->authorize('update', PartInquiry::class),
                     AdminUi::impactBulkAction(
                         name: 'bulkMarkUnavailable',
                         label: 'Mark Unavailable',
@@ -318,7 +318,7 @@ class PartInquiryResource extends Resource
                                 ->success()
                                 ->send();
                         },
-                    ),
+                    )->authorize('update', PartInquiry::class),
                     AdminUi::exportCsvBulkAction('Export Part Inquiries', [
                         'email' => 'Email',
                         'oem_number' => 'OEM Number',
