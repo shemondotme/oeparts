@@ -7,9 +7,10 @@ use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 use Illuminate\Database\Eloquent\Builder;
 
-class SettingsActivityLog extends Page
+class SettingsActivityLog extends Page implements HasTable
 {
     use InteractsWithTable;
 

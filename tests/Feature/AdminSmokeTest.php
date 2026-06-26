@@ -187,31 +187,13 @@ class AdminSmokeTest extends TestCase
     #[Test]
     public function settings_pages_return_200(): void
     {
-        $pages = [
-            '/admin/settings/general-settings',
-            '/admin/settings/appearance-settings',
-            '/admin/settings/contact-settings',
-            '/admin/settings/tax-settings',
-            '/admin/settings/shipping-settings',
-            '/admin/settings/payment-settings',
-            '/admin/settings/orders-settings',
-            '/admin/settings/cart-settings',
-            '/admin/settings/email-settings',
-            '/admin/settings/auth-security-settings',
-            '/admin/settings/announcement-settings',
-            '/admin/settings/search-settings',
-            '/admin/settings/seo-settings',
-            '/admin/settings/performance-settings',
-            '/admin/settings/stats-counter-settings',
-            '/admin/settings/security-settings',
-            '/admin/settings/integrations-settings',
-            '/admin/settings/maintenance-settings',
-            '/admin/settings/ui-settings',
-            '/admin/settings/preloader-settings',
-        ];
+        // Derived from the registry (not hand-maintained) so every settings
+        // page is covered automatically — see SettingsRegistryTest.php for
+        // the test that catches a page missing from the registry itself.
+        $pages = \App\Filament\Support\SettingsRegistry::PAGES;
 
-        foreach ($pages as $url) {
-            $response = $this->get($url);
+        foreach ($pages as $page) {
+            $response = $this->get($page['url']);
             $response->assertStatus(200);
         }
     }

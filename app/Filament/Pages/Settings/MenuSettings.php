@@ -50,7 +50,7 @@ class MenuSettings extends SettingsPage
                                     ->disabled()
                                     ->dehydrated(false),
                             ])
-                            ->items(collect($menus)->mapWithKeys(fn ($menu) => [
+                            ->default(collect($menus)->mapWithKeys(fn ($menu) => [
                                 $menu->id => [
                                     'name' => $menu->name,
                                     'location' => $menu->location ?? 'Not set',

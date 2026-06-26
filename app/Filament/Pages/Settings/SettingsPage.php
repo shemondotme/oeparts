@@ -28,11 +28,15 @@ abstract class SettingsPage extends Page
     /**
      * Note: $navigationSort on subclasses is NOT consulted for display order.
      * shouldRegisterNavigation=false hides every settings page from Filament's
-     * nav tree entirely; the actual (and only) display order is the hardcoded
-     * $sections array in resources/views/filament/clusters/settings.blade.php.
-     * Keep each subclass's $navigationSort unique anyway for documentation
-     * accuracy, but a new settings page must be added to that Blade array to
-     * be reachable at all — see ARCHITECTURE.md's Settings Architecture section.
+     * nav tree entirely; reachability and display order are driven by
+     * App\Filament\Support\SettingsRegistry::PAGES instead. A new settings
+     * page must be added to that registry to be reachable at all — but
+     * tests/Feature/SettingsRegistryTest.php asserts every concrete
+     * SettingsPage subclass has exactly one registry entry, so a forgotten
+     * page now fails a test instead of silently going unreachable (this
+     * happened to UISettings before the registry existed — see
+     * ARCHITECTURE.md's Settings Architecture section). Keep each subclass's
+     * $navigationSort unique anyway for documentation accuracy.
      */
     protected static string $settingsGroup;
 
