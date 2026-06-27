@@ -31,10 +31,10 @@
         aria-label="Jump to OEM number"
         style="display: none;"
     >
-        <form wire:submit="jump" class="flex items-center gap-2">
+        <form wire:submit="selectFirst" class="flex items-center gap-2">
             <input
                 type="text"
-                wire:model="oem"
+                wire:model.live.debounce.300ms="oem"
                 x-ref="oemInput"
                 placeholder="OEM number..."
                 class="op-jump-oem-input"
@@ -48,8 +48,49 @@
             </button>
         </form>
 
-        @if ($errorMessage)
-            <p class="op-jump-oem-error">{{ $errorMessage }}</p>
+        @php
+            $badges = [
+                'exact' => ['label' => 'Exact', 'class' => 'op-jump-oem-badge-exact'],
+                'cross_reference' => ['label' => 'Cross-Ref', 'class' => 'op-jump-oem-badge-cross'],
+                'partial' => ['label' => 'Partial', 'class' => 'op-jump-oem-badge-partial'],
+            ];
+        @endphp
+
+        @if ($oem === '')
+            <p class="op-jump-oem-section-label">Recently Viewed</p>
+
+            @php $recents = $this->recents(); @endphp
+
+            @if (count($recents) > 0)
+                <div class="op-jump-oem-results">
+                    @foreach ($recents as $item)
+                        <a href="{{ $item['url'] }}" wire:navigate class="op-jump-oem-result">
+                            <span class="op-jump-oem-result-oem">{{ $item['label'] }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @else
+                <p class="op-jump-oem-empty">Pages you visit will appear here.</p>
+            @endif
+        @elseif (count($results) > 0)
+            <p class="op-jump-oem-section-label">
+                <span class="op-jump-oem-badge {{ $badges[$searchType]['class'] ?? '' }}">{{ $badges[$searchType]['label'] ?? '' }}</span>
+            </p>
+
+            <div class="op-jump-oem-results">
+                @foreach ($results as $result)
+                    <a href="{{ $result['url'] }}" wire:navigate class="op-jump-oem-result">
+                        <span class="op-jump-oem-result-oem">{{ $result['oem'] }}</span>
+                        @if ($result['title'] || $result['manufacturer'])
+                            <span class="op-jump-oem-result-meta">
+                                {{ trim(($result['manufacturer'] ?? '') . ' ' . ($result['title'] ?? '')) }}
+                            </span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+        @else
+            <p class="op-jump-oem-error">No match for &quot;{{ $oem }}&quot;.</p>
         @endif
     </div>
 </div>

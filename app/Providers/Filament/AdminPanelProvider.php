@@ -76,6 +76,12 @@ class AdminPanelProvider extends PanelProvider
                     : '',
             )
             ->renderHook(
+                PanelsRenderHook::TOPBAR_END,
+                fn (): string => filament()->auth()->check()
+                    ? Blade::render('@livewire(\'health-indicator\')')
+                    : '',
+            )
+            ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn (): string => filament()->auth()->check()
                     ? Blade::render('@livewire(\'jump-to-oem\')')
