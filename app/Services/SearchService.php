@@ -22,7 +22,9 @@ use Illuminate\Support\Str;
  *   2. Cross-reference match on normalized_cross_oem
  *   3. Partial match (LIKE %query%) if no exact
  *
- * Always logs searches to search_logs and failed_search_logs.
+ * Logs searches to search_logs/failed_search_logs unless $log is false (used
+ * by internal/admin callers, e.g. the admin topbar's OEM lookup, so internal
+ * traffic doesn't pollute customer-search analytics).
  */
 class SearchService
 {
@@ -38,13 +40,15 @@ class SearchService
      * @param  int|null  $manufacturerId  Optional manufacturer filter
      * @param  int|null  $carModelId  Optional car model filter
      * @param  array  $options  Additional options (limit, paginate, per_page, sort, condition, in_stock_only)
+     * @param  bool  $log  Whether to log the search and cache the result (false for internal/admin lookups)
      * @return array{products: Collection|LengthAwarePaginator, total: int, search_type: string, normalized_query: string, search_log_id: int|null, condition_counts: array}
      */
     public function search(
         string $query,
         ?int $manufacturerId = null,
         ?int $carModelId = null,
-        array $options = []
+        array $options = [],
+        bool $log = true
     ): array {
         $query = Str::limit(trim($query), 200);
         $normalized = $this->normalizer->normalize($query);
@@ -58,17 +62,11 @@ class SearchService
 
         $hasActiveFilters = $condition || $inStockOnly;
 
-        $cacheKey = 'search:' . md5(implode('|', [
-            $normalized, $manufacturerId ?? '', $carModelId ?? '',
-            $limit, $paginate ? '1' : '0', $perPage, $sort,
-            $condition ?? '', $inStockOnly ? '1' : '0',
-        ]));
-
-        return Cache::remember($cacheKey, 300, function () use ($query, $normalized, $lang, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly, $hasActiveFilters) {
+        $resolver = function () use ($query, $normalized, $lang, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly, $hasActiveFilters, $log) {
             // Step 1: Exact match
             $exactResult = $this->exactMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
             if ($exactResult['total'] > 0) {
-                $logId = $this->logSearch($query, $normalized, $lang, $exactResult['total'], $manufacturerId, $carModelId);
+                $logId = $log ? $this->logSearch($query, $normalized, $lang, $exactResult['total'], $manufacturerId, $carModelId) : null;
 
                 return $this->buildResult('exact', $exactResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
             }
@@ -80,7 +78,7 @@ class SearchService
             // Step 2: Cross-reference match
             $crossResult = $this->crossReferenceMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
             if ($crossResult['total'] > 0) {
-                $logId = $this->logSearch($query, $normalized, $lang, $crossResult['total'], $manufacturerId, $carModelId);
+                $logId = $log ? $this->logSearch($query, $normalized, $lang, $crossResult['total'], $manufacturerId, $carModelId) : null;
 
                 return $this->buildResult('cross_reference', $crossResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
             }
@@ -98,7 +96,7 @@ class SearchService
             if ($partialEnabled && strlen($normalized) >= $minPartialLen) {
                 $partialResult = $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
                 if ($partialResult['total'] > 0) {
-                    $logId = $this->logSearch($query, $normalized, $lang, $partialResult['total'], $manufacturerId, $carModelId);
+                    $logId = $log ? $this->logSearch($query, $normalized, $lang, $partialResult['total'], $manufacturerId, $carModelId) : null;
 
                     return $this->buildResult('partial', $partialResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
                 }
@@ -108,7 +106,7 @@ class SearchService
             }
 
             // Zero results
-            $logId = $this->logFailedSearch($query, $normalized, $lang, $manufacturerId, $carModelId);
+            $logId = $log ? $this->logFailedSearch($query, $normalized, $lang, $manufacturerId, $carModelId) : null;
 
             return [
                 'products' => collect(),
@@ -122,7 +120,22 @@ class SearchService
                 'filtered_empty' => false,
                 'unfiltered_total' => 0,
             ];
-        });
+        };
+
+        if (! $log) {
+            // Internal/admin lookups skip the shared result cache too — otherwise an
+            // admin's query could populate the cache and cause a later real customer
+            // search for the same term to silently skip its own logging.
+            return $resolver();
+        }
+
+        $cacheKey = 'search:' . md5(implode('|', [
+            $normalized, $manufacturerId ?? '', $carModelId ?? '',
+            $limit, $paginate ? '1' : '0', $perPage, $sort,
+            $condition ?? '', $inStockOnly ? '1' : '0',
+        ]));
+
+        return Cache::remember($cacheKey, 300, $resolver);
     }
 
     /**
