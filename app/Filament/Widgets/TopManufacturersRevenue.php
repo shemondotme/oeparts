@@ -74,9 +74,16 @@ class TopManufacturersRevenue extends TableWidget
             ]);
     }
 
-    protected function getHeaderActions(): array
+    protected function getTableHeaderActions(): array
     {
-        return [$this->getExportActions()];
+        return [
+            $this->getExportActions(),
+            Tables\Actions\Action::make('view_all')
+                ->label('View all')
+                ->icon('heroicon-o-arrow-right')
+                ->link()
+                ->url(ManufacturerResource::getUrl('index')),
+        ];
     }
 
     public function table(Table $table): Table

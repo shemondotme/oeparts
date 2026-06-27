@@ -90,7 +90,7 @@
             <button
                 type="button"
                 x-data="{}"
-                x-on:click="$dispatch('open-spotlight')"
+                x-on:click="$dispatch('toggle-spotlight')"
                 class="op-topbar-search"
                 aria-label="Search everything (⌘K)"
                 title="Search everything (⌘K)"

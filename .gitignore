@@ -12,6 +12,11 @@
 /vendor
 /auth.json
 
+# Playwright
+/test-results
+/playwright-report
+/tests/e2e/.auth
+
 # Environment — only .env.example and .env.testing are committed
 .env
 .env.*

@@ -31,10 +31,61 @@ const _opGradientPlugin = {
     },
 };
 
-// Register only once — guard against HMR double-registration
-if (window.Chart && !Chart.registry.plugins.get('op-gradient')) {
-    Chart.register(_opGradientPlugin);
+/* ── CSS custom-property color resolver for Chart.js ────────────────────── */
+// Widgets set dataset colors as literal `var(--token)` strings (theme-aware,
+// resolved per light/dark mode at CSS level). Canvas 2D's fillStyle/
+// strokeStyle cannot resolve CSS custom properties — only Filament's own 4
+// generic chart colors get resolved (via hidden DOM spans inside its own
+// chart.js component). Any other var(--x) string passed as a dataset color
+// silently falls back to black. Re-resolves from the original var()
+// reference on every update (theme toggle, live data refresh), not just once.
+const _opCssVarColorKeys = [
+    'backgroundColor', 'borderColor',
+    'hoverBackgroundColor', 'hoverBorderColor',
+    'pointBackgroundColor', 'pointBorderColor',
+];
+
+function _opResolveCssVar(value) {
+    if (Array.isArray(value)) {
+        return value.map(_opResolveCssVar);
+    }
+    if (typeof value === 'string') {
+        const match = value.match(/^var\((--[\w-]+)\)$/);
+        if (match) {
+            const resolved = getComputedStyle(document.documentElement).getPropertyValue(match[1]).trim();
+            return resolved || value;
+        }
+    }
+    return value;
 }
+
+const _opCssVarColorPlugin = {
+    id: 'op-css-var-colors',
+    beforeInit(chart) {
+        chart.data.datasets.forEach((dataset) => {
+            _opCssVarColorKeys.forEach((key) => {
+                if (dataset[key] === undefined) return;
+                if (dataset[`_${key}Source`] === undefined) {
+                    dataset[`_${key}Source`] = dataset[key];
+                }
+                dataset[key] = _opResolveCssVar(dataset[`_${key}Source`]);
+            });
+        });
+    },
+    beforeUpdate(chart) {
+        this.beforeInit(chart);
+    },
+};
+
+// Filament's vendor chart.js Alpine component imports Chart.js as a private
+// module binding — it never exposes `window.Chart`, so a direct
+// `Chart.register()` call from here can never run (confirmed: window.Chart
+// is undefined at runtime). The vendor component DOES check
+// `window.filamentChartJsGlobalPlugins` at load time and registers whatever
+// it finds there — that array, not Chart.register(), is the actual
+// supported extension point.
+window.filamentChartJsGlobalPlugins = (window.filamentChartJsGlobalPlugins ?? [])
+    .concat([_opGradientPlugin, _opCssVarColorPlugin]);
 
 let grid = null;
 let saveTimer = null;
@@ -239,7 +290,7 @@ function initCanvas() {
     }, 50);
 
     // Staggered entry for Tab 1 KPI cards (fade-in-up, 50ms apart)
-    const ccKpiIds = ['revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi', 'parts_inquiry'];
+    const ccKpiIds = ['order_stats_overview', 'parts_inquiry'];
     ccKpiIds.forEach((id, i) => {
         const inner = el.querySelector(`[gs-id="${id}"] .fi-wi`);
         if (inner) {

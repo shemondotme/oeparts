@@ -70,7 +70,7 @@ class AdminSmokeTest extends TestCase
         $this->assertCount(count($visibleIds), $enabled, 'Only default-visible widgets should be enabled');
 
         // Essential widgets are visible
-        $this->assertContains(\App\Filament\Widgets\RevenueKpi::class, $enabled);
+        $this->assertContains(\App\Filament\Widgets\OrderStatsOverview::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\RevenueChart::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\RecentOrdersList::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\TopSearchedOems::class, $enabled);
@@ -79,7 +79,6 @@ class AdminSmokeTest extends TestCase
         $this->assertContains(\App\Filament\Widgets\HealthStrip::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\OrderVolumeChart::class, $enabled);
         $this->assertContains(\App\Filament\Widgets\TopManufacturersRevenue::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\NewOrdersKpi::class, $enabled);
 
         // Non-essential widgets are hidden by default
         $this->assertNotContains(\App\Filament\Widgets\NewsletterGrowthWidget::class, $enabled);
@@ -96,10 +95,10 @@ class AdminSmokeTest extends TestCase
 
         $this->assertFalse($service->isEnabled(\App\Filament\Widgets\TopManufacturersRevenue::class));
 
-        // Set sort order via legacy ID (maps to revenue_kpi)
+        // Set sort order via legacy ID (maps to order_stats_overview)
         $service->setSortOrder('kpi_stats', 10);
         $sorted = $service->getSortedWidgets();
-        $kpi = current(array_filter($sorted, fn ($w) => $w['id'] === 'revenue_kpi'));
+        $kpi = current(array_filter($sorted, fn ($w) => $w['id'] === 'order_stats_overview'));
         $this->assertEquals(10, $kpi['sort']);
     }
 

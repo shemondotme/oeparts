@@ -53,8 +53,8 @@
                         <div class="flex items-center justify-between text-xs">
                             <span style="color: var(--color-text-muted);">Avg response</span>
                             <span class="font-semibold"
-                                  style="font-family: var(--font-mono); color: {{ ($avgHours ?? 0) > 0 && ($avgHours ?? 0) <= 4 ? 'var(--color-success-600)' : (($avgHours ?? 0) > 0 ? 'var(--color-warning-600)' : 'var(--color-text-muted)') }};">
-                                {{ ($avgHours ?? 0) > 0 ? $avgHours . 'h' : 'N/A' }}
+                                  style="font-family: var(--font-mono); color: {{ $avgHoursColor ?? 'var(--color-text-muted)' }};">
+                                {{ $avgHoursLabel ?? 'N/A' }}
                             </span>
                         </div>
                     </div>

@@ -58,9 +58,9 @@ class WidgetPreferenceService
             'type' => 'strip',
             'default_layout' => ['w' => 12, 'h' => 1],
         ],
-        'revenue_kpi' => [
-            'class' => \App\Filament\Widgets\RevenueKpi::class,
-            'label' => "Today's Revenue",
+        'order_stats_overview' => [
+            'class' => \App\Filament\Widgets\OrderStatsOverview::class,
+            'label' => 'Order Stats Overview',
             'default_visible' => true,
             'default_sort' => 3,
             'roles' => self::MGMT,
@@ -68,31 +68,7 @@ class WidgetPreferenceService
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
             'type' => 'kpi',
-            'default_layout' => ['w' => 6, 'h' => 3],
-        ],
-        'new_orders_kpi' => [
-            'class' => \App\Filament\Widgets\NewOrdersKpi::class,
-            'label' => 'New Orders',
-            'default_visible' => true,
-            'default_sort' => 4,
-            'roles' => self::MGMT,
-            'financial' => false,
-            'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'type' => 'kpi',
-            'default_layout' => ['w' => 6, 'h' => 3],
-        ],
-        'pending_orders_kpi' => [
-            'class' => \App\Filament\Widgets\PendingOrdersKpi::class,
-            'label' => 'Pending Orders',
-            'default_visible' => true,
-            'default_sort' => 5,
-            'roles' => self::MGMT,
-            'financial' => false,
-            'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
-            'type' => 'kpi',
-            'default_layout' => ['w' => 6, 'h' => 3],
+            'default_layout' => ['w' => 9, 'h' => 2],
         ],
         'parts_inquiry' => [
             'class' => \App\Filament\Widgets\PartsInquiryWidget::class,
@@ -152,7 +128,7 @@ class WidgetPreferenceService
             'period' => true,
             'ttl' => AdminCacheService::DEFAULT_TTL,
             'type' => 'table',
-            'default_layout' => ['w' => 6, 'h' => 3],
+            'default_layout' => ['w' => 6, 'h' => 5],
         ],
 
         // ── Operations ──────────────────────────────────────────────────
@@ -353,7 +329,7 @@ class WidgetPreferenceService
             'period' => false,
             'ttl' => AdminCacheService::SHORT_TTL,
             'type' => 'kpi',
-            'default_layout' => ['w' => 4, 'h' => 2],
+            'default_layout' => ['w' => 4, 'h' => 4],
         ],
         'queue_worker_status' => [
             'class' => \App\Filament\Widgets\QueueWorkerStatusWidget::class,
@@ -403,13 +379,13 @@ class WidgetPreferenceService
             // Command Center
             // Row 1: dashboard_header (w12)
             // Row 2: health_strip (w12)
-            // Row 3: revenue_kpi (w4) + new_orders_kpi (w4) + pending_orders_kpi (w4)
-            // Row 4: parts_inquiry (w6)
+            // Row 3: order_stats_overview (w9)
+            // Row 4: parts_inquiry (w3)
             // Row 5: revenue_chart (w8) + order_volume_chart (w4)
             // Row 6: order_status_distribution (w6) + latest_customers (w6)
             'dashboard_header',
             'health_strip',
-            'revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi',
+            'order_stats_overview',
             'parts_inquiry',
             'revenue_chart', 'order_volume_chart',
             'order_status_distribution', 'latest_customers',
@@ -431,7 +407,7 @@ class WidgetPreferenceService
         'admin' => [
             'dashboard_header',
             'health_strip',
-            'revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi',
+            'order_stats_overview',
             'parts_inquiry',
             'revenue_chart', 'order_volume_chart',
             'order_status_distribution', 'latest_customers',
@@ -449,7 +425,7 @@ class WidgetPreferenceService
         ],
         'manager' => [
             'dashboard_header',
-            'revenue_kpi', 'new_orders_kpi', 'pending_orders_kpi',
+            'order_stats_overview',
             'parts_inquiry',
             'revenue_chart', 'order_volume_chart',
             'order_status_distribution', 'latest_customers',
@@ -492,9 +468,7 @@ class WidgetPreferenceService
         'Command Center' => [
             'dashboard_header',
             'health_strip',
-            'revenue_kpi',
-            'new_orders_kpi',
-            'pending_orders_kpi',
+            'order_stats_overview',
             'parts_inquiry',
             'revenue_chart',
             'order_volume_chart',
@@ -530,7 +504,7 @@ class WidgetPreferenceService
 
     /** Map legacy retired widget IDs to their closest new equivalent. */
     private const LEGACY_ID_MAP = [
-        'kpi_stats' => 'revenue_kpi',
+        'kpi_stats' => 'order_stats_overview',
         'quick_actions' => 'dashboard_header',
         'activity_overview' => 'recent_activity',
         'alerts' => 'health_strip',
@@ -538,10 +512,10 @@ class WidgetPreferenceService
         'checkout_dropoff' => 'recent_orders',
         'sales_by_country' => 'manufacturer_revenue',
         'payment_method_split' => 'revenue_chart',
-        'coupon_usage' => 'revenue_kpi',
+        'coupon_usage' => 'order_stats_overview',
         'stock-alert' => 'stock_alert',
         'abandoned-carts' => 'abandoned_carts',
-        'coupon-usage' => 'revenue_kpi',
+        'coupon-usage' => 'order_stats_overview',
         'parts-inquiry' => 'parts_inquiry',
         'manufacturing-stats' => 'manufacturing_stats',
         'newsletter-growth' => 'newsletter_growth',

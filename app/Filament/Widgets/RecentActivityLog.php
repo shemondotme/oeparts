@@ -48,9 +48,16 @@ class RecentActivityLog extends TableWidget
             ]);
     }
 
-    protected function getHeaderActions(): array
+    protected function getTableHeaderActions(): array
     {
-        return [$this->getExportActions()];
+        return [
+            $this->getExportActions(),
+            Tables\Actions\Action::make('view_all')
+                ->label('View all')
+                ->icon('heroicon-o-arrow-right')
+                ->link()
+                ->url(ActivityLogResource::getUrl('index')),
+        ];
     }
 
     public function table(Table $table): Table
@@ -72,7 +79,31 @@ class RecentActivityLog extends TableWidget
                     ->label('Action')
                     ->badge()
                     ->color('gray')
-                    ->searchable(),
+                    ->getStateUsing(function (ActivityLog $record): string {
+                        $label = ucfirst($record->action);
+
+                        if ($record->model_type) {
+                            $label .= ' ' . class_basename($record->model_type);
+                            if ($record->model_id) {
+                                $label .= ' #' . $record->model_id;
+                            }
+                        }
+
+                        $old = is_array($record->old_values) ? $record->old_values : [];
+                        $new = is_array($record->new_values) ? $record->new_values : [];
+                        $changedFields = array_keys(array_filter(
+                            $new,
+                            fn ($value, $key) => ! array_key_exists($key, $old) || $old[$key] !== $value,
+                            ARRAY_FILTER_USE_BOTH
+                        ));
+
+                        if ($changedFields !== []) {
+                            $label .= ' (' . implode(', ', $changedFields) . ')';
+                        }
+
+                        return $label;
+                    })
+                    ->searchable(query: fn ($query, $search) => $query->where('action', 'like', "%{$search}%")),
                 // Model + IP live in the full Activity Log resource (via the row
                 // action) — omitted here so 5 columns don't overflow the half-width cell.
                 Tables\Columns\TextColumn::make('ip_address')

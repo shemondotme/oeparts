@@ -86,7 +86,7 @@ class DashboardPeriodTest extends TestCase
     public function meta_period_survives_sort_order_change(): void
     {
         $this->service->savePeriod('365');
-        $this->service->setSortOrder('revenue_kpi', 5);
+        $this->service->setSortOrder('order_stats_overview', 5);
 
         $this->assertSame('365', $this->service->getPeriod());
     }
@@ -141,7 +141,6 @@ class DashboardPeriodTest extends TestCase
         $exemptClasses = [
             \App\Filament\Widgets\DashboardHeader::class,
             \App\Filament\Widgets\HealthStrip::class,
-            \App\Filament\Widgets\PendingOrdersKpi::class,
             \App\Filament\Widgets\StockAlertWidget::class,
             \App\Filament\Widgets\RecentActivityLog::class,
             \App\Filament\Widgets\DiskSpaceWidget::class,
