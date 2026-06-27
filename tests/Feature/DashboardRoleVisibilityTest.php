@@ -14,7 +14,7 @@ class DashboardRoleVisibilityTest extends TestCase
 
     private const FINANCIAL_WIDGETS = [
         \App\Filament\Widgets\RevenueChart::class,
-        \App\Filament\Widgets\RevenueKpi::class,
+        \App\Filament\Widgets\OrderStatsOverview::class,
         \App\Filament\Widgets\TopManufacturersRevenue::class,
     ];
 

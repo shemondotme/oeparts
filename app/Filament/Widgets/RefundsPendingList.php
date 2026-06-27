@@ -49,9 +49,16 @@ class RefundsPendingList extends TableWidget
             ]);
     }
 
-    protected function getHeaderActions(): array
+    protected function getTableHeaderActions(): array
     {
-        return [$this->getExportActions()];
+        return [
+            $this->getExportActions(),
+            Tables\Actions\Action::make('view_all')
+                ->label('View all')
+                ->icon('heroicon-o-arrow-right')
+                ->link()
+                ->url(\App\Filament\Resources\RefundRequestResource::getUrl('index')),
+        ];
     }
 
     public function table(Table $table): Table
@@ -79,7 +86,18 @@ class RefundsPendingList extends TableWidget
                     ->color('danger'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Days Open')
-                    ->getStateUsing(fn (Order $record): string => (int) $record->created_at->diffInDays(now()) . ' days'),
+                    ->badge()
+                    ->getStateUsing(fn (Order $record): string => (int) $record->created_at->diffInDays(now()) . ' days')
+                    ->color(function (Order $record): string {
+                        $days = (int) $record->created_at->diffInDays(now());
+                        if ($days < 14) {
+                            return 'success';
+                        }
+                        if ($days < 27) {
+                            return 'warning';
+                        }
+                        return 'danger';
+                    }),
             ])
             ->actions([
                 Tables\Actions\Action::make('process')

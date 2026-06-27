@@ -144,11 +144,11 @@
             </div>
             @else
             <div style="position: relative; min-height: 20rem; height: 100%;">
-                <div class="op-chart-empty">
-                    <x-heroicon-o-chart-bar class="w-8 h-8" style="color: var(--widget-accent); opacity: 0.6;" />
-                    <div class="op-chart-empty-title">No data for this period</div>
-                    <div class="op-chart-empty-desc">Once there's activity in this range, it'll show up here.</div>
-                </div>
+                @include('filament.widgets.empty-state', [
+                    'icon' => 'heroicon-o-chart-bar',
+                    'heading' => 'No data for this period',
+                    'description' => "Once there's activity in this range, it'll show up here.",
+                ])
             </div>
             @endif
         </div>

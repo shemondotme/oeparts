@@ -34,23 +34,21 @@ class DashboardLayoutService
      * CLAUDE.md's dashboard dual-source-of-truth rule.
      */
     public const TAB_BLUEPRINT_LAYOUTS = [
-        // TAB 1: COMMAND CENTER — Executive View (10 widgets)
+        // TAB 1: COMMAND CENTER — Executive View (8 widgets)
         // Row 0 — Welcome Header  (w:12, h:2)
         // Row 1 — Health Strip    (w:12, h:1)
-        // Row 2 — 4 KPI cards     (w:3 each, h:2)
+        // Row 2 — Order stats overview + Parts inquiry (w:9+3, h:2)
         // Row 3 — Revenue + Volume charts (w:8+4, h:5)
-        // Row 4 — Order status distribution + Latest customers (w:6+6, h:5/3)
+        // Row 4 — Order status distribution + Latest customers (w:6+6, h:5/5)
         'command-center' => [
             ['id' => 'dashboard_header',          'x' => 0, 'y' => 0,  'w' => 12, 'h' => 2],
             ['id' => 'health_strip',              'x' => 0, 'y' => 2,  'w' => 12, 'h' => 1],
-            ['id' => 'revenue_kpi',               'x' => 0, 'y' => 3,  'w' => 3,  'h' => 2],
-            ['id' => 'new_orders_kpi',            'x' => 3, 'y' => 3,  'w' => 3,  'h' => 2],
-            ['id' => 'pending_orders_kpi',        'x' => 6, 'y' => 3,  'w' => 3,  'h' => 2],
+            ['id' => 'order_stats_overview',      'x' => 0, 'y' => 3,  'w' => 9,  'h' => 2],
             ['id' => 'parts_inquiry',             'x' => 9, 'y' => 3,  'w' => 3,  'h' => 2],
             ['id' => 'revenue_chart',             'x' => 0, 'y' => 5,  'w' => 8,  'h' => 5],
             ['id' => 'order_volume_chart',        'x' => 8, 'y' => 5,  'w' => 4,  'h' => 5],
             ['id' => 'order_status_distribution', 'x' => 0, 'y' => 10, 'w' => 6,  'h' => 5],
-            ['id' => 'latest_customers',          'x' => 6, 'y' => 10, 'w' => 6,  'h' => 3],
+            ['id' => 'latest_customers',          'x' => 6, 'y' => 10, 'w' => 6,  'h' => 5],
         ],
 
         // TAB 2: OPERATIONS — Action queue (6 widgets)
@@ -90,7 +88,7 @@ class DashboardLayoutService
             ['id' => 'recent_activity',     'x' => 0, 'y' => 0, 'w' => 8,  'h' => 4],
             ['id' => 'failed_queue_jobs',   'x' => 8, 'y' => 0, 'w' => 4,  'h' => 4],
             ['id' => 'disk_space',          'x' => 0, 'y' => 4, 'w' => 4,  'h' => 4],
-            ['id' => 'cache_status',        'x' => 4, 'y' => 4, 'w' => 4,  'h' => 2],
+            ['id' => 'cache_status',        'x' => 4, 'y' => 4, 'w' => 4,  'h' => 4],
             ['id' => 'queue_worker_status', 'x' => 8, 'y' => 4, 'w' => 4,  'h' => 4],
             ['id' => 'request_metrics',     'x' => 0, 'y' => 8, 'w' => 12, 'h' => 1],
         ],

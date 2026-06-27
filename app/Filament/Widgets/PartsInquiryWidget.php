@@ -51,6 +51,23 @@ class PartsInquiryWidget extends Widget
 
         $avgHours = round((float) ($d['avgResponseHours'] ?? 0));
 
+        if ($avgHours <= 0) {
+            $avgHoursLabel = 'N/A';
+        } elseif ($avgHours < 24) {
+            $avgHoursLabel = $avgHours . 'h';
+        } else {
+            $days = intdiv($avgHours, 24);
+            $hours = $avgHours % 24;
+            $avgHoursLabel = $hours > 0 ? "{$days}d {$hours}h" : "{$days}d";
+        }
+
+        $avgHoursColor = match (true) {
+            $avgHours <= 0 => 'var(--color-text-muted)',
+            $avgHours <= 4 => 'var(--color-success-600)',
+            $avgHours <= 72 => 'var(--color-warning-600)',
+            default => 'var(--color-danger-600)',
+        };
+
         return [
             'today'          => $d['today'],
             'pending'        => $d['pending'],
@@ -58,6 +75,8 @@ class PartsInquiryWidget extends Widget
             'responseRate'   => $responseRate,
             'belowThreshold' => $responseRate > 0 && $responseRate < 90,
             'avgHours'       => $avgHours,
+            'avgHoursLabel'  => $avgHoursLabel,
+            'avgHoursColor'  => $avgHoursColor,
             'isEmpty'        => $isEmpty,
             'newUrl'         => PartInquiryResource::getUrl('index', [
                 'tableFilters' => ['status' => ['value' => PartInquiryStatus::New->value]],

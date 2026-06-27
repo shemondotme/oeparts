@@ -1938,6 +1938,21 @@ select.fi-select-input {
     overflow: hidden;
 }
 
+/* Table widgets: scroll instead of clip at every viewport, not just the
+   768-1279px media query band — desktop had no scroll rule at all, so rows
+   past the fixed Gridstack cell height (action column included) were just
+   clipped. Scoped to [gs-type="table"] only; chart/KPI/header cells keep
+   the overflow:hidden rules above. */
+#dashboard-canvas .grid-stack-item[gs-type="table"] .fi-section > .fi-section-content-ctn > .fi-section-content {
+    overflow: visible !important;
+}
+
+#dashboard-canvas .grid-stack-item[gs-type="table"] .fi-ta-ctn {
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
 #dashboard-canvas .fi-wi-chart-canvas-ctn {
     min-height: 18rem;
 }
@@ -1982,12 +1997,11 @@ select.fi-select-input {
 
 /* Revenue/money group */
 #dashboard-canvas .grid-stack-item[gs-id="manufacturer_revenue"],
-#dashboard-canvas .grid-stack-item[gs-id="revenue_kpi"]               { --widget-accent: var(--aurora-emerald); --widget-accent-2: var(--aurora-cyan); }
+#dashboard-canvas .grid-stack-item[gs-id="order_stats_overview"]      { --widget-accent: var(--aurora-emerald); --widget-accent-2: var(--aurora-cyan); }
 
 /* Orders group */
 #dashboard-canvas .grid-stack-item[gs-id="recent_orders"],
 #dashboard-canvas .grid-stack-item[gs-id="order_volume_chart"],
-#dashboard-canvas .grid-stack-item[gs-id="new_orders_kpi"],
 #dashboard-canvas .grid-stack-item[gs-id="awaiting_confirmation"],
 #dashboard-canvas .grid-stack-item[gs-id="refunds_pending"]           { --widget-accent: var(--aurora-sky); --widget-accent-2: var(--aurora-indigo); }
 
@@ -2020,7 +2034,6 @@ select.fi-select-input {
 /* ── Tab 1 Command Center: per-blueprint accent assignment (2026) ── */
 #dashboard-canvas .grid-stack-item[gs-id="dashboard_header"]    { --widget-accent: var(--aurora-indigo);  --widget-accent-2: var(--aurora-violet); }
 #dashboard-canvas .grid-stack-item[gs-id="health_strip"]        { --widget-accent: var(--aurora-cyan);    --widget-accent-2: var(--aurora-sky); }
-#dashboard-canvas .grid-stack-item[gs-id="pending_orders_kpi"]  { --widget-accent: var(--aurora-amber);   --widget-accent-2: var(--aurora-rose); }
 #dashboard-canvas .grid-stack-item[gs-id="parts_inquiry"]       { --widget-accent: var(--aurora-violet);  --widget-accent-2: var(--aurora-pink); }
 #dashboard-canvas .grid-stack-item[gs-id="revenue_chart"]       { --widget-accent: var(--aurora-indigo);  --widget-accent-2: var(--aurora-violet); }
 

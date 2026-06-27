@@ -48,9 +48,16 @@ class AbandonedCartWidget extends TableWidget
             ]);
     }
 
-    protected function getHeaderActions(): array
+    protected function getTableHeaderActions(): array
     {
-        return [$this->getExportActions()];
+        return [
+            $this->getExportActions(),
+            Tables\Actions\Action::make('view_all')
+                ->label('View all')
+                ->icon('heroicon-o-arrow-right')
+                ->link()
+                ->url(AbandonedCartResource::getUrl('index')),
+        ];
     }
 
     public function table(Table $table): Table
@@ -92,6 +99,10 @@ class AbandonedCartWidget extends TableWidget
                     ->icon('heroicon-o-bell')
                     ->color('warning')
                     ->size('sm')
+                    ->disabled(fn (Cart $record): bool => $record->user?->email === null)
+                    ->tooltip(fn (Cart $record): ?string => $record->user?->email === null
+                        ? 'No email on file — guest checkout'
+                        : null)
                     ->action(function (Cart $record): void {
                         $record->touch('reminded_at');
                         \Filament\Notifications\Notification::make()

@@ -74,10 +74,10 @@ class OrderStatusDistributionWidget extends ChartWidget implements DrilldownCont
                 OrderStatus::Pending->value         => 'var(--aurora-amber)',
                 OrderStatus::Paid->value            => 'var(--aurora-sky)',
                 OrderStatus::Processing->value      => 'var(--aurora-indigo)',
-                OrderStatus::Shipped->value         => 'var(--aurora-teal)',
-                OrderStatus::Delivered->value       => 'var(--aurora-green)',
-                OrderStatus::Cancelled->value       => 'var(--aurora-red)',
-                OrderStatus::RefundRequested->value => 'var(--aurora-orange)',
+                OrderStatus::Shipped->value         => 'var(--aurora-cyan)',
+                OrderStatus::Delivered->value       => 'var(--color-success-500)',
+                OrderStatus::Cancelled->value       => 'var(--color-danger-500)',
+                OrderStatus::RefundRequested->value => 'var(--aurora-rose)',
                 OrderStatus::Refunded->value        => 'var(--color-text-muted)',
             ];
 

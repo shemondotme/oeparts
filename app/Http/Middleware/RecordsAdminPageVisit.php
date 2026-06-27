@@ -9,7 +9,7 @@ use Filament\Pages\Page;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\Page as ResourcePage;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Records each admin page visit into AdminNavService::recordVisit() for the

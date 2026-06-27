@@ -2,21 +2,13 @@
 
 <div
     x-data="{
-        dark: localStorage.getItem('theme') === 'dark',
+        dark: window.Alpine.store('theme') === 'dark',
         toggle() {
             this.dark = !this.dark;
-            localStorage.setItem('theme', this.dark ? 'dark' : 'light');
-            document.documentElement.classList.toggle('dark', this.dark);
-            window.dispatchEvent(new CustomEvent('theme-changed', { detail: { dark: this.dark } }));
+            window.dispatchEvent(new CustomEvent('theme-changed', { detail: this.dark ? 'dark' : 'light' }));
         },
-        init() {
-            if (this.dark) {
-                document.documentElement.classList.add('dark');
-            }
-        }
     }"
-    x-init="init()"
-    @theme-changed.window="dark = $event.detail.dark ?? false"
+    @theme-changed.window="dark = $event.detail === 'dark'"
 >
     <button
         @click="toggle()"
