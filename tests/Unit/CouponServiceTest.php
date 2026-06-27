@@ -187,6 +187,70 @@ class CouponServiceTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // validate() — personal coupons (B2B per-customer restriction)
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function personal_coupon_is_rejected_for_a_different_customer(): void
+    {
+        $owner = User::factory()->create();
+        $otherUser = User::factory()->create();
+        $coupon = Coupon::factory()->forCustomer($owner)->create(['created_by' => $this->adminId]);
+
+        $result = $this->service->validate($coupon->code, '100.00', $otherUser->id);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('not valid for your account', $result['message']);
+    }
+
+    #[Test]
+    public function personal_coupon_is_rejected_for_guest(): void
+    {
+        $owner = User::factory()->create();
+        $coupon = Coupon::factory()->forCustomer($owner)->create(['created_by' => $this->adminId]);
+
+        $result = $this->service->validate($coupon->code, '100.00', null);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('signed in', $result['message']);
+    }
+
+    #[Test]
+    public function personal_coupon_is_accepted_for_the_matching_customer(): void
+    {
+        $owner = User::factory()->create();
+        $coupon = Coupon::factory()->forCustomer($owner)->fixed()->create([
+            'created_by' => $this->adminId,
+            'discount_value' => 25,
+            'min_order_amount' => null,
+            'usage_limit' => null,
+            'expires_at' => null,
+        ]);
+
+        $result = $this->service->validate($coupon->code, '100.00', $owner->id);
+
+        $this->assertTrue($result['valid']);
+        $this->assertEquals('25.00', $result['discount']);
+    }
+
+    #[Test]
+    public function generic_coupon_remains_usable_by_anyone(): void
+    {
+        $coupon = Coupon::factory()->create([
+            'created_by' => $this->adminId,
+            'user_id' => null,
+            'min_order_amount' => null,
+            'usage_limit' => null,
+            'expires_at' => null,
+        ]);
+        $someUser = User::factory()->create();
+
+        $result = $this->service->validate($coupon->code, '100.00', $someUser->id);
+
+        $this->assertTrue($result['valid']);
+    }
+
+    // -------------------------------------------------------------------------
     // apply() — records usage
     // -------------------------------------------------------------------------
 

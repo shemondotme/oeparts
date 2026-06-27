@@ -32,7 +32,7 @@ class PartInquiryResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Customers';
+        return 'Catalog';
     }
 
     public static function form(Schema $schema): Schema

@@ -43,6 +43,26 @@ class CouponService
             ];
         }
 
+        // 2b. Personal coupon — restricted to one customer
+        if ($coupon->user_id !== null) {
+            if ($userId === null) {
+                return [
+                    'valid' => false,
+                    'coupon' => $coupon,
+                    'discount' => null,
+                    'message' => 'This coupon requires you to be signed in.',
+                ];
+            }
+            if ((int) $coupon->user_id !== $userId) {
+                return [
+                    'valid' => false,
+                    'coupon' => $coupon,
+                    'discount' => null,
+                    'message' => 'This coupon is not valid for your account.',
+                ];
+            }
+        }
+
         // 3. Not expired
         if ($coupon->expires_at && now()->gt($coupon->expires_at)) {
             return [

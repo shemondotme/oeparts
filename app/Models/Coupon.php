@@ -15,7 +15,7 @@ class Coupon extends Model
     protected $fillable = [
         'code', 'name', 'discount_type', 'discount_value',
         'min_order_amount', 'usage_limit', 'usage_limit_per_user',
-        'expires_at', 'is_active', 'created_by',
+        'expires_at', 'is_active', 'created_by', 'user_id',
     ];
 
     protected $casts = [
@@ -29,6 +29,11 @@ class Coupon extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function usages(): HasMany
@@ -53,5 +58,10 @@ class Coupon extends Model
     public function getIsExpiredAttribute(): bool
     {
         return $this->expires_at !== null && $this->expires_at->isPast();
+    }
+
+    public function getIsPersonalAttribute(): bool
+    {
+        return $this->user_id !== null;
     }
 }
