@@ -30,7 +30,7 @@ class TestimonialResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Marketing';
+        return 'Content';
     }
 
     public static function getNavigationSort(): ?int

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\DiscountType;
 use App\Models\Coupon;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -56,6 +57,13 @@ class CouponFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'is_active' => false,
+        ]);
+    }
+
+    public function forCustomer(User $user): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'user_id' => $user->id,
         ]);
     }
 }

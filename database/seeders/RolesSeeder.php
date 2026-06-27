@@ -27,6 +27,8 @@ class RolesSeeder extends Seeder
 
             // Payments
             'view payments',
+            'edit payments',
+            'delete payments',
 
             // Products / Catalog
             'view products',
@@ -190,7 +192,7 @@ class RolesSeeder extends Seeder
             'view conditions', 'create conditions', 'edit conditions',
             'view categories', 'create categories', 'edit categories',
             'view customers', 'edit customers', 'export customers',
-            'view coupons', 'create coupons', 'edit coupons',
+            'view coupons', 'create coupons', 'edit coupons', 'delete coupons',
             'view inquiries', 'edit inquiries',
             'view contact messages', 'edit contact messages',
             'view abandoned carts',
@@ -231,7 +233,7 @@ class RolesSeeder extends Seeder
             'view conditions', 'create conditions', 'edit conditions',
             'view categories', 'create categories', 'edit categories',
             'view customers', 'edit customers', 'export customers',
-            'view coupons', 'create coupons', 'edit coupons',
+            'view coupons', 'create coupons', 'edit coupons', 'delete coupons',
             'view inquiries', 'edit inquiries',
             'view contact messages', 'edit contact messages',
             'view abandoned carts',

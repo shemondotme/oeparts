@@ -116,6 +116,13 @@ class CouponResource extends Resource
                                             ->label('Coupon Active')
                                             ->helperText('Inactive coupons cannot be applied at checkout.')
                                             ->default(true),
+                                        Forms\Components\Select::make('user_id')
+                                            ->label('Restrict to Customer (optional)')
+                                            ->relationship('user', 'name')
+                                            ->searchable()
+                                            ->preload()
+                                            ->nullable()
+                                            ->helperText('Leave empty for a generic coupon anyone can redeem. Select a customer to issue a personal code only that account can use — e.g. a B2B bulk-discount code for one client.'),
                                     ]),
                             ]),
                     ]),
@@ -172,6 +179,10 @@ class CouponResource extends Resource
                 ->icon(fn (bool $state): string => $state ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
                 ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
                 ->alignCenter(),
+            Tables\Columns\TextColumn::make('user.name')
+                ->label('Restricted To')
+                ->placeholder('Anyone')
+                ->toggleable(),
             Tables\Columns\TextColumn::make('expires_at')
                 ->label('Expires')
                 ->dateTime()
@@ -194,6 +205,16 @@ class CouponResource extends Resource
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
+                    ->columnSpan(1),
+                Tables\Filters\TernaryFilter::make('user_id')
+                    ->label('Personal Coupons')
+                    ->placeholder('All')
+                    ->trueLabel('Personal Only')
+                    ->falseLabel('Generic Only')
+                    ->queries(
+                        true: fn ($query) => $query->whereNotNull('user_id'),
+                        false: fn ($query) => $query->whereNull('user_id'),
+                    )
                     ->columnSpan(1),
             ])
             ->filtersFormColumns(2)
