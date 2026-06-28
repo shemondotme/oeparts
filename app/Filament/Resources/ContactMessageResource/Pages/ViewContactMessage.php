@@ -24,6 +24,7 @@ class ViewContactMessage extends ViewRecord
                 ->label('Mark Resolved')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
+                ->authorize('update')
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update(['status' => 'resolved']);

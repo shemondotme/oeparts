@@ -7,6 +7,7 @@ use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
 use App\Filament\Resources\OrderResource\Pages\ListOrders;
+use App\Filament\Resources\OrderResource\Pages\ViewOrder;
 use App\Filament\Resources\RefundRequestResource\Pages\ListRefundRequests;
 use App\Models\Admin;
 use App\Models\Order;
@@ -168,6 +169,85 @@ class CommerceAuthorizationTest extends TestCase
         Livewire::test(ListOrders::class)
             ->callTableAction('sendTracking', $trackingOrder, data: ['tracking_number' => 'DHL-1', 'carrier' => 'DHL']);
         $this->assertSame('DHL-1', $trackingOrder->refresh()->tracking_number);
+    }
+
+    // ── Regression tests: ViewOrder page duplicates 4 table-level custom
+    // actions (toggleUrgent, addNote, generateInvoice, confirmPayment)
+    // without their ->authorize('update') — found during the Phase 6
+    // security audit (Option LL). ──
+
+    #[Test]
+    public function view_only_role_cannot_see_or_execute_view_order_page_actions(): void
+    {
+        Role::create(['name' => 'orders_view_page_test', 'guard_name' => 'admin'])
+            ->givePermissionTo('view orders');
+        $viewOnlyAdmin = $this->adminWithRole('orders_view_page_test');
+        $this->actingAs($viewOnlyAdmin, 'admin');
+
+        $order = Order::factory()->create([
+            'status' => OrderStatus::Pending,
+            'urgent_processing' => false,
+            'invoice_number' => null,
+            'payment_method' => \App\Enums\PaymentMethod::BankTransfer,
+            'payment_status' => PaymentStatus::Pending,
+        ]);
+        Payment::factory()->create([
+            'order_id' => $order->id,
+            'gateway' => PaymentGateway::BankTransfer,
+        ]);
+
+        Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
+            ->assertActionHidden('toggleUrgent')
+            ->assertActionHidden('addNote')
+            ->assertActionHidden('generateInvoice')
+            ->assertActionHidden('confirmPayment');
+
+        $order->refresh();
+        $this->assertFalse($order->urgent_processing);
+        $this->assertNull($order->invoice_number);
+        $this->assertSame(PaymentStatus::Pending, $order->payment_status);
+        $this->assertSame(0, $order->notes()->count());
+    }
+
+    #[Test]
+    public function manager_role_can_see_and_execute_view_order_page_actions(): void
+    {
+        Queue::fake();
+
+        $manager = $this->adminWithRole('manager');
+        $this->actingAs($manager, 'admin');
+
+        $order = Order::factory()->create([
+            'status' => OrderStatus::Pending,
+            'urgent_processing' => false,
+            'invoice_number' => null,
+            'payment_method' => \App\Enums\PaymentMethod::BankTransfer,
+            'payment_status' => PaymentStatus::Pending,
+        ]);
+        Payment::factory()->create([
+            'order_id' => $order->id,
+            'gateway' => PaymentGateway::BankTransfer,
+        ]);
+
+        Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
+            ->assertActionVisible('toggleUrgent')
+            ->callAction('toggleUrgent');
+        $this->assertTrue($order->refresh()->urgent_processing);
+
+        Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
+            ->assertActionVisible('addNote')
+            ->callAction('addNote', data: ['note' => 'test note']);
+        $this->assertSame(1, $order->notes()->count());
+
+        Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
+            ->assertActionVisible('generateInvoice')
+            ->callAction('generateInvoice');
+        $this->assertNotNull($order->refresh()->invoice_number);
+
+        Livewire::test(ViewOrder::class, ['record' => $order->getRouteKey()])
+            ->assertActionVisible('confirmPayment')
+            ->callAction('confirmPayment', data: ['transaction_id' => 'TXN-1']);
+        $this->assertSame(PaymentStatus::Paid, $order->refresh()->payment_status);
     }
 
     // ── Confirmatory test: PaymentResource is intentionally view-only today ──

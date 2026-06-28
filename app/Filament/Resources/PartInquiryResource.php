@@ -66,7 +66,7 @@ class PartInquiryResource extends Resource
                                                 'soon' => 'Soon (within a week)',
                                                 'urgent' => 'Urgent (ASAP)',
                                             ])
-                                            ->readOnly()
+                                            ->disabled()
                                             ->helperText('Customer-specified delivery urgency.'),
                                     ])
                                     ->columns(3),

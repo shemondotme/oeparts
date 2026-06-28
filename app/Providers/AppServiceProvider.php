@@ -78,6 +78,17 @@ class AppServiceProvider extends ServiceProvider
             });
         }
 
+        // Same legacy shim for Infolist TextEntry — found missing while writing a
+        // regression test that actually mounted a ViewRecord page (no existing
+        // test had ever rendered one): every ViewRecord infolist using
+        // ->fontMono() was throwing BadMethodCallException, a real, currently-
+        // live 500 on every "View" click for affected resources (e.g. Orders).
+        if (class_exists(\Filament\Infolists\Components\TextEntry::class)) {
+            \Filament\Infolists\Components\TextEntry::macro('fontMono', function () {
+                return $this->fontFamily('mono');
+            });
+        }
+
         // Register custom macro for Filament Schemas Components to support helperText calls
         if (class_exists(\Filament\Schemas\Components\Component::class)) {
             \Filament\Schemas\Components\Component::macro('helperText', function ($text) {
