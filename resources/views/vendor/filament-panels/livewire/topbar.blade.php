@@ -117,8 +117,6 @@
             {{-- Quick-create dropdown (role-aware) --}}
             <x-admin.quick-create />
 
-            {{-- Custom notification center rendered via TOPBAR_END hook --}}
-
             {{-- Environment indicator --}}
             <x-admin.environment-indicator />
 

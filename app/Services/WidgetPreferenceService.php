@@ -878,7 +878,13 @@ class WidgetPreferenceService
             unset($prefs[$legacy]);
         }
 
-        return $prefs;
+        // dashboard_preferences is shared with AdminNavService, which stores
+        // unrelated sidebar housekeeping (pinned_nav, recent_nav) on the same
+        // column — those keys must never be mistaken for real widget prefs
+        // by callers like DashboardLayoutService::legacySeedWidgetIds(),
+        // which uses emptiness here to decide whether to trust the curated
+        // blueprint layout or fall back to a naive auto-pack.
+        return array_intersect_key($prefs, static::WIDGETS);
     }
 
     private function getDefaultEnabledClasses(): array
