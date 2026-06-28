@@ -103,6 +103,8 @@ class ProductImportService
 
         \Illuminate\Support\Facades\Cache::forget('admin:dashboard:stock_alerts');
         \Illuminate\Support\Facades\Cache::forget('sitemap_parts');
+        app(CacheService::class)->forgetHeroStats();
+        app(CacheService::class)->forgetPopularOems();
 
         return compact('created', 'updated', 'skipped', 'rowErrors');
     }
