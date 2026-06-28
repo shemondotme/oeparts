@@ -32,11 +32,6 @@ class ProcessAirwallexWebhook implements ShouldQueue
     public int $tries = 3;
 
     /**
-     * The number of seconds to wait before retrying the job.
-     */
-    public int $backoff = 60;
-
-    /**
      * Create a new job instance.
      */
     public function __construct(

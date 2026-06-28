@@ -143,7 +143,7 @@ class CustomerResource extends Resource
                     ->withCount('orders')
                     ->withSum(['orders' => fn ($q) => $q->whereIn('status', $paidStatuses)], 'grand_total')
                     ->withAvg(['orders' => fn ($q) => $q->whereIn('status', $paidStatuses)], 'grand_total')
-                    ->with(['orders' => fn ($q) => $q->select('user_id')->latest()->limit(1)]);
+                    ->with(['orders' => fn ($q) => $q->select(['id', 'user_id', 'created_at'])->latest()->limit(1)]);
             })
             ->columns([
                 Tables\Columns\TextColumn::make('name')
