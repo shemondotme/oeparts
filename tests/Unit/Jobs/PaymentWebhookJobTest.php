@@ -50,7 +50,7 @@ class PaymentWebhookJobTest extends TestCase
         $webhookData = ['id' => 'evt_123', 'type' => 'payment_intent.succeeded'];
         $job = new ProcessAirwallexWebhook($webhookData);
 
-        $this->assertEquals(60, $job->backoff);
+        $this->assertEquals([60, 120, 300], $job->backoff());
     }
 
     #[Test]

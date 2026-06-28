@@ -92,6 +92,7 @@ class MenuItemRelationManager extends RelationManager
         // pattern from the persisted-filter/sort/search paginated tables
         // every other resource/relation manager uses.
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('parent'))
             ->recordTitleAttribute('label')
             ->columns([
                 Tables\Columns\TextColumn::make('label')
