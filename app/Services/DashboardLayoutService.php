@@ -280,6 +280,18 @@ class DashboardLayoutService
     {
         $items = [];
 
+        // Blueprint-governed dashboards may deliberately set a widget's h
+        // below its bare registry default_layout (e.g. parts_inquiry at h:2
+        // on Command Center, to sit compactly beside order_stats_overview)
+        // — the floor below must defer to that intentional value instead of
+        // clamping it back up, or every widget below it gets pushed down a
+        // row. Falls back to the bare registry default for non-blueprint
+        // (legacy/custom) dashboards, where it remains a genuine safety net
+        // against a stale saved h smaller than the widget actually needs.
+        $blueprintHeights = isset(self::TAB_BLUEPRINT_LAYOUTS[$dashboard->slug])
+            ? collect(self::TAB_BLUEPRINT_LAYOUTS[$dashboard->slug])->pluck('h', 'id')
+            : collect();
+
         foreach ($dashboard->layout ?? [] as $item) {
             $id = (string) ($item['id'] ?? '');
             $config = WidgetPreferenceService::WIDGETS[$id] ?? null;
@@ -293,9 +305,10 @@ class DashboardLayoutService
             }
 
             $defaultLayout = $config['default_layout'];
+            $heightFloor = $blueprintHeights->get($id, (int) $defaultLayout['h']);
 
             $actualW = (int) ($item['w'] ?? $defaultLayout['w']);
-            $actualH = max((int) ($item['h'] ?? $defaultLayout['h']), (int) $defaultLayout['h']);
+            $actualH = max((int) ($item['h'] ?? $defaultLayout['h']), $heightFloor);
 
             $items[] = [
                 'id' => $id,
@@ -306,7 +319,7 @@ class DashboardLayoutService
                 'w' => $actualW,
                 'h' => $actualH,
                 'minW' => min($actualW, 4),
-                'minH' => (int) $defaultLayout['h'],
+                'minH' => $heightFloor,
             ];
         }
 

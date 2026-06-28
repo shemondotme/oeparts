@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::hex('#F59E0B'),
                 'success' => Color::hex('#10B981'),
                 'danger'  => Color::hex('#EF4444'),
-                'info'    => Color::hex('#0A1228'),
+                'info'    => Color::hex('#185FA5'),
                 'gray'    => Color::Stone,
             ])
             ->font('Geist Sans')
@@ -51,29 +51,12 @@ class AdminPanelProvider extends PanelProvider
                 fn (): string => Blade::render('<x-admin.skip-nav /><x-admin.aria-enhancer />'),
             )
             ->renderHook(
-                PanelsRenderHook::SIMPLE_LAYOUT_START,
-                fn (): string => view('filament.login-banner')->render(),
-            )
-            ->renderHook(
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): string => Blade::render("@vite('resources/css/filament/admin/theme.css')"),
             )
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn (): string => Blade::render("@vite('resources/js/filament/admin/dashboard-canvas.js')"),
-            )
-            ->renderHook(
-                PanelsRenderHook::HEAD_END,
-                // Login.js only on unauthenticated (simple-layout) pages
-                fn (): string => ! filament()->auth()->check()
-                    ? Blade::render("@vite('resources/js/filament/admin/login.js')")
-                    : '',
-            )
-            ->renderHook(
-                PanelsRenderHook::TOPBAR_END,
-                fn (): string => filament()->auth()->check()
-                    ? Blade::render('@livewire(\'notification-center\')')
-                    : '',
             )
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
@@ -88,18 +71,6 @@ class AdminPanelProvider extends PanelProvider
                     : '',
             )
             ->renderHook(
-                PanelsRenderHook::SIDEBAR_NAV_START,
-                fn (): string => filament()->auth()->check()
-                    ? Blade::render('@livewire(\'sidebar-pinned-nav\')')
-                    : '',
-            )
-            ->renderHook(
-                PanelsRenderHook::SIDEBAR_NAV_END,
-                fn (): string => filament()->auth()->check()
-                    ? Blade::render('@livewire(\'sidebar-recent-nav\')')
-                    : '',
-            )
-            ->renderHook(
                 PanelsRenderHook::FOOTER,
                 fn (): string => Blade::render('<x-admin.loading-bar /><x-admin.toast /><x-admin.keyboard-shortcuts />'),
             )
@@ -109,29 +80,18 @@ class AdminPanelProvider extends PanelProvider
             ->favicon(asset('favicon.ico'))
             ->unsavedChangesAlerts()
             ->profile(isSimple: false)
-            ->sidebarWidth('3.5rem') // Rail-only width; flyout panel is position:absolute
             ->spa()
             ->darkMode()
             ->plugins([
                 SpotlightPlugin::make(),
             ])
-            // ->collapsible() intentionally omitted: the custom rail+panel sidebar
-            // (livewire/sidebar.blade.php) ignores it entirely, using Alpine
-            // activeGroup state instead. It only affects Filament's stock
-            // sub-navigation sidebar, which no resource currently uses.
             ->navigationGroups([
-                NavigationGroup::make('Commerce')
-                    ->icon('heroicon-o-shopping-bag'),
-                NavigationGroup::make('Catalog')
-                    ->icon('heroicon-o-book-open'),
-                NavigationGroup::make('Customers')
-                    ->icon('heroicon-o-user-group'),
-                NavigationGroup::make('Marketing')
-                    ->icon('heroicon-o-megaphone'),
-                NavigationGroup::make('Content')
-                    ->icon('heroicon-o-document-text'),
-                NavigationGroup::make('System')
-                    ->icon('heroicon-o-server-stack'),
+                NavigationGroup::make('Commerce'),
+                NavigationGroup::make('Catalog'),
+                NavigationGroup::make('Customers'),
+                NavigationGroup::make('Marketing'),
+                NavigationGroup::make('Content'),
+                NavigationGroup::make('System'),
             ])
             ->navigationItems([])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

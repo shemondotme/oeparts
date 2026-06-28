@@ -10,7 +10,6 @@ import { loginAsSuperAdmin } from './helpers.js';
  * Selectors are taken directly from the live Blade source, not guessed:
  *   resources/views/vendor/filament-panels/livewire/topbar.blade.php
  *   resources/views/components/admin/{quick-create,environment-indicator,theme-toggle,keyboard-shortcuts}.blade.php
- *   resources/views/livewire/notification-center.blade.php
  *   vendor/wire-elements/spotlight/resources/views/spotlight.blade.php
  *
  * Two real bugs were found while writing this suite (event-name mismatch
@@ -327,77 +326,6 @@ test.describe('Dark mode toggle', () => {
         const rightBox = await page.locator('.op-topbar-right').boundingBox();
         // Zones shouldn't overlap.
         expect(leftBox.x + leftBox.width).toBeLessThanOrEqual(rightBox.x);
-    });
-});
-
-test.describe('Notifications bell', () => {
-    test.beforeEach(async ({ page }) => {
-        await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
-    });
-
-    const bell = (page) => page.locator('.op-notification-btn');
-    const panel = (page) => page.locator('.op-nc-panel');
-
-    test('bell is visible', async ({ page }) => {
-        await expect(bell(page)).toBeVisible();
-    });
-
-    test('clicking the bell opens a panel showing notifications or an empty state', async ({ page }) => {
-        await bell(page).click();
-        await expect(panel(page)).toBeVisible();
-
-        const emptyState = panel(page).locator('.op-nc-empty');
-        const items = panel(page).locator('.op-nc-item');
-        const hasEmptyState = await emptyState.count() > 0;
-        const hasItems = await items.count() > 0;
-
-        // Exactly one of these should be true — never neither, never both.
-        expect(hasEmptyState !== hasItems).toBe(true);
-
-        if (hasEmptyState) {
-            await expect(emptyState).toContainText(/all caught up|no new notifications/i);
-        }
-    });
-
-    test('unread badge is visible only when there are unread notifications', async ({ page }) => {
-        const badge = page.locator('.op-notification-badge');
-        const ariaLabel = await bell(page).getAttribute('aria-label');
-        const hasUnreadInLabel = /\(\d+ unread\)/.test(ariaLabel ?? '');
-
-        expect(await badge.count() > 0).toBe(hasUnreadInLabel);
-    });
-
-    test('panel closes on outside click and on Escape', async ({ page }) => {
-        await bell(page).click();
-        await expect(panel(page)).toBeVisible();
-        await page.keyboard.press('Escape');
-        await expect(panel(page)).toBeHidden();
-
-        await bell(page).click();
-        await expect(panel(page)).toBeVisible();
-        await page.locator('.op-topbar-left').click({ position: { x: 5, y: 5 } });
-        await expect(panel(page)).toBeHidden();
-    });
-
-    test('clicking a notification item marks it read or navigates', async ({ page }) => {
-        await bell(page).click();
-        const firstItem = panel(page).locator('.op-nc-item').first();
-
-        if (await firstItem.count() === 0) {
-            test.skip(true, 'No notifications exist in the current dev DB to click — see report.');
-        }
-
-        const viewLink = firstItem.locator('.op-nc-action-link');
-        const markRead = firstItem.locator('.op-nc-mark-read');
-
-        if (await viewLink.count() > 0) {
-            await viewLink.click();
-            await expect(page).not.toHaveURL(/\/admin$/);
-        } else if (await markRead.count() > 0) {
-            await markRead.click();
-            await expect(firstItem).toHaveClass(/is-read/);
-        }
     });
 });
 

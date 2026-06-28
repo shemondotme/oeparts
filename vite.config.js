@@ -17,7 +17,6 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/css/filament/admin/theme.css',
                 'resources/js/filament/admin/dashboard-canvas.js',
-                'resources/js/filament/admin/login.js',
             ],
             refresh: true,
         }),
