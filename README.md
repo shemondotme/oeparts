@@ -112,6 +112,18 @@ The installer will:
 php artisan queue:work redis --queue=critical,default
 ```
 
+In production, run this under a process supervisor so it auto-restarts
+on crash instead of silently stopping all queue processing. A Supervisor
+config template is provided in `deploy/supervisor/oeparts-queue-worker.conf`:
+
+```bash
+cp deploy/supervisor/oeparts-queue-worker.conf /etc/supervisor/conf.d/
+# edit the file and replace /path/to/oeparts with your real deployment path
+supervisorctl reread
+supervisorctl update
+supervisorctl start oeparts-queue-worker:*
+```
+
 ### 5. Schedule the sitemap
 
 Add to crontab:
