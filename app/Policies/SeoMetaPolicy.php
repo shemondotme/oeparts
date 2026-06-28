@@ -7,4 +7,5 @@ namespace App\Policies;
 class SeoMetaPolicy extends BasePolicy
 {
     protected string $model = 'seo_meta';
+    protected ?string $permissionKey = 'seo meta';
 }

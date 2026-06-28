@@ -44,6 +44,9 @@ use App\Models\PartInquiry;
 use App\Models\Product;
 use App\Models\SearchLog;
 use App\Models\Section;
+use App\Models\SeoMeta;
+use App\Models\ShippingMethod;
+use App\Models\ShippingZone;
 use App\Models\Testimonial;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -437,6 +440,64 @@ class ExtendedAuthorizationTest extends TestCase
         $this->assertTrue($catalogAdmin->can('create', Category::class));
         $this->assertTrue($catalogAdmin->can('update', $category));
         $this->assertTrue($catalogAdmin->can('delete', $category));
+    }
+
+    // ── Phase 6 security audit (Option MM): SeoMetaPolicy/ShippingMethodPolicy/
+    // ShippingZonePolicy used the default BasePolicy key (their underscored
+    // $model, e.g. 'seo_meta') with no $permissionKey override, but the
+    // seeded permissions use spaces ('seo meta') — the exact same mismatch
+    // class as RefundRequestPolicy's already-fixed bug. Latent (no seeded
+    // role was ever granted these permissions), but would silently deny
+    // access forever if anyone tried to grant one via the Roles UI.
+
+    #[Test]
+    public function seo_meta_policy_now_matches_seeded_permission_spelling(): void
+    {
+        // Page::factory()'s default 'created_by' => null violates the pages
+        // table's NOT NULL constraint — a pre-existing, unrelated factory
+        // gap (nothing in the suite exercised Page::factory() bare before
+        // this test). Not this chunk's concern; worked around directly.
+        $page = \App\Models\Page::factory()->create(['created_by' => $this->adminWithRole('super_admin')->id]);
+        $seoMeta = SeoMeta::factory()->create(['metable_type' => \App\Models\Page::class, 'metable_id' => $page->id]);
+        $editor = $this->adminWithPermissions('seo_meta_editor_test', ['view seo meta', 'create seo meta', 'edit seo meta', 'delete seo meta']);
+
+        $this->assertTrue($editor->can('viewAny', SeoMeta::class));
+        $this->assertTrue($editor->can('create', SeoMeta::class));
+        $this->assertTrue($editor->can('update', $seoMeta));
+        $this->assertTrue($editor->can('delete', $seoMeta));
+    }
+
+    #[Test]
+    public function shipping_method_policy_now_matches_seeded_permission_spelling(): void
+    {
+        $zone = ShippingZone::factory()->create();
+        $method = ShippingMethod::create([
+            'zone_id' => $zone->id,
+            'name' => ['en' => 'Test Method'],
+            'flat_rate' => '5.00',
+            'estimated_days_min' => 1,
+            'estimated_days_max' => 3,
+            'is_active' => true,
+            'sort_order' => 0,
+        ]);
+        $editor = $this->adminWithPermissions('shipping_method_editor_test', ['view shipping methods', 'create shipping methods', 'edit shipping methods', 'delete shipping methods']);
+
+        $this->assertTrue($editor->can('viewAny', ShippingMethod::class));
+        $this->assertTrue($editor->can('create', ShippingMethod::class));
+        $this->assertTrue($editor->can('update', $method));
+        $this->assertTrue($editor->can('delete', $method));
+    }
+
+    #[Test]
+    public function shipping_zone_policy_now_matches_seeded_permission_spelling(): void
+    {
+        $zone = ShippingZone::factory()->create();
+        $editor = $this->adminWithPermissions('shipping_zone_editor_test', ['view shipping zones', 'create shipping zones', 'edit shipping zones', 'delete shipping zones']);
+
+        $this->assertTrue($editor->can('viewAny', ShippingZone::class));
+        $this->assertTrue($editor->can('create', ShippingZone::class));
+        $this->assertTrue($editor->can('update', $zone));
+        $this->assertTrue($editor->can('delete', $zone));
     }
 
     // ── Customers module deep gap analysis (Option V): 4 bulk actions
