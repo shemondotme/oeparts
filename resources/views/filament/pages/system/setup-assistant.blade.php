@@ -1,4 +1,3 @@
-@include('filament.components.admin-styles')
 <x-filament-panels::page>
     <style>
     .op-action-btn:hover { border-color: var(--color-accent-300) !important; background: var(--color-bg-surface) !important; }

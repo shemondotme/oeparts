@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    @include('filament.components.admin-styles')
     <div class="space-y-6">
         {{-- Header --}}
         <div class="op-card relative overflow-hidden p-6 page-header-gradient page-header-border">

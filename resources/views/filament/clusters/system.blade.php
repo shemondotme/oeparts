@@ -1,4 +1,3 @@
-@include('filament.components.admin-styles')
 <x-filament-panels::page>
     <div class="space-y-6" x-data="{ search: '' }">
         <div class="op-card relative overflow-hidden p-6 page-header-gradient page-header-border">

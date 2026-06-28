@@ -77,6 +77,13 @@
     --color-success-700: #047857;
     --color-success-900: #064E3B;
 
+    /* Semantic aliases — referenced by widget/table blade views */
+    --op-financial-positive: var(--color-success-500);
+    --op-badge-success-bg:   var(--color-success-50);
+    --op-badge-success-text: var(--color-success-700);
+    --op-badge-gray-bg:      var(--color-neutral-50);
+    --op-badge-gray-text:    var(--color-neutral-700);
+
     --color-warning-50:  #FFFBEB;
     --color-warning-100: #FEF3C7;
     --color-warning-500: #F59E0B;
@@ -340,6 +347,10 @@
 
     --sidebar-bg: #F5F3EE;
     --sidebar-bg-dark: #0F172A;
+    /* Fixed regardless of light/dark mode — for text sitting on a
+       deliberately-dark surface like --sidebar-bg-dark or
+       .page-header-gradient (cluster/page headers). */
+    --color-text-on-accent: #FFFFFF;
     --sidebar-width: 17rem;
     --sidebar-collapsed-width: 3.5rem;
     --sidebar-item-height: 2.25rem;
@@ -418,6 +429,12 @@
     --color-success-600: #34D399;
     --color-success-700: #6EE7B7;
     --color-success-900: #A7F3D0;
+
+    --op-financial-positive: var(--color-success-500);
+    --op-badge-success-bg:   var(--color-success-50);
+    --op-badge-success-text: var(--color-success-700);
+    --op-badge-gray-bg:      var(--color-neutral-50);
+    --op-badge-gray-text:    var(--color-neutral-700);
 
     --color-warning-50:  #2A1A05;
     --color-warning-100: #3D2609;
