@@ -114,9 +114,12 @@ class AppServiceProvider extends ServiceProvider
         Section::observe(SectionObserver::class);
         NewsletterCampaign::observe(NewsletterCampaignObserver::class);
 
-        // Force HTTPS in production
         if ($this->app->environment('production')) {
+            // Force HTTPS in production
             URL::forceScheme('https');
+
+            // Fail fast if production is misconfigured to use non-Redis cache/queue/session drivers (CLAUDE.md rule #7)
+            $this->assertProductionUsesRedisDrivers();
         }
 
         // Use the project's custom password-reset route instead of Laravel's default 'password.reset'
@@ -175,5 +178,26 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));
+    }
+
+    /**
+     * Production must use Redis for cache, queue, and session — never the
+     * database/file/array fallbacks config/*.php default to when an env
+     * var is missing. Throws immediately so a misconfigured deploy fails
+     * loudly instead of silently degrading (CLAUDE.md rule #7).
+     */
+    protected function assertProductionUsesRedisDrivers(): void
+    {
+        $drivers = [
+            'cache.default'  => config('cache.default'),
+            'queue.default'  => config('queue.default'),
+            'session.driver' => config('session.driver'),
+        ];
+
+        foreach ($drivers as $key => $driver) {
+            if ($driver !== 'redis') {
+                throw new \RuntimeException("Production requires Redis for {$key}, got '{$driver}'.");
+            }
+        }
     }
 }
