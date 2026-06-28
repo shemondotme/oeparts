@@ -140,15 +140,6 @@ class AppServiceProvider extends ServiceProvider
             return null;
         });
 
-        // Rate limiter for admin login — backup for Filament's built-in Livewire rate limiting.
-        // Filament Login page already calls $this->rateLimit(5) via DanHarrin\LivewireRateLimiting,
-        // but this definition is available if we need throttle middleware elsewhere.
-        RateLimiter::for('admin-login', function (Request $request) {
-            return Limit::perMinute(5)->by(
-                $request->input('email') . '|' . $request->ip()
-            );
-        });
-
         RateLimiter::for('api', fn (Request $r) => Limit::perMinute(60)->by($r->ip()));
 
         RateLimiter::for('admin-api', function (Request $request) {

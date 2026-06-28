@@ -10,6 +10,8 @@ class IpBlocklist extends Model
 {
     use HasFactory;
 
+    const UPDATED_AT = null;
+
     protected $table = 'ip_blocklists';
 
     protected $fillable = ['ip_address', 'reason', 'blocked_by', 'expires_at', 'is_active'];
