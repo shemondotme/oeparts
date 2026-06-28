@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
                 'warning' => Color::hex('#F59E0B'),
                 'success' => Color::hex('#10B981'),
                 'danger'  => Color::hex('#EF4444'),
-                'info'    => Color::hex('#185FA5'),
+                'info'    => Color::Blue,
                 'gray'    => Color::Stone,
             ])
             ->font('Geist Sans')

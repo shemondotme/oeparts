@@ -1,4 +1,3 @@
-@include('filament.components.admin-styles')
 <x-filament-panels::page>
     <div class="space-y-6">
         {{-- Header --}}

@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    @include('filament.components.admin-styles')
     {{-- Header filter controls --}}
     <div class="flex justify-end mb-6">
         <div class="flex items-center gap-2 p-1 rounded-xl" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); box-shadow: var(--shadow-1);">

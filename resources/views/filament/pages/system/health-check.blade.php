@@ -1,5 +1,4 @@
 <x-filament-panels::page>
-    @include('filament.components.admin-styles')
     <style>
     .health-card:hover { border-color: var(--color-accent-300) !important; }
     </style>
