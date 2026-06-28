@@ -39,6 +39,7 @@ class ViewOrder extends ViewRecord
                     ->label(fn () => $record->urgent_processing ? 'Remove Urgent' : 'Mark Urgent')
                     ->icon('heroicon-o-exclamation-triangle')
                     ->color(fn () => $record->urgent_processing ? 'gray' : 'danger')
+                    ->authorize('update')
                     ->action(function (): void {
                         $record = $this->getRecord();
                         $record->urgent_processing = !$record->urgent_processing;
@@ -54,6 +55,7 @@ class ViewOrder extends ViewRecord
                 Actions\Action::make('addNote')
                     ->label('Add Internal Note')
                     ->icon('heroicon-o-chat-bubble-left')
+                    ->authorize('update')
                     ->schema([
                         Forms\Components\Textarea::make('note')
                             ->label('Note')
@@ -78,6 +80,7 @@ class ViewOrder extends ViewRecord
                     ->label('Generate Invoice PDF')
                     ->icon('heroicon-o-document-text')
                     ->color('gray')
+                    ->authorize('update')
                     ->action(function (): void {
                         $record = $this->getRecord();
 
@@ -103,6 +106,7 @@ class ViewOrder extends ViewRecord
                 ->label('Confirm Payment')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
+                ->authorize('update')
                 ->requiresConfirmation()
                 ->modalHeading('Confirm Bank Transfer Payment')
                 ->modalDescription('Mark this order as paid after verifying the bank transfer has been received.')

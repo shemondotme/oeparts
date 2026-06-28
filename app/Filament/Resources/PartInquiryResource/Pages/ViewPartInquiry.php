@@ -24,6 +24,7 @@ class ViewPartInquiry extends ViewRecord
                 ->label('Mark Sourced')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
+                ->authorize('update')
                 ->requiresConfirmation()
                 ->action(function () {
                     $this->record->update(['status' => PartInquiryStatus::Sourced]);

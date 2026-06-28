@@ -11,12 +11,14 @@ use App\Filament\Resources\BlogPostResource\Pages\ListBlogPosts;
 use App\Filament\Resources\CarModelResource\Pages\ListCarModels;
 use App\Filament\Resources\CarrierResource\Pages\ListCarriers;
 use App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages;
+use App\Filament\Resources\ContactMessageResource\Pages\ViewContactMessage;
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
 use App\Filament\Resources\FaqResource\Pages\ListFaqs;
 use App\Filament\Resources\ManufacturerResource\Pages\ListManufacturers;
 use App\Filament\Resources\NewsletterCampaignResource\Pages\ListNewsletterCampaigns;
 use App\Filament\Resources\NewsletterSubscriberResource\Pages\ListNewsletterSubscribers;
 use App\Filament\Resources\PartInquiryResource\Pages\ListPartInquiries;
+use App\Filament\Resources\PartInquiryResource\Pages\ViewPartInquiry;
 use App\Filament\Resources\ProductResource\Pages\ListProducts;
 use App\Filament\Resources\SectionResource\Pages\ListSections;
 use App\Filament\Resources\TestimonialResource\Pages\ListTestimonials;
@@ -198,6 +200,29 @@ class ExtendedAuthorizationTest extends TestCase
         $this->assertSame('read', $message->refresh()->status->value);
     }
 
+    // ── Regression test: ViewContactMessage page duplicates markResolved
+    // without the table-level action's ->authorize('update') — found during
+    // the Phase 6 security audit (Option LL). ──
+
+    #[Test]
+    public function contact_message_view_page_mark_resolved_requires_update_permission(): void
+    {
+        $message = ContactMessage::factory()->create(['status' => ContactStatus::Unread]);
+        $viewOnly = $this->adminWithPermissions('contact_view_page_test', ['view contact messages']);
+        $editor = $this->adminWithRole('support');
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ViewContactMessage::class, ['record' => $message->getRouteKey()])
+            ->assertActionHidden('markResolved');
+        $this->assertSame(ContactStatus::Unread, $message->refresh()->status);
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ViewContactMessage::class, ['record' => $message->getRouteKey()])
+            ->assertActionVisible('markResolved')
+            ->callAction('markResolved');
+        $this->assertSame(ContactStatus::Resolved, $message->refresh()->status);
+    }
+
     #[Test]
     public function part_inquiry_actions_require_update_permission(): void
     {
@@ -212,6 +237,29 @@ class ExtendedAuthorizationTest extends TestCase
         Livewire::test(ListPartInquiries::class)
             ->assertTableActionVisible('mark_sourced', $inquiry)
             ->callTableAction('mark_sourced', $inquiry);
+        $this->assertSame(PartInquiryStatus::Sourced, $inquiry->refresh()->status);
+    }
+
+    // ── Regression test: ViewPartInquiry page duplicates mark_sourced
+    // without the table-level action's ->authorize('update') — found during
+    // the Phase 6 security audit (Option LL). ──
+
+    #[Test]
+    public function part_inquiry_view_page_mark_sourced_requires_update_permission(): void
+    {
+        $inquiry = PartInquiry::factory()->create(['status' => PartInquiryStatus::New]);
+        $viewOnly = $this->adminWithPermissions('inquiries_view_page_test', ['view inquiries']);
+        $editor = $this->adminWithRole('manager');
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ViewPartInquiry::class, ['record' => $inquiry->getRouteKey()])
+            ->assertActionHidden('mark_sourced');
+        $this->assertSame(PartInquiryStatus::New, $inquiry->refresh()->status);
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ViewPartInquiry::class, ['record' => $inquiry->getRouteKey()])
+            ->assertActionVisible('mark_sourced')
+            ->callAction('mark_sourced');
         $this->assertSame(PartInquiryStatus::Sourced, $inquiry->refresh()->status);
     }
 
