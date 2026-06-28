@@ -803,34 +803,4 @@ final class AdminUi
 
         return $items;
     }
-
-    /**
-     * Role-default sidebar nav group to auto-open on first visit (when the
-     * client has no persisted oeparts.navGroup yet). Mirrors
-     * ROLE_DEFAULT_QUICK_CREATE / WidgetPreferenceService::ROLE_DEFAULT_DASHBOARDS'
-     * exact shape and first-matching-role-wins resolution pattern.
-     *
-     * @var array<string, string>
-     */
-    public const ROLE_DEFAULT_NAV_GROUP = [
-        'super_admin' => 'Commerce',
-        'admin' => 'Commerce',
-        'manager' => 'Commerce',
-        'catalog_admin' => 'Catalog',
-        'support' => 'Customers',
-    ];
-
-    /**
-     * Resolve the role-appropriate default-open sidebar nav group label.
-     */
-    public static function defaultNavGroupFor(\App\Models\Admin $admin): string
-    {
-        foreach (array_keys(self::ROLE_DEFAULT_NAV_GROUP) as $role) {
-            if ($admin->hasRole($role)) {
-                return self::ROLE_DEFAULT_NAV_GROUP[$role];
-            }
-        }
-
-        return self::ROLE_DEFAULT_NAV_GROUP['support'];
-    }
 }
