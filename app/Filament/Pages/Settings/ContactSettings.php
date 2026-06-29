@@ -110,6 +110,17 @@ class ContactSettings extends SettingsPage
                             ->maxLength(500)
                             ->default(null),
                     ])->columns(2),
+
+                Section::make('Form Submission')
+                    ->description('Feedback shown to customers after submitting the contact form.')
+                    ->schema([
+                        Forms\Components\Textarea::make('success_message')
+                            ->label('Success Message')
+                            ->rows(2)
+                            ->maxLength(500)
+                            ->columnSpanFull()
+                            ->default('Your message has been sent successfully. We will get back to you soon.'),
+                    ]),
             ]);
     }
 }

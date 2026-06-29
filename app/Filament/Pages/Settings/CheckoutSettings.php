@@ -77,6 +77,24 @@ class CheckoutSettings extends SettingsPage
                             ->minValue(100)
                             ->maxValue(2000)
                             ->default(500),
+
+                        Forms\Components\TextInput::make('proof_max_size_kb')
+                            ->label('Payment Proof Max File Size (KB)')
+                            ->numeric()
+                            ->minValue(100)
+                            ->maxValue(20480)
+                            ->required()
+                            ->helperText('Maximum upload size for bank-transfer payment proof attachments')
+                            ->default(5120),
+
+                        Forms\Components\TextInput::make('guest_password_length')
+                            ->label('Guest Account Generated Password Length')
+                            ->numeric()
+                            ->minValue(8)
+                            ->maxValue(64)
+                            ->required()
+                            ->helperText('Length of the random password generated for guest-checkout accounts')
+                            ->default(12),
                     ])->columns(2),
             ]);
     }

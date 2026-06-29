@@ -31,7 +31,7 @@ class SupplierPerformanceScorecardWidget extends TableWidget
 
     protected function getExportRows(): iterable
     {
-        $expectedDays = (int) settings('order.expected_delivery_days', 5);
+        $expectedDays = (int) settings('orders.expected_delivery_days', 5);
         $periodStart  = $this->periodStart();
 
         return Manufacturer::query()
@@ -107,7 +107,7 @@ class SupplierPerformanceScorecardWidget extends TableWidget
 
     public function table(Table $table): Table
     {
-        $expectedDays = (int) settings('order.expected_delivery_days', 5);
+        $expectedDays = (int) settings('orders.expected_delivery_days', 5);
         $periodStart  = $this->periodStart();
 
         $query = Manufacturer::query()

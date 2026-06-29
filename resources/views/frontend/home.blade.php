@@ -2,19 +2,19 @@
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
 @section('title')
-    {{ trans_field(settings('seo.homepage_title', null)) ?: settings('general.site_name', 'OeParts') . ' — Genuine OEM Auto Parts' }}
+    {{ trans_field(settings('seo.home_title', null)) ?: settings('general.site_name', 'OeParts') . ' — Genuine OEM Auto Parts' }}
 @endsection
 
 @section('meta_description')
-    {{ trans_field(settings('seo.homepage_description', null)) ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.' }}
+    {{ trans_field(settings('seo.home_description', null)) ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.' }}
 @endsection
 
 @section('og_title')
-    {{ trans_field(settings('seo.homepage_title', null)) ?: settings('general.site_name', 'OeParts') . ' — Genuine OEM Auto Parts' }}
+    {{ trans_field(settings('seo.home_title', null)) ?: settings('general.site_name', 'OeParts') . ' — Genuine OEM Auto Parts' }}
 @endsection
 
 @section('og_description')
-    {{ trans_field(settings('seo.homepage_description', null)) ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.' }}
+    {{ trans_field(settings('seo.home_description', null)) ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.' }}
 @endsection
 
 @section('canonical')

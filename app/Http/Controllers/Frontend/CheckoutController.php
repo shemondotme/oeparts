@@ -480,8 +480,13 @@ class CheckoutController extends Controller
         $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
         
+        $rawAllowedPaymentMethods = settings('checkout.allowed_payment_methods', ['card', 'bank_transfer']);
+        $allowedPaymentMethods = is_string($rawAllowedPaymentMethods)
+            ? (json_decode($rawAllowedPaymentMethods, true) ?: ['card', 'bank_transfer'])
+            : (array) $rawAllowedPaymentMethods;
+
         $validated = $request->validate([
-            'payment_method' => 'required|in:' . implode(',', settings('checkout.allowed_payment_methods', ['card', 'bank_transfer'])),
+            'payment_method' => 'required|in:' . implode(',', $allowedPaymentMethods),
             'payment_intent_id' => 'nullable|string|max:255',
             'payment_reference' => 'nullable|string|max:255',
             'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:' . (settings('checkout.proof_max_size_kb', 5120)),

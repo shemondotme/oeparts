@@ -16,7 +16,7 @@ class PartInquiryController extends Controller
     public function store(PartInquiryRequest $request, string $lang)
     {
         // Rate limit: 5 inquiries per hour per IP
-        $maxInquiries = (int) settings('search.inquiry_max_per_email', 5);
+        $maxInquiries = (int) settings('security.inquiry_max_per_email', 5);
         if (!RateLimiter::attempt("inquiry:{$request->ip()}", $maxInquiries, fn() => true, 3600)) {
             return response()->json([
                 'success' => false,
