@@ -102,6 +102,60 @@ class SearchSettings extends SettingsPage
                             ->helperText('Minimum character length of user input before running partial queries')
                             ->default(4),
                     ])->columns(2),
+
+                Section::make('Storefront Search & Popular Results')
+                    ->description('Frontend autocomplete API, results pagination, and popular-search caching.')
+                    ->schema([
+                        Forms\Components\TagsInput::make('supported_languages')
+                            ->label('Supported Autocomplete Languages')
+                            ->helperText('Locale codes the autocomplete API accepts for the q parameter')
+                            ->default(['en', 'de', 'lt', 'fr', 'es']),
+
+                        Forms\Components\TextInput::make('results_limit')
+                            ->label('Default Results Limit')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(500)
+                            ->required()
+                            ->helperText('Default number of search results returned when not paginating')
+                            ->default(50),
+
+                        Forms\Components\TextInput::make('per_page')
+                            ->label('Results per Page')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(200)
+                            ->required()
+                            ->helperText('Items per page on the paginated search results page')
+                            ->default(20),
+
+                        Forms\Components\TextInput::make('popular_days_window')
+                            ->label('Popular Searches Window (Days)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(90)
+                            ->required()
+                            ->helperText('How many days back to look when computing popular searches/products')
+                            ->default(30),
+
+                        Forms\Components\TextInput::make('popular_limit')
+                            ->label('Popular Results Limit')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(50)
+                            ->required()
+                            ->helperText('Maximum number of popular search/product entries to show')
+                            ->default(8),
+
+                        Forms\Components\TextInput::make('cache_ttl_hours')
+                            ->label('Popular Results Cache TTL (Hours)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(168)
+                            ->required()
+                            ->helperText('How long popular-search results are cached before recomputing')
+                            ->default(6),
+                    ])->columns(2),
             ]);
     }
 }

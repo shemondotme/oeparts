@@ -22,7 +22,10 @@ class SearchController extends Controller
     {
         $query = $request->query('q', '');
         $lang = (string) $request->query('lang', 'en');
-        $supportedLanguages = (array) settings('search.supported_languages', ['en', 'de', 'lt', 'fr', 'es']);
+        $rawSupportedLanguages = settings('search.supported_languages', ['en', 'de', 'lt', 'fr', 'es']);
+        $supportedLanguages = is_string($rawSupportedLanguages)
+            ? (json_decode($rawSupportedLanguages, true) ?: ['en', 'de', 'lt', 'fr', 'es'])
+            : (array) $rawSupportedLanguages;
         if (! in_array($lang, $supportedLanguages, true)) {
             $lang = 'en';
         }
@@ -38,7 +41,7 @@ class SearchController extends Controller
         }
 
         // Rate limit autocomplete requests (30 per minute per IP)
-        $maxSearches = (int) settings('search.autocomplete_rate_limit', 30);
+        $maxSearches = (int) settings('search.rate_limit_per_minute', 30);
         if (!RateLimiter::attempt("search:autocomplete:{$request->ip()}", $maxSearches, function () {
             return true;
         }, 60)) {

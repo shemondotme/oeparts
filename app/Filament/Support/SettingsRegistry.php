@@ -10,6 +10,7 @@ use App\Filament\Pages\Settings\CartSettings;
 use App\Filament\Pages\Settings\CheckoutSettings;
 use App\Filament\Pages\Settings\CompanySettings;
 use App\Filament\Pages\Settings\ContactSettings;
+use App\Filament\Pages\Settings\DashboardSettings;
 use App\Filament\Pages\Settings\DatabaseSettings;
 use App\Filament\Pages\Settings\EmailSettings;
 use App\Filament\Pages\Settings\GeneralSettings;
@@ -149,6 +150,15 @@ final class SettingsRegistry
             'description' => 'Cart duration, timeout limits',
             'icon' => 'heroicon-o-shopping-cart',
             'sort' => 40,
+        ],
+        'dashboard-settings' => [
+            'class' => DashboardSettings::class,
+            'section' => 'Store Operations',
+            'title' => 'Dashboard Thresholds',
+            'url' => '/admin/settings/dashboard-settings',
+            'description' => 'Pending order and cart abandonment alert thresholds',
+            'icon' => 'heroicon-o-presentation-chart-line',
+            'sort' => 45,
         ],
         'shipping-settings' => [
             'class' => ShippingSettings::class,

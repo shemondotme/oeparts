@@ -368,11 +368,29 @@ class SettingsSeeder extends Seeder
             ['group' => 'seo', 'key' => 'google_verification',  'value' => '',   'type' => $s],
             ['group' => 'seo', 'key' => 'bing_verification',    'value' => '',   'type' => $s],
 
+            // ── Phase 8 Option SS: settings() calls with no seed row + no UI ──────
+            ['group' => 'cart', 'key' => 'rate_limit_per_minute', 'value' => '60',  'type' => $i],
+            ['group' => 'cart', 'key' => 'max_quantity',          'value' => '999', 'type' => $i],
+            ['group' => 'cart', 'key' => 'guest_cookie_days',     'value' => '7',   'type' => $i],
+            ['group' => 'search', 'key' => 'supported_languages', 'value' => json_encode(['en', 'de', 'lt', 'fr', 'es']), 'type' => $j],
+            ['group' => 'search', 'key' => 'results_limit',        'value' => '50', 'type' => $i],
+            ['group' => 'search', 'key' => 'per_page',              'value' => '20', 'type' => $i],
+            ['group' => 'search', 'key' => 'popular_days_window',  'value' => '30', 'type' => $i],
+            ['group' => 'search', 'key' => 'popular_limit',        'value' => '8',  'type' => $i],
+            ['group' => 'search', 'key' => 'cache_ttl_hours',      'value' => '6',  'type' => $i],
+            ['group' => 'checkout', 'key' => 'allowed_payment_methods', 'value' => json_encode(['card', 'bank_transfer']), 'type' => $j],
+            ['group' => 'checkout', 'key' => 'proof_max_size_kb',      'value' => '5120', 'type' => $i],
+            ['group' => 'checkout', 'key' => 'guest_password_length',  'value' => '12',   'type' => $i],
+            ['group' => 'contact', 'key' => 'success_message', 'value' => 'Your message has been sent successfully. We will get back to you soon.', 'type' => $s],
+            ['group' => 'orders', 'key' => 'expected_delivery_days', 'value' => '5', 'type' => $i],
+
             // ── DASHBOARD (widget thresholds — defaults mirrored in code) ─────────
             ['group' => 'dashboard', 'key' => 'pending_orders_warning',   'value' => '50', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'pending_orders_attention', 'value' => '10', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'backup_stale_hours',       'value' => '26', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],
+            ['group' => 'dashboard', 'key' => 'orders_threshold',         'value' => '50', 'type' => $i],
+            ['group' => 'dashboard', 'key' => 'pending_delayed_minutes',  'value' => '120', 'type' => $i],
         ];
     }
 }

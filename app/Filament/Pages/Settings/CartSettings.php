@@ -77,6 +77,33 @@ class CartSettings extends SettingsPage
                             ->label('Merge Guest Cart on Login')
                             ->helperText('Combines guest cart items with logged-in user cart items')
                             ->default(true),
+
+                        Forms\Components\TextInput::make('rate_limit_per_minute')
+                            ->label('Cart Add Rate Limit (per Minute)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(600)
+                            ->required()
+                            ->helperText('Maximum cart-add requests allowed per minute, per client')
+                            ->default(60),
+
+                        Forms\Components\TextInput::make('max_quantity')
+                            ->label('Maximum Quantity per Line Item')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(10000)
+                            ->required()
+                            ->helperText('Maximum quantity of a single product allowed in one cart line')
+                            ->default(999),
+
+                        Forms\Components\TextInput::make('guest_cookie_days')
+                            ->label('Guest Cart Cookie Lifetime (Days)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(90)
+                            ->required()
+                            ->helperText('How long the guest cart identifier cookie persists')
+                            ->default(7),
                     ])->columns(2),
             ]);
     }

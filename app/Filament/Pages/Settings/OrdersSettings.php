@@ -80,6 +80,15 @@ class OrdersSettings extends SettingsPage
                             ->minValue(0)
                             ->prefix('€')
                             ->default(5.00),
+
+                        Forms\Components\TextInput::make('expected_delivery_days')
+                            ->label('Expected Supplier Delivery (Days)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(90)
+                            ->required()
+                            ->helperText('Baseline days used to score supplier on-time delivery performance')
+                            ->default(5),
                     ])->columns(2),
 
                 Section::make('Documents & Numbering Prefixes')

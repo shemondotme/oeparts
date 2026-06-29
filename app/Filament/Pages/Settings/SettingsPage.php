@@ -443,6 +443,9 @@ abstract class SettingsPage extends Page
                 'max_steps' => 3,
                 'max_note_length' => 500,
                 'default_payment_method' => 'card',
+                'allowed_payment_methods' => ['card', 'bank_transfer'],
+                'proof_max_size_kb' => 5120,
+                'guest_password_length' => 12,
             ],
             'payment' => [
                 'airwallex_environment' => 'demo',
@@ -475,6 +478,7 @@ abstract class SettingsPage extends Page
                 'map_longitude' => '',
                 'map_zoom' => '12',
                 'working_hours' => '',
+                'success_message' => 'Your message has been sent successfully. We will get back to you soon.',
             ],
             'menu' => [
                 'menu_style' => 'modern',
@@ -514,6 +518,12 @@ abstract class SettingsPage extends Page
                 'cross_ref_enabled' => true,
                 'partial_match_enabled' => true,
                 'partial_match_min_length' => 4,
+                'supported_languages' => ['en', 'de', 'lt', 'fr', 'es'],
+                'results_limit' => 50,
+                'per_page' => 20,
+                'popular_days_window' => 30,
+                'popular_limit' => 8,
+                'cache_ttl_hours' => 6,
             ],
             'part_inquiry' => [
                 'response_hours' => 48,
@@ -575,6 +585,7 @@ abstract class SettingsPage extends Page
                 'order_number_padding' => 6,
                 'invoice_number_prefix' => 'INV-',
                 'rma_number_prefix' => 'RMA-',
+                'expected_delivery_days' => 5,
             ],
             'cart' => [
                 'expiry_days' => 30,
@@ -583,6 +594,14 @@ abstract class SettingsPage extends Page
                 'otp_required_guest' => true,
                 'coupon_enabled' => true,
                 'merge_on_login' => true,
+                'rate_limit_per_minute' => 60,
+                'max_quantity' => 999,
+                'guest_cookie_days' => 7,
+            ],
+            'dashboard' => [
+                'orders_threshold' => 50,
+                'pending_delayed_minutes' => 120,
+                'cart_abandoned_hours' => 2,
             ],
             'seo' => [
                 'default_robots' => 'index,follow',

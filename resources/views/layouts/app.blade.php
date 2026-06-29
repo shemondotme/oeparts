@@ -425,7 +425,7 @@
         style="background-color: {{ settings('announcement.color', '#F59E0B') }}; color: {{ settings('announcement.text_color', '#1E293B') }}"
         class="text-sm text-center py-2 px-4 relative"
     >
-        <span>{{ trans_field(settings('announcement.text', null)) }}</span>
+        <span>{{ settings_trans('announcement.text') }}</span>
         @if(settings('announcement.dismissable', true))
         <button
             @click="visible = false; localStorage.setItem('announcement_dismissed', '1')"
