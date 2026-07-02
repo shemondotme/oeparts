@@ -678,14 +678,17 @@ class OrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', OrderStatus::Pending)->count() ?: null;
+        return \App\Support\NavBadge::count('orders_pending', fn () => static::getModel()::where('status', OrderStatus::Pending)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $count = static::getModel()::where('status', OrderStatus::Pending)->count();
+        return (int) \App\Support\NavBadge::count('orders_pending', fn () => static::getModel()::where('status', OrderStatus::Pending)->count()) > 10 ? 'danger' : 'warning';
+    }
 
-        return $count > 10 ? 'danger' : 'warning';
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Orders awaiting processing';
     }
 
     public static function makeChangeStatusAction(): Actions\Action
@@ -735,6 +738,19 @@ class OrderResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['order_number', 'customer_name', 'guest_email'];
+        // 'customer_name' is not a real column (orders has no such column) — it
+        // threw "Unknown column orders.customer_name" on every order search.
+        // The stored customer name lives in 'shipping_name'.
+        return ['order_number', 'shipping_name', 'guest_email'];
+    }
+
+    public static function getGlobalSearchResultDetails(\Illuminate\Database\Eloquent\Model $record): array
+    {
+        $status = $record->status;
+
+        return [
+            'Status' => \Illuminate\Support\Str::headline($status instanceof \BackedEnum ? $status->value : (string) $status),
+            'Total' => format_money($record->grand_total),
+        ];
     }
 }

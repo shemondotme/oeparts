@@ -3,14 +3,20 @@
 ])
 
 @php
-    $styles = match ($status instanceof \BackedEnum ? $status->value : $status) {
-        'active', 'published', 'paid', 'delivered', 'completed', 'success' => 'background: var(--color-success-50, #f0fdf4); color: var(--color-success-800, #166534); border-color: var(--color-success-200, #bbf7d0);',
-        'pending', 'scheduled', 'processing', 'warning' => 'background: var(--color-warning-50, #fffbeb); color: var(--color-warning-800, #92400e); border-color: var(--color-warning-200, #fde68a);',
-        'inactive', 'draft', 'cancelled', 'failed', 'danger' => 'background: var(--color-danger-50, #fef2f2); color: var(--color-danger-800, #991b1b); border-color: var(--color-danger-200, #fecaca);',
-        default => 'background: var(--color-bg-inset); color: var(--color-text-muted); border-color: var(--color-border-default);',
+    $key = $status instanceof \BackedEnum ? $status->value : $status;
+
+    $classes = match ($key) {
+        'active', 'published', 'paid', 'delivered', 'completed', 'success'
+            => 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800',
+        'pending', 'scheduled', 'processing', 'warning'
+            => 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
+        'inactive', 'draft', 'cancelled', 'failed', 'danger'
+            => 'bg-rose-50 text-rose-800 border-rose-200 dark:bg-rose-950 dark:text-rose-300 dark:border-rose-800',
+        default
+            => 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
     };
 @endphp
 
-<span {{ $attributes->merge(['class' => "inline-flex items-center rounded border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide", 'style' => $styles]) }}>
-    {{ $slot->isEmpty() ? ucwords(str_replace('_', ' ', $status instanceof \BackedEnum ? $status->value : $status)) : $slot }}
+<span {{ $attributes->merge(['class' => "inline-flex items-center rounded border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wide {$classes}"]) }}>
+    {{ $slot->isEmpty() ? ucwords(str_replace('_', ' ', $key)) : $slot }}
 </span>

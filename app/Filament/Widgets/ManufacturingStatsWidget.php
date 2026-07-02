@@ -24,7 +24,9 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
 
     protected ?string $heading = 'Manufacturing';
 
-    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
+    // Full-width so the 3 stats lay out horizontally (matches the other
+    // full-width stat strips) instead of stacking in a half-width column.
+    protected int|string|array $columnSpan = 'full';
 
     public function getStats(): array
     {

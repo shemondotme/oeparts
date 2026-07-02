@@ -44,6 +44,10 @@ return [
             'driver'   => 'session',
             'provider' => 'admins',
         ],
+        'sanctum' => [                  // API token auth
+            'driver'   => 'sanctum',
+            'provider' => 'admins',
+        ],
     ],
 
     /*

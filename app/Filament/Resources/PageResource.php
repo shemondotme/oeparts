@@ -32,14 +32,16 @@ class PageResource extends Resource
         return 'heroicon-o-document';
     }
 
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return null;
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 30;
+        return 10;
     }
 
     public static function getRecordTitleAttribute(): ?string
@@ -265,17 +267,6 @@ class PageResource extends Resource
             'view'   => Pages\ViewPage::route('/{record}'),
             'edit'   => Pages\EditPage::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('status', ContentStatus::Published)->count();
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

@@ -2,11 +2,13 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Enums\SettingType;
 use App\Filament\Clusters\Settings as SettingsCluster;
 use App\Models\ActivityLog;
 use App\Models\Admin;
 use App\Models\Setting;
 use App\Services\SettingsService;
+use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
@@ -396,225 +398,29 @@ abstract class SettingsPage extends Page
         ];
     }
 
+    /**
+     * Derived directly from SettingsSeeder::definitions() — the actual
+     * source of truth that populates the database — rather than a
+     * separately hand-maintained list. A hardcoded duplicate here is
+     * exactly how 18 of 30 groups drifted (some down to zero protection;
+     * see ADMIN_PANEL_MASTER_WORKFLOW.md Option TT) before this refactor.
+     */
     protected function getFactoryDefaults(): array
     {
-        return match (static::$settingsGroup) {
-            'general' => [
-                'site_name' => 'OeParts',
-                'site_url' => config('app.url', 'http://localhost'),
-                'default_locale' => 'en',
-                'timezone' => 'UTC',
-                'date_format' => 'Y-m-d',
-                'currency' => 'EUR',
-                'currency_symbol' => '€',
-                'tagline' => 'Premium OEM Auto Parts',
-            ],
-            'tax' => [
-                'default_vat_rate' => '21',
-                'price_display' => 'inc_vat',
-                'vat_validation_enabled' => false,
-                'b2b_exempt_on_valid_vat' => false,
-            ],
-            'shipping' => [
-                'free_shipping_threshold' => '200',
-                'handling_fee' => '0',
-                'nudge_enabled' => true,
-                'default_origin_country' => 'DE',
-            ],
-            'auth' => [
-                'otp_length' => 6,
-                'otp_expiry_minutes' => 10,
-                'otp_max_attempts' => 5,
-                'otp_resend_cooldown' => 30,
-                'customer_password_min' => 8,
-                'admin_password_min' => 12,
-                'customer_session_lifetime' => 120,
-                'guest_checkout_enabled' => true,
-                'registration_enabled' => true,
-            ],
-            'email' => [
-                'smtp_port' => '587',
-                'smtp_encryption' => 'tls',
-                'admin_notify_new_order' => true,
-                'admin_notify_new_inquiry' => true,
-            ],
-            'checkout' => [
-                'timeout_minutes' => 30,
-                'max_steps' => 3,
-                'max_note_length' => 500,
-                'default_payment_method' => 'card',
-                'allowed_payment_methods' => ['card', 'bank_transfer'],
-                'proof_max_size_kb' => 5120,
-                'guest_password_length' => 12,
-            ],
-            'payment' => [
-                'airwallex_environment' => 'demo',
-                'card_enabled' => true,
-                'bank_transfer_enabled' => true,
-                'bank_reference_prefix' => 'OEP-',
-            ],
-            'store' => [
-                'timezone' => 'UTC',
-                'date_format' => 'Y-m-d',
-                'currency' => 'EUR',
-                'currency_symbol' => '€',
-                'decimals' => '2',
-            ],
-            'company' => [
-                'company_name' => 'OeParts',
-                'company_reg_number' => '',
-                'company_vat_number' => '',
-                'company_address' => '',
-                'company_bank_name' => '',
-                'company_bank_iban' => '',
-            ],
-            'contact' => [
-                'email' => 'info@oeparts.lt',
-                'phone' => '+370 600 00000',
-                'address' => '',
-                'contact_form_enabled' => true,
-                'contact_form_recipient' => 'info@oeparts.lt',
-                'map_latitude' => '',
-                'map_longitude' => '',
-                'map_zoom' => '12',
-                'working_hours' => '',
-                'success_message' => 'Your message has been sent successfully. We will get back to you soon.',
-            ],
-            'menu' => [
-                'menu_style' => 'modern',
-                'enable_mega_menu' => false,
-                'sticky_header' => true,
-                'mobile_breakpoint' => '1024',
-            ],
-            'social_links' => [
-                'facebook_url' => '',
-                'instagram_url' => '',
-                'youtube_url' => '',
-                'linkedin_url' => '',
-            ],
-            'stats_counter' => [
-                'products_count' => '',
-                'customers_count' => '',
-                'years_in_business' => '',
-                'show_products' => true,
-                'show_customers' => true,
-                'show_years' => true,
-            ],
-            'integrations' => [
-                'gtm_id' => '',
-                'ga4_measurement_id' => '',
-                'fb_pixel_id' => '',
-                'recaptcha_site_key' => '',
-                'recaptcha_secret_key' => '',
-            ],
-            'search' => [
-                'min_chars' => 3,
-                'autocomplete_count' => 8,
-                'rate_limit_per_minute' => 60,
-                'max_results' => 50,
-                'log_searches' => true,
-                'log_failed' => true,
-                'log_retention_days' => 30,
-                'cross_ref_enabled' => true,
-                'partial_match_enabled' => true,
-                'partial_match_min_length' => 4,
-                'supported_languages' => ['en', 'de', 'lt', 'fr', 'es'],
-                'results_limit' => 50,
-                'per_page' => 20,
-                'popular_days_window' => 30,
-                'popular_limit' => 8,
-                'cache_ttl_hours' => 6,
-            ],
-            'part_inquiry' => [
-                'response_hours' => 48,
-                'guest_inquiries_allowed' => true,
-                'rate_limit_per_hour' => 10,
-            ],
-            'performance' => [
-                'cache_driver' => 'redis',
-                'cache_ttl_settings' => 5,
-                'cache_ttl_sections' => 60,
-                'cache_ttl_manufacturers' => 1440,
-                'cache_settings' => true,
-                'cache_sections' => true,
-                'cache_manufacturers' => true,
-            ],
-            'newsletter' => [
-                'rate_limit_per_hour' => 30,
-                'rate_window_seconds' => 3600,
-                'double_opt_in' => true,
-            ],
-            'security' => [
-                'login_max_attempts' => 5,
-                'login_window_minutes' => 15,
-                'inquiry_max_per_email' => 5,
-                'ip_blocklist_enabled' => true,
-                'honeypot_enabled' => true,
-                'csrf_enabled' => true,
-                'force_https' => true,
-                'admin_2fa_required' => false,
-            ],
-            'maintenance' => [
-                'enabled' => false,
-                'show_estimated_time' => true,
-            ],
-            'sections' => [
-                'testimonials_limit' => 5,
-                'faq_limit' => 10,
-                'blog_limit' => 6,
-                'manufacturers_limit' => 12,
-            ],
-            'announcement' => [
-                'enabled' => false,
-                'dismissable' => true,
-                'color' => 'warning',
-            ],
-            'appearance' => [
-                'primary_color' => '#1d4ed8',
-                'custom_css_enabled' => false,
-            ],
-            'orders' => [
-                'bank_transfer_expiry_hours' => 48,
-                'customer_cancel_window_hours' => 24,
-                'refund_window_days' => 30,
-                'minimum_order_amount' => '0',
-                'auto_complete_days' => 14,
-                'urgent_processing_enabled' => false,
-                'urgent_processing_fee' => '0',
-                'order_number_prefix' => 'OEP-',
-                'order_number_padding' => 6,
-                'invoice_number_prefix' => 'INV-',
-                'rma_number_prefix' => 'RMA-',
-                'expected_delivery_days' => 5,
-            ],
-            'cart' => [
-                'expiry_days' => 30,
-                'max_items' => 50,
-                'checkout_timeout_minutes' => 30,
-                'otp_required_guest' => true,
-                'coupon_enabled' => true,
-                'merge_on_login' => true,
-                'rate_limit_per_minute' => 60,
-                'max_quantity' => 999,
-                'guest_cookie_days' => 7,
-            ],
-            'dashboard' => [
-                'orders_threshold' => 50,
-                'pending_delayed_minutes' => 120,
-                'cart_abandoned_hours' => 2,
-            ],
-            'seo' => [
-                'default_robots' => 'index,follow',
-                'maintenance_noindex' => true,
-                'google_ping_enabled' => true,
-                'sitemap_search_log_days' => 7,
-            ],
-            'preloader' => [
-                'enabled' => true,
-                'min_display_ms' => 300,
-                'max_display_ms' => 3000,
-            ],
-            default => [],
+        return collect(SettingsSeeder::definitions())
+            ->where('group', static::$settingsGroup)
+            ->mapWithKeys(fn (array $row) => [$row['key'] => static::castDefinitionValue($row['value'], $row['type'])])
+            ->all();
+    }
+
+    private static function castDefinitionValue(mixed $value, string $type): mixed
+    {
+        return match ($type) {
+            SettingType::Boolean->value => in_array($value, ['1', 1, true], true),
+            SettingType::Integer->value => (int) $value,
+            SettingType::Decimal->value => (float) $value,
+            SettingType::Json->value => json_decode($value, true) ?? [],
+            default => $value, // string, encrypted — encrypted defaults are seeded as empty placeholders, never decrypted here
         };
     }
 

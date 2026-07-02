@@ -30,8 +30,6 @@ class SearchIntelligenceReport extends Page
 
     public string $period = '30';
 
-    public bool $showTable = false;
-
     protected static bool $shouldRegisterNavigation = true;
 
     public static function getNavigationLabel(): string
@@ -51,13 +49,13 @@ class SearchIntelligenceReport extends Page
                 ->label('Export CSV')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('gray')
-                ->action('exportCsv'),
+                ->action(fn () => $this->exportCsv()),
         ];
     }
 
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $start = Carbon::now()->subDays((int) $this->period);
+        $start = ($this->period === '1' ? Carbon::today() : Carbon::now()->subDays((int) $this->period));
 
         $data = \App\Models\SearchLog::where('created_at', '>=', $start)
             ->select('search_query', DB::raw('COUNT(*) as count'))
@@ -80,51 +78,6 @@ class SearchIntelligenceReport extends Page
         ]);
     }
 
-    public function toggleView(): void
-    {
-        $this->showTable = !$this->showTable;
-    }
-
-    public function getTotalSearches(): int
-    {
-        $start = Carbon::now()->subDays((int) $this->period);
-
-        return \App\Models\SearchLog::where('created_at', '>=', $start)->count();
-    }
-
-    public function getUnresolvedSearches(): int
-    {
-        $start = Carbon::now()->subDays((int) $this->period);
-
-        return FailedSearchLog::where('created_at', '>=', $start)
-            ->where('inquiry_submitted', false)
-            ->count();
-    }
-
-    public function getTopSearches(): array
-    {
-        $start = Carbon::now()->subDays((int) $this->period);
-
-        return \App\Models\SearchLog::where('created_at', '>=', $start)
-            ->select('search_query', DB::raw('COUNT(*) as count'))
-            ->groupBy('search_query')
-            ->orderByDesc('count')
-            ->limit(15)
-            ->get()
-            ->toArray();
-    }
-
-    public function getFailedQueries(): array
-    {
-        $start = Carbon::now()->subDays((int) $this->period);
-
-        return FailedSearchLog::where('created_at', '>=', $start)
-            ->where('inquiry_submitted', false)
-            ->select('search_query', DB::raw('COUNT(*) as count'))
-            ->groupBy('search_query')
-            ->orderByDesc('count')
-            ->limit(10)
-            ->get()
-            ->toArray();
-    }
+    // KPIs and the two query tables are native Filament widgets
+    // (App\Filament\Widgets\Reports\Search*), rendered by the page view.
 }

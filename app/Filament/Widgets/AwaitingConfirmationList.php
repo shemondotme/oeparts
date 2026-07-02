@@ -3,18 +3,24 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
-use App\Filament\Concerns\HasWidgetExport;
 use App\Models\Order;
 use App\Services\OrderService;
 use Filament\Notifications\Notification;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class AwaitingConfirmationList extends TableWidget
 {
     use Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use Concerns\InteractsWithDashboardCache;
 
     protected static bool $isLazy = true;
 
@@ -31,32 +37,18 @@ class AwaitingConfirmationList extends TableWidget
         return 'Orders pending admin confirmation';
     }
 
-    protected function getExportHeaders(): array
+    protected function getTableHeading(): string
     {
-        return ['Order #', 'Customer', 'Status', 'Total', 'Placed'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return Order::query()
-            ->whereIn('status', [OrderStatus::Paid->value, OrderStatus::Processing->value])
+        $count = Order::whereIn('status', [OrderStatus::Paid->value, OrderStatus::Processing->value])
             ->where('created_at', '>=', now()->subDays(7))
-            ->with(['user'])
-            ->latest()
-            ->get()
-            ->map(fn (Order $order): array => [
-                $order->order_number,
-                $order->shipping_name ?? $order->user?->name ?? $order->guest_email ?? '—',
-                $order->status instanceof OrderStatus ? $order->status->name : (string) $order->status,
-                format_money($order->grand_total),
-                $order->created_at?->format('d M Y H:i') ?? '—',
-            ]);
+            ->count();
+
+        return 'Awaiting Confirmation' . ($count > 0 ? " ({$count})" : '');
     }
 
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -74,26 +66,31 @@ class AwaitingConfirmationList extends TableWidget
                     ->where('created_at', '>=', now()->subDays(7))
                     ->with(['user'])
                     ->latest()
-                    ->limit(8)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
-                    ->label('Order #')
-                    ->extraAttributes(['class' => 'oem-number']),
-                Tables\Columns\TextColumn::make('customer_name')
-                    ->label('Customer')
-                    ->getStateUsing(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—')
-                    ->limit(20),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('order_number')
+                    ->label('Order')
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—'),
+                TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
+                    ->icon(fn (mixed $state): string => ($state instanceof OrderStatus ? $state->value : $state) === 'processing' ? 'heroicon-m-cog-6-tooth' : 'heroicon-m-banknotes')
                     ->color(fn (mixed $state): string => $state instanceof OrderStatus ? $state->color() : 'gray'),
-                Tables\Columns\TextColumn::make('grand_total')
+                TextColumn::make('grand_total')
                     ->label('Total')
                     ->formatStateUsing(fn (Order $record): string => format_money($record->grand_total))
-                    ->fontMono(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Waiting')
-                    ->since(),
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description(fn (Order $record): string => $record->created_at?->diffForHumans() ?? '—')
+                    ->alignEnd()
+                    ->summarize(
+                        Sum::make()
+                            ->label('Pending value')
+                            ->formatStateUsing(fn ($state): string => format_money($state))
+                    ),
             ])
             ->actions([
                 Tables\Actions\Action::make('approve')
@@ -133,6 +130,8 @@ class AwaitingConfirmationList extends TableWidget
                             ->send();
                     }),
             ])
+            ->recordClasses(fn (Order $record): ?string => (int) $record->created_at->diffInDays(now()) >= 3 ? 'op-row-warn' : null)
+            ->striped()
             ->paginated(false)
             ->searchable(false)
             ->emptyStateIcon('heroicon-o-check-circle')

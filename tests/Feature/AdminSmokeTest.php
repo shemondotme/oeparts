@@ -32,7 +32,7 @@ class AdminSmokeTest extends TestCase
             \Database\Seeders\SectionsSeeder::class,
         ]);
 
-        $this->admin = Admin::where('email', 'admin@oeparts.test')->firstOrFail();
+        $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
 
         $this->actingAs($this->admin, 'admin');
 
@@ -46,8 +46,6 @@ class AdminSmokeTest extends TestCase
     {
         $response = $this->get('/admin');
         $response->assertStatus(200);
-        $response->assertSee('Manage Widgets');
-        $response->assertSee('fi-header-actions-ctn');
     }
 
     // ── Widget Default Visibility ───────────────────────────────────────────────
@@ -55,51 +53,47 @@ class AdminSmokeTest extends TestCase
     #[Test]
     public function default_widget_visibility_is_correct(): void
     {
-        $service = app(\App\Services\WidgetPreferenceService::class);
+        $widgets = \App\Services\WidgetPreferenceService::WIDGETS;
 
-        // Admin has no preferences saved, so defaults apply
-        $enabled = $service->getSortedEnabledClasses();
+        // Always-on widgets
+        $this->assertTrue($widgets['dashboard_header']['default_visible']);
+        $this->assertTrue($widgets['health_strip']['default_visible']);
 
-        $visibleIds = [];
-        foreach (\App\Services\WidgetPreferenceService::WIDGETS as $id => $config) {
-            if ($config['default_visible']) {
-                $visibleIds[] = $id;
-            }
-        }
+        // Business overview (default visible)
+        $this->assertTrue($widgets['order_stats_overview']['default_visible']);
+        $this->assertTrue($widgets['revenue_chart']['default_visible']);
+        $this->assertTrue($widgets['order_volume_chart']['default_visible']);
 
-        $this->assertCount(count($visibleIds), $enabled, 'Only default-visible widgets should be enabled');
+        // Needs attention (default visible)
+        $this->assertTrue($widgets['abandoned_carts']['default_visible']);
+        $this->assertTrue($widgets['awaiting_confirmation']['default_visible']);
+        $this->assertTrue($widgets['refunds_pending']['default_visible']);
+        $this->assertTrue($widgets['new_messages']['default_visible']);
+        $this->assertTrue($widgets['stock_alert']['default_visible']);
 
-        // Essential widgets are visible
-        $this->assertContains(\App\Filament\Widgets\OrderStatsOverview::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\RevenueChart::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\RecentOrdersList::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\TopSearchedOems::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\FailedSearchesWidget::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\CacheStatusWidget::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\HealthStrip::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\OrderVolumeChart::class, $enabled);
-        $this->assertContains(\App\Filament\Widgets\TopManufacturersRevenue::class, $enabled);
+        // Live activity (default visible)
+        $this->assertTrue($widgets['recent_orders']['default_visible']);
 
-        // Non-essential widgets are hidden by default
-        $this->assertNotContains(\App\Filament\Widgets\NewsletterGrowthWidget::class, $enabled);
-        $this->assertNotContains(\App\Filament\Widgets\ManufacturingStatsWidget::class, $enabled);
+        // Catalog & Search (not default visible - opt-in)
+        $this->assertFalse($widgets['top_searches']['default_visible']);
+        $this->assertFalse($widgets['failed_searches']['default_visible']);
+        $this->assertFalse($widgets['manufacturer_revenue']['default_visible']);
+
+        // System Health (not default visible - opt-in)
+        $this->assertFalse($widgets['cache_status']['default_visible']);
     }
 
     #[Test]
-    public function widget_preferences_can_be_saved(): void
+    public function widget_period_can_be_saved(): void
     {
         $service = app(\App\Services\WidgetPreferenceService::class);
 
-        // Toggle one widget off
-        $service->toggle('manufacturer_revenue', false);
+        // Save and retrieve period
+        $service->savePeriod('7');
+        $this->assertSame('7', $service->getPeriod());
 
-        $this->assertFalse($service->isEnabled(\App\Filament\Widgets\TopManufacturersRevenue::class));
-
-        // Set sort order via legacy ID (maps to order_stats_overview)
-        $service->setSortOrder('kpi_stats', 10);
-        $sorted = $service->getSortedWidgets();
-        $kpi = current(array_filter($sorted, fn ($w) => $w['id'] === 'order_stats_overview'));
-        $this->assertEquals(10, $kpi['sort']);
+        $service->savePeriod('30');
+        $this->assertSame('30', $service->getPeriod());
     }
 
     // ── Resource Index Pages ────────────────────────────────────────────────────
@@ -111,13 +105,13 @@ class AdminSmokeTest extends TestCase
             '/admin/products',
             '/admin/car-models',
             '/admin/manufacturers',
-            '/admin/blog-posts',
-            '/admin/sections',
-            '/admin/pages',
-            '/admin/faqs',
-            '/admin/testimonials',
-            '/admin/menus',
-            '/admin/media-files',
+            '/admin/content/blog-posts',
+            '/admin/content/sections',
+            '/admin/content/pages',
+            '/admin/content/faqs',
+            '/admin/content/testimonials',
+            '/admin/content/menus',
+            '/admin/content/media-files',
             '/admin/newsletter-subscribers',
             '/admin/abandoned-carts',
             '/admin/email-logs',
@@ -140,6 +134,12 @@ class AdminSmokeTest extends TestCase
             '/admin/contact-messages',
             '/admin/refund-requests',
             '/admin/admins',
+            '/admin/conditions',
+            '/admin/shipping-methods',
+            '/admin/payments',
+            '/admin/roles',
+            '/admin/translations',
+            '/admin/newsletter-campaigns',
         ];
 
         foreach ($pages as $url) {
@@ -157,12 +157,12 @@ class AdminSmokeTest extends TestCase
             '/admin/products/create',
             '/admin/car-models/create',
             '/admin/manufacturers/create',
-            '/admin/blog-posts/create',
-            '/admin/sections/create',
-            '/admin/pages/create',
-            '/admin/faqs/create',
-            '/admin/testimonials/create',
-            '/admin/menus/create',
+            '/admin/content/blog-posts/create',
+            '/admin/content/sections/create',
+            '/admin/content/pages/create',
+            '/admin/content/faqs/create',
+            '/admin/content/testimonials/create',
+            '/admin/content/menus/create',
             '/admin/newsletter-subscribers/create',
             '/admin/languages/create',
             '/admin/carriers/create',
@@ -215,7 +215,7 @@ class AdminSmokeTest extends TestCase
         foreach (['manager', 'catalog_admin', 'support'] as $role) {
             $roleAdmin = Admin::create([
                 'name' => ucfirst($role) . ' Test',
-                'email' => $role . '@oeparts.test',
+                'email' => $role . '-reject@oeparts.test',
                 'password' => bcrypt('password'),
             ]);
             $roleAdmin->assignRole($role);
@@ -303,6 +303,40 @@ class AdminSmokeTest extends TestCase
     }
 
     #[Test]
+    public function system_cluster_pages_reject_unauthorized_roles(): void
+    {
+        // System cluster pages are gated to super_admin OR users with
+        // 'view system information' permission. Confirm non-super_admin
+        // roles without explicit permission are rejected.
+        $pages = [
+            '/admin/system/health-check-dashboard',
+            '/admin/system/cache-dashboard',
+            '/admin/system/permission-matrix',
+            '/admin/system/failed-jobs-page',
+        ];
+
+        foreach (['manager', 'catalog_admin', 'support'] as $role) {
+            $roleAdmin = Admin::create([
+                'name' => ucfirst($role) . ' System Test',
+                'email' => $role . '-system@oeparts.test',
+                'password' => bcrypt('password'),
+            ]);
+            $roleAdmin->assignRole($role);
+
+            auth('admin')->login($roleAdmin);
+
+            foreach ($pages as $url) {
+                $response = $this->get($url);
+                $response->assertStatus(403, "Role '{$role}' should be denied {$url}");
+            }
+
+            auth('admin')->logout();
+        }
+
+        $this->actingAs($this->admin, 'admin');
+    }
+
+    #[Test]
     public function reports_cluster_pages_return_200(): void
     {
         // The legacy report_pages_return_200() test above was a deliberate
@@ -384,7 +418,7 @@ class AdminSmokeTest extends TestCase
 
         $pages = [
             "/admin/products/{$product->id}/edit",
-            "/admin/sections/{$section->id}/edit",
+            "/admin/content/sections/{$section->id}/edit",
             "/admin/admins/{$this->admin->id}/edit",
         ];
 
@@ -508,76 +542,14 @@ class AdminSmokeTest extends TestCase
         );
     }
 
-    // ── Layout Save — Junk ID Rejection ────────────────────────────────────────
+    // ── Topbar ──────────────────────────────────────────────────────────────────
 
     #[Test]
-    public function save_layout_with_junk_id_is_silently_rejected(): void
-    {
-        $service = app(\App\Services\DashboardLayoutService::class);
-        $dashboard = $service->ensureDefaultDashboard($this->admin);
-
-        $result = $service->saveLayout($this->admin, $dashboard->id, [
-            ['id' => 'totally_bogus_widget_id', 'x' => 0, 'y' => 0, 'w' => 6, 'h' => 4],
-            ['id' => '../../../etc/passwd',     'x' => 0, 'y' => 0, 'w' => 6, 'h' => 4],
-            ['id' => '<script>alert(1)</script>', 'x' => 0, 'y' => 0, 'w' => 6, 'h' => 4],
-        ]);
-
-        $this->assertEmpty($result, 'Unknown widget IDs must all be stripped from layout');
-        $this->assertEmpty($dashboard->fresh()->layout, 'Dashboard layout must be empty after junk-only save');
-    }
-
-    #[Test]
-    public function save_layout_mixes_valid_and_junk_ids_keeps_only_valid(): void
-    {
-        $service = app(\App\Services\DashboardLayoutService::class);
-        $dashboard = $service->ensureDefaultDashboard($this->admin);
-
-        $result = $service->saveLayout($this->admin, $dashboard->id, [
-            ['id' => 'dashboard_header',  'x' => 0, 'y' => 0, 'w' => 12, 'h' => 2],
-            ['id' => 'totally_fake',      'x' => 0, 'y' => 4, 'w' => 6,  'h' => 4],
-            ['id' => 'revenue_chart',     'x' => 0, 'y' => 2, 'w' => 8,  'h' => 4],
-        ]);
-
-        $ids = array_column($result, 'id');
-        $this->assertContains('dashboard_header', $ids);
-        $this->assertContains('revenue_chart', $ids);
-        $this->assertNotContains('totally_fake', $ids);
-    }
-
-    // ── Chrome Layout ───────────────────────────────────────────────────────────
-
-    #[Test]
-    public function topbar_has_expected_zones(): void
+    public function topbar_renders_in_dashboard(): void
     {
         $response = $this->get('/admin');
         $response->assertStatus(200);
-        $response->assertSee('op-topbar-left', false);
-        $response->assertSee('op-topbar-center', false);
-        $response->assertSee('op-topbar-right', false);
-    }
-
-    #[Test]
-    public function quick_create_is_role_aware(): void
-    {
-        $catalogAdmin = Admin::create([
-            'name'     => 'Catalog Admin',
-            'email'    => 'catalog@oeparts.test',
-            'password' => bcrypt('password'),
-        ]);
-        $catalogAdmin->assignRole('catalog_admin');
-
-        // Log in as catalog_admin in the admin guard so the Blade component sees it.
-        auth('admin')->login($catalogAdmin);
-
-        try {
-            $html = (string) \Illuminate\Support\Facades\Blade::render('<x-admin.quick-create />');
-            $this->assertStringNotContainsString('/admin/filament/orders/create', $html);
-            // Catalog admin DOES get the product link
-            $this->assertStringContainsString('/admin/products/create', $html);
-        } finally {
-            auth('admin')->logout();
-            $this->actingAs($this->admin, 'admin');
-        }
+        $response->assertSee('fi-topbar', false);
     }
 
     #[Test]

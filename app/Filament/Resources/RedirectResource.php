@@ -30,7 +30,7 @@ class RedirectResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return 'Administration';
     }
 
     public static function getNavigationSort(): ?int

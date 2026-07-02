@@ -2,18 +2,24 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
+use App\Enums\OrderStatus;
+use App\Filament\Resources\OrderResource;
 use App\Models\Order;
-use Filament\Actions\ViewAction;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class RecentOrdersList extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -26,31 +32,9 @@ class RecentOrdersList extends TableWidget
 
     protected static ?string $heading = 'Recent Orders';
 
-    protected function getExportHeaders(): array
-    {
-        return ['Order #', 'Customer', 'Total', 'Status', 'Date'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return Order::query()
-            ->with(['user'])
-            ->where('created_at', '>=', $this->periodStart())
-            ->latest()
-            ->get()
-            ->map(fn (Order $o) => [
-                $o->order_number,
-                $o->shipping_name ?? $o->user?->name ?? $o->guest_email ?? '—',
-                format_money($o->grand_total),
-                $o->status instanceof \App\Enums\OrderStatus ? $o->status->value : ($o->status ?? '—'),
-                $o->created_at?->format('d M Y H:i') ?? '—',
-            ]);
-    }
-
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -59,7 +43,7 @@ class RecentOrdersList extends TableWidget
         ];
     }
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
@@ -67,28 +51,35 @@ class RecentOrdersList extends TableWidget
             ->query(
                 Order::query()
                     ->with(['user'])
-                    ->where('created_at', '>=', $this->periodStart())
                     ->latest()
-                    ->limit(5)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
-                    ->label('Order #')
+                // Fixed, aligned columns (not Split) so status/amount line up
+                // across rows; ->description() keeps the 2-line card richness.
+                TextColumn::make('order_number')
+                    ->label('Order')
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—')
                     ->searchable()
                     ->copyable()
-                    ->copyMessage('Order number copied')
-                    ->extraAttributes(['class' => 'oem-number']),
-                Tables\Columns\TextColumn::make('customer_name')
-                    ->label('Customer')
-                    ->getStateUsing(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—')
-                    ->limit(20),
-                Tables\Columns\TextColumn::make('grand_total')
-                    ->label('Total')
-                    ->getStateUsing(fn (Order $record): string => format_money($record->grand_total))
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                    ->copyMessage('Order number copied'),
+                TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
-                    ->color(fn (mixed $state): string => match ($state instanceof \App\Enums\OrderStatus ? $state->value : $state) {
+                    ->icon(fn (mixed $state): string => match ($state instanceof OrderStatus ? $state->value : $state) {
+                        'pending' => 'heroicon-m-clock',
+                        'paid' => 'heroicon-m-banknotes',
+                        'processing' => 'heroicon-m-cog-6-tooth',
+                        'shipped' => 'heroicon-m-truck',
+                        'delivered' => 'heroicon-m-check-circle',
+                        'cancelled' => 'heroicon-m-x-circle',
+                        'refund_requested' => 'heroicon-m-receipt-refund',
+                        'refunded' => 'heroicon-m-arrow-uturn-left',
+                        default => 'heroicon-m-ellipsis-horizontal',
+                    })
+                    ->color(fn (mixed $state): string => match ($state instanceof OrderStatus ? $state->value : $state) {
                         'pending' => 'warning',
                         'paid' => 'info',
                         'processing' => 'primary',
@@ -99,25 +90,24 @@ class RecentOrdersList extends TableWidget
                         'refunded' => 'gray',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
-                    ->since()
-                    ->sortable(),
+                TextColumn::make('grand_total')
+                    ->label('Total')
+                    ->formatStateUsing(fn (Order $record): string => format_money($record->grand_total))
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description(fn (Order $record): string => $record->created_at?->diffForHumans() ?? '—')
+                    ->alignEnd()
+                    ->summarize(
+                        Sum::make()
+                            ->label('Total')
+                            ->formatStateUsing(fn ($state): string => format_money($state))
+                    ),
             ])
-            ->actions([
-                ViewAction::make()
-                    ->url(fn (Order $record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record])),
-            ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-shopping-bag',
-                    'heading' => 'No recent orders',
-                    'description' => 'Create your first order to see metrics here.',
-                    'ctaLabel' => 'Create Order',
-                    'ctaUrl' => \App\Filament\Resources\OrderResource::getUrl('create'),
-                ])
-            )
-            ->emptyStateDescription('')
+            ->recordUrl(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record]))
+            ->striped()
+            ->emptyStateIcon('heroicon-o-shopping-bag')
+            ->emptyStateHeading('No orders yet')
+            ->emptyStateDescription('New orders will appear here as they come in.')
             ->searchable(false)
             ->paginated(false);
     }

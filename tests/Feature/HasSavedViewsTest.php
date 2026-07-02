@@ -28,7 +28,7 @@ class HasSavedViewsTest extends TestCase
             \Database\Seeders\AdminSeeder::class,
         ]);
 
-        $this->admin = Admin::where('email', 'admin@oeparts.test')->firstOrFail();
+        $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
         $this->actingAs($this->admin, 'admin');
 
         $this->instance = new HasSavedViewsTestable;

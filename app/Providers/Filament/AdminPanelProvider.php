@@ -2,14 +2,14 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Clusters\Reports;
-use App\Filament\Clusters\Settings;
 use App\Filament\Pages\Dashboard;
+use App\Filament\Pages\System\HelpPage;
+use App\Filament\Pages\System\ServerMonitor;
+use Filament\Navigation\MenuItem;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -23,9 +23,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Session\Middleware\AuthenticateSession;
-use Illuminate\Support\Facades\View;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use pxlrbt\FilamentSpotlight\SpotlightPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -39,62 +37,77 @@ class AdminPanelProvider extends PanelProvider
             ->login(\App\Filament\Pages\Auth\CustomLogin::class)
             ->simplePageMaxContentWidth(Width::Medium)
             ->colors([
-                'primary' => Color::hex('#0A1228'),
-                'warning' => Color::hex('#F59E0B'),
-                'success' => Color::hex('#10B981'),
-                'danger'  => Color::hex('#EF4444'),
+                'primary' => Color::Indigo,
+                'gray'    => Color::Zinc,
+                'danger'  => Color::Rose,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
                 'info'    => Color::Blue,
-                'gray'    => Color::Stone,
             ])
-            ->font('Geist Sans')
-            ->renderHook(
-                PanelsRenderHook::BODY_START,
-                fn (): string => Blade::render('<x-admin.skip-nav /><x-admin.aria-enhancer />'),
-            )
             ->renderHook(
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): string => Blade::render("@vite('resources/css/filament/admin/theme.css')"),
             )
-            ->renderHook(
-                PanelsRenderHook::HEAD_END,
-                fn (): string => Blade::render("@vite('resources/js/filament/admin/dashboard-canvas.js')"),
-            )
-            ->renderHook(
-                PanelsRenderHook::TOPBAR_END,
-                fn (): string => filament()->auth()->check()
-                    ? Blade::render('@livewire(\'health-indicator\')')
-                    : '',
-            )
-            ->renderHook(
-                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-                fn (): string => filament()->auth()->check()
-                    ? Blade::render('@livewire(\'jump-to-oem\')')
-                    : '',
-            )
-            ->renderHook(
-                PanelsRenderHook::FOOTER,
-                fn (): string => Blade::render('<x-admin.loading-bar /><x-admin.toast /><x-admin.keyboard-shortcuts />'),
-            )
             ->brandName('OeParts')
-            ->brandLogo(fn () => view('filament.brand'))
-            ->brandLogoHeight('2.5rem')
+            ->brandLogo(fn () => view('filament.brand-logo'))
+            ->brandLogoHeight('1.9rem')
             ->favicon(asset('favicon.ico'))
             ->unsavedChangesAlerts()
             ->profile(isSimple: false)
             ->spa()
             ->darkMode()
-            ->plugins([
-                SpotlightPlugin::make(),
+            // Let power users collapse the sidebar to icons for more workspace.
+            // No group icons are set (rule #36) — item icons are kept, which is
+            // what the collapsed rail shows.
+            ->sidebarCollapsibleOnDesktop()
+            // Native bell icon + notifications panel in the topbar. Fed by
+            // App\Support\AdminNotifier from observers (new orders, refunds…).
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
+            // Topbar user-menu quick links (account/profile already added by
+            // ->profile()). Storefront opens the live site in a new tab.
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label('View storefront')
+                    // Storefront routes are language-prefixed ({lang}); pass a
+                    // locale so URL generation doesn't throw.
+                    ->url(fn (): string => route('frontend.home', ['lang' => app()->getLocale()]), shouldOpenInNewTab: true)
+                    ->icon('heroicon-o-arrow-top-right-on-square'),
+                MenuItem::make()
+                    ->label('Help & docs')
+                    ->url(fn (): string => HelpPage::getUrl())
+                    ->icon('heroicon-o-question-mark-circle'),
+                MenuItem::make()
+                    ->label('System status')
+                    ->url(fn (): string => ServerMonitor::getUrl())
+                    ->icon('heroicon-o-server-stack')
+                    ->visible(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false),
             ])
+            // Topbar layout (native components via render hooks):
+            //   [logo] [env badge] … [search] [+ New] [bell] [avatar]
+            // Env badge sits right after the brand logo; the quick-create
+            // button sits right after global search, before the bell.
+            ->renderHook(
+                PanelsRenderHook::TOPBAR_LOGO_AFTER,
+                fn (): string => Blade::render('@include(\'filament.topbar.env-badge\')'),
+            )
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
+                fn (): string => Blade::render('@include(\'filament.topbar.quick-create\')'),
+            )
             ->navigationGroups([
                 NavigationGroup::make('Commerce'),
                 NavigationGroup::make('Catalog'),
                 NavigationGroup::make('Customers'),
                 NavigationGroup::make('Marketing'),
-                NavigationGroup::make('Content'),
-                NavigationGroup::make('System'),
+                // Administration (config/logs/SEO) starts collapsed to declutter
+                // the dense sidebar; the daily-work groups above stay expanded.
+                // (The old 'CMS' group was folded into the Content cluster.)
+                NavigationGroup::make('Administration')->collapsed(),
             ])
-            ->navigationItems([])
+            // Widget Preferences moved from here to a "Customize" button in the
+            // Dashboard page header (App\Filament\Pages\Dashboard) for
+            // discoverability.
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')

@@ -31,16 +31,14 @@ class AdminResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     protected static ?int $navigationSort = 20;
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('is_active', false)->count();
-
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('admins_inactive', fn () => static::getModel()::where('is_active', false)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string

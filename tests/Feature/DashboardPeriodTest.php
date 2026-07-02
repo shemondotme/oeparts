@@ -72,23 +72,15 @@ class DashboardPeriodTest extends TestCase
     }
 
     #[Test]
-    public function meta_period_survives_widget_toggle(): void
+    public function meta_period_survives_admin_model_save(): void
     {
         $this->service->savePeriod('90');
 
-        // toggle() rewrites dashboard_preferences — _meta must be preserved
-        $this->service->toggle('revenue_chart', false);
+        // Saving the admin model must not clobber _meta.period
+        $this->admin->touch();
+        $this->admin->save();
 
         $this->assertSame('90', $this->service->getPeriod());
-    }
-
-    #[Test]
-    public function meta_period_survives_sort_order_change(): void
-    {
-        $this->service->savePeriod('365');
-        $this->service->setSortOrder('order_stats_overview', 5);
-
-        $this->assertSame('365', $this->service->getPeriod());
     }
 
     #[Test]

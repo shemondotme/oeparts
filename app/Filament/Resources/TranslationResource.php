@@ -27,7 +27,7 @@ class TranslationResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     protected static ?int $navigationSort = 70;

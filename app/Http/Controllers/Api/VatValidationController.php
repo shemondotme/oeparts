@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Services\ViesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +12,7 @@ use Illuminate\Support\Facades\Log;
  * 
  * Provides real-time VAT number validation via EU VIES service.
  */
-class VatValidationController extends Controller
+class VatValidationController extends ApiController
 {
     public function __construct(
         private ViesService $viesService

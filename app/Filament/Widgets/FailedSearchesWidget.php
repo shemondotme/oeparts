@@ -2,10 +2,15 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\PartInquiryResource;
 use App\Models\FailedSearchLog;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -13,11 +18,18 @@ class FailedSearchesWidget extends TableWidget
 {
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
         return 'Searches with zero results';
+    }
+
+    protected function getTableHeading(): string
+    {
+        $count = FailedSearchLog::where('created_at', '>=', $this->periodStart())->count();
+
+        return 'Failed Searches (Sourcing Opportunities)' . ($count > 0 ? " ({$count})" : '');
     }
 
     protected ?string $pollingInterval = '120s';
@@ -28,28 +40,9 @@ class FailedSearchesWidget extends TableWidget
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
-    protected function getExportHeaders(): array
-    {
-        return ['OEM Number', 'Language', 'Date'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return FailedSearchLog::query()
-            ->where('created_at', '>=', $this->periodStart())
-            ->latest()
-            ->get()
-            ->map(fn (FailedSearchLog $row) => [
-                $row->search_query,
-                $row->lang ?? '—',
-                $row->created_at?->format('d M Y H:i') ?? '—',
-            ]);
-    }
-
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -65,22 +58,24 @@ class FailedSearchesWidget extends TableWidget
                 FailedSearchLog::query()
                     ->where('created_at', '>=', $this->periodStart())
                     ->latest()
-                    ->limit(8)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('search_query')
-                    ->label('OEM Number')
-                    ->searchable()
-                    ->extraAttributes(['class' => 'oem-number']),
-                Tables\Columns\TextColumn::make('lang')
-                    ->label('Language')
+                TextColumn::make('search_query')
+                    ->label('OEM / Query')
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description('no results — sourcing opportunity')
+                    ->searchable(),
+                TextColumn::make('lang')
+                    ->label('Lang')
                     ->badge()
-                    ->color('gray')
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->color('gray'),
+                TextColumn::make('created_at')
+                    ->label('Searched')
                     ->since()
-                    ->sortable(),
+                    ->color('gray')
+                    ->alignEnd(),
             ])
             ->actions([
                 Tables\Actions\Action::make('create_product')
@@ -96,15 +91,10 @@ class FailedSearchesWidget extends TableWidget
                     ->size('sm')
                     ->url(fn ($record): string => PartInquiryResource::getUrl('create', ['data' => ['search' => $record->search_query]])),
             ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-hand-thumb-up',
-                    'heading' => 'No failed searches',
-                    'description' => 'Customers are finding what they need!',
-                    'ctaLabel' => '',
-                    'ctaUrl' => '',
-                ])
-            )
+            ->striped()
+            ->emptyStateIcon('heroicon-o-magnifying-glass-circle')
+            ->emptyStateHeading('No failed searches')
+            ->emptyStateDescription('Every search in this period returned results.')
             ->searchable(false)
             ->paginated(false);
     }

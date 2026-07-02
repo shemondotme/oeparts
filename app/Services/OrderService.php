@@ -41,15 +41,24 @@ class OrderService
     ) {}
 
     /**
-     * Create an order from checkout session data.
+     * Create an order from checkout data.
      *
-     * @param array $checkoutData  Full checkout session data array
+     * @param array $checkoutData  Full checkout data array
      * @param Cart $cart           The validated cart with items loaded
+     * @param int|null $userId    Explicit user ID — null for guest checkout
+     * @param string|null $ipAddress Client IP — null uses request()->ip()
+     * @param array|null $utmParams  UTM tracking params — null reads from session
      * @return Order
      *
      * @throws \RuntimeException on validation failure
      */
-    public function createFromCheckout(array $checkoutData, Cart $cart): Order
+    public function createFromCheckout(
+        array $checkoutData,
+        Cart $cart,
+        ?int $userId = null,
+        ?string $ipAddress = null,
+        ?array $utmParams = null,
+    ): Order
     {
         $data = $checkoutData['data'] ?? $checkoutData;
 
@@ -60,7 +69,7 @@ class OrderService
             }
         }
 
-        return DB::transaction(function () use ($checkoutData, $cart) {
+        return DB::transaction(function () use ($checkoutData, $cart, $userId, $ipAddress, $utmParams) {
             $data = $checkoutData['data'] ?? $checkoutData;
             $cart->loadMissing('items.product.manufacturer');
 
@@ -91,9 +100,18 @@ class OrderService
             ])));
 
             // Create the order record
+            $resolvedUserId = $userId ?? auth()->id();
+            $resolvedIp = $ipAddress ?? request()->ip();
+            $utm = $utmParams ?? [
+                'source'   => session('utm_source'),
+                'medium'   => session('utm_medium'),
+                'campaign' => session('utm_campaign'),
+                'content'  => session('utm_content'),
+            ];
+
             $order = Order::create([
                 'order_number'                 => $this->sequenceService->nextOrderNumber(),
-                'user_id'                      => auth()->id(),
+                'user_id'                      => $resolvedUserId,
                 'guest_email'                  => $data['guest_email'] ?? null,
                 'status'                       => OrderStatus::Pending,
                 'payment_method'               => $paymentMethod,
@@ -118,11 +136,11 @@ class OrderService
                 'vat_exempt'                   => $data['vat_exempt'] ?? false,
                 'is_b2b'                       => $data['is_b2b'] ?? !empty($data['vat_number']),
                 'customer_note'                => $data['customer_note'] ?? null,
-                'ip_address'                   => request()->ip(),
-                'utm_source'                   => session('utm_source'),
-                'utm_medium'                   => session('utm_medium'),
-                'utm_campaign'                 => session('utm_campaign'),
-                'utm_content'                  => session('utm_content'),
+                'ip_address'                   => $resolvedIp,
+                'utm_source'                   => $utm['source'] ?? null,
+                'utm_medium'                   => $utm['medium'] ?? null,
+                'utm_campaign'                 => $utm['campaign'] ?? null,
+                'utm_content'                  => $utm['content'] ?? null,
             ]);
 
             // Create order items from cart items

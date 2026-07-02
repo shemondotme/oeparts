@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\System\CacheDashboard;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
@@ -10,12 +11,14 @@ class CacheStatusWidget extends BaseWidget
 {
     use Concerns\HasWidgetRoles;
     use Concerns\InteractsWithDashboardCache;
+    use Concerns\HasMonitoringVisuals;
 
     protected static bool $isLazy = false;
 
     protected ?string $pollingInterval = '60s';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    // Full-width so the 3 stats lay out horizontally (System Health strip).
+    protected int | string | array $columnSpan = 'full';
 
     protected static ?int $sort = -28;
 
@@ -70,16 +73,22 @@ class CacheStatusWidget extends BaseWidget
 
             return [
                 Stat::make('Driver', ucfirst($d['driver']))
-                    ->description($d['configured'] ? 'Configured' : 'Fallback driver')
-                    ->descriptionIcon($d['configured'] ? 'heroicon-o-check-circle' : 'heroicon-o-exclamation-triangle')
-                    ->color($healthColor),
+                    ->description($this->statusDescription($d['configured'] ? 'Configured' : 'Fallback driver', live: $d['configured']))
+                    ->descriptionIcon($d['configured'] ? null : 'heroicon-o-exclamation-triangle')
+                    ->color($healthColor)
+                    ->extraAttributes($this->alertAccent($d['configured'] ? null : 'warning'))
+                    ->url(CacheDashboard::getUrl()),
                 Stat::make('Cache Keys', number_format($d['keys']))
                     ->description('Total stored entries')
                     ->descriptionIcon('heroicon-o-circle-stack')
+                    ->chart($this->rollingSamples('cache_keys', $d['keys']))
+                    ->chartColor('info')
                     ->color('info'),
                 Stat::make('Hit Rate', $d['hitRate'] > 0 ? "{$d['hitRate']}%" : '—')
                     ->description($d['hitRate'] > 80 ? 'Healthy' : ($d['hitRate'] > 0 ? 'Below optimal' : 'Tracking disabled (file cache)'))
                     ->descriptionIcon('heroicon-o-chart-bar-square')
+                    ->chart($d['hitRate'] > 0 ? $this->rollingSamples('cache_hitrate', $d['hitRate']) : [0, 0])
+                    ->chartColor($d['hitRate'] > 80 ? 'success' : ($d['hitRate'] > 0 ? 'warning' : 'gray'))
                     ->color($d['hitRate'] > 80 ? 'success' : ($d['hitRate'] > 0 ? 'warning' : 'gray')),
             ];
         } catch (\Throwable $e) {

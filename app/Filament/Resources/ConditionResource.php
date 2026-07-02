@@ -32,19 +32,7 @@ class ConditionResource extends Resource
 
     public static function getNavigationSort(): ?int
     {
-        return 40;
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('is_active', true)->count();
-
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
+        return 45;
     }
 
     public static function getRecordTitleAttribute(): ?string
@@ -119,7 +107,7 @@ class ConditionResource extends Resource
                                             ->helperText('Badge text color (hex).'),
                                         Forms\Components\Placeholder::make('preview')
                                             ->label('Preview')
-                                            ->content(fn (Forms\Get $get) => sprintf(
+                                            ->content(fn (\Filament\Schemas\Components\Utilities\Get $get) => sprintf(
                                                 '<span class="inline-flex items-center rounded px-2 py-0.5 bp-spec-mono font-bold" style="background-color: %s; color: %s;">%s</span>',
                                                 $get('bg_color') ?? '#DCFCE7',
                                                 $get('text_color') ?? '#16A34A',

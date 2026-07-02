@@ -5,7 +5,7 @@
             <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold tracking-tight flex items-center gap-2" style="color: var(--color-text-on-accent, #ffffff); font-family: var(--font-display);">
-                        <x-heroicon-o-document-text class="w-5 h-5" style="color: var(--color-warning-500);" />
+                        <x-heroicon-o-document-text class="w-5 h-5" style="color: var(--warning-500);" />
                         Log Viewer
                     </h2>
                     <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
@@ -24,7 +24,7 @@
                     <select
                         wire:model.live="selectedFile"
                         class="w-full px-4 py-2.5 text-sm rounded-xl transition-all duration-200 focus:ring-2 focus:ring-offset-0"
-                        style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--color-brand-500);"
+                        style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--primary-500);"
                     >
                         @foreach($this->getLogFiles() as $file)
                             <option value="{{ $file['name'] }}">{{ $file['name'] }} ({{ $file['size'] }})</option>
@@ -38,7 +38,7 @@
                     <select
                         wire:model.live="levelFilter"
                         class="w-full px-4 py-2.5 text-sm rounded-xl transition-all duration-200 focus:ring-2 focus:ring-offset-0"
-                        style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--color-brand-500);"
+                        style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--primary-500);"
                     >
                         <option value="">All Levels</option>
                         <option value="critical">Critical</option>
@@ -57,7 +57,7 @@
                         wire:model.live.debounce.300ms="searchQuery"
                         placeholder="Search log content..."
                         class="w-full px-4 py-2.5 text-sm rounded-xl transition-all duration-200 focus:ring-2 focus:ring-offset-0"
-                        style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--color-brand-500);"
+                        style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--primary-500);"
                     />
                 </div>
 
@@ -70,7 +70,7 @@
                         wire:loading.attr="disabled"
                         wire:loading.class="opacity-50"
                         class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200"
-                        style="background: var(--color-danger-600); color: white;">
+                        style="background: var(--danger-600); color: white;">
                         <x-heroicon-o-trash class="w-3.5 h-3.5" />
                         Clear
                     </button>
@@ -94,7 +94,7 @@
             <div class="p-0">
                 @if(empty($logs))
                     <div class="text-center py-12">
-                        <x-heroicon-o-check-circle class="w-12 h-12 mx-auto mb-4" style="color: var(--color-success-500);" />
+                        <x-heroicon-o-check-circle class="w-12 h-12 mx-auto mb-4" style="color: var(--success-500);" />
                         <p class="text-sm font-medium" style="color: var(--color-text-muted);">No log entries found.</p>
                     </div>
                 @else

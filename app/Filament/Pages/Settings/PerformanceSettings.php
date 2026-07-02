@@ -134,6 +134,19 @@ class PerformanceSettings extends SettingsPage
                             ->required()
                             ->default(60),
                     ])->columns(2),
+
+                Section::make('Queue')
+                    ->description('Configure queue worker retry behaviour for Redis-backed queues.')
+                    ->schema([
+                        Forms\Components\TextInput::make('queue_retry_after')
+                            ->label('Queue Retry After (Seconds)')
+                            ->numeric()
+                            ->minValue(60)
+                            ->maxValue(7200)
+                            ->required()
+                            ->helperText('Must exceed the longest job timeout. Default 3700 seconds (~62 minutes).')
+                            ->default(3700),
+                    ])->columns(2),
             ]);
     }
 }

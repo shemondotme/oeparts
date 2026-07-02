@@ -300,18 +300,6 @@ class CarModelResource extends Resource
         ];
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('is_active', true)->count();
-
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
-    }
-
     public static function getGloballySearchableAttributes(): array
     {
         return ['name', 'slug'];

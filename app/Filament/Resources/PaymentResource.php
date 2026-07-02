@@ -14,13 +14,15 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Schema;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Table;
 
 class PaymentResource extends Resource
 {
     protected static ?string $model = Payment::class;
 
-    protected static ?string $slug = 'filament/payments';
+    protected static ?string $slug = 'payments';
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
@@ -143,7 +145,7 @@ class PaymentResource extends Resource
                 Tables\Filters\Filter::make('created_at')
                     ->label('Payment Date')
                     ->form([
-                        Tables\Filters\SelectFilter::make('created_at')
+                        \Filament\Forms\Components\Select::make('created_at')
                             ->options([
                                 'today' => 'Today',
                                 'yesterday' => 'Yesterday',
@@ -172,7 +174,7 @@ class PaymentResource extends Resource
             ...AdminUi::recordActions(),
         ])
         ->bulkActions([
-            Actions\BulkActionGroup::make([
+            BulkActionGroup::make([
                 AdminUi::exportCsvBulkAction('Export Payments', [
                     'id' => 'ID',
                     'order.order_number' => 'Order Number',
@@ -182,16 +184,14 @@ class PaymentResource extends Resource
                     'amount' => 'Amount',
                     'created_at' => 'Date',
                 ]),
-                Actions\DeleteBulkAction::make(),
+                DeleteBulkAction::make(),
             ]),
         ]);
     }
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('status', 'failed')->count();
-
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('payments_failed', fn () => static::getModel()::where('status', 'failed')->count());
     }
 
     public static function getNavigationBadgeColor(): ?string

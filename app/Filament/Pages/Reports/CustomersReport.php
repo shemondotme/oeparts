@@ -3,7 +3,6 @@
 namespace App\Filament\Pages\Reports;
 
 use App\Models\User;
-use App\Models\Order;
 use App\Filament\Clusters\Reports;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
@@ -49,13 +48,13 @@ class CustomersReport extends Page
                 ->label('Export CSV')
                 ->icon('heroicon-o-arrow-down-tray')
                 ->color('gray')
-                ->action('exportCsv'),
+                ->action(fn () => $this->exportCsv()),
         ];
     }
 
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $start = Carbon::now()->subDays((int) $this->period);
+        $start = ($this->period === '1' ? Carbon::today() : Carbon::now()->subDays((int) $this->period));
 
         $data = User::leftJoin('orders', 'users.id', '=', 'orders.user_id')
             ->where('orders.created_at', '>=', $start)
@@ -85,44 +84,6 @@ class CustomersReport extends Page
         ]);
     }
 
-    public function getTotalCustomers(): int
-    {
-        return User::count();
-    }
-
-    public function getNewCustomers(): int
-    {
-        $start = Carbon::now()->subDays((int) $this->period);
-
-        return User::where('created_at', '>=', $start)->count();
-    }
-
-    public function getRepeatCustomers(): int
-    {
-        return DB::table('orders')
-            ->select('user_id')
-            ->groupBy('user_id')
-            ->havingRaw('COUNT(*) > 1')
-            ->get()
-            ->count();
-    }
-
-    public function getTopCustomers(): array
-    {
-        $start = Carbon::now()->subDays((int) $this->period);
-
-        $customers = User::leftJoin('orders', 'users.id', '=', 'orders.user_id')
-            ->where('orders.created_at', '>=', $start)
-            ->select('users.id', 'users.name', 'users.email', DB::raw('COUNT(orders.id) as order_count'), DB::raw('SUM(orders.grand_total) as total_spent'))
-            ->groupBy('users.id', 'users.name', 'users.email')
-            ->orderByDesc('total_spent')
-            ->limit(10)
-            ->get()
-            ->toArray();
-
-        return array_map(function ($c) {
-            $c['total_spent'] = number_format((float) bcadd((string) ($c['total_spent'] ?? '0'), '0', 2), 2, '.', '');
-            return $c;
-        }, $customers);
-    }
+    // KPIs, growth chart and top-customers are native Filament widgets
+    // (App\Filament\Widgets\Reports\Customers*), rendered by the page view.
 }

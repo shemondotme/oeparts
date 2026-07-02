@@ -5,10 +5,10 @@
 ])
 
 @php
-    $iconAccent = $accent ?? 'var(--widget-accent, var(--color-brand-500))';
+    $iconAccent = $accent ?? 'var(--primary-500)';
 @endphp
 
-<div {{ $attributes->merge(['class' => 'op-card relative overflow-hidden flex flex-col justify-between p-5 h-full']) }}
+<div {{ $attributes->merge(['class' => 'rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900 relative overflow-hidden flex flex-col justify-between p-5 h-full']) }}
      style="min-height: {{ $minHeight }};{{ $accent ? ' border-top-color: '.$accent.' !important;' : '' }}">
 
     @if ($label || isset($icon) || isset($headerEnd))
@@ -22,7 +22,7 @@
                     </div>
                 @endisset
                 @if ($label)
-                    <span class="op-widget-title leading-tight">{{ $label }}</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider opacity-70 text-zinc-600 dark:text-zinc-300 leading-tight">{{ $label }}</span>
                 @endif
             </div>
 

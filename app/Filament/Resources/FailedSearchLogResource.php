@@ -24,9 +24,7 @@ class FailedSearchLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::whereDate('created_at', today())->count();
-
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('failed_searches_today', fn () => static::getModel()::where('created_at', '>=', now()->startOfDay())->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -34,9 +32,14 @@ class FailedSearchLogResource extends Resource
         return 'warning';
     }
 
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Searches with no results today';
+    }
+
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     public static function getNavigationSort(): ?int

@@ -9,12 +9,13 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerGrowthChart extends ChartWidget
 {
+    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+
     protected ?string $heading = 'Customer Growth';
 
-    protected int | string | array $columnSpan = 'full';
-
-    // Set via @livewire(..., ['period' => $this->period]) from CustomersReport.
-    public string $period = '30';
+    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected function getType(): string
     {
@@ -36,7 +37,7 @@ class CustomerGrowthChart extends ChartWidget
                 [
                     'label' => 'New Customers',
                     'data' => $data->values()->all(),
-                    'borderColor' => 'var(--aurora-violet)',
+                    'borderColor' => '#F59E0B',
                     'backgroundColor' => 'transparent',
                     'fill' => true,
                     'tension' => 0.4,

@@ -45,7 +45,7 @@
                     ['title' => 'Column Visibility', 'description' => 'Click the columns icon in the table header to show/hide columns. Preferences are saved per-admin.', 'icon' => 'heroicon-o-table-cells'],
                 ] as $item)
                     <div class="flex items-start gap-3 p-4 rounded-lg" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
-                        <div class="w-8 h-8 flex items-center justify-center rounded-lg shrink-0" style="background: rgba(99,102,241,0.1); color: var(--color-primary-500);">
+                        <div class="w-8 h-8 flex items-center justify-center rounded-lg shrink-0" style="background: rgba(99,102,241,0.1); color: var(--primary-500);">
                             <x-dynamic-component :component="$item['icon']" class="w-4 h-4" />
                         </div>
                         <div>

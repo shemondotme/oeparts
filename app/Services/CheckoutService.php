@@ -222,10 +222,19 @@ class CheckoutService
     /**
      * Create the final order from the checkout session.
      * Returns the Order model on success, throws on failure.
+     *
+     * @param string $checkoutId
+     * @param int|null $userId       Explicit user ID — null for guest checkout
+     * @param string|null $ipAddress Client IP — null uses request()->ip()
+     * @param array $utmParams       UTM tracking params — null reads from session
      */
-    public function createOrder(string $checkoutId): Order
-    {
-        return DB::transaction(function () use ($checkoutId) {
+    public function createOrder(
+        string $checkoutId,
+        ?int $userId = null,
+        ?string $ipAddress = null,
+        ?array $utmParams = null,
+    ): Order {
+        return DB::transaction(function () use ($checkoutId, $userId, $ipAddress, $utmParams) {
             $checkout = $this->get($checkoutId);
             if (!$checkout) {
                 throw new \RuntimeException('Checkout session expired or not found.');
@@ -284,10 +293,20 @@ class CheckoutService
                 $shippingAddress['last_name'] ?? null,
             ])));
 
+            // Resolve context: explicit params or session/request helpers
+            $resolvedUserId = $userId ?? auth()->id();
+            $resolvedIp = $ipAddress ?? request()->ip();
+            $utm = $utmParams ?? [
+                'source'   => session('utm_source'),
+                'medium'   => session('utm_medium'),
+                'campaign' => session('utm_campaign'),
+                'content'  => session('utm_content'),
+            ];
+
             // Create order
             $order = Order::create([
                 'order_number' => $this->sequenceService->nextOrderNumber(),
-                'user_id' => auth()->id(),
+                'user_id' => $resolvedUserId,
                 'guest_email' => $data['guest_email'],
                 'status' => OrderStatus::Pending,
                 'payment_method' => $paymentMethod,
@@ -308,12 +327,11 @@ class CheckoutService
                 'shipping_postal_code' => $shippingAddress['postal_code'] ?? null,
                 'shipping_country_code' => $shippingAddress['country_code'] ?? null,
                 'customer_note' => $data['customer_note'],
-                'ip_address' => request()->ip(),
-                // UTM parameters from session
-                'utm_source' => session('utm_source'),
-                'utm_medium' => session('utm_medium'),
-                'utm_campaign' => session('utm_campaign'),
-                'utm_content' => session('utm_content'),
+                'ip_address' => $resolvedIp,
+                'utm_source' => $utm['source'] ?? null,
+                'utm_medium' => $utm['medium'] ?? null,
+                'utm_campaign' => $utm['campaign'] ?? null,
+                'utm_content' => $utm['content'] ?? null,
             ]);
 
             // Create order items
@@ -353,7 +371,7 @@ class CheckoutService
             $this->clear($checkoutId);
 
             // Auto‑create guest account if guest_email is set and no user logged in
-            if ($data['guest_email'] && !auth()->check()) {
+            if ($data['guest_email'] && !$resolvedUserId) {
                 $this->createGuestAccount($data['guest_email'], $order);
             }
 

@@ -8,15 +8,32 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminSeeder extends Seeder
 {
+    /**
+     * One admin per role, used for testing. Kept idempotent via updateOrCreate
+     * (keyed by email) so re-seeding preserves these exact credentials and roles
+     * instead of creating duplicates. Requires RolesSeeder to have run first.
+     */
     public function run(): void
     {
-        $admin = Admin::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@oeparts.test',
-            'password' => Hash::make('Admin@123456'),
-            'is_active' => true,
-        ]);
+        $accounts = [
+            ['name' => 'Super Admin',   'email' => 'superadmin@oeparts.test', 'password' => 'superadmin@oeparts', 'role' => 'super_admin'],
+            ['name' => 'Admin',         'email' => 'admin@oeparts.test',      'password' => 'admin@oeparts',      'role' => 'admin'],
+            ['name' => 'Manager',       'email' => 'manager@oeparts.test',    'password' => 'manager@oeparts',    'role' => 'manager'],
+            ['name' => 'Catalog Admin', 'email' => 'catalog@oeparts.test',    'password' => 'catalog@oeparts',    'role' => 'catalog_admin'],
+            ['name' => 'Support',       'email' => 'support@oeparts.test',    'password' => 'support@oeparts',    'role' => 'support'],
+        ];
 
-        $admin->assignRole('super_admin');
+        foreach ($accounts as $account) {
+            $admin = Admin::updateOrCreate(
+                ['email' => $account['email']],
+                [
+                    'name' => $account['name'],
+                    'password' => Hash::make($account['password']),
+                    'is_active' => true,
+                ],
+            );
+
+            $admin->syncRoles([$account['role']]);
+        }
     }
 }

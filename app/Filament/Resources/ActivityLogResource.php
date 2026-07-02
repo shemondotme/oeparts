@@ -137,19 +137,9 @@ class ActivityLogResource extends Resource
         return 'heroicon-o-clipboard-document-list';
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) ActivityLog::whereDate('created_at', today())->count();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
-    }
-
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     protected static ?int $navigationSort = 30;

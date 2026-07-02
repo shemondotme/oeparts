@@ -22,9 +22,7 @@ class CronLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = CronLog::where('status', 'failed')->whereDate('ran_at', today())->count();
-
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('crons_failed_today', fn () => CronLog::where('status', 'failed')->where('ran_at', '>=', now()->startOfDay())->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -34,7 +32,7 @@ class CronLogResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     protected static ?int $navigationSort = 120;

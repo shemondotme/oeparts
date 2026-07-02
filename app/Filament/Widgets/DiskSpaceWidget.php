@@ -19,7 +19,9 @@ class DiskSpaceWidget extends BaseWidget
 
     protected ?string $pollingInterval = '120s';
 
-    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
+    // Full-width so the 3 stats lay out horizontally (System Health strip)
+    // instead of stacking vertically in a half-width column.
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = -15;
 
@@ -54,11 +56,34 @@ class DiskSpaceWidget extends BaseWidget
 
             $level = $usedPercent > 90 ? 'danger' : ($usedPercent > 70 ? 'warning' : 'success');
 
+            $barColor = match (true) {
+                $usedPercent > 90 => '#ef4444',
+                $usedPercent > 75 => '#f59e0b',
+                default => '#22c55e',
+            };
+
+            // Three stats so this widget matches the height of the adjacent
+            // CacheStatusWidget (also 3 stats) — a single stat left a large
+            // empty gap below it in the half-width System Health column.
             return [
                 Stat::make('Disk Usage', "{$usedPercent}%")
-                    ->description("{$usedGB} / {$totalGB} GB · {$freeGB} GB free" . ($usedPercent > 90 ? ' — Critical' : ''))
+                    ->description("{$freeGB} GB free of {$totalGB} GB" . ($usedPercent > 90 ? ' — Critical' : ''))
                     ->descriptionIcon('heroicon-o-server-stack')
-                    ->color($level),
+                    ->color($level)
+                    ->extraAttributes([
+                        // Progress bar always; a red/amber alert edge only when
+                        // disk usage crosses the warning/critical thresholds.
+                        'class' => 'op-stat-bar' . ($usedPercent > 90 ? ' op-health-down' : ($usedPercent > 75 ? ' op-health-warn' : '')),
+                        'style' => "--op-bar: {$usedPercent}%; --op-bar-color: {$barColor};",
+                    ]),
+                Stat::make('Free Space', "{$freeGB} GB")
+                    ->description('Available storage')
+                    ->descriptionIcon('heroicon-o-circle-stack')
+                    ->color($usedPercent > 90 ? 'danger' : 'success'),
+                Stat::make('Total Capacity', "{$totalGB} GB")
+                    ->description('Storage volume')
+                    ->descriptionIcon('heroicon-o-server')
+                    ->color('gray'),
             ];
         } catch (\Exception $e) {
             report($e);

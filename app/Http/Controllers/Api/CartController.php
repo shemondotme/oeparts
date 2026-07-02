@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Services\CartService;
 use App\Services\CouponService;
 use Illuminate\Http\JsonResponse;
@@ -11,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
-class CartController extends Controller
+class CartController extends ApiController
 {
     public function __construct(
         private CartService $cartService,

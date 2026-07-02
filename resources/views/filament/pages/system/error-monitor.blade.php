@@ -9,7 +9,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(239,68,68,0.1); color: var(--color-danger-500);">
+                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(239,68,68,0.1); color: var(--danger-500);">
                     <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
                 </div>
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Exceptions (24h)</span>
@@ -21,7 +21,7 @@
 
         <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(245,158,11,0.1); color: var(--color-warning-500);">
+                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(245,158,11,0.1); color: var(--warning-500);">
                     <x-heroicon-o-x-circle class="w-5 h-5" />
                 </div>
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Failed Jobs (24h)</span>
@@ -33,7 +33,7 @@
 
         <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(59,130,246,0.1); color: var(--color-info-500);">
+                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(59,130,246,0.1); color: var(--info-500);">
                     <x-heroicon-o-tag class="w-5 h-5" />
                 </div>
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Unique Types</span>
@@ -45,7 +45,7 @@
 
         <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
-                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(16,185,129,0.1); color: var(--color-success-500);">
+                <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(16,185,129,0.1); color: var(--success-500);">
                     <x-heroicon-o-clock class="w-5 h-5" />
                 </div>
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Log File</span>
@@ -70,7 +70,7 @@
                 @foreach($stats['by_exception'] as $type => $count)
                     <div class="flex items-center justify-between p-3 rounded-lg" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                         <span class="font-mono text-xs font-bold" style="color: var(--color-text-primary);">{{ class_basename($type) }}</span>
-                        <span class="font-mono text-sm font-bold tabular-nums px-3 py-1 rounded" style="background: rgba(239,68,68,0.1); color: var(--color-danger-600);">
+                        <span class="font-mono text-sm font-bold tabular-nums px-3 py-1 rounded" style="background: rgba(239,68,68,0.1); color: var(--danger-600);">
                             {{ $count }}
                         </span>
                     </div>
@@ -93,11 +93,11 @@
                     @foreach($exceptions as $error)
                         <div class="flex items-start gap-3 p-3 rounded-lg text-sm" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                             <div class="shrink-0 mt-0.5">
-                                <span class="inline-block w-2 h-2 rounded-full" style="background: var(--color-danger-500);"></span>
+                                <span class="inline-block w-2 h-2 rounded-full" style="background: var(--danger-500);"></span>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-xs font-bold" style="color: var(--color-danger-600);">{{ ucfirst($error['type']) }}</span>
+                                    <span class="text-xs font-bold" style="color: var(--danger-600);">{{ ucfirst($error['type']) }}</span>
                                     <span class="font-mono text-[10px] px-1.5 py-0.5 rounded" style="background: var(--color-bg-surface); color: var(--color-text-muted);">{{ $error['file'] }}:{{ $error['line'] }}</span>
                                 </div>
                                 <p class="mt-1 text-xs truncate" style="color: var(--color-text-muted);">{{ $error['message'] }}</p>

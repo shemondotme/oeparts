@@ -3,16 +3,22 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
-use App\Filament\Concerns\HasWidgetExport;
 use App\Models\Order;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class RefundsPendingList extends TableWidget
 {
     use Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use Concerns\InteractsWithDashboardCache;
 
     protected static bool $isLazy = true;
 
@@ -29,30 +35,16 @@ class RefundsPendingList extends TableWidget
         return 'Orders with pending refund requests';
     }
 
-    protected function getExportHeaders(): array
+    protected function getTableHeading(): string
     {
-        return ['Order #', 'Customer', 'Amount', 'Days Open'];
-    }
+        $count = Order::where('status', OrderStatus::RefundRequested->value)->count();
 
-    protected function getExportRows(): iterable
-    {
-        return Order::query()
-            ->where('status', OrderStatus::RefundRequested->value)
-            ->with(['user'])
-            ->latest()
-            ->get()
-            ->map(fn (Order $order): array => [
-                $order->order_number,
-                $order->shipping_name ?? $order->user?->name ?? $order->guest_email ?? '—',
-                format_money($order->grand_total),
-                (int) $order->created_at->diffInDays(now()) . ' days',
-            ]);
+        return 'Refunds Pending' . ($count > 0 ? " ({$count})" : '');
     }
 
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -69,24 +61,18 @@ class RefundsPendingList extends TableWidget
                     ->where('status', OrderStatus::RefundRequested->value)
                     ->with(['user'])
                     ->latest()
-                    ->limit(8)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('order_number')
-                    ->label('Order #')
-                    ->extraAttributes(['class' => 'oem-number']),
-                Tables\Columns\TextColumn::make('customer_name')
-                    ->label('Customer')
-                    ->getStateUsing(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—')
-                    ->limit(20),
-                Tables\Columns\TextColumn::make('grand_total')
-                    ->label('Amount')
-                    ->formatStateUsing(fn (Order $record): string => format_money($record->grand_total))
-                    ->fontMono()
-                    ->color('danger'),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('order_number')
+                    ->label('Order')
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—'),
+                TextColumn::make('created_at')
                     ->label('Days Open')
                     ->badge()
+                    ->icon('heroicon-m-clock')
                     ->getStateUsing(fn (Order $record): string => (int) $record->created_at->diffInDays(now()) . ' days')
                     ->color(function (Order $record): string {
                         $days = (int) $record->created_at->diffInDays(now());
@@ -98,6 +84,19 @@ class RefundsPendingList extends TableWidget
                         }
                         return 'danger';
                     }),
+                TextColumn::make('grand_total')
+                    ->label('Amount')
+                    ->formatStateUsing(fn (Order $record): string => format_money($record->grand_total))
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->color('danger')
+                    ->description('refund requested')
+                    ->alignEnd()
+                    ->summarize(
+                        Sum::make()
+                            ->label('Refund exposure')
+                            ->formatStateUsing(fn ($state): string => format_money($state))
+                    ),
             ])
             ->actions([
                 Tables\Actions\Action::make('process')
@@ -106,6 +105,17 @@ class RefundsPendingList extends TableWidget
                     ->color('warning')
                     ->url(fn (Order $record): string => \App\Filament\Resources\OrderResource::getUrl('edit', ['record' => $record])),
             ])
+            ->recordClasses(function (Order $record): ?string {
+                $days = (int) $record->created_at->diffInDays(now());
+                if ($days >= 27) {
+                    return 'op-row-critical';
+                }
+                if ($days >= 14) {
+                    return 'op-row-warn';
+                }
+                return null;
+            })
+            ->striped()
             ->paginated(false)
             ->searchable(false)
             ->emptyStateIcon('heroicon-o-currency-euro')

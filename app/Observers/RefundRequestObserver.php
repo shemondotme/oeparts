@@ -2,9 +2,13 @@
 
 namespace App\Observers;
 
+use App\Filament\Resources\RefundRequestResource;
 use App\Models\ActivityLog;
 use App\Models\RefundRequest;
 use App\Services\CacheService;
+use App\Support\AdminNotifier;
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 
 class RefundRequestObserver
@@ -13,6 +17,7 @@ class RefundRequestObserver
     {
         $this->log($refundRequest, 'created', [], $refundRequest->getAttributes());
         $this->invalidateCache($refundRequest);
+        $this->notifyRefundRequested($refundRequest);
     }
 
     public function updated(RefundRequest $refundRequest): void
@@ -34,6 +39,30 @@ class RefundRequestObserver
     {
         $this->log($refundRequest, 'deleted', $refundRequest->getAttributes(), []);
         $this->invalidateCache($refundRequest);
+    }
+
+    protected function notifyRefundRequested(RefundRequest $refundRequest): void
+    {
+        try {
+            $orderLabel = $refundRequest->order?->order_number ?? ('#' . $refundRequest->order_id);
+
+            AdminNotifier::toRoles(
+                ['super_admin', 'admin', 'manager'],
+                Notification::make()
+                    ->title('Refund requested')
+                    ->body('Order ' . $orderLabel)
+                    ->icon('heroicon-o-receipt-refund')
+                    ->iconColor('warning')
+                    ->actions([
+                        Action::make('review')
+                            ->label('Review')
+                            ->url(RefundRequestResource::getUrl('index', panel: 'admin'))
+                            ->markAsRead(),
+                    ]),
+            );
+        } catch (\Throwable $e) {
+            // A bell notification must never break the refund flow.
+        }
     }
 
     protected function invalidateCache(RefundRequest $refundRequest): void

@@ -349,14 +349,17 @@ class ContactMessageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('status', 'unread')->count();
-
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('messages_unread', fn () => static::getModel()::where('status', 'unread')->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
         return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Unread messages';
     }
 
     public static function getRelations(): array

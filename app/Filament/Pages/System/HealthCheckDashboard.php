@@ -3,8 +3,11 @@
 namespace App\Filament\Pages\System;
 
 use App\Filament\Clusters\System;
+use App\Filament\Widgets\System\HealthCheckStats;
 use App\Models\ActivityLog;
 use App\Services\HealthCheckService;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Artisan;
@@ -18,14 +21,7 @@ class HealthCheckDashboard extends Page
 
     protected string $view = 'filament.pages.system.health-check';
 
-    protected static ?string $pollingInterval = '30s';
-
-    public static function getNavigationGroup(): ?string
-    {
-        return System::getNavigationGroup();
-    }
-
-    public array $checkHistory = [];
+    protected ?string $subheading = 'Live status of core services. Stats refresh automatically every 30 seconds.';
 
     public static function getNavigationSort(): ?int
     {
@@ -42,68 +38,63 @@ class HealthCheckDashboard extends Page
         return auth('admin')->user()->hasRole('super_admin');
     }
 
-    public function getHealthResults(): array
+    protected function getHeaderWidgets(): array
     {
-        return app(HealthCheckService::class)->runAll();
-    }
-
-    public function getOverallStatusColor(): string
-    {
-        $results = $this->getHealthResults();
-
-        return match ($results['status']) {
-            'ok' => 'success',
-            'degraded' => 'warning',
-            default => 'danger',
-        };
-    }
-
-    public function getOverallStatusIcon(): string
-    {
-        $results = $this->getHealthResults();
-
-        return match ($results['status']) {
-            'ok' => 'heroicon-o-check-badge',
-            'degraded' => 'heroicon-o-exclamation-triangle',
-            default => 'heroicon-o-x-circle',
-        };
-    }
-
-    public function getStatusForCheck(string $status): array
-    {
-        return match ($status) {
-            'ok' => ['color' => 'success', 'icon' => 'heroicon-o-check-circle', 'pulse' => true],
-            'fail' => ['color' => 'danger', 'icon' => 'heroicon-o-x-circle', 'pulse' => false],
-            'missing' => ['color' => 'warning', 'icon' => 'heroicon-o-question-mark-circle', 'pulse' => false],
-            'stale' => ['color' => 'warning', 'icon' => 'heroicon-o-clock', 'pulse' => false],
-            'unknown' => ['color' => 'gray', 'icon' => 'heroicon-o-minus-circle', 'pulse' => false],
-            default => ['color' => 'gray', 'icon' => 'heroicon-o-minus-circle', 'pulse' => false],
-        };
-    }
-
-    public function pollingInterval(): ?string
-    {
-        return '30s';
-    }
-
-    public function runCheckAction(): void
-    {
-        $results = $this->getHealthResults();
-
-        $this->checkHistory[] = [
-            'time' => now()->format('H:i:s'),
-            'status' => $results['status'],
-            'checks' => $results['checks'],
+        return [
+            HealthCheckStats::class,
         ];
+    }
 
-        if (count($this->checkHistory) > 12) {
-            $this->checkHistory = array_slice($this->checkHistory, -12);
-        }
+    public function getHeaderWidgetsColumns(): int|array
+    {
+        return 1;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('runChecks')
+                ->label('Run Checks')
+                ->icon('heroicon-o-play')
+                ->action(fn () => $this->runCheck()),
+
+            ActionGroup::make([
+                Action::make('clearCache')
+                    ->label('Clear Cache')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalDescription('This will flush all cached data. Continue?')
+                    ->action(fn () => $this->clearCacheRemediation()),
+
+                Action::make('resetScheduler')
+                    ->label('Reset Scheduler Heartbeat')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalDescription('Reset the scheduler heartbeat timestamp. This will not start the scheduler if it is not running.')
+                    ->action(fn () => $this->resetSchedulerHeartbeat()),
+
+                Action::make('setup')
+                    ->label('Open Setup Assistant')
+                    ->icon('heroicon-o-arrow-top-right-on-square')
+                    ->url(fn () => SetupAssistant::getUrl()),
+            ])
+                ->label('Remediation')
+                ->icon('heroicon-o-wrench-screwdriver')
+                ->button()
+                ->color('gray'),
+        ];
+    }
+
+    public function runCheck(): void
+    {
+        $results = app(HealthCheckService::class)->runAll();
 
         $this->logAction('health_check_run', 'Health check executed: ' . $results['status']);
 
         Notification::make()
-            ->title($results['status'] === 'ok' ? 'All systems healthy' : 'Some checks failed')
+            ->title($results['status'] === 'ok' ? 'All systems healthy' : 'Some checks need attention')
             ->{$results['status'] === 'ok' ? 'success' : 'warning'}()
             ->send();
     }
@@ -113,16 +104,9 @@ class HealthCheckDashboard extends Page
         try {
             Artisan::call('cache:clear');
             $this->logAction('remediation_action', 'Cache cleared via health check remediation');
-            Notification::make()
-                ->title('Cache cleared')
-                ->success()
-                ->send();
+            Notification::make()->title('Cache cleared')->success()->send();
         } catch (\Exception $e) {
-            Notification::make()
-                ->title('Failed to clear cache')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+            Notification::make()->title('Failed to clear cache')->body($e->getMessage())->danger()->send();
         }
     }
 
@@ -131,81 +115,10 @@ class HealthCheckDashboard extends Page
         try {
             Cache::put('scheduler_heartbeat', now(), 360);
             $this->logAction('remediation_action', 'Scheduler heartbeat reset via health check remediation');
-            Notification::make()
-                ->title('Scheduler heartbeat reset')
-                ->success()
-                ->send();
+            Notification::make()->title('Scheduler heartbeat reset')->success()->send();
         } catch (\Exception $e) {
-            Notification::make()
-                ->title('Failed to reset scheduler')
-                ->body($e->getMessage())
-                ->danger()
-                ->send();
+            Notification::make()->title('Failed to reset scheduler')->body($e->getMessage())->danger()->send();
         }
-    }
-
-    public function remediateDatabase(): void
-    {
-        $this->logAction('remediation_action', 'Database remediation requested — manual check required');
-        Notification::make()
-            ->title('Database connection failed')
-            ->body('Check your database credentials in .env and ensure the MySQL server is running.')
-            ->warning()
-            ->send();
-    }
-
-    public function getRemediationForCheck(string $checkKey): ?array
-    {
-        return match ($checkKey) {
-            'database' => [
-                'label' => 'Check Config',
-                'action' => 'remediateDatabase',
-                'icon' => 'heroicon-o-wrench',
-                'color' => 'danger',
-                'needsConfirmation' => false,
-            ],
-            'cache' => [
-                'label' => 'Clear Cache',
-                'action' => 'clearCacheRemediation',
-                'icon' => 'heroicon-o-arrow-path',
-                'color' => 'warning',
-                'needsConfirmation' => true,
-                'confirmMessage' => 'This will flush all cached data. Continue?',
-            ],
-            'queue' => [
-                'label' => 'Check Config',
-                'action' => null,
-                'icon' => 'heroicon-o-arrow-top-right-on-square',
-                'color' => 'warning',
-                'needsConfirmation' => false,
-                'externalUrl' => \App\Filament\Pages\System\SetupAssistant::getUrl(),
-            ],
-            'storage' => [
-                'label' => 'Check Permissions',
-                'action' => null,
-                'icon' => 'heroicon-o-arrow-top-right-on-square',
-                'color' => 'warning',
-                'needsConfirmation' => false,
-                'externalUrl' => \App\Filament\Pages\System\SetupAssistant::getUrl(),
-            ],
-            'scheduler' => [
-                'label' => 'Reset Heartbeat',
-                'action' => 'resetSchedulerHeartbeat',
-                'icon' => 'heroicon-o-arrow-path',
-                'color' => 'warning',
-                'needsConfirmation' => true,
-                'confirmMessage' => 'Reset the scheduler heartbeat timestamp. This will not start the scheduler if it is not running.',
-            ],
-            'assets' => [
-                'label' => 'View Setup',
-                'action' => null,
-                'icon' => 'heroicon-o-arrow-top-right-on-square',
-                'color' => 'warning',
-                'needsConfirmation' => false,
-                'externalUrl' => \App\Filament\Pages\System\SetupAssistant::getUrl(),
-            ],
-            default => null,
-        };
     }
 
     protected function logAction(string $action, string $description): void

@@ -40,12 +40,14 @@ class BlogPostResource extends Resource
         return 'heroicon-o-newspaper';
     }
 
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return null;
     }
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 50;
 
     public static function form(Schema $schema): Schema
     {
@@ -354,18 +356,6 @@ class BlogPostResource extends Resource
                     ->icon('heroicon-o-plus')
                     ->button(),
             ]);
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('status', 'draft')->count();
-
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
     }
 
     public static function getRelations(): array

@@ -29,17 +29,7 @@ class SeoMetaResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
+        return 'Administration';
     }
 
     public static function getNavigationSort(): ?int
@@ -218,11 +208,6 @@ class SeoMetaResource extends Resource
             'create' => Pages\CreateSeoMeta::route('/create'),
             'edit'  => Pages\EditSeoMeta::route('/{record}/edit'),
         ];
-    }
-
-    public static function canCreate(): bool
-    {
-        return true;
     }
 
     public static function getGloballySearchableAttributes(): array

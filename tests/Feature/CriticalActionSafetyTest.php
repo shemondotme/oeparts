@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Filament\Pages\System\HealthCheckDashboard;
 use App\Filament\Pages\System\SetupAssistant;
 use App\Models\Admin;
+use Filament\Actions\Action;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -28,11 +30,11 @@ class CriticalActionSafetyTest extends TestCase
             \Database\Seeders\AdminSeeder::class,
         ]);
 
-        $this->superAdmin = Admin::where('email', 'admin@oeparts.test')->firstOrFail();
+        $this->superAdmin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
 
         $this->supportAdmin = Admin::create([
             'name' => 'Support Agent',
-            'email' => 'support@oeparts.test',
+            'email' => 'support-safety@oeparts.test',
             'password' => bcrypt('password'),
         ]);
         $this->supportAdmin->assignRole('support');
@@ -133,69 +135,42 @@ class CriticalActionSafetyTest extends TestCase
         $this->assertFalse(HealthCheckDashboard::canAccess());
     }
 
-    // ── HealthCheckDashboard: Remediation Config ───────────────────────────
+    // ── HealthCheckDashboard: Remediation Action Safety ────────────────────
 
     #[Test]
-    public function database_remediation_does_not_need_confirmation(): void
+    public function clear_cache_remediation_requires_confirmation(): void
     {
-        $remediation = $this->buildHealthPage()->getRemediationForCheck('database');
+        $this->actingAs($this->superAdmin, 'admin');
 
-        $this->assertNotNull($remediation);
-        $this->assertFalse($remediation['needsConfirmation']);
-        $this->assertEquals('Check Config', $remediation['label']);
-        $this->assertEquals('remediateDatabase', $remediation['action']);
-    }
-
-    #[Test]
-    public function cache_remediation_requires_confirmation(): void
-    {
-        $remediation = $this->buildHealthPage()->getRemediationForCheck('cache');
-
-        $this->assertNotNull($remediation);
-        $this->assertTrue($remediation['needsConfirmation']);
-        $this->assertEquals('Clear Cache', $remediation['label']);
-        $this->assertEquals('clearCacheRemediation', $remediation['action']);
-        $this->assertStringContainsString('flush all cached data', $remediation['confirmMessage']);
-    }
-
-    #[Test]
-    public function queue_remediation_links_to_setup_assistant(): void
-    {
-        $remediation = $this->buildHealthPage()->getRemediationForCheck('queue');
-
-        $this->assertNotNull($remediation);
-        $this->assertArrayHasKey('externalUrl', $remediation);
-        $this->assertStringContainsString('setup-assistant', $remediation['externalUrl']);
-        $this->assertNull($remediation['action']);
-    }
-
-    #[Test]
-    public function asset_remediation_links_to_setup_assistant(): void
-    {
-        $remediation = $this->buildHealthPage()->getRemediationForCheck('assets');
-
-        $this->assertNotNull($remediation);
-        $this->assertArrayHasKey('externalUrl', $remediation);
-        $this->assertNull($remediation['action']);
+        Livewire::test(HealthCheckDashboard::class)
+            ->assertActionExists('clearCache', fn (Action $action): bool => $action->isConfirmationRequired());
     }
 
     #[Test]
     public function scheduler_remediation_requires_confirmation(): void
     {
-        $remediation = $this->buildHealthPage()->getRemediationForCheck('scheduler');
+        $this->actingAs($this->superAdmin, 'admin');
 
-        $this->assertNotNull($remediation);
-        $this->assertTrue($remediation['needsConfirmation']);
-        $this->assertEquals('Reset Heartbeat', $remediation['label']);
-        $this->assertEquals('resetSchedulerHeartbeat', $remediation['action']);
+        Livewire::test(HealthCheckDashboard::class)
+            ->assertActionExists('resetScheduler', fn (Action $action): bool => $action->isConfirmationRequired());
     }
 
     #[Test]
-    public function unknown_check_returns_null_remediation(): void
+    public function setup_remediation_links_to_setup_assistant(): void
     {
-        $remediation = $this->buildHealthPage()->getRemediationForCheck('nonexistent_check');
+        $this->actingAs($this->superAdmin, 'admin');
 
-        $this->assertNull($remediation);
+        Livewire::test(HealthCheckDashboard::class)
+            ->assertActionExists('setup', fn (Action $action): bool => str_contains((string) $action->getUrl(), 'setup-assistant'));
+    }
+
+    #[Test]
+    public function run_checks_action_is_available(): void
+    {
+        $this->actingAs($this->superAdmin, 'admin');
+
+        Livewire::test(HealthCheckDashboard::class)
+            ->assertActionExists('runChecks');
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────
@@ -205,12 +180,5 @@ class CriticalActionSafetyTest extends TestCase
         $this->actingAs($this->superAdmin, 'admin');
 
         return new SetupAssistant;
-    }
-
-    private function buildHealthPage(): HealthCheckDashboard
-    {
-        $this->actingAs($this->superAdmin, 'admin');
-
-        return new HealthCheckDashboard;
     }
 }

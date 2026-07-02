@@ -310,14 +310,17 @@ class RefundRequestResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', RefundStatus::Pending)->count() ?: null;
+        return \App\Support\NavBadge::count('refunds_pending', fn () => static::getModel()::where('status', RefundStatus::Pending)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $count = static::getModel()::where('status', RefundStatus::Pending)->count();
+        return 'warning';
+    }
 
-        return $count > 0 ? 'warning' : null;
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Refunds pending review';
     }
 
     public static function approveAction(): Actions\Action

@@ -3,25 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
-use App\Filament\Concerns\HasWidgetExport;
-use App\Filament\Resources\OrderResource;
-use App\Filament\Support\DrilldownContract;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
 
-class OrderStatusDistributionWidget extends ChartWidget implements DrilldownContract
+class OrderStatusDistributionWidget extends ChartWidget
 {
     use Concerns\HasDashboardPeriod;
     use Concerns\HasWidgetRoles;
     use Concerns\InteractsWithDashboardCache;
-    use HasWidgetExport;
-
-    public function getDescription(): ?string
-    {
-        return 'Order counts by status for the selected period';
-    }
-
-    protected string $view = 'filament.widgets.chart-with-drilldown';
 
     protected ?string $heading = 'Order Status';
 
@@ -33,21 +22,6 @@ class OrderStatusDistributionWidget extends ChartWidget implements DrilldownCont
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
-    #[\Livewire\Attributes\Renderless]
-    public function getPlaceholder(): string
-    {
-        return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
-    }
-
-    public function getDrilldownUrl(): ?string
-    {
-        return OrderResource::getUrl('index');
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [$this->getExportActions(chartOnly: true)];
-    }
 
     protected function getType(): string
     {
@@ -66,19 +40,19 @@ class OrderStatusDistributionWidget extends ChartWidget implements DrilldownCont
                 ->all();
 
             $statuses = OrderStatus::cases();
-            $labels   = [];
-            $values   = [];
-            $colors   = [];
+            $labels = [];
+            $values = [];
+            $colors = [];
 
             $colorMap = [
-                OrderStatus::Pending->value         => 'var(--aurora-amber)',
-                OrderStatus::Paid->value            => 'var(--aurora-sky)',
-                OrderStatus::Processing->value      => 'var(--aurora-indigo)',
-                OrderStatus::Shipped->value         => 'var(--aurora-cyan)',
-                OrderStatus::Delivered->value       => 'var(--color-success-500)',
-                OrderStatus::Cancelled->value       => 'var(--color-danger-500)',
-                OrderStatus::RefundRequested->value => 'var(--aurora-rose)',
-                OrderStatus::Refunded->value        => 'var(--color-text-muted)',
+                OrderStatus::Pending->value => '#F59E0B',
+                OrderStatus::Paid->value => '#D97706',
+                OrderStatus::Processing->value => '#3B82F6',
+                OrderStatus::Shipped->value => '#10B981',
+                OrderStatus::Delivered->value => '#059669',
+                OrderStatus::Cancelled->value => '#EF4444',
+                OrderStatus::RefundRequested->value => '#DC2626',
+                OrderStatus::Refunded->value => '#71717b',
             ];
 
             foreach ($statuses as $status) {
@@ -88,7 +62,7 @@ class OrderStatusDistributionWidget extends ChartWidget implements DrilldownCont
                 }
                 $labels[] = $status->label();
                 $values[] = $count;
-                $colors[] = $colorMap[$status->value] ?? 'var(--color-text-muted)';
+                $colors[] = $colorMap[$status->value] ?? '#71717b';
             }
 
             return compact('labels', 'values', 'colors');
@@ -97,12 +71,12 @@ class OrderStatusDistributionWidget extends ChartWidget implements DrilldownCont
         return [
             'datasets' => [
                 [
-                    'data'                 => $cached['values'],
-                    'backgroundColor'      => $cached['colors'],
-                    'borderColor'          => 'var(--surface-card)',
-                    'borderWidth'          => 2,
-                    'hoverBorderWidth'     => 0,
-                    'hoverOffset'          => 6,
+                    'data' => $cached['values'],
+                    'backgroundColor' => $cached['colors'],
+                    'borderColor' => '#ffffff',
+                    'borderWidth' => 2,
+                    'hoverBorderWidth' => 0,
+                    'hoverOffset' => 6,
                 ],
             ],
             'labels' => $cached['labels'],
@@ -118,32 +92,33 @@ class OrderStatusDistributionWidget extends ChartWidget implements DrilldownCont
             ],
             'plugins' => [
                 'legend' => [
-                    'display'  => true,
+                    'display' => true,
                     'position' => 'right',
-                    'labels'   => [
-                        'font'        => ['family' => 'Geist Sans, sans-serif', 'size' => 12],
-                        'color'       => 'var(--color-text-secondary)',
-                        'padding'     => 12,
-                        'boxWidth'    => 12,
-                        'boxHeight'   => 12,
+                    'labels' => [
+                        'font' => ['size' => 12],
+                        'color' => '#52525b',
+                        'padding' => 12,
+                        'boxWidth' => 12,
+                        'boxHeight' => 12,
                         'borderRadius' => 3,
                         'useBorderRadius' => true,
                     ],
                 ],
                 'tooltip' => [
-                    'backgroundColor' => 'var(--chart-tooltip-bg)',
-                    'titleColor'      => 'var(--chart-tooltip-text)',
-                    'bodyColor'       => 'var(--chart-tooltip-text)',
-                    'borderColor'     => 'var(--color-border-default)',
-                    'borderWidth'     => 1,
-                    'cornerRadius'    => 8,
-                    'padding'         => 10,
-                    'callbacks'       => [
-                        'label' => 'function(ctx){return " "+ctx.label+": "+ctx.parsed+" orders"}',
-                    ],
+                    'backgroundColor' => '#18181b',
+                    'titleColor' => '#fafafa',
+                    'bodyColor' => '#a1a1aa',
+                    'borderColor' => '#27272a',
+                    'borderWidth' => 1,
+                    'cornerRadius' => 8,
+                    'padding' => 10,
+                    // No JS-function callback here: Filament JSON-encodes chart
+                    // options, so a 'function(){…}' string is never a real JS
+                    // function and Chart.js silently ignores it. The default
+                    // doughnut tooltip ("Label: value") already shows the count.
                 ],
             ],
-            'cutout'             => '65%',
+            'cutout' => '65%',
             'maintainAspectRatio' => false,
         ];
     }

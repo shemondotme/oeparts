@@ -2,7 +2,6 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Models\Manufacturer;
 use App\Services\AdminCacheService;
 use Filament\Tables;
@@ -12,9 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class SupplierPerformanceScorecardWidget extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     protected ?string $pollingInterval = '120s';
 
@@ -22,81 +20,20 @@ class SupplierPerformanceScorecardWidget extends TableWidget
 
     protected static ?string $heading = 'Supplier Performance';
 
-    protected static ?string $maxWidth = '1/2';
+    protected static ?string $maxWidth = 'full';
 
-    protected function getExportHeaders(): array
+    // Full-width — a 6-column metric scorecard reads much better across the
+    // full row than cramped into a half-width column.
+    protected int|string|array $columnSpan = 'full';
+
+    private function periodStart(): string
     {
-        return ['Manufacturer', 'Orders', 'Avg Order Value', 'Avg Delivery Days', 'On-Time %', 'Return %'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        $expectedDays = (int) settings('orders.expected_delivery_days', 5);
-        $periodStart  = $this->periodStart();
-
-        return Manufacturer::query()
-            ->select('manufacturers.id', 'manufacturers.name')
-            ->selectSub(fn ($q) => $q->selectRaw('COUNT(DISTINCT orders.id)')
-                ->from('order_items')
-                ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                ->join('products', 'products.id', '=', 'order_items.product_id')
-                ->whereColumn('products.manufacturer_id', 'manufacturers.id')
-                ->where('orders.created_at', '>=', $periodStart), 'order_count')
-            ->selectSub(fn ($q) => $q->selectRaw('COALESCE(AVG(orders.grand_total), 0)')
-                ->from('order_items')
-                ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                ->join('products', 'products.id', '=', 'order_items.product_id')
-                ->whereColumn('products.manufacturer_id', 'manufacturers.id')
-                ->whereIn('orders.status', ['paid', 'processing', 'shipped', 'delivered'])
-                ->where('orders.created_at', '>=', $periodStart), 'avg_order_value')
-            ->selectSub(fn ($q) => $q->selectRaw('COALESCE(AVG(DATEDIFF(orders.updated_at, orders.created_at)), 0)')
-                ->from('order_items')
-                ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                ->join('products', 'products.id', '=', 'order_items.product_id')
-                ->whereColumn('products.manufacturer_id', 'manufacturers.id')
-                ->where('orders.status', 'delivered')
-                ->where('orders.created_at', '>=', $periodStart), 'avg_delivery_days')
-            ->selectSub(fn ($q) => $q->selectRaw(
-                    'CASE COUNT(*) WHEN 0 THEN NULL ELSE
-                     ROUND(SUM(CASE WHEN DATEDIFF(orders.updated_at, orders.created_at) <= ? THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 1)
-                     END',
-                    [$expectedDays]
-                )
-                ->from('order_items')
-                ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                ->join('products', 'products.id', '=', 'order_items.product_id')
-                ->whereColumn('products.manufacturer_id', 'manufacturers.id')
-                ->where('orders.status', 'delivered')
-                ->where('orders.created_at', '>=', $periodStart), 'on_time_rate')
-            ->selectSub(fn ($q) => $q->selectRaw(
-                    "CASE COUNT(DISTINCT orders.id) WHEN 0 THEN NULL ELSE
-                     ROUND(SUM(CASE WHEN orders.status IN ('refund_requested', 'refunded') THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT orders.id), 1)
-                     END"
-                )
-                ->from('order_items')
-                ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                ->join('products', 'products.id', '=', 'order_items.product_id')
-                ->whereColumn('products.manufacturer_id', 'manufacturers.id')
-                ->where('orders.created_at', '>=', $periodStart), 'return_rate')
-            ->having('order_count', '>', 0)
-            ->orderByDesc('order_count')
-            ->get()
-            ->map(fn ($m) => [
-                is_array($m->name)
-                    ? ($m->name['en'] ?? $m->name[array_key_first($m->name)] ?? '—')
-                    : ($m->name ?? '—'),
-                $m->order_count,
-                format_money($m->avg_order_value ?? 0),
-                $m->avg_delivery_days ? number_format((float) $m->avg_delivery_days, 1) . 'd' : '—',
-                $m->on_time_rate !== null ? $m->on_time_rate . '%' : '—',
-                $m->return_rate !== null ? $m->return_rate . '%' : '—',
-            ]);
+        return now()->subDays(90)->startOfDay()->toDateTimeString();
     }
 
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -202,40 +139,24 @@ class SupplierPerformanceScorecardWidget extends TableWidget
                     ->alignCenter()
                     ->size('sm'),
 
-                Tables\Columns\ViewColumn::make('on_time_rate')
+                Tables\Columns\TextColumn::make('on_time_rate')
                     ->label('On-Time')
-                    ->view('filament.widgets.partials.rate-bar')
-                    ->viewData([
-                        'colorFor' => fn (float $rate): string => $rate >= 90
-                            ? 'var(--accent-success)'
-                            : ($rate >= 70 ? 'var(--accent-warning)' : 'var(--accent-danger)'),
-                        'decimals' => 0,
-                        'widthScale' => 1,
-                    ])
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => $state !== null ? number_format((float) $state, 0) . '%' : '—')
+                    ->color(fn ($state): string => $state === null ? 'gray' : ((float) $state >= 90 ? 'success' : ((float) $state >= 70 ? 'warning' : 'danger')))
                     ->alignCenter(),
 
-                Tables\Columns\ViewColumn::make('return_rate')
+                Tables\Columns\TextColumn::make('return_rate')
+                    // Lower return rate is better — red above 10%, amber 5-10%, green < 5%
                     ->label('Returns')
-                    ->view('filament.widgets.partials.rate-bar')
-                    ->viewData([
-                        // Lower return rate is better — red above 10%, amber 5-10%, green < 5%
-                        'colorFor' => fn (float $rate): string => $rate >= 10
-                            ? 'var(--accent-danger)'
-                            : ($rate >= 5 ? 'var(--accent-warning)' : 'var(--accent-success)'),
-                        'decimals' => 1,
-                        'widthScale' => 5,
-                    ])
+                    ->badge()
+                    ->formatStateUsing(fn ($state): string => $state !== null ? number_format((float) $state, 1) . '%' : '—')
+                    ->color(fn ($state): string => $state === null ? 'gray' : ((float) $state >= 10 ? 'danger' : ((float) $state >= 5 ? 'warning' : 'success')))
                     ->alignCenter(),
             ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon'        => 'heroicon-o-truck',
-                    'heading'     => 'No supplier data yet',
-                    'description' => 'Add products and complete orders to see manufacturer performance metrics.',
-                    'ctaLabel'    => 'Add Product',
-                    'ctaUrl'      => \App\Filament\Resources\ProductResource::getUrl('create'),
-                ])
-            )
+            ->emptyStateIcon('heroicon-o-truck')
+            ->emptyStateHeading('No supplier data yet')
+            ->emptyStateDescription('Performance appears once manufacturers have orders.')
             ->searchable(false)
             ->paginated(false)
             ->striped();

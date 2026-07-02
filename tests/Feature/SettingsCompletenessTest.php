@@ -139,7 +139,7 @@ class SettingsCompletenessTest extends TestCase
             \Database\Seeders\RolesSeeder::class,
             \Database\Seeders\AdminSeeder::class,
         ]);
-        $admin = \App\Models\Admin::where('email', 'admin@oeparts.test')->firstOrFail();
+        $admin = \App\Models\Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
 
         $response = $this->actingAs($admin, 'admin')->get('/admin/settings/dashboard-settings');
 

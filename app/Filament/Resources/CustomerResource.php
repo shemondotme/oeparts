@@ -371,20 +371,16 @@ class CustomerResource extends Resource
         ];
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('created_at', '>=', now()->subDays(7))->count();
-
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
-    }
-
     public static function getGloballySearchableAttributes(): array
     {
         return ['name', 'email', 'phone'];
+    }
+
+    public static function getGlobalSearchResultDetails(\Illuminate\Database\Eloquent\Model $record): array
+    {
+        return [
+            'Email' => $record->email,
+            'Status' => $record->is_active ? 'Active' : 'Inactive',
+        ];
     }
 }

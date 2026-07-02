@@ -5,7 +5,7 @@
             <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold tracking-tight flex items-center gap-2" style="color: var(--color-text-on-accent, #ffffff); font-family: var(--font-display);">
-                        <x-heroicon-o-archive-box class="w-5 h-5" style="color: var(--color-warning-500);" />
+                        <x-heroicon-o-archive-box class="w-5 h-5" style="color: var(--warning-500);" />
                         Backup Management
                     </h2>
                     <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
@@ -16,7 +16,7 @@
                     x-data
                     x-on:click="if (!confirm('Create a new backup now?')) $event.preventDefault()"
                     class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200"
-                    style="background: var(--color-success-600); color: white;">
+                    style="background: var(--success-600); color: white;">
                     <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
                     Create Backup
                 </button>
@@ -39,7 +39,7 @@
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-3">
                             <div class="p-1.5 rounded-lg" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
-                                <x-heroicon-o-archive-box class="w-4 h-4" style="color: var(--color-primary-500);" />
+                                <x-heroicon-o-archive-box class="w-4 h-4" style="color: var(--primary-500);" />
                             </div>
                             <span class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Total Backups</span>
                         </div>
@@ -56,7 +56,7 @@
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-3">
                             <div class="p-1.5 rounded-lg" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
-                                <x-heroicon-o-server-stack class="w-4 h-4" style="color: var(--color-info-500);" />
+                                <x-heroicon-o-server-stack class="w-4 h-4" style="color: var(--info-500);" />
                             </div>
                             <span class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Total Size</span>
                         </div>
@@ -73,7 +73,7 @@
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-3">
                             <div class="p-1.5 rounded-lg" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
-                                <x-heroicon-o-clock class="w-4 h-4" style="color: var(--color-warning-500);" />
+                                <x-heroicon-o-clock class="w-4 h-4" style="color: var(--warning-500);" />
                             </div>
                             <span class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Last Backup</span>
                         </div>
@@ -90,7 +90,7 @@
                     <div class="flex-1">
                         <div class="flex items-center gap-2 mb-3">
                             <div class="p-1.5 rounded-lg" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
-                                <x-heroicon-o-document-text class="w-4 h-4" style="color: var(--color-success-500);" />
+                                <x-heroicon-o-document-text class="w-4 h-4" style="color: var(--success-500);" />
                             </div>
                             <span class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Latest File</span>
                         </div>
@@ -151,7 +151,7 @@
                                             <div class="flex items-center justify-end gap-2">
                                                 <a href="{{ route('admin.backup.download', $backup['name']) }}"
                                                     class="op-focus-ring op-press inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all duration-200"
-                                                    style="background: var(--color-success-600); color: white;">
+                                                    style="background: var(--success-600); color: white;">
                                                     <x-heroicon-o-arrow-down-tray class="w-3 h-3" />
                                                     Download
                                                 </a>

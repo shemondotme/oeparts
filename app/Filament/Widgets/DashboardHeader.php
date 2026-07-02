@@ -2,41 +2,28 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\OrderStatus;
+use App\Filament\Resources\CustomerResource;
+use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use App\Models\User;
-use App\Enums\OrderStatus;
-use Filament\Widgets\Widget;
+use Filament\Widgets\StatsOverviewWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
 
-class DashboardHeader extends Widget
+class DashboardHeader extends StatsOverviewWidget
 {
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
     use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
-    public function getDescription(): ?string
-    {
-        return 'Welcome overview and quick actions';
-    }
-
     protected static bool $isLazy = false;
-
-    protected string $view = 'filament.widgets.dashboard-header';
 
     protected int | string | array $columnSpan = 'full';
 
     protected static ?int $sort = -39;
 
-    protected function getViewData(): array
+    protected function getStats(): array
     {
-        $hour = now()->hour;
-        if ($hour < 12) {
-            $greeting = 'Good morning';
-        } elseif ($hour < 17) {
-            $greeting = 'Good afternoon';
-        } else {
-            $greeting = 'Good evening';
-        }
-
         $admin = auth('admin')->user();
 
         $d = $this->cachedWidgetData(function (): array {
@@ -55,42 +42,87 @@ class DashboardHeader extends Widget
                 'pendingOrders' => Order::where('status', OrderStatus::Pending->value)->count(),
                 'activeUsers' => User::where('is_active', true)->count(),
                 'failedJobs' => DB::table('failed_jobs')->count(),
+                'revenueSparkline' => collect(range(6, 0))->map(
+                    fn ($i) => (float) Order::whereIn('status', $paidStatuses)
+                        ->whereDate('created_at', today()->subDays($i))->sum('grand_total')
+                )->all(),
+                'ordersSparkline' => collect(range(6, 0))->map(
+                    fn ($i) => Order::whereDate('created_at', today()->subDays($i))->count()
+                )->all(),
+                'usersSparkline' => collect(range(6, 0))->map(
+                    fn ($i) => User::whereDate('created_at', today()->subDays($i))->count()
+                )->all(),
             ];
         });
 
-        $pendingWarning = (int) settings('dashboard.pending_orders_warning', 50);
-
-        $systemHealth = 'healthy';
-        if ($d['failedJobs'] > 0) $systemHealth = 'degraded';
-        if ($d['pendingOrders'] > $pendingWarning) $systemHealth = 'warning';
-
-        // The revenue tile is restricted to management roles; the header
-        // itself is visible to every role (see registry 'roles').
         $showRevenue = $admin?->hasAnyRole(['super_admin', 'admin', 'manager']) ?? false;
 
-        $roleBadge = $admin?->getRoleNames()?->first() ?? 'Admin';
-        $roleColors = [
-            'super_admin' => 'var(--accent-danger)',
-            'admin' => 'var(--accent-brand)',
-            'manager' => 'var(--accent-warning)',
-            'catalog_admin' => 'var(--accent-success)',
-            'support' => 'var(--text-secondary)',
-        ];
-        $badgeColor = $roleColors[$roleBadge] ?? 'var(--accent-brand)';
+        // Yesterday = second-to-last sparkline point (index 5 of the 7-day series).
+        $ordersDelta = $this->delta((float) $d['todayOrders'], (float) ($d['ordersSparkline'][5] ?? 0));
 
-        return [
-            'greeting' => $greeting,
-            'adminName' => $admin ? $admin->name : 'Demo Admin',
-            'roleBadge' => ucwords(str_replace('_', ' ', $roleBadge)),
-            'badgeColor' => $badgeColor,
-            'currentDate' => now()->format('l, F j, Y'),
-            'showRevenue' => $showRevenue,
-            'todayRevenue' => $showRevenue ? format_money($d['todayRevenue']) : null,
-            'todayOrders' => $d['todayOrders'],
-            'pendingOrders' => $d['pendingOrders'],
-            'activeUsers' => $d['activeUsers'],
-            'systemHealth' => $systemHealth,
-            'failedJobs' => $d['failedJobs'],
+        $stats = [
+            Stat::make('Today\'s Orders', $d['todayOrders'])
+                ->description($ordersDelta['text'])
+                ->descriptionIcon($ordersDelta['icon'])
+                ->chart($d['ordersSparkline'])
+                ->color($ordersDelta['color'])
+                ->url(OrderResource::getUrl('index')),
+            Stat::make('Pending Orders', $d['pendingOrders'])
+                ->description('Awaiting processing')
+                ->descriptionIcon('heroicon-m-clock')
+                ->color($d['pendingOrders'] > 0 ? 'warning' : 'success')
+                ->url(OrderResource::getUrl('index', [
+                    'tableFilters' => ['status' => ['value' => OrderStatus::Pending->value]],
+                ])),
+            Stat::make('Active Users', $d['activeUsers'])
+                ->description('Registered customers')
+                ->descriptionIcon('heroicon-m-users')
+                ->chart($d['usersSparkline'])
+                ->color('info')
+                ->url(CustomerResource::getUrl('index')),
         ];
+
+        if ($showRevenue) {
+            $revenueDelta = $this->delta((float) $d['todayRevenue'], (float) ($d['revenueSparkline'][5] ?? 0));
+
+            array_unshift($stats,
+                Stat::make('Today\'s Revenue', format_money($d['todayRevenue']))
+                    ->description($revenueDelta['text'])
+                    ->descriptionIcon($revenueDelta['icon'])
+                    ->chart($d['revenueSparkline'])
+                    ->color($revenueDelta['color'])
+                    ->url(OrderResource::getUrl('index'))
+            );
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Build a period-over-period delta indicator (text + trend icon + color)
+     * for a KPI stat, comparing today's value to yesterday's.
+     *
+     * @return array{text: string, icon: string, color: string}
+     */
+    private function delta(float $today, float $previous): array
+    {
+        if ($previous <= 0.0) {
+            return $today > 0.0
+                ? ['text' => 'New activity today', 'icon' => 'heroicon-m-arrow-trending-up', 'color' => 'success']
+                : ['text' => 'No activity yet', 'icon' => 'heroicon-m-minus-small', 'color' => 'gray'];
+        }
+
+        $pct = (($today - $previous) / $previous) * 100;
+        $label = number_format(abs($pct), 1) . '% vs yesterday';
+
+        if ($pct > 0.0) {
+            return ['text' => $label, 'icon' => 'heroicon-m-arrow-trending-up', 'color' => 'success'];
+        }
+
+        if ($pct < 0.0) {
+            return ['text' => $label, 'icon' => 'heroicon-m-arrow-trending-down', 'color' => 'danger'];
+        }
+
+        return ['text' => 'No change vs yesterday', 'icon' => 'heroicon-m-minus-small', 'color' => 'gray'];
     }
 }

@@ -3,29 +3,22 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\OrderResource;
-use App\Filament\Support\DrilldownContract;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
 use Flowframe\Trend\TrendValue;
 
-class RevenueChart extends ChartWidget implements DrilldownContract
+class RevenueChart extends ChartWidget
 {
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
     use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-    use HasWidgetExport;
-
-    public function getDescription(): ?string
-    {
-        return 'Revenue trend over the selected period';
-    }
-
-    protected string $view = 'filament.widgets.chart-with-drilldown';
 
     protected ?string $heading = 'Revenue Trend';
+
+    // Segmented pill period selector instead of the native <select> dropdown.
+    protected string $view = 'filament.widgets.chart-with-period';
 
     protected ?string $pollingInterval = '120s';
 
@@ -35,40 +28,25 @@ class RevenueChart extends ChartWidget implements DrilldownContract
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
-    // Default to 30-day view; synced with the segmented control
     public ?string $filter = '30';
 
-    #[\Livewire\Attributes\Renderless]
-    public function getPlaceholder(): string
-    {
-        return view('filament.widgets.chart-skeleton', ['heading' => $this->getHeading()])->render();
-    }
-
-    public function getDrilldownUrl(): ?string
-    {
-        return OrderResource::getUrl('index');
-    }
-
-    /** Segmented date-range control (Today / 7d / 30d / 90d / 1y). */
     protected function getFilters(): ?array
     {
         return [
-            '1'   => 'Today',
-            '7'   => '7d',
-            '30'  => '30d',
-            '90'  => '90d',
+            '1' => 'Today',
+            '7' => '7d',
+            '30' => '30d',
+            '90' => '90d',
             '365' => '1y',
         ];
     }
 
-    /** Sync global period and notify OrderVolumeChart when the filter changes. */
     public function updatedFilter(string $value): void
     {
         $this->period = $value;
         $this->dispatch('cc-date-range-changed', range: $value);
     }
 
-    /** Keep filter in sync when the sibling chart (W8) drives the change. */
     #[\Livewire\Attributes\On('cc-date-range-changed')]
     public function onCcDateRangeChanged(string $range): void
     {
@@ -79,10 +57,6 @@ class RevenueChart extends ChartWidget implements DrilldownContract
         }
     }
 
-    protected function getHeaderActions(): array
-    {
-        return [$this->getExportActions(chartOnly: true)];
-    }
 
     protected function getType(): string
     {
@@ -92,7 +66,7 @@ class RevenueChart extends ChartWidget implements DrilldownContract
     protected function getData(): array
     {
         $start = $this->periodStart();
-        $end   = now();
+        $end = now();
 
         $cached = $this->cachedWidgetData(function () use ($start, $end): array {
             $paidStatuses = [
@@ -107,29 +81,56 @@ class RevenueChart extends ChartWidget implements DrilldownContract
                 ->perDay()
                 ->sum('grand_total');
 
+            // Immediately-preceding window of equal length, for the faded
+            // comparison line ("this period vs last period").
+            $lengthDays = max((int) $start->diffInDays($end), 1);
+            $prev = Trend::query(Order::whereIn('status', $paidStatuses))
+                ->between(start: $start->copy()->subDays($lengthDays), end: $start->copy())
+                ->perDay()
+                ->sum('grand_total');
+
+            $values = $data->map(fn (TrendValue $v) => bcadd((string) $v->aggregate, '0', 2))->all();
+
             return [
-                'values' => $data->map(fn (TrendValue $v) => bcadd((string) $v->aggregate, '0', 2))->all(),
+                'values' => $values,
                 'labels' => $data->map(fn (TrendValue $v) => $v->date)->all(),
+                'prevValues' => array_slice(
+                    array_values($prev->map(fn (TrendValue $v) => bcadd((string) $v->aggregate, '0', 2))->all()),
+                    0,
+                    count($values)
+                ),
             ];
         });
 
         return [
             'datasets' => [
                 [
-                    'label'                  => 'Revenue (€)',
-                    'data'                   => $cached['values'],
-                    'borderColor'            => 'var(--aurora-violet)',
-                    'backgroundColor'        => 'transparent',
-                    'op_gradient'            => ['rgba(139,92,246,0.42)', 'rgba(139,92,246,0.01)'],
-                    'fill'                   => true,
-                    'tension'                => 0.4,
-                    'pointRadius'            => 3,
-                    'pointHoverRadius'       => 6,
-                    'pointBackgroundColor'   => 'var(--aurora-violet)',
-                    'pointBorderColor'       => 'var(--aurora-cyan)',
-                    'pointBorderWidth'       => 2,
-                    'pointHoverBorderWidth'  => 3,
-                    'borderWidth'            => 2,
+                    'label' => 'Revenue (€)',
+                    'data' => $cached['values'],
+                    'borderColor' => '#F59E0B',
+                    'backgroundColor' => 'transparent',
+                    'fill' => true,
+                    'tension' => 0.4,
+                    'pointRadius' => 3,
+                    'pointHoverRadius' => 6,
+                    'pointBackgroundColor' => '#F59E0B',
+                    'pointBorderColor' => '#D97706',
+                    'pointBorderWidth' => 2,
+                    'pointHoverBorderWidth' => 3,
+                    'borderWidth' => 2,
+                ],
+                [
+                    'label' => 'Previous period',
+                    'data' => $cached['prevValues'],
+                    'borderColor' => 'rgba(148, 163, 184, 0.6)',
+                    'backgroundColor' => 'transparent',
+                    'borderDash' => [6, 4],
+                    'fill' => false,
+                    'tension' => 0.4,
+                    'pointRadius' => 0,
+                    'pointHoverRadius' => 4,
+                    'pointBackgroundColor' => 'rgba(148, 163, 184, 0.9)',
+                    'borderWidth' => 2,
                 ],
             ],
             'labels' => $cached['labels'],
@@ -141,42 +142,54 @@ class RevenueChart extends ChartWidget implements DrilldownContract
         return [
             'scales' => [
                 'x' => [
-                    'grid'  => ['display' => false],
+                    'grid' => ['display' => false],
                     'ticks' => [
                         'maxTicksLimit' => 7,
-                        'font'          => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
-                        'color'         => 'var(--color-text-muted)',
+                        'font' => ['size' => 11],
+                        'color' => '#71717b',
                     ],
                 ],
                 'y' => [
-                    'grid'  => [
-                        'color'       => 'var(--chart-grid)',
-                        'borderDash'  => [4, 4],
-                        'drawBorder'  => false,
+                    'grid' => [
+                        'color' => 'rgba(0,0,0,0.06)',
+                        'borderDash' => [4, 4],
+                        'drawBorder' => false,
                     ],
                     'ticks' => [
-                        'callback' => 'function(v){return "€"+Number(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0})}',
-                        'font'     => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 11],
-                        'color'    => 'var(--color-text-muted)',
+                        // No 'callback' JS-function string: Filament JSON-encodes
+                        // chart options, so it never becomes a real function and
+                        // Chart.js ignores it. The dataset label ("Revenue (€)")
+                        // already conveys the currency.
+                        'font' => ['size' => 11],
+                        'color' => '#71717b',
                         'maxTicksLimit' => 5,
                     ],
                 ],
             ],
             'plugins' => [
-                'legend'  => ['display' => false],
-                'tooltip' => [
-                    'titleFont'    => ['family' => 'Geist Sans, sans-serif', 'size' => 12, 'weight' => '600'],
-                    'bodyFont'     => ['family' => 'Geist Mono, JetBrains Mono, monospace', 'size' => 12],
-                    'backgroundColor' => 'var(--chart-tooltip-bg)',
-                    'titleColor'   => 'var(--chart-tooltip-text)',
-                    'bodyColor'    => 'var(--chart-tooltip-text)',
-                    'borderColor'  => 'var(--color-border-default)',
-                    'borderWidth'  => 1,
-                    'cornerRadius' => 8,
-                    'padding'      => 10,
-                    'callbacks'    => [
-                        'label' => 'function(ctx){return "€"+Number(ctx.parsed.y).toLocaleString("en-US",{minimumFractionDigits:2})}',
+                'legend' => [
+                    'display' => true,
+                    'position' => 'top',
+                    'align' => 'end',
+                    'labels' => [
+                        'boxWidth' => 12,
+                        'boxHeight' => 12,
+                        'usePointStyle' => true,
+                        'font' => ['size' => 11],
+                        'color' => '#71717b',
                     ],
+                ],
+                'tooltip' => [
+                    'backgroundColor' => '#18181b',
+                    'titleColor' => '#fafafa',
+                    'bodyColor' => '#a1a1aa',
+                    'borderColor' => '#27272a',
+                    'borderWidth' => 1,
+                    'cornerRadius' => 8,
+                    'padding' => 10,
+                    // No JS-function callback: see the ticks note above. The
+                    // dataset label "Revenue (€)" already shows the currency in
+                    // the default tooltip ("Revenue (€): 1234.56").
                 ],
             ],
             'maintainAspectRatio' => false,

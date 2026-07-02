@@ -26,6 +26,15 @@ class DashboardSettings extends SettingsPage
                 Section::make('Admin Dashboard Alert Thresholds')
                     ->description('Tune the warning thresholds used by dashboard widgets to flag attention-needed orders and abandoned carts.')
                     ->schema([
+                        Forms\Components\TextInput::make('pending_orders_warning')
+                            ->label('Pending Orders Warning Threshold')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(10000)
+                            ->required()
+                            ->helperText('Pending order count that triggers the system health "warning" indicator in the dashboard header')
+                            ->default(50),
+
                         Forms\Components\TextInput::make('orders_threshold')
                             ->label('Pending Orders Alert Threshold')
                             ->numeric()
