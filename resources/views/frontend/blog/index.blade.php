@@ -32,7 +32,7 @@
 @section('json_ld')
 <script type="application/ld+json">
 {
-    "@context": "https://schema.org",
+    "@@context": "https://schema.org",
     "@type": "Blog",
     "name": @json($pageTitle),
     "description": @json($pageDescr),
@@ -50,7 +50,7 @@
 </script>
 <script type="application/ld+json">
 {
-    "@context": "https://schema.org",
+    "@@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
         {"@type": "ListItem", "position": 1, "name": "{{ __('Home') }}", "item": "{{ url('/'.$lang.'/') }}"},

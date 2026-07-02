@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+### Changed
+- **Framework upgrade** — Laravel 11.52 → 12.62, FilamentPHP 5.6.5 → 5.6.7 (Update System **Chunk 0.0**). Clean dependency resolution; the upgrade also cleared the 21 prior Composer security advisories. Full test suite: 530 passed / 0 failed.
+
+### Fixed
+- **JSON-LD rendering under Laravel 12** — escaped `@context` → `@@context` across 9 storefront views (home, blog index/show, car-model index/show, manufacturer show, search results/zero-results, faqs section). Laravel 12's new core `@context` Blade directive was hijacking JSON-LD `"@context"` keys, emitting an unclosed `@if` and causing a **500 on every page carrying structured data**. See CLAUDE.md rule #40.
+
 ## 1.0.2 — 2026-06-03
 
 ### Fixed

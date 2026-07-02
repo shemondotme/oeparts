@@ -82,7 +82,7 @@
         ];
     }
     $jsonLdSchema = [
-        '@context' => 'https://schema.org',
+        '@@context' => 'https://schema.org',
         '@type' => 'ItemList',
         'numberOfItems' => (int) ($total ?? count($jsonLdItems)),
         'itemListElement' => $jsonLdItems,

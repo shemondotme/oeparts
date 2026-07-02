@@ -6,7 +6,7 @@
     $inquiryHours = (int) settings('part_inquiry.response_hours', 24);
     $minChars = (int) settings('search.min_chars', 3);
     $zeroJsonLd = [
-        '@context' => 'https://schema.org',
+        '@@context' => 'https://schema.org',
         '@type' => 'SearchResultsPage',
         'name' => __('search.zero_jsonld_name', ['oem' => $normalized_query]),
         'description' => __('search.zero_jsonld_description', ['oem' => $normalized_query]),
