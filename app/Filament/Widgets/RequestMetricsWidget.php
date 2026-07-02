@@ -2,6 +2,10 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\System\FailedJobsPage;
+use App\Filament\Pages\System\QueueMonitor;
+use App\Filament\Resources\EmailLogResource;
+use App\Filament\Resources\SearchLogResource;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
@@ -15,12 +19,14 @@ class RequestMetricsWidget extends BaseWidget
 
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
     use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use \App\Filament\Widgets\Concerns\HasMonitoringVisuals;
 
     protected static bool $isLazy = false;
 
     protected ?string $pollingInterval = '60s';
 
-    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
+    // Full-width so the 4 stats lay out horizontally (System Health strip).
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = -14;
 
@@ -63,30 +69,45 @@ class RequestMetricsWidget extends BaseWidget
                 'failed_jobs' => $failedJobs,
                 'emails_sent' => $emailsSent,
                 'searches' => $searches,
+                'failed_trend' => $this->hourlyTrend($failedTable, 'failed_at', 12),
+                'emails_trend' => $this->hourlyTrend('email_logs', 'created_at', 12),
+                'searches_trend' => $this->hourlyTrend('search_logs', 'created_at', 12),
             ];
         });
 
-        $hasAnomaly = $metrics['failed_jobs'] > 5;
-        $anomalyColor = $hasAnomaly ? 'danger' : '';
+        $failedLevel = $metrics['failed_jobs'] > 5 ? 'danger' : ($metrics['failed_jobs'] > 0 ? 'warning' : null);
 
         return [
             Stat::make('Pending Jobs', number_format($metrics['pending_jobs']))
                 ->description($metrics['pending_jobs'] > 0 ? 'In queue' : 'All clear')
                 ->descriptionIcon('heroicon-o-clock')
-                ->color($metrics['pending_jobs'] > 50 ? 'warning' : 'gray'),
+                ->chart($this->rollingSamples('req_pending', $metrics['pending_jobs']))
+                ->chartColor($metrics['pending_jobs'] > 50 ? 'warning' : 'gray')
+                ->color($metrics['pending_jobs'] > 50 ? 'warning' : 'gray')
+                ->extraAttributes($this->alertAccent($metrics['pending_jobs'] > 50 ? 'warning' : null))
+                ->url(QueueMonitor::getUrl()),
             Stat::make('Failed (1h)', number_format($metrics['failed_jobs']))
                 ->description($metrics['failed_jobs'] > 0 ? 'Needs attention' : 'No failures')
                 ->descriptionIcon('heroicon-o-x-circle')
+                ->chart($metrics['failed_trend'])
+                ->chartColor($metrics['failed_jobs'] > 0 ? 'danger' : 'success')
                 ->color($metrics['failed_jobs'] > 0 ? 'danger' : 'success')
-                ->extraAttributes($hasAnomaly ? ['class' => 'op-anomaly-bg'] : []),
+                ->url(FailedJobsPage::getUrl())
+                ->extraAttributes($this->alertAccent($failedLevel)),
             Stat::make('Emails Sent (1h)', number_format($metrics['emails_sent']))
                 ->description('Last hour')
                 ->descriptionIcon('heroicon-o-envelope')
-                ->color('info'),
+                ->chart($metrics['emails_trend'])
+                ->chartColor('info')
+                ->color('info')
+                ->url(EmailLogResource::getUrl('index')),
             Stat::make('Searches (1h)', number_format($metrics['searches']))
                 ->description('Product searches')
                 ->descriptionIcon('heroicon-o-magnifying-glass')
-                ->color('gray'),
+                ->chart($metrics['searches_trend'])
+                ->chartColor('gray')
+                ->color('gray')
+                ->url(SearchLogResource::getUrl('index')),
         ];
     }
 }

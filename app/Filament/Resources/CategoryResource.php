@@ -164,16 +164,6 @@ class CategoryResource extends Resource
             ]);
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) static::getModel()::count();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
-    }
-
     public static function getRelations(): array
     {
         return [];

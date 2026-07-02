@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\PartInquiryStatus;
-use App\Http\Controllers\Controller;
 use App\Models\PartInquiry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 
-class InquiryController extends Controller
+class InquiryController extends ApiController
 {
     /**
      * Store a part inquiry from the homepage modal form.

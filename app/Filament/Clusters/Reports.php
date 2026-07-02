@@ -7,6 +7,8 @@ use Filament\Pages\Enums\SubNavigationPosition;
 
 class Reports extends Cluster
 {
+    use Concerns\RedirectsNavigationToFirstChild;
+
     protected static ?string $slug = 'reports';
 
     protected static ?string $navigationLabel = 'Reports';
@@ -18,8 +20,6 @@ class Reports extends Cluster
     protected static ?int $navigationSort = 80;
 
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
-
-    protected string $view = 'filament.clusters.reports';
 
     public static function canAccess(): bool
     {
@@ -34,9 +34,5 @@ class Reports extends Cluster
     public static function getNavigationGroup(): ?string
     {
         return null;
-    }
-
-    public function mount(): void
-    {
     }
 }

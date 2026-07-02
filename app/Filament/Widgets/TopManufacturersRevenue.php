@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\ManufacturerResource;
 use App\Models\Manufacturer;
 use Filament\Tables;
@@ -14,7 +13,7 @@ class TopManufacturersRevenue extends TableWidget
 {
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -27,57 +26,11 @@ class TopManufacturersRevenue extends TableWidget
 
     protected static ?string $heading = 'Top Manufacturers by Revenue';
 
-    protected static ?string $maxWidth = '1/2';
-
-    protected function getExportHeaders(): array
-    {
-        return ['Manufacturer', 'Revenue', 'Orders'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        $paidStatuses = [
-            OrderStatus::Paid->value,
-            OrderStatus::Processing->value,
-            OrderStatus::Shipped->value,
-            OrderStatus::Delivered->value,
-        ];
-
-        return Manufacturer::query()
-            ->select('manufacturers.id', 'manufacturers.name')
-            ->selectSub(function ($q) use ($paidStatuses) {
-                $q->selectRaw('COALESCE(SUM(order_items.total_price), 0)')
-                    ->from('order_items')
-                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                    ->join('products', 'products.id', '=', 'order_items.product_id')
-                    ->whereColumn('products.manufacturer_id', 'manufacturers.id')
-                    ->whereIn('orders.status', $paidStatuses)
-                    ->where('orders.created_at', '>=', $this->periodStart());
-            }, 'revenue')
-            ->selectSub(function ($q) use ($paidStatuses) {
-                $q->selectRaw('COUNT(*)')
-                    ->from('order_items')
-                    ->join('orders', 'orders.id', '=', 'order_items.order_id')
-                    ->join('products', 'products.id', '=', 'order_items.product_id')
-                    ->whereColumn('products.manufacturer_id', 'manufacturers.id')
-                    ->whereIn('orders.status', $paidStatuses)
-                    ->where('orders.created_at', '>=', $this->periodStart());
-            }, 'order_count')
-            ->orderByDesc('revenue')
-            ->get()
-            ->map(fn ($m) => [
-                is_array($m->name)
-                    ? ($m->name['en'] ?? $m->name[array_key_first($m->name)] ?? '—')
-                    : ($m->name ?? '—'),
-                format_money($m->revenue),
-                $m->order_count,
-            ]);
-    }
+    protected int | string | array $columnSpan = 'full';
 
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -128,9 +81,20 @@ class TopManufacturersRevenue extends TableWidget
                         'order_count'
                     )
                     ->orderByDesc('revenue')
-                    ->limit(8)
+                    ->limit(10)
             )
             ->columns([
+                Tables\Columns\TextColumn::make('rank')
+                    ->label('#')
+                    ->rowIndex()
+                    ->badge()
+                    ->icon(fn (mixed $state): ?string => (int) $state === 1 ? 'heroicon-m-trophy' : null)
+                    ->color(fn (mixed $state): string => match ((int) $state) {
+                        1 => 'warning',
+                        2, 3 => 'primary',
+                        default => 'gray',
+                    })
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Manufacturer')
                     ->searchable()
@@ -139,10 +103,19 @@ class TopManufacturersRevenue extends TableWidget
                 Tables\Columns\TextColumn::make('revenue')
                     ->label('Revenue (' . $this->periodLabel() . ')')
                     ->getStateUsing(fn ($record): string => (float) $record->revenue > 0 ? format_money($record->revenue) : '—')
-                    ->sortable(),
+                    ->sortable()
+                    ->summarize(
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Top 10 total')
+                            ->formatStateUsing(fn ($state): string => format_money($state))
+                    ),
                 Tables\Columns\TextColumn::make('order_count')
                     ->label('Orders')
-                    ->alignCenter(),
+                    ->alignCenter()
+                    ->summarize(
+                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                            ->label('Total')
+                    ),
                 Tables\Columns\TextColumn::make('market_share')
                     ->label('Share')
                     ->getStateUsing(function ($record) use ($paidStatuses): string {
@@ -162,15 +135,10 @@ class TopManufacturersRevenue extends TableWidget
                     ->size('sm')
                     ->icon('heroicon-m-eye'),
             ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-building-office-2',
-                    'heading' => 'No manufacturer data',
-                    'description' => 'Add products to track performance by manufacturer.',
-                    'ctaLabel' => 'Add Product',
-                    'ctaUrl' => \App\Filament\Resources\ProductResource::getUrl('create'),
-                ])
-            )
+            ->striped()
+            ->emptyStateIcon('heroicon-o-building-office-2')
+            ->emptyStateHeading('No revenue data yet')
+            ->emptyStateDescription('Manufacturer revenue appears once orders are placed.')
             ->searchable(false)
             ->paginated(false);
     }

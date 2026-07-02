@@ -83,6 +83,19 @@ class SecuritySettings extends SettingsPage
                             ->default(false),
 
                     ])->columns(2),
+
+                Section::make('Session')
+                    ->description('Control admin panel session expiry for security compliance.')
+                    ->schema([
+                        Forms\Components\TextInput::make('session_lifetime')
+                            ->label('Admin Session Lifetime (Minutes)')
+                            ->numeric()
+                            ->minValue(15)
+                            ->maxValue(1440)
+                            ->required()
+                            ->helperText('Minutes of inactivity before the admin panel session expires')
+                            ->default(120),
+                    ])->columns(2),
             ]);
     }
 }

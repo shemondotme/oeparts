@@ -2,17 +2,21 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\ActivityLogResource;
 use App\Models\ActivityLog;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class RecentActivityLog extends TableWidget
 {
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -21,7 +25,7 @@ class RecentActivityLog extends TableWidget
 
     protected ?string $pollingInterval = '60s';
 
-    protected int|string|array $columnSpan = 'full';
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected static ?int $sort = -23;
 
@@ -29,29 +33,9 @@ class RecentActivityLog extends TableWidget
 
     protected static ?string $maxWidth = 'full';
 
-    protected function getExportHeaders(): array
-    {
-        return ['Admin', 'Action', 'IP Address', 'Timestamp'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return ActivityLog::query()
-            ->with('admin')
-            ->latest()
-            ->get()
-            ->map(fn (ActivityLog $log) => [
-                $log->admin?->name ?? 'System',
-                $log->action,
-                $log->ip_address ?? '—',
-                $log->created_at?->format('d M Y H:i') ?? '—',
-            ]);
-    }
-
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -67,19 +51,14 @@ class RecentActivityLog extends TableWidget
                 ActivityLog::query()
                     ->with('admin')
                     ->latest()
-                    ->limit(6)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('admin.name')
+                TextColumn::make('admin.name')
                     ->label('Admin')
-                    ->searchable()
                     ->getStateUsing(fn (ActivityLog $record): string => $record->admin?->name ?? 'System')
-                    ->limit(18),
-                Tables\Columns\TextColumn::make('action')
-                    ->label('Action')
-                    ->badge()
-                    ->color('gray')
-                    ->getStateUsing(function (ActivityLog $record): string {
+                    ->weight(FontWeight::Bold)
+                    ->description(function (ActivityLog $record): string {
                         $label = ucfirst($record->action);
 
                         if ($record->model_type) {
@@ -104,18 +83,12 @@ class RecentActivityLog extends TableWidget
                         return $label;
                     })
                     ->searchable(query: fn ($query, $search) => $query->where('action', 'like', "%{$search}%")),
-                // Model + IP live in the full Activity Log resource (via the row
-                // action) — omitted here so 5 columns don't overflow the half-width cell.
-                Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP')
-                    ->copyable()
-                    ->copyMessage('IP address copied')
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->extraAttributes(['class' => 'oem-number']),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Timestamp')
-                    ->dateTime('M j, H:i')
-                    ->sortable(),
+                TextColumn::make('created_at')
+                    ->label('When')
+                    ->since()
+                    ->color('gray')
+                    ->description(fn (ActivityLog $record): string => $record->created_at?->format('M j, H:i') ?? '—')
+                    ->alignEnd(),
             ])
             ->actions([
                 Tables\Actions\Action::make('audit_detail')
@@ -137,15 +110,10 @@ class RecentActivityLog extends TableWidget
                     ->color('gray')
                     ->url(fn (ActivityLog $record): string => ActivityLogResource::getUrl('view', ['record' => $record])),
             ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-moon',
-                    'heading' => 'No recent activity',
-                    'description' => 'System is quiet.',
-                    'ctaLabel' => '',
-                    'ctaUrl' => '',
-                ])
-            )
+            ->striped()
+            ->emptyStateIcon('heroicon-o-clipboard-document-list')
+            ->emptyStateHeading('No activity yet')
+            ->emptyStateDescription('Admin actions will be logged here.')
             ->searchable(false)
             ->paginated(false);
     }

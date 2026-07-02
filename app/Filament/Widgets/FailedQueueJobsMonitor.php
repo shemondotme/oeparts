@@ -2,9 +2,11 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Models\FailedJob;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +14,7 @@ use Illuminate\Support\Facades\DB;
 class FailedQueueJobsMonitor extends TableWidget
 {
     use Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use Concerns\InteractsWithDashboardCache;
 
     protected static bool $isLazy = true;
 
@@ -20,7 +22,7 @@ class FailedQueueJobsMonitor extends TableWidget
 
     protected ?string $pollingInterval = '30s';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = 'full';
 
     protected static ?int $sort = -30;
 
@@ -29,32 +31,16 @@ class FailedQueueJobsMonitor extends TableWidget
         return 'Monitor for failed queue job retries';
     }
 
-    protected function getExportHeaders(): array
+    protected function getTableHeading(): string
     {
-        return ['Connection', 'Queue', 'Job', 'Failed At'];
-    }
+        $count = DB::table('failed_jobs')->count();
 
-    protected function getExportRows(): iterable
-    {
-        return DB::table('failed_jobs')
-            ->orderByDesc('failed_at')
-            ->get()
-            ->map(function (object $row): array {
-                $payload = json_decode($row->payload ?? '{}', true);
-                $job = class_basename($payload['displayName'] ?? $payload['job'] ?? 'Unknown');
-                return [
-                    $row->connection,
-                    $row->queue,
-                    $job,
-                    $row->failed_at ?? '—',
-                ];
-            });
+        return 'Failed Queue Jobs' . ($count > 0 ? " ({$count})" : '');
     }
 
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -69,31 +55,38 @@ class FailedQueueJobsMonitor extends TableWidget
             ->query(
                 FailedJob::query()
                     ->orderByDesc('failed_at')
-                    ->limit(8)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('connection')
-                    ->label('Connection')
-                    ->badge()
-                    ->color('gray')
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('queue')
-                    ->label('Queue')
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('payload')
+                TextColumn::make('payload')
                     ->label('Job')
                     ->getStateUsing(function ($record): string {
                         $payload = json_decode($record->payload ?? '{}', true);
                         $command = $payload['displayName'] ?? $payload['job'] ?? 'Unknown';
-                        $class = class_basename($command);
-                        return $class;
+                        return class_basename($command);
                     })
-                    ->limit(30)
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('failed_at')
-                    ->label('Failed')
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->limit(40)
+                    ->tooltip(function ($record): ?string {
+                        $payload = json_decode($record->payload ?? '{}', true);
+                        $command = $payload['displayName'] ?? $payload['job'] ?? 'Unknown';
+                        return mb_strlen((string) $command) > 40 ? $command : null;
+                    })
+                    ->description(fn ($record): string => ($record->connection ?? '—') . ' · ' . ($record->queue ?? 'default')),
+                TextColumn::make('failed_flag')
+                    ->label('Status')
+                    ->state('Failed')
+                    ->badge()
+                    ->icon('heroicon-m-x-circle')
+                    ->color('danger'),
+                TextColumn::make('failed_at')
+                    ->label('Failed At')
                     ->since()
-                    ->size('sm'),
+                    ->color('danger')
+                    ->weight(FontWeight::Medium)
+                    ->description('failed')
+                    ->alignEnd(),
             ])
             ->actions([
                 Tables\Actions\Action::make('retry')
@@ -117,6 +110,8 @@ class FailedQueueJobsMonitor extends TableWidget
                     ->requiresConfirmation()
                     ->action(fn ($record) => DB::table('failed_jobs')->where('id', $record->id)->delete()),
             ])
+            ->recordClasses(fn ($record): ?string => ($record->queue ?? 'default') === 'critical' ? 'op-row-critical' : null)
+            ->striped()
             ->paginated(false)
             ->searchable(false)
             ->emptyStateIcon('heroicon-o-check-badge')

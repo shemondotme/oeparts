@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Services\SectionRendererService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class SectionController extends Controller
+class SectionController extends ApiController
 {
     public function __construct(
         private SectionRendererService $sectionRenderer

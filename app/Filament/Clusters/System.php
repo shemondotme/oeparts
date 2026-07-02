@@ -6,6 +6,8 @@ use Filament\Clusters\Cluster;
 
 class System extends Cluster
 {
+    use Concerns\RedirectsNavigationToFirstChild;
+
     protected static ?string $slug = 'system';
 
     protected static ?string $navigationLabel = 'System';
@@ -15,8 +17,6 @@ class System extends Cluster
     protected static ?string $title = 'System';
 
     protected static ?int $navigationSort = 90;
-
-    protected string $view = 'filament.clusters.system';
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
@@ -30,10 +30,8 @@ class System extends Cluster
 
     public static function canAccess(): bool
     {
-        return auth('admin')->user()->hasRole('super_admin');
-    }
+        $user = auth('admin')->user();
 
-    public function mount(): void
-    {
+        return $user->hasRole('super_admin') || $user->hasPermissionTo('view system information');
     }
 }

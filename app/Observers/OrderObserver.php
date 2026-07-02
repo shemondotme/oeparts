@@ -2,9 +2,13 @@
 
 namespace App\Observers;
 
+use App\Filament\Resources\OrderResource;
 use App\Models\ActivityLog;
 use App\Models\Order;
 use App\Services\CacheService;
+use App\Support\AdminNotifier;
+use Filament\Notifications\Actions\Action;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -14,6 +18,7 @@ class OrderObserver
     {
         $this->log($order, 'created', [], $order->getAttributes());
         $this->invalidateCache($order);
+        $this->notifyNewOrder($order);
     }
 
     public function updated(Order $order): void
@@ -35,6 +40,28 @@ class OrderObserver
     {
         $this->log($order, 'deleted', $order->getAttributes(), []);
         $this->invalidateCache($order);
+    }
+
+    protected function notifyNewOrder(Order $order): void
+    {
+        try {
+            AdminNotifier::toRoles(
+                ['super_admin', 'admin', 'manager'],
+                Notification::make()
+                    ->title('New order placed')
+                    ->body($order->order_number . ' · ' . format_money($order->grand_total))
+                    ->icon('heroicon-o-shopping-bag')
+                    ->iconColor('success')
+                    ->actions([
+                        Action::make('view')
+                            ->label('View order')
+                            ->url(OrderResource::getUrl('view', ['record' => $order->getKey()], panel: 'admin'))
+                            ->markAsRead(),
+                    ]),
+            );
+        } catch (\Throwable $e) {
+            // A bell notification must never break checkout / order creation.
+        }
     }
 
     protected function invalidateCache(Order $order): void

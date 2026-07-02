@@ -26,21 +26,9 @@ class IpBlocklistResource extends Resource
         return 'heroicon-o-no-symbol';
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('is_active', true)->count();
-
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
-    }
-
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     public static function getNavigationSort(): ?int

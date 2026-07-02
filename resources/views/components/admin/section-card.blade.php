@@ -1,14 +1,3 @@
-{{--
-    <x-admin.section-card title="..." description="..." [actions slot]>
-        Content goes here
-    </x-admin.section-card>
-
-    Props:
-      title       — (required) card heading
-      description — (optional) subtitle below the heading
-      noPadding   — (optional, bool) omit inner body padding (e.g. for tables that bleed edge-to-edge)
-      interactive — (optional, bool) add lift-on-hover via bp-card--interactive
---}}
 @props([
     'title',
     'description' => null,
@@ -16,16 +5,15 @@
     'interactive' => false,
 ])
 
-<div {{ $attributes->merge(['class' => 'bp-card overflow-hidden' . ($interactive ? ' bp-card--interactive' : '')]) }}>
-    {{-- Header --}}
+<div {{ $attributes->merge(['class' => 'rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden' . ($interactive ? ' transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md' : '')]) }}>
     @if($title || isset($actions))
-        <div class="bp-card-header flex items-start justify-between gap-4">
+        <div class="flex items-start justify-between gap-4 px-5 pt-4 pb-3">
             <div class="min-w-0">
-                <h2 class="truncate font-display text-[0.9375rem] font-semibold tracking-tight" style="color: var(--color-text-primary);">
+                <h2 class="truncate text-[0.9375rem] font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                     {{ $title }}
                 </h2>
                 @if($description)
-                    <p class="mt-0.5 text-xs" style="color: var(--color-text-muted);">{{ $description }}</p>
+                    <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{{ $description }}</p>
                 @endif
             </div>
             @isset($actions)
@@ -36,7 +24,6 @@
         </div>
     @endif
 
-    {{-- Body --}}
     <div @class(['p-5' => !$noPadding])>
         {{ $slot }}
     </div>

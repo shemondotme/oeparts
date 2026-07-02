@@ -28,14 +28,16 @@ class TestimonialResource extends Resource
         return 'heroicon-o-chat-bubble-left-right';
     }
 
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return null;
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 30;
+        return 35;
     }
 
     public static function getRecordTitleAttribute(): ?string
@@ -279,16 +281,5 @@ class TestimonialResource extends Resource
             'view'   => Pages\ViewTestimonial::route('/{record}'),
             'edit'   => Pages\EditTestimonial::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('is_active', true)->count();
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
     }
 }

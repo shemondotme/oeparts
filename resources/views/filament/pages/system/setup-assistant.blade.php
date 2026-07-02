@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <style>
-    .op-action-btn:hover { border-color: var(--color-accent-300) !important; background: var(--color-bg-surface) !important; }
-    .op-maintenance-btn:hover { border-color: var(--color-accent-300) !important; background: var(--color-bg-surface) !important; }
+    .op-action-btn:hover { border-color: var(--warning-300) !important; background: var(--color-bg-surface) !important; }
+    .op-maintenance-btn:hover { border-color: var(--warning-300) !important; background: var(--color-bg-surface) !important; }
     </style>
     <div class="space-y-6">
         {{-- Header --}}
@@ -9,7 +9,7 @@
             <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold tracking-tight flex items-center gap-2" style="color: var(--color-text-on-accent, #ffffff); font-family: var(--font-display);">
-                        <x-heroicon-o-wrench-screwdriver class="w-5 h-5" style="color: var(--color-warning-500);" />
+                        <x-heroicon-o-wrench-screwdriver class="w-5 h-5" style="color: var(--warning-500);" />
                         Setup Assistant
                     </h2>
                     <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
@@ -19,14 +19,14 @@
                 <div class="flex items-center gap-3">
                     @if($this->isInstalled())
                         <div class="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg shrink-0 w-fit"
-                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--color-success-400);">
-                            <span class="h-2 w-2 rounded-full animate-pulse" style="background: var(--color-success-500);"></span>
+                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--success-400);">
+                            <span class="h-2 w-2 rounded-full animate-pulse" style="background: var(--success-500);"></span>
                             INSTALLED
                         </div>
                     @else
                         <div class="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg shrink-0 w-fit"
-                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--color-warning-400);">
-                            <span class="h-2 w-2 rounded-full" style="background: var(--color-warning-500);"></span>
+                            style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--warning-400);">
+                            <span class="h-2 w-2 rounded-full" style="background: var(--warning-500);"></span>
                             NOT INSTALLED
                         </div>
                     @endif
@@ -41,13 +41,13 @@
                 <h3 class="text-sm font-bold" style="color: var(--color-text-primary); font-family: var(--font-display);">
                     Setup Progress
                 </h3>
-                <span class="text-lg font-black font-mono" style="color: {{ $progress >= 80 ? 'var(--color-success-500)' : ($progress >= 50 ? 'var(--color-warning-500)' : 'var(--color-danger-500)') }};">
+                <span class="text-lg font-black font-mono" style="color: {{ $progress >= 80 ? 'var(--success-500)' : ($progress >= 50 ? 'var(--warning-500)' : 'var(--danger-500)') }};">
                     {{ $progress }}%
                 </span>
             </div>
             <div class="w-full h-3 rounded-full overflow-hidden" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                 <div class="h-full rounded-full transition-all duration-700 ease-out"
-                    style="width: {{ $progress }}%; background: {{ $progress >= 80 ? 'var(--color-success-500)' : ($progress >= 50 ? 'var(--color-warning-500)' : 'var(--color-danger-500)') }};">
+                    style="width: {{ $progress }}%; background: {{ $progress >= 80 ? 'var(--success-500)' : ($progress >= 50 ? 'var(--warning-500)' : 'var(--danger-500)') }};">
                 </div>
             </div>
             <p class="mt-2 text-xs font-mono" style="color: var(--color-text-muted);">
@@ -73,7 +73,7 @@
                             {{-- Status Icon --}}
                             <div class="shrink-0">
                                 @if($step['done'])
-                                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--color-success-500); color: white;">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center" style="background: var(--success-500); color: white;">
                                         <x-heroicon-o-check class="w-4 h-4" />
                                     </div>
                                 @else
@@ -96,7 +96,7 @@
                             {{-- Badge --}}
                             <div class="shrink-0">
                                 @if($step['done'])
-                                    <span class="text-xs font-bold font-mono px-2 py-1 rounded" style="background: var(--color-success-500); color: white;">
+                                    <span class="text-xs font-bold font-mono px-2 py-1 rounded" style="background: var(--success-500); color: white;">
                                         DONE
                                     </span>
                                 @else
@@ -126,7 +126,7 @@
                     {{-- PHP Version --}}
                     <div class="p-4 rounded-xl" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                         <dt class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">PHP Version</dt>
-                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ version_compare($this->getPhpVersion(), '8.2', '>=') ? 'var(--color-success-500)' : 'var(--color-danger-500)' }};">
+                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ version_compare($this->getPhpVersion(), '8.2', '>=') ? 'var(--success-500)' : 'var(--danger-500)' }};">
                             {{ $this->getPhpVersion() }}
                         </dd>
                     </div>
@@ -134,7 +134,7 @@
                     {{-- Database --}}
                     <div class="p-4 rounded-xl" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                         <dt class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Database</dt>
-                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ $this->getDbStatus()['ok'] ? 'var(--color-success-500)' : 'var(--color-danger-500)' }};">
+                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ $this->getDbStatus()['ok'] ? 'var(--success-500)' : 'var(--danger-500)' }};">
                             {{ $this->getDbStatus()['message'] }}
                             @if($this->getDbStatus()['ok'])
                                 <span class="text-xs font-normal" style="color: var(--color-text-muted);">({{ $this->getDbSize() }})</span>
@@ -161,7 +161,7 @@
                     {{-- Redis --}}
                     <div class="p-4 rounded-xl" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                         <dt class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Redis</dt>
-                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ $this->getRedisStatus()['ok'] ? 'var(--color-success-500)' : 'var(--color-danger-500)' }};">
+                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ $this->getRedisStatus()['ok'] ? 'var(--success-500)' : 'var(--danger-500)' }};">
                             {{ $this->getRedisStatus()['message'] }}
                         </dd>
                     </div>
@@ -169,7 +169,7 @@
                     {{-- Failed Jobs --}}
                     <div class="p-4 rounded-xl" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                         <dt class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">Failed Jobs</dt>
-                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ $this->getFailedJobsCount() > 0 ? 'var(--color-danger-500)' : 'var(--color-success-500)' }};">
+                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ $this->getFailedJobsCount() > 0 ? 'var(--danger-500)' : 'var(--success-500)' }};">
                             {{ $this->getFailedJobsCount() }}
                         </dd>
                     </div>
@@ -219,7 +219,7 @@
                         <div class="text-left">
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-bold" style="color: var(--color-text-primary); font-family: var(--font-display);">Run Migrations</div>
-                                <span class="text-xs font-bold font-mono px-1.5 py-0.5 rounded" style="background: var(--color-warning-500); color: white;">MEDIUM</span>
+                                <span class="text-xs font-bold font-mono px-1.5 py-0.5 rounded" style="background: var(--warning-500); color: white;">MEDIUM</span>
                             </div>
                             <div class="text-xs font-mono" style="color: var(--color-text-muted);">Apply pending database changes</div>
                         </div>
@@ -239,7 +239,7 @@
                         <div class="text-left">
                             <div class="flex items-center gap-2">
                                 <div class="text-sm font-bold" style="color: var(--color-text-primary); font-family: var(--font-display);">Seed Demo Data</div>
-                                <span class="text-xs font-bold font-mono px-1.5 py-0.5 rounded" style="background: var(--color-danger-500); color: white;">HIGH</span>
+                                <span class="text-xs font-bold font-mono px-1.5 py-0.5 rounded" style="background: var(--danger-500); color: white;">HIGH</span>
                             </div>
                             <div class="text-xs font-mono" style="color: var(--color-text-muted);">Populate with sample products</div>
                         </div>
@@ -252,9 +252,9 @@
                         wire:loading.attr="disabled"
                         wire:loading.class="opacity-50"
                         class="op-maintenance-btn op-focus-ring op-press flex items-center gap-3 p-4 rounded-xl transition-all duration-200"
-                        style="border: 1px solid {{ $this->isDownForMaintenance() ? 'var(--color-warning-300)' : 'var(--color-border-subtle)' }}; background: var(--color-bg-inset);"
+                        style="border: 1px solid {{ $this->isDownForMaintenance() ? 'var(--warning-300)' : 'var(--color-border-subtle)' }}; background: var(--color-bg-inset);"
                     >
-                        <div class="p-2 rounded-lg" style="background: {{ $this->isDownForMaintenance() ? 'var(--color-warning-500)' : 'var(--color-bg-surface)' }}; border: 1px solid var(--color-border-default); color: {{ $this->isDownForMaintenance() ? 'white' : 'var(--color-text-muted)' }};">
+                        <div class="p-2 rounded-lg" style="background: {{ $this->isDownForMaintenance() ? 'var(--warning-500)' : 'var(--color-bg-surface)' }}; border: 1px solid var(--color-border-default); color: {{ $this->isDownForMaintenance() ? 'white' : 'var(--color-text-muted)' }};">
                             <x-heroicon-o-power class="w-5 h-5" />
                         </div>
                         <div class="text-left">
@@ -262,7 +262,7 @@
                                 <div class="text-sm font-bold" style="color: var(--color-text-primary); font-family: var(--font-display);">
                                     {{ $this->isDownForMaintenance() ? 'Disable Maintenance' : 'Enable Maintenance' }}
                                 </div>
-                                <span class="text-xs font-bold font-mono px-1.5 py-0.5 rounded" style="background: var(--color-warning-500); color: white;">MEDIUM</span>
+                                <span class="text-xs font-bold font-mono px-1.5 py-0.5 rounded" style="background: var(--warning-500); color: white;">MEDIUM</span>
                             </div>
                             <div class="text-xs font-mono" style="color: var(--color-text-muted);">
                                 {{ $this->isDownForMaintenance() ? 'Bring site back online' : 'Put site in maintenance mode' }}

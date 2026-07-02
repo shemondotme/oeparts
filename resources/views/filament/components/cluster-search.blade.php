@@ -10,7 +10,7 @@
         placeholder="{{ $placeholder ?? 'Search...' }}"
         aria-label="Search"
         class="w-full pl-11 pr-4 py-3 text-sm rounded-xl transition-all duration-200 focus:ring-2 focus:ring-offset-0"
-        style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--color-brand-500);"
+        style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--primary-500);"
     />
     <div x-show="search.length > 0" class="absolute inset-y-0 right-0 pr-4 flex items-center">
         <button @click="search = ''" class="text-xs font-medium px-2 py-1 rounded" style="color: var(--color-text-muted);">

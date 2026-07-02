@@ -2,24 +2,23 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Widgets\Widget;
+use App\Filament\Pages\System\CacheDashboard;
+use App\Filament\Pages\System\QueueMonitor;
+use App\Filament\Pages\System\ScheduledTasksPage;
+use App\Filament\Pages\System\ServerMonitor;
+use Filament\Widgets\StatsOverviewWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class HealthStrip extends Widget
+class HealthStrip extends StatsOverviewWidget
 {
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
     use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-
-    public function getDescription(): ?string
-    {
-        return 'Real-time system health indicators';
-    }
+    use \App\Filament\Widgets\Concerns\HasMonitoringVisuals;
 
     protected static bool $isLazy = false;
-
-    protected string $view = 'filament.widgets.system-health-strip';
 
     protected int | string | array $columnSpan = 'full';
 
@@ -27,42 +26,80 @@ class HealthStrip extends Widget
 
     protected static ?int $sort = -13;
 
-    protected function getViewData(): array
+    protected function getStats(): array
     {
-        return [
-            'checks' => $this->cachedHealthData('checks', fn (): array => [
-                'db'        => $this->checkDatabase(),
-                'redis'     => $this->checkRedis(),
-                'queue'     => $this->checkQueue(),
-                'storage'   => $this->checkStorage(),
-                'scheduler' => $this->checkScheduler(),
-                'cache'     => $this->checkCache(),
-            ]),
-        ];
+        $checks = $this->cachedHealthData('checks', fn (): array => [
+            $this->checkDatabase(),
+            $this->checkRedis(),
+            $this->checkQueue(),
+            $this->checkStorage(),
+            $this->checkScheduler(),
+            $this->checkCache(),
+        ]);
+
+        return array_map(function (array $check): Stat {
+            // Live pulse dot for healthy checks + a status-colored accent on
+            // the card's left edge (clean at-a-glance status, no cramped
+            // inline strip).
+            $live = $check['color'] === 'success';
+
+            $stat = Stat::make($check['label'], $check['value'])
+                ->description($this->statusDescription($check['description'], live: $live))
+                ->color($check['color'])
+                ->extraAttributes(['class' => 'op-health-' . $this->colorToState($check['color'])]);
+
+            // Healthy checks show the pulse dot instead of a redundant icon;
+            // degraded checks keep their warning/error icon.
+            if (! $live) {
+                $stat->descriptionIcon($check['icon']);
+            }
+
+            $url = match ($check['label']) {
+                'Database', 'Redis', 'Storage' => ServerMonitor::getUrl(),
+                'Queue' => QueueMonitor::getUrl(),
+                'Scheduler' => ScheduledTasksPage::getUrl(),
+                'Cache' => CacheDashboard::getUrl(),
+                default => null,
+            };
+
+            if ($url !== null) {
+                $stat->url($url);
+            }
+
+            return $stat;
+        }, $checks);
     }
 
     private function checkDatabase(): array
     {
         try {
-            $start  = microtime(true);
+            $start = microtime(true);
             DB::connection()->getPdo();
-            $ms     = round((microtime(true) - $start) * 1000);
+            $ms = round((microtime(true) - $start) * 1000);
             $tables = count(DB::select('SHOW TABLES'));
 
             return [
-                'label'  => 'Connected',
-                'detail' => "{$tables} tables · {$ms}ms",
-                'color'  => 'success',
+                'label' => 'Database',
+                'value' => "{$tables} tables",
+                'description' => "{$ms}ms · connected",
+                'icon' => 'heroicon-m-check-circle',
+                'color' => 'success',
             ];
         } catch (\Exception $e) {
-            return ['label' => 'Error', 'detail' => $e->getMessage(), 'color' => 'danger'];
+            return [
+                'label' => 'Database', 'value' => 'Offline',
+                'description' => 'Connection failed', 'icon' => 'heroicon-m-x-circle', 'color' => 'danger',
+            ];
         }
     }
 
     private function checkRedis(): array
     {
         if (! extension_loaded('redis') && ! class_exists('Redis')) {
-            return ['label' => 'Not installed', 'detail' => 'PHP Redis extension not available', 'color' => 'gray'];
+            return [
+                'label' => 'Redis', 'value' => 'Not installed',
+                'description' => 'Optional in local dev', 'icon' => 'heroicon-m-minus-circle', 'color' => 'gray',
+            ];
         }
 
         try {
@@ -71,14 +108,19 @@ class HealthStrip extends Widget
             Cache::store('redis')->get('_health_check');
             $ms = round((microtime(true) - $start) * 1000);
 
-            return ['label' => 'Responding', 'detail' => "{$ms}ms", 'color' => 'success'];
+            return [
+                'label' => 'Redis', 'value' => "{$ms}ms",
+                'description' => 'Connected', 'icon' => 'heroicon-m-bolt', 'color' => 'success',
+            ];
         } catch (\Throwable) {
             $isRequired = config('cache.default') === 'redis';
 
             return [
-                'label'  => $isRequired ? 'Unavailable' : 'Not configured',
-                'detail' => $isRequired ? 'Connection failed' : 'Using ' . config('cache.default'),
-                'color'  => $isRequired ? 'danger' : 'gray',
+                'label' => 'Redis',
+                'value' => $isRequired ? 'Unavailable' : 'Not configured',
+                'description' => $isRequired ? 'Required in production' : 'Using fallback driver',
+                'icon' => $isRequired ? 'heroicon-m-x-circle' : 'heroicon-m-minus-circle',
+                'color' => $isRequired ? 'danger' : 'gray',
             ];
         }
     }
@@ -91,12 +133,21 @@ class HealthStrip extends Widget
             if ($lastJob) {
                 $s = now()->diffInSeconds($lastJob);
 
-                return ['label' => 'Active', 'detail' => "Last job {$s}s ago", 'color' => 'success'];
+                return [
+                    'label' => 'Queue', 'value' => 'Active',
+                    'description' => "Last job {$s}s ago", 'icon' => 'heroicon-m-arrow-path', 'color' => 'success',
+                ];
             }
 
-            return ['label' => 'Idle', 'detail' => 'No recent jobs', 'color' => 'gray'];
+            return [
+                'label' => 'Queue', 'value' => 'Idle',
+                'description' => 'No pending jobs', 'icon' => 'heroicon-m-check-circle', 'color' => 'success',
+            ];
         } catch (\Exception) {
-            return ['label' => 'Error', 'detail' => 'Queue table not accessible', 'color' => 'danger'];
+            return [
+                'label' => 'Queue', 'value' => 'Error',
+                'description' => 'Cannot read queue', 'icon' => 'heroicon-m-x-circle', 'color' => 'danger',
+            ];
         }
     }
 
@@ -106,20 +157,29 @@ class HealthStrip extends Widget
             $path = Storage::disk('public')->path('');
 
             if (! is_dir($path)) {
-                return ['label' => 'Not mounted', 'detail' => 'Storage path not found', 'color' => 'warning'];
+                return [
+                    'label' => 'Storage', 'value' => 'Not mounted',
+                    'description' => 'Check disk mount', 'icon' => 'heroicon-m-exclamation-triangle', 'color' => 'warning',
+                ];
             }
 
-            $total   = disk_total_space($path);
-            $free    = disk_free_space($path);
+            $total = disk_total_space($path);
+            $free = disk_free_space($path);
             $usedPct = $total > 0 ? round((($total - $free) / $total) * 100) : 0;
+            $freeGb = number_format($free / 1024 / 1024 / 1024, 1);
 
             return [
-                'label'  => "{$usedPct}% used",
-                'detail' => number_format($free / 1024 / 1024 / 1024, 1) . ' GB free',
-                'color'  => $usedPct > 90 ? 'danger' : ($usedPct > 75 ? 'warning' : 'success'),
+                'label' => 'Storage',
+                'value' => "{$usedPct}% used",
+                'description' => "{$freeGb} GB free" . ($usedPct > 90 ? ' — critical' : ''),
+                'icon' => $usedPct > 90 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-server-stack',
+                'color' => $usedPct > 90 ? 'danger' : ($usedPct > 75 ? 'warning' : 'success'),
             ];
         } catch (\Exception) {
-            return ['label' => 'Unknown', 'detail' => 'Cannot check storage', 'color' => 'gray'];
+            return [
+                'label' => 'Storage', 'value' => 'Unknown',
+                'description' => 'Cannot read disk', 'icon' => 'heroicon-m-minus-circle', 'color' => 'gray',
+            ];
         }
     }
 
@@ -132,13 +192,19 @@ class HealthStrip extends Widget
                 $s = now()->diffInSeconds($heartbeat);
 
                 return $s < 120
-                    ? ['label' => 'Running',      'detail' => "Heartbeat {$s}s ago",      'color' => 'success']
-                    : ['label' => 'Stale',        'detail' => "{$s}s since heartbeat",     'color' => 'danger'];
+                    ? ['label' => 'Scheduler', 'value' => 'Running', 'description' => "Beat {$s}s ago", 'icon' => 'heroicon-m-check-circle', 'color' => 'success']
+                    : ['label' => 'Scheduler', 'value' => 'Stale', 'description' => "{$s}s since last beat", 'icon' => 'heroicon-m-exclamation-triangle', 'color' => 'danger'];
             }
 
-            return ['label' => 'No heartbeat', 'detail' => 'Scheduler may not be running', 'color' => 'warning'];
+            return [
+                'label' => 'Scheduler', 'value' => 'No heartbeat',
+                'description' => 'Cron may not be running', 'icon' => 'heroicon-m-exclamation-triangle', 'color' => 'warning',
+            ];
         } catch (\Exception) {
-            return ['label' => 'Error', 'detail' => 'Cannot check scheduler', 'color' => 'danger'];
+            return [
+                'label' => 'Scheduler', 'value' => 'Error',
+                'description' => 'Cannot read status', 'icon' => 'heroicon-m-x-circle', 'color' => 'danger',
+            ];
         }
     }
 
@@ -146,14 +212,20 @@ class HealthStrip extends Widget
     {
         try {
             $driver = config('cache.default');
+            $ok = in_array($driver, ['redis', 'file', 'database'], true);
 
             return [
-                'label'  => ucfirst($driver),
-                'detail' => 'Driver: ' . $driver,
-                'color'  => in_array($driver, ['redis', 'file', 'database']) ? 'success' : 'warning',
+                'label' => 'Cache',
+                'value' => ucfirst($driver),
+                'description' => $ok ? 'Driver active' : 'Unknown driver',
+                'icon' => $ok ? 'heroicon-m-check-circle' : 'heroicon-m-exclamation-triangle',
+                'color' => $ok ? 'success' : 'warning',
             ];
         } catch (\Exception) {
-            return ['label' => 'Error', 'detail' => 'Cannot check cache', 'color' => 'danger'];
+            return [
+                'label' => 'Cache', 'value' => 'Error',
+                'description' => 'Cannot read config', 'icon' => 'heroicon-m-x-circle', 'color' => 'danger',
+            ];
         }
     }
 }

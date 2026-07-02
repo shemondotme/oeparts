@@ -5,7 +5,7 @@
             <div class="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-lg font-bold tracking-tight flex items-center gap-2" style="color: var(--color-text-on-accent, #ffffff); font-family: var(--font-display);">
-                        <x-heroicon-o-clock class="w-5 h-5" style="color: var(--color-warning-500);" />
+                        <x-heroicon-o-clock class="w-5 h-5" style="color: var(--warning-500);" />
                         Scheduled Tasks
                     </h2>
                     <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
@@ -13,8 +13,8 @@
                     </p>
                 </div>
                 <div class="flex items-center gap-2 text-xs font-mono px-3 py-1.5 rounded-lg shrink-0 w-fit"
-                    style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--color-success-400);">
-                    <span class="h-2 w-2 rounded-full animate-pulse" style="background: var(--color-success-500);"></span>
+                    style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: var(--success-400);">
+                    <span class="h-2 w-2 rounded-full animate-pulse" style="background: var(--success-500);"></span>
                     POLLING 60s
                 </div>
             </div>
@@ -70,7 +70,7 @@
                                                 x-data
                                                 x-on:click="if (!confirm('Run this task now?')) $event.preventDefault()"
                                                 class="op-focus-ring op-press inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all duration-200"
-                                                style="background: var(--color-info-600); color: white;">
+                                                style="background: var(--info-600); color: white;">
                                                 <x-heroicon-o-play class="w-3 h-3" />
                                                 Run Now
                                             </button>
@@ -106,7 +106,7 @@
             <div class="p-6">
                 @if($logs->isEmpty())
                     <div class="text-center py-12">
-                        <x-heroicon-o-check-circle class="w-12 h-12 mx-auto mb-4" style="color: var(--color-success-500);" />
+                        <x-heroicon-o-check-circle class="w-12 h-12 mx-auto mb-4" style="color: var(--success-500);" />
                         <p class="text-sm font-medium" style="color: var(--color-text-muted);">No execution logs found.</p>
                     </div>
                 @else
@@ -130,9 +130,9 @@
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
                                                 style="
                                                     @if($log->status->value === 'success')
-                                                        background: rgba(34, 197, 94, 0.1); color: var(--color-success-500);
+                                                        background: rgba(34, 197, 94, 0.1); color: var(--success-500);
                                                     @elseif($log->status->value === 'failed')
-                                                        background: rgba(239, 68, 68, 0.1); color: var(--color-danger-500);
+                                                        background: rgba(239, 68, 68, 0.1); color: var(--danger-500);
                                                     @else
                                                         background: var(--color-bg-inset); color: var(--color-text-muted);
                                                     @endif

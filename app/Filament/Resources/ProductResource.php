@@ -619,14 +619,17 @@ class ProductResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('is_in_stock', false)->where('is_active', true)->count() ?: null;
+        return \App\Support\NavBadge::count('products_oos', fn () => static::getModel()::where('is_in_stock', false)->where('is_active', true)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $count = static::getModel()::where('is_in_stock', false)->where('is_active', true)->count();
+        return 'danger';
+    }
 
-        return $count > 0 ? 'danger' : null;
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Products out of stock';
     }
 
     /**
@@ -663,5 +666,13 @@ class ProductResource extends Resource
         if ($normalized !== '') {
             $query->orWhere('normalized_oem', 'like', "%{$normalized}%");
         }
+    }
+
+    public static function getGlobalSearchResultDetails(\Illuminate\Database\Eloquent\Model $record): array
+    {
+        return [
+            'OEM' => $record->oem_number,
+            'Stock' => $record->is_in_stock ? 'In stock' : 'Out of stock',
+        ];
     }
 }

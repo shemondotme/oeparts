@@ -26,35 +26,27 @@ export default {
                     900: "#312e81",
                 },
 
-                // Semantic grays
-                body: "#334155", // Primary body text
-                muted: "#64748B", // Secondary text, labels
-                "bg-page": "#F8FAFC", // Page background
-                "section-alt": "#EEF4FF", // Alternating section bg — navy 6% tint
-
-                // Admin shell surfaces (Industrial Blueprint Pro — warm drafting studio)
-                "admin-canvas": "#F4F2ED",
-                "admin-surface": "#FAF8F4",
-                "admin-border": "rgba(10, 18, 40, 0.08)",
-                "admin-muted": "#718096",
-
-                // ── Industrial Blueprint tokens ───────────────────────
-                // Deep ink for primary text on ivory — more contrast than navy
+                // Industrial Blueprint core — ink (dark blueprint base)
                 ink: "#0A1228",
-                // Secondary ink — for muted text on ivory surfaces
                 "ink-muted": "#4E5A74",
-                // Warm cream page background — evokes blueprint / spec-sheet paper
-                ivory: "#F7F3E7",
-                // Darker cream for alternating strips
-                "ivory-alt": "#EFE9D6",
-                // Paper white — card surfaces on ivory
+
+                // Blueprint paper & rule colors
                 paper: "#FFFFFF",
-                // Hairline rule colors (borders without shadows)
-                rule: "#D8CFB6", // default hairline on ivory (warm)
-                "rule-strong": "#B8AE90", // emphasized hairline
-                "rule-dark": "#1D2A44", // hairline on navy/dark surfaces
-                // Blueprint amber — slightly desaturated for ivory surfaces
-                "amber-ink": "#9A5A00", // maximal contrast amber text (> AA) on ivory
+                ivory: "#F7F3E7",
+                "ivory-alt": "#EFE9D6",
+                rule: "#D8CFB6",
+                "rule-strong": "#B8AE90",
+
+                // Amber-on-ink compound
+                "amber-ink": "#9A5A00",
+
+                // Semantic grays
+                body: "#334155",
+                muted: "#64748B",
+                "bg-page": "#F8FAFC",
+                "section-alt": "#EEF4FF",
+
+
 
             },
 

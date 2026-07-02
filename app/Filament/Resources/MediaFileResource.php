@@ -25,9 +25,11 @@ class MediaFileResource extends Resource
         return 'heroicon-o-photo';
     }
 
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return null;
     }
 
     public static function getNavigationSort(): ?int

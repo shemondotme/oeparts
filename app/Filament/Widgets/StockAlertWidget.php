@@ -2,21 +2,33 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\ProductResource;
 use App\Models\Product;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class StockAlertWidget extends TableWidget
 {
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
         return 'Products currently out of stock';
+    }
+
+    protected function getTableHeading(): string
+    {
+        $count = Product::where('is_in_stock', false)->where('is_active', true)->count();
+
+        return 'Out of Stock' . ($count > 0 ? " ({$count})" : '');
     }
 
     protected ?string $pollingInterval = '60s';
@@ -27,34 +39,9 @@ class StockAlertWidget extends TableWidget
 
     protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
-    protected function getExportHeaders(): array
-    {
-        return ['OEM Number', 'Manufacturer', 'Price'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return Product::query()
-            ->where('is_in_stock', false)
-            ->where('is_active', true)
-            ->with('manufacturer')
-            ->latest()
-            ->get()
-            ->map(fn (Product $p) => [
-                $p->oem_number,
-                $p->manufacturer
-                    ? (is_array($p->manufacturer->name)
-                        ? ($p->manufacturer->name['en'] ?? reset($p->manufacturer->name))
-                        : $p->manufacturer->name)
-                    : '—',
-                format_money($p->price),
-            ]);
-    }
-
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -71,7 +58,7 @@ class StockAlertWidget extends TableWidget
                 ->where('is_active', true)
                 ->with('manufacturer')
                 ->latest()
-                ->limit(5);
+                ->limit(10);
         } catch (\Exception $e) {
             report($e);
             $query = Product::query()->whereRaw('1 = 0');
@@ -80,21 +67,26 @@ class StockAlertWidget extends TableWidget
         return $table
             ->query($query)
             ->columns([
-                Tables\Columns\TextColumn::make('oem_number')
+                TextColumn::make('oem_number')
                     ->label('OEM')
-                    ->fontMono()
-                    ->limit(15)
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('manufacturer.name')
-                    ->label('Mfr')
-                    ->getStateUsing(fn (Product $record): string => $record->manufacturer ? $record->manufacturer->name['en'] ?? (is_array($record->manufacturer->name) ? reset($record->manufacturer->name) : $record->manufacturer->name) ?? '—' : '—')
-                    ->limit(15)
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('price')
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->limit(24)
+                    ->tooltip(fn (Product $record): ?string => mb_strlen((string) $record->oem_number) > 24 ? $record->oem_number : null)
+                    ->description(fn (Product $record): string => $record->manufacturer ? ($record->manufacturer->name['en'] ?? (is_array($record->manufacturer->name) ? reset($record->manufacturer->name) : $record->manufacturer->name) ?? '—') : '—'),
+                TextColumn::make('stock_flag')
+                    ->label('Status')
+                    ->state('Out of stock')
+                    ->badge()
+                    ->icon('heroicon-m-exclamation-triangle')
+                    ->color('danger'),
+                TextColumn::make('price')
                     ->label('Price')
                     ->formatStateUsing(fn (Product $record): string => format_money($record->price))
-                    ->fontMono()
-                    ->size('sm'),
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description('unit price')
+                    ->alignEnd(),
             ])
             ->actions([
                 Tables\Actions\Action::make('reorder')
@@ -110,15 +102,10 @@ class StockAlertWidget extends TableWidget
                     ->iconButton()
                     ->icon('heroicon-m-eye'),
             ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-check-badge',
-                    'heading' => 'Stock levels healthy',
-                    'description' => 'No items below reorder point.',
-                    'ctaLabel' => '',
-                    'ctaUrl' => '',
-                ])
-            )
+            ->striped()
+            ->emptyStateIcon('heroicon-o-check-badge')
+            ->emptyStateHeading('Everything in stock')
+            ->emptyStateDescription('No active products are out of stock.')
             ->paginated(false)
             ->searchable(false);
     }

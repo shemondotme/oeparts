@@ -28,14 +28,17 @@ class AbandonedCartResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('recovery_email_sent', false)->where('created_at', '>=', now()->subHours(24))->count();
-
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('carts_abandoned', fn () => static::getModel()::where('recovery_email_sent', false)->where('created_at', '>=', now()->subHours(24))->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
         return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Carts abandoned in the last 24h';
     }
 
     public static function getNavigationGroup(): ?string

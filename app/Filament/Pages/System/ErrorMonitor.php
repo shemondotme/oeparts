@@ -38,7 +38,7 @@ class ErrorMonitor extends Page
 
     public static function getNavigationSort(): ?int
     {
-        return 47;
+        return 50;
     }
 
     public static function getNavigationGroup(): ?string

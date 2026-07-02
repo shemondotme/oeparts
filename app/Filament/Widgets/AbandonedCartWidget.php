@@ -2,21 +2,34 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\AbandonedCartResource;
 use App\Models\Cart;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class AbandonedCartWidget extends TableWidget
 {
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
         return 'Carts left before checkout';
+    }
+
+    protected function getTableHeading(): string
+    {
+        $count = Cart::where('updated_at', '<', now()->subHours((int) settings('dashboard.cart_abandoned_hours', 2)))
+            ->whereHas('items')
+            ->count();
+
+        return 'Abandoned Carts' . ($count > 0 ? " ({$count})" : '');
     }
 
     protected ?string $pollingInterval = '60s';
@@ -27,31 +40,9 @@ class AbandonedCartWidget extends TableWidget
 
     protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
-    protected function getExportHeaders(): array
-    {
-        return ['User', 'Items', 'Last Active'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return Cart::query()
-            ->withCount('items')
-            ->with('user')
-            ->where('updated_at', '<', now()->subHours((int) settings('dashboard.cart_abandoned_hours', 2)))
-            ->whereHas('items')
-            ->latest('updated_at')
-            ->get()
-            ->map(fn (Cart $cart) => [
-                $cart->user?->email ?? 'Guest',
-                $cart->items_count,
-                $cart->updated_at?->format('d M Y H:i') ?? '—',
-            ]);
-    }
-
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -69,20 +60,17 @@ class AbandonedCartWidget extends TableWidget
                     ->where('updated_at', '<', now()->subHours((int) settings('dashboard.cart_abandoned_hours', 2)))
                     ->whereHas('items')
                     ->latest('updated_at')
-                    ->limit(5)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('user.email')
-                    ->label('User')
-                    ->limit(25)
-                    ->placeholder('Guest')
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('items_count')
-                    ->label('Items')
-                    ->counts('items')
-                    ->fontMono()
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('user.email')
+                    ->label('Customer')
+                    ->weight(FontWeight::Bold)
+                    ->placeholder('Guest checkout')
+                    ->limit(32)
+                    ->tooltip(fn (Cart $record): ?string => $record->user?->email && mb_strlen((string) $record->user->email) > 32 ? $record->user->email : null)
+                    ->description(fn (Cart $record): string => $record->items_count . ' item' . ((int) $record->items_count === 1 ? '' : 's') . ' in cart'),
+                TextColumn::make('updated_at')
                     ->label('Last Active')
                     ->since()
                     ->color(function (Cart $record): string {
@@ -91,7 +79,8 @@ class AbandonedCartWidget extends TableWidget
                         if ($hours < 24) return 'warning';
                         return 'danger';
                     })
-                    ->size('sm'),
+                    ->weight(FontWeight::Medium)
+                    ->alignEnd(),
             ])
             ->actions([
                 Tables\Actions\Action::make('send_reminder')
@@ -115,15 +104,10 @@ class AbandonedCartWidget extends TableWidget
                     ->size('sm')
                     ->icon('heroicon-m-eye'),
             ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-check-circle',
-                    'heading' => 'No abandoned carts',
-                    'description' => 'Great! Your checkout flow is working.',
-                    'ctaLabel' => '',
-                    'ctaUrl' => '',
-                ])
-            )
+            ->striped()
+            ->emptyStateIcon('heroicon-o-check-circle')
+            ->emptyStateHeading('No abandoned carts')
+            ->emptyStateDescription('Every cart made it to checkout.')
             ->paginated(false)
             ->searchable(false);
     }

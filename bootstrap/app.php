@@ -41,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
             'csp' => \App\Http\Middleware\ContentSecurityPolicy::class,
             'honeypot' => \Spatie\Honeypot\ProtectAgainstSpam::class,
+            'auth.sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
         $middleware->web(append: [

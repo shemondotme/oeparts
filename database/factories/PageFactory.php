@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\ContentStatus;
+use App\Models\Admin;
 use App\Models\Page;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -28,7 +29,7 @@ class PageFactory extends Factory
             'is_homepage'      => false,
             'is_header'        => false,
             'is_footer'        => false,
-            'created_by'       => null,
+            'created_by'       => Admin::factory(),
             'published_at'     => fake()->dateTimeBetween('-6 months', 'now'),
         ];
     }

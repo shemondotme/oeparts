@@ -2,9 +2,14 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Models\Product;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
@@ -12,7 +17,7 @@ class NewProductsAdded extends TableWidget
 {
     use Concerns\HasWidgetRoles;
     use Concerns\HasDashboardPeriod;
-    use HasWidgetExport;
+    use Concerns\InteractsWithDashboardCache;
 
     protected static bool $isLazy = true;
 
@@ -29,36 +34,9 @@ class NewProductsAdded extends TableWidget
         return 'Recently added products';
     }
 
-    protected function getExportHeaders(): array
-    {
-        return ['OEM Number', 'Product', 'Manufacturer', 'Added'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return Product::query()
-            ->where('created_at', '>=', $this->periodStart())
-            ->with(['manufacturer'])
-            ->latest()
-            ->get()
-            ->map(function (Product $product): array {
-                $mfr = $product->manufacturer;
-                $mfrName = $mfr
-                    ? ($mfr->name['en'] ?? (is_array($mfr->name) ? reset($mfr->name) : $mfr->name) ?? '—')
-                    : '—';
-                return [
-                    $product->oem_number,
-                    is_array($product->name) ? ($product->name['en'] ?? reset($product->name)) : ($product->name ?? '—'),
-                    $mfrName,
-                    $product->created_at?->format('d M Y H:i') ?? '—',
-                ];
-            });
-    }
-
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -75,26 +53,26 @@ class NewProductsAdded extends TableWidget
                     ->where('created_at', '>=', $this->periodStart())
                     ->with(['manufacturer'])
                     ->latest()
-                    ->limit(8)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('oem_number')
-                    ->label('SKU')
-                    ->extraAttributes(['class' => 'oem-number'])
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Product')
-                    ->limit(30)
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('manufacturer.name')
+                    ->weight(FontWeight::Bold)
+                    ->limit(36)
+                    ->tooltip(fn (Product $record): ?string => mb_strlen(trans_field($record->name)) > 36 ? trans_field($record->name) : null)
+                    ->description(fn (Product $record): string => $record->oem_number ?? '—'),
+                TextColumn::make('manufacturer.name')
                     ->label('Manufacturer')
                     ->getStateUsing(fn (Product $record): string => $record->manufacturer ? ($record->manufacturer->name['en'] ?? (is_array($record->manufacturer->name) ? reset($record->manufacturer->name) : $record->manufacturer->name) ?? '—') : '—')
-                    ->limit(15)
-                    ->size('sm'),
-                Tables\Columns\TextColumn::make('created_at')
+                    ->badge()
+                    ->color('gray'),
+                TextColumn::make('created_at')
                     ->label('Added')
                     ->since()
-                    ->size('sm'),
+                    ->color('gray')
+                    ->description('added')
+                    ->alignEnd(),
             ])
             ->actions([
                 Tables\Actions\Action::make('edit')
@@ -104,6 +82,7 @@ class NewProductsAdded extends TableWidget
                     ->size('sm')
                     ->url(fn (Product $record): string => \App\Filament\Resources\ProductResource::getUrl('edit', ['record' => $record])),
             ])
+            ->striped()
             ->paginated(false)
             ->searchable(false)
             ->emptyStateIcon('heroicon-o-cube-transparent')

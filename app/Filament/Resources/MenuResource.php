@@ -27,14 +27,16 @@ class MenuResource extends Resource
         return 'heroicon-o-bars-3';
     }
 
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return null;
     }
 
     public static function getNavigationSort(): ?int
     {
-        return 50;
+        return 55;
     }
 
     public static function getRecordTitleAttribute(): ?string
@@ -188,17 +190,6 @@ class MenuResource extends Resource
             'view'   => Pages\ViewMenu::route('/{record}'),
             'edit'   => Pages\EditMenu::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('is_active', true)->count();
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

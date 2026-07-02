@@ -189,8 +189,7 @@ class EmailLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('status', LogStatus::Failed)->count();
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('emails_failed', fn () => static::getModel()::where('status', LogStatus::Failed)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string

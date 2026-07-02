@@ -31,9 +31,11 @@ class SectionResource extends Resource
         return 'heroicon-o-squares-2x2';
     }
 
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return null;
     }
 
     public static function getNavigationSort(): ?int
@@ -307,18 +309,6 @@ class SectionResource extends Resource
             'view'   => Pages\ViewSection::route('/{record}'),
             'edit'   => Pages\EditSection::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('status', \App\Enums\SectionStatus::Published)->count();
-
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

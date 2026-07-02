@@ -2,24 +2,26 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\CustomerResource;
 use App\Models\User;
-use Filament\Actions\ViewAction;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class LatestCustomersWidget extends TableWidget
 {
-    use Concerns\HasDashboardPeriod;
     use Concerns\HasWidgetRoles;
     use Concerns\InteractsWithDashboardCache;
-    use HasWidgetExport;
 
     public function getDescription(): ?string
     {
-        return 'Customers who registered in the selected period';
+        return 'Most recent customer registrations';
     }
 
     protected ?string $pollingInterval = '60s';
@@ -30,66 +32,42 @@ class LatestCustomersWidget extends TableWidget
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
-    protected function getExportHeaders(): array
-    {
-        return ['Name', 'Email', 'Joined', 'Status'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return User::where('created_at', '>=', $this->periodStart())
-            ->latest()
-            ->get()
-            ->map(fn (User $u) => [
-                $u->name,
-                $u->email,
-                $u->created_at?->format('d M Y H:i') ?? '—',
-                $u->is_active ? 'Active' : 'Inactive',
-            ]);
-    }
-
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                User::where('created_at', '>=', $this->periodStart())
+                User::query()
                     ->latest()
-                    ->limit(5)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
-                    ->searchable()
-                    ->limit(22),
-                Tables\Columns\TextColumn::make('email')
-                    ->label('Email')
-                    ->limit(24)
-                    ->copyable()
-                    ->copyMessage('Email copied'),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Joined')
-                    ->since()
-                    ->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                IconColumn::make('is_active')
+                    ->label('')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('gray'),
+                TextColumn::make('name')
+                    ->label('Name')
+                    ->weight(FontWeight::Bold)
+                    ->searchable()
+                    ->limit(26)
+                    ->tooltip(fn (User $record): ?string => $record->email)
+                    ->description(fn (User $record): string => \Illuminate\Support\Str::limit((string) $record->email, 32))
+                    ->copyable()
+                    ->copyableState(fn (User $record): string => (string) $record->email)
+                    ->copyMessage('Email copied'),
+                TextColumn::make('created_at')
+                    ->label('Joined')
+                    ->since()
+                    ->color('gray')
+                    ->description('joined')
+                    ->alignEnd(),
             ])
-            ->actions([
-                ViewAction::make()
-                    ->url(fn (User $record): string => CustomerResource::getUrl('view', ['record' => $record])),
-            ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-users',
-                    'heading' => 'No new customers',
-                    'description' => 'No customers signed up in the selected period.',
-                    'ctaLabel' => 'View all customers',
-                    'ctaUrl' => CustomerResource::getUrl('index'),
-                ])
-            )
-            ->emptyStateDescription('')
+            ->recordUrl(fn (User $record): string => CustomerResource::getUrl('view', ['record' => $record]))
+            ->striped()
+            ->emptyStateIcon('heroicon-o-user-group')
+            ->emptyStateHeading('No customers yet')
+            ->emptyStateDescription('New customer registrations will appear here.')
             ->searchable(false)
             ->paginated(false);
     }

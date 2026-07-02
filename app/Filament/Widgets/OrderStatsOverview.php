@@ -21,7 +21,7 @@ class OrderStatsOverview extends StatsOverviewWidget
 
     protected ?string $heading = 'Order Overview';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int | string | array $columnSpan = 'full';
 
     public function getDescription(): ?string
     {
@@ -59,6 +59,10 @@ class OrderStatsOverview extends StatsOverviewWidget
             $ordersCurrent = Order::where('created_at', '>=', $start)->count();
             $ordersPrevious = Order::whereBetween('created_at', [$prevStart, $start])->count();
 
+            $ordersSparkline = collect(range(6, 0))->map(
+                fn ($i) => Order::whereDate('created_at', now()->subDays($i))->count()
+            )->values()->toArray();
+
             $driver = DB::connection()->getDriverName();
             $diffExpr = $driver === 'sqlite'
                 ? "(julianday('now') - julianday(created_at)) * 1440"
@@ -71,6 +75,7 @@ class OrderStatsOverview extends StatsOverviewWidget
                 'revenueCurrent' => (string) $revenueCurrent,
                 'revenuePrevious' => (string) $revenuePrevious,
                 'revenueSparkline' => $revenueSparkline,
+                'ordersSparkline' => $ordersSparkline,
                 'ordersCurrent' => $ordersCurrent,
                 'ordersPrevious' => $ordersPrevious,
                 'ordersThreshold' => (int) settings('dashboard.orders_threshold', 50),
@@ -120,6 +125,7 @@ class OrderStatsOverview extends StatsOverviewWidget
             Stat::make('New Orders', number_format($d['ordersCurrent']))
                 ->description($exceedsThreshold ? "{$ordersTrendLabel} — above target" : $ordersTrendLabel)
                 ->descriptionIcon($exceedsThreshold ? 'heroicon-o-arrow-trending-up' : 'heroicon-o-shopping-bag')
+                ->chart(array_map('intval', $d['ordersSparkline']))
                 ->color($exceedsThreshold ? 'warning' : 'info')
                 ->url(OrderResource::getUrl('index')),
 

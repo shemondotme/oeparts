@@ -6,6 +6,8 @@ use Filament\Clusters\Cluster;
 
 class Content extends Cluster
 {
+    use Concerns\RedirectsNavigationToFirstChild;
+
     protected static ?string $slug = 'content';
 
     protected static ?string $navigationLabel = 'Content';
@@ -15,8 +17,6 @@ class Content extends Cluster
     protected static ?string $title = 'Content';
 
     protected static ?int $navigationSort = 40;
-
-    protected string $view = 'filament.clusters.content';
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
@@ -31,9 +31,5 @@ class Content extends Cluster
     public static function canAccess(): bool
     {
         return auth('admin')->user()->hasAnyRole(['super_admin', 'admin', 'catalog_admin']);
-    }
-
-    public function mount(): void
-    {
     }
 }

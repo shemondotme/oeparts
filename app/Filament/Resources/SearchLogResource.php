@@ -19,19 +19,9 @@ class SearchLogResource extends Resource
         return 'heroicon-o-magnifying-glass';
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return (string) SearchLog::whereDate('created_at', today())->count();
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
-    }
-
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     protected static ?int $navigationSort = 80;

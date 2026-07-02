@@ -25,7 +25,7 @@ class LoginLogResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return 'System';
+        return 'Administration';
     }
 
     public static function getNavigationSort(): ?int
@@ -123,8 +123,7 @@ class LoginLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('status', LogStatus::Failed)->whereDate('created_at', today())->count();
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('logins_failed_today', fn () => static::getModel()::where('status', LogStatus::Failed)->where('created_at', '>=', now()->startOfDay())->count());
     }
 
     public static function getNavigationBadgeColor(): ?string

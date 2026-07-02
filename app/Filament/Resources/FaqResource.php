@@ -30,9 +30,11 @@ class FaqResource extends Resource
         return 'heroicon-o-question-mark-circle';
     }
 
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Content';
+        return null;
     }
 
     public static function getNavigationSort(): ?int
@@ -248,17 +250,6 @@ class FaqResource extends Resource
             'view'   => Pages\ViewFaq::route('/{record}'),
             'edit'   => Pages\EditFaq::route('/{record}/edit'),
         ];
-    }
-
-    public static function getNavigationBadge(): ?string
-    {
-        $count = static::getModel()::where('is_active', true)->count();
-        return $count > 0 ? (string) $count : null;
-    }
-
-    public static function getNavigationBadgeColor(): ?string
-    {
-        return 'gray';
     }
 
     public static function getGloballySearchableAttributes(): array

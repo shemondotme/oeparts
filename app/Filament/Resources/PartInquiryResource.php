@@ -353,14 +353,17 @@ class PartInquiryResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = static::getModel()::where('status', PartInquiryStatus::New)->count();
-
-        return $count > 0 ? (string) $count : null;
+        return \App\Support\NavBadge::count('inquiries_new', fn () => static::getModel()::where('status', PartInquiryStatus::New)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
         return 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'New part inquiries';
     }
 
     public static function getGloballySearchableAttributes(): array

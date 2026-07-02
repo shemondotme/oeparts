@@ -10,7 +10,7 @@ class SettingsSeeder extends Seeder
 {
     public function run(): void
     {
-        $settings = $this->definitions();
+        $settings = self::definitions();
 
         foreach ($settings as $row) {
             Setting::updateOrCreate(
@@ -24,7 +24,7 @@ class SettingsSeeder extends Seeder
         }
     }
 
-    private function definitions(): array
+    public static function definitions(): array
     {
         $s = SettingType::String->value;
         $b = SettingType::Boolean->value;
@@ -184,6 +184,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'performance', 'key' => 'cache_ttl_manufacturers', 'value' => '60',    'type' => $i],
             ['group' => 'performance', 'key' => 'query_cache_enabled',     'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'query_cache_ttl',         'value' => '10',    'type' => $i],
+            ['group' => 'performance', 'key' => 'queue_retry_after',      'value' => '3700',  'type' => $i],
 
             // ── SECURITY ─────────────────────────────────────────────────────────
             ['group' => 'security', 'key' => 'login_max_attempts',    'value' => '5',  'type' => $i],
@@ -386,8 +387,6 @@ class SettingsSeeder extends Seeder
 
             // ── DASHBOARD (widget thresholds — defaults mirrored in code) ─────────
             ['group' => 'dashboard', 'key' => 'pending_orders_warning',   'value' => '50', 'type' => $i],
-            ['group' => 'dashboard', 'key' => 'pending_orders_attention', 'value' => '10', 'type' => $i],
-            ['group' => 'dashboard', 'key' => 'backup_stale_hours',       'value' => '26', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],
             ['group' => 'dashboard', 'key' => 'orders_threshold',         'value' => '50', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'pending_delayed_minutes',  'value' => '120', 'type' => $i],

@@ -23,7 +23,9 @@ class ContentRevisionPage extends Page implements HasTable
 
     public static function getNavigationSort(): ?int
     {
-        return 50;
+        // Last in the Content cluster — it's a read-only audit trail, not a
+        // content type, so it sits after all the editable items.
+        return 100;
     }
 
     public static function getNavigationIcon(): string|\BackedEnum|null
@@ -34,6 +36,11 @@ class ContentRevisionPage extends Page implements HasTable
     public static function getNavigationLabel(): string
     {
         return 'Revision History';
+    }
+
+    public function getSubheading(): ?string
+    {
+        return 'Audit trail of all content changes across sections, pages, blog posts, and FAQs.';
     }
 
     public static function canAccess(): bool

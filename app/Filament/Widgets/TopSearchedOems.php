@@ -2,10 +2,15 @@
 
 namespace App\Filament\Widgets;
 
-use App\Filament\Concerns\HasWidgetExport;
 use App\Filament\Resources\ProductResource;
 use App\Models\SearchLog;
+use Filament\Support\Enums\Alignment;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
+use Filament\Tables\Columns\Layout\Split;
+use Filament\Tables\Columns\Layout\Stack;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +19,7 @@ class TopSearchedOems extends TableWidget
 {
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use HasWidgetExport;
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -27,34 +32,14 @@ class TopSearchedOems extends TableWidget
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
-    public function getHeading(): string
+    protected function getTableHeading(): string
     {
         return 'Top Searched OEMs (' . $this->periodLabel() . ')';
-    }
-
-    protected function getExportHeaders(): array
-    {
-        return ['OEM Number', 'Searches'];
-    }
-
-    protected function getExportRows(): iterable
-    {
-        return SearchLog::query()
-            ->select('search_query', \Illuminate\Support\Facades\DB::raw('COUNT(*) as search_count'))
-            ->where('created_at', '>=', $this->periodStart())
-            ->groupBy('search_query')
-            ->orderByDesc('search_count')
-            ->get()
-            ->map(fn ($row) => [
-                $row->search_query,
-                $row->search_count,
-            ]);
     }
 
     protected function getTableHeaderActions(): array
     {
         return [
-            $this->getExportActions(),
             Tables\Actions\Action::make('view_all')
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
@@ -72,17 +57,33 @@ class TopSearchedOems extends TableWidget
                     ->where('created_at', '>=', $this->periodStart())
                     ->groupBy('search_query')
                     ->orderByDesc('search_count')
-                    ->limit(8)
+                    ->limit(10)
             )
             ->columns([
-                Tables\Columns\TextColumn::make('search_query')
-                    ->label('OEM Number')
-                    ->searchable()
-                    ->extraAttributes(['class' => 'oem-number']),
-                Tables\Columns\TextColumn::make('search_count')
-                    ->label('Searches')
-                    ->sortable()
+                TextColumn::make('rank')
+                    ->label('#')
+                    ->rowIndex()
+                    ->badge()
+                    ->icon(fn (mixed $state): ?string => (int) $state === 1 ? 'heroicon-m-trophy' : null)
+                    ->color(fn (mixed $state): string => match ((int) $state) {
+                        1 => 'warning',
+                        2, 3 => 'primary',
+                        default => 'gray',
+                    })
                     ->alignCenter(),
+                TextColumn::make('search_query')
+                    ->label('OEM / Query')
+                    ->weight(FontWeight::Bold)
+                    ->fontFamily(FontFamily::Mono)
+                    ->description('search term')
+                    ->searchable(),
+                TextColumn::make('search_count')
+                    ->label('Searches')
+                    ->badge()
+                    ->color('primary')
+                    ->icon('heroicon-m-magnifying-glass')
+                    ->formatStateUsing(fn ($state): string => number_format((int) $state) . '×')
+                    ->alignEnd(),
             ])
             ->actions([
                 Tables\Actions\Action::make('source_now')
@@ -98,15 +99,10 @@ class TopSearchedOems extends TableWidget
                     ->url(fn ($record): string => ProductResource::getUrl('index', ['tableSearch' => $record->search_query]))
                     ->openUrlInNewTab(),
             ])
-            ->emptyState(
-                view('filament.widgets.empty-state', [
-                    'icon' => 'heroicon-o-magnifying-glass',
-                    'heading' => 'No search logs yet',
-                    'description' => 'Enable search tracking in settings to see OEM search data.',
-                    'ctaLabel' => '',
-                    'ctaUrl' => '',
-                ])
-            )
+            ->striped()
+            ->emptyStateIcon('heroicon-o-magnifying-glass')
+            ->emptyStateHeading('No searches yet')
+            ->emptyStateDescription('Customer search activity will appear here.')
             ->searchable(false)
             ->paginated(false);
     }

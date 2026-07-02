@@ -80,7 +80,10 @@ class LogViewerPage extends Page
             return [];
         }
 
-        $lines = file($filepath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        // Only the tail of the file is read — loading a multi-hundred-MB log
+        // in full previously exhausted memory (OOM). 5000 lines is plenty to
+        // filter down to the 200 shown below.
+        $lines = $this->tailLines($filepath, 5000);
         $lines = array_reverse($lines);
 
         $filtered = [];
@@ -110,6 +113,40 @@ class LogViewerPage extends Page
         }
 
         return $filtered;
+    }
+
+    /**
+     * Read the last ~$maxLines lines of a (possibly huge) log file without
+     * loading the whole file into memory — seeks to the end and reads
+     * backwards in chunks until enough newlines are collected.
+     *
+     * @return array<int, string>
+     */
+    private function tailLines(string $filepath, int $maxLines = 5000): array
+    {
+        $handle = fopen($filepath, 'rb');
+
+        if ($handle === false) {
+            return [];
+        }
+
+        $buffer = '';
+        $chunkSize = 16384;
+        fseek($handle, 0, SEEK_END);
+        $pos = ftell($handle);
+
+        while ($pos > 0 && substr_count($buffer, "\n") <= $maxLines) {
+            $read = (int) min($chunkSize, $pos);
+            $pos -= $read;
+            fseek($handle, $pos);
+            $buffer = fread($handle, $read) . $buffer;
+        }
+
+        fclose($handle);
+
+        $lines = array_slice(explode("\n", $buffer), -$maxLines);
+
+        return array_values(array_filter($lines, fn ($line) => trim($line) !== ''));
     }
 
     private function getLogLevel(string $line): string

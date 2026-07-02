@@ -240,14 +240,12 @@ class NewsletterCampaignResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::where('status', 'draft')->count() ?: null;
+        return \App\Support\NavBadge::count('campaigns_draft', fn () => static::getModel()::where('status', 'draft')->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $count = static::getModel()::where('status', 'draft')->count();
-
-        return $count > 5 ? 'danger' : 'warning';
+        return (int) \App\Support\NavBadge::count('campaigns_draft', fn () => static::getModel()::where('status', 'draft')->count()) > 5 ? 'danger' : 'warning';
     }
 
     public static function getGloballySearchableAttributes(): array
