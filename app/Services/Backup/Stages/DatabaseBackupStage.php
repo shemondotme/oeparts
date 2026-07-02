@@ -299,15 +299,17 @@ class DatabaseBackupStage implements BackupStage
         return 'backups/'.$run->getKey().'/db/'.$safe.'.'.$suffix.'.sql.gz';
     }
 
-    /** Compress + persist one part file; return the attrs the engine records. */
+    /** Compress + persist one part file to LOCAL staging; the transport stage
+     *  (2.4) encrypts + ships it afterwards. Returns the attrs the engine records. */
     private function writePart(BackupRun $run, string $path, string $sql, array $attrs): array
     {
         $compressed = (string) gzencode($sql, 6);
+        $disk       = (string) config('backup.staging_disk', 'local');
 
-        Storage::disk($run->disk)->put($path, $compressed);
+        Storage::disk($disk)->put($path, $compressed);
 
         return array_merge($attrs, [
-            'disk'   => $run->disk,
+            'disk'   => $disk,
             'path'   => $path,
             'bytes'  => strlen($compressed),
             'sha256' => hash('sha256', $compressed),

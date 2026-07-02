@@ -22,9 +22,14 @@ return [
         'cipher'  => 'aes-256-gcm',
     ],
 
-    // Laravel filesystem disk. Off-site (S3 EU region / SFTP) strongly recommended;
+    // Final destination disk. Off-site (S3 EU region / SFTP) strongly recommended;
     // 'local' warns in pre-flight. S3 must be an EU region for GDPR residency.
     'disk' => env('OE_BACKUP_DISK', 'local'),
+
+    // Local working disk where parts are staged + encrypted before transport. MUST
+    // be a local-driver disk (native paths / append). Off-site parts are streamed
+    // here first, then uploaded and deleted (never stage a whole backup off-site).
+    'staging_disk' => env('OE_BACKUP_STAGING_DISK', 'local'),
 
     // Volume split size for large file backups (keeps memory flat, enables resume).
     'volume_bytes' => (int) env('OE_BACKUP_VOLUME_BYTES', 512 * 1024 * 1024), // 512 MB
@@ -93,15 +98,17 @@ return [
     'stale_after_seconds' => (int) env('OE_BACKUP_STALE_AFTER', 3600),
 
     // Ordered pipeline of BackupStage classes per profile (Chunk 2.1 seam).
-    // The engine runs them in listed order, one chunk per poll. The file (2.3)
-    // and env/encryption (2.4) stages append here as they land.
+    // The engine runs them in listed order, one chunk per poll. EncryptTransport
+    // MUST be last — it encrypts + ships every part the earlier stages staged.
     'stages' => [
         'update_safety' => [
             \App\Services\Backup\Stages\DatabaseBackupStage::class,
+            \App\Services\Backup\Stages\EncryptTransportStage::class,
         ],
         'full' => [
             \App\Services\Backup\Stages\DatabaseBackupStage::class,
             \App\Services\Backup\Stages\FileBackupStage::class,
+            \App\Services\Backup\Stages\EncryptTransportStage::class,
         ],
     ],
 
