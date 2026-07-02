@@ -79,6 +79,36 @@ class SystemUpdates extends Page
         return 'heroicon-o-arrow-up-circle';
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        // Cached only — never triggers a network call on nav render.
+        $status = app(UpdateChecker::class)->cached();
+
+        return ($status && $status->updateAvailable) ? '1' : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $status = app(UpdateChecker::class)->cached();
+
+        if (! $status || ! $status->updateAvailable) {
+            return null;
+        }
+
+        return $status->security ? 'danger' : 'warning';
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        $status = app(UpdateChecker::class)->cached();
+
+        if (! $status || ! $status->updateAvailable) {
+            return null;
+        }
+
+        return ($status->security ? 'Security update' : 'Update').' available: '.$status->latestVersion;
+    }
+
     public static function canAccess(): bool
     {
         return (bool) auth('admin')->user()?->can('view updates');

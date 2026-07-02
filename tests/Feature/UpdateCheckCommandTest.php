@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\NotifyAdminsOfUpdate;
 use App\Services\Updates\UpdateChecker;
 use App\Services\Updates\UpdateStatus;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -24,6 +26,8 @@ class UpdateCheckCommandTest extends TestCase
         config()->set('updates.check.manifest_url', 'https://updates.test/version.json');
 
         Cache::forget(UpdateChecker::CACHE_KEY);
+        Cache::forget('oe_updates.notified_version');
+        Queue::fake();
     }
 
     #[Test]
@@ -72,5 +76,36 @@ class UpdateCheckCommandTest extends TestCase
         $this->artisan('schedule:list')
             ->assertSuccessful()
             ->expectsOutputToContain('oeparts:update:check');
+    }
+
+    #[Test]
+    public function it_notifies_super_admins_once_per_new_version(): void
+    {
+        Http::fake([
+            'updates.test/*' => Http::response(['channel' => 'stable', 'releases' => [
+                ['version' => '9.9.9', 'min_version_to_update_from' => '0.0.0', 'security' => true, 'download_url' => 'https://x/z.zip'],
+            ]], 200),
+            '*' => Http::response('', 500),
+        ]);
+
+        $this->artisan('oeparts:update:check')->assertSuccessful();
+        $this->artisan('oeparts:update:check')->assertSuccessful(); // same version — must not re-notify
+
+        Queue::assertPushed(NotifyAdminsOfUpdate::class, 1);
+    }
+
+    #[Test]
+    public function it_does_not_notify_when_up_to_date(): void
+    {
+        Http::fake([
+            'updates.test/*' => Http::response(['channel' => 'stable', 'releases' => [
+                ['version' => '0.0.1'], // older than the installed version
+            ]], 200),
+            '*' => Http::response('', 500),
+        ]);
+
+        $this->artisan('oeparts:update:check')->assertSuccessful();
+
+        Queue::assertNotPushed(NotifyAdminsOfUpdate::class);
     }
 }

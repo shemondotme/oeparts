@@ -95,6 +95,13 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,
                 fn (): string => Blade::render('@include(\'filament.topbar.quick-create\')'),
             )
+            // "Update available" admin notice at the top of every page — reads only the
+            // cached UpdateChecker status (no network) and is gated on `view updates`
+            // inside the partial (Update System, Module 21).
+            ->renderHook(
+                PanelsRenderHook::PAGE_START,
+                fn (): string => Blade::render('@include(\'filament.hooks.update-banner\')'),
+            )
             ->navigationGroups([
                 NavigationGroup::make('Commerce'),
                 NavigationGroup::make('Catalog'),
