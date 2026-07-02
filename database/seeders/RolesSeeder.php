@@ -160,6 +160,13 @@ class RolesSeeder extends Seeder
             'edit carriers',
             'delete carriers',
             'view system information',
+
+            // Update & Recovery System (Module 21) — super_admin only (via Gate::before)
+            'view updates',
+            'apply updates',
+            'manage backups',
+            'restore backups',
+            'run recovery',
         ];
 
         foreach ($permissions as $permission) {
