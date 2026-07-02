@@ -88,4 +88,23 @@ class SystemUpdatesPageTest extends TestCase
         $this->assertTrue($status['update_available']);
         $this->assertSame('9.9.9', $status['latest_version']);
     }
+
+    #[Test]
+    public function the_nav_badge_reflects_a_cached_security_update(): void
+    {
+        $this->fakeUpdateAvailable(security: true);
+        app(UpdateChecker::class)->check(force: true); // populate the cache
+
+        $this->assertSame('1', SystemUpdates::getNavigationBadge());
+        $this->assertSame('danger', SystemUpdates::getNavigationBadgeColor());
+    }
+
+    #[Test]
+    public function the_nav_badge_is_hidden_without_a_cached_status(): void
+    {
+        Cache::forget(UpdateChecker::CACHE_KEY);
+
+        $this->assertNull(SystemUpdates::getNavigationBadge());
+        $this->assertNull(SystemUpdates::getNavigationBadgeColor());
+    }
 }

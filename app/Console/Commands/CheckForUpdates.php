@@ -2,8 +2,11 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\NotifyAdminsOfUpdate;
 use App\Services\Updates\UpdateChecker;
+use App\Services\Updates\UpdateStatus;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Update & Recovery System (Module 21, Chunk 1.2) — scheduled/manual check tier.
@@ -21,6 +24,8 @@ class CheckForUpdates extends Command
     public function handle(UpdateChecker $checker): int
     {
         $status = $checker->check(force: true);
+
+        $this->notifyIfNew($status);
 
         if ($this->option('json')) {
             $this->line((string) json_encode($status->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
@@ -54,5 +59,26 @@ class CheckForUpdates extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Email super_admins once per new available version (deduped by version so the
+     * daily run does not re-notify). Only the scheduled command notifies — lazy
+     * page-load and the "Check now" button never send mail.
+     */
+    private function notifyIfNew(UpdateStatus $status): void
+    {
+        if (! $status->reachable || ! $status->updateAvailable) {
+            return;
+        }
+
+        $key = 'oe_updates.notified_version';
+
+        if (Cache::get($key) === $status->latestVersion) {
+            return;
+        }
+
+        NotifyAdminsOfUpdate::dispatch($status->toArray());
+        Cache::forever($key, $status->latestVersion);
     }
 }
