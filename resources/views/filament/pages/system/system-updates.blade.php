@@ -122,6 +122,57 @@
             </div>
         @endif
 
+        {{-- One-click apply (Chunk 3.5) --}}
+        @if($this->canApply() && ($available || $applying))
+            <div class="op-card relative overflow-hidden p-6"
+                style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);"
+                x-data
+                x-on:update-complete.window="setTimeout(() => window.location.reload(), 1500)">
+
+                @if(! $applying)
+                    <div class="text-sm font-bold uppercase tracking-widest font-mono mb-3" style="color: var(--color-text-muted, #6b7280);">
+                        Apply this update
+                    </div>
+                    <p class="text-sm mb-4" style="color: var(--color-text-muted, #6b7280);">
+                        A full backup is taken first, the site enters maintenance mode, and the update is applied and verified.
+                        Confirm your password to begin.
+                    </p>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase tracking-wider mb-1" style="color: var(--color-text-muted, #6b7280);">Your password</label>
+                            <input type="password" wire:model="applyPassword"
+                                class="op-focus-ring rounded-xl px-3 py-2 text-sm font-mono"
+                                style="background: var(--color-bg-inset, #f3f4f6); border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);" />
+                            @error('applyPassword')<div class="mt-1 text-xs" style="color: var(--danger-500, #dc2626);">{{ $message }}</div>@enderror
+                        </div>
+                        <button wire:click="startApply" wire:loading.attr="disabled" wire:target="startApply"
+                            x-on:click="return confirm('Apply update {{ $s['latest_version'] ?? '' }} now? The site will go into maintenance mode.')"
+                            class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+                            style="background: {{ $security ? 'var(--danger-500, #dc2626)' : 'var(--primary-600, #2563eb)' }}; color: white;">
+                            <x-heroicon-o-rocket-launch class="w-3.5 h-3.5" />
+                            Apply update now
+                        </button>
+                    </div>
+                @else
+                    <div wire:poll.2s="pollApply">
+                        <div class="flex items-center gap-3 mb-3">
+                            <svg class="animate-spin h-4 w-4" style="color: var(--primary-600, #2563eb);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            <span class="text-sm font-bold" style="color: var(--color-text-primary, #111827);">
+                                Updating… step: <span class="font-mono">{{ $applyStatus['step'] ?? '—' }}</span>
+                                (<span class="font-mono">{{ $applyStatus['status'] ?? '—' }}</span>)
+                            </span>
+                        </div>
+                        <p class="text-xs" style="color: var(--color-text-muted, #6b7280);">
+                            Keep this window open — the page reloads automatically when the update finishes.
+                        </p>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         {{-- Footer meta --}}
         @if(!empty($s['checked_at']))
             <p class="text-xs font-mono" style="color: var(--color-text-muted, #6b7280);">
