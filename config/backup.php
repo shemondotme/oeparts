@@ -71,5 +71,17 @@ return [
         'time'    => env('OE_BACKUP_TIME', '01:00'), // supersedes the old db:backup command
     ],
 
+    // A run still 'running' this many seconds after it started is presumed crashed;
+    // the BackupJanitor reclaims its files and releases the shared lock.
+    'stale_after_seconds' => (int) env('OE_BACKUP_STALE_AFTER', 3600),
+
+    // Ordered pipeline of BackupStage classes per profile (Chunk 2.1 seam).
+    // The DB (2.2), file (2.3) and env/encryption (2.4) stages register here as
+    // they land; the engine runs them in listed order, one chunk per poll.
+    'stages' => [
+        'update_safety' => [],
+        'full'          => [],
+    ],
+
     'path' => storage_path('app/backups'),
 ];
