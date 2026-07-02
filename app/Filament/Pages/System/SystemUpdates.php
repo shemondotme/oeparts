@@ -3,9 +3,13 @@
 namespace App\Filament\Pages\System;
 
 use App\Filament\Clusters\System;
+use App\Models\UpdateHistory;
+use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Update & Recovery System (Module 21, Chunk 1.3) — the "System Updates" page.
@@ -26,10 +30,118 @@ class SystemUpdates extends Page
     /** @var array<string,mixed>|null Result of UpdateChecker::check()->toArray() */
     public ?array $status = null;
 
+    /* ---- One-click apply (Chunk 3.5) ---- */
+    public bool $applying = false;
+    public ?int $applyHistoryId = null;
+    /** @var array<string,mixed>|null current FSM status for the progress panel */
+    public ?array $applyStatus = null;
+    public ?string $applyPassword = null;
+
     public function mount(): void
     {
         // Lazy tier — served from cache unless the TTL has expired.
         $this->status = app(UpdateChecker::class)->check()->toArray();
+
+        // Resume a running apply if the operator reloaded mid-update.
+        $running = UpdateHistory::query()->whereNotIn('status', [
+            UpdateHistory::STATUS_SUCCESS, UpdateHistory::STATUS_FAILED, UpdateHistory::STATUS_ROLLED_BACK,
+        ])->recent()->first();
+        if ($running) {
+            $this->applying = true;
+            $this->applyHistoryId = $running->id;
+            $this->applyStatus = ['status' => $running->status, 'step' => $running->step];
+        }
+    }
+
+    public function canApply(): bool
+    {
+        return (bool) auth('admin')->user()?->can('apply updates');
+    }
+
+    /** Re-auth (password) then start the resumable apply FSM. */
+    public function startApply(): void
+    {
+        abort_unless($this->canApply(), 403);
+
+        $admin = auth('admin')->user();
+        if (! $admin || ! Hash::check((string) $this->applyPassword, $admin->password)) {
+            throw ValidationException::withMessages(['applyPassword' => 'Your password is incorrect.']);
+        }
+        $this->applyPassword = null;
+
+        $manifest = $this->applyManifest();
+        if (! $manifest) {
+            Notification::make()->title('No update to apply')->warning()->send();
+
+            return;
+        }
+
+        try {
+            $history = app(UpdateApplier::class)->start($manifest, $admin->id);
+        } catch (\Throwable $e) {
+            Notification::make()->title('Update cannot start')->body($e->getMessage())->danger()->send();
+
+            return;
+        }
+
+        $this->applyHistoryId = $history->id;
+        $this->applying = true;
+        $this->applyStatus = ['status' => $history->status, 'step' => $history->step];
+        Notification::make()->title('Update started')->body('Do not close this window.')->success()->send();
+    }
+
+    /** Advance the FSM one step per poll; signal a hard reload on success. */
+    public function pollApply(): void
+    {
+        if (! $this->applying || ! $this->applyHistoryId) {
+            return;
+        }
+        abort_unless($this->canApply(), 403);
+
+        $history = UpdateHistory::find($this->applyHistoryId);
+        if (! $history) {
+            $this->applying = false;
+
+            return;
+        }
+
+        if (! $history->isTerminal()) {
+            $history = app(UpdateApplier::class)->advance($history);
+        }
+
+        $this->applyStatus = ['status' => $history->status, 'step' => $history->step, 'error' => $history->error];
+
+        if ($history->isTerminal()) {
+            $this->applying = false;
+            if ($history->isSuccessful()) {
+                $this->status = app(UpdateChecker::class)->check(force: true)->toArray();
+                Notification::make()->title('Update complete')->body('Now running '.$history->to_version.'.')->success()->send();
+                $this->dispatch('update-complete'); // storefront hard-reload
+            } else {
+                Notification::make()->title('Update did not complete')
+                    ->body($history->error ?? 'See the update history.')->danger()->send();
+            }
+        }
+    }
+
+    /** Build the target release manifest from the cached check result. */
+    private function applyManifest(): ?array
+    {
+        $s = $this->status ?? [];
+        if (empty($s['update_available']) || empty($s['latest_version'])) {
+            return null;
+        }
+
+        return [
+            'version'         => $s['latest_version'],
+            'channel'         => $s['channel'] ?? 'stable',
+            'security'        => (bool) ($s['security'] ?? false),
+            'download_url'    => $s['download_url'] ?? null,
+            'sha256'          => $s['sha256'] ?? null,
+            'size_bytes'      => $s['size_bytes'] ?? null,
+            'migration_count' => (int) ($s['migration_count'] ?? 0),
+            'min_php'         => $s['min_php'] ?? null,
+        ];
     }
 
     public function checkNow(): void

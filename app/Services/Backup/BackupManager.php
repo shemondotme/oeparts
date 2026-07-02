@@ -50,6 +50,7 @@ class BackupManager
         string $profile = BackupRun::PROFILE_FULL,
         string $trigger = BackupRun::TRIGGER_MANUAL,
         array $meta = [],
+        bool $acquireLock = true,
     ): BackupRun {
         if (! in_array($profile, [BackupRun::PROFILE_UPDATE_SAFETY, BackupRun::PROFILE_FULL], true)) {
             throw new BackupException('Unknown backup profile: '.$profile);
@@ -65,16 +66,20 @@ class BackupManager
             'php_version' => PHP_VERSION,
             'db_version'  => $this->databaseVersion(),
             'started_at'  => now(),
-            'meta'        => $meta,
+            // lock_owned=false lets the Update Engine own the shared lock across the
+            // WHOLE apply while its pre-update backup step runs (rule #48).
+            'meta'        => array_merge($meta, ['lock_owned' => $acquireLock]),
         ]);
 
         // Acquire the lock AFTER the row exists so the owner token carries the id.
         // If someone else holds it, drop the just-created row and surface the error.
-        try {
-            $this->lock->acquire($run->lockOwner());
-        } catch (\Throwable $e) {
-            $run->delete();
-            throw $e;
+        if ($acquireLock) {
+            try {
+                $this->lock->acquire($run->lockOwner());
+            } catch (\Throwable $e) {
+                $run->delete();
+                throw $e;
+            }
         }
 
         $run->setCheckpoint(['stage_index' => 0, 'stage_state' => []]);
@@ -155,7 +160,7 @@ class BackupManager
         $run->finished_at = now();
         $run->save();
 
-        $this->lock->release();
+        $this->releaseLockIfOwned($run);
 
         Log::channel(config('updates.log_channel', 'stack'))
             ->error('Backup run '.$run->getKey().' failed: '.$error);
@@ -182,9 +187,17 @@ class BackupManager
         $run->clearCheckpoint();
         $run->save();
 
-        $this->lock->release();
+        $this->releaseLockIfOwned($run);
 
         return BackupProgress::success($run);
+    }
+
+    /** Release the shared lock only if this run acquired it (not when the updater owns it). */
+    private function releaseLockIfOwned(BackupRun $run): void
+    {
+        if (($run->meta['lock_owned'] ?? true) === true) {
+            $this->lock->release();
+        }
     }
 
     /** Persist a backup_parts row emitted by a stage step. */
