@@ -125,7 +125,7 @@ class FileBackupStage implements BackupStage
         }
 
         $counts['file_count'] = count($seen);
-        Storage::disk($run->disk)->put($filelistRel, (string) json_encode(array_values($archive)));
+        Storage::disk($this->stagingDisk())->put($filelistRel, (string) json_encode(array_values($archive)));
 
         return [
             'root'            => $root,
@@ -149,7 +149,7 @@ class FileBackupStage implements BackupStage
         $volumeCap  = max(1, (int) config('backup.volume_bytes', 512 * 1024 * 1024));
         $throttleMs = (int) config('backup.files.throttle_ms', 0);
 
-        $list   = (array) json_decode((string) Storage::disk($run->disk)->get($state['filelist']), true);
+        $list   = (array) json_decode((string) Storage::disk($this->stagingDisk())->get($state['filelist']), true);
         $cursor = (int) $state['cursor'];
         $vol    = (int) $state['vol'];
 
@@ -252,7 +252,7 @@ class FileBackupStage implements BackupStage
         return [
             'type'   => BackupPart::TYPE_FILES,
             'name'   => 'vol-'.$vol,
-            'disk'   => $run->disk,
+            'disk'   => $this->stagingDisk(),
             'path'   => $rel,
             'bytes'  => $this->size($abs),
             'sha256' => is_file($abs) ? hash_file('sha256', $abs) : null,
@@ -288,12 +288,12 @@ class FileBackupStage implements BackupStage
 
         $rel = 'backups/'.$run->getKey().'/files/files-manifest.json.gz';
         $gz  = (string) gzencode((string) json_encode($manifest), 6);
-        Storage::disk($run->disk)->put($rel, $gz);
+        Storage::disk($this->stagingDisk())->put($rel, $gz);
 
         return [
             'type'   => BackupPart::TYPE_FILES,
             'name'   => 'files-manifest',
-            'disk'   => $run->disk,
+            'disk'   => $this->stagingDisk(),
             'path'   => $rel,
             'bytes'  => strlen($gz),
             'sha256' => hash('sha256', $gz),
@@ -325,7 +325,13 @@ class FileBackupStage implements BackupStage
             return ['run_id' => null, 'map' => []];
         }
 
-        $data = json_decode((string) gzdecode((string) Storage::disk($part->disk)->get($part->path)), true);
+        // The baseline manifest is encrypted at rest (Chunk 2.4) — decrypt before gunzip.
+        $bytes = (string) Storage::disk($part->disk)->get($part->path);
+        if (($part->meta['encrypted'] ?? false) === true) {
+            $bytes = app(\App\Services\Backup\BackupCipher::class)->decryptData($bytes);
+        }
+
+        $data = json_decode((string) gzdecode($bytes), true);
         $map  = [];
 
         foreach ((array) ($data['files'] ?? []) as $entry) {
@@ -386,10 +392,16 @@ class FileBackupStage implements BackupStage
         return 'backups/'.$run->getKey().'/files/vol-'.$vol.'.oevol';
     }
 
-    /** Absolute path on the (local-staging) backup disk, ensuring the dir exists. */
+    /** The LOCAL staging disk parts are written to before encryption/transport (2.4). */
+    private function stagingDisk(): string
+    {
+        return (string) config('backup.staging_disk', 'local');
+    }
+
+    /** Absolute path on the local staging disk, ensuring the dir exists. */
     private function absolute(BackupRun $run, string $rel): string
     {
-        $abs = Storage::disk($run->disk)->path($rel);
+        $abs = Storage::disk($this->stagingDisk())->path($rel);
         $dir = dirname($abs);
         if (! is_dir($dir)) {
             @mkdir($dir, 0775, true);
@@ -419,11 +431,12 @@ class FileBackupStage implements BackupStage
 
     private function cleanupWorkingFiles(BackupRun $run, array $state): void
     {
+        $disk = $this->stagingDisk();
         foreach ([$state['entries'], $state['filelist']] as $rel) {
-            if (Storage::disk($run->disk)->exists($rel)) {
-                Storage::disk($run->disk)->delete($rel);
+            if (Storage::disk($disk)->exists($rel)) {
+                Storage::disk($disk)->delete($rel);
             }
         }
-        Storage::disk($run->disk)->deleteDirectory('backups/'.$run->getKey().'/files/_work');
+        Storage::disk($disk)->deleteDirectory('backups/'.$run->getKey().'/files/_work');
     }
 }

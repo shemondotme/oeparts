@@ -26,6 +26,7 @@ class DatabaseBackupStageTest extends TestCase
     use RefreshDatabase;
 
     private string $statePath;
+    private string $filesRoot;
 
     protected function setUp(): void
     {
@@ -37,6 +38,12 @@ class DatabaseBackupStageTest extends TestCase
         @mkdir($this->statePath, 0775, true);
         config(['updates.state_path' => $this->statePath]);
         config(['backup.disk' => 'local']);
+
+        // The full-profile manager test also runs the file stage — point it at an
+        // empty dir so it doesn't back up (and encrypt) the whole project tree.
+        $this->filesRoot = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-db-stage-files-'.getmypid();
+        @mkdir($this->filesRoot, 0775, true);
+        config(['backup.files.root' => $this->filesRoot]);
 
         // A small, deterministic table to assert against.
         Schema::create('oe_bk_widget', function ($t) {
@@ -55,6 +62,8 @@ class DatabaseBackupStageTest extends TestCase
         Schema::dropIfExists('oe_bk_widget');
         @array_map('unlink', glob($this->statePath.DIRECTORY_SEPARATOR.'*') ?: []);
         @rmdir($this->statePath);
+        @array_map('unlink', glob($this->filesRoot.DIRECTORY_SEPARATOR.'*') ?: []);
+        @rmdir($this->filesRoot);
 
         parent::tearDown();
     }
