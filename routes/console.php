@@ -38,5 +38,8 @@ Schedule::command('abandoned-cart:process')->hourlyAt(5);
 // Database backup — daily at 1 AM
 Schedule::command('db:backup')->dailyAt('01:00');
 
+// Check for available updates — daily at 6 AM (warms the update-check cache)
+Schedule::command('oeparts:update:check')->dailyAt('06:00');
+
 // Scheduler heartbeat — every minute (for health monitoring)
 Schedule::command('scheduler:heartbeat')->everyMinute();
