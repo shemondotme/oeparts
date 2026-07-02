@@ -34,6 +34,11 @@ return [
 
     'db' => [
         'chunk_rows' => (int) env('OE_BACKUP_DB_CHUNK', 5000), // keyset-cursor page size
+        // Consistent-snapshot intent (LOCKED DECISION #5). A true held-transaction
+        // snapshot is impossible across the resumable, cross-request FSM, so this is
+        // realised via the maintenance gate (writes blocked) and recorded in each
+        // data part's meta for audit/restore; default is eventual-consistent chunked.
+        'consistent' => (bool) env('OE_BACKUP_DB_CONSISTENT', false),
         // Tables backed up structure-only by default (bloat / regenerable / session state).
         'exclude_table_data' => [
             'activity_log', 'activity_logs', 'email_logs', 'login_logs',
@@ -76,11 +81,15 @@ return [
     'stale_after_seconds' => (int) env('OE_BACKUP_STALE_AFTER', 3600),
 
     // Ordered pipeline of BackupStage classes per profile (Chunk 2.1 seam).
-    // The DB (2.2), file (2.3) and env/encryption (2.4) stages register here as
-    // they land; the engine runs them in listed order, one chunk per poll.
+    // The engine runs them in listed order, one chunk per poll. The file (2.3)
+    // and env/encryption (2.4) stages append here as they land.
     'stages' => [
-        'update_safety' => [],
-        'full'          => [],
+        'update_safety' => [
+            \App\Services\Backup\Stages\DatabaseBackupStage::class,
+        ],
+        'full' => [
+            \App\Services\Backup\Stages\DatabaseBackupStage::class,
+        ],
     ],
 
     'path' => storage_path('app/backups'),
