@@ -72,6 +72,28 @@ return [
         'min_free_bytes'  => (int) env('OE_UPDATE_MIN_FREE_BYTES', 200 * 1024 * 1024), // 200 MB
     ],
 
+    // Post-swap boot steps (Chunk 3.4) — run on a FRESH request after the file swap,
+    // in listed order, after `migrate --force` (always first, critical). Each is
+    // idempotent/safe to re-run. Framework caches are rebuilt here — NEVER via
+    // Cache::flush() (rule #5/#46).
+    'post_swap' => [
+        // Optional artisan commands after migrate. critical=true aborts the update.
+        'artisan' => [
+            ['command' => 'package:discover', 'critical' => false],
+            ['command' => 'filament:upgrade',  'critical' => false],
+            ['command' => 'storage:link',      'critical' => false],
+        ],
+        // vendor:publish --tag=<tag> --force for each (default none — avoid clobbering).
+        'vendor_publish_tags' => [],
+        // Idempotent reference seeders (db:seed --class --force). Releases opt-in here;
+        // default none, since re-running a non-idempotent seeder could reset user data.
+        'seeders' => [],
+        // Rebuild config/route/view/event caches (clear then cache).
+        'rebuild_cache' => true,
+        // queue:restart — only fires when a real worker driver is in use (not sync).
+        'restart_queue' => true,
+    ],
+
     // Framework-independent state files (dir-rename map, arm flag, single-update lock).
     'state_path' => storage_path('app/updates'),
 
