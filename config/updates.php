@@ -94,6 +94,22 @@ return [
         'restart_queue' => true,
     ],
 
+    // Post-update verification (Chunk 3.6) — run after finalize; ANY failure triggers
+    // auto-rollback (reverse swap + restore DB).
+    'verify' => [
+        // Critical tables that must exist after migrations.
+        'required_tables' => [
+            'admins', 'users', 'orders', 'order_items', 'products', 'categories',
+            'settings', 'update_histories', 'backup_runs', 'backup_parts',
+        ],
+        // Referential-integrity spot-checks: [child, fk, parent, parent_key] — no orphans.
+        'referential' => [
+            ['order_items', 'order_id', 'orders', 'id'],
+        ],
+        // In-process smoke (DB reachable + critical tables readable).
+        'smoke' => true,
+    ],
+
     // Framework-independent state files (dir-rename map, arm flag, single-update lock).
     'state_path' => storage_path('app/updates'),
 
