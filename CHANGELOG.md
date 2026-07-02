@@ -4,6 +4,9 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+### Added
+- **Backup Engine core** (Update System **Chunk 2.1**) — the chunked, resumable backup FSM: `BackupManager` (start → advance-one-chunk-per-poll → finalize/fail, checkpointed in `backup_runs.meta` for crash resume), `BackupStage` contract + `StageRegistry` (pluggable `db`/`files`/`env` stages register via `config('backup.stages')`), `BackupLock` (O_EXCL filesystem lock shared with the Update Engine), `BackupManifest` (self-describing part index + SHA-256), and `BackupJanitor` (reclaims failed/stale partials, releases stale locks). `BackupRun`/`BackupPart` Eloquent models. Concrete DB/file/encryption stages land in Chunks 2.2–2.4. 10 new tests.
+
 ### Changed
 - **Framework upgrade** — Laravel 11.52 → 12.62, FilamentPHP 5.6.5 → 5.6.7 (Update System **Chunk 0.0**). Clean dependency resolution; the upgrade also cleared the 21 prior Composer security advisories. Full test suite: 530 passed / 0 failed.
 
