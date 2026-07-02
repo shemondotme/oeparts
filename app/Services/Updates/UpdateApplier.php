@@ -66,7 +66,7 @@ class UpdateApplier
         try {
             $this->enterMaintenance();
 
-            return UpdateHistory::create([
+            $history = UpdateHistory::create([
                 'from_version' => app(UpdateChecker::class)->currentVersion(),
                 'to_version'   => $version,
                 'channel'      => (string) ($manifest['channel'] ?? config('updates.channel', 'stable')),
@@ -76,6 +76,12 @@ class UpdateApplier
                 'started_at'   => now(),
                 'meta'         => ['manifest' => $manifest, 'step_index' => 0],
             ]);
+
+            Log::channel(config('updates.log_channel', 'stack'))->notice('update.start', [
+                'history' => $history->getKey(), 'to' => $version, 'admin' => $initiatedBy,
+            ]);
+
+            return $history;
         } catch (\Throwable $e) {
             $this->exitMaintenance();
             app(BackupLock::class)->release();
@@ -185,9 +191,15 @@ class UpdateApplier
 
     protected function doVerify(UpdateHistory $history): void
     {
-        // Post-up verification (schema/smoke) + auto-rollback are enriched in 3.6.
-        // Baseline check: the DB must be reachable after migrate.
-        app(PreflightService::class)->schemaFingerprint();
+        // Post-up verification (Chunk 3.6): schema + referential + smoke. Any
+        // failure throws → fail() rolls back (needsRollback('verify') is true).
+        $report = app(PostUpdateVerifier::class)->verify();
+        $history->putMeta('verify', $report->toArray());
+        $history->save();
+
+        if (! $report->ok()) {
+            throw new UpdateException('Post-update verification failed: '.$report->firstFailure());
+        }
     }
 
     protected function complete(UpdateHistory $history): UpdateHistory
@@ -199,6 +211,10 @@ class UpdateApplier
 
         $this->exitMaintenance();
         app(BackupLock::class)->release();
+
+        Log::channel(config('updates.log_channel', 'stack'))->notice('update.success', [
+            'history' => $history->getKey(), 'to' => $history->to_version,
+        ]);
 
         return $history;
     }
