@@ -55,6 +55,22 @@ return [
         'ip_allowlist' => array_values(array_filter(array_map('trim', explode(',', (string) env('OE_RECOVERY_IP_ALLOWLIST', ''))))),
     ],
 
+    // Application root the updater operates on (dir-rename swap target, writability +
+    // deployment-type checks). Overridable for tests / non-standard docroots.
+    'root_path' => base_path(),
+
+    // Operator flag: this instance sits behind a load balancer / has sibling app
+    // servers. Pre-flight warns (never auto-applies) when set (LOCKED DECISION #9).
+    'multi_server' => (bool) env('OE_UPDATE_MULTI_SERVER', false),
+
+    // Pre-flight environment gate (Chunk 3.1).
+    'preflight' => [
+        // Free disk needed ≈ zip + extract + backup ⇒ size_bytes × this multiplier.
+        'disk_multiplier' => (int) env('OE_UPDATE_DISK_MULTIPLIER', 3),
+        // Absolute floor of free space required regardless of release size.
+        'min_free_bytes'  => (int) env('OE_UPDATE_MIN_FREE_BYTES', 200 * 1024 * 1024), // 200 MB
+    ],
+
     // Framework-independent state files (dir-rename map, arm flag, single-update lock).
     'state_path' => storage_path('app/updates'),
 
