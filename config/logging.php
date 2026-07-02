@@ -123,6 +123,15 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        // Update & Recovery System (Module 21) — isolated audit trail.
+        'updates' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/updates.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('OE_UPDATE_LOG_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
