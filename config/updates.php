@@ -31,7 +31,8 @@ return [
     'download' => [
         'timeout'       => (int) env('OE_UPDATE_DOWNLOAD_TIMEOUT', 300),
         'retries'       => (int) env('OE_UPDATE_DOWNLOAD_RETRIES', 3),
-        'verify_sha256' => true, // never disable in production (rule #11-security)
+        'backoff'       => [1, 3, 5], // seconds between retries (resumable HTTP Range)
+        'verify_sha256' => true,      // never disable in production (rule #11-security)
     ],
 
     // Require password re-auth (and 2FA if enabled) before applying (LOCKED DECISION #1).
