@@ -48,9 +48,13 @@ return [
     ],
 
     'files' => [
+        // Root of the file backup (the whole app). Overridable so tests can point
+        // at a fixture tree instead of the real project.
+        'root' => base_path(),
         // Never back up caches, logs, our own backup/update dirs, or build tooling.
         // NOTE: vendor/ is intentionally NOT excluded — full-profile restores must be
-        // self-contained on shared hosting (no composer available).
+        // self-contained on shared hosting (no composer available). `.env*` is skipped
+        // here and handled as a dedicated encrypted 'env' part (Chunk 2.4).
         'exclude' => [
             'storage/framework/cache',
             'storage/framework/sessions',
@@ -60,8 +64,16 @@ return [
             'storage/app/updates',
             'node_modules',
             '.git',
+            '.env',
         ],
-        'throttle_ms' => (int) env('OE_BACKUP_THROTTLE_MS', 0), // pause between chunks on shared hosting
+        'throttle_ms' => (int) env('OE_BACKUP_THROTTLE_MS', 0), // pause between files on shared hosting
+        // Soft wall-clock budget per FSM step: keep archiving files until this many
+        // raw bytes have been processed this step, then yield (the volume stays open
+        // and continues next poll). A volume filling up also ends a step.
+        'batch_bytes' => (int) env('OE_BACKUP_FILE_BATCH_BYTES', 64 * 1024 * 1024), // 64 MB
+        // Incremental (hash-manifest diff vs the previous successful full backup).
+        // Per-run override via BackupRun.meta['incremental'].
+        'incremental' => (bool) env('OE_BACKUP_FILE_INCREMENTAL', false),
     ],
 
     // GFS retention — auto-prune (LOCKED DECISION #5).
@@ -89,6 +101,7 @@ return [
         ],
         'full' => [
             \App\Services\Backup\Stages\DatabaseBackupStage::class,
+            \App\Services\Backup\Stages\FileBackupStage::class,
         ],
     ],
 
