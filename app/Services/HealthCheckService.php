@@ -30,6 +30,7 @@ class HealthCheckService
             'storage'   => $this->checkStorage(),
             'scheduler' => $this->checkScheduler(),
             'assets'    => $this->checkAssets(),
+            'backup'    => $this->checkLastBackup(),
         ];
 
         $status = in_array('fail', $checks, true) ? 'degraded' : 'ok';
@@ -123,6 +124,41 @@ class HealthCheckService
         } catch (\Throwable) {
             return 'unknown';
         }
+    }
+
+    /**
+     * Age of the most recent successful Backup Engine backup (Module 21, Chunk 2.6).
+     * 'ok' if within the staleness window, 'stale' if older, 'none' if there has
+     * never been a successful backup. Never returns 'fail' — a missing backup is
+     * an operational warning, not a system fault (so it won't mark /health degraded).
+     */
+    public function checkLastBackup(): string
+    {
+        try {
+            $at = $this->lastBackupAt();
+            if (! $at) {
+                return 'none';
+            }
+
+            $threshold = (int) settings('dashboard.backup_stale_hours', 26);
+
+            return $at->greaterThan(now()->subHours($threshold)) ? 'ok' : 'stale';
+        } catch (\Throwable) {
+            return 'unknown';
+        }
+    }
+
+    /** Timestamp of the newest successful, un-pruned backup, or null. */
+    public function lastBackupAt(): ?\Illuminate\Support\Carbon
+    {
+        $run = \App\Models\BackupRun::query()
+            ->successful()
+            ->whereNull('meta->pruned_at')
+            ->whereNotNull('finished_at')
+            ->orderByDesc('finished_at')
+            ->first();
+
+        return $run?->finished_at;
     }
 
     /**

@@ -35,8 +35,11 @@ Schedule::command('logs:clean')->dailyAt('04:00');
 // Process abandoned carts — hourly at minute 5
 Schedule::command('abandoned-cart:process')->hourlyAt(5);
 
-// Database backup — daily at 1 AM
-Schedule::command('db:backup')->dailyAt('01:00');
+// Backup Engine (Module 21) — daily full encrypted backup + GFS prune.
+// Supersedes the old db:backup / mysqldump command (kept for now, no longer scheduled).
+Schedule::command('oeparts:backup --trigger=scheduled')
+    ->dailyAt(config('backup.schedule.time', '01:00'))
+    ->when(fn () => (bool) config('backup.schedule.enabled', true) && (bool) config('backup.enabled', true));
 
 // Check for available updates — daily at 6 AM (warms the update-check cache)
 Schedule::command('oeparts:update:check')->dailyAt('06:00');
