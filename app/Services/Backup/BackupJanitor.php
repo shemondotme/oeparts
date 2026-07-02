@@ -65,8 +65,9 @@ class BackupJanitor
         return $cleaned;
     }
 
-    /** Delete every stored part + manifest + the run directory for a run. */
-    private function purgeFiles(BackupRun $run): void
+    /** Delete every stored part + manifest + the run directory for a run.
+     *  Shared with BackupRetentionService (GFS pruning). */
+    public function purgeFiles(BackupRun $run): void
     {
         try {
             foreach ($run->parts as $part) {
