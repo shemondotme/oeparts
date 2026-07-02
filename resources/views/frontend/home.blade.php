@@ -31,7 +31,7 @@
 @section('json_ld')
 <script type="application/ld+json">
 {!! json_encode(array_filter([
-    '@context' => 'https://schema.org',
+    '@@context' => 'https://schema.org',
     '@type' => 'Organization',
     'name' => settings('general.site_name', 'OeParts'),
     'url' => settings('general.site_url', url('/')),
@@ -51,7 +51,7 @@
 </script>
 <script type="application/ld+json">
 {
-    "@context": "https://schema.org",
+    "@@context": "https://schema.org",
     "@type": "WebSite",
     "name": "{{ settings('general.site_name', 'OeParts') }}",
     "url": "{{ settings('general.site_url', url('/')) }}",
@@ -67,7 +67,7 @@
 </script>
 <script type="application/ld+json">
 {
-    "@context": "https://schema.org",
+    "@@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [{
         "@type": "ListItem",

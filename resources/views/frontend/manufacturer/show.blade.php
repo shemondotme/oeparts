@@ -27,7 +27,7 @@
 @section('json_ld')
 <script type="application/ld+json">
 {!! json_encode([
-    '@context' => 'https://schema.org',
+    '@@context' => 'https://schema.org',
     '@type'    => 'Organization',
     'name'     => $brandName,
     'url'      => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]),
@@ -41,7 +41,7 @@
 </script>
 <script type="application/ld+json">
 {!! json_encode([
-    '@context'        => 'https://schema.org',
+    '@@context'        => 'https://schema.org',
     '@type'           => 'BreadcrumbList',
     'itemListElement' => [
         ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'),   'item' => url('/'.$lang.'/')],
