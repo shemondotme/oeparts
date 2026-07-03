@@ -259,7 +259,7 @@
                                             </div>
                                             <div class="text-right shrink-0 space-y-1">
                                                 <p class="font-mono text-[13px] font-bold text-ink tabular-nums"
-                                                   x-text="'{{ settings('store.currency_symbol', '€') }}' + item.line_total.toFixed(2)"></p>
+                                                   x-text="'{{ settings('store.currency_symbol', '€') }}' + Number(item.line_total).toFixed(2)"></p>
                                                 <button @click.stop="removeItem(item.id)"
                                                         aria-label="Remove"
                                                         class="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted hover:text-red-700 border-b border-transparent hover:border-red-700">
@@ -282,7 +282,7 @@
                                 <span class="bp-spec">{{ settings('navbar.subtotal_label', 'SUBTOTAL') }}</span>
                                 <span class="bp-leader-dots"></span>
                                 <span class="font-mono text-lg font-bold text-ink tabular-nums"
-                                      x-text="'{{ settings('store.currency_symbol', '€') }}' + subtotal.toFixed(2)"></span>
+                                      x-text="'{{ settings('store.currency_symbol', '€') }}' + Number(subtotal).toFixed(2)"></span>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <a href="{{ $cartUrl }}" class="bp-btn-outline text-[11px] py-2.5">
