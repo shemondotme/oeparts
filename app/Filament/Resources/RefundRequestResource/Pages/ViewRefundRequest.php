@@ -107,7 +107,7 @@ class ViewRefundRequest extends ViewRecord
                                                 'pending' => 'heroicon-o-clock',
                                                 'paid' => 'heroicon-o-check-circle',
                                                 'failed' => 'heroicon-o-x-circle',
-                                                'refunded' => 'heroicon-o-arrow-uturn',
+                                                'refunded' => 'heroicon-o-receipt-refund',
                                                 default => null,
                                             } : null)
                                             ->color(fn ($record): string => $record->order ? AdminUi::paymentStatusColor($record->order->payment_status) : 'gray'),
@@ -150,7 +150,7 @@ class ViewRefundRequest extends ViewRecord
                                         TextEntry::make('processed_at')
                                             ->label('Processed At')
                                             ->dateTime('d M Y H:i')
-                                            ->default('—')
+                                            ->placeholder('—')
                                             ->fontMono()
                                             ->size('sm'),
                                     ]),

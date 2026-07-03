@@ -347,7 +347,7 @@ class OrderResource extends Resource
                     OrderStatus::Delivered => 'heroicon-o-check-badge',
                     OrderStatus::Cancelled => 'heroicon-o-x-circle',
                     OrderStatus::RefundRequested => 'heroicon-o-arrow-uturn-left',
-                    OrderStatus::Refunded => 'heroicon-o-arrow-uturn',
+                    OrderStatus::Refunded => 'heroicon-o-receipt-refund',
                 })
                 ->color(fn (OrderStatus $state): string => AdminUi::orderStatusColor($state))
                 ->sortable(),
@@ -358,7 +358,7 @@ class OrderResource extends Resource
                     PaymentStatus::Pending => 'heroicon-o-clock',
                     PaymentStatus::Paid => 'heroicon-o-check-circle',
                     PaymentStatus::Failed => 'heroicon-o-x-circle',
-                    PaymentStatus::Refunded => 'heroicon-o-arrow-uturn',
+                    PaymentStatus::Refunded => 'heroicon-o-receipt-refund',
                 })
                 ->color(fn (PaymentStatus $state): string => AdminUi::paymentStatusColor($state))
                 ->sortable(),

@@ -287,7 +287,7 @@ class ProductResource extends Resource
                 Tables\Columns\TextColumn::make('condition.name')
                     ->label('Condition')
                     ->badge()
-                    ->formatStateUsing(fn (?Condition $state): string => $state?->name ?? '—')
+                    ->formatStateUsing(fn ($state): string => static::localizedName($state))
                     ->extraAttributes(fn (Product $record): array => $record->condition ? [
                         'style' => "background-color: {$record->condition->bg_color} !important; color: {$record->condition->text_color} !important;",
                     ] : [])
@@ -406,8 +406,10 @@ class ProductResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->extraAttributes(['x-on:click' => 'navigator.clipboard.writeText($el.dataset.oem); $dispatch(\'toast\', { type: \'success\', message: \'OEM number copied!\' })'])
-                    ->record(fn (Product $record): array => ['oem' => $record->oem_number]),
+                    ->extraAttributes(fn (Product $record): array => [
+                        'data-oem' => $record->oem_number,
+                        'x-on:click' => 'navigator.clipboard.writeText($el.dataset.oem); $dispatch(\'toast\', { type: \'success\', message: \'OEM number copied!\' })',
+                    ]),
                 Actions\Action::make('toggleStock')
                     ->label(fn (Product $record): string => $record->is_in_stock ? 'Mark Out of Stock' : 'Mark In Stock')
                     ->icon(fn (Product $record): string => $record->is_in_stock ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
