@@ -77,6 +77,10 @@ class UpdateApplier
                 'meta'         => ['manifest' => $manifest, 'step_index' => 0],
             ]);
 
+            // Open the recovery window: arm the app-independent Recovery Console for
+            // the duration of the apply (auto-disarmed on success / rollback, Chunk 4.1).
+            $this->armRecovery($history);
+
             Log::channel(config('updates.log_channel', 'stack'))->notice('update.start', [
                 'history' => $history->getKey(), 'to' => $version, 'admin' => $initiatedBy,
             ]);
@@ -210,6 +214,7 @@ class UpdateApplier
         $history->save();
 
         $this->exitMaintenance();
+        $this->disarmRecovery(); // install is known-good → close the recovery window
         app(BackupLock::class)->release();
 
         Log::channel(config('updates.log_channel', 'stack'))->notice('update.success', [
@@ -238,6 +243,12 @@ class UpdateApplier
         $history->save();
 
         $this->exitMaintenance();
+        // A completed rollback restored a known-good install → close the recovery
+        // window. A hard failure (no rollback) may have left the app unbootable, so
+        // KEEP it armed — that is exactly when an operator needs the console (rule #47).
+        if ($rolledBack) {
+            $this->disarmRecovery();
+        }
         app(BackupLock::class)->release();
 
         return $history;
@@ -277,6 +288,22 @@ class UpdateApplier
     protected function exitMaintenance(): void
     {
         app(SettingsService::class)->set('maintenance.enabled', false);
+    }
+
+    /* ---- Recovery window (arm-flag lifecycle, Chunk 4.1) --------------- */
+
+    protected function armRecovery(UpdateHistory $history): void
+    {
+        app(RecoveryArm::class)->arm([
+            'history_id'   => $history->getKey(),
+            'from_version' => $history->from_version,
+            'to_version'   => $history->to_version,
+        ]);
+    }
+
+    protected function disarmRecovery(): void
+    {
+        app(RecoveryArm::class)->disarm();
     }
 
     /* ---- Helpers ------------------------------------------------------- */

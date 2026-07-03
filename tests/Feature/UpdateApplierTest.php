@@ -142,6 +142,44 @@ class UpdateApplierTest extends TestCase
     }
 
     #[Test]
+    public function it_arms_the_recovery_console_on_start_and_disarms_on_success(): void
+    {
+        $arm = app(\App\Services\Updates\RecoveryArm::class);
+
+        $applier = new FakeUpdateApplier;
+        $history = $applier->start($this->manifest());
+
+        $this->assertTrue($arm->isArmed(), 'the recovery window opens for the duration of the apply');
+        $this->assertSame($history->getKey(), $arm->read()['history_id']);
+
+        $applier->run($history);
+
+        $this->assertFalse($arm->isArmed(), 'a successful update auto-disarms the console');
+    }
+
+    #[Test]
+    public function a_hard_failure_leaves_the_console_armed_but_a_rollback_disarms_it(): void
+    {
+        $arm = app(\App\Services\Updates\RecoveryArm::class);
+
+        // Pre-swap failure → status failed, no rollback → stay armed (operator territory).
+        $failed = new FakeUpdateApplier;
+        $failed->failAt = 'download';
+        $history = $failed->run($failed->start($this->manifest()));
+        $this->assertSame(UpdateHistory::STATUS_FAILED, $history->status);
+        $this->assertTrue($arm->isArmed(), 'a hard failure keeps the recovery window open');
+
+        $arm->disarm(); // reset between scenarios
+
+        // Post-swap failure → rolled_back → known-good install → disarm.
+        $rolled = new FakeUpdateApplier;
+        $rolled->failAt = 'finalize';
+        $history = $rolled->run($rolled->start($this->manifest()));
+        $this->assertSame(UpdateHistory::STATUS_ROLLED_BACK, $history->status);
+        $this->assertFalse($arm->isArmed(), 'a completed rollback closes the recovery window');
+    }
+
+    #[Test]
     public function the_preview_summarises_the_release(): void
     {
         // A clean fixture root so pre-flight can proceed.
