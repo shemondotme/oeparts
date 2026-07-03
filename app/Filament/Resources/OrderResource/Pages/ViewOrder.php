@@ -312,7 +312,7 @@ class ViewOrder extends ViewRecord
                                             'delivered' => 'heroicon-o-check-badge',
                                             'cancelled' => 'heroicon-o-x-circle',
                                             'refund_requested' => 'heroicon-o-arrow-uturn-left',
-                                            'refunded' => 'heroicon-o-arrow-uturn',
+                                            'refunded' => 'heroicon-o-receipt-refund',
                                             default => 'heroicon-o-question-mark-circle',
                                         })
                                         ->color(fn ($state): string => AdminUi::orderStatusColor($state))
@@ -324,7 +324,7 @@ class ViewOrder extends ViewRecord
                                             'pending' => 'heroicon-o-clock',
                                             'paid' => 'heroicon-o-check-circle',
                                             'failed' => 'heroicon-o-x-circle',
-                                            'refunded' => 'heroicon-o-arrow-uturn',
+                                            'refunded' => 'heroicon-o-receipt-refund',
                                             default => 'heroicon-o-question-mark-circle',
                                         })
                                         ->color(fn ($state): string => AdminUi::paymentStatusColor($state)),
