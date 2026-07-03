@@ -84,7 +84,7 @@
             this.errors = {};
             try {
                 const honeypotData = {};
-                document.querySelectorAll('[name^="my_name"], [name="valid_from"]').forEach(el => {
+                document.querySelectorAll('[name^=my_name], [name=valid_from]').forEach(el => {
                     honeypotData[el.name] = el.value;
                 });
                 const res = await fetch('{{ route('frontend.inquiry.store', ['lang' => $lang]) }}', {
