@@ -94,6 +94,29 @@ return [
         'restart_queue' => true,
     ],
 
+    // Release signature verification (Chunk 6.1). RSA-SHA256 via openssl (already a
+    // required extension → guaranteed on shared hosting; no ext-sodium dependency).
+    // The updater authenticates each release's (version + sha256) against an app-baked
+    // public key, so a tampered manifest/zip can't be applied even if it hashes cleanly.
+    'signing' => [
+        'algo' => 'rsa-sha256',
+        // App-baked TRUST ANCHOR (ships with the app so every install can verify). When
+        // set, signature verification is ENFORCED — a missing/invalid signature BLOCKS the
+        // update at pre-flight. Empty = signing not yet provisioned (verification skipped,
+        // pre-flight WARNs) — opt-in rollout, like OE_RECOVERY_KEY. Provision via env or a
+        // committed resources/keys/release-public.pem; generate with:
+        //   openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out release-private.pem
+        //   openssl rsa -in release-private.pem -pubout -out release-public.pem
+        'public_key' => env('OE_RELEASE_PUBLIC_KEY') ?: (
+            is_file(resource_path('keys/release-public.pem'))
+                ? (string) file_get_contents(resource_path('keys/release-public.pem'))
+                : null
+        ),
+        // Release-SIGNING private key — build/CI ONLY, NEVER committed (a CI secret).
+        // Read only by oeparts:release:manifest when producing a release.
+        'private_key' => env('OE_RELEASE_PRIVATE_KEY'),
+    ],
+
     // Post-update verification (Chunk 3.6) — run after finalize; ANY failure triggers
     // auto-rollback (reverse swap + restore DB).
     'verify' => [

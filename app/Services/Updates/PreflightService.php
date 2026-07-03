@@ -36,6 +36,7 @@ class PreflightService
             $this->checkMultiServer(),
             $this->checkEnvKeys($manifest),
             $this->checkSchemaDrift($manifest),
+            $this->checkSignature($manifest),
             $this->checkRecoveryConsole(),
         ]);
     }
@@ -300,6 +301,30 @@ class PreflightService
         }
 
         return PreflightCheck::pass($key, $label, 'Matches baseline.');
+    }
+
+    /**
+     * Verify the release's cryptographic signature (Chunk 6.1). When a public key is
+     * baked, a missing/invalid signature FAILS (blocks the update — the release can't
+     * be authenticated). When no key is provisioned, WARN (signatures are opt-in).
+     */
+    public function checkSignature(array $manifest): PreflightCheck
+    {
+        $key = 'signature';
+        $label = 'Release signature';
+        $signer = app(ReleaseSignature::class);
+
+        if (! $signer->enforced()) {
+            return PreflightCheck::warn($key, $label,
+                'Release signature verification is not enabled (no public key provisioned). '
+                .'Provision OE_RELEASE_PUBLIC_KEY so updates are authenticated, not just checksummed.');
+        }
+
+        [$ok, $reason] = $signer->verifyManifest($manifest);
+
+        return $ok
+            ? PreflightCheck::pass($key, $label, 'Signature valid.')
+            : PreflightCheck::fail($key, $label, $reason);
     }
 
     /**
