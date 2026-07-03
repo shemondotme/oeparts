@@ -107,7 +107,7 @@
 
     {{-- ── Session timeout banner ── --}}
     @if(isset($secondsRemaining) && $secondsRemaining > 0)
-    <div x-data="{ remaining: {{ $secondsRemaining }}, init() { setInterval(() => { this.remaining = Math.max(0, this.remaining - 1); }, 1000) } }"
+    <div x-data="{ remaining: {{ (int) $secondsRemaining }}, init() { setInterval(() => { this.remaining = Math.max(0, this.remaining - 1); }, 1000) } }"
          x-show="remaining > 0"
          x-cloak
          :class="remaining < 120 ? 'bg-red-50 border-red-400 text-red-800' : (remaining < 300 ? 'bg-amber/10 border-amber text-amber-ink' : 'bg-paper border-ink text-ink')"
