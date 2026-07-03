@@ -356,6 +356,22 @@ class InstallerController extends Controller
             }
         }
 
-        File::put($envPath, $envContent);
+        // Write atomically: a plain File::put() truncates .env in place, so a
+        // concurrent web request whose bootstrap reads .env mid-write sees an
+        // empty file. Dotenv::safeLoad() then silently loads nothing and every
+        // value falls back to Laravel's defaults (DB_DATABASE => "laravel",
+        // CACHE_STORE => "database", ...), producing intermittent 500s. Writing
+        // to a temp file and renaming makes the swap atomic — readers always see
+        // either the old or the new file, never a partial one.
+        $tmpPath = $envPath.'.tmp';
+        File::put($tmpPath, $envContent);
+        if (file_exists($envPath)) {
+            @chmod($tmpPath, @fileperms($envPath) & 0777);
+        }
+        if (! @rename($tmpPath, $envPath)) {
+            // Fallback for filesystems where rename() cannot replace: best effort.
+            File::put($envPath, $envContent);
+            @unlink($tmpPath);
+        }
     }
 }
