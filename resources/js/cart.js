@@ -22,6 +22,25 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
         };
     }
 
+    // Money values arrive from the server as DECIMAL strings ("297.00") because
+    // prices are bcmath-computed. The Blade template calls .toFixed() and does
+    // arithmetic on them, so coerce the numeric fields to real numbers here —
+    // otherwise cartData() throws ("subtotal.toFixed is not a function") and the
+    // whole cart component fails to initialise (blank cart page).
+    function normalizeSummary(summary) {
+        const out = { ...(summary || {}) };
+        const numeric = [
+            'subtotal', 'subtotal_excl_vat', 'vat_amount', 'grand_total',
+            'coupon_discount', 'shipping', 'shipping_needed', 'free_shipping_threshold',
+        ];
+        for (const field of numeric) {
+            if (out[field] !== undefined && out[field] !== null && out[field] !== '') {
+                out[field] = parseFloat(out[field]) || 0;
+            }
+        }
+        return out;
+    }
+
     function firePriceChangeToast(summary) {
         if (!summary.price_changes?.length) return;
         const count = summary.price_changes.length;
@@ -42,8 +61,8 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
     }
 
     return {
-        cart:         { items: initialCart.items.map(mapItem) },
-        summary:      { ...initialSummary },
+        cart:         { items: (initialCart?.items || []).map(mapItem) },
+        summary:      normalizeSummary(initialSummary),
         loading:      false,
         errorMessage: '',
         couponCode:   '',
@@ -71,7 +90,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                 if (data.success) {
                     this.couponMessage = '';
                     this.couponCode = '';
-                    this.summary = { ...data.cart_summary };
+                    this.summary = normalizeSummary(data.cart_summary);
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Promo code applied!', type: 'success' } }));
                 } else {
                     this.couponError = true;
@@ -92,7 +111,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                 });
                 const data = await res.json();
                 if (data.success) {
-                    this.summary = { ...data.cart_summary };
+                    this.summary = normalizeSummary(data.cart_summary);
                     window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Coupon removed.', type: 'info' } }));
                 }
             } catch (e) {
@@ -174,8 +193,8 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                 const res  = await fetch(routePreview);
                 const data = await res.json();
                 if (data.success) {
-                    this.cart.items = data.items.map(mapItem);
-                    this.summary    = { ...data.summary };
+                    this.cart.items = (data.items || []).map(mapItem);
+                    this.summary    = normalizeSummary(data.summary);
                     if (showToast && data.summary.price_changes?.length > 0) {
                         firePriceChangeToast(data.summary);
                     }

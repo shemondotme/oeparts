@@ -13,7 +13,7 @@
     $cartCouponApplyRoute = route('frontend.cart.coupon.apply', ['lang' => $cartLocale]);
     $cartCouponRemoveRoute = route('frontend.cart.coupon.remove', ['lang' => $cartLocale]);
 @endphp
-<div x-data="cartData(@json($cart), @json($summary), '{{ $cartLocale }}', '{{ $cartUpdateRoute }}', '{{ $cartRemoveRoute }}', '{{ $cartPreviewRoute }}', '{{ $cartCouponApplyRoute }}', '{{ $cartCouponRemoveRoute }}')" class="relative min-h-screen bg-ivory text-ink pt-10 pb-28">
+<div x-data="cartData(@js($cart), @js($summary), '{{ $cartLocale }}', '{{ $cartUpdateRoute }}', '{{ $cartRemoveRoute }}', '{{ $cartPreviewRoute }}', '{{ $cartCouponApplyRoute }}', '{{ $cartCouponRemoveRoute }}')" class="relative min-h-screen bg-ivory text-ink pt-10 pb-28">
     <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
 
     {{-- ── Clear Cart Confirm Modal ── --}}

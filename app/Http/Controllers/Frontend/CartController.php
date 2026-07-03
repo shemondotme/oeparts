@@ -25,6 +25,11 @@ class CartController extends Controller
     {
         $cartData = $this->getCurrentCart($request);
         $cart = $cartData['cart'];
+        // Eager-load items for the view: the cart page serialises $cart via @js()
+        // into the cartData() Alpine component, which reads $cart->items. Without
+        // this the relation is absent from the JSON and the page renders as an
+        // empty cart even when items exist (getSummary() reads items separately).
+        $cart->load('items.product.condition');
         $summary = $this->cartService->getSummary($cart);
 
         $popularOems = Cache::remember('cart_popular_oems_' . $lang, 3600, function () {
