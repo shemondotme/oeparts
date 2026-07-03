@@ -15,6 +15,19 @@ function settings(string $key, mixed $default = null): mixed
 }
 
 /**
+ * Per-request Content-Security-Policy nonce.
+ *
+ * Bound by App\Http\Middleware\ContentSecurityPolicy before the response renders.
+ * Used by inline <script>/<style> tags (e.g. settings-driven header/footer scripts,
+ * custom CSS). Returns '' outside the HTTP middleware stack (console, tests) so
+ * views never fatal with an undefined-function error.
+ */
+function csp_nonce(): string
+{
+    return app()->bound('csp-nonce') ? (string) app('csp-nonce') : '';
+}
+
+/**
  * String from a multilang JSON setting (or plain string) with current locale.
  * Settings values from DB for type=json may be stored as JSON string.
  */
