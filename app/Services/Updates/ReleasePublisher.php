@@ -79,6 +79,7 @@ class ReleasePublisher
             'migration_count'            => (int) ($manifest['migration_count'] ?? 0),
             'sha256'                     => $manifest['sha256'] ?? null,
             'size_bytes'                 => isset($manifest['size_bytes']) ? (int) $manifest['size_bytes'] : null,
+            'signature'                  => $manifest['signature'] ?? null,
             'changelog_url'              => $manifest['changelog_url'] ?? null,
             'download_url'               => $manifest['download_url'] ?? null,
         ];

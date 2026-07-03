@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Updates\ReleasePublisher;
+use App\Services\Updates\ReleaseSignature;
 use Illuminate\Console\Command;
 
 /**
@@ -17,11 +18,12 @@ class GenerateReleaseManifest extends Command
         {--version-file= : Path to version.json (default: base path)}
         {--catalog-file= : Path to releases.json (default: base path)}
         {--build-result= : Path to dist/build-result.json (default: base path)}
+        {--private-key= : PEM release signing key (overrides OE_RELEASE_PRIVATE_KEY)}
         {--json : Emit a machine-readable summary}';
 
-    protected $description = 'Fold the build result into version.json and upsert the releases.json catalog.';
+    protected $description = 'Fold the build result into version.json, sign it, and upsert the releases.json catalog.';
 
-    public function handle(ReleasePublisher $publisher): int
+    public function handle(ReleasePublisher $publisher, ReleaseSignature $signer): int
     {
         $versionFile = (string) ($this->option('version-file') ?: base_path('version.json'));
         $catalogFile = (string) ($this->option('catalog-file') ?: base_path('releases.json'));
@@ -49,6 +51,17 @@ class GenerateReleaseManifest extends Command
         }
 
         $manifest = $publisher->finalize($manifest, $build);
+
+        // Sign the release (version + sha256) if a private key is available. Verification
+        // against the app-baked public key happens at pre-flight on every install (6.1).
+        $privateKey = $this->resolvePrivateKey();
+        if ($privateKey !== null) {
+            $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), $privateKey);
+            $this->info('Release signed.');
+        } else {
+            $this->warn('No release signing key — publishing UNSIGNED (set OE_RELEASE_PRIVATE_KEY to sign).');
+        }
+
         $this->writeJson($versionFile, $manifest);
 
         $catalog = $this->readJson($catalogFile) ?? [
@@ -66,6 +79,7 @@ class GenerateReleaseManifest extends Command
                 'version'      => $manifest['version'],
                 'sha256'       => $manifest['sha256'],
                 'size_bytes'   => $manifest['size_bytes'],
+                'signed'       => ! empty($manifest['signature']),
                 'download_url' => $manifest['download_url'],
                 'latest'       => $catalog['latest'],
                 'release_count' => count($catalog['releases']),
@@ -81,6 +95,19 @@ class GenerateReleaseManifest extends Command
         $this->line('  catalog latest: '.$catalog['latest'].' ('.count($catalog['releases']).' releases)');
 
         return self::SUCCESS;
+    }
+
+    /** The signing key, from --private-key (a PEM string or a file path) or config/env. */
+    private function resolvePrivateKey(): ?string
+    {
+        $opt = (string) ($this->option('private-key') ?: '');
+        if ($opt !== '') {
+            return is_file($opt) ? (string) file_get_contents($opt) : $opt;
+        }
+
+        $key = trim((string) config('updates.signing.private_key', ''));
+
+        return $key !== '' ? $key : null;
     }
 
     /** @return array<string,mixed>|null */

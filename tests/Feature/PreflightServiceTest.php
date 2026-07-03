@@ -74,6 +74,25 @@ class PreflightServiceTest extends TestCase
     }
 
     #[Test]
+    public function signature_check_warns_unprovisioned_passes_valid_and_fails_invalid(): void
+    {
+        $signer = app(\App\Services\Updates\ReleaseSignature::class);
+
+        // No public key baked → warn (opt-in), never blocks.
+        config(['updates.signing.public_key' => null]);
+        $this->assertSame(PreflightCheck::WARN, $this->service()->checkSignature([])->status);
+
+        // Provisioned + a correctly-signed manifest → pass.
+        config(['updates.signing.public_key' => \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY]);
+        $manifest = ['version' => '1.1.0', 'sha256' => hash('sha256', 'z')];
+        $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), \Tests\Fixtures\ReleaseKeys::PRIVATE_KEY);
+        $this->assertSame(PreflightCheck::PASS, $this->service()->checkSignature($manifest)->status);
+
+        // Provisioned + unsigned manifest → fail (blocks the update).
+        $this->assertSame(PreflightCheck::FAIL, $this->service()->checkSignature(['version' => '1.1.0', 'sha256' => 'z'])->status);
+    }
+
+    #[Test]
     public function recovery_console_check_warns_when_the_key_is_unset(): void
     {
         config(['updates.recovery.enabled' => false]);

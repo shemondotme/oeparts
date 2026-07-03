@@ -69,6 +69,37 @@ class GenerateReleaseManifestCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_signs_the_release_when_a_private_key_is_configured(): void
+    {
+        config([
+            'updates.signing.private_key' => \Tests\Fixtures\ReleaseKeys::PRIVATE_KEY,
+            'updates.signing.public_key'  => \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY,
+        ]);
+
+        $version = $this->writeJson('version.json', ['version' => '1.4.0', 'sha256' => null, 'size_bytes' => null]);
+        $catalog = $this->dir.'/releases.json';
+        $build = $this->writeJson('build-result.json', [
+            'version' => '1.4.0', 'sha256' => str_repeat('d', 64), 'size_bytes' => 64,
+        ]);
+
+        $this->artisan('oeparts:release:manifest', [
+            '--version-file' => $version,
+            '--catalog-file' => $catalog,
+            '--build-result' => $build,
+        ])->assertExitCode(0);
+
+        $manifest = json_decode(file_get_contents($version), true);
+        $this->assertNotEmpty($manifest['signature']);
+
+        // The signature verifies against the public key — and the catalog carries it too.
+        $signer = app(\App\Services\Updates\ReleaseSignature::class);
+        $this->assertTrue($signer->verify($signer->payloadFor($manifest), $manifest['signature'], \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY));
+
+        $cat = json_decode(file_get_contents($catalog), true);
+        $this->assertSame($manifest['signature'], $cat['releases'][0]['signature']);
+    }
+
+    #[Test]
     public function it_fails_on_a_version_mismatch(): void
     {
         $version = $this->writeJson('version.json', ['version' => '1.2.0']);

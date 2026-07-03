@@ -51,9 +51,13 @@ jobs:
       - name: Build release zip
         run: bash build/build.sh
 
-      # Fold the zip's sha256/size/download-url into version.json + upsert releases.json.
+      # Fold the zip's sha256/size/download-url into version.json, SIGN it (RSA-SHA256),
+      # and upsert releases.json. OE_RELEASE_PRIVATE_KEY is a repo secret (never committed);
+      # every install verifies against the baked public key at pre-flight.
       - name: Generate release manifests
         run: php artisan oeparts:release:manifest --build-result=dist/build-result.json
+        env:
+          OE_RELEASE_PRIVATE_KEY: ${{ secrets.OE_RELEASE_PRIVATE_KEY }}
 
       # Publish the served manifests to main (raw.githubusercontent.com/.../main/*.json).
       - name: Publish manifests to main
