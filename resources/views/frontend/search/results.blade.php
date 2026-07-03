@@ -276,13 +276,13 @@
             {{-- ── Price Stats Strip ───────────────────────────────────── --}}
             @if($price_stats['min'] !== null && $price_stats['max'] !== null && !$filtered_empty)
             @php $priceMinMaxSame = (string) $price_stats['min'] === (string) $price_stats['max']; @endphp
-            <div class="grid grid-cols-3 border border-ink bg-paper mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 border border-ink bg-paper mb-8">
                 @foreach([
                     ['label' => ui_copy('search_price_from', 'search.price_from'), 'value' => settings('store.currency_symbol', '€') . $price_stats['min'], 'em' => false],
                     ['label' => ui_copy('search_price_avg', 'search.price_avg'),  'value' => settings('store.currency_symbol', '€') . ($priceMinMaxSame ? $price_stats['min'] : $price_stats['avg']), 'em' => true],
                     ['label' => ui_copy('search_price_to', 'search.price_to'),   'value' => settings('store.currency_symbol', '€') . $price_stats['max'], 'em' => false],
                 ] as $idx => $stat)
-                <div class="p-5 sm:p-6 {{ !$loop->last ? 'border-r border-rule' : '' }}">
+                <div class="p-5 sm:p-6 {{ !$loop->last ? 'border-b sm:border-b-0 sm:border-r border-rule' : '' }}">
                     <p class="bp-spec text-ink-muted mb-3">{{ $stat['label'] }}</p>
                     <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight
                               text-3xl sm:text-4xl lg:text-5xl

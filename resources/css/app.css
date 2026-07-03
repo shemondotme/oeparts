@@ -251,8 +251,13 @@
         @apply absolute -top-3 left-3 -z-10 h-[6px] w-[6px] bg-amber/20 rounded-full;
     }
 
+    /* Entrance animation. No `display` here: bp-rise is applied to block/flex/
+       grid containers (sections, asides), which are all transformable, so the
+       legacy `inline-block` (a leftover from a per-character version that is no
+       longer used — 0 inline usages) only shrink-wrapped those containers and
+       pushed content past the viewport on narrow screens (mobile x-overflow). */
     .bp-rise {
-        @apply inline-block animate-[bp-rise_0.7s_ease-out_forwards];
+        @apply animate-[bp-rise_0.7s_ease-out_forwards];
     }
 
     .bp-rise-delay-1 {
