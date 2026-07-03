@@ -12,9 +12,20 @@ use Tests\TestCase;
 class InstallerTest extends TestCase
 {
     use RefreshDatabase;
+
+    /** Snapshot of the developer's real .env, restored in tearDown. */
+    protected ?string $envBackup = null;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // The installer writes to base_path('.env') (InstallerController::
+        // updateEnvFile). Snapshot it so these tests can never clobber the
+        // developer's real environment — this is exactly how a test run once
+        // overwrote DB_DATABASE with the mock 'test_database' and broke login.
+        $envPath = base_path('.env');
+        $this->envBackup = File::exists($envPath) ? File::get($envPath) : null;
 
         // Remove installed.lock if exists
         $lockFile = storage_path('installed.lock');
@@ -28,6 +39,14 @@ class InstallerTest extends TestCase
 
     protected function tearDown(): void
     {
+        // Restore the real .env exactly as it was before the test ran.
+        $envPath = base_path('.env');
+        if ($this->envBackup !== null) {
+            File::put($envPath, $this->envBackup);
+        } elseif (File::exists($envPath)) {
+            File::delete($envPath);
+        }
+
         // Clean up after tests
         $lockFile = storage_path('installed.lock');
         if (File::exists($lockFile)) {
