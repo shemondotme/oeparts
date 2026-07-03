@@ -36,6 +36,7 @@ class PreflightService
             $this->checkMultiServer(),
             $this->checkEnvKeys($manifest),
             $this->checkSchemaDrift($manifest),
+            $this->checkRecoveryConsole(),
         ]);
     }
 
@@ -299,6 +300,25 @@ class PreflightService
         }
 
         return PreflightCheck::pass($key, $label, 'Matches baseline.');
+    }
+
+    /**
+     * Warn (don't block) if the app-independent Recovery Console is disarmed by a
+     * missing OE_RECOVERY_KEY. Without it, a failed update that leaves the app
+     * unbootable has no out-of-band recovery path (CLAUDE rule #47 / decision #6).
+     */
+    public function checkRecoveryConsole(): PreflightCheck
+    {
+        $key = 'recovery';
+        $label = 'Recovery Console';
+
+        if (! (bool) config('updates.recovery.enabled', false)) {
+            return PreflightCheck::warn($key, $label,
+                'OE_RECOVERY_KEY is not set — the app-independent Recovery Console is disabled. '
+                .'Set it so you can recover if an update leaves the app unable to boot.');
+        }
+
+        return PreflightCheck::pass($key, $label, 'Armed on demand (OE_RECOVERY_KEY set).');
     }
 
     /* ---- Helpers -------------------------------------------------------- */

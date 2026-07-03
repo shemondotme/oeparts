@@ -36,6 +36,7 @@ if (! class_exists('OeRecoveryConsole', false)) {
         public const STATE_DISABLED  = 'disabled';   // no OE_RECOVERY_KEY
         public const STATE_FORBIDDEN = 'forbidden';  // IP not allowed
         public const STATE_UNARMED   = 'unarmed';    // no update window open
+        public const STATE_BLOCKED   = 'blocked';    // rate-limited (too many failures)
         public const STATE_LOGIN     = 'login';      // armed, awaiting/failed key
         public const STATE_READY     = 'ready';      // authenticated status view
 
@@ -52,6 +53,11 @@ if (! class_exists('OeRecoveryConsole', false)) {
 
         /** @var array<string,string> disk name → absolute local root (overridable for tests). */
         private array $diskRoots = [];
+
+        /** @var callable|null injectable clock (unit tests); defaults to time(). */
+        private $clock = null;
+
+        private ?string $currentIp = null;
 
         /** @param array<string,string> $env */
         public function __construct(string $baseDir, array $env, ?string $stateDir = null)
@@ -270,6 +276,149 @@ if (! class_exists('OeRecoveryConsole', false)) {
             return isset($this->env['OE_BACKUP_KEY']) && trim((string) $this->env['OE_BACKUP_KEY']) !== '';
         }
 
+        /* ---- Security: clock / rate-limit / audit / tokens (Chunk 4.3) -- */
+
+        public function setClock(callable $clock): void
+        {
+            $this->clock = $clock;
+        }
+
+        private function now(): int
+        {
+            return $this->clock !== null ? (int) ($this->clock)() : time();
+        }
+
+        private function maxAttempts(): int
+        {
+            return max(1, (int) ($this->env['OE_RECOVERY_MAX_ATTEMPTS'] ?? 5));
+        }
+
+        private function lockoutSeconds(): int
+        {
+            return max(1, (int) ($this->env['OE_RECOVERY_LOCKOUT_SECONDS'] ?? 900));
+        }
+
+        private function tokenTtl(): int
+        {
+            return max(1, (int) ($this->env['OE_RECOVERY_TOKEN_TTL'] ?? 900));
+        }
+
+        public function throttleFile(): string
+        {
+            return $this->stateDir.'/recovery-throttle.json';
+        }
+
+        public function sessionFile(): string
+        {
+            return $this->stateDir.'/recovery-session.json';
+        }
+
+        public function logFile(): string
+        {
+            return $this->stateDir.'/recovery.log';
+        }
+
+        private function ipKey(?string $ip): string
+        {
+            return ($ip !== null && $ip !== '') ? $ip : 'unknown';
+        }
+
+        public function isBlocked(?string $ip): bool
+        {
+            $entry = ($this->readJson($this->throttleFile()) ?? [])[$this->ipKey($ip)] ?? null;
+
+            return is_array($entry) && (int) ($entry['blocked_until'] ?? 0) > $this->now();
+        }
+
+        private function recordFailure(?string $ip): void
+        {
+            $throttle = $this->readJson($this->throttleFile()) ?? [];
+            $k        = $this->ipKey($ip);
+            $now      = $this->now();
+            $entry    = $throttle[$k] ?? ['count' => 0, 'first' => $now, 'blocked_until' => 0];
+
+            // Slide the window: a stale first-attempt starts a fresh count.
+            if (($now - (int) ($entry['first'] ?? $now)) > $this->lockoutSeconds()) {
+                $entry = ['count' => 0, 'first' => $now, 'blocked_until' => 0];
+            }
+
+            $entry['count'] = (int) $entry['count'] + 1;
+            if ($entry['count'] >= $this->maxAttempts()) {
+                $entry['blocked_until'] = $now + $this->lockoutSeconds();
+            }
+
+            $throttle[$k] = $entry;
+            $this->writeJson($this->throttleFile(), $throttle);
+        }
+
+        private function recordSuccess(?string $ip): void
+        {
+            $throttle = $this->readJson($this->throttleFile()) ?? [];
+            unset($throttle[$this->ipKey($ip)]);
+            $this->writeJson($this->throttleFile(), $throttle);
+        }
+
+        /** Append one structured audit line (JSON) for every access/action. */
+        public function audit(string $event, array $ctx = []): void
+        {
+            $this->ensureDir($this->stateDir);
+            $line = json_encode(array_merge(
+                ['ts' => gmdate('c', $this->now()), 'ip' => $this->currentIp, 'event' => $event],
+                $ctx
+            ), JSON_UNESCAPED_SLASHES);
+            @file_put_contents($this->logFile(), $line.PHP_EOL, FILE_APPEND);
+        }
+
+        /** Mint a single-use-window confirm token bound to the client IP + a TTL. */
+        public function mintToken(?string $ip): string
+        {
+            $token = bin2hex(random_bytes(32));
+            $this->writeJson($this->sessionFile(), [
+                'hash'    => hash('sha256', $token),
+                'ip'      => $ip,
+                'expires' => $this->now() + $this->tokenTtl(),
+            ]);
+
+            return $token;
+        }
+
+        public function validateToken(?string $token, ?string $ip): bool
+        {
+            if (! is_string($token) || $token === '') {
+                return false;
+            }
+
+            $session = $this->readJson($this->sessionFile());
+            if (! $session) {
+                return false;
+            }
+            if ((int) ($session['expires'] ?? 0) < $this->now()) {
+                return false;
+            }
+            if (($session['ip'] ?? null) !== $ip) {
+                return false;
+            }
+
+            return hash_equals((string) ($session['hash'] ?? ''), hash('sha256', $token));
+        }
+
+        /** Explicitly close the recovery window: disarm + clear the session + throttle. */
+        public function disarmConsole(): array
+        {
+            @unlink($this->armFlagPath());
+            @unlink($this->sessionFile());
+            @unlink($this->throttleFile());
+
+            return ['ok' => true, 'action' => 'disarm',
+                'message' => 'Recovery complete — the update window is closed and the console is disarmed and locked.'];
+        }
+
+        private function writeJson(string $path, array $data): void
+        {
+            $this->ensureDir(dirname($path));
+            @file_put_contents($path, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        }
+
         /** @return array<int,array<string,mixed>> */
         public function recentUpdates(int $limit = 10): array
         {
@@ -336,8 +485,10 @@ if (! class_exists('OeRecoveryConsole', false)) {
          *
          * @return array{0:int,1:string,2:string} [httpStatus, stateConst, html]
          */
-        public function handle(?string $providedKey, ?string $ip, ?string $action = null): array
+        public function handle(?string $providedKey, ?string $ip, ?string $action = null, ?string $token = null): array
         {
+            $this->currentIp = $ip;
+
             if (! $this->secretConfigured()) {
                 return [404, self::STATE_DISABLED, $this->page(
                     'Recovery Console disabled',
@@ -347,6 +498,8 @@ if (! class_exists('OeRecoveryConsole', false)) {
             }
 
             if (! $this->ipAllowed($ip)) {
+                $this->audit('forbidden_ip');
+
                 return [403, self::STATE_FORBIDDEN, $this->page(
                     'Access denied',
                     '<p>Your IP address is not permitted by <code>OE_RECOVERY_IP_ALLOWLIST</code>.</p>'
@@ -362,15 +515,57 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 )];
             }
 
+            // Rate-limit: too many failed key/token attempts locks this IP out.
+            if ($this->isBlocked($ip)) {
+                $this->audit('blocked');
+
+                return [429, self::STATE_BLOCKED, $this->page(
+                    'Too many attempts',
+                    '<p>Too many failed attempts. This address is temporarily locked out of the '
+                    .'Recovery Console. Wait for the lockout window to elapse and try again.</p>'
+                )];
+            }
+
+            // Action path: authenticate via a minted confirm token OR the raw key
+            // (both POST-only). Actions never run from a GET link.
+            if ($action !== null && $action !== '') {
+                if (! ($this->validateToken($token, $ip) || $this->authenticate($providedKey))) {
+                    $this->recordFailure($ip);
+                    $this->audit('action_denied', ['action' => $action]);
+
+                    return [403, self::STATE_LOGIN, $this->loginPage(true)];
+                }
+
+                $this->recordSuccess($ip);
+                $result = $this->runAction($action);
+                $this->audit('action', ['action' => $action, 'ok' => ! empty($result['ok'])]);
+
+                // A successful disarm (or any action that closes the window) locks the console.
+                if (! $this->isArmed()) {
+                    return [200, self::STATE_UNARMED, $this->page(
+                        'Recovery window closed',
+                        '<p>'.$this->e((string) ($result['message'] ?? 'The console is disarmed and locked.')).'</p>'
+                    )];
+                }
+
+                return [200, self::STATE_READY, $this->dashboardPage($this->status(), $this->mintToken($ip), $result)];
+            }
+
+            // Login path (POST key).
             if (! $this->authenticate($providedKey)) {
                 $failed = $providedKey !== null && $providedKey !== '';
+                if ($failed) {
+                    $this->recordFailure($ip);
+                    $this->audit('auth_fail');
+                }
 
                 return [$failed ? 403 : 401, self::STATE_LOGIN, $this->loginPage($failed)];
             }
 
-            $result = ($action !== null && $action !== '') ? $this->runAction($action) : null;
+            $this->recordSuccess($ip);
+            $this->audit('auth_success');
 
-            return [200, self::STATE_READY, $this->dashboardPage($this->status(), $providedKey, $result)];
+            return [200, self::STATE_READY, $this->dashboardPage($this->status(), $this->mintToken($ip), null)];
         }
 
         /* ---- Recovery actions (Chunk 4.2 — still framework-free) -------- */
@@ -383,6 +578,7 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 case 'rollback_files':  return $this->rollbackFiles();
                 case 'maintenance_off': return $this->forceMaintenanceOff();
                 case 'opcache_reset':   return $this->resetOpcache();
+                case 'disarm':          return $this->disarmConsole();
                 default:
                     return ['ok' => false, 'action' => $action, 'message' => 'Unknown recovery action.'];
             }
@@ -768,7 +964,7 @@ if (! class_exists('OeRecoveryConsole', false)) {
         }
 
         /** @param array<string,mixed> $s */
-        private function dashboardPage(array $s, ?string $providedKey = null, ?array $actionResult = null): string
+        private function dashboardPage(array $s, ?string $token = null, ?array $actionResult = null): string
         {
             $arm  = $s['arm_info'] ?? null;
             $swap = $s['swap_state'] ?? null;
@@ -830,7 +1026,7 @@ if (! class_exists('OeRecoveryConsole', false)) {
             // Restorable backups.
             $body .= '<h2>Restorable backups</h2>'.$this->tableOr($s['backups'], ['id', 'profile', 'app_version', 'part_count', 'finished_at'], 'No successful backups found (or DB unreachable).');
 
-            $body .= $this->actionsSection($providedKey);
+            $body .= $this->actionsSection($token);
 
             $body .= '<div class="note">Recovery actions are live (Chunk 4.2). Rate-limiting, structured '
                 .'audit logging, POST-only keys and per-action confirmation tokens are hardened in Chunk 4.3. '
@@ -861,22 +1057,25 @@ if (! class_exists('OeRecoveryConsole', false)) {
             return $html;
         }
 
-        private function actionsSection(?string $providedKey): string
+        private function actionsSection(?string $token): string
         {
-            $key = $this->e((string) ($providedKey ?? ''));
+            // Actions carry a short-lived confirm TOKEN (not the raw key) so the secret
+            // never sits in the DOM; the token is IP-bound + expiring (Chunk 4.3).
+            $tok = $this->e((string) ($token ?? ''));
 
             $actions = [
                 ['restore_db', 'Restore database', 'Decrypt + apply the latest pre-update safety backup. Overwrites current data.'],
                 ['rollback_files', 'Roll back files', 'Reverse the interrupted file swap (restore the previous release from last-swap.json).'],
                 ['maintenance_off', 'Force maintenance OFF', 'Clear the maintenance flag so the storefront serves again.'],
                 ['opcache_reset', 'Reset OPcache', 'Flush the PHP OPcache + realpath cache.'],
+                ['disarm', 'Finish recovery & disarm', 'Close the update window and lock the console (do this when recovery is complete).'],
             ];
 
             $html = '<h2>Recovery actions</h2><div class="actions">';
             foreach ($actions as [$act, $label, $desc]) {
                 $confirm = 'return confirm('.json_encode($label.' — are you sure? This cannot be undone.').')';
                 $html .= '<form method="post" class="action" onsubmit="'.$this->e($confirm).'">'
-                    .'<input type="hidden" name="key" value="'.$key.'">'
+                    .'<input type="hidden" name="token" value="'.$tok.'">'
                     .'<input type="hidden" name="action" value="'.$this->e($act).'">'
                     .'<button type="submit">'.$this->e($label).'</button>'
                     .'<span class="muted">'.$this->e($desc).'</span>'
@@ -976,24 +1175,17 @@ if (! class_exists('OeRecoveryConsole', false)) {
         {
             $console = self::fromBase(dirname(__DIR__));
 
-            // Accept the key from POST (form) or GET (deep link). Query-string keys are
-            // discouraged (they land in access logs); 4.3 tightens this to POST-only.
-            $key = null;
-            if (isset($_POST['key'])) {
-                $key = (string) $_POST['key'];
-            } elseif (isset($_GET['key'])) {
-                $key = (string) $_GET['key'];
-            }
+            $isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
+
+            // POST-only key + token + action. A key in a GET query string would leak into
+            // access logs, so it is never read from $_GET (Chunk 4.3).
+            $key    = ($isPost && isset($_POST['key'])) ? (string) $_POST['key'] : null;
+            $token  = ($isPost && isset($_POST['token'])) ? (string) $_POST['token'] : null;
+            $action = ($isPost && isset($_POST['action'])) ? (string) $_POST['action'] : null;
 
             $ip = $_SERVER['REMOTE_ADDR'] ?? null;
 
-            // Destructive recovery actions run on POST only — never via a GET link.
-            $action = null;
-            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['action'])) {
-                $action = (string) $_POST['action'];
-            }
-
-            [$http, , $html] = $console->handle($key, $ip, $action);
+            [$http, , $html] = $console->handle($key, $ip, $action, $token);
 
             if (! headers_sent()) {
                 http_response_code($http);

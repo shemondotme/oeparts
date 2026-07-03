@@ -74,6 +74,16 @@ class PreflightServiceTest extends TestCase
     }
 
     #[Test]
+    public function recovery_console_check_warns_when_the_key_is_unset(): void
+    {
+        config(['updates.recovery.enabled' => false]);
+        $this->assertSame(PreflightCheck::WARN, $this->service()->checkRecoveryConsole()->status);
+
+        config(['updates.recovery.enabled' => true]);
+        $this->assertSame(PreflightCheck::PASS, $this->service()->checkRecoveryConsole()->status);
+    }
+
+    #[Test]
     public function php_version_gate_passes_and_fails(): void
     {
         $this->assertSame(PreflightCheck::PASS, $this->service()->checkPhpVersion(['min_php' => '8.2'])->status);
