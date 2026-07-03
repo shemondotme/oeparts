@@ -139,5 +139,9 @@ return [
         'manifest_file' => 'file-manifest.json',
         // Bundled third-party license text (open-source compliance, decision #14).
         'licenses_file' => 'THIRD-PARTY-LICENSES.md',
+        // Release download URL template (Chunk 5.2). {version} = SemVer, {asset} = zip name.
+        // Versioned (not /latest/) so the updater can resolve a sequential upgrade path.
+        'release_url_template' => env('OE_RELEASE_URL', 'https://github.com/oeparts/oeparts/releases/download/v{version}/{asset}'),
+        'asset_name'           => 'oeparts-{version}.zip',
     ],
 ];

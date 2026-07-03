@@ -1,73 +1,84 @@
 name: Release
 
+# Build + publish an OeParts release when a v*.*.* tag is pushed (Module 21, Chunk 5.2).
+# Replaces the earlier ad-hoc in-place zip with the real pipeline: build/build.sh produces
+# the distributable zip + per-file sha256 manifest, oeparts:release:manifest folds the zip's
+# sha256/size into version.json and upserts releases.json, and both manifests are published
+# to `main` (raw-served to the in-app updater) and attached to the GitHub Release.
+
 on:
   push:
     tags:
       - "v*.*.*"
 
+permissions:
+  contents: write
+
 jobs:
-  build:
-    name: Build release zip
+  release:
+    name: Build and publish release
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout tag
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.2"
-          extensions: mbstring, bcmath, pdo, xml, zip
+          extensions: pdo_mysql, zip, openssl, mbstring, curl, fileinfo, json, bcmath, gd, intl
+          tools: composer:v2
           coverage: none
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
 
-      - name: Install Composer dependencies (production)
-        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+      # Root dev deps so `php artisan` (oeparts:build / oeparts:release:manifest) can boot.
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress
 
-      - name: Install npm dependencies and build assets
+      - name: Prepare environment
         run: |
-          npm ci
-          npm run build
+          cp .env.example .env
+          php artisan key:generate
 
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+      # git archive -> composer --no-dev -> npm build -> strip -> sha256 manifest -> zip.
+      - name: Build release zip
+        run: bash build/build.sh
 
-      - name: Update version.json release date
+      # Fold the zip's sha256/size/download-url into version.json + upsert releases.json.
+      - name: Generate release manifests
+        run: php artisan oeparts:release:manifest --build-result=dist/build-result.json
+
+      # Publish the served manifests to main (raw.githubusercontent.com/.../main/*.json).
+      - name: Publish manifests to main
         run: |
-          jq --arg ver "${{ steps.version.outputs.VERSION }}" \
-             --arg date "$(date -u +%Y-%m-%d)" \
-             '.version = $ver | .release_date = $date' \
-             version.json > version.json.tmp && mv version.json.tmp version.json
-
-      - name: Create release archive
-        run: |
-          zip -r oeparts-${{ steps.version.outputs.VERSION }}.zip . \
-            --exclude "*.git*" \
-            --exclude "node_modules/*" \
-            --exclude "tests/*" \
-            --exclude ".env" \
-            --exclude ".env.testing" \
-            --exclude "*.log" \
-            --exclude "storage/logs/*" \
-            --exclude "storage/framework/cache/*" \
-            --exclude "storage/framework/sessions/*" \
-            --exclude "storage/framework/views/*" \
-            --exclude "storage/installed.lock"
+          cp version.json /tmp/version.json
+          cp releases.json /tmp/releases.json
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout -B main origin/main
+          cp /tmp/version.json version.json
+          cp /tmp/releases.json releases.json
+          git add version.json releases.json
+          git commit -m "chore(release): ${GITHUB_REF_NAME} manifest + catalog [skip ci]" || echo "nothing to commit"
+          git push origin main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "OeParts v${{ steps.version.outputs.VERSION }}"
-          body_path: CHANGELOG.md
-          files: oeparts-${{ steps.version.outputs.VERSION }}.zip
-          draft: false
+          name: "OeParts ${{ github.ref_name }}"
+          generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            dist/oeparts-*.zip
+            version.json
+            releases.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
