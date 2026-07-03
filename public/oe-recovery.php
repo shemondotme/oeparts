@@ -50,6 +50,9 @@ if (! class_exists('OeRecoveryConsole', false)) {
 
         private bool $pdoResolved = false;
 
+        /** @var array<string,string> disk name → absolute local root (overridable for tests). */
+        private array $diskRoots = [];
+
         /** @param array<string,string> $env */
         public function __construct(string $baseDir, array $env, ?string $stateDir = null)
         {
@@ -232,11 +235,39 @@ if (! class_exists('OeRecoveryConsole', false)) {
 
             $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
 
-            return new PDO($dsn, $user, $pass, [
+            $options = [
                 PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_TIMEOUT            => 5,
-            ]);
+            ];
+            // DB restore applies multi-statement SQL parts (schema DROP+CREATE, INSERT batches).
+            if (defined('PDO::MYSQL_ATTR_MULTI_STATEMENTS')) {
+                $options[PDO::MYSQL_ATTR_MULTI_STATEMENTS] = true;
+            }
+
+            return new PDO($dsn, $user, $pass, $options);
+        }
+
+        public function setDiskRoot(string $disk, string $absRoot): void
+        {
+            $this->diskRoots[$disk] = rtrim($absRoot, "/\\");
+        }
+
+        /** Absolute local root for a backup disk. Console recovery handles LOCAL disks only. */
+        public function diskRoot(string $disk): ?string
+        {
+            if (isset($this->diskRoots[$disk])) {
+                return $this->diskRoots[$disk];
+            }
+
+            // Laravel's conventional 'local' disk root. Off-site disks (S3/SFTP) can't be
+            // read framework-free — the operator must re-localise those before recovering.
+            return $disk === 'local' ? $this->baseDir.'/storage/app' : null;
+        }
+
+        public function backupKeyConfigured(): bool
+        {
+            return isset($this->env['OE_BACKUP_KEY']) && trim((string) $this->env['OE_BACKUP_KEY']) !== '';
         }
 
         /** @return array<int,array<string,mixed>> */
@@ -305,7 +336,7 @@ if (! class_exists('OeRecoveryConsole', false)) {
          *
          * @return array{0:int,1:string,2:string} [httpStatus, stateConst, html]
          */
-        public function handle(?string $providedKey, ?string $ip): array
+        public function handle(?string $providedKey, ?string $ip, ?string $action = null): array
         {
             if (! $this->secretConfigured()) {
                 return [404, self::STATE_DISABLED, $this->page(
@@ -337,7 +368,388 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 return [$failed ? 403 : 401, self::STATE_LOGIN, $this->loginPage($failed)];
             }
 
-            return [200, self::STATE_READY, $this->dashboardPage($this->status())];
+            $result = ($action !== null && $action !== '') ? $this->runAction($action) : null;
+
+            return [200, self::STATE_READY, $this->dashboardPage($this->status(), $providedKey, $result)];
+        }
+
+        /* ---- Recovery actions (Chunk 4.2 — still framework-free) -------- */
+
+        /** @return array{ok:bool,action:string,message:string,detail?:array} */
+        public function runAction(string $action): array
+        {
+            switch ($action) {
+                case 'restore_db':      return $this->restoreDatabase();
+                case 'rollback_files':  return $this->rollbackFiles();
+                case 'maintenance_off': return $this->forceMaintenanceOff();
+                case 'opcache_reset':   return $this->resetOpcache();
+                default:
+                    return ['ok' => false, 'action' => $action, 'message' => 'Unknown recovery action.'];
+            }
+        }
+
+        /**
+         * Reverse an interrupted file swap from `last-swap.json` — the framework-free
+         * twin of UpdateSwapper::rollback(): move the new code back to staging and
+         * restore each original from the swap-backup, in reverse order.
+         */
+        public function rollbackFiles(): array
+        {
+            $map = $this->swapState();
+            if (! $map || empty($map['swapped'])) {
+                return ['ok' => false, 'action' => 'rollback_files',
+                    'message' => 'No interrupted file swap to roll back (no last-swap.json).'];
+            }
+
+            $root       = (string) ($map['root'] ?? '');
+            $backupDir  = (string) ($map['backup_dir'] ?? '');
+            $stagingDir = (string) ($map['staging_dir'] ?? '');
+            $restored = 0;
+            $movedBack = 0;
+            $errors = [];
+
+            foreach (array_reverse($map['swapped']) as $entry) {
+                $rel = (string) ($entry['path'] ?? '');
+                if ($rel === '') {
+                    continue;
+                }
+                $rootPath    = $root.'/'.$rel;
+                $backupPath  = $backupDir.'/'.$rel;
+                $stagingPath = $stagingDir.'/'.$rel;
+
+                // Move the new code out of the way (preserve it in staging).
+                if (file_exists($rootPath)) {
+                    $this->ensureDir(dirname($stagingPath));
+                    if (@rename($rootPath, $stagingPath)) {
+                        $movedBack++;
+                    } else {
+                        $errors[] = 'could not move new code out: '.$rel;
+                    }
+                }
+
+                // Restore the original (a path that had no original stays removed).
+                if (! empty($entry['had_original']) && file_exists($backupPath)) {
+                    $this->ensureDir(dirname($rootPath));
+                    if (@rename($backupPath, $rootPath)) {
+                        $restored++;
+                    } else {
+                        $errors[] = 'could not restore original: '.$rel;
+                    }
+                }
+            }
+
+            $this->resetRuntimeCaches();
+            @unlink($this->swapStatePath()); // clear the recovery state once reversed
+
+            return ['ok' => $errors === [], 'action' => 'rollback_files',
+                'message' => $errors === []
+                    ? "File swap reversed: {$restored} originals restored, {$movedBack} new paths moved out."
+                    : 'File rollback completed with errors — see detail.',
+                'detail' => ['restored' => $restored, 'moved_back' => $movedBack, 'errors' => $errors]];
+        }
+
+        /**
+         * Restore the database from the latest successful pre-update safety backup —
+         * the framework-free twin of RestoreManager: read the unencrypted manifest TOC,
+         * decrypt each DB part (BackupCipher frame format), gunzip, and apply. Schema
+         * parts run before data parts with FK checks disabled, so table order is safe.
+         */
+        public function restoreDatabase(): array
+        {
+            if (! $this->backupKeyConfigured()) {
+                return ['ok' => false, 'action' => 'restore_db',
+                    'message' => 'OE_BACKUP_KEY is not set — the encrypted pre-update backup cannot be decrypted.'];
+            }
+
+            $pdo = $this->pdo();
+            if ($pdo === null) {
+                return ['ok' => false, 'action' => 'restore_db',
+                    'message' => 'Database is unreachable — cannot restore.'];
+            }
+
+            $run = $this->latestPreUpdateBackup();
+            if ($run === null) {
+                return ['ok' => false, 'action' => 'restore_db',
+                    'message' => 'No successful pre-update backup found to restore from.'];
+            }
+
+            $manifest = $this->readManifest((string) $run['disk'], (string) $run['manifest_path']);
+            if (! $manifest || empty($manifest['parts'])) {
+                return ['ok' => false, 'action' => 'restore_db',
+                    'message' => 'Backup manifest missing or unreadable at '.($run['manifest_path'] ?? '?').'.'];
+            }
+
+            $dbParts = array_values(array_filter(
+                $manifest['parts'], fn ($p) => ($p['type'] ?? '') === 'db'
+            ));
+            if ($dbParts === []) {
+                return ['ok' => false, 'action' => 'restore_db', 'message' => 'Backup contains no database parts.'];
+            }
+
+            // All schema (DROP+CREATE) before all data (INSERT): every table exists before
+            // its rows regardless of part sequence. FK checks are disabled around the lot.
+            $schema  = array_filter($dbParts, fn ($p) => (($p['meta']['kind'] ?? null) === 'schema'));
+            $data    = array_filter($dbParts, fn ($p) => (($p['meta']['kind'] ?? null) === 'data'));
+            $ordered = array_merge(array_values($schema), array_values($data));
+
+            $driver  = strtolower((string) $pdo->getAttribute(PDO::ATTR_DRIVER_NAME));
+            $applied = 0;
+            $tables  = [];
+            $errors  = [];
+
+            $this->toggleForeignKeys($pdo, $driver, false);
+            try {
+                foreach ($ordered as $p) {
+                    try {
+                        $sql = (string) gzdecode($this->loadPartPlaintext((string) $run['disk'], $p));
+                        $pdo->exec($sql);
+                        $applied++;
+                        if ((($p['meta']['kind'] ?? null) === 'schema') && ! empty($p['name'])) {
+                            $tables[] = $p['name'];
+                        }
+                    } catch (\Throwable $e) {
+                        $errors[] = ($p['name'] ?? 'part').': '.$e->getMessage();
+                    }
+                }
+            } finally {
+                $this->toggleForeignKeys($pdo, $driver, true);
+            }
+
+            $this->resetRuntimeCaches();
+
+            return ['ok' => $errors === [], 'action' => 'restore_db',
+                'message' => $errors === []
+                    ? 'Database restored from backup #'.$run['id'].": {$applied} parts applied, ".count($tables).' tables.'
+                    : 'Database restore completed with errors — see detail.',
+                'detail' => ['backup_id' => (int) $run['id'], 'parts_applied' => $applied,
+                    'tables' => count($tables), 'errors' => $errors]];
+        }
+
+        /**
+         * Clear the maintenance flag so the site serves again (framework-free): write the
+         * `settings` row directly + a best-effort settings-cache purge. With a Redis/remote
+         * cache the change lands within the 5-minute settings TTL (or on the next flush).
+         */
+        public function forceMaintenanceOff(): array
+        {
+            $pdo = $this->pdo();
+            if ($pdo === null) {
+                return ['ok' => false, 'action' => 'maintenance_off',
+                    'message' => 'Database unreachable — cannot clear the maintenance flag.'];
+            }
+
+            try {
+                $stmt = $pdo->prepare("UPDATE settings SET `value` = '0' WHERE `group` = 'maintenance' AND `key` = 'enabled'");
+                $stmt->execute();
+                $updated = $stmt->rowCount();
+            } catch (\Throwable $e) {
+                return ['ok' => false, 'action' => 'maintenance_off',
+                    'message' => 'Could not update the maintenance setting: '.$e->getMessage()];
+            }
+
+            $cache = $this->clearMaintenanceCache();
+            $this->resetRuntimeCaches();
+
+            return ['ok' => true, 'action' => 'maintenance_off',
+                'message' => $updated > 0
+                    ? 'Maintenance mode flag cleared in the database.'
+                    : 'No maintenance flag was set (already off).',
+                'detail' => ['rows_updated' => $updated, 'cache' => $cache]];
+        }
+
+        public function resetOpcache(): array
+        {
+            $available = function_exists('opcache_reset');
+            if ($available) {
+                @opcache_reset();
+            }
+            clearstatcache(true);
+
+            return ['ok' => true, 'action' => 'opcache_reset',
+                'message' => $available
+                    ? 'OPcache reset + realpath cache cleared.'
+                    : 'OPcache not available on this SAPI; realpath cache cleared.',
+                'detail' => ['opcache' => $available]];
+        }
+
+        /* ---- Action helpers -------------------------------------------- */
+
+        /** @return array<string,mixed>|null */
+        private function latestPreUpdateBackup(): ?array
+        {
+            $pdo = $this->pdo();
+            if ($pdo === null) {
+                return null;
+            }
+
+            try {
+                $stmt = $pdo->query(
+                    "SELECT id, disk, manifest_path FROM backup_runs"
+                    ." WHERE `trigger` = 'pre_update' AND status = 'success' AND manifest_path IS NOT NULL"
+                    .' ORDER BY id DESC LIMIT 1'
+                );
+                $row = $stmt ? $stmt->fetch() : false;
+
+                return is_array($row) ? $row : null;
+            } catch (\Throwable $e) {
+                return null;
+            }
+        }
+
+        /** @return array<string,mixed>|null */
+        private function readManifest(string $disk, string $path): ?array
+        {
+            $root = $this->diskRoot($disk);
+            if ($root === null || $path === '') {
+                return null;
+            }
+            $abs = $root.'/'.ltrim($path, '/');
+            if (! is_file($abs)) {
+                return null;
+            }
+            $data = json_decode((string) @file_get_contents($abs), true);
+
+            return is_array($data) ? $data : null;
+        }
+
+        /** Read a part off its (local) disk, verify + decrypt → still-gzipped plaintext. */
+        private function loadPartPlaintext(string $runDisk, array $part): string
+        {
+            $disk = (string) ($part['disk'] ?? $runDisk);
+            $root = $this->diskRoot($disk);
+            if ($root === null) {
+                throw new \RuntimeException('unsupported backup disk ['.$disk.'] — console recovery handles local disks only');
+            }
+
+            $abs = $root.'/'.ltrim((string) $part['path'], '/');
+            if (! is_file($abs)) {
+                throw new \RuntimeException('backup part missing on disk: '.($part['path'] ?? '?'));
+            }
+
+            $enc = (string) file_get_contents($abs);
+            if (! empty($part['sha256']) && hash('sha256', $enc) !== $part['sha256']) {
+                throw new \RuntimeException('ciphertext sha256 mismatch');
+            }
+
+            $plain = (($part['meta']['encrypted'] ?? false) === true)
+                ? $this->cipherDecrypt($enc)
+                : $enc;
+
+            if (! empty($part['meta']['plain_sha256']) && hash('sha256', $plain) !== $part['meta']['plain_sha256']) {
+                throw new \RuntimeException('plaintext sha256 mismatch');
+            }
+
+            return $plain;
+        }
+
+        /**
+         * Decrypt an OeParts backup stream (framework-free port of BackupCipher):
+         * header "OEENC1"+ver, then frames iv(12)·tag(16)·len(u32BE)·ciphertext, each an
+         * independent AES-256-GCM frame with the frame index as AAD. Key = sha256(OE_BACKUP_KEY).
+         */
+        private function cipherDecrypt(string $enc): string
+        {
+            $key   = hash('sha256', trim((string) ($this->env['OE_BACKUP_KEY'] ?? '')), true);
+            $magic = 'OEENC1';
+            $headerLen = strlen($magic) + 1;
+
+            if (strlen($enc) < $headerLen || substr($enc, 0, strlen($magic)) !== $magic) {
+                throw new \RuntimeException('not an OeParts encrypted backup stream');
+            }
+
+            $len    = strlen($enc);
+            $offset = $headerLen;
+            $frame  = 0;
+            $out    = '';
+
+            while ($offset < $len) {
+                if ($offset + 12 + 16 + 4 > $len) {
+                    throw new \RuntimeException('truncated encrypted stream');
+                }
+                $iv = substr($enc, $offset, 12);
+                $offset += 12;
+                $tag = substr($enc, $offset, 16);
+                $offset += 16;
+                $clen = unpack('N', substr($enc, $offset, 4))[1];
+                $offset += 4;
+                if ($offset + $clen > $len) {
+                    throw new \RuntimeException('truncated frame '.$frame);
+                }
+                $ct = substr($enc, $offset, $clen);
+                $offset += $clen;
+
+                $pt = openssl_decrypt($ct, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, pack('N', $frame));
+                if ($pt === false) {
+                    throw new \RuntimeException('decryption/authentication failed at frame '.$frame);
+                }
+
+                $out .= $pt;
+                $frame++;
+            }
+
+            return $out;
+        }
+
+        private function toggleForeignKeys(PDO $pdo, string $driver, bool $on): void
+        {
+            try {
+                if (in_array($driver, ['mysql', 'mariadb'], true)) {
+                    $pdo->exec('SET FOREIGN_KEY_CHECKS = '.($on ? '1' : '0').';');
+                } elseif ($driver === 'sqlite') {
+                    $pdo->exec('PRAGMA foreign_keys = '.($on ? 'ON' : 'OFF').';');
+                }
+            } catch (\Throwable $e) {
+                // Best-effort — a driver that rejects the toggle still restores.
+            }
+        }
+
+        /** Best-effort purge of the cached `settings.maintenance` group (single key). */
+        private function clearMaintenanceCache(): string
+        {
+            $store = strtolower((string) ($this->env['CACHE_STORE'] ?? $this->env['CACHE_DRIVER'] ?? 'file'));
+
+            try {
+                if ($store === 'file') {
+                    $hash = sha1('settings.maintenance');
+                    $file = $this->baseDir.'/storage/framework/cache/data/'
+                        .substr($hash, 0, 2).'/'.substr($hash, 2, 2).'/'.$hash;
+                    if (is_file($file)) {
+                        @unlink($file);
+
+                        return 'file cache entry cleared';
+                    }
+
+                    return 'file cache: no entry';
+                }
+
+                if ($store === 'database') {
+                    $pdo = $this->pdo();
+                    if ($pdo !== null) {
+                        $pdo->exec("DELETE FROM cache WHERE `key` LIKE '%settings.maintenance'");
+
+                        return 'database cache entry cleared';
+                    }
+                }
+            } catch (\Throwable $e) {
+                return 'cache clear skipped: '.$e->getMessage();
+            }
+
+            return $store.' cache: clears within the settings TTL (<= 5 min) or on next flush';
+        }
+
+        private function resetRuntimeCaches(): void
+        {
+            if (function_exists('opcache_reset')) {
+                @opcache_reset();
+            }
+            clearstatcache(true);
+        }
+
+        private function ensureDir(string $dir): void
+        {
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0775, true);
+            }
         }
 
         /* ---- Views (self-contained HTML, no external assets) ----------- */
@@ -356,10 +768,12 @@ if (! class_exists('OeRecoveryConsole', false)) {
         }
 
         /** @param array<string,mixed> $s */
-        private function dashboardPage(array $s): string
+        private function dashboardPage(array $s, ?string $providedKey = null, ?array $actionResult = null): string
         {
             $arm  = $s['arm_info'] ?? null;
             $swap = $s['swap_state'] ?? null;
+
+            $banner = $this->actionBanner($actionResult);
 
             $rows = function (array $pairs): string {
                 $html = '<table class="kv">';
@@ -370,7 +784,7 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 return $html.'</table>';
             };
 
-            $body = '<div class="grid">';
+            $body = $banner.'<div class="grid">';
 
             // Environment.
             $body .= '<section><h2>Environment</h2>'.$rows([
@@ -416,10 +830,60 @@ if (! class_exists('OeRecoveryConsole', false)) {
             // Restorable backups.
             $body .= '<h2>Restorable backups</h2>'.$this->tableOr($s['backups'], ['id', 'profile', 'app_version', 'part_count', 'finished_at'], 'No successful backups found (or DB unreachable).');
 
-            $body .= '<div class="note"><strong>Recovery actions</strong> (file rollback, database restore, '
-                .'force maintenance off, OPcache reset) arrive in Chunk 4.2. This build is read-only status.</div>';
+            $body .= $this->actionsSection($providedKey);
+
+            $body .= '<div class="note">Recovery actions are live (Chunk 4.2). Rate-limiting, structured '
+                .'audit logging, POST-only keys and per-action confirmation tokens are hardened in Chunk 4.3. '
+                .'Every action here is destructive — a pre-update backup exists, but proceed deliberately.</div>';
 
             return $this->page('Recovery Console', $body);
+        }
+
+        /** @param array<string,mixed>|null $result */
+        private function actionBanner(?array $result): string
+        {
+            if (! $result) {
+                return '';
+            }
+
+            $cls  = ! empty($result['ok']) ? 'ok' : 'err';
+            $html = '<div class="banner '.$cls.'">'.$this->e((string) ($result['message'] ?? '')).'</div>';
+
+            $errors = $result['detail']['errors'] ?? [];
+            if (is_array($errors) && $errors !== []) {
+                $html .= '<ul class="errs">';
+                foreach ($errors as $err) {
+                    $html .= '<li>'.$this->e((string) $err).'</li>';
+                }
+                $html .= '</ul>';
+            }
+
+            return $html;
+        }
+
+        private function actionsSection(?string $providedKey): string
+        {
+            $key = $this->e((string) ($providedKey ?? ''));
+
+            $actions = [
+                ['restore_db', 'Restore database', 'Decrypt + apply the latest pre-update safety backup. Overwrites current data.'],
+                ['rollback_files', 'Roll back files', 'Reverse the interrupted file swap (restore the previous release from last-swap.json).'],
+                ['maintenance_off', 'Force maintenance OFF', 'Clear the maintenance flag so the storefront serves again.'],
+                ['opcache_reset', 'Reset OPcache', 'Flush the PHP OPcache + realpath cache.'],
+            ];
+
+            $html = '<h2>Recovery actions</h2><div class="actions">';
+            foreach ($actions as [$act, $label, $desc]) {
+                $confirm = 'return confirm('.json_encode($label.' — are you sure? This cannot be undone.').')';
+                $html .= '<form method="post" class="action" onsubmit="'.$this->e($confirm).'">'
+                    .'<input type="hidden" name="key" value="'.$key.'">'
+                    .'<input type="hidden" name="action" value="'.$this->e($act).'">'
+                    .'<button type="submit">'.$this->e($label).'</button>'
+                    .'<span class="muted">'.$this->e($desc).'</span>'
+                    .'</form>';
+            }
+
+            return $html.'</div>';
         }
 
         /**
@@ -489,7 +953,14 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 .'.login{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap}'
                 .'input{font:inherit;padding:.4rem;border:1px solid #999;background:#fff}'
                 .'button{font:inherit;padding:.45rem 1rem;background:#1a1a1a;color:#f7f5ef;border:0;cursor:pointer}'
-                .'.note{margin-top:2rem;border:1px dashed #b7a; padding:.75rem 1rem;background:#fffdf8;color:#6b6455}';
+                .'.note{margin-top:2rem;border:1px dashed #b7a; padding:.75rem 1rem;background:#fffdf8;color:#6b6455}'
+                .'.banner{padding:.6rem 1rem;margin-bottom:1rem;border:1px solid}'
+                .'.banner.ok{background:#eefbef;border-color:#7cbf88;color:#1c5b2a}'
+                .'.banner.err{background:#fdecec;border-color:#d99;color:#8a1c1c}'
+                .'.errs{margin:.25rem 0 1rem;padding-left:1.2rem;color:#8a1c1c}'
+                .'.actions{display:flex;flex-direction:column;gap:.5rem}'
+                .'.action{display:flex;gap:.75rem;align-items:center;border:1px solid #d8d2c4;padding:.5rem .75rem;background:#fffdf8;margin:0;flex-wrap:wrap}'
+                .'.action button{white-space:nowrap}';
 
             return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 ."<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
@@ -516,7 +987,13 @@ if (! class_exists('OeRecoveryConsole', false)) {
 
             $ip = $_SERVER['REMOTE_ADDR'] ?? null;
 
-            [$http, , $html] = $console->handle($key, $ip);
+            // Destructive recovery actions run on POST only — never via a GET link.
+            $action = null;
+            if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['action'])) {
+                $action = (string) $_POST['action'];
+            }
+
+            [$http, , $html] = $console->handle($key, $ip, $action);
 
             if (! headers_sent()) {
                 http_response_code($http);
