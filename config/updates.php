@@ -115,4 +115,29 @@ return [
 
     // Dedicated log channel (config/logging.php).
     'log_channel' => 'updates',
+
+    // Release build (Chunk 5.1) — LOCAL / CI ONLY. Production never builds a release
+    // (rules #18/#19). The build script (build/build.sh) exports a clean tree, installs
+    // prod deps, builds assets, then `oeparts:build` strips dev files, bundles licenses,
+    // and writes the per-file sha256 manifest before zipping.
+    'build' => [
+        // Paths removed from the release zip (dev-only / secret / internal docs). Matched
+        // by EXACT path or directory-prefix, so '.env' never matches '.env.example'
+        // (which MUST ship — new_env_keys are diffed from it, decision #3).
+        'exclude' => [
+            '.git', '.github', '.gitignore', '.gitattributes',
+            'tests', 'node_modules', 'build', 'dist',
+            '.env', '.env.testing', '.env.backup',
+            '.editorconfig', '.vscode', '.idea', '.cursor',
+            'phpunit.xml', 'pint.json', '.php-cs-fixer.php', '.php-cs-fixer.dist.php', '.styleci.yml',
+            'storage/app/backups', 'storage/app/updates', 'storage/logs',
+            // Internal dev docs (CHANGELOG.md + README.md still ship).
+            'UPDATE_SYSTEM_MASTER_WORKFLOW.md', 'ADMIN_PANEL_MASTER_WORKFLOW.md',
+            'PRD.md', 'ARCHITECTURE.md', 'CLAUDE.md',
+        ],
+        // Per-file sha256 manifest — enables modified-core detection (#44) + future delta.
+        'manifest_file' => 'file-manifest.json',
+        // Bundled third-party license text (open-source compliance, decision #14).
+        'licenses_file' => 'THIRD-PARTY-LICENSES.md',
+    ],
 ];
