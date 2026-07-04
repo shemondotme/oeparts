@@ -16,16 +16,15 @@
 @endphp
 <section class="relative bg-ivory-alt border-b border-rule" aria-label="Trust signals">
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
-        <ul class="grid grid-cols-2 {{ $tbGrid }} divide-x divide-rule">
+        {{-- Mobile: stack 1-per-row so labels are never truncated; md+: N across. --}}
+        <ul class="grid grid-cols-1 {{ $tbGrid }} divide-y md:divide-y-0 md:divide-x divide-rule">
             @foreach($items as $index => $item)
             @php
                 $icon = $item['icon'] ?? 'check-circle';
                 $text = trans_field($item['text'] ?? null);
                 $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
-                $needsTopBorder = $index >= 2 && count($items) > 2;
             @endphp
-            <li class="flex items-center gap-4 px-5 py-5 sm:px-6
-                       {{ $needsTopBorder ? 'border-t md:border-t-0 border-rule' : '' }}">
+            <li class="flex items-center gap-4 px-5 py-5 sm:px-6">
 
                 <div class="w-9 h-9 border border-ink flex items-center justify-center shrink-0 bg-paper">
                     @switch($icon)
@@ -39,7 +38,7 @@
                 </div>
 
                 <div class="min-w-0">
-                    <p class="font-mono text-[11px] font-bold tracking-[0.14em] uppercase text-ink leading-tight truncate">
+                    <p class="font-mono text-[11px] font-bold tracking-[0.14em] uppercase text-ink leading-tight">
                         {{ $text }}
                     </p>
                 </div>
