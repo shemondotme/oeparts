@@ -30,35 +30,14 @@
 <section class="relative bg-ivory text-ink border-b border-rule overflow-hidden">
     <div class="absolute inset-0 bg-grid-ivory bg-grid-lg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
 
         {{-- Header --}}
-        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-ink">
-            <div class="col-span-12 md:col-span-7">
-                @if($eyebrow)
-                <div class="flex items-center gap-4 mb-6">
-                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
-                </div>
-                @endif
-                @if($headline)
-                <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
-                           text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
-                    {{ $headline }}<span class="text-amber">.</span>
-                </h2>
-                @endif
-            </div>
-            @if($subheadline)
-            <div class="col-span-12 md:col-span-5 mt-6 md:mt-0 md:pl-8 md:border-l md:border-rule">
-                <p class="text-base text-body leading-relaxed">
-                    {{ $subheadline }}
-                </p>
-                <p class="mt-4 bp-spec-mono">
-                    Index · {{ $manufacturers->count() }} manufacturers · verified
-                </p>
-            </div>
-            @endif
-        </div>
+        <x-section-header
+            :eyebrow="$eyebrow"
+            :headline="$headline"
+            :subheadline="$subheadline"
+            :meta="'Index · ' . $manufacturers->count() . ' manufacturers · verified'" />
 
         {{-- Brand grid: 2/3/4 column ledger --}}
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border border-ink bg-paper">

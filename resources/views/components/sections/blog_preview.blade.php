@@ -17,38 +17,19 @@
 @endphp
 
 <section class="relative bg-ivory text-ink border-b border-rule">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
 
-        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-ink">
-            <div class="col-span-12 md:col-span-7">
-                @if($eyebrow)
-                <div class="flex items-center gap-4 mb-6">
-                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
-                </div>
-                @endif
-                @if($headline)
-                <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
-                           text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
-                    {{ $headline }}<span class="text-amber">.</span>
-                </h2>
-                @endif
-            </div>
-            @if($subheadline)
-            <div class="col-span-12 md:col-span-5 mt-6 md:mt-0 md:pl-8 md:border-l md:border-rule">
-                <p class="text-base text-body leading-relaxed">
-                    {{ $subheadline }}
-                </p>
-            </div>
-            @endif
-        </div>
+        <x-section-header
+            :eyebrow="$eyebrow"
+            :headline="$headline"
+            :subheadline="$subheadline" />
 
         {{-- Posts ledger grid --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-ink bg-paper">
             @foreach($posts as $index => $post)
             @php
                 $category = $post->category ?? null;
-                $categoryName = $category?->name['en'] ?? 'Article';
+                $categoryName = $category ? trans_field($category->name) : 'Article';
                 $authorName = $post->author?->name ?? 'Admin';
                 $articleNum = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
             @endphp

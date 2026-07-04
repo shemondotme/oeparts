@@ -12,35 +12,15 @@
 
 @if($testimonials->isNotEmpty())
 <section class="relative bg-paper text-ink border-b border-rule">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
 
-        {{-- Header --}}
-        <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-ink">
-            <div class="col-span-12 md:col-span-7">
-                @if($eyebrow)
-                <div class="flex items-center gap-4 mb-6">
-                    <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">{{ $eyebrow }}</span>
-                </div>
-                @endif
-                @if($headline)
-                <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
-                           text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
-                    {{ $headline }}<span class="text-amber">.</span>
-                </h2>
-                @endif
-            </div>
-            @if($subheadline)
-            <div class="col-span-12 md:col-span-5 mt-6 md:mt-0 md:pl-8 md:border-l md:border-rule">
-                <p class="text-base text-body leading-relaxed">
-                    {{ $subheadline }}
-                </p>
-                <p class="mt-4 bp-spec-mono">
-                    Log · {{ $testimonials->count() }} verified entries
-                </p>
-            </div>
-            @endif
-        </div>
+        {{-- Header — center variant (breaks the split-header rhythm) --}}
+        <x-section-header
+            variant="center"
+            :eyebrow="$eyebrow"
+            :headline="$headline"
+            :subheadline="$subheadline"
+            :meta="'Log · ' . $testimonials->count() . ' verified entries'" />
 
         {{-- Testimonial cards in ledger grid --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-ink bg-paper">
