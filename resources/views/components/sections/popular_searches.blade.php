@@ -97,8 +97,8 @@
                     </div>
 
                     {{-- OEM number + Hot badge --}}
-                    <div class="col-span-5 sm:col-span-4 flex items-center gap-3 min-w-0">
-                        <span class="font-mono text-base sm:text-lg font-semibold tabular-nums text-ink truncate
+                    <div class="col-span-8 sm:col-span-4 flex items-center gap-3 min-w-0">
+                        <span class="font-mono text-base sm:text-lg font-semibold tabular-nums text-ink
                                      group-hover:text-amber-ink transition-colors">
                             {{ $item->search_query }}
                         </span>
@@ -120,7 +120,7 @@
                     </div>
 
                     {{-- Hits --}}
-                    <div class="col-span-6 sm:col-span-2 text-right flex items-center justify-end gap-2">
+                    <div class="col-span-3 sm:col-span-2 text-right flex items-center justify-end gap-2">
                         <x-heroicon-o-magnifying-glass class="w-4 h-4 text-ink-muted" />
                         <span class="font-mono text-sm font-bold tabular-nums text-ink">
                             {{ number_format($item->hits) }}
