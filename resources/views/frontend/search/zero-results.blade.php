@@ -143,56 +143,14 @@
         </div>
 
         {{-- ═══ Re-submit bar ═══ --}}
-        <section class="mb-16 bp-rise bp-rise-delay-2"
-                 x-data="{
-                     q: '{{ $normalized_query }}',
-                     submit() {
-                         const oem = this.q.trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                         if (oem.length >= {{ $minChars }}) {
-                             window.location.href = '{{ url('/'.$lang.'/parts') }}/' + oem;
-                         }
-                     }
-                 }">
+        <section class="mb-16 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
                 <span class="bp-spec text-ink">02 · Re-submit query</span>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     min {{ $minChars }} chars · alphanumeric
                 </span>
             </div>
-            <form @submit.prevent="submit" class="flex flex-col sm:flex-row items-stretch bg-paper border-x border-b border-ink" role="search">
-                @csrf
-                <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
-                <div class="flex-1 flex items-center gap-4 px-5 sm:px-7 py-4 min-w-0">
-                    <x-heroicon-o-magnifying-glass class="w-5 h-5 text-ink shrink-0" aria-hidden="true" />
-                    <input type="text"
-                           x-model="q"
-                           placeholder="{{ __('search.mini_search_placeholder') }}"
-                           aria-label="Search by OEM part number"
-                           autocomplete="off"
-                           autocapitalize="characters"
-                           inputmode="text"
-                           class="flex-1 bg-transparent font-mono uppercase tracking-wider
-                                  text-lg sm:text-xl font-medium text-ink
-                                  placeholder:normal-case placeholder:tracking-normal placeholder:font-sans placeholder:text-ink-muted/60
-                                  border-0 focus:outline-none focus:ring-0 min-w-0 py-1">
-                    <button type="button"
-                            x-show="q.length > 0"
-                            x-cloak
-                            @click="q = ''"
-                            class="text-ink-muted hover:text-red-700 shrink-0"
-                            aria-label="Clear">
-                        <x-heroicon-o-x-mark class="w-4 h-4" />
-                    </button>
-                </div>
-                <button type="submit"
-                        class="group shrink-0 inline-flex items-center justify-center gap-3 px-6 sm:px-8 py-4
-                               bg-ink text-ivory font-sans text-[12px] font-bold uppercase tracking-[0.22em]
-                               border-t sm:border-t-0 sm:border-l border-ink
-                               hover:bg-amber hover:text-ink transition-colors duration-150">
-                    {{ __('search.mini_search_button') }}
-                    <x-heroicon-s-arrow-long-right class="w-4 h-4 transform transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                </button>
-            </form>
+            <x-search.oem-input :value="$normalized_query" />
         </section>
 
         {{-- ═══ Primary: Concierge inquiry card ═══ --}}

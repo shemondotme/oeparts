@@ -7,7 +7,9 @@ use App\Services\SearchService;
 use App\Models\CarModel;
 use App\Models\Condition;
 use App\Models\Manufacturer;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -108,11 +110,24 @@ class SearchController extends Controller
 
         $minChars = (int) settings('search.min_chars', 3);
 
+        // Catalogue stats for the status panel — cached (rarely change; avoid a
+        // COUNT query on every console load).
+        $stats = Cache::remember(
+            'search_console_stats',
+            now()->addHours((int) settings('search.cache_ttl_hours', 6)),
+            fn () => [
+                'brands'   => Manufacturer::where('is_active', true)->count(),
+                'products' => Product::where('is_active', true)->count(),
+            ]
+        );
+
         return view('frontend.search.console', [
             'lang'           => $lang,
             'popularOems'    => $popularOems,
             'featuredBrands' => $featuredBrands,
             'minChars'       => $minChars,
+            'brandCount'     => $stats['brands'],
+            'productCount'   => $stats['products'],
         ]);
     }
 
