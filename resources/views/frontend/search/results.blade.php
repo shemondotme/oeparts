@@ -125,15 +125,7 @@
 <div class="relative min-h-screen bg-ivory text-ink pb-20">
     <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative" x-data="{
-             lg: typeof matchMedia !== 'undefined' && matchMedia('(min-width: 1024px)').matches,
-             init() {
-                 if (typeof matchMedia === 'undefined') return;
-                 const mq = matchMedia('(min-width: 1024px)');
-                 this.lg = mq.matches;
-                 mq.addEventListener('change', () => { this.lg = mq.matches });
-             }
-         }">
+    <div class="relative">
 
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8">
 
@@ -212,7 +204,7 @@
                                 <dt class="bp-spec-mono shrink-0">Filters</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0">
-                                    {{ $activeFilterCount }} {{ $activeFilterCount === 1 ? 'active' : 'active' }}
+                                    {{ $activeFilterCount }} active
                                 </dd>
                             </div>
                         </dl>
@@ -592,7 +584,7 @@
             <div class="mt-6">
 
                 {{-- ═══ TABLE VIEW (Desktop) ══════════════════════════════ --}}
-                <div x-show="lg" x-cloak>
+                <div class="hidden lg:block">
                     <div class="border border-ink bg-paper overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full min-w-[900px] table-auto border-collapse text-sm" role="table">
@@ -785,7 +777,7 @@
                                                     <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $product->delivery_time }}</p>
                                                 </div>
                                                 @endif
-                                                <div class="p-4 {{ $product->delivery_time ? 'border-rule border-b sm:border-b-0 sm:border-r' : 'border-rule border-b sm:border-b-0 sm:border-r' }}">
+                                                <div class="p-4 border-rule border-b sm:border-b-0 sm:border-r">
                                                     <p class="bp-spec text-ink-muted mb-2">Condition</p>
                                                     <span class="inline-flex items-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm"
                                                           style="background-color: {{ $condBg }}; color: {{ $condText }};">{{ $condLabel }}</span>
@@ -854,7 +846,7 @@
                 </div>
 
                 {{-- ═══ CARD VIEW (Mobile/Tablet) ══════════════════════════ --}}
-                <div x-show="!lg" x-cloak class="space-y-4">
+                <div class="lg:hidden space-y-4">
                     @foreach($products as $product)
                     @php
                         $manufacturer = $product->manufacturer;
