@@ -115,7 +115,7 @@
                     x-transition:leave="transition ease-in duration-300"
                     x-transition:leave-start="opacity-100"
                     x-transition:leave-end="opacity-0"
-                    class="relative bg-ivory border-b border-rule py-20 md:py-28 px-4 sm:px-6 lg:px-10"
+                    class="relative bg-ivory border-b border-rule py-16 md:py-24 px-4 sm:px-6 lg:px-10"
                     aria-hidden="true"
                 >
                     <div class="max-w-[1440px] mx-auto">
