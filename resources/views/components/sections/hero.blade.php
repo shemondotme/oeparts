@@ -21,6 +21,10 @@
     $heroR2v = $heroStats['manufacturers'] ?? settings_trans('ui.hero_spec_r2_value', '214');
     $heroR3l = settings_trans('ui.hero_spec_r3_label', 'Cross-refs');
     $heroR3v = $heroStats['cross_refs'] ?? settings_trans('ui.hero_spec_r3_value', '3.2M');
+    // Hide the Cross-refs row entirely when it resolves to zero/empty — a visible
+    // "0" in a trust panel reads as incomplete; never substitute a fake marketing
+    // number when the real count is 0.
+    $showCrossRefs = filled($heroR3v) && (! is_numeric($heroR3v) || (float) $heroR3v > 0);
     $heroR4l = settings_trans('ui.hero_spec_r4_label', 'Avg. despatch');
     $heroR4v = settings_trans('ui.hero_spec_r4_value', '24h');
     $heroR5l = settings_trans('ui.hero_spec_r5_label', 'Languages');
@@ -91,11 +95,13 @@
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">{{ $heroR2v }}</dd>
                         </div>
+                        @if($showCrossRefs)
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ $heroR3l }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">{{ $heroR3v }}</dd>
                         </div>
+                        @endif
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ $heroR4l }}</dt>
                             <span class="bp-leader-dots"></span>
