@@ -4,10 +4,15 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
         if (typeof itemName === 'object' && itemName !== null) {
             itemName = itemName[locale] || itemName['en'] || Object.values(itemName)[0];
         }
+        // Items arrive in two shapes: the initial @js($cart) serialization (nested
+        // product, price_at_add) and the /cart/preview payload (flattened: price,
+        // is_in_stock). Read the current price + stock from whichever is present —
+        // the current product price is what the summary and checkout use, so display
+        // it consistently (price_at_add is only the add-time price for change detection).
         return {
             id:             item.id,
             quantity:       item.quantity,
-            price:          parseFloat(item.price_at_add),
+            price:          parseFloat(item.product?.price ?? item.price ?? item.price_at_add),
             oldPrice:       item.old_price ? parseFloat(item.old_price) : null,
             priceChanged:   !!(item.old_price && Math.abs(parseFloat(item.old_price) - parseFloat(item.price_at_add)) > 0.01),
             priceBlocked:   item.block_checkout || false,
@@ -17,7 +22,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
             condition_name: item.condition_name || item.product?.condition?.name || 'New',
             condition_bg:   item.condition_bg || item.product?.condition?.bg_color || '#DCFCE7',
             condition_text: item.condition_text || item.product?.condition?.text_color || '#16A34A',
-            in_stock:       !!item.product?.is_in_stock,
+            in_stock:       item.is_in_stock ?? item.in_stock ?? !!item.product?.is_in_stock,
             removing:       false,
         };
     }

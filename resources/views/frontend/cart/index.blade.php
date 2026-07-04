@@ -249,9 +249,8 @@
                                 </div>
                             </div>
 
-                            {{-- ── DESKTOP: Grid row ── --}}
-                            <div class="hidden sm:grid grid-cols-12 gap-3 px-5 py-4 items-center"
-                                 x-bind:class="item.removing ? 'opacity-0 -translate-x-8' : 'opacity-100'">
+                            {{-- ── DESKTOP: Grid row (removal animation handled by the outer wrapper) ── --}}
+                            <div class="hidden sm:grid grid-cols-12 gap-3 px-5 py-4 items-center">
 
                                 {{-- OEM + name + condition --}}
                                 <div class="col-span-5 flex items-start gap-3 min-w-0">
