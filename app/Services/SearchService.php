@@ -318,7 +318,7 @@ class SearchService
         $query = Product::query()
             ->where('normalized_oem', $normalized)
             ->where('is_active', true)
-            ->with(['manufacturer', 'crossReferences', 'condition']);
+            ->with(['manufacturer.logo', 'crossReferences', 'condition']);
 
         if ($manufacturerId) {
             $query->where('manufacturer_id', $manufacturerId);
@@ -371,7 +371,7 @@ class SearchService
         $query = Product::query()
             ->whereIn('id', $productIds)
             ->where('is_active', true)
-            ->with(['manufacturer', 'crossReferences', 'condition']);
+            ->with(['manufacturer.logo', 'crossReferences', 'condition']);
 
         if ($manufacturerId) {
             $query->where('manufacturer_id', $manufacturerId);
@@ -417,7 +417,7 @@ class SearchService
         $query = Product::query()
             ->where('normalized_oem', 'LIKE', "%{$escaped}%")
             ->where('is_active', true)
-            ->with(['manufacturer', 'crossReferences', 'condition']);
+            ->with(['manufacturer.logo', 'crossReferences', 'condition']);
 
         if ($manufacturerId) {
             $query->where('manufacturer_id', $manufacturerId);
