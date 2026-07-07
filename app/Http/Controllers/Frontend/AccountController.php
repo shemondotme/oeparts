@@ -41,6 +41,7 @@ class AccountController extends Controller
     {
         $user = Auth::guard('web')->user();
         $recentOrders = Order::where('user_id', $user->id)
+            ->withCount('items') // dashboard renders the item count only
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
@@ -55,6 +56,7 @@ class AccountController extends Controller
     {
         $user = Auth::guard('web')->user();
         $orders = Order::where('user_id', $user->id)
+            ->withCount('items') // list renders the item count only
             ->orderBy('created_at', 'desc')
             ->paginate(settings('general.pagination_per_page', 10));
 
@@ -70,6 +72,10 @@ class AccountController extends Controller
         if ($order->user_id !== $user->id) {
             abort(404);
         }
+
+        // The item ledger renders each line's product name; eager-load to avoid
+        // an N+1 (OEM/manufacturer/condition are snapshot columns, not relations).
+        $order->load('items.product');
 
         return view('frontend.account.order-detail', compact('order'));
     }
