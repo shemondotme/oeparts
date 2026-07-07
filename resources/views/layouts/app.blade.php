@@ -447,7 +447,6 @@
 
         {{-- Global modals live inside main — children are position:fixed so DOM placement has no visual effect --}}
         @include('components.modals.auth-modal')
-        @include('components.modals.otp-modal')
     </main>
 
     {{-- Footer --}}
