@@ -20,11 +20,13 @@ class ManufacturerController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        // Get products for this manufacturer (paginated)
+        // Get products for this manufacturer (paginated). Eager-load only what the
+        // view uses per row — the condition badge. (The manufacturer is already
+        // known, and carModels is not referenced in the parts ledger.)
         $products = Product::query()
             ->where('manufacturer_id', $manufacturer->id)
             ->where('is_active', true)
-            ->with(['manufacturer', 'carModels'])
+            ->with('condition')
             ->orderBy('oem_number')
             ->paginate(settings('general.pagination_per_page', 20));
 
@@ -49,7 +51,8 @@ class ManufacturerController extends Controller
     public function index(Request $request, string $lang)
     {
         $query = Manufacturer::query()
-            ->where('is_active', true);
+            ->where('is_active', true)
+            ->with('logo'); // the ledger renders each brand's logo → avoid an N+1
 
         if ($request->filled('letter')) {
             $letter = strtoupper($request->letter);
