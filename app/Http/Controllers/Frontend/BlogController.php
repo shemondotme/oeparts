@@ -15,7 +15,7 @@ class BlogController extends Controller
      */
     public function index(Request $request, string $lang)
     {
-        $query = BlogPost::with(['author', 'category', 'tags'])
+        $query = BlogPost::with(['author', 'category', 'tags', 'featuredImage'])
             ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
@@ -55,9 +55,12 @@ class BlogController extends Controller
             ->paginate(settings('general.pagination_per_page', 10))
             ->withQueryString();
 
-        $categories = Category::whereHas('blogPosts')->get();
+        // withCount avoids loading each category's full blogPosts collection just
+        // to render the count badge in the sidebar (was an N+1 + heavy rows).
+        $categories = Category::whereHas('blogPosts')->withCount('blogPosts')->get();
         $tags = BlogTag::whereHas('posts')->get();
-        $featuredPost = BlogPost::where('status', 'published')
+        $featuredPost = BlogPost::with('featuredImage')
+            ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
             ->whereNotNull('featured_image_id')
@@ -72,7 +75,7 @@ class BlogController extends Controller
      */
     public function show(Request $request, string $lang, string $slug)
     {
-        $post = BlogPost::with(['author', 'category', 'tags'])
+        $post = BlogPost::with(['author', 'category', 'tags', 'featuredImage'])
             ->where('slug', $slug)
             ->where('status', 'published')
             ->whereNotNull('published_at')
@@ -80,7 +83,7 @@ class BlogController extends Controller
             ->firstOrFail();
 
         // Get related posts (same category or tags)
-        $relatedPosts = BlogPost::with(['author', 'category'])
+        $relatedPosts = BlogPost::with(['author', 'category', 'featuredImage'])
             ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())
