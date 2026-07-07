@@ -11,28 +11,7 @@
     $registerUrl = url("/{$lang}/register");
 @endphp
 <div
-    x-data="{
-        show: false,
-        tab: 'login',
-        loading: false,
-        error: '',
-        showPw: false,
-        showPw2: false,
-        open(tab = 'login') {
-            this.tab = tab;
-            this.show = true;
-            this.error = '';
-            this.$nextTick(() => {
-                const ref = tab === 'login' ? this.$refs.loginEmail : this.$refs.regName;
-                ref?.focus();
-            });
-        },
-        close() {
-            this.show = false;
-            this.error = '';
-            this.loading = false;
-        },
-    }"
+    x-data="authModal()"
     @open-auth-modal.window="open($event.detail?.tab ?? 'login')"
     @keydown.escape.window="close()"
     x-cloak
@@ -84,7 +63,7 @@
                 <div class="relative px-7 pt-6 pb-5">
                     <div class="flex items-center justify-between mb-5">
                         <span class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">
-                            AUTH · <span x-text="tab === 'login' ? 'PROTOCOL-IN' : 'PROTOCOL-REG'"></span>
+                            AUTH · <span x-text="tab === 'login' ? 'PROTOCOL-IN' : (tab === 'register' ? 'PROTOCOL-REG' : 'PROTOCOL-OTP')"></span>
                         </span>
                         <button @click="close()"
                                 class="w-8 h-8 flex items-center justify-center border border-white/20 text-ivory/70 hover:bg-amber hover:text-ink hover:border-amber transition-colors"
@@ -97,14 +76,16 @@
                         class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.02em] text-3xl md:text-[34px]">
                         <span x-show="tab === 'login'">Welcome back<span class="text-amber">.</span></span>
                         <span x-show="tab === 'register'">Create account<span class="text-amber">.</span></span>
+                        <span x-show="tab === 'otp'" x-cloak>{{ __('Verify email') }}<span class="text-amber">.</span></span>
                     </h2>
                     <p class="mt-2 font-mono text-[11px] tracking-[0.22em] uppercase text-ivory/60">
                         <span x-show="tab === 'login'">Sign in to continue · Secure session</span>
                         <span x-show="tab === 'register'" x-cloak>Free account · Verified email</span>
+                        <span x-show="tab === 'otp'" x-cloak>{{ __('One-time code · Secure verification') }}</span>
                     </p>
 
                     {{-- Tabs --}}
-                    <div class="mt-6 grid grid-cols-2 border border-white/20 bg-ink/50" role="tablist">
+                    <div x-show="tab !== 'otp'" class="mt-6 grid grid-cols-2 border border-white/20 bg-ink/50" role="tablist">
                         <button
                             @click="tab = 'login'; error = ''"
                             :class="tab === 'login' ? 'bg-amber text-ink' : 'text-ivory/70 hover:text-ivory hover:bg-white/5'"
@@ -147,30 +128,7 @@
                     <form
                         method="POST"
                         action="{{ $loginUrl }}"
-                        @submit.prevent="
-                            loading = true; error = '';
-                            fetch('{{ $loginUrl }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                },
-                                credentials: 'same-origin',
-                                body: JSON.stringify({ email: $refs.loginEmail.value, password: $refs.loginPassword.value })
-                            })
-                            .then(async r => {
-                                const text = await r.text();
-                                try { return JSON.parse(text); }
-                                catch { return { success: false, message: r.status + ' ' + r.statusText }; }
-                            })
-                            .then(d => {
-                                if(d.success) { window.location.reload(); }
-                                else { error = d.message || 'Invalid credentials'; loading = false; }
-                            })
-                            .catch(() => { error = 'Something went wrong. Please try again.'; loading = false; });
-                        "
+                        @submit.prevent="submitLogin()"
                         class="space-y-5"
                     >
                         {{-- Email --}}
@@ -250,37 +208,7 @@
                     <form
                         method="POST"
                         action="{{ $registerUrl }}"
-                        @submit.prevent="
-                            loading = true; error = '';
-                            fetch('{{ $registerUrl }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                },
-                                credentials: 'same-origin',
-                                body: JSON.stringify({ name: $refs.regName.value, email: $refs.regEmail.value, password: $refs.regPassword.value, password_confirmation: $refs.regConfirm.value })
-                            })
-                            .then(async r => {
-                                const text = await r.text();
-                                try { return JSON.parse(text); }
-                                catch { return { success: false, message: r.status + ' ' + r.statusText }; }
-                            })
-                            .then(d => {
-                                if(d.success) {
-                                    window.location.href = '{{ url('/'.$lang.'/account/dashboard') }}';
-                                } else {
-                                    error = d.message || 'Registration failed';
-                                    loading = false;
-                                }
-                            })
-                            .catch(e => {
-                                error = 'Something went wrong. Please try again.';
-                                loading = false;
-                            });
-                        "
+                        @submit.prevent="submitRegister()"
                         class="space-y-4"
                     >
                         <div>
@@ -364,8 +292,207 @@
                     </button>
                 </div>
 
+                {{-- OTP VERIFICATION (inline email verify) --}}
+                <div x-show="tab === 'otp'" x-cloak role="tabpanel" class="space-y-5">
+                    <div class="text-center">
+                        <div class="inline-flex w-12 h-12 border border-ink bg-ivory-alt items-center justify-center mb-4">
+                            <x-heroicon-o-envelope-open class="w-6 h-6 text-amber-ink" />
+                        </div>
+                        <p class="text-sm text-body">{{ __('Enter the code we emailed to') }}</p>
+                        <p class="mt-0.5 font-mono text-sm font-bold text-ink break-all" x-text="otpEmail"></p>
+                    </div>
+
+                    <form @submit.prevent="verifyOtp()" class="space-y-5">
+                        <div>
+                            <label for="otp-code" class="bp-spec block mb-2 text-ink text-center">{{ __('Verification code') }}</label>
+                            <input id="otp-code" x-ref="otpCode" x-model="otpCode"
+                                   inputmode="numeric" autocomplete="one-time-code" :maxlength="otpLength" required
+                                   @input="otpCode = otpCode.replace(/[^0-9]/g, '')"
+                                   class="w-full px-4 py-3 border border-ink bg-paper text-center font-mono text-2xl font-bold tracking-[0.5em] text-ink focus:outline-none focus:border-amber"
+                                   :placeholder="'•'.repeat(otpLength)">
+                        </div>
+                        <button type="submit" :disabled="loading || otpCode.length < otpLength"
+                                class="bp-btn-primary w-full justify-center py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg x-show="loading" x-cloak class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                            </svg>
+                            <x-heroicon-s-shield-check class="w-4 h-4" x-show="!loading" />
+                            <span x-text="loading ? '{{ __('Verifying…') }}' : '{{ __('Verify & continue') }}'"></span>
+                        </button>
+                    </form>
+
+                    <p x-show="resendMsg" x-cloak x-text="resendMsg"
+                       class="text-center font-mono text-[11px] tracking-[0.08em] text-emerald-700"></p>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <button type="button" @click="resendOtp()"
+                                class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink hover:text-ink transition-colors">
+                            {{ __('Resend code') }}
+                        </button>
+                        <button type="button" @click="tab = 'login'; error = ''; resendMsg = ''"
+                                class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-ink-muted hover:text-ink transition-colors">
+                            {{ __('Back to sign in') }}
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+function authModal() {
+    const loginUrl     = @json($loginUrl);
+    const registerUrl  = @json($registerUrl);
+    const verifyUrl    = @json(url("/{$lang}/verify-otp"));
+    const resendUrl    = @json(url("/{$lang}/resend-otp"));
+    const dashboardUrl = @json(url("/{$lang}/account/dashboard"));
+    const otpLength    = {{ (int) settings('auth.otp_length', 6) }};
+
+    // Read the fresh XSRF-TOKEN cookie (Laravel refreshes it on every response),
+    // not the static <meta> token. The auth flow makes several POSTs across
+    // session rotation (login attempt + logout on requires_otp), which stales the
+    // meta token and 419s the follow-up verify/login calls.
+    function xsrfToken() {
+        const m = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
+        return m ? decodeURIComponent(m[1]) : (document.querySelector('meta[name=csrf-token]')?.content || '');
+    }
+
+    async function postJson(url, payload) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-XSRF-TOKEN': xsrfToken(),
+            },
+            credentials: 'same-origin',
+            body: JSON.stringify(payload),
+        });
+        const text = await res.text();
+        try { return JSON.parse(text); }
+        catch { return { success: false, message: res.status + ' ' + res.statusText }; }
+    }
+
+    return {
+        show: false,
+        tab: 'login',
+        loading: false,
+        error: '',
+        showPw: false,
+        showPw2: false,
+        // OTP (inline email verification) state
+        otpEmail: '',
+        otpPassword: '',
+        otpCode: '',
+        otpContext: 'login',
+        resendMsg: '',
+        otpLength: otpLength,
+
+        open(tab = 'login') {
+            this.tab = tab;
+            this.show = true;
+            this.error = '';
+            this.$nextTick(() => {
+                (tab === 'login' ? this.$refs.loginEmail : this.$refs.regName)?.focus();
+            });
+        },
+        close() {
+            this.show = false;
+            this.error = '';
+            this.loading = false;
+        },
+
+        async submitLogin() {
+            if (this.loading) return;
+            this.loading = true; this.error = '';
+            const d = await postJson(loginUrl, {
+                email: this.$refs.loginEmail.value,
+                password: this.$refs.loginPassword.value,
+            });
+            if (d.success && d.data?.requires_otp) {
+                this.startOtp(this.$refs.loginEmail.value, this.$refs.loginPassword.value, 'login');
+            } else if (d.success) {
+                window.location.reload();
+            } else {
+                this.error = d.message || 'Invalid credentials';
+                this.loading = false;
+            }
+        },
+
+        async submitRegister() {
+            if (this.loading) return;
+            this.loading = true; this.error = '';
+            const d = await postJson(registerUrl, {
+                name: this.$refs.regName.value,
+                email: this.$refs.regEmail.value,
+                password: this.$refs.regPassword.value,
+                password_confirmation: this.$refs.regConfirm.value,
+                // The controller requires an accepted terms flag; the checkbox was
+                // previously omitted from the payload, so registration always 422'd.
+                agree_terms: document.getElementById('reg-terms')?.checked ? '1' : '',
+                website: '',
+            });
+            if (d.success && d.data?.requires_otp) {
+                this.startOtp(this.$refs.regEmail.value, this.$refs.regPassword.value, 'register');
+            } else if (d.success) {
+                window.location.href = dashboardUrl;
+            } else {
+                this.error = d.message || 'Registration failed';
+                this.loading = false;
+            }
+        },
+
+        startOtp(email, password, context) {
+            this.otpEmail = email;
+            this.otpPassword = password;
+            this.otpContext = context;
+            this.otpCode = '';
+            this.resendMsg = '';
+            this.error = '';
+            this.loading = false;
+            this.tab = 'otp';
+            this.$nextTick(() => this.$refs.otpCode?.focus());
+        },
+
+        async verifyOtp() {
+            if (this.loading || this.otpCode.length < this.otpLength) return;
+            this.loading = true; this.error = ''; this.resendMsg = '';
+            const v = await postJson(verifyUrl, {
+                email: this.otpEmail,
+                otp: this.otpCode,
+                purpose: 'email_verify',
+            });
+            if (!v.success) {
+                this.error = v.message || 'Invalid or expired code.';
+                this.loading = false;
+                return;
+            }
+            // Email is now verified — complete sign-in with the stored credentials.
+            const l = await postJson(loginUrl, { email: this.otpEmail, password: this.otpPassword });
+            if (l.success && !l.data?.requires_otp) {
+                if (this.otpContext === 'register') { window.location.href = dashboardUrl; }
+                else { window.location.reload(); }
+            } else {
+                this.error = 'Email verified — please sign in.';
+                this.tab = 'login';
+                this.loading = false;
+            }
+        },
+
+        async resendOtp() {
+            this.error = ''; this.resendMsg = '';
+            const d = await postJson(resendUrl, { email: this.otpEmail, purpose: 'email_verify' });
+            this.resendMsg = d.success
+                ? 'A new code has been sent to your email.'
+                : (d.message || 'Could not resend the code.');
+        },
+    };
+}
+</script>
+@endpush
