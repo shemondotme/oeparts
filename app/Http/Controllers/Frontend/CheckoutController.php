@@ -371,7 +371,7 @@ class CheckoutController extends Controller
             return null;
         }
 
-        $name = is_array($method->name) ? ($method->name['en'] ?? reset($method->name)) : $method->name;
+        $name = trans_field($method->name);
 
         return (object) [
             'id' => $method->id,

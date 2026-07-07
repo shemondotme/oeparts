@@ -7,18 +7,23 @@
     $shippingOptions = \App\Models\ShippingMethod::where('is_active', true)
         ->orderBy('sort_order')
         ->get()
-        ->map(fn ($m) => [
-            'id' => $m->id,
-            'name' => is_array($m->name) ? ($m->name['en'] ?? reset($m->name)) : $m->name,
-            'days_min' => $m->estimated_days_min,
-            'days_max' => $m->estimated_days_max,
-            'price' => (float) $m->flat_rate,
-            'icon' => match(true) {
-                str_contains(strtolower(is_array($m->name) ? ($m->name['en'] ?? '') : $m->name), 'express') => 'rocket-launch',
-                str_contains(strtolower(is_array($m->name) ? ($m->name['en'] ?? '') : $m->name), 'economy') => 'globe-alt',
-                default => 'truck',
-            },
-        ])
+        ->map(function ($m) {
+            // Display the localized name; keep icon-matching on the stable English
+            // keyword so the heuristic works regardless of the active locale.
+            $enName = strtolower(is_array($m->name) ? ($m->name['en'] ?? reset($m->name) ?? '') : (string) $m->name);
+            return [
+                'id' => $m->id,
+                'name' => trans_field($m->name),
+                'days_min' => $m->estimated_days_min,
+                'days_max' => $m->estimated_days_max,
+                'price' => (float) $m->flat_rate,
+                'icon' => match(true) {
+                    str_contains($enName, 'express') => 'rocket-launch',
+                    str_contains($enName, 'economy') => 'globe-alt',
+                    default => 'truck',
+                },
+            ];
+        })
         ->toArray();
 @endphp
 
