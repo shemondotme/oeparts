@@ -335,7 +335,7 @@
                                         </span>
                                         <span class="font-mono text-[10px] font-bold tracking-[0.2em] tabular-nums
                                                      {{ $isActiveCat ? 'text-amber' : 'text-ink-muted group-hover:text-ink' }}">
-                                            {{ str_pad($category->blogPosts->count(), 2, '0', STR_PAD_LEFT) }}
+                                            {{ str_pad($category->blog_posts_count, 2, '0', STR_PAD_LEFT) }}
                                         </span>
                                     </a>
                                 </li>
