@@ -10,7 +10,9 @@ class PageController extends Controller
 {
     public function show(Request $request, string $lang, string $slug)
     {
-        $page = Page::where('slug', $slug)
+        // Eager-load the featured image the view renders (avoids a lazy follow-up query).
+        $page = Page::with('featuredImage')
+            ->where('slug', $slug)
             ->where('status', 'published')
             ->firstOrFail();
 
