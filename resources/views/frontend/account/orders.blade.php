@@ -115,7 +115,7 @@
                                     {{ $order->created_at->format('Y-m-d') }}
                                 </td>
                                 <td class="px-5 py-4 text-center font-mono text-sm text-ink tabular-nums">
-                                    {{ $order->items->count() }}
+                                    {{ $order->items_count }}
                                 </td>
                                 <td class="px-5 py-4 text-right font-mono text-sm font-bold text-ink tabular-nums">
                                     {{ format_price($order->grand_total) }}
@@ -184,7 +184,7 @@
                     </div>
                     <div class="flex items-baseline justify-between gap-3 pt-3 border-t border-rule">
                         <span class="bp-spec-mono">
-                            {{ $order->items->count() }} items
+                            {{ $order->items_count }} items
                         </span>
                         <span class="font-mono text-lg font-medium text-ink tabular-nums">
                             {{ format_price($order->grand_total) }}

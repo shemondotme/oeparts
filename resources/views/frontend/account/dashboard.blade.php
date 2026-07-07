@@ -205,7 +205,7 @@
                                             {{ $order->order_number }}
                                         </a>
                                         <p class="mt-0.5 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                                            {{ $order->items->count() }} {{ \Illuminate\Support\Str::plural('item', $order->items->count()) }}
+                                            {{ $order->items_count }} {{ \Illuminate\Support\Str::plural('item', $order->items_count) }}
                                         </p>
                                     </td>
                                     <td class="px-5 py-4 font-mono text-xs text-ink-muted tabular-nums">
