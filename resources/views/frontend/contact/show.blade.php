@@ -24,7 +24,8 @@
 
 {{-- ══════════════════════════════════════════════════════════════════════
      INDUSTRIAL BLUEPRINT — CONTACT
-     Document-style enquiry panel with OTP-verified contact form.
+     Document-style enquiry panel. Spam protection is honeypot + rate-limiting
+     (see the contact route middleware) — there is no OTP step on this form.
      ══════════════════════════════════════════════════════════════════ --}}
 @section('content')
 
@@ -337,7 +338,7 @@
 
                             {{-- Submit --}}
                             <div class="pt-2">
-                                <button type="submit" :disabled="!verified || submitting"
+                                <button type="submit" :disabled="submitting"
                                         class="group w-full inline-flex items-center justify-center gap-3 px-6 py-4
                                                bg-ink text-ivory border border-ink
                                                font-mono text-[12px] font-bold tracking-[0.24em] uppercase
@@ -348,13 +349,9 @@
                                     <span x-text="submitting ? '{{ trans('contact.sending') }}…' : '{{ trans('contact.send_message') }}'"></span>
                                     <x-heroicon-s-arrow-long-right class="w-4 h-4 transition-transform group-hover:translate-x-1" x-show="!submitting" />
                                 </button>
-                                <p class="mt-3 font-mono text-[10px] tracking-[0.18em] uppercase text-center"
-                                   :class="verified ? 'text-emerald-700' : 'text-ink-muted'">
-                                    <span x-show="!verified">{{ __('Verify email to enable submit') }}</span>
-                                    <span x-show="verified" class="inline-flex items-center gap-1.5">
-                                        <x-heroicon-s-check class="w-3 h-3" />
-                                        {{ __('Ready to send') }}
-                                    </span>
+                                <p class="mt-3 inline-flex items-center justify-center gap-1.5 w-full font-mono text-[10px] tracking-[0.18em] uppercase text-center text-ink-muted">
+                                    <x-heroicon-s-lock-closed class="w-3 h-3 text-amber-ink" />
+                                    {{ __('Encrypted · Spam-protected · GDPR-safe') }}
                                 </p>
                             </div>
                         </form>
