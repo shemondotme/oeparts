@@ -42,10 +42,13 @@ class NewsletterCampaignResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
+        // Filament v5: Section lives in Schemas (Forms\Components\Section
+        // doesn't exist — this fatal'd create/view/edit, killing the entire
+        // campaign authoring flow). No statePath() here either: the pages
+        // already set it, and a second level double-nests the form state.
         return $schema
-            ->statePath('data')
             ->schema([
-                Forms\Components\Section::make('Campaign Details')
+                \Filament\Schemas\Components\Section::make('Campaign Details')
                     ->description('Email content and subject line for this newsletter campaign.')
                     ->schema([
                         Forms\Components\TextInput::make('subject')
@@ -65,13 +68,13 @@ class NewsletterCampaignResource extends Resource
                             ->placeholder('Hello! We have great deals...')
                             ->helperText('Fallback plain text version for email clients that do not support HTML.'),
                     ])->columns(1),
-                Forms\Components\Section::make('Scheduling')
+                \Filament\Schemas\Components\Section::make('Scheduling')
                     ->description('Control when this campaign is sent to subscribers.')
                     ->schema([
                         Forms\Components\DateTimePicker::make('scheduled_at')
                             ->label('Scheduled Send Date')
                             ->nullable()
-                            ->helperText('Leave empty to save as draft. Set a future date/time to schedule sending.'),
+                            ->helperText('Leave empty to save as a draft. Set a future date/time and the campaign is sent automatically at that time.'),
                     ]),
             ]);
     }
@@ -163,8 +166,6 @@ class NewsletterCampaignResource extends Resource
                             "This will send \"{$record->subject}\" to " . NewsletterSubscriber::where('is_active', true)->count() . " active subscribers."
                         )
                         ->action(function (NewsletterCampaign $record): void {
-                            $record->update(['created_by' => auth('admin')->user()->id]);
-
                             dispatch(new SendNewsletterCampaign($record));
 
                             Notification::make()

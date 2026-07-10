@@ -10,6 +10,17 @@ class EditNewsletterCampaign extends EditRecord
 {
     protected static string $resource = NewsletterCampaignResource::class;
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Keep the status honest for editable campaigns: scheduling toggles
+        // draft <-> scheduled. Never touch sending/sent/failed states.
+        if (in_array($this->getRecord()->status, ['draft', 'scheduled'], true)) {
+            $data['status'] = filled($data['scheduled_at'] ?? null) ? 'scheduled' : 'draft';
+        }
+
+        return $data;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -35,6 +35,10 @@ Schedule::command('logs:clean')->dailyAt('04:00');
 // Process abandoned carts — hourly at minute 5
 Schedule::command('abandoned-cart:process')->hourlyAt(5);
 
+// Dispatch newsletter campaigns whose scheduled send time has arrived —
+// this is what makes the admin's "Scheduled Send Date" actually fire.
+Schedule::command('oeparts:newsletter:send-due')->everyFiveMinutes();
+
 // Backup Engine (Module 21) — daily full encrypted backup + GFS prune.
 // Supersedes the old db:backup / mysqldump command (kept for now, no longer scheduled).
 Schedule::command('oeparts:backup --trigger=scheduled')
