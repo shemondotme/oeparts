@@ -39,7 +39,7 @@
                                     </td>
                                     <td align="right" style="padding-bottom: 12px;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228; font-weight: bold;">
-                                            {{ $order->shipping_carrier_snapshot ?? 'Standard Courier' }}
+                                            {{ $order->carrier_name ?? 'Standard Courier' }}
                                         </span>
                                     </td>
                                 </tr>

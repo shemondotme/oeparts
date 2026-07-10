@@ -254,8 +254,12 @@ class ViewOrder extends ViewRecord
                                     TextEntry::make('tracking_number')
                                         ->label('Tracking Number')
                                         ->default('—')
-                                        ->fontMono(),
-                                    TextEntry::make('carrier')
+                                        ->fontMono()
+                                        ->url(fn ($record): ?string => $record->tracking_url)
+                                        ->openUrlInNewTab()
+                                        ->color(fn ($record): ?string => $record->tracking_url ? 'primary' : null)
+                                        ->tooltip(fn ($record): ?string => $record->tracking_url ? 'Open carrier tracking page' : null),
+                                    TextEntry::make('carrier_name')
                                         ->label('Carrier')
                                         ->default('—'),
                                     TextEntry::make('invoice_number')

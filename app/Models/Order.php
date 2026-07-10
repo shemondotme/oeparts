@@ -26,7 +26,7 @@ class Order extends Model
         'shipping_postal_code', 'shipping_country_code',
         'is_b2b', 'company_name', 'vat_number', 'vat_exempt',
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
-        'customer_note', 'ip_address', 'tracking_number', 'carrier',
+        'customer_note', 'ip_address', 'tracking_number', 'carrier', 'carrier_id',
         'urgent_processing', 'urgent_processing_fee', 'invoice_number',
     ];
 
@@ -58,6 +58,39 @@ class Order extends Model
     public function shippingMethod(): BelongsTo
     {
         return $this->belongsTo(ShippingMethod::class);
+    }
+
+    /**
+     * The Carrier record fulfilling this order. Named shippingCarrier because
+     * the legacy free-text `carrier` column occupies the `carrier` attribute.
+     */
+    public function shippingCarrier(): BelongsTo
+    {
+        return $this->belongsTo(Carrier::class, 'carrier_id');
+    }
+
+    /**
+     * Display name of the carrier: Carrier record first, then the legacy
+     * free-text column for orders predating carrier_id.
+     */
+    public function getCarrierNameAttribute(): ?string
+    {
+        return $this->shippingCarrier?->name ?? ($this->carrier ?: null);
+    }
+
+    /**
+     * Customer-facing tracking link, built from the carrier's URL template
+     * ({tracking_no} placeholder). Null unless both parts are present.
+     */
+    public function getTrackingUrlAttribute(): ?string
+    {
+        $template = $this->shippingCarrier?->tracking_url;
+
+        if (! $template || ! $this->tracking_number) {
+            return null;
+        }
+
+        return str_replace('{tracking_no}', rawurlencode($this->tracking_number), $template);
     }
 
     public function items(): HasMany

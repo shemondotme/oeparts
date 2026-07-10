@@ -140,12 +140,18 @@ class OrderResource extends Resource
                                         ->maxLength(100)
                                         ->placeholder('e.g. DHL-1234567890')
                                         ->helperText('Carrier tracking reference for the shipment.'),
-                                    Forms\Components\TextInput::make('carrier')
+                                    Forms\Components\Select::make('carrier_id')
                                         ->label('Shipping Carrier')
+                                        ->options(fn (): array => \App\Models\Carrier::query()
+                                            ->where('is_active', true)
+                                            ->orderBy('sort_order')
+                                            ->pluck('name', 'id')
+                                            ->all())
+                                        ->searchable()
                                         ->nullable()
-                                        ->maxLength(100)
-                                        ->placeholder('e.g. DHL, GLS, DPD')
-                                        ->helperText('Name of the logistics provider handling delivery.'),
+                                        ->native(false)
+                                        ->placeholder('Select carrier...')
+                                        ->helperText('Carriers are managed under Commerce → Carriers; the tracking link in customer emails is built from the carrier\'s URL template.'),
                                     Forms\Components\Toggle::make('urgent_processing')
                                         ->label('Urgent Processing')
                                         ->helperText('When enabled, this order is prioritized for same-day dispatch.')
@@ -485,16 +491,21 @@ class OrderResource extends Resource
                                 ->placeholder('e.g. DHL-1234567890')
                                 ->default(fn (Order $record): ?string => $record->tracking_number)
                                 ->helperText('The carrier tracking reference for this shipment.'),
-                            Forms\Components\TextInput::make('carrier')
+                            Forms\Components\Select::make('carrier_id')
                                 ->label('Shipping Carrier')
-                                ->maxLength(100)
-                                ->placeholder('e.g. DHL, GLS, DPD')
-                                ->default(fn (Order $record): ?string => $record->carrier)
-                                ->helperText('Name of the logistics provider.'),
+                                ->options(fn (): array => \App\Models\Carrier::query()
+                                    ->where('is_active', true)
+                                    ->orderBy('sort_order')
+                                    ->pluck('name', 'id')
+                                    ->all())
+                                ->searchable()
+                                ->native(false)
+                                ->default(fn (Order $record): ?int => $record->carrier_id)
+                                ->helperText('The email\'s tracking link is built from this carrier\'s URL template.'),
                         ])
                         ->action(function (Order $record, array $data): void {
                             $record->tracking_number = $data['tracking_number'];
-                            $record->carrier = $data['carrier'] ?? $record->carrier;
+                            $record->carrier_id = $data['carrier_id'] ?? $record->carrier_id;
                             $record->save();
 
                             dispatch(new SendTrackingUpdateEmail($record));
