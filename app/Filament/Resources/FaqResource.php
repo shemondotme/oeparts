@@ -132,8 +132,9 @@ class FaqResource extends Resource
                 ->getStateUsing(fn (Faq $record): string => AdminUi::localizedName($record->question))
                 ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->where(function ($q) use ($search) {
-                        $q->where('question->en', 'like', "%{$search}%")
-                            ->orWhere('question->de', 'like', "%{$search}%");
+                        foreach (array_keys(AdminUi::LOCALES) as $code) {
+                            $q->orWhere("question->{$code}", 'like', "%{$search}%");
+                        }
                     });
                 })
                 ->sortable()

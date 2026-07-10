@@ -85,7 +85,24 @@ class BlogPostResource extends Resource
                                             ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                                             ->multiple()
                                             ->preload()
-                                            ->helperText('Add tags for content discovery and SEO.'),
+                                            ->createOptionForm([
+                                                Forms\Components\TextInput::make('name')
+                                                    ->label('Tag Name')
+                                                    ->required()
+                                                    ->maxLength(100)
+                                                    ->live(onBlur: true)
+                                                    ->afterStateUpdated(fn ($state, callable $set) => filled($state) ? $set('slug', \Illuminate\Support\Str::slug($state)) : null),
+                                                Forms\Components\TextInput::make('slug')
+                                                    ->required()
+                                                    ->maxLength(200)
+                                                    ->unique(table: 'blog_tags')
+                                                    ->helperText('Auto-filled from the name.'),
+                                            ])
+                                            ->createOptionUsing(fn (array $data): int => \App\Models\BlogTag::create([
+                                                'name' => ['en' => $data['name']],
+                                                'slug' => $data['slug'],
+                                            ])->id)
+                                            ->helperText('Add tags for content discovery and SEO — create new ones inline with the + button.'),
                                         Forms\Components\Select::make('featured_image_id')
                                             ->label('Featured Image')
                                             ->relationship('featuredImage', 'file_name')
@@ -142,7 +159,7 @@ class BlogPostResource extends Resource
                                                                 ->rows(2)
                                                                 ->maxLength(500)
                                                                 ->nullable()
-                                                                ->helperText('Optimal: 150–160 characters. Shanked beneath the title in search results.'),
+                                                                ->helperText('Optimal: 150–160 characters. Shown beneath the title in search results.'),
                                                         ]))
                                                     ->values()
                                                     ->all()
@@ -195,8 +212,9 @@ class BlogPostResource extends Resource
                 ->getStateUsing(fn (BlogPost $record): string => AdminUi::localizedName($record->title))
                 ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->where(function ($q) use ($search) {
-                        $q->where('title->en', 'like', "%{$search}%")
-                          ->orWhere('title->de', 'like', "%{$search}%");
+                        foreach (array_keys(AdminUi::LOCALES) as $code) {
+                            $q->orWhere("title->{$code}", 'like', "%{$search}%");
+                        }
                     });
                 })
                 ->sortable()
@@ -360,9 +378,10 @@ class BlogPostResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            RelationManagers\TagsRelationManager::class,
-        ];
+        // Tags are managed by the form's multiselect (with inline creation) —
+        // the old relation manager duplicated it and asked operators to type
+        // raw {"en": ...} JSON into a text field.
+        return [];
     }
 
     public static function getPages(): array
