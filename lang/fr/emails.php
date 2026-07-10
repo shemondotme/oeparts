@@ -132,4 +132,17 @@ return [
         'greeting'  => 'Cher/Chère :name,',
         'body_intro'=> 'Notre équipe technique examine votre demande de pièce. Nous répondrons avec les disponibilités, les prix et les options de référence croisée sous 24 heures.',
     ],
+    'part_inquiry_status' => [
+        'subject_sourced'     => 'Bonne nouvelle — nous avons trouvé votre pièce :oem',
+        'subject_unavailable' => 'Mise à jour de votre demande de pièce :oem',
+        'sourced_label'       => 'SUPPORT · PIÈCE TROUVÉE',
+        'unavailable_label'   => 'SUPPORT · MISE À JOUR',
+        'sourced_title'       => 'Nous avons trouvé votre pièce',
+        'unavailable_title'   => 'Nous n\'avons pas pu trouver cette pièce',
+        'sourced_body'        => 'Nous avons localisé la pièce demandée. Notre équipe vous contactera prochainement avec le prix, l\'état et les options de livraison.',
+        'unavailable_body'    => 'Malgré une recherche approfondie dans notre réseau de fournisseurs, nous n\'avons pas pu trouver cette pièce pour le moment. Nous vous informerons si elle redevient disponible.',
+        'requested_part'      => 'PIÈCE DEMANDÉE',
+        'inquiry_id'          => 'ID DE DEMANDE',
+        'status'              => 'STATUT',
+    ],
 ];

@@ -132,4 +132,17 @@ return [
         'greeting'  => 'Gerb. :name,',
         'body_intro'=> 'Mūsų techninė komanda tikrina jūsų dalių užklausą. Atsakysime su prieinamumu, kainomis ir kryžminės nuorodos parinktimis per 24 valandas.',
     ],
+    'part_inquiry_status' => [
+        'subject_sourced'     => 'Geros naujienos — radome jūsų detalę :oem',
+        'subject_unavailable' => 'Jūsų dalių užklausos :oem atnaujinimas',
+        'sourced_label'       => 'PAGALBA · DETALĖ RASTA',
+        'unavailable_label'   => 'PAGALBA · UŽKLAUSOS ATNAUJINIMAS',
+        'sourced_title'       => 'Radome jūsų detalę',
+        'unavailable_title'   => 'Šios detalės gauti nepavyko',
+        'sourced_body'        => 'Radome jūsų užklaustą detalę. Mūsų komanda netrukus susisieks su kaina, būkle ir pristatymo galimybėmis.',
+        'unavailable_body'    => 'Nepaisant išsamios paieškos mūsų tiekėjų tinkle, šiuo metu šios detalės gauti nepavyko. Pranešime, kai ji vėl bus prieinama.',
+        'requested_part'      => 'UŽKLAUSTA DETALĖ',
+        'inquiry_id'          => 'UŽKLAUSOS ID',
+        'status'              => 'BŪSENA',
+    ],
 ];

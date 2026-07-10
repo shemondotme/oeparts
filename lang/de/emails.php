@@ -132,4 +132,17 @@ return [
         'greeting'  => 'Sehr geehrte/r :name,',
         'body_intro'=> 'Unser technisches Team prüft Ihre Teileanfrage. Wir werden innerhalb von 24 Stunden mit Verfügbarkeit, Preisen und Cross-Reference-Optionen antworten.',
     ],
+    'part_inquiry_status' => [
+        'subject_sourced'     => 'Gute Nachrichten — wir haben Ihr Teil gefunden: :oem',
+        'subject_unavailable' => 'Update zu Ihrer Teileanfrage :oem',
+        'sourced_label'       => 'SUPPORT · TEIL GEFUNDEN',
+        'unavailable_label'   => 'SUPPORT · ANFRAGE-UPDATE',
+        'sourced_title'       => 'Wir haben Ihr Teil gefunden',
+        'unavailable_title'   => 'Wir konnten dieses Teil nicht beschaffen',
+        'sourced_body'        => 'Wir haben das angefragte Teil gefunden. Unser Team meldet sich in Kürze mit Preis, Zustand und Lieferoptionen.',
+        'unavailable_body'    => 'Trotz intensiver Suche in unserem Lieferantennetzwerk konnten wir dieses Teil derzeit nicht beschaffen. Wir benachrichtigen Sie, sobald es wieder verfügbar ist.',
+        'requested_part'      => 'ANGEFRAGTES TEIL',
+        'inquiry_id'          => 'ANFRAGE-ID',
+        'status'              => 'STATUS',
+    ],
 ];

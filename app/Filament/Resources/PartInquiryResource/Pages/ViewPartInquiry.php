@@ -17,26 +17,23 @@ class ViewPartInquiry extends ViewRecord
 {
     protected static string $resource = PartInquiryResource::class;
 
+    public function getHeading(): string
+    {
+        return "Inquiry — {$this->getRecord()->oem_number}";
+    }
+
     protected function getHeaderActions(): array
     {
         return [
-            Actions\Action::make('mark_sourced')
-                ->label('Mark Sourced')
-                ->icon('heroicon-o-check-circle')
-                ->color('success')
-                ->authorize('update')
-                ->requiresConfirmation()
-                ->action(function () {
-                    $this->record->update(['status' => PartInquiryStatus::Sourced]);
-                    $this->refreshFormData(['status']);
-
-                    \Filament\Notifications\Notification::make()
-                        ->title('Marked as sourced')
-                        ->success()
-                        ->send();
-                })
-                ->visible(fn () => $this->record->status !== PartInquiryStatus::Sourced),
-            Actions\DeleteAction::make(),
+            PartInquiryResource::makeMarkSourcedAction()
+                ->after(fn () => $this->refreshFormData(['status'])),
+            PartInquiryResource::makeMarkUnavailableAction()
+                ->after(fn () => $this->refreshFormData(['status'])),
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make(),
+            ])
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->color('gray'),
         ];
     }
 
@@ -56,7 +53,9 @@ class ViewPartInquiry extends ViewRecord
                                     ->schema([
                                         TextEntry::make('oem_number')
                                             ->label('OEM Number')
-                                            ->copyable()
+                                            ->url(fn ($record): string => \App\Filament\Resources\ProductResource::getUrl('index', ['tableSearch' => $record->oem_number]))
+                                            ->color('primary')
+                                            ->tooltip('Search the catalog for this OEM number')
                                             ->extraAttributes(['class' => 'font-mono uppercase']),
                                         TextEntry::make('quantity')
                                             ->label('Requested Quantity'),
