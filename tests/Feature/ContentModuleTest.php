@@ -93,6 +93,24 @@ class ContentModuleTest extends TestCase
             ->assertOk();
     }
 
+    public function test_section_view_renders_legacy_string_title(): void
+    {
+        // Real seeded rows store title as a bare JSON string ("Hero"), not a
+        // locale map — the view page must tolerate both shapes.
+        $section = Section::create([
+            'type'       => 'hero',
+            'location'   => 'homepage',
+            'title'      => 'Hero',
+            'content'    => ['headline' => 'x'],
+            'is_active'  => true,
+            'status'     => 'published',
+            'sort_order' => 0,
+        ]);
+
+        Livewire::test(\App\Filament\Resources\SectionResource\Pages\ViewSection::class, ['record' => $section->id])
+            ->assertOk();
+    }
+
     public function test_section_json_editor_round_trips_nested_content(): void
     {
         $section = $this->makeNestedSection();
