@@ -12,6 +12,33 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Section extends Model
 {
     use HasFactory;
+
+    /**
+     * The single source of truth for section types: one entry per storefront
+     * component in resources/views/components/sections/. The home page
+     * renders via @includeIf('components.sections.' . $type), which silently
+     * skips unknown types — so the admin MUST offer exactly these values.
+     * A test asserts every DB type and every blade component stays in sync.
+     *
+     * @var array<string, string>
+     */
+    public const TYPES = [
+        'hero'             => 'Hero (search + specification panel)',
+        'trust_bar'        => 'Trust Bar',
+        'featured_brands'  => 'Featured Brands',
+        'how_it_works'     => 'How It Works',
+        'popular_searches' => 'Popular Searches',
+        'stats_counter'    => 'Stats Counter',
+        'testimonials'     => 'Testimonials',
+        'blog_preview'     => 'Blog Preview',
+        'shipping_info'    => 'Shipping Info',
+        'faqs'             => 'FAQs Accordion',
+        'part_inquiry'     => 'Part Inquiry',
+        'contact_cta'      => 'Contact CTA',
+        'newsletter'       => 'Newsletter',
+        'banner'           => 'Banner / B2B Strip',
+    ];
+
     protected $fillable = [
         'type', 'location', 'title', 'content', 'is_active', 'status', 'publish_at', 
         'published_by', 'updated_by', 'sort_order',
