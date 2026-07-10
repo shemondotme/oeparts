@@ -131,27 +131,24 @@ class ConditionResource extends Resource
                     ->alignCenter()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                // One column, keyed 'name': two columns previously shared this
+                // key, so the second ("Badge") silently REPLACED the first and
+                // the list lost its Name/Slug columns entirely. The badge IS
+                // the name presentation — rendered in the condition's colors.
                 Tables\Columns\TextColumn::make('name')
                     ->label('Name')
                     ->searchable()
                     ->sortable()
-                    ->weight(FontWeight::Medium),
+                    ->badge()
+                    ->weight(FontWeight::Medium)
+                    ->color(fn (Condition $record) => $record->bg_color
+                        ? \Filament\Support\Colors\Color::hex($record->bg_color)
+                        : 'gray'),
                 Tables\Columns\TextColumn::make('slug')
                     ->label('Slug')
-                    ->badge()
-                    ->color('gray')
+                    ->fontMono()
                     ->copyable()
-                    ->copyMessage('Slug copied')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Badge')
-                    ->badge()
-                    ->formatStateUsing(fn (Condition $record): string => $record->name)
-                    ->color(fn (Condition $record): string => 'gray')
-                    ->extraAttributes(fn (Condition $record): array => [
-                        'style' => "background-color: {$record->bg_color} !important; color: {$record->text_color} !important;",
-                    ])
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->copyMessage('Slug copied'),
                 Tables\Columns\TextColumn::make('products_count')
                     ->label('Products')
                     ->counts('products')

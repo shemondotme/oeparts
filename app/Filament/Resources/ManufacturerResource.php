@@ -105,21 +105,7 @@ class ManufacturerResource extends Resource
                                             ->helperText('Select a media file to use as the manufacturer logo.'),
                                         Forms\Components\Select::make('country_code')
                                             ->label('Country of Origin')
-                                            ->options([
-                                                'DE' => 'Germany',
-                                                'FR' => 'France',
-                                                'IT' => 'Italy',
-                                                'JP' => 'Japan',
-                                                'KR' => 'South Korea',
-                                                'SE' => 'Sweden',
-                                                'CZ' => 'Czech Republic',
-                                                'US' => 'United States',
-                                                'GB' => 'United Kingdom',
-                                                'ES' => 'Spain',
-                                                'NL' => 'Netherlands',
-                                                'AT' => 'Austria',
-                                                'PL' => 'Poland',
-                                            ])
+                                            ->options(config('countries', []))
                                             ->searchable()
                                             ->native(false)
                                             ->nullable()
@@ -158,8 +144,9 @@ class ManufacturerResource extends Resource
                     ->getStateUsing(fn (Manufacturer $record): string => AdminUi::localizedName($record->name))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where(function ($q) use ($search) {
-                            $q->where('name->en', 'like', "%{$search}%")
-                                ->orWhere('name->de', 'like', "%{$search}%");
+                            foreach (array_keys(AdminUi::LOCALES) as $code) {
+                                $q->orWhere("name->{$code}", 'like', "%{$search}%");
+                            }
                         });
                     })
                     ->sortable()

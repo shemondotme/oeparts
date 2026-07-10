@@ -147,7 +147,9 @@ class CarModelResource extends Resource
                     ->getStateUsing(fn (CarModel $record): string => $record->manufacturer ? AdminUi::localizedName($record->manufacturer->name) : '—')
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('manufacturer', function ($q) use ($search) {
-                            $q->where('name->en', 'like', "%{$search}%");
+                            foreach (array_keys(AdminUi::LOCALES) as $i => $code) {
+                                $q->{$i === 0 ? 'where' : 'orWhere'}("name->{$code}", 'like', "%{$search}%");
+                            }
                         });
                     })
                     ->sortable()
