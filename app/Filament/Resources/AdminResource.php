@@ -153,7 +153,21 @@ class AdminResource extends Resource
                     ->falseLabel('Inactive Only')
                     ->native(false),
             ])
-            ->actions(AdminUi::recordActions())
+            ->actions([
+                Actions\ActionGroup::make([
+                    Actions\ViewAction::make(),
+                    Actions\EditAction::make(),
+                    Actions\DeleteAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Administrator')
+                        ->modalDescription('Are you sure? This admin loses panel access immediately.')
+                        // Explicit closures: Gate::before waves super_admins
+                        // through every policy, so the lockout guards must
+                        // live here too (hidden() is server-enforced).
+                        ->hidden(fn (Admin $record): bool => $record->is(auth('admin')->user())
+                            || \App\Policies\AdminPolicy::isLastActiveSuperAdmin($record)),
+                ]),
+            ])
         ->bulkActions([
             Actions\BulkActionGroup::make([
                 AdminUi::exportCsvBulkAction('Export Admins', [
@@ -163,7 +177,8 @@ class AdminResource extends Resource
                     'last_login_at' => 'Last Login',
                     'created_at' => 'Created',
                 ]),
-                Actions\DeleteBulkAction::make(),
+                // No bulk delete: admins are deleted one at a time through
+                // the guarded action above (self / last-super_admin lockout).
             ]),
         ])
             ->defaultSort('created_at', 'desc')

@@ -14,7 +14,15 @@ class EditRole extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make()
+                    // Same guards as the table action: super_admin is the
+                    // trust anchor; in-use roles would strip admins' access.
+                    ->hidden(fn (): bool => $this->getRecord()->name === 'super_admin'
+                        || $this->getRecord()->users()->exists()),
+            ])
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->color('gray'),
         ];
     }
 }
