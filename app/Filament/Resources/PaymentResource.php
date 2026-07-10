@@ -160,14 +160,14 @@ class PaymentResource extends Resource
                             return;
                         }
 
-                        $query->whereDate('created_at', match ($data['created_at']) {
-                            'today' => now()->toDateString(),
-                            'yesterday' => now()->subDay()->toDateString(),
-                            'week' => now()->startOfWeek()->toDateString(),
-                            'month' => now()->startOfMonth()->toDateString(),
-                            'quarter' => now()->startOfQuarter()->toDateString(),
-                            default => now()->toDateString(),
-                        });
+                        match ($data['created_at']) {
+                            'today' => $query->whereDate('created_at', now()->toDateString()),
+                            'yesterday' => $query->whereDate('created_at', now()->subDay()->toDateString()),
+                            'week' => $query->where('created_at', '>=', now()->startOfWeek()),
+                            'month' => $query->where('created_at', '>=', now()->startOfMonth()),
+                            'quarter' => $query->where('created_at', '>=', now()->startOfQuarter()),
+                            default => $query,
+                        };
                     }),
             ])
         ->actions([
@@ -322,7 +322,7 @@ class PaymentResource extends Resource
 
                                 return json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                             })
-                            ->font('mono')
+                            ->fontMono()
                             ->columnSpanFull(),
                     ]),
             ]);
