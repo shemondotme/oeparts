@@ -34,7 +34,7 @@ class LogEmailFailed
             EmailLog::create([
                 'to_email' => $toEmail,
                 'subject' => $subject,
-                'template_type' => EmailTemplate::OrderConfirmation, // best-effort fallback
+                'template_type' => EmailTemplate::Other, // failure events don't carry the mailable class
                 'related_id' => null,
                 'related_type' => null,
                 'status' => LogStatus::Failed,

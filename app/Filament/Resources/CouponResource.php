@@ -162,7 +162,10 @@ class CouponResource extends Resource
                 }),
             Tables\Columns\TextColumn::make('discount_value')
                 ->label('Value')
-                ->money('EUR')
+                // A 10% coupon rendered as "€10.00" with unconditional money().
+                ->getStateUsing(fn (Coupon $record): string => $record->discount_type === DiscountType::Percentage
+                    ? rtrim(rtrim((string) $record->discount_value, '0'), '.') . '%'
+                    : format_money($record->discount_value))
                 ->alignEnd()
                 ->fontMono()
                 ->weight('bold'),
@@ -173,11 +176,25 @@ class CouponResource extends Resource
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('is_active')
-                ->label('Active')
+                ->label('Status')
                 ->badge()
-                ->color(fn (bool $state): string => $state ? 'success' : 'danger')
-                ->icon(fn (bool $state): string => $state ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
-                ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
+                // Derived status: an expired coupon must not read "Active"
+                // (expires_at is a hidden-by-default column).
+                ->getStateUsing(fn (Coupon $record): string => match (true) {
+                    ! $record->is_active => 'Inactive',
+                    $record->expires_at !== null && $record->expires_at->isPast() => 'Expired',
+                    default => 'Active',
+                })
+                ->color(fn (string $state): string => match ($state) {
+                    'Active' => 'success',
+                    'Expired' => 'warning',
+                    default => 'gray',
+                })
+                ->icon(fn (string $state): string => match ($state) {
+                    'Active' => 'heroicon-o-check-circle',
+                    'Expired' => 'heroicon-o-clock',
+                    default => 'heroicon-o-x-circle',
+                })
                 ->alignCenter(),
             Tables\Columns\TextColumn::make('user.name')
                 ->label('Restricted To')

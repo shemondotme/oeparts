@@ -84,6 +84,40 @@ class MarketingModuleTest extends TestCase
         Queue::assertPushed(SendNewsletterCampaign::class, fn ($job) => $job->campaign->is($due));
     }
 
+    public function test_unknown_mailables_log_as_other_and_inquiry_status_maps(): void
+    {
+        $listener = new \App\Listeners\LogEmailSent();
+        $method = new \ReflectionMethod($listener, 'determineTemplateType');
+
+        $this->assertSame(\App\Enums\EmailTemplate::Other, $method->invoke($listener, 'App\Mail\SomeFutureMailable'));
+        $this->assertSame(\App\Enums\EmailTemplate::PartInquiryStatus, $method->invoke($listener, 'App\Mail\PartInquiryStatusUpdate'));
+        $this->assertSame(\App\Enums\EmailTemplate::Other, $method->invoke($listener, null));
+    }
+
+    public function test_email_log_list_renders_new_template_types(): void
+    {
+        \App\Models\EmailLog::create([
+            'to_email' => 'x@example.com',
+            'subject' => 'Inquiry update',
+            'template_type' => \App\Enums\EmailTemplate::PartInquiryStatus,
+            'status' => \App\Enums\LogStatus::Success,
+            'sent_at' => now(),
+        ]);
+        \App\Models\EmailLog::create([
+            'to_email' => 'y@example.com',
+            'subject' => 'Mystery mail',
+            'template_type' => \App\Enums\EmailTemplate::Other,
+            'status' => \App\Enums\LogStatus::Failed,
+            'error_message' => 'smtp timeout',
+            'sent_at' => now(),
+        ]);
+
+        Livewire::test(\App\Filament\Resources\EmailLogResource\Pages\ListEmailLogs::class)
+            ->loadTable()
+            ->assertOk()
+            ->assertSee('Part Inquiry Status');
+    }
+
     public function test_send_due_command_is_scheduled(): void
     {
         $events = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events());

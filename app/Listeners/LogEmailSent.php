@@ -69,7 +69,7 @@ class LogEmailSent
     private function determineTemplateType(?string $mailableClass): EmailTemplate
     {
         if (!$mailableClass) {
-            return EmailTemplate::OrderConfirmation;
+            return EmailTemplate::Other;
         }
 
         $className = class_basename($mailableClass);
@@ -86,7 +86,10 @@ class LogEmailSent
             'NewsletterConfirmation' => EmailTemplate::NewsletterConfirm,
             'PasswordReset' => EmailTemplate::PasswordReset,
             'ContactReply' => EmailTemplate::ContactReply,
-            default => EmailTemplate::OrderConfirmation,
+            'PartInquiryStatusUpdate' => EmailTemplate::PartInquiryStatus,
+            // Honest catch-all — unknown mailables were misfiled as order
+            // confirmations, which poisons the log's usefulness.
+            default => EmailTemplate::Other,
         };
     }
 }

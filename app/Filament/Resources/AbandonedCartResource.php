@@ -163,13 +163,15 @@ class AbandonedCartResource extends Resource
             ])
             ->actions(AdminUi::recordActions(before: [
                 Actions\Action::make('sendRecovery')
-                    ->label('Send Recovery')
+                    ->label(fn (AbandonedCart $record): string => $record->recovery_email_sent ? 'Send Again' : 'Send Recovery')
                     ->icon('heroicon-o-paper-airplane')
-                    ->color('info')
+                    ->color(fn (AbandonedCart $record): string => $record->recovery_email_sent ? 'gray' : 'info')
                     ->authorize('update')
                     ->requiresConfirmation()
-                    ->modalHeading('Send Recovery Email')
-                    ->modalDescription('Send a cart recovery email to the customer. This will remind them of the items left in their cart.')
+                    ->modalHeading(fn (AbandonedCart $record): string => $record->recovery_email_sent ? 'Send Recovery Email Again' : 'Send Recovery Email')
+                    ->modalDescription(fn (AbandonedCart $record): string => $record->recovery_email_sent
+                        ? 'A recovery email was already sent for this cart — sending another should be a deliberate choice.'
+                        : 'Send a cart recovery email to the customer. This will remind them of the items left in their cart.')
                     ->action(function (AbandonedCart $record) {
                         $email = $record->guest_email ?? $record->user?->email;
 
