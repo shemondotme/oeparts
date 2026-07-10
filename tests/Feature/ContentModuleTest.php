@@ -119,6 +119,20 @@ class ContentModuleTest extends TestCase
             'Section::TYPES must mirror resources/views/components/sections/ one-to-one — the homepage silently skips unknown types');
     }
 
+    public function test_blog_edit_renders_with_inline_tag_creation_select(): void
+    {
+        $post = \App\Models\BlogPost::create([
+            'title'     => ['en' => 'Audit Post'],
+            'slug'      => 'audit-post',
+            'content'   => ['en' => 'Body'],
+            'status'    => 'draft',
+            'author_id' => Admin::first()->id,
+        ]);
+
+        Livewire::test(\App\Filament\Resources\BlogPostResource\Pages\EditBlogPost::class, ['record' => $post->id])
+            ->assertOk();
+    }
+
     public function test_upload_action_creates_a_media_record(): void
     {
         Storage::fake('public');

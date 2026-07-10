@@ -174,8 +174,9 @@ class PageResource extends Resource
                 ->getStateUsing(fn (Page $record): string => AdminUi::localizedName($record->title))
                 ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->where(function ($q) use ($search) {
-                        $q->where('title->en', 'like', "%{$search}%")
-                            ->orWhere('title->de', 'like', "%{$search}%");
+                        foreach (array_keys(AdminUi::LOCALES) as $code) {
+                            $q->orWhere("title->{$code}", 'like', "%{$search}%");
+                        }
                     });
                 })
                 ->sortable()
