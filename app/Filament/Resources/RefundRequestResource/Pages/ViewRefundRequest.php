@@ -18,6 +18,13 @@ class ViewRefundRequest extends ViewRecord
 {
     protected static string $resource = RefundRequestResource::class;
 
+    public function getHeading(): string
+    {
+        $order = $this->getRecord()->order;
+
+        return $order ? "Refund Request — {$order->order_number}" : 'Refund Request';
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -53,8 +60,11 @@ class ViewRefundRequest extends ViewRecord
                                     ->schema([
                                         TextEntry::make('order.order_number')
                                             ->label('Order #')
-                                            ->copyable()
-                                            ->copyMessage('Order number copied')
+                                            ->url(fn ($record): ?string => $record->order_id
+                                                ? \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id])
+                                                : null)
+                                            ->color('primary')
+                                            ->tooltip('Open the order')
                                             ->fontMono()
                                             ->weight('bold'),
                                         TextEntry::make('user.name')

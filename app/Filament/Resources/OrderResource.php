@@ -395,8 +395,10 @@ class OrderResource extends Resource
                 ->sortable(),
             Tables\Columns\IconColumn::make('urgent_processing')
                 ->label('Urgent')
-                ->boolean()
+                // Icon only when urgent — a column of red X's for "normal" reads as alarm.
+                ->icon(fn (bool $state): ?string => $state ? 'heroicon-o-exclamation-triangle' : null)
                 ->color('danger')
+                ->tooltip(fn (bool $state): ?string => $state ? 'Urgent processing — same-day dispatch' : null)
                 ->alignCenter(),
             ])
             ->filters([
@@ -629,7 +631,9 @@ class OrderResource extends Resource
                         'grand_total' => 'Total',
                         'created_at' => 'Date',
                     ]),
-                    Actions\DeleteBulkAction::make(),
+                    // No bulk delete: cancellation via Change Status is the
+                    // order lifecycle; single-record delete (soft) remains
+                    // on the edit/view pages for test/junk orders.
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
