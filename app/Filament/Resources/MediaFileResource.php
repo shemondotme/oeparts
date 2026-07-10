@@ -90,9 +90,10 @@ class MediaFileResource extends Resource
                                             ->label('File URL')
                                             ->disabled()
                                             ->dehydrated(false)
+                                            // copyMessage() doesn't exist on form inputs — it 500'd
+                                            // this whole edit page (copyable() alone is fine).
                                             ->copyable()
-                                            ->copyMessage('URL copied')
-                                            ->helperText('Full URL to access this file. Click the copy icon to copy.'),
+                                            ->helperText('Full URL to access this file.'),
                                         Forms\Components\TextInput::make('mime_type')
                                             ->label('MIME Type')
                                             ->disabled()
@@ -161,6 +162,9 @@ class MediaFileResource extends Resource
                     ->query(fn ($query, $data): mixed => ($data['value'] ?? null) ? $query->where('mime_type', 'like', "{$data['value']}/%") : $query)
                     ->helperText('Filter by image, document, or video files.'),
             ])
+            ->headerActions([
+                static::makeUploadAction(),
+            ])
             ->actions(AdminUi::recordActionsWithoutView())
             ->bulkActions([
                 Actions\BulkActionGroup::make([
@@ -178,7 +182,11 @@ class MediaFileResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-photo')
             ->emptyStateHeading('No media files uploaded yet')
-            ->emptyStateDescription('Media files uploaded through products, categories, blog posts, and pages will appear here.');
+            ->emptyStateDescription('Upload files here, or attach them while editing products, blog posts, and pages.')
+            ->emptyStateActions([
+                static::makeUploadAction()
+                    ->button(),
+            ]);
     }
 
     public static function getRelations(): array
@@ -196,7 +204,58 @@ class MediaFileResource extends Resource
 
     public static function canCreate(): bool
     {
+        // No create PAGE — uploads happen via the modal Upload action below.
         return false;
+    }
+
+    /**
+     * Modal upload into the media library. Mirrors MediaPickerController's
+     * conventions (public disk, media/ directory, image types, 5MB cap).
+     */
+    public static function makeUploadAction(): Actions\Action
+    {
+        return Actions\Action::make('upload')
+            ->label('Upload File')
+            ->icon('heroicon-o-arrow-up-tray')
+            ->authorize(fn (): bool => auth('admin')->user()?->can('create', MediaFile::class) ?? false)
+            ->modalHeading('Upload Media File')
+            ->modalDescription('Add an image to the media library. It becomes selectable everywhere media is used (logos, featured images, social share images).')
+            ->schema([
+                Forms\Components\FileUpload::make('file')
+                    ->label('Image')
+                    ->disk('public')
+                    ->directory('media')
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
+                    ->maxSize(5120)
+                    ->required()
+                    ->storeFileNamesIn('original_name')
+                    ->helperText('JPEG, PNG, GIF, or WebP. Max 5 MB.'),
+                Forms\Components\TextInput::make('alt_text')
+                    ->label('Alt Text')
+                    ->maxLength(255)
+                    ->nullable()
+                    ->helperText('Describe the image for screen readers and SEO.'),
+            ])
+            ->action(function (array $data): void {
+                $path = $data['file'];
+                $disk = \Illuminate\Support\Facades\Storage::disk('public');
+
+                MediaFile::create([
+                    'uploaded_by' => auth('admin')->id(),
+                    'file_name'   => $data['original_name'] ?? basename($path),
+                    'file_path'   => $path,
+                    'file_url'    => \Illuminate\Support\Facades\Storage::url($path),
+                    'mime_type'   => $disk->mimeType($path) ?: 'application/octet-stream',
+                    'size'        => $disk->size($path) ?: null,
+                    'alt_text'    => $data['alt_text'] ?? null,
+                ]);
+
+                \Filament\Notifications\Notification::make()
+                    ->title('File uploaded')
+                    ->body('The file is now available in the media library.')
+                    ->success()
+                    ->send();
+            });
     }
 
     public static function getNavigationBadge(): ?string
