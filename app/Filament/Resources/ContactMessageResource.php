@@ -13,10 +13,6 @@ use Filament\Actions;
 use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Grid;
-use Filament\Schemas\Components\Group;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -39,97 +35,8 @@ class ContactMessageResource extends Resource
 
     protected static ?int $navigationSort = 30;
 
-    public static function form(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                Grid::make(['default' => 1, 'xl' => 3])
-                    ->columnSpanFull()
-                    ->schema([
-                        // ─── Main column ──────────────────────────────────
-                        Group::make()
-                            ->columnSpan(['default' => 1, 'xl' => 2])
-                            ->schema([
-                                Section::make('Message Content')
-                                    ->icon('heroicon-o-envelope')
-                                    ->description('Content of the contact message sent by the customer.')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('subject_type')
-                                            ->label('Subject / Inquiry Type')
-                                            ->readOnly()
-                                            ->helperText('The category of this contact message.')
-                                            ->columnSpanFull(),
-                                        Forms\Components\Textarea::make('message')
-                                            ->label('Message Body')
-                                            ->rows(6)
-                                            ->readOnly()
-                                            ->columnSpanFull(),
-                                    ]),
-                            ]),
-
-                        // ─── Sidebar column ───────────────────────────────
-                        Group::make()
-                            ->columnSpan(['default' => 1, 'xl' => 1])
-                            ->schema([
-                                Section::make('Status & Processing')
-                                    ->icon('heroicon-o-adjustments-horizontal')
-                                    ->description('Track message handling and resolution status.')
-                                    ->schema([
-                                        Forms\Components\Select::make('status')
-                                            ->label('Message Status')
-                                            ->options([
-                                                'unread' => 'Unread',
-                                                'read' => 'Read',
-                                                'resolved' => 'Resolved',
-                                            ])
-                                            ->native(false)
-                                            ->required()
-                                            ->helperText('Current handling state of this contact message.'),
-                                    ]),
-
-                                Section::make('Sender Details')
-                                    ->icon('heroicon-o-user')
-                                    ->description('Contact information for the person who sent this message.')
-                                    ->schema([
-                                        Forms\Components\TextInput::make('name')
-                                            ->label('Sender Name')
-                                            ->readOnly(),
-                                        Forms\Components\TextInput::make('email')
-                                            ->label('Email Address')
-                                            ->email()
-                                            ->readOnly(),
-                                    ]),
-
-                                Section::make('Part / Order Reference')
-                                    ->icon('heroicon-o-magnifying-glass')
-                                    ->description('Related order or part details if provided by the customer.')
-                                    ->collapsible()
-                                    ->schema([
-                                        Forms\Components\TextInput::make('order_number')
-                                            ->label('Order Number')
-                                            ->readOnly()
-                                            ->helperText('Related order if the customer referenced one.'),
-                                        Forms\Components\TextInput::make('oem_number')
-                                            ->label('OEM Part Number')
-                                            ->readOnly()
-                                            ->extraAttributes(['class' => 'font-mono uppercase']),
-                                        Forms\Components\TextInput::make('manufacturer')
-                                            ->label('Vehicle Manufacturer')
-                                            ->readOnly(),
-                                        Forms\Components\TextInput::make('car_model')
-                                            ->label('Car Model')
-                                            ->readOnly(),
-                                        Forms\Components\TextInput::make('year')
-                                            ->label('Model Year')
-                                            ->readOnly(),
-                                        Forms\Components\TextInput::make('vin_number')
-                                            ->label('VIN Number')
-                                            ->readOnly(),
-                                    ]),
-                            ]),
-                    ]),
-            ]);
-    }
+    // No form(): this resource is read-only (index + view pages only) —
+    // status changes go through the reply/mark actions.
 
     public static function table(Table $table): Table
     {
@@ -139,7 +46,15 @@ class ContactMessageResource extends Resource
                     ->label('Name')
                     ->searchable()
                     ->sortable()
-                    ->weight(FontWeight::Medium)
+                    // Unread messages read bolder — the empty-state copy
+                    // promises highlighting, so deliver it.
+                    ->weight(fn (ContactMessage $record): FontWeight => $record->status === ContactStatus::Unread
+                        ? FontWeight::Bold
+                        : FontWeight::Medium)
+                    ->icon(fn (ContactMessage $record): ?string => $record->status === ContactStatus::Unread
+                        ? 'heroicon-s-envelope'
+                        : null)
+                    ->iconColor('warning')
                     ->limit(25),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
@@ -199,11 +114,7 @@ class ContactMessageResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Message Status')
-                    ->options([
-                        'unread' => 'Unread',
-                        'read' => 'Read',
-                        'resolved' => 'Resolved',
-                    ])
+                    ->options(ContactStatus::class)
                     ->native(false)
                     ->helperText('Filter by message handling status.')
                     ->columnSpan(1),
@@ -228,7 +139,9 @@ class ContactMessageResource extends Resource
             ->actions(AdminUi::recordActions(after: [
                 Actions\Action::make('reply')
                     ->label('Reply')
-                    ->icon('heroicon-o-reply')
+                    // 'reply' was removed in Heroicons v2 — the missing SVG
+                    // 500'd the entire deferred table render.
+                    ->icon('heroicon-o-arrow-uturn-left')
                     ->color('info')
                     ->authorize('update')
                     ->requiresConfirmation()
