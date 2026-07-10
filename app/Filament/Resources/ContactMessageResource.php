@@ -146,23 +146,32 @@ class ContactMessageResource extends Resource
                     ->authorize('update')
                     ->requiresConfirmation()
                     ->modalHeading('Reply to Contact Message')
-                    ->modalDescription(fn (ContactMessage $record): string => "Send a reply to {$record->email}. The message status will be updated to 'Read'.")
+                    ->modalDescription(fn (ContactMessage $record): string => "Send a reply to {$record->email}. The reply is saved on the message for future reference.")
                     ->schema([
                         Forms\Components\Textarea::make('reply_body')
                             ->label('Reply Message')
                             ->required()
                             ->rows(6)
                             ->placeholder('Type your reply to the customer...')
-                            ->helperText('Your reply will be sent via email and queued as a background job.'),
+                            ->helperText('Sent via email (queued) and stored on this message.'),
+                        Forms\Components\Toggle::make('mark_resolved')
+                            ->label('Mark as resolved')
+                            ->default(true)
+                            ->helperText('Disable if you expect further back-and-forth on this message.'),
                     ])
                     ->action(function (ContactMessage $record, array $data): void {
                         dispatch(new SendContactReplyEmail($record, $data['reply_body']));
 
-                        $record->update(['status' => 'read']);
+                        $record->update([
+                            'reply_body' => $data['reply_body'],
+                            'replied_at' => now(),
+                            'replied_by' => auth('admin')->id(),
+                            'status'     => ($data['mark_resolved'] ?? true) ? ContactStatus::Resolved : ContactStatus::Read,
+                        ]);
 
                         Notification::make()
                             ->title('Reply queued')
-                            ->body("Reply to {$record->email} has been queued.")
+                            ->body("Reply to {$record->email} has been queued and saved.")
                             ->success()
                             ->send();
                     }),

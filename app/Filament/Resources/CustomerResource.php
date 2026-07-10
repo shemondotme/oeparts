@@ -48,6 +48,18 @@ class CustomerResource extends Resource
         return 'name';
     }
 
+    // The model is User, but everything about this resource is customer-facing
+    // — nav, breadcrumbs, and actions should say so.
+    public static function getModelLabel(): string
+    {
+        return 'Customer';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'Customers';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -201,10 +213,12 @@ class CustomerResource extends Resource
                         $orderCount = $record->orders_count ?? 0;
                         $totalSpent = $record->orders_sum_grand_total ?? 0;
 
-                        if ($orderCount >= 10 && bccomp((string) $totalSpent, '1000', 2) >= 0) {
+                        // Thresholds are operator-tunable (rule #21).
+                        if ($orderCount >= (int) settings('customers.vip_min_orders', 10)
+                            && bccomp((string) $totalSpent, (string) settings('customers.vip_min_spent', '1000'), 2) >= 0) {
                             return 'VIP';
                         }
-                        if ($orderCount >= 3) {
+                        if ($orderCount >= (int) settings('customers.repeat_min_orders', 3)) {
                             return 'Repeat';
                         }
                         if ($orderCount === 0) {
@@ -259,27 +273,29 @@ class CustomerResource extends Resource
             ])
             ->filtersFormColumns(2)
             ->actions(AdminUi::recordActions(after: [
-                Actions\Action::make('resetPassword')
-                    ->label('Reset Password')
+                Actions\Action::make('sendPasswordReset')
+                    ->label('Send Password Reset')
                     ->icon('heroicon-o-key')
                     ->authorize('update')
                     ->requiresConfirmation()
-                    ->modalHeading('Reset Customer Password')
-                    ->modalDescription('Set a new password for this customer. They will need to use this new password on their next login.')
-                    ->form([
-                        Forms\Components\TextInput::make('new_password')
-                            ->label('New Password')
-                            ->password()
-                            ->required()
-                            ->minLength(8)
-                            ->rules(['regex:/^(?=.*[A-Z])(?=.*\d).+$/'])
-                            ->placeholder('Enter a strong password')
-                            ->helperText('Must contain at least one uppercase letter and one number. Minimum 8 characters.'),
-                    ])
-                    ->action(function (User $record, array $data): void {
-                        $record->update(['password' => $data['new_password']]);
+                    ->modalHeading('Send Password Reset Link')
+                    ->modalDescription(fn (User $record): string => "Email a secure password-reset link to {$record->email}. The customer chooses their own new password — nobody else ever sees it.")
+                    ->action(function (User $record): void {
+                        $status = \Illuminate\Support\Facades\Password::broker()->sendResetLink(['email' => $record->email]);
 
-                        Notification::make()->title('Password reset successfully')->success()->send();
+                        if ($status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT) {
+                            Notification::make()
+                                ->title('Reset link sent')
+                                ->body("A password-reset email is on its way to {$record->email}.")
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Could not send reset link')
+                                ->body(trans($status))
+                                ->danger()
+                                ->send();
+                        }
                     }),
                 Actions\Action::make('sendEmail')
                     ->label('Send Email')
