@@ -63,6 +63,23 @@ class ViewContactMessage extends ViewRecord
                                             ->columnSpanFull(),
                                     ]),
 
+                                Section::make('Reply Sent')
+                                    ->icon('heroicon-o-arrow-uturn-left')
+                                    ->description('The reply emailed to the customer from this panel.')
+                                    ->visible(fn ($record): bool => filled($record->reply_body))
+                                    ->schema([
+                                        TextEntry::make('reply_body')
+                                            ->hiddenLabel()
+                                            ->columnSpanFull(),
+                                        TextEntry::make('repliedBy.name')
+                                            ->label('Replied by')
+                                            ->placeholder('—'),
+                                        TextEntry::make('replied_at')
+                                            ->label('Replied at')
+                                            ->dateTime('M j, Y H:i'),
+                                    ])
+                                    ->columns(2),
+
                                 Section::make('Part / Order Reference')
                                     ->icon('heroicon-o-magnifying-glass')
                                     ->description('Related part or order information, if provided by the customer.')

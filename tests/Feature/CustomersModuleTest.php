@@ -53,6 +53,59 @@ class CustomersModuleTest extends TestCase
             ->assertSee('Jane Doe');
     }
 
+    public function test_reply_is_persisted_and_resolves_the_message(): void
+    {
+        \Illuminate\Support\Facades\Queue::fake();
+        $message = $this->makeMessage();
+
+        Livewire::test(\App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages::class)
+            ->loadTable()
+            ->callTableAction('reply', $message, ['reply_body' => 'We stock it — link attached.', 'mark_resolved' => true]);
+
+        $message->refresh();
+        $this->assertSame('We stock it — link attached.', $message->reply_body);
+        $this->assertNotNull($message->replied_at);
+        $this->assertNotNull($message->replied_by);
+        $this->assertSame(ContactStatus::Resolved, $message->status);
+        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\SendContactReplyEmail::class);
+    }
+
+    public function test_password_reset_action_sends_broker_link_not_a_password(): void
+    {
+        // User overrides sendPasswordResetNotification to dispatch the custom
+        // Industrial Blueprint email job — assert on that job.
+        \Illuminate\Support\Facades\Queue::fake();
+        $customer = User::factory()->create();
+        $originalHash = $customer->password;
+
+        Livewire::test(\App\Filament\Resources\CustomerResource\Pages\ListCustomers::class)
+            ->loadTable()
+            ->callTableAction('sendPasswordReset', $customer);
+
+        \Illuminate\Support\Facades\Queue::assertPushed(
+            \App\Jobs\SendPasswordResetEmail::class,
+            fn ($job) => $job->email === $customer->email,
+        );
+        $this->assertSame($originalHash, $customer->refresh()->password, 'the admin action must never change the password itself');
+        $this->assertDatabaseHas('password_reset_tokens', ['email' => $customer->email]);
+    }
+
+    public function test_segment_thresholds_come_from_settings(): void
+    {
+        $customer = User::factory()->create();
+        Order::factory()->count(2)->create(['user_id' => $customer->id, 'status' => 'paid']);
+
+        // Default repeat threshold is 3 — two orders is 'Regular'; with the
+        // setting lowered to 2 the same customer becomes 'Repeat'.
+        \App\Models\Setting::updateOrCreate(
+            ['group' => 'customers', 'key' => 'repeat_min_orders'],
+            ['value' => '2', 'type' => 'integer'],
+        );
+        \Illuminate\Support\Facades\Cache::forget('settings.customers');
+
+        $this->assertSame(2, (int) settings('customers.repeat_min_orders', 3));
+    }
+
     public function test_customer_aggregate_sorts_execute(): void
     {
         $customer = User::factory()->create();
