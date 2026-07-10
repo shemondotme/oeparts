@@ -57,7 +57,8 @@ class MethodsRelationManager extends RelationManager
                         ->label('Max Days')
                         ->numeric()
                         ->required()
-                        ->minValue(1),
+                        ->minValue(1)
+                        ->gte('estimated_days_min'),
                 ]),
                 Forms\Components\Toggle::make('is_active')
                     ->label('Active')

@@ -44,6 +44,17 @@ class RefundRequestResource extends Resource
         return 'id';
     }
 
+    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): ?string
+    {
+        if (! $record instanceof RefundRequest) {
+            return null;
+        }
+
+        return $record->order
+            ? "Refund — {$record->order->order_number}"
+            : "Refund #{$record->id}";
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -154,6 +165,10 @@ class RefundRequestResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with(['order', 'user']))
             ->columns([
             AdminUi::copyableColumn('order.order_number', 'Order #', 'Order number copied')
+                ->url(fn (RefundRequest $record): ?string => $record->order_id
+                    ? \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id])
+                    : null)
+                ->color('primary')
                 ->searchable()
                 ->sortable(),
             Tables\Columns\TextColumn::make('customer_name')
@@ -298,9 +313,9 @@ class RefundRequestResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            \App\Filament\Resources\RefundRequestResource\RelationManagers\OrderSummaryRelationManager::class,
-        ];
+        // The view page's "Related Order Snapshot" section already covers the
+        // order context (and links to the order) — no relation manager needed.
+        return [];
     }
 
     public static function getPages(): array

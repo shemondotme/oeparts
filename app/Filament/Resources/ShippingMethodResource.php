@@ -134,8 +134,9 @@ class ShippingMethodResource extends Resource
                                                 ->numeric()
                                                 ->required()
                                                 ->minValue(1)
+                                                ->gte('estimated_days_min')
                                                 ->placeholder('e.g. 5')
-                                                ->helperText('Most business days for delivery.'),
+                                                ->helperText('Most business days for delivery. Must be ≥ the minimum.'),
                                         ]),
                                     ])
                                     ->columns(2),

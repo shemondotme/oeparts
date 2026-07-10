@@ -171,7 +171,8 @@ class PaymentResource extends Resource
                     }),
             ])
         ->actions([
-            ...AdminUi::recordActions(),
+            // Payments are financial records — read-only, never deletable.
+            ...AdminUi::recordActionsReadOnly(),
         ])
         ->bulkActions([
             BulkActionGroup::make([
@@ -184,7 +185,6 @@ class PaymentResource extends Resource
                     'amount' => 'Amount',
                     'created_at' => 'Date',
                 ]),
-                DeleteBulkAction::make(),
             ]),
         ]);
     }

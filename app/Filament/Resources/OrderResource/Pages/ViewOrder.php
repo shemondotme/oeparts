@@ -160,7 +160,24 @@ class ViewOrder extends ViewRecord
                     && $this->getRecord()->payment_status === PaymentStatus::Pending
                 ),
             Actions\EditAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make()
+                    ->modalDescription('Are you sure you want to delete this order? Prefer cancelling via "Change Status" — deletion is for test/junk orders only.'),
+            ])
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->color('gray'),
+        ];
+    }
+
+    /**
+     * Mutating relation managers (Items, Notes) live on the edit page; the
+     * infolist + timeline already present that data read-only here.
+     */
+    public function getRelationManagers(): array
+    {
+        return [
+            \App\Filament\Resources\OrderResource\RelationManagers\PaymentRelationManager::class,
+            \App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationManager::class,
         ];
     }
 
@@ -181,6 +198,7 @@ class ViewOrder extends ViewRecord
                                     RepeatableEntry::make('items')
                                         ->hiddenLabel()
                                         ->extraAttributes(['class' => 'op-order-items-table'])
+                                        // 2-up pairs on small screens; full 6-column row from xl.
                                         ->schema([
                                             TextEntry::make('oem_number_snapshot')
                                                 ->label('OEM Number')
@@ -199,8 +217,7 @@ class ViewOrder extends ViewRecord
                                                 }),
                                             TextEntry::make('quantity')
                                                 ->label('Qty')
-                                                ->fontMono()
-                                                ->alignCenter(),
+                                                ->fontMono(),
                                             TextEntry::make('unit_price')
                                                 ->label('Unit Price')
                                                 ->fontMono()
@@ -211,7 +228,7 @@ class ViewOrder extends ViewRecord
                                                 ->weight('bold')
                                                 ->getStateUsing(fn ($record): string => format_money($record->total_price)),
                                         ])
-                                        ->columns(6),
+                                        ->columns(['default' => 2, 'xl' => 6]),
                                     \Filament\Infolists\Components\TextEntry::make('items_summary')
                                         ->hiddenLabel()
                                         ->default(function () use ($record): string {
@@ -239,6 +256,9 @@ class ViewOrder extends ViewRecord
                                         ->label('Postal Code'),
                                     TextEntry::make('shipping_country_code')
                                         ->label('Country')
+                                        ->formatStateUsing(fn (?string $state): string => $state
+                                            ? (config('countries')[$state] ?? $state) . " ({$state})"
+                                            : '—')
                                         ->badge()
                                         ->color('gray'),
                                 ])
@@ -268,6 +288,14 @@ class ViewOrder extends ViewRecord
                                         ->fontMono(),
                                 ])
                                 ->columns(2),
+                            Section::make('Order Timeline')
+                                ->icon('heroicon-o-clock')
+                                ->description('Chronological history of status changes and notes.')
+                                ->extraAttributes(['class' => 'op-timeline-section'])
+                                ->schema([
+                                    $this->getTimelineEntries(),
+                                ])
+                                ->collapsible(),
                         ])
                             ->columnSpan(['default' => 1, 'xl' => 2]),
                         Group::make([
@@ -285,7 +313,7 @@ class ViewOrder extends ViewRecord
                                     TextEntry::make('created_at')
                                         ->label('Placed At')
                                         ->dateTime('d M Y H:i')
-                                        ->since()
+                                        ->tooltip(fn ($record): string => $record->created_at->diffForHumans())
                                         ->fontMono()
                                         ->size('sm'),
                                     TextEntry::make('customer_name')
@@ -354,7 +382,10 @@ class ViewOrder extends ViewRecord
                                         ->extraAttributes(['class' => 'op-fin-line']),
                                     TextEntry::make('discount_amount')
                                         ->label('Discount')
-                                        ->money('EUR')
+                                        ->formatStateUsing(fn ($state): string => bccomp((string) $state, '0.00', 2) === 1
+                                            ? '− ' . format_money($state)
+                                            : format_money($state))
+                                        ->color(fn ($state): ?string => bccomp((string) $state, '0.00', 2) === 1 ? 'success' : null)
                                         ->size('sm')
                                         ->extraAttributes(['class' => 'op-fin-line']),
                                     TextEntry::make('shipping_cost')
@@ -393,19 +424,6 @@ class ViewOrder extends ViewRecord
                         ])
                             ->columnSpan(['default' => 1, 'xl' => 1]),
                     ]),
-                Grid::make(['default' => 1])
-                    ->columnSpanFull()
-                    ->schema([
-                        Section::make('Order Timeline')
-                            ->icon('heroicon-o-clock')
-                            ->description('Chronological history of status changes and notes.')
-                            ->extraAttributes(['class' => 'op-timeline-section'])
-                            ->schema([
-                                $this->getTimelineEntries(),
-                            ])
-                            ->collapsible()
-                            ->collapsed(),
-                    ]),
             ]);
     }
 
@@ -438,6 +456,17 @@ class ViewOrder extends ViewRecord
         $timeline = $statusHistory->concat($notes)
             ->sortByDesc('date')
             ->values();
+
+        if ($timeline->isEmpty()) {
+            return RepeatableEntry::make('timeline')
+                ->hiddenLabel()
+                ->schema([
+                    TextEntry::make('placeholder')
+                        ->hiddenLabel()
+                        ->color('gray'),
+                ])
+                ->state([['placeholder' => 'No status changes or internal notes yet.']]);
+        }
 
         return RepeatableEntry::make('timeline')
             ->hiddenLabel()
@@ -499,6 +528,6 @@ class ViewOrder extends ViewRecord
                     ->extraAttributes(['class' => 'op-timeline-note']),
             ])
             ->state($timeline->toArray())
-            ->columns(6);
+            ->columns(['default' => 2, 'xl' => 6]);
     }
 }
