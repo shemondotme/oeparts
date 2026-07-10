@@ -178,7 +178,7 @@ class ExtendedAuthorizationTest extends TestCase
 
         $this->actingAs($viewOnly, 'admin');
         Livewire::test(ListCustomers::class)
-            ->assertTableActionHidden('resetPassword', $user)
+            ->assertTableActionHidden('sendPasswordReset', $user)
             ->assertTableActionHidden('toggleActive', $user);
 
         $this->actingAs($editor, 'admin');
