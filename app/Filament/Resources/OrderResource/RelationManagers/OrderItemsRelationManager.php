@@ -3,7 +3,10 @@
 namespace App\Filament\Resources\OrderResource\RelationManagers;
 
 use App\Filament\Support\AdminUi;
+use App\Models\Order;
+use App\Services\OrderService;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -35,6 +38,7 @@ class OrderItemsRelationManager extends RelationManager
                     ->label('Quantity')
                     ->required()
                     ->numeric()
+                    ->integer()
                     ->minValue(1),
                 Forms\Components\TextInput::make('unit_price')
                     ->label('Unit Price')
@@ -42,14 +46,8 @@ class OrderItemsRelationManager extends RelationManager
                     ->numeric()
                     ->minValue(0)
                     ->step(0.01)
-                    ->prefix('€'),
-                Forms\Components\TextInput::make('total_price')
-                    ->label('Total Price')
-                    ->required()
-                    ->numeric()
-                    ->minValue(0)
-                    ->step(0.01)
-                    ->prefix('€'),
+                    ->prefix('€')
+                    ->helperText('Line total and order totals are recalculated automatically on save.'),
             ]);
     }
 
@@ -78,11 +76,40 @@ class OrderItemsRelationManager extends RelationManager
                     ->fontMono(),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->mutateFormDataUsing(fn (array $data): array => self::withComputedTotal($data))
+                    ->after(fn () => $this->recalculateOwnerTotals()),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->mutateFormDataUsing(fn (array $data): array => self::withComputedTotal($data))
+                    ->after(fn () => $this->recalculateOwnerTotals()),
+                Tables\Actions\DeleteAction::make()
+                    ->after(fn () => $this->recalculateOwnerTotals()),
             ]);
+    }
+
+    /**
+     * Line total is always derived — never hand-typed (bcmath, rule #2).
+     */
+    private static function withComputedTotal(array $data): array
+    {
+        $data['total_price'] = bcmul((string) $data['quantity'], (string) $data['unit_price'], 2);
+
+        return $data;
+    }
+
+    private function recalculateOwnerTotals(): void
+    {
+        /** @var Order $order */
+        $order = $this->getOwnerRecord();
+
+        app(OrderService::class)->recalculateTotals($order->refresh());
+
+        Notification::make()
+            ->title('Order totals recalculated')
+            ->body("Subtotal and grand total now reflect the updated items. New total: " . format_money($order->grand_total))
+            ->success()
+            ->send();
     }
 }

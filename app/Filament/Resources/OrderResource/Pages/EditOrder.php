@@ -26,13 +26,30 @@ class EditOrder extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            OrderResource::makeChangeStatusAction(),
             Actions\ViewAction::make()
                 ->label('View Order')
                 ->color('gray'),
-            Actions\DeleteAction::make()
-                ->modalHeading('Delete Order')
-                ->modalDescription('Are you sure you want to delete this order? This action cannot be undone.')
-                ->modalSubmitActionLabel('Yes, delete'),
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make()
+                    ->modalHeading('Delete Order')
+                    ->modalDescription('Are you sure you want to delete this order? Prefer cancelling via "Change Status" — deletion is for test/junk orders only.')
+                    ->modalSubmitActionLabel('Yes, delete'),
+            ])
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->color('gray'),
+        ];
+    }
+
+    /**
+     * Relation managers that mutate order contents live on the edit page;
+     * the view page shows the same data read-only in its infolist + timeline.
+     */
+    public function getRelationManagers(): array
+    {
+        return [
+            \App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager::class,
+            \App\Filament\Resources\OrderResource\RelationManagers\OrderNotesRelationManager::class,
         ];
     }
 }

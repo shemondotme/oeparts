@@ -190,7 +190,11 @@ class OrderResource extends Resource
                                         ->options(OrderStatus::class)
                                         ->required()
                                         ->default(OrderStatus::Pending)
-                                        ->helperText('Determines the order stage in the fulfillment pipeline.'),
+                                        ->disabled(fn (string $operation): bool => $operation === 'edit')
+                                        ->dehydrated(fn (string $operation): bool => $operation === 'create')
+                                        ->helperText(fn (string $operation): string => $operation === 'edit'
+                                            ? 'Status changes go through the "Change Status" action above — it validates the transition, records history, and notifies the customer.'
+                                            : 'Determines the order stage in the fulfillment pipeline.'),
                                 ]),
                             Section::make('Payment')
                                 ->icon('heroicon-o-credit-card')
@@ -206,7 +210,11 @@ class OrderResource extends Resource
                                         ->options(PaymentStatus::class)
                                         ->required()
                                         ->default(PaymentStatus::Pending)
-                                        ->helperText('Current state of the payment transaction.'),
+                                        ->disabled(fn (string $operation): bool => $operation === 'edit')
+                                        ->dehydrated(fn (string $operation): bool => $operation === 'create')
+                                        ->helperText(fn (string $operation): string => $operation === 'edit'
+                                            ? 'Payment status is managed by the payment flow ("Confirm Payment" for bank transfers, webhooks for card).'
+                                            : 'Current state of the payment transaction.'),
                                     Forms\Components\TextInput::make('payment_reference')
                                         ->label('Payment Reference')
                                         ->nullable()
