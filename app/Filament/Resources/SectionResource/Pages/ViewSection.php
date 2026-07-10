@@ -48,9 +48,17 @@ class ViewSection extends ViewRecord
                                 Section::make('Content Configuration (JSON)')
                                     ->icon('heroicon-o-code-bracket')
                                     ->schema([
-                                        KeyValueEntry::make('content')
+                                        // KeyValueEntry fatals on the nested arrays real sections
+                                        // carry — render pretty-printed JSON instead (safe for any shape).
+                                        \Filament\Infolists\Components\TextEntry::make('content')
                                             ->hiddenLabel()
-                                            ->placeholder('No content configuration provided')
+                                            // state() (not formatStateUsing) — Filament treats array
+                                            // states as item lists and formats per element.
+                                            ->state(fn ($record): string => filled($record->content)
+                                                ? (json_encode($record->content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '—')
+                                                : 'No content configuration provided')
+                                            ->fontMono()
+                                            ->extraAttributes(['class' => 'whitespace-pre-wrap'])
                                             ->columnSpanFull(),
                                     ]),
                             ]),

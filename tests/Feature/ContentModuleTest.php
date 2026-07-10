@@ -62,6 +62,63 @@ class ContentModuleTest extends TestCase
             ->assertOk();
     }
 
+    private function makeNestedSection(): Section
+    {
+        return Section::create([
+            'type'      => 'how_it_works',
+            'location'  => 'homepage',
+            'title'     => ['en' => 'How It Works'],
+            // Real home sections carry nested structures — exactly what broke
+            // both the view page (foreach on string) and the KeyValue editor.
+            'content'   => [
+                'headline' => 'Three steps',
+                'steps'    => [
+                    ['title' => 'Search', 'description' => 'Enter your OEM number'],
+                    ['title' => 'Order', 'description' => 'Checkout securely'],
+                ],
+            ],
+            'is_active'  => true,
+            'status'     => 'published',
+            'sort_order' => 1,
+        ]);
+    }
+
+    public function test_section_view_and_edit_render_with_nested_content(): void
+    {
+        $section = $this->makeNestedSection();
+
+        Livewire::test(\App\Filament\Resources\SectionResource\Pages\ViewSection::class, ['record' => $section->id])
+            ->assertOk();
+        Livewire::test(\App\Filament\Resources\SectionResource\Pages\EditSection::class, ['record' => $section->id])
+            ->assertOk();
+    }
+
+    public function test_section_json_editor_round_trips_nested_content(): void
+    {
+        $section = $this->makeNestedSection();
+        $original = $section->content;
+
+        Livewire::test(\App\Filament\Resources\SectionResource\Pages\EditSection::class, ['record' => $section->id])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame($original, $section->refresh()->content, 'saving without edits must not corrupt nested content');
+    }
+
+    public function test_section_types_match_storefront_components_exactly(): void
+    {
+        $bladeTypes = collect(glob(resource_path('views/components/sections/*.blade.php')))
+            ->map(fn (string $path): string => basename($path, '.blade.php'))
+            ->sort()
+            ->values()
+            ->all();
+
+        $adminTypes = collect(array_keys(Section::TYPES))->sort()->values()->all();
+
+        $this->assertSame($bladeTypes, $adminTypes,
+            'Section::TYPES must mirror resources/views/components/sections/ one-to-one — the homepage silently skips unknown types');
+    }
+
     public function test_upload_action_creates_a_media_record(): void
     {
         Storage::fake('public');

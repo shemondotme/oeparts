@@ -73,25 +73,13 @@ class SectionResource extends Resource
                                     ->schema([
                                         Forms\Components\Select::make('type')
                                             ->label('Section Type')
-                                            ->options([
-                                                'hero_banner' => 'Hero Banner',
-                                                'trust_signals' => 'Trust Signals',
-                                                'how_it_works' => 'How It Works',
-                                                'stats_counter' => 'Stats Counter',
-                                                'promo_banner' => 'Promo Banner',
-                                                'newsletter' => 'Newsletter',
-                                                'manufacturer_carousel' => 'Manufacturer Carousel',
-                                                'popular_searches' => 'Popular Searches',
-                                                'blog_preview' => 'Blog Preview',
-                                                'faq_accordion' => 'FAQ Accordion',
-                                                'testimonials' => 'Testimonials',
-                                                'contact_strip' => 'Contact Strip',
-                                                'announcement_bar' => 'Announcement Bar',
-                                            ])
+                                            // Section::TYPES mirrors the real storefront components —
+                                            // the previous hand-typed list matched NONE of them.
+                                            ->options(Section::TYPES)
                                             ->native(false)
                                             ->required()
                                             ->live()
-                                            ->helperText('Determines the visual layout and content fields available.'),
+                                            ->helperText('Must match a storefront section component — the homepage silently skips unknown types.'),
                                         Forms\Components\Select::make('location')
                                             ->label('Page Location')
                                             ->options(SectionLocation::class)
@@ -113,12 +101,27 @@ class SectionResource extends Resource
 
                                 UiSection::make('Content (JSON Config)')
                                     ->icon('heroicon-o-code-bracket')
-                                    ->description('Enter raw JSON configuration block tailored for the selected section type.')
+                                    ->description('The configuration block the storefront component reads. Nested structures are supported.')
                                     ->schema([
-                                        Forms\Components\KeyValue::make('content')
-                                            ->label('Content Details')
-                                            ->keyLabel('Field')
-                                            ->valueLabel('Value')
+                                        // A KeyValue field JS-fatals on the nested JSON real
+                                        // sections carry — a validated JSON editor handles any shape.
+                                        Forms\Components\Textarea::make('content')
+                                            ->label('Content JSON')
+                                            ->rows(16)
+                                            ->formatStateUsing(fn ($state): string => $state
+                                                ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                                                : '{}')
+                                            ->dehydrateStateUsing(fn (?string $state): array => json_decode($state ?? '{}', true) ?? [])
+                                            ->rules([
+                                                fn (): \Closure => function (string $attribute, $value, \Closure $fail): void {
+                                                    json_decode((string) $value, true);
+                                                    if (json_last_error() !== JSON_ERROR_NONE) {
+                                                        $fail('The content must be valid JSON: ' . json_last_error_msg());
+                                                    }
+                                                },
+                                            ])
+                                            ->extraInputAttributes(['class' => 'font-mono', 'spellcheck' => 'false'])
+                                            ->helperText('Edit carefully — the structure must match what the selected section component expects. Invalid JSON is rejected on save.')
                                             ->columnSpanFull(),
                                     ]),
                             ]),
@@ -172,7 +175,7 @@ class SectionResource extends Resource
                     ->label('Type')
                     ->badge()
                     ->color('gray')
-                    ->getStateUsing(fn (Model $record): string => ucwords(str_replace('_', ' ', $record->type)))
+                    ->getStateUsing(fn (Model $record): string => Section::TYPES[$record->type] ?? ucwords(str_replace('_', ' ', $record->type)))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('location')
                     ->label('Location')
@@ -210,21 +213,7 @@ class SectionResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
                     ->label('Section Type')
-                    ->options([
-                        'hero_banner' => 'Hero Banner',
-                        'trust_signals' => 'Trust Signals',
-                        'how_it_works' => 'How It Works',
-                        'stats_counter' => 'Stats Counter',
-                        'promo_banner' => 'Promo Banner',
-                        'newsletter' => 'Newsletter',
-                        'manufacturer_carousel' => 'Manufacturer Carousel',
-                        'popular_searches' => 'Popular Searches',
-                        'blog_preview' => 'Blog Preview',
-                        'faq_accordion' => 'FAQ Accordion',
-                        'testimonials' => 'Testimonials',
-                        'contact_strip' => 'Contact Strip',
-                        'announcement_bar' => 'Announcement Bar',
-                    ])
+                    ->options(Section::TYPES)
                     ->native(false)
                     ->helperText('Filter by the type of content section.'),
                 Tables\Filters\SelectFilter::make('status')
