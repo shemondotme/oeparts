@@ -132,4 +132,17 @@ return [
         'greeting'  => 'Estimado/a :name,',
         'body_intro'=> 'Nuestro equipo técnico está revisando su consulta de pieza. Responderemos con disponibilidad, precios y opciones de referencia cruzada dentro de 24 horas.',
     ],
+    'part_inquiry_status' => [
+        'subject_sourced'     => 'Buenas noticias — encontramos su pieza :oem',
+        'subject_unavailable' => 'Actualización de su consulta de pieza :oem',
+        'sourced_label'       => 'SOPORTE · PIEZA ENCONTRADA',
+        'unavailable_label'   => 'SOPORTE · ACTUALIZACIÓN',
+        'sourced_title'       => 'Encontramos su pieza',
+        'unavailable_title'   => 'No pudimos conseguir esta pieza',
+        'sourced_body'        => 'Hemos localizado la pieza solicitada. Nuestro equipo le contactará en breve con precio, estado y opciones de entrega.',
+        'unavailable_body'    => 'A pesar de una búsqueda exhaustiva en nuestra red de proveedores, no pudimos conseguir esta pieza por el momento. Le avisaremos si vuelve a estar disponible.',
+        'requested_part'      => 'PIEZA SOLICITADA',
+        'inquiry_id'          => 'ID DE CONSULTA',
+        'status'              => 'ESTADO',
+    ],
 ];

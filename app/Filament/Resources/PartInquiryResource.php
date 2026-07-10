@@ -231,40 +231,8 @@ class PartInquiryResource extends Resource
             ])
             ->filtersFormColumns(2)
             ->actions(AdminUi::recordActions(after: [
-                Actions\Action::make('mark_sourced')
-                    ->label('Mark Sourced')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->authorize('update')
-                    ->requiresConfirmation()
-                    ->modalHeading('Mark Inquiry as Sourced')
-                    ->modalDescription('Confirm that the requested part has been found and is available. The status will be updated to "Sourced".')
-                    ->action(function (PartInquiry $record) {
-                        $record->update(['status' => PartInquiryStatus::Sourced]);
-
-                        Notification::make()
-                            ->title('Inquiry marked as sourced')
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn (PartInquiry $record) => $record->status !== PartInquiryStatus::Sourced),
-                Actions\Action::make('markUnavailable')
-                    ->label('Mark Unavailable')
-                    ->icon('heroicon-o-x-circle')
-                    ->color('danger')
-                    ->authorize('update')
-                    ->requiresConfirmation()
-                    ->modalHeading('Mark Inquiry as Unavailable')
-                    ->modalDescription('Confirm that the requested part cannot be sourced. The customer will not be notified automatically.')
-                    ->action(function (PartInquiry $record) {
-                        $record->update(['status' => PartInquiryStatus::Unavailable]);
-
-                        Notification::make()
-                            ->title('Inquiry marked as unavailable')
-                            ->success()
-                            ->send();
-                    })
-                    ->visible(fn (PartInquiry $record) => $record->status !== PartInquiryStatus::Unavailable),
+                static::makeMarkSourcedAction(),
+                static::makeMarkUnavailableAction(),
             ]))
             ->bulkActions([
                 Actions\BulkActionGroup::make([
@@ -285,13 +253,14 @@ class PartInquiryResource extends Resource
                             $count = 0;
                             $records->each(function (PartInquiry $record) use (&$count) {
                                 if ($record->status !== PartInquiryStatus::Sourced) {
-                                    $record->update(['status' => PartInquiryStatus::Sourced]);
+                                    static::transitionAndNotify($record, PartInquiryStatus::Sourced);
                                     $count++;
                                 }
                             });
 
                             Notification::make()
-                                ->title("{$count} inquiry marked as sourced")
+                                ->title("{$count} " . str('inquiry')->plural($count) . ' marked as sourced')
+                                ->body('Customers with an email on file have been notified.')
                                 ->success()
                                 ->send();
                         },
@@ -309,12 +278,17 @@ class PartInquiryResource extends Resource
                                 'new' => PartInquiryStatus::Unavailable->value,
                             ],
                         action: function ($records) {
-                            $records->each(function (PartInquiry $record) {
-                                $record->update(['status' => PartInquiryStatus::Unavailable]);
+                            $count = 0;
+                            $records->each(function (PartInquiry $record) use (&$count) {
+                                if ($record->status !== PartInquiryStatus::Unavailable) {
+                                    static::transitionAndNotify($record, PartInquiryStatus::Unavailable);
+                                    $count++;
+                                }
                             });
 
                             Notification::make()
-                                ->title($records->count() . ' inquiries marked as unavailable')
+                                ->title("{$count} " . str('inquiry')->plural($count) . ' marked as unavailable')
+                                ->body('Customers with an email on file have been notified.')
                                 ->success()
                                 ->send();
                         },
@@ -369,5 +343,63 @@ class PartInquiryResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         return ['oem_number', 'email', 'manufacturer'];
+    }
+
+    /**
+     * Transition an inquiry and email the customer (when one is on file) —
+     * the storefront inquiry form promises a concierge response, so status
+     * verdicts must close that loop.
+     */
+    public static function transitionAndNotify(PartInquiry $record, PartInquiryStatus $status): void
+    {
+        $record->update(['status' => $status]);
+
+        if (filled($record->email)) {
+            dispatch(new \App\Jobs\SendPartInquiryStatusEmail($record, $status));
+        }
+    }
+
+    public static function makeMarkSourcedAction(): Actions\Action
+    {
+        return Actions\Action::make('mark_sourced')
+            ->label('Mark Sourced')
+            ->icon('heroicon-o-check-circle')
+            ->color('success')
+            ->authorize('update')
+            ->requiresConfirmation()
+            ->modalHeading('Mark Inquiry as Sourced')
+            ->modalDescription('Confirm the requested part has been found. The customer receives a "part sourced" email; follow up with pricing and delivery.')
+            ->action(function (PartInquiry $record): void {
+                static::transitionAndNotify($record, PartInquiryStatus::Sourced);
+
+                Notification::make()
+                    ->title('Inquiry marked as sourced')
+                    ->body(filled($record->email) ? 'The customer has been emailed.' : 'No customer email on file — no notification sent.')
+                    ->success()
+                    ->send();
+            })
+            ->visible(fn (PartInquiry $record) => $record->status !== PartInquiryStatus::Sourced);
+    }
+
+    public static function makeMarkUnavailableAction(): Actions\Action
+    {
+        return Actions\Action::make('markUnavailable')
+            ->label('Mark Unavailable')
+            ->icon('heroicon-o-x-circle')
+            ->color('danger')
+            ->authorize('update')
+            ->requiresConfirmation()
+            ->modalHeading('Mark Inquiry as Unavailable')
+            ->modalDescription('Confirm the requested part cannot be sourced. The customer receives an "unavailable" email so they are not left waiting.')
+            ->action(function (PartInquiry $record): void {
+                static::transitionAndNotify($record, PartInquiryStatus::Unavailable);
+
+                Notification::make()
+                    ->title('Inquiry marked as unavailable')
+                    ->body(filled($record->email) ? 'The customer has been emailed.' : 'No customer email on file — no notification sent.')
+                    ->success()
+                    ->send();
+            })
+            ->visible(fn (PartInquiry $record) => $record->status !== PartInquiryStatus::Unavailable);
     }
 }

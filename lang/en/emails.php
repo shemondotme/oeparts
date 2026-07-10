@@ -169,4 +169,19 @@ return [
         'greeting'  => 'Dear :name,',
         'body_intro'=> 'Our technical team is reviewing your part inquiry. We will respond with availability, pricing, and cross-reference options within 24 hours.',
     ],
+
+    // ─── Part Inquiry Status Update ──────────────────────────────────────
+    'part_inquiry_status' => [
+        'subject_sourced'     => 'Good news — we sourced your part :oem',
+        'subject_unavailable' => 'Update on your part inquiry :oem',
+        'sourced_label'       => 'SUPPORT · PART SOURCED',
+        'unavailable_label'   => 'SUPPORT · INQUIRY UPDATE',
+        'sourced_title'       => 'We found your part',
+        'unavailable_title'   => 'We could not source this part',
+        'sourced_body'        => 'We located the part you requested. Our team will contact you shortly with pricing, condition, and delivery options.',
+        'unavailable_body'    => 'Despite an extensive search of our supplier network, we could not source this part at this time. We will notify you if it becomes available again.',
+        'requested_part'      => 'REQUESTED PART',
+        'inquiry_id'          => 'INQUIRY ID',
+        'status'              => 'STATUS',
+    ],
 ];
