@@ -94,7 +94,8 @@ class LoginLogResource extends Resource
                         'ip_address' => 'IP Address',
                         'created_at' => 'Attempted At',
                     ]),
-                    Actions\DeleteBulkAction::make(),
+                    // No bulk delete: login attempts are the security audit
+                    // trail (rows are read-only); retention is logs:clean's job.
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
