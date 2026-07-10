@@ -41,6 +41,20 @@ class ViewSection extends ViewRecord
                                     ->schema([
                                         KeyValueEntry::make('title')
                                             ->hiddenLabel()
+                                            // Legacy rows store title as a bare JSON string ("Hero"),
+                                            // not a locale map — KeyValueEntry foreach()'s a string
+                                            // and fatals. Normalize both shapes, with human labels.
+                                            ->state(function ($record): array {
+                                                $title = $record->title;
+
+                                                if (! is_array($title)) {
+                                                    return ['Title' => (string) $title];
+                                                }
+
+                                                return collect($title)
+                                                    ->mapWithKeys(fn ($value, $code) => [(\App\Filament\Support\AdminUi::LOCALES[$code] ?? $code) . " ({$code})" => $value])
+                                                    ->all();
+                                            })
                                             ->placeholder('No titles provided')
                                             ->columnSpanFull(),
                                     ]),
