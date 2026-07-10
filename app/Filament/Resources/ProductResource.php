@@ -21,7 +21,6 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Cache;
 
 class ProductResource extends Resource
 {
@@ -269,7 +268,7 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return AdminUi::configureTable($table)
-            ->modifyQueryUsing(fn ($query) => $query->with('manufacturer'))
+            ->modifyQueryUsing(fn ($query) => $query->with(['manufacturer', 'condition']))
             ->columns([
                 AdminUi::oemColumn('oem_number', 'OEM number copied')
                     ->description(fn (Product $record): ?string => static::localizedName($record->name) ?: null),
@@ -288,9 +287,9 @@ class ProductResource extends Resource
                     ->label('Condition')
                     ->badge()
                     ->formatStateUsing(fn ($state): string => static::localizedName($state))
-                    ->extraAttributes(fn (Product $record): array => $record->condition ? [
-                        'style' => "background-color: {$record->condition->bg_color} !important; color: {$record->condition->text_color} !important;",
-                    ] : [])
+                    ->color(fn (Product $record) => $record->condition?->bg_color
+                        ? \Filament\Support\Colors\Color::hex($record->condition->bg_color)
+                        : 'gray')
                     ->sortable(),
                 Tables\Columns\TextInputColumn::make('price')
                     ->label('Price')
@@ -391,43 +390,9 @@ class ProductResource extends Resource
                     ->columnSpan(2),
             ])
             ->filtersFormColumns(2)
-            ->actions(AdminUi::recordActions([], [
-                Actions\Action::make('copyOem')
-                    ->label('Copy OEM')
-                    ->icon('heroicon-o-clipboard-document')
-                    ->color('gray')
-                    ->action(function (Product $record): void {
-                        $oem = $record->oem_number;
-                        if (isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-                            $_SERVER['HTTP_X_REQUESTED_WITH'] = '';
-                        }
-                        Notification::make()
-                            ->title("OEM number copied: {$oem}")
-                            ->success()
-                            ->send();
-                    })
-                    ->extraAttributes(fn (Product $record): array => [
-                        'data-oem' => $record->oem_number,
-                        'x-on:click' => 'navigator.clipboard.writeText($el.dataset.oem); $dispatch(\'toast\', { type: \'success\', message: \'OEM number copied!\' })',
-                    ]),
-                Actions\Action::make('toggleStock')
-                    ->label(fn (Product $record): string => $record->is_in_stock ? 'Mark Out of Stock' : 'Mark In Stock')
-                    ->icon(fn (Product $record): string => $record->is_in_stock ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
-                    ->color(fn (Product $record): string => $record->is_in_stock ? 'danger' : 'success')
-                    ->authorize('update')
-                    ->requiresConfirmation()
-                    ->action(function (Product $record): void {
-                        $record->is_in_stock = !$record->is_in_stock;
-                        $record->save();
-
-                        Cache::forget('sections.homepage');
-
-                        Notification::make()
-                            ->title('Stock status updated')
-                            ->success()
-                            ->send();
-                    }),
-            ]))
+            // Copy-OEM and stock-toggle row actions removed: the OEM column is
+            // click-to-copy and the Stock column is an inline toggle already.
+            ->actions(AdminUi::recordActions())
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     AdminUi::impactBulkAction(
@@ -577,9 +542,6 @@ class ProductResource extends Resource
                 )->authorize(fn (): bool => auth('admin')->user()?->can('import products') ?? false),
             ])
             ->defaultSort('created_at', 'desc')
-            ->striped()
-            ->defaultPaginationPageOption(25)
-            ->paginated([10, 25, 50, 100])
             ->emptyStateIcon('heroicon-o-cube')
             ->emptyStateHeading('No products yet')
             ->emptyStateDescription('Create your first product or import a CSV to populate the catalog.')

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
-use App\Models\Condition;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Resources\Pages\ViewRecord;
@@ -52,10 +51,12 @@ class ViewProduct extends ViewRecord
                                         Infolists\Components\TextEntry::make('condition.name')
                                             ->label('Condition')
                                             ->badge()
-                                            ->formatStateUsing(fn (?Condition $state): string => $state?->name ?? '—')
-                                            ->extraAttributes(fn ($record): array => $record->condition ? [
-                                                'style' => "background-color: {$record->condition->bg_color} !important; color: {$record->condition->text_color} !important;",
-                                            ] : []),
+                                            // State here is the related NAME STRING, not a Condition
+                                            // model — a ?Condition type-hint fatals on render.
+                                            ->formatStateUsing(fn (?string $state): string => $state ?? '—')
+                                            ->color(fn ($record) => $record->condition?->bg_color
+                                                ? \Filament\Support\Colors\Color::hex($record->condition->bg_color)
+                                                : 'gray'),
                                     ])
                                     ->columns(2),
 
