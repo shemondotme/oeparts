@@ -172,19 +172,27 @@ class CustomerResource extends Resource
                     ->alignEnd()
                     ->fontMono()
                     ->getStateUsing(fn (User $record): string => format_money($record->orders_sum_grand_total ?? 0))
-                    ->sortable()
+                    // 'total_spent' is not a real column — default sort threw
+                    // "Unknown column in ORDER BY". Order by the withSum alias.
+                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy('orders_sum_grand_total', $direction))
                     ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('avg_order_value')
                     ->label('Avg Order')
                     ->alignEnd()
                     ->fontMono()
                     ->getStateUsing(fn (User $record): string => ($record->orders_avg_grand_total ?? 0) > 0 ? format_money($record->orders_avg_grand_total) : '—')
-                    ->sortable()
+                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy('orders_avg_grand_total', $direction))
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('last_order_date')
                     ->label('Last Order')
                     ->getStateUsing(fn (User $record): ?string => $record->orders->first()?->created_at?->diffForHumans())
-                    ->sortable()
+                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy(
+                        \App\Models\Order::select('created_at')
+                            ->whereColumn('user_id', 'users.id')
+                            ->latest()
+                            ->limit(1),
+                        $direction,
+                    ))
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('segment')
                     ->label('Segment')
@@ -337,7 +345,8 @@ class CustomerResource extends Resource
                         'created_at' => 'Registered',
                         'is_active' => 'Active',
                     ]),
-                    Actions\DeleteBulkAction::make(),
+                    // No bulk delete: account erasure is an individual,
+                    // deliberate act (GDPR flow) — single delete remains.
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
