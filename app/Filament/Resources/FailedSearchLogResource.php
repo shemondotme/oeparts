@@ -157,7 +157,8 @@ class FailedSearchLogResource extends Resource
                         'ip_address' => 'IP Address',
                         'created_at' => 'Date',
                     ]),
-                    Actions\DeleteBulkAction::make(),
+                    // No bulk delete: read-only demand-signal log; retention
+                    // is logs:clean's job.
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

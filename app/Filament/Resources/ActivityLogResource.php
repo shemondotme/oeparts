@@ -8,7 +8,9 @@ use App\Models\ActivityLog;
 use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\TextEntry;
+// TextEntry lives in Infolists, not Schemas — the wrong import 500'd every
+// activity-detail view (the audit trail itself was unopenable).
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -64,33 +66,16 @@ class ActivityLogResource extends Resource
                     ]),
                 Section::make('Changes')
                     ->schema([
+                        // state() (not formatStateUsing) — Filament treats array
+                        // states as item lists and formats PER ELEMENT, so the
+                        // foreach received ints/strings and fataled.
                         TextEntry::make('new_values')
                             ->label('Details')
-                            ->formatStateUsing(function ($state) {
-                                if (! $state) {
-                                    return '—';
-                                }
-                                $lines = [];
-                                foreach ($state as $key => $value) {
-                                    $lines[] = '<span class="font-mono text-xs">' . e($key) . ':</span> ' . e(is_array($value) ? json_encode($value) : $value);
-                                }
-
-                                return implode('<br>', $lines);
-                            })
+                            ->state(fn ($record): string => self::renderValueList($record->new_values))
                             ->html(),
                         TextEntry::make('old_values')
                             ->label('Previous Values')
-                            ->formatStateUsing(function ($state) {
-                                if (! $state) {
-                                    return '—';
-                                }
-                                $lines = [];
-                                foreach ($state as $key => $value) {
-                                    $lines[] = '<span class="font-mono text-xs">' . e($key) . ':</span> ' . e(is_array($value) ? json_encode($value) : $value);
-                                }
-
-                                return implode('<br>', $lines);
-                            })
+                            ->state(fn ($record): string => self::renderValueList($record->old_values))
                             ->html()
                             ->visible(fn ($record) => ! empty($record->old_values)),
                     ]),
@@ -108,6 +93,25 @@ class ActivityLogResource extends Resource
             \App\Filament\Pages\System\HealthCheckDashboard::class => \App\Filament\Pages\System\HealthCheckDashboard::getUrl(),
             default => null,
         };
+    }
+
+    /**
+     * Render an old/new-values payload as escaped key: value lines.
+     * Tolerates any shape (arrays, scalars, null).
+     */
+    public static function renderValueList(mixed $values): string
+    {
+        if (blank($values) || ! is_iterable($values)) {
+            return '—';
+        }
+
+        $lines = [];
+        foreach ($values as $key => $value) {
+            $lines[] = '<span class="font-mono text-xs">' . e((string) $key) . ':</span> '
+                . e(is_array($value) ? json_encode($value) : (string) $value);
+        }
+
+        return $lines === [] ? '—' : implode('<br>', $lines);
     }
 
     public static function getActionLabels(): array
