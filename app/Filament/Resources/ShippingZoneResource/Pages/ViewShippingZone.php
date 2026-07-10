@@ -44,11 +44,13 @@ class ViewShippingZone extends ViewRecord
                                     ->schema([
                                         TextEntry::make('countries_count')
                                             ->label('Countries')
+                                            ->state(fn ($record): int => $record->countries()->count())
                                             ->badge()
                                             ->color('info')
                                             ->icon('heroicon-o-globe-alt'),
                                         TextEntry::make('methods_count')
                                             ->label('Methods')
+                                            ->state(fn ($record): int => $record->methods()->count())
                                             ->badge()
                                             ->color('success')
                                             ->icon('heroicon-o-truck'),

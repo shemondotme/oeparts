@@ -81,15 +81,14 @@ class MethodsRelationManager extends RelationManager
                     ->searchable(),
                 Tables\Columns\TextColumn::make('flat_rate')
                     ->label('Rate')
-                    ->money('EUR')
+                    ->getStateUsing(fn ($record): string => format_money($record->flat_rate))
                     ->fontMono()
                     ->alignEnd(),
                 Tables\Columns\TextColumn::make('free_shipping_threshold')
                     ->label('Free Threshold')
-                    ->money('EUR')
+                    ->getStateUsing(fn ($record): string => filled($record->free_shipping_threshold) ? format_money($record->free_shipping_threshold) : '—')
                     ->fontMono()
-                    ->alignEnd()
-                    ->getStateUsing(fn ($record): string => $record->free_shipping_threshold ?: '—'),
+                    ->alignEnd(),
                 Tables\Columns\TextColumn::make('estimated_days')
                     ->label('Delivery')
                     ->alignCenter()

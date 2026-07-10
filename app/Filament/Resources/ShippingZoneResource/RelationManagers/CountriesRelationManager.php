@@ -54,25 +54,14 @@ class CountriesRelationManager extends RelationManager
                     ->weight(FontWeight::Medium),
             ])
             ->headerActions([
-                Actions\CreateAction::make(),
-                Actions\AttachAction::make()
-                    ->preloadRecordSelect()
-                    ->recordSelect(function ($select) {
-                        return $select->options(function () {
-                            $existing = $this->getOwnerRecord()->countries->pluck('country_code')->toArray();
-                            $countries = config('countries', []);
-                            return collect($countries)->except($existing)->toArray();
-                        });
-                    }),
+                Actions\CreateAction::make()
+                    ->label('Add Country'),
             ])
             ->actions([
-                ...AdminUi::recordActionsWithoutView(
-                    before: [Actions\DetachAction::make()],
-                ),
+                ...AdminUi::recordActionsWithoutView(),
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
-                    Actions\DetachBulkAction::make(),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ]);
