@@ -115,6 +115,8 @@ class EmailLogResource extends Resource
                     EmailTemplate::NewsletterConfirm => 'info',
                     EmailTemplate::PasswordReset => 'warning',
                     EmailTemplate::ContactReply => 'info',
+                    EmailTemplate::PartInquiryStatus => 'info',
+                    default => 'gray',
                 })
                 ->toggleable(),
             Tables\Columns\TextColumn::make('status')
@@ -160,7 +162,8 @@ class EmailLogResource extends Resource
                     'status' => 'Status',
                     'sent_at' => 'Sent At',
                 ]),
-                Actions\DeleteBulkAction::make(),
+                // No bulk delete: delivery logs are an audit trail (row
+                // actions are already read-only); retention is logs:clean's job.
             ]),
         ])
             ->defaultSort('sent_at', 'desc')
