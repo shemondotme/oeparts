@@ -28,6 +28,18 @@ class Product extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        // Homepage sections render stock/visibility state; invalidate the
+        // cached payload on ANY mutation path (inline toggle, bulk actions,
+        // CSV import) — never Cache::flush() (rule #5).
+        static::saved(function (Product $product): void {
+            if ($product->wasChanged(['is_in_stock', 'is_active'])) {
+                \Illuminate\Support\Facades\Cache::forget('sections.homepage');
+            }
+        });
+    }
+
     public function manufacturer(): BelongsTo
     {
         return $this->belongsTo(Manufacturer::class);

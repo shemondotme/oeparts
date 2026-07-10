@@ -22,7 +22,18 @@ class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
 
-    protected static ?string $recordTitleAttribute = 'name';
+    // `name` is a JSON multilang array — a raw record-title attribute makes
+    // getRecordTitle() fatal (must return string). Resolved in the override.
+    protected static ?string $recordTitleAttribute = null;
+
+    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): ?string
+    {
+        if (! $record instanceof Category) {
+            return null;
+        }
+
+        return AdminUi::localizedName($record->name);
+    }
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {

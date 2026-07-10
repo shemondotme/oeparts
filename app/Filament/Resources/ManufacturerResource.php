@@ -40,7 +40,18 @@ class ManufacturerResource extends Resource
 
     public static function getRecordTitleAttribute(): ?string
     {
-        return 'name';
+        // `name` is a JSON multilang array — returning it raw makes
+        // getRecordTitle() fatal (must be string). Resolved below instead.
+        return null;
+    }
+
+    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): ?string
+    {
+        if (! $record instanceof Manufacturer) {
+            return null;
+        }
+
+        return AdminUi::localizedName($record->name);
     }
 
     public static function form(Schema $schema): Schema
