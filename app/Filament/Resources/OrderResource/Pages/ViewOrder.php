@@ -137,6 +137,7 @@ class ViewOrder extends ViewRecord
                         app(PaymentService::class)->confirmBankTransferPayment(
                             $payment,
                             $data['transaction_id'] ?? '',
+                            auth('admin')->id(),
                         );
 
                         Notification::make()
@@ -215,8 +216,11 @@ class ViewOrder extends ViewRecord
                                         ->hiddenLabel()
                                         ->default(function () use ($record): string {
                                             $count = $record->items->count();
-                                            $total = format_money($record->items->sum('total_price'));
-                                            return "{$count} item(s) — Total: {$total}";
+                                            $total = $record->items->reduce(
+                                                fn (string $carry, $item): string => bcadd($carry, (string) $item->total_price, 2),
+                                                '0.00'
+                                            );
+                                            return "{$count} item(s) — Total: " . format_money($total);
                                         })
                                         ->extraAttributes(['class' => 'op-order-items-footer']),
                                 ]),

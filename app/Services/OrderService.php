@@ -298,6 +298,33 @@ class OrderService
     }
 
     /**
+     * Recalculate an order's money totals from its line items after an admin
+     * edits them. Shipping, VAT, and discount are kept as stored — only
+     * subtotal and grand_total are re-derived, using the same formula as
+     * createFromCheckout(): grand = (subtotal + shipping + vat) − discount,
+     * floored at 0.00.
+     */
+    public function recalculateTotals(Order $order): void
+    {
+        $subtotal = '0.00';
+        foreach ($order->items()->get(['total_price']) as $item) {
+            $subtotal = bcadd($subtotal, (string) $item->total_price, 2);
+        }
+
+        $taxableBase = bcadd($subtotal, (string) $order->shipping_cost, 2);
+        $grandTotal = bcsub(bcadd($taxableBase, (string) $order->vat_amount, 2), (string) $order->discount_amount, 2);
+
+        if (bccomp($grandTotal, '0.00', 2) === -1) {
+            $grandTotal = '0.00';
+        }
+
+        $order->forceFill([
+            'subtotal'    => $subtotal,
+            'grand_total' => $grandTotal,
+        ])->save();
+    }
+
+    /**
      * Calculate shipping cost. Returns '0.00' if no method selected.
      */
     public function calculateShippingCost(Cart $cart, ?int $shippingMethodId): string

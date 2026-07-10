@@ -118,8 +118,12 @@ class RefundRequestResource extends Resource
                                             ->prefix('€')
                                             ->required()
                                             ->minValue(0.01)
+                                            ->maxValue(fn (?RefundRequest $record): ?float => $record?->order ? (float) $record->order->grand_total : null)
                                             ->step(0.01)
                                             ->placeholder('0.00')
+                                            ->helperText(fn (?RefundRequest $record): ?string => $record?->order
+                                                ? 'Cannot exceed the order total of ' . format_money($record->order->grand_total) . '.'
+                                                : null)
                                             ->extraAttributes(['class' => 'op-fin-form-total']),
                                     ]),
                                 Section::make('Return Images')
@@ -332,14 +336,17 @@ class RefundRequestResource extends Resource
             ->authorize('update')
             ->requiresConfirmation()
             ->modalHeading('Approve Refund Request')
-            ->modalDescription('Mark this refund request as approved. The customer will be notified and you can process the refund manually or mark it as processed.')
+            ->modalDescription('Mark this refund request as approved. The customer receives an approval email; process the payout, then use "Mark Processed".')
             ->visible(fn (RefundRequest $record): bool => $record->status === RefundStatus::Pending)
             ->action(function (RefundRequest $record): void {
                 $record->status = RefundStatus::Approved;
                 $record->save();
 
+                dispatch(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Approved));
+
                 Notification::make()
-                    ->title('Refund approved successfully')
+                    ->title('Refund approved')
+                    ->body('The customer has been emailed about the approval.')
                     ->success()
                     ->send();
             });
@@ -368,8 +375,11 @@ class RefundRequestResource extends Resource
                 $record->admin_note = $data['admin_note'];
                 $record->save();
 
+                dispatch(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Rejected));
+
                 Notification::make()
                     ->title('Refund request rejected')
+                    ->body('The customer has been emailed with the rejection reason.')
                     ->danger()
                     ->send();
             });
