@@ -19,7 +19,11 @@ class ViewProduct extends ViewRecord
     {
         return [
             Actions\EditAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make(),
+            ])
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->color('gray'),
         ];
     }
 
@@ -67,6 +71,9 @@ class ViewProduct extends ViewRecord
                                             ->hiddenLabel()
                                             ->keyLabel('Language')
                                             ->valueLabel('Name')
+                                            ->state(fn ($record): array => collect($record->name ?? [])
+                                                ->mapWithKeys(fn ($value, $code) => [(\App\Filament\Support\AdminUi::LOCALES[$code] ?? $code) . " ({$code})" => $value])
+                                                ->all())
                                             ->placeholder('No names provided')
                                             ->columnSpanFull(),
                                     ]),
@@ -79,6 +86,9 @@ class ViewProduct extends ViewRecord
                                             ->hiddenLabel()
                                             ->keyLabel('Language')
                                             ->valueLabel('Description')
+                                            ->state(fn ($record): array => collect($record->description ?? [])
+                                                ->mapWithKeys(fn ($value, $code) => [(\App\Filament\Support\AdminUi::LOCALES[$code] ?? $code) . " ({$code})" => $value])
+                                                ->all())
                                             ->placeholder('No descriptions provided')
                                             ->columnSpanFull(),
                                     ]),

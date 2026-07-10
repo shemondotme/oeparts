@@ -40,9 +40,13 @@ class CategoryResource extends Resource
         return 'heroicon-o-folder';
     }
 
+    // Categories are a blog/content taxonomy (products never reference them)
+    // — they live in the Content cluster with the rest of the CMS, not Catalog.
+    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+
     public static function getNavigationGroup(): ?string
     {
-        return 'Catalog';
+        return null;
     }
 
     protected static ?int $navigationSort = 40;

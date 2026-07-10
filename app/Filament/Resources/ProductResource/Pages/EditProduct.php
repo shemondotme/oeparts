@@ -15,7 +15,11 @@ class EditProduct extends EditRecord
     {
         return [
             Actions\ViewAction::make(),
-            Actions\DeleteAction::make(),
+            Actions\ActionGroup::make([
+                Actions\DeleteAction::make(),
+            ])
+                ->icon('heroicon-o-ellipsis-vertical')
+                ->color('gray'),
         ];
     }
 

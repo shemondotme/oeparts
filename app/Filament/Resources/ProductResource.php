@@ -277,8 +277,9 @@ class ProductResource extends Resource
                     ->getStateUsing(fn (Product $record): string => $record->manufacturer ? static::localizedName($record->manufacturer->name) : '—')
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('manufacturer', function ($q) use ($search) {
-                            $q->where('name->en', 'like', "%{$search}%")
-                                ->orWhere('name->de', 'like', "%{$search}%");
+                            foreach (array_keys(AdminUi::LOCALES) as $i => $code) {
+                                $q->{$i === 0 ? 'where' : 'orWhere'}("name->{$code}", 'like', "%{$search}%");
+                            }
                         });
                     })
                     ->toggleable()
@@ -318,6 +319,9 @@ class ProductResource extends Resource
                     ->onColor('success')
                     ->offColor('danger')
                     ->tooltip(fn (Product $record): string => $record->is_in_stock ? 'In stock' : 'Out of stock')
+                    // Server-enforced (updateColumnState no-ops on disabled
+                    // columns) — same policy guard as the inline price column.
+                    ->disabled(fn (Product $record): bool => ! auth('admin')->user()?->can('update', $record))
                     ->alignCenter()
                     ->afterStateUpdated(function (\Filament\Tables\Table $table, $record, $state): void {
                         Notification::make()

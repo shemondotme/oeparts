@@ -82,7 +82,11 @@ class ExtendedAuthorizationTest extends TestCase
         return $this->adminWithRole($roleName);
     }
 
-    // ── Tier 1: actively exploitable today — ProductResource::toggleStock ──
+    // ── Tier 1: ProductResource stock toggle (inline column since the
+    // redundant toggleStock row action was removed — the ToggleColumn is now
+    // the ONLY stock mutation path, policy-guarded via disabled(), which
+    // Filament enforces server-side: updateColumnState() no-ops when the
+    // column is disabled for the record. ──
 
     #[Test]
     public function support_cannot_toggle_product_stock_but_manager_can(): void
@@ -97,15 +101,15 @@ class ExtendedAuthorizationTest extends TestCase
 
         $support = $this->adminWithRole('support');
         $this->actingAs($support, 'admin');
-        Livewire::test(ListProducts::class)->assertTableActionHidden('toggleStock', $product);
-        $this->assertTrue($product->refresh()->is_in_stock);
+        Livewire::test(ListProducts::class)
+            ->call('updateTableColumnState', 'is_in_stock', (string) $product->getKey(), false);
+        $this->assertTrue($product->refresh()->is_in_stock, 'support must not be able to flip stock via the toggle column');
 
         $manager = $this->adminWithRole('manager');
         $this->actingAs($manager, 'admin');
         Livewire::test(ListProducts::class)
-            ->assertTableActionVisible('toggleStock', $product)
-            ->callTableAction('toggleStock', $product);
-        $this->assertFalse($product->refresh()->is_in_stock);
+            ->call('updateTableColumnState', 'is_in_stock', (string) $product->getKey(), false);
+        $this->assertFalse($product->refresh()->is_in_stock, 'manager must be able to flip stock via the toggle column');
     }
 
     // ── Tier 3: Policy permission-key mismatch fixes ──
