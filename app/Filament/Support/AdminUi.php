@@ -691,7 +691,19 @@ final class AdminUi
         };
 
         if ($resourceClass && class_exists($resourceClass)) {
-            return $resourceClass::getUrl('view', ['record' => $record]);
+            // Not every resource registers a 'view' page (e.g. MediaFile is
+            // index+edit only) — building a URL for an unregistered page
+            // throws RouteNotFoundException DURING TABLE RENDER, 500ing the
+            // whole list the moment it has rows. Fall back gracefully.
+            $pages = $resourceClass::getPages();
+
+            foreach (['view', 'edit'] as $page) {
+                if (isset($pages[$page])) {
+                    return $resourceClass::getUrl($page, ['record' => $record]);
+                }
+            }
+
+            return $resourceClass::getUrl('index');
         }
 
         return '#';
