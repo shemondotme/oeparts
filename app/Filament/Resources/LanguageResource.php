@@ -167,7 +167,17 @@ class LanguageResource extends Resource
                     ->trueLabel('Default Only')
                     ->falseLabel('Non-Default'),
             ])
-            ->actions(AdminUi::recordActionsWithoutView())
+            ->actions([
+                Actions\ActionGroup::make([
+                    Actions\EditAction::make(),
+                    Actions\DeleteAction::make()
+                        // 'en' is the code-wide trans_field() fallback and the
+                        // default language drives the storefront — protected.
+                        // Explicit closure because Gate::before bypasses the
+                        // policy for super_admins.
+                        ->hidden(fn ($record): bool => \App\Policies\LanguagePolicy::isProtected($record)),
+                ]),
+            ])
         ->bulkActions([
             Actions\BulkActionGroup::make([
                 AdminUi::exportCsvBulkAction('Export Languages', [
@@ -178,7 +188,8 @@ class LanguageResource extends Resource
                     'is_active' => 'Active',
                     'sort_order' => 'Sort Order',
                 ]),
-                Actions\DeleteBulkAction::make(),
+                // No bulk delete: a handful of rows, two of them load-bearing
+                // ('en' + the default) — deletes go through the guarded action.
             ]),
         ])
             ->reorderable('sort_order')

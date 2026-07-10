@@ -18,4 +18,17 @@ class Language extends Model
         'is_active'  => 'boolean',
         'is_default' => 'boolean',
     ];
+
+    protected static function booted(): void
+    {
+        // Single-default invariant: making one language the default unsets
+        // every other (two defaults previously possible via the edit form).
+        static::saved(function (Language $language): void {
+            if ($language->is_default && $language->wasChanged('is_default')) {
+                static::whereKeyNot($language->getKey())
+                    ->where('is_default', true)
+                    ->update(['is_default' => false]);
+            }
+        });
+    }
 }

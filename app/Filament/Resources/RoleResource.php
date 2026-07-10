@@ -56,14 +56,14 @@ class RoleResource extends Resource
                             ->disabled()
                             ->dehydrated()
                             ->helperText('The authentication guard this role applies to.'),
-                        Forms\Components\Select::make('permissions')
+                        Forms\Components\CheckboxList::make('permissions')
                             ->label('Assigned Permissions')
                             ->relationship('permissions', 'name')
-                            ->multiple()
-                            ->preload()
+                            ->columns(3)
                             ->searchable()
+                            ->bulkToggleable()
                             ->columnSpanFull()
-                            ->helperText('Select the permissions this role grants. Hold Ctrl/Cmd to select multiple.'),
+                            ->helperText('Tick the permissions this role grants. Use the search box to filter, or "Select all / Deselect all" to bulk-toggle.'),
                     ])->columns(2),
             ]);
     }
@@ -84,12 +84,20 @@ class RoleResource extends Resource
                     ->badge()
                     ->color('gray'),
                 Tables\Columns\TextColumn::make('permissions_count')
-                    ->label('Assigned Permissions')
+                    ->label('Permissions')
                     ->counts('permissions')
                     ->badge()
                     ->color('info')
                     ->fontMono()
                     ->alignCenter(),
+                Tables\Columns\TextColumn::make('users_count')
+                    ->label('Admins')
+                    ->counts('users')
+                    ->badge()
+                    ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
+                    ->fontMono()
+                    ->alignCenter()
+                    ->tooltip('Administrators currently holding this role — roles in use cannot be deleted.'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime('M j, Y H:i')
@@ -103,7 +111,21 @@ class RoleResource extends Resource
                     ->default('admin')
                     ->native(false)
                     ->helperText('Filter roles by their authentication guard.'),
-            ])            ->actions(AdminUi::recordActions())
+            ])
+            ->actions([
+                Actions\ActionGroup::make([
+                    Actions\ViewAction::make(),
+                    Actions\EditAction::make()
+                        // super_admin is the Gate::before trust anchor — its
+                        // permission list is cosmetic and renaming it strips
+                        // every super admin's access. Explicit closure because
+                        // Gate::before bypasses the policy for super_admins.
+                        ->hidden(fn (Role $record): bool => $record->name === 'super_admin'),
+                    Actions\DeleteAction::make()
+                        ->hidden(fn (Role $record): bool => $record->name === 'super_admin'
+                            || $record->users()->exists()),
+                ]),
+            ])
         ->bulkActions([
             Actions\BulkActionGroup::make([
                 AdminUi::exportCsvBulkAction('Export Roles', [
@@ -112,7 +134,8 @@ class RoleResource extends Resource
                     'permissions_count' => 'Permissions',
                     'created_at' => 'Created',
                 ]),
-                Actions\DeleteBulkAction::make(),
+                // No bulk delete: role deletion is guarded per record
+                // (super_admin immutable, in-use roles protected).
             ]),
         ])
             ->defaultSort('name', 'asc')

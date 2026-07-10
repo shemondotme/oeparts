@@ -29,11 +29,28 @@ class RolePolicy
 
     public function update(Admin $admin, Role $role): bool
     {
+        // The super_admin role is the Gate::before trust anchor — renaming it
+        // silently strips every super admin's access. Immutable.
+        // (Gate::before bypasses policies FOR super_admins, so RoleResource
+        // ALSO hides these actions via explicit closures — defense in depth.)
+        if ($role->name === 'super_admin') {
+            return false;
+        }
+
         return $admin->hasRole('super_admin') || $admin->can('edit roles');
     }
 
     public function delete(Admin $admin, Role $role): bool
     {
+        if ($role->name === 'super_admin') {
+            return false;
+        }
+
+        // Deleting an in-use role silently strips those admins' access.
+        if ($role->users()->exists()) {
+            return false;
+        }
+
         return $admin->hasRole('super_admin') || $admin->can('delete roles');
     }
 
