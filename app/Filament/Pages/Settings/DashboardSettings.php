@@ -59,7 +59,7 @@ class DashboardSettings extends SettingsPage
                             ->minValue(1)
                             ->maxValue(720)
                             ->required()
-                            ->helperText('Hours of inactivity before a cart is counted as abandoned on the dashboard')
+                            ->helperText('Hours of inactivity before a cart counts as abandoned — drives the dashboard widget and the hourly recovery-email run')
                             ->default(2),
                     ])->columns(2),
             ]);

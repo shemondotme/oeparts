@@ -214,6 +214,18 @@ class HealthStrip extends StatsOverviewWidget
             $driver = config('cache.default');
             $ok = in_array($driver, ['redis', 'file', 'database'], true);
 
+            // Production requires Redis (file/database drivers are a
+            // dev-only convenience) — surface that instead of a green tile.
+            if ($ok && $driver !== 'redis' && app()->isProduction()) {
+                return [
+                    'label' => 'Cache',
+                    'value' => ucfirst($driver),
+                    'description' => 'Redis required in production',
+                    'icon' => 'heroicon-m-exclamation-triangle',
+                    'color' => 'warning',
+                ];
+            }
+
             return [
                 'label' => 'Cache',
                 'value' => ucfirst($driver),

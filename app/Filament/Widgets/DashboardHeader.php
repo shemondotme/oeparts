@@ -106,10 +106,14 @@ class DashboardHeader extends StatsOverviewWidget
      */
     private function delta(float $today, float $previous): array
     {
+        // A zero morning is normal, not a 100% collapse — keep it calm
+        // until there is actually something to compare.
+        if ($today <= 0.0) {
+            return ['text' => 'No activity yet today', 'icon' => 'heroicon-m-minus-small', 'color' => 'gray'];
+        }
+
         if ($previous <= 0.0) {
-            return $today > 0.0
-                ? ['text' => 'New activity today', 'icon' => 'heroicon-m-arrow-trending-up', 'color' => 'success']
-                : ['text' => 'No activity yet', 'icon' => 'heroicon-m-minus-small', 'color' => 'gray'];
+            return ['text' => 'New activity today', 'icon' => 'heroicon-m-arrow-trending-up', 'color' => 'success'];
         }
 
         $pct = (($today - $previous) / $previous) * 100;

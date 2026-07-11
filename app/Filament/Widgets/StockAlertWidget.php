@@ -89,9 +89,11 @@ class StockAlertWidget extends TableWidget
                     ->alignEnd(),
             ])
             ->actions([
+                // Edit link, honestly labelled — there is no procurement flow
+                // (binary stock only), so no "Reorder"/truck implications.
                 Tables\Actions\Action::make('reorder')
-                    ->label('Reorder')
-                    ->icon('heroicon-o-truck')
+                    ->label('Restock')
+                    ->icon('heroicon-o-pencil-square')
                     ->color('warning')
                     ->size(\Filament\Support\Enums\Size::Small)
                     ->iconButton()
