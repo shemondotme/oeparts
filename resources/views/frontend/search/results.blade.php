@@ -177,23 +177,23 @@
 
                         <dl class="space-y-0 flex-1">
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="bp-spec-mono shrink-0">Query</dt>
+                                <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_query_label', 'search.query_label') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0 truncate max-w-[180px]">{{ $normalized_query }}</dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="bp-spec-mono shrink-0">Match type</dt>
+                                <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_match_type_label', 'search.match_type_label') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-amber-ink shrink-0">{{ $matchBadge['code'] }}</dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="bp-spec-mono shrink-0">Hits</dt>
+                                <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_hits_label', 'search.hits_label') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">{{ number_format($total) }}</dd>
                             </div>
                             @if($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="bp-spec-mono shrink-0">Page</dt>
+                                <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_page_label', 'search.page_label') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm tabular-nums text-ink shrink-0">
                                     {{ $products->currentPage() }} / {{ $products->lastPage() }}
@@ -201,10 +201,10 @@
                             </div>
                             @endif
                             <div class="flex items-baseline justify-between gap-3 py-2.5">
-                                <dt class="bp-spec-mono shrink-0">Filters</dt>
+                                <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_filters', 'search.filters') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0">
-                                    {{ $activeFilterCount }} active
+                                    {{ ui_trans_choice('search_filters_active_choice', 'search.filters_active_choice', $activeFilterCount) }}
                                 </dd>
                             </div>
                         </dl>
@@ -353,7 +353,7 @@
                         {{-- Condition (desktop) --}}
                         <div class="hidden sm:flex items-center gap-2">
                             <span class="w-px h-5 bg-rule"></span>
-                            <span class="bp-spec text-ink-muted">Condition</span>
+                            <span class="bp-spec text-ink-muted">{{ ui_copy('search_condition', 'search.condition') }}</span>
                             @foreach($conditionLabels as $val => $label)
                             @php $cnt = $condition_counts[$val] ?? 0; @endphp
                             @if($cnt > 0)
@@ -552,13 +552,13 @@
                                         <th class="text-left px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle" scope="col">
                                             <span class="flex items-center gap-2">
                                                 <span class="font-mono text-[10px] text-ink-muted">№</span>
-                                                OEM · Brand
+                                                {{ ui_copy('search_th_oem_brand', 'search.th_oem_brand') }}
                                             </span>
                                         </th>
-                                        <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Condition</th>
-                                        <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Stock</th>
-                                        <th class="text-right px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Price · {{ settings('store.currency_symbol', '€') }}</th>
-                                        <th class="text-center px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">Action</th>
+                                        <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_condition', 'search.th_condition') }}</th>
+                                        <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_stock', 'search.th_stock') }}</th>
+                                        <th class="text-right px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_price', 'search.th_price') }} · {{ settings('store.currency_symbol', '€') }}</th>
+                                        <th class="text-center px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_action', 'search.th_action') }}</th>
                                     </tr>
                                 </thead>
                                 @foreach($products as $index => $product)
@@ -588,7 +588,7 @@
                                             <div class="flex items-center gap-2">
                                                 <span class="w-6 h-[2px] bg-amber"></span>
                                                 <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-ink">
-                                                    Best Match · Row 001
+                                                    {{ ui_copy('search_best_match_row', 'search.best_match_row', ['row' => $rowNum]) }}
                                                 </span>
                                             </div>
                                         </td>
@@ -731,12 +731,12 @@
                                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-rule bg-paper">
                                                 @if($product->delivery_time)
                                                 <div class="p-4 border-rule border-b sm:border-b-0 sm:border-r">
-                                                    <p class="bp-spec text-ink-muted mb-2">Delivery</p>
+                                                    <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_delivery', 'search.delivery') }}</p>
                                                     <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $product->delivery_time }}</p>
                                                 </div>
                                                 @endif
                                                 <div class="p-4 border-rule border-b sm:border-b-0 sm:border-r">
-                                                    <p class="bp-spec text-ink-muted mb-2">Condition</p>
+                                                    <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_condition', 'search.condition') }}</p>
                                                     <span class="inline-flex items-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm"
                                                           style="background-color: {{ $condBg }}; color: {{ $condText }};">{{ $condLabel }}</span>
                                                 </div>
@@ -751,7 +751,7 @@
                                             <div class="mt-5 pt-4 border-t border-rule">
                                                 <div class="flex items-center gap-3 mb-3">
                                                     <x-heroicon-o-arrow-path class="w-3.5 h-3.5 text-amber-ink" />
-                                                    <span class="bp-spec text-amber-ink">Cross-references · {{ $totalRefs }}</span>
+                                                    <span class="bp-spec text-amber-ink">{{ ui_copy('search_cross_refs_title_count', 'search.cross_refs_title_count', ['count' => $totalRefs]) }}</span>
                                                 </div>
                                                 <div class="flex flex-wrap gap-2">
                                                     @foreach($crossRefs as $cross)
@@ -829,7 +829,7 @@
                         <div class="flex items-center gap-2 bg-amber/10 border-b border-amber px-4 py-2">
                             <span class="w-4 h-[2px] bg-amber"></span>
                             <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-ink">
-                                Best Match
+                                {{ ui_copy('search_best_match', 'search.best_match') }}
                             </span>
                         </div>
                         @endif
@@ -972,7 +972,7 @@
                             <div class="grid grid-cols-2 border border-rule bg-paper">
                                 @if($product->delivery_time)
                                 <div class="p-3 border-r border-rule">
-                                    <p class="bp-spec text-ink-muted mb-1">Delivery</p>
+                                    <p class="bp-spec text-ink-muted mb-1">{{ ui_copy('search_delivery', 'search.delivery') }}</p>
                                     <p class="font-mono text-xs font-bold text-ink">{{ $product->delivery_time }}</p>
                                 </div>
                                 @endif
@@ -985,7 +985,7 @@
                             @if($crossRefs->isNotEmpty())
                             @php $refLimit = 4; $totalRefs = $crossRefs->count(); @endphp
                             <div class="pt-2">
-                                <p class="bp-spec text-amber-ink mb-3">Cross-references</p>
+                                <p class="bp-spec text-amber-ink mb-3">{{ ui_copy('search_cross_refs_title', 'search.cross_refs_title') }}</p>
                                 <div class="flex flex-wrap gap-1.5">
                                     @foreach($crossRefs as $cross)
                                     <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $cross->normalized_cross_oem ?? $cross->cross_oem_number]) }}"

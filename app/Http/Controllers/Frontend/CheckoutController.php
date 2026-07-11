@@ -454,7 +454,7 @@ class CheckoutController extends Controller
         if ($order->payment_method !== PaymentMethod::Card) {
             return response()->json([
                 'success' => false,
-                'message' => settings('checkout.payment_error_message', 'Payment method is not card'),
+                'message' => settings_trans('checkout.payment_error_message', 'Payment method is not card'),
             ], 400);
         }
         
@@ -539,7 +539,7 @@ class CheckoutController extends Controller
         // For card payments, we rely on webhook for status updates
         return response()->json([
             'success' => true,
-            'message' => settings('checkout.payment_success_message', 'Payment processing initiated'),
+            'message' => settings_trans('checkout.payment_success_message', 'Payment processing initiated'),
             'redirect_url' => route('frontend.checkout.payment.return', [
                 'lang' => $lang,
                 'order' => $order->order_number,

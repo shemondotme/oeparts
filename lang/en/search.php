@@ -14,6 +14,12 @@ return [
     'mini_search_aria' => 'Search by OEM part number',
     'mini_search_button' => 'Search',
 
+    'query_label' => 'Query',
+    'match_type_label' => 'Match type',
+    'hits_label' => 'Hits',
+    'page_label' => 'Page',
+    'best_match_row' => 'Best Match · Row :row',
+
     'heading_results_for' => 'Results for',
     'parts_found_sentence' => ':count :parts_word found',
     'part' => 'part',
@@ -116,6 +122,7 @@ return [
     'cross_refs_hint' => '— Compatible OEM numbers',
     'cross_refs_view_all' => 'View all :count equivalents',
     'cross_refs_show_less' => 'Show less',
+    'cross_refs_title_count' => 'Cross-references · :count',
 
     'inquiry_title' => 'Can\'t find what you need?',
     'inquiry_subtitle' => 'Submit a part inquiry and our sourcing team will respond within :hours hours.',
@@ -173,6 +180,18 @@ return [
     'zero_step_2_body' => '12+ partners across Europe get notified.',
     'zero_step_3_title' => 'You get a quote',
     'zero_step_3_body' => 'Within :hours h by email.',
+    'submitted_label' => 'Submitted',
+    'normalized_label' => 'Normalized',
+    'catalogue_label' => 'Catalogue',
+    'zero_hits' => '0 hits',
+    'status_label' => 'Status',
+    'concierge_label' => 'Concierge',
+    'trust_record_label' => 'Trust · Record',
+    'trust_sub_background_checked' => 'Background-checked',
+    'trust_sub_eu_despatch' => 'EU despatch · 24-48h',
+    'trust_sub_genuine_warranty' => 'Genuine · warranty-backed',
+    'typical_sla_label' => 'Typical SLA',
+    'business_hours_response' => 'Business-hours response',
 
     // Search Console page (/{lang}/parts)
     'console_seo_title' => 'Parts Search Console',
