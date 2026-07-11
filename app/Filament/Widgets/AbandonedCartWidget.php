@@ -3,12 +3,12 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\AbandonedCartResource;
-use App\Models\Cart;
-use Filament\Support\Enums\Alignment;
+use App\Models\AbandonedCart;
+use App\Services\CartRecoveryService;
+use Filament\Notifications\Notification;
+use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -20,14 +20,12 @@ class AbandonedCartWidget extends TableWidget
 
     public function getDescription(): ?string
     {
-        return 'Carts left before checkout';
+        return 'Carts left before checkout — recovery opportunity';
     }
 
     protected function getTableHeading(): string
     {
-        $count = Cart::where('updated_at', '<', now()->subHours((int) settings('dashboard.cart_abandoned_hours', 2)))
-            ->whereHas('items')
-            ->count();
+        $count = AbandonedCart::where('recovery_email_sent', false)->count();
 
         return 'Abandoned Carts' . ($count > 0 ? " ({$count})" : '');
     }
@@ -55,52 +53,65 @@ class AbandonedCartWidget extends TableWidget
     {
         return $table
             ->query(
-                Cart::query()
-                    ->withCount('items')
-                    ->where('updated_at', '<', now()->subHours((int) settings('dashboard.cart_abandoned_hours', 2)))
-                    ->whereHas('items')
-                    ->latest('updated_at')
+                AbandonedCart::query()
+                    ->with('user')
+                    ->latest('last_active_at')
                     ->limit(10)
             )
             ->columns([
                 TextColumn::make('user.email')
                     ->label('Customer')
+                    ->getStateUsing(fn (AbandonedCart $record): string => $record->guest_email ?? $record->user?->email ?? '—')
                     ->weight(FontWeight::Bold)
-                    ->placeholder('Guest checkout')
                     ->limit(32)
-                    ->tooltip(fn (Cart $record): ?string => $record->user?->email && mb_strlen((string) $record->user->email) > 32 ? $record->user->email : null)
-                    ->description(fn (Cart $record): string => $record->items_count . ' item' . ((int) $record->items_count === 1 ? '' : 's') . ' in cart'),
-                TextColumn::make('updated_at')
+                    ->description(function (AbandonedCart $record): string {
+                        $items = count($record->cart_snapshot['items'] ?? []);
+                        $total = $record->cart_snapshot['total'] ?? null;
+
+                        return $items . ' item' . ($items === 1 ? '' : 's')
+                            . ($total !== null ? ' · ' . format_money($total) : '');
+                    }),
+                TextColumn::make('recovery_email_sent')
+                    ->label('Recovery')
+                    ->badge()
+                    ->formatStateUsing(fn (bool $state): string => $state ? 'Sent' : 'Not sent')
+                    ->color(fn (bool $state): string => $state ? 'success' : 'warning'),
+                TextColumn::make('last_active_at')
                     ->label('Last Active')
                     ->since()
-                    ->color(function (Cart $record): string {
-                        $hours = now()->diffInHours($record->updated_at);
-                        if ($hours < 12) return 'success';
-                        if ($hours < 24) return 'warning';
-                        return 'danger';
-                    })
-                    ->weight(FontWeight::Medium)
+                    ->fontFamily(FontFamily::Mono)
                     ->alignEnd(),
             ])
             ->actions([
-                Tables\Actions\Action::make('send_reminder')
-                    ->label('Send Reminder')
-                    ->icon('heroicon-o-bell')
-                    ->color('warning')
+                Tables\Actions\Action::make('send_recovery')
+                    ->label(fn (AbandonedCart $record): string => $record->recovery_email_sent ? 'Send Again' : 'Send Recovery')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color(fn (AbandonedCart $record): string => $record->recovery_email_sent ? 'gray' : 'info')
                     ->size('sm')
-                    ->disabled(fn (Cart $record): bool => $record->user?->email === null)
-                    ->tooltip(fn (Cart $record): ?string => $record->user?->email === null
-                        ? 'No email on file — guest checkout'
-                        : null)
-                    ->action(function (Cart $record): void {
-                        $record->touch('reminded_at');
-                        \Filament\Notifications\Notification::make()
-                            ->title('Reminder sent')
+                    ->authorize('update')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (AbandonedCart $record): string => $record->recovery_email_sent ? 'Send Recovery Email Again' : 'Send Recovery Email')
+                    ->modalDescription(fn (AbandonedCart $record): string => $record->recovery_email_sent
+                        ? 'A recovery email was already sent for this cart — sending another should be a deliberate choice.'
+                        : 'Send a cart recovery email to the customer reminding them of the items left in their cart.')
+                    ->action(function (AbandonedCart $record): void {
+                        if (! app(CartRecoveryService::class)->send($record)) {
+                            Notification::make()
+                                ->title('No email address')
+                                ->body('This abandoned cart has no associated customer or guest email.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        Notification::make()
+                            ->title('Recovery email sent')
                             ->success()
                             ->send();
                     }),
                 Tables\Actions\ViewAction::make()
-                    ->url(fn (Cart $record): string => AbandonedCartResource::getUrl('view', ['record' => $record]))
+                    ->url(fn (AbandonedCart $record): string => AbandonedCartResource::getUrl('view', ['record' => $record]))
                     ->size('sm')
                     ->icon('heroicon-m-eye'),
             ])

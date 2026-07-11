@@ -2,13 +2,21 @@
 
 namespace App\Filament\Resources\PartInquiryResource\Pages;
 
+use App\Filament\Concerns\FillsFromQuery;
 use App\Filament\Resources\PartInquiryResource;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreatePartInquiry extends CreateRecord
 {
+    use FillsFromQuery;
+
     protected static string $resource = PartInquiryResource::class;
+
+    protected function queryFillable(): array
+    {
+        return ['oem_number'];
+    }
 
     protected ?string $heading = 'New Part Inquiry';
 

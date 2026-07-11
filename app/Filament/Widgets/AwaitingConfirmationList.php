@@ -34,7 +34,7 @@ class AwaitingConfirmationList extends TableWidget
 
     public function getDescription(): ?string
     {
-        return 'Orders pending admin confirmation';
+        return 'Paid orders awaiting fulfilment action';
     }
 
     protected function getTableHeading(): string
@@ -93,42 +93,46 @@ class AwaitingConfirmationList extends TableWidget
                     ),
             ])
             ->actions([
-                Tables\Actions\Action::make('approve')
-                    ->label('Approve')
-                    ->icon('heroicon-o-check')
-                    ->color('success')
+                // Deliberately narrow: paid orders can be moved into processing
+                // here; shipping (needs a tracking number) and cancelling a paid
+                // order (refund territory) stay on the order page's guarded flows.
+                Tables\Actions\Action::make('start_processing')
+                    ->label('Start Processing')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->color('info')
+                    ->size('sm')
+                    ->authorize('update')
+                    ->visible(fn (Order $record): bool => $record->status === OrderStatus::Paid)
                     ->requiresConfirmation()
+                    ->modalDescription('Move this paid order into processing. The customer is notified by email.')
                     ->action(function (Order $record): void {
-                        app(OrderService::class)->transitionStatus(
-                            $record,
-                            OrderStatus::Shipped,
-                            'Approved via Awaiting Confirmation widget.',
-                            auth('admin')->id(),
-                        );
+                        try {
+                            app(OrderService::class)->transitionStatus(
+                                $record,
+                                OrderStatus::Processing,
+                                'Started processing via Awaiting Confirmation widget.',
+                                auth('admin')->id(),
+                            );
+                        } catch (\InvalidArgumentException $e) {
+                            Notification::make()
+                                ->title('Transition not allowed')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
 
                         Notification::make()
-                            ->title('Order approved')
+                            ->title('Order is now processing')
                             ->success()
                             ->send();
                     }),
-                Tables\Actions\Action::make('reject')
-                    ->label('Reject')
-                    ->icon('heroicon-o-x-mark')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->action(function (Order $record): void {
-                        app(OrderService::class)->transitionStatus(
-                            $record,
-                            OrderStatus::Cancelled,
-                            'Rejected via Awaiting Confirmation widget.',
-                            auth('admin')->id(),
-                        );
-
-                        Notification::make()
-                            ->title('Order cancelled')
-                            ->success()
-                            ->send();
-                    }),
+                Tables\Actions\Action::make('view')
+                    ->label('View')
+                    ->icon('heroicon-m-eye')
+                    ->size('sm')
+                    ->url(fn (Order $record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record])),
             ])
             ->recordClasses(fn (Order $record): ?string => (int) $record->created_at->diffInDays(now()) >= 3 ? 'op-row-warn' : null)
             ->striped()

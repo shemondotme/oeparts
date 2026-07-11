@@ -2,12 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\SendAbandonedCartEmail;
 use App\Models\AbandonedCart;
 use App\Models\Cart;
-use App\Models\User;
+use App\Services\CartRecoveryService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 
 class ProcessAbandonedCarts extends Command
 {
@@ -23,117 +21,80 @@ class ProcessAbandonedCarts extends Command
      *
      * @var string
      */
-    protected $description = 'Process abandoned carts and send recovery emails';
+    protected $description = 'Snapshot abandoned carts and send recovery emails';
 
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(CartRecoveryService $recovery): int
     {
         $this->info('Processing abandoned carts...');
 
-        // Find carts that are abandoned (inactive for more than 1 hour)
-        // and have not been recovered yet
-        $cutoffTime = now()->subHour();
+        // Same staleness window the dashboard widget shows, so the operator's
+        // "Abandoned Carts" list and the automated recovery agree on what
+        // "abandoned" means.
+        $cutoffTime = now()->subHours((int) settings('dashboard.cart_abandoned_hours', 2));
 
-        $abandonedCarts = DB::table('carts')
+        $staleCarts = Cart::query()
+            ->with(['user', 'items.product'])
             ->where('updated_at', '<', $cutoffTime)
             ->whereHas('items')
             ->get();
 
         $emailCount = 0;
 
-        foreach ($abandonedCarts as $cart) {
-            // Check if we already sent a recovery email
-            $existingRecord = AbandonedCart::where('user_id', $cart->user_id)
-                ->where('guest_email', $cart->guest_email ?? null)
+        foreach ($staleCarts as $cart) {
+            // Guest carts carry no email address — nothing to recover to.
+            if (! $cart->user?->email) {
+                continue;
+            }
+
+            // One recovery per customer per 7 days, regardless of cart churn.
+            $alreadySent = AbandonedCart::where('user_id', $cart->user_id)
                 ->where('recovery_email_sent', true)
                 ->where('created_at', '>', now()->subDays(7))
-                ->first();
+                ->exists();
 
-            if ($existingRecord) {
-                continue; // Already sent recovery email in the last 7 days
-            }
-
-            // Get cart items for snapshot with product data
-            $items = DB::table('cart_items')
-                ->leftJoin('products', 'cart_items.product_id', '=', 'products.id')
-                ->where('cart_items.cart_id', $cart->id)
-                ->select('cart_items.*', 'products.oem_number')
-                ->get();
-
-            if ($items->isEmpty()) {
+            if ($alreadySent) {
                 continue;
             }
 
-            // Determine email recipient
-            $email = null;
-            $userId = null;
-            $customerName = null;
+            $snapshotItems = $cart->items->map(fn ($item): array => [
+                'id' => $item->id,
+                'cart_id' => $item->cart_id,
+                'product_id' => $item->product_id,
+                'oem_number' => $item->product?->oem_number,
+                'oem_number_snapshot' => $item->product?->oem_number,
+                'quantity' => $item->quantity,
+                'price_at_add' => $item->price_at_add,
+                'total_price' => bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
+            ])->all();
 
-            if ($cart->user_id) {
-                $user = User::find($cart->user_id);
-                if ($user) {
-                    $email = $user->email;
-                    $userId = $user->id;
-                    $customerName = $user->name;
-                }
-            } elseif ($cart->guest_email) {
-                $email = $cart->guest_email;
-            }
+            $total = array_reduce(
+                $snapshotItems,
+                fn (string $carry, array $item): string => bcadd($carry, $item['total_price'], 2),
+                '0.00',
+            );
 
-            if (!$email) {
-                continue;
-            }
-
-            // Build snapshot with enriched item data
-            $snapshotItems = $items->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'cart_id' => $item->cart_id,
-                    'product_id' => $item->product_id,
-                    'oem_number' => $item->oem_number ?? null,
-                    'oem_number_snapshot' => $item->oem_number ?? null,
-                    'quantity' => $item->quantity,
-                    'price_at_add' => $item->price_at_add,
-                    'total_price' => bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
-                ];
-            })->toArray();
-
-            $total = array_reduce($snapshotItems, function ($carry, $item) {
-                return bcadd($carry, $item['total_price'], 2);
-            }, '0.00');
-
-            // Create abandoned cart record
             $abandonedCart = AbandonedCart::create([
-                'user_id' => $userId,
-                'guest_email' => $cart->guest_email,
+                'user_id' => $cart->user_id,
+                'guest_email' => null,
                 'cart_snapshot' => [
                     'items' => $snapshotItems,
                     'total' => $total,
-                    'customer_name' => $customerName,
+                    'customer_name' => $cart->user->name,
                 ],
                 'last_active_at' => $cart->updated_at,
                 'recovery_email_sent' => false,
             ]);
 
-            // Dispatch recovery email job
-            dispatch(new SendAbandonedCartEmail(
-                $email,
-                $abandonedCart->cart_snapshot,
-                $customerName,
-                $user?->locale ?? 'en',
-            ));
-            
-            // Mark as sent
-            $abandonedCart->update(['recovery_email_sent' => true]);
-            
-            $emailCount++;
-
-            $this->info("Queued recovery email for: {$email}");
+            if ($recovery->send($abandonedCart)) {
+                $emailCount++;
+                $this->info("Queued recovery email for: {$cart->user->email}");
+            }
         }
 
-        $this->info("Processed {$abandonedCarts->count()} abandoned carts, queued {$emailCount} recovery emails.");
+        $this->info("Processed {$staleCarts->count()} stale carts, queued {$emailCount} recovery emails.");
 
         return Command::SUCCESS;
     }
