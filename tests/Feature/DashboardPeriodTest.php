@@ -188,4 +188,59 @@ class DashboardPeriodTest extends TestCase
     {
         return $v ? 'true' : 'false';
     }
+
+    // ── The global period control (chart pill strips) ────────────────────
+
+    #[Test]
+    public function clicking_a_chart_pill_persists_the_period_and_broadcasts_it(): void
+    {
+        \Livewire\Livewire::test(\App\Filament\Widgets\RevenueChart::class)
+            ->set('filter', '7')
+            ->assertSet('period', '7')
+            ->assertDispatched('period-changed', period: '7');
+
+        $this->assertSame('7', $this->service->getPeriod(), 'pill choice must persist per admin');
+    }
+
+    #[Test]
+    public function stat_widgets_follow_the_broadcast_period(): void
+    {
+        \Livewire\Livewire::test(\App\Filament\Widgets\OrderStatsOverview::class)
+            ->dispatch('period-changed', period: '90')
+            ->assertSet('period', '90');
+    }
+
+    #[Test]
+    public function other_charts_sync_their_pill_highlight_to_the_broadcast(): void
+    {
+        \Livewire\Livewire::test(\App\Filament\Widgets\OrderVolumeChart::class)
+            ->dispatch('period-changed', period: '365')
+            ->assertSet('period', '365')
+            ->assertSet('filter', '365');
+    }
+
+    #[Test]
+    public function charts_hydrate_pills_from_the_persisted_period_on_mount(): void
+    {
+        $this->service->savePeriod('90');
+
+        \Livewire\Livewire::test(\App\Filament\Widgets\CustomerGrowthChart::class)
+            ->assertSet('filter', '90')
+            ->assertSet('period', '90');
+    }
+
+    #[Test]
+    public function every_chart_with_pills_also_participates_in_the_global_period(): void
+    {
+        foreach ([
+            \App\Filament\Widgets\RevenueChart::class,
+            \App\Filament\Widgets\OrderVolumeChart::class,
+            \App\Filament\Widgets\OrderStatusDistributionWidget::class,
+            \App\Filament\Widgets\CustomerGrowthChart::class,
+        ] as $class) {
+            $uses = class_uses_recursive($class);
+            $this->assertArrayHasKey(\App\Filament\Widgets\Concerns\HasPeriodFilterPills::class, $uses, class_basename($class));
+            $this->assertArrayHasKey(HasDashboardPeriod::class, $uses, class_basename($class));
+        }
+    }
 }

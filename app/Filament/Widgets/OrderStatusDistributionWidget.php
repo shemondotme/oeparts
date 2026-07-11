@@ -9,10 +9,14 @@ use Filament\Widgets\ChartWidget;
 class OrderStatusDistributionWidget extends ChartWidget
 {
     use Concerns\HasDashboardPeriod;
+    use Concerns\HasPeriodFilterPills;
     use Concerns\HasWidgetRoles;
     use Concerns\InteractsWithDashboardCache;
 
     protected ?string $heading = 'Order Status';
+
+    // Segmented pill period selector (the global period control).
+    protected string $view = 'filament.widgets.chart-with-period';
 
     protected ?string $pollingInterval = '120s';
 

@@ -12,6 +12,7 @@ use Flowframe\Trend\TrendValue;
 class RevenueChart extends ChartWidget
 {
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasPeriodFilterPills;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
     use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
@@ -30,36 +31,6 @@ class RevenueChart extends ChartWidget
     protected static ?int $sort = -38;
 
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
-
-    public ?string $filter = '30';
-
-    protected function getFilters(): ?array
-    {
-        return [
-            '1' => 'Today',
-            '7' => '7d',
-            '30' => '30d',
-            '90' => '90d',
-            '365' => '1y',
-        ];
-    }
-
-    public function updatedFilter(string $value): void
-    {
-        $this->period = $value;
-        $this->dispatch('cc-date-range-changed', range: $value);
-    }
-
-    #[\Livewire\Attributes\On('cc-date-range-changed')]
-    public function onCcDateRangeChanged(string $range): void
-    {
-        if ($this->filter !== $range) {
-            $this->filter = $range;
-            $this->period = $range;
-            $this->updateChartData();
-        }
-    }
-
 
     protected function getType(): string
     {

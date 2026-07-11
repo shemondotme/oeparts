@@ -12,12 +12,13 @@ class Dashboard extends BaseDashboard
 {
     protected static ?int $navigationSort = -2;
 
-    public string $period = '30';
-
     /**
      * Dashboard-header "Customize" button — the single, discoverable entry
      * point for managing which widgets appear (moved here from the hidden
      * user-menu item). WidgetPreferences enforces its own auth in mount().
+     *
+     * The global period is NOT owned here: the chart widgets' pill strips
+     * (HasPeriodFilterPills) persist it and broadcast 'period-changed'.
      */
     protected function getHeaderActions(): array
     {
@@ -29,23 +30,6 @@ class Dashboard extends BaseDashboard
                 ->outlined()
                 ->url(WidgetPreferences::getUrl()),
         ];
-    }
-
-    public function mount(): void
-    {
-        $admin = auth('admin')->user();
-
-        if ($admin) {
-            $this->period = app(WidgetPreferenceService::class)->getPeriod();
-        }
-    }
-
-    #[\Livewire\Attributes\Renderless]
-    public function setPeriod(string $period): void
-    {
-        $this->period = $period;
-        app(WidgetPreferenceService::class)->savePeriod($period);
-        $this->dispatch('period-changed', period: $period);
     }
 
     public function getWidgets(): array

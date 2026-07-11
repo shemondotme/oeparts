@@ -8,15 +8,15 @@ use Carbon\CarbonInterface;
 /**
  * Global dashboard period participation.
  *
- * The Dashboard page persists the selected period ('1','7','30','90','365')
- * per admin and broadcasts 'period-changed'. Widgets using this trait
- * hydrate the persisted value on mount (so lazy-loaded widgets are correct
- * without the event) and re-render when it changes.
+ * The chart widgets' pill strips (HasPeriodFilterPills) persist the selected
+ * period ('1','7','30','90','365') per admin and broadcast 'period-changed'.
+ * Widgets using this trait hydrate the persisted value on mount (so
+ * lazy-loaded widgets are correct without the event) and re-render when it
+ * changes.
  *
  * Exempt widgets (registry 'period' => false) keep their semantic windows:
- * DashboardHeader (today), QuickActions, HealthStrip, DiskSpace,
- * RequestMetrics, DashboardAlerts, StockAlert, AbandonedCart (2h),
- * PartsInquiry pending, RecentActivityLog.
+ * DashboardHeader (today), HealthStrip, DiskSpace, RequestMetrics,
+ * StockAlert, AbandonedCart, PartsInquiry pending, RecentActivityLog.
  */
 trait HasDashboardPeriod
 {
@@ -38,6 +38,12 @@ trait HasDashboardPeriod
     {
         if (in_array($period, ['1', '7', '30', '90', '365'], true)) {
             $this->period = $period;
+
+            // Charts carrying the pill strip keep their highlighted pill in
+            // step when another widget's strip made the change.
+            if (property_exists($this, 'filter')) {
+                $this->filter = $period;
+            }
         }
     }
 
