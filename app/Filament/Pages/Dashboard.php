@@ -68,10 +68,13 @@ class Dashboard extends BaseDashboard
                 return false;
             }
 
-            // Get widget ID and check visibility preference
+            // Only registry widgets belong on the dashboard. Panel-wide
+            // discovery also picks up Reports/System page widgets — without
+            // this gate they all render here, ungrouped, duplicating the
+            // health strip (and exposing System data to manager roles).
             $widgetId = $service->getWidgetId($class);
             if (! $widgetId) {
-                return true;
+                return false;
             }
 
             return $service->getVisibility($widgetId);

@@ -16,7 +16,8 @@ class OrderStatusDistributionWidget extends ChartWidget
 
     protected ?string $pollingInterval = '120s';
 
-    protected static bool $isLazy = true;
+    // Eager: async-alpine never initializes charts on lazily-morphed HTML (see RevenueChart).
+    protected static bool $isLazy = false;
 
     protected static ?int $sort = -24;
 

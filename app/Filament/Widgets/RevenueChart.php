@@ -22,7 +22,10 @@ class RevenueChart extends ChartWidget
 
     protected ?string $pollingInterval = '120s';
 
-    protected static bool $isLazy = true;
+    // Chart widgets must render in the initial page HTML: async-alpine never
+    // initializes the `chart` Alpine component on lazily-morphed elements
+    // (stuck x-ignore, blank canvas, zero errors). Data is cached, so eager is cheap.
+    protected static bool $isLazy = false;
 
     protected static ?int $sort = -38;
 
