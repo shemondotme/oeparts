@@ -25,8 +25,9 @@ class SetupAssistant extends Page
 
     protected string $view = 'filament.pages.system.setup-assistant';
 
-    protected static bool $shouldRegisterNavigation = false;
-
+    // Listed in the System cluster nav — this is the operator's onboarding
+    // surface (setup checklist, demo data, maintenance) and used to be
+    // reachable only through a single Health Check link.
     public static function getNavigationSort(): ?int
     {
         return 69;
@@ -243,15 +244,15 @@ class SetupAssistant extends Page
                 'level' => 'MEDIUM',
                 'color' => 'warning',
                 'label' => $this->isDownForMaintenance()
-                    ? 'Brings the site back online. All users will be able to access the storefront.'
-                    : 'Blocks all public access to the site. Only admins with panel access can log in.',
+                    ? 'Brings the storefront back online for all visitors.'
+                    : 'Shows visitors the maintenance page (503). The admin panel stays fully accessible; whitelisted IPs from Maintenance Settings can still browse.',
                 'requireTypedConfirmation' => false,
                 'confirmText' => null,
             ],
             'clearCache' => [
                 'level' => 'LOW',
                 'color' => 'success',
-                'label' => 'Flushes all application cache (views, config, routes, events). No data loss. May temporarily slow down the site while cache rebuilds.',
+                'label' => 'Rebuilds the framework caches (config, routes, views, events). Application data, sessions, and the settings cache are not touched.',
                 'requireTypedConfirmation' => false,
                 'confirmText' => null,
             ],
@@ -274,12 +275,19 @@ class SetupAssistant extends Page
 
     public function clearCache(): void
     {
-        Artisan::call('cache:clear');
+        // Framework caches only. NEVER cache:clear here — that is
+        // Cache::flush() on the shared store (rule #5): it destroys
+        // sessions on production Redis and every cached settings group.
+        Artisan::call('config:clear');
+        Artisan::call('route:clear');
+        Artisan::call('view:clear');
+        Artisan::call('event:clear');
 
-        $this->logAction('clear_cache', 'Cache cleared via admin panel');
+        $this->logAction('clear_cache', 'Framework caches cleared via admin panel');
 
         Notification::make()
-            ->title('Cache cleared')
+            ->title('System caches cleared')
+            ->body('Config, route, view, and event caches were rebuilt.')
             ->success()
             ->send();
     }
@@ -340,20 +348,25 @@ class SetupAssistant extends Page
 
     public function toggleMaintenance(): void
     {
+        // Drives the settings-based MaintenanceMode middleware (Module 19)
+        // — the same flag as Settings > Maintenance. Never `artisan down`:
+        // that is a second, disconnected maintenance system whose 503 also
+        // locks the operator out of this very panel.
         $wasDown = $this->isDownForMaintenance();
 
+        app(\App\Services\SettingsService::class)->set('maintenance.enabled', $wasDown ? '0' : '1');
+
         if ($wasDown) {
-            Artisan::call('up');
-            $this->logAction('maintenance_disabled', 'Maintenance mode disabled, site back online');
+            $this->logAction('maintenance_disabled', 'Maintenance mode disabled, storefront back online');
             Notification::make()
                 ->title('Maintenance mode disabled')
                 ->success()
                 ->send();
         } else {
-            Artisan::call('down', ['--render' => 'errors.503']);
-            $this->logAction('maintenance_enabled', 'Maintenance mode enabled, site offline');
+            $this->logAction('maintenance_enabled', 'Maintenance mode enabled, storefront offline');
             Notification::make()
                 ->title('Maintenance mode enabled')
+                ->body('Visitors see the maintenance page; the admin panel stays reachable.')
                 ->warning()
                 ->send();
         }
@@ -361,7 +374,7 @@ class SetupAssistant extends Page
 
     public function isDownForMaintenance(): bool
     {
-        return File::exists(storage_path('framework/down'));
+        return (bool) settings('maintenance.enabled', false);
     }
 
     protected function logAction(string $action, string $description): void
@@ -381,13 +394,13 @@ class SetupAssistant extends Page
     {
         return [
             Action::make('clear_cache')
-                ->label('Clear Cache')
+                ->label('Clear System Caches')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->modalHeading('Clear Application Cache')
+                ->modalHeading('Clear System Caches')
                 ->modalDescription($this->getActionRisk('clearCache')['label'])
                 ->modalIcon('heroicon-o-arrow-path')
-                ->modalSubmitActionLabel('Yes, Clear Cache')
+                ->modalSubmitActionLabel('Yes, Clear Caches')
                 ->action('clearCache'),
 
             Action::make('clear_views')
