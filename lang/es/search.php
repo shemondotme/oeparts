@@ -105,6 +105,8 @@ return [
 
     'cross_refs_title' => 'Referencias cruzadas',
     'cross_refs_hint' => '— Números OEM compatibles',
+    'cross_refs_view_all' => 'Ver los :count equivalentes',
+    'cross_refs_show_less' => 'Ver menos',
 
     'inquiry_title' => '¿No encuentra lo que necesita?',
     'inquiry_subtitle' => 'Envíe una consulta — nuestro equipo responde en :hours horas.',
