@@ -46,9 +46,8 @@ function settings_trans(string $key, string $default = ''): string
         $decoded = json_decode($raw, true);
         if (json_last_error() === JSON_ERROR_NONE && is_array($decoded) && $decoded !== []) {
             $out = trans_field($decoded);
-            if ($out !== '') {
-                return $out;
-            }
+
+            return $out !== '' ? $out : $default;
         }
 
         return $raw !== '' ? $raw : $default;

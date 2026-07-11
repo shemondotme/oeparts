@@ -112,30 +112,30 @@
                     </div>
                     <div class="p-5 space-y-3">
                         <div>
-                            <p class="bp-spec text-ink-muted mb-2">Submitted</p>
+                            <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_submitted_label', 'search.submitted_label') }}</p>
                             <p class="font-mono text-xl sm:text-2xl font-bold text-ink tracking-wide uppercase break-all">
                                 {{ $normalized_query }}
                             </p>
                         </div>
                         <div class="bp-leader pt-2">
-                            <dt class="text-sm text-ink-muted">Normalized</dt>
+                            <dt class="text-sm text-ink-muted">{{ ui_copy('search_normalized_label', 'search.normalized_label') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink">✓</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-sm text-ink-muted">Catalogue</dt>
+                            <dt class="text-sm text-ink-muted">{{ ui_copy('search_catalogue_label', 'search.catalogue_label') }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono text-sm font-bold text-red-700">0 hits</dd>
+                            <dd class="font-mono text-sm font-bold text-red-700">{{ ui_copy('search_zero_hits', 'search.zero_hits') }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-sm text-ink-muted">Cross-refs</dt>
+                            <dt class="text-sm text-ink-muted">{{ ui_copy('search_console_status_crossrefs', 'search.console_status_crossrefs') }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono text-sm font-bold text-red-700">0 hits</dd>
+                            <dd class="font-mono text-sm font-bold text-red-700">{{ ui_copy('search_zero_hits', 'search.zero_hits') }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-sm text-ink-muted">Status</dt>
+                            <dt class="text-sm text-ink-muted">{{ ui_copy('search_status_label', 'search.status_label') }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono text-sm font-bold text-amber-ink uppercase tracking-wide">Concierge</dd>
+                            <dd class="font-mono text-sm font-bold text-amber-ink uppercase tracking-wide">{{ ui_copy('search_concierge_label', 'search.concierge_label') }}</dd>
                         </div>
                     </div>
                 </div>
@@ -145,9 +145,9 @@
         {{-- ═══ Re-submit bar ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">02 · Re-submit query</span>
+                <span class="bp-spec text-ink">02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</span>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                    min {{ $minChars }} chars · alphanumeric
+                    {{ ui_copy('search_console_submit_meta', 'search.console_submit_meta', ['min' => $minChars]) }}
                 </span>
             </div>
             <x-search.oem-input :value="$normalized_query" />
@@ -158,7 +158,7 @@
             <div class="flex items-end justify-between pb-3 border-b border-ink">
                 <span class="bp-spec text-ink">03 · {{ __('search.zero_cta_title') }}</span>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                    RESPONSE · {{ $inquiryHours }}h
+                    {{ __('search.console_concierge_meta', ['hours' => $inquiryHours]) }}
                 </span>
             </div>
 
@@ -202,39 +202,39 @@
 
                 {{-- Right: trust spec panel (5 cols) --}}
                 <aside class="col-span-12 md:col-span-5 p-6 sm:p-10 bg-ivory border-t md:border-t-0 border-rule">
-                    <p class="bp-spec text-ink mb-5">Trust · Record</p>
+                    <p class="bp-spec text-ink mb-5">{{ ui_copy('search_trust_record_label', 'search.trust_record_label') }}</p>
 
                     <dl class="space-y-4">
                         <div class="flex items-start gap-3">
                             <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
                             <div>
                                 <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_suppliers') }}</dt>
-                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">Background-checked</dd>
+                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_background_checked', 'search.trust_sub_background_checked') }}</dd>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
                             <x-heroicon-s-building-storefront class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
                             <div>
                                 <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_warehouse') }}</dt>
-                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">EU despatch · 24-48h</dd>
+                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_eu_despatch', 'search.trust_sub_eu_despatch') }}</dd>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
                             <x-heroicon-s-trophy class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
                             <div>
                                 <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_quality') }}</dt>
-                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">Genuine · warranty-backed</dd>
+                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_genuine_warranty', 'search.trust_sub_genuine_warranty') }}</dd>
                             </div>
                         </div>
                     </dl>
 
                     <div class="mt-8 pt-6 border-t border-rule">
-                        <p class="bp-spec text-ink-muted mb-3">Typical SLA</p>
+                        <p class="bp-spec text-ink-muted mb-3">{{ ui_copy('search_typical_sla_label', 'search.typical_sla_label') }}</p>
                         <p class="font-mono text-4xl sm:text-5xl font-bold text-ink leading-none tabular-nums">
                             {{ $inquiryHours }}<span class="text-amber">h</span>
                         </p>
                         <p class="mt-2 font-mono text-[11px] text-ink-muted uppercase tracking-[0.16em]">
-                            Business-hours response
+                            {{ ui_copy('search_business_hours_response', 'search.business_hours_response') }}
                         </p>
                     </div>
                 </aside>
