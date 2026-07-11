@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\Coupon;
+use App\Models\Manufacturer;
 use App\Models\NewsletterCampaign;
 use App\Models\Order;
 use App\Models\Product;
@@ -14,6 +15,7 @@ use App\Models\User;
 use App\Observers\AdminObserver;
 use App\Observers\BlogPostObserver;
 use App\Observers\CouponObserver;
+use App\Observers\ManufacturerObserver;
 use App\Observers\NewsletterCampaignObserver;
 use App\Observers\OrderObserver;
 use App\Observers\ProductObserver;
@@ -106,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
         // Register Eloquent observers for CRUD audit logging
         Order::observe(OrderObserver::class);
         Product::observe(ProductObserver::class);
+        Manufacturer::observe(ManufacturerObserver::class);
         Admin::observe(AdminObserver::class);
         User::observe(UserObserver::class);
         Coupon::observe(CouponObserver::class);

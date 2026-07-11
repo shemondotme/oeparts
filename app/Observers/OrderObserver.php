@@ -6,11 +6,11 @@ use App\Filament\Resources\OrderResource;
 use App\Models\ActivityLog;
 use App\Models\Order;
 use App\Services\CacheService;
+use App\Services\WidgetPreferenceService;
 use App\Support\AdminNotifier;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 
 class OrderObserver
 {
@@ -71,11 +71,19 @@ class OrderObserver
 
             $cache->forget("order.{$order->id}");
             $cache->forget("order_number.{$order->order_number}");
-            $cache->forget('admin:dashboard:recent_orders');
-            $cache->forget('admin:dashboard:order_status_distribution');
-            Cache::forget('admin:dashboard:kpi_stats');
-            Cache::forget('admin:dashboard:checkout_dropoff');
-            Cache::forget('admin:dashboard:payment_method_split');
+
+            foreach ([
+                'dashboard_header',
+                'order_stats_overview',
+                'revenue_chart',
+                'order_volume_chart',
+                'order_status_distribution',
+                'awaiting_confirmation',
+                'recent_orders',
+                'manufacturer_revenue',
+            ] as $widgetId) {
+                WidgetPreferenceService::forgetCache($widgetId);
+            }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
         }

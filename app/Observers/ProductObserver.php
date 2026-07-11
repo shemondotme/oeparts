@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Services\CacheService;
+use App\Services\WidgetPreferenceService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -44,8 +45,11 @@ class ProductObserver
 
             $cache->forget("product.{$product->id}");
             $cache->forgetManufacturers();
-            Cache::forget('admin:dashboard:stock_alerts');
             Cache::forget('sitemap_parts');
+
+            foreach (['stock_alert', 'manufacturing_stats', 'new_products_added'] as $widgetId) {
+                WidgetPreferenceService::forgetCache($widgetId);
+            }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
         }

@@ -611,6 +611,28 @@ class WidgetPreferenceService
         return null;
     }
 
+    /**
+     * Invalidate every cached-data entry for a widget, across all periods it
+     * can be viewed at — cache keys are period-suffixed (see
+     * InteractsWithDashboardCache), so a bare `AdminCacheService::forget($id)`
+     * never matches the real key and silently does nothing. Unknown widget
+     * ids are a no-op (never throw from an observer's cache-invalidation path).
+     */
+    public static function forgetCache(string $widgetId): void
+    {
+        $config = self::WIDGETS[$widgetId] ?? null;
+
+        if (! $config) {
+            return;
+        }
+
+        $periods = ($config['period'] ?? false) ? ['1', '7', '30', '90', '365'] : ['-'];
+
+        foreach ($periods as $period) {
+            AdminCacheService::forget("{$widgetId}:p{$period}");
+        }
+    }
+
     // ── Global period (persisted in _meta) ──────────────────────────────
 
     public function getPeriod(): string

@@ -271,7 +271,17 @@ class ProductResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with(['manufacturer', 'condition']))
             ->columns([
                 AdminUi::oemColumn('oem_number', 'OEM number copied')
-                    ->description(fn (Product $record): ?string => static::localizedName($record->name) ?: null),
+                    ->description(fn (Product $record): ?string => static::localizedName($record->name) ?: null)
+                    // Rule #12: OEM search always on normalized_oem (BTREE), matching
+                    // dashes/spaces/dots the way global search and the storefront do —
+                    // not a leading-wildcard LIKE on the raw oem_number column.
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        $normalized = app(OemNormalizerService::class)->normalize($search);
+
+                        return $normalized === ''
+                            ? $query->whereRaw('1 = 0')
+                            : $query->where('normalized_oem', 'like', "%{$normalized}%");
+                    }),
                 Tables\Columns\TextColumn::make('manufacturer.name')
                     ->label('Manufacturer')
                     ->getStateUsing(fn (Product $record): string => $record->manufacturer ? static::localizedName($record->manufacturer->name) : '—')
