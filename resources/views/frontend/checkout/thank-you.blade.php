@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', 'Order Confirmed - ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('checkout_order_confirmed_title', 'checkout.order_confirmed_title') . ' - ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -37,9 +37,9 @@
 
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">{{ ui_copy('checkout_breadcrumb_home', 'checkout.breadcrumb_home') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <span class="text-ivory">Order confirmed</span>
+                    <span class="text-ivory">{{ ui_copy('checkout_order_confirmed_breadcrumb', 'checkout.order_confirmed_breadcrumb') }}</span>
                 </nav>
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
                     DOC · CONFIRMATION · 001
@@ -50,13 +50,13 @@
                 <div class="col-span-12 md:col-span-8">
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">Status · Order placed</span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ ui_copy('checkout_status_order_placed', 'checkout.status_order_placed') }}</span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
-                        Thank you<span class="text-amber">.</span>
+                        {{ ui_copy('checkout_thank_you_heading', 'checkout.thank_you_heading') }}<span class="text-amber">.</span>
                     </h1>
                     <p class="mt-5 max-w-xl text-ivory/80 text-base md:text-lg leading-relaxed">
-                        Your order has been filed. We are preparing it for shipment and will email a full receipt shortly.
+                        {{ ui_copy('checkout_thank_you_note', 'checkout.thank_you_note') }}
                     </p>
                 </div>
 
@@ -72,8 +72,8 @@
                             <x-heroicon-s-check class="w-5 h-5 text-amber" />
                         </div>
                         <div>
-                            <p class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">Filed</p>
-                            <p class="font-display text-xl font-extrabold text-ivory tracking-[-0.02em]">Confirmed</p>
+                            <p class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">{{ ui_copy('checkout_filed_label', 'checkout.filed_label') }}</p>
+                            <p class="font-display text-xl font-extrabold text-ivory tracking-[-0.02em]">{{ ui_copy('checkout_confirmed_label', 'checkout.confirmed_label') }}</p>
                         </div>
                     </div>
                 </div>
@@ -88,9 +88,9 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-document-text class="w-3.5 h-3.5" />
-                    Order details
+                    {{ ui_copy('checkout_order_details_heading', 'checkout.order_details_heading') }}
                 </span>
-                <span class="bp-spec-mono">Reference</span>
+                <span class="bp-spec-mono">{{ ui_copy('checkout_reference_label', 'checkout.reference_label') }}</span>
             </header>
 
             <div class="relative p-6 sm:p-8">
@@ -99,7 +99,7 @@
 
                 {{-- Order number --}}
                 <div class="pb-6 mb-6 border-b border-rule">
-                    <p class="bp-spec text-ink-muted mb-2">Order number</p>
+                    <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('checkout_order_number_label', 'checkout.order_number_label') }}</p>
                     <p class="font-mono font-medium text-3xl md:text-4xl text-ink tabular-nums tracking-tight">
                         {{ $orderData['order_number'] }}
                     </p>
@@ -110,21 +110,21 @@
                     <div>
                         <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
                             <x-heroicon-s-envelope class="w-3 h-3 text-amber-ink" />
-                            Email
+                            {{ ui_copy('checkout_email_label', 'checkout.email_label') }}
                         </p>
                         <p class="font-mono text-sm font-bold text-ink truncate">{{ $orderData['email'] }}</p>
                     </div>
                     <div>
                         <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
                             <x-heroicon-s-calendar class="w-3 h-3 text-amber-ink" />
-                            Date
+                            {{ ui_copy('checkout_date_label', 'checkout.date_label') }}
                         </p>
                         <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $orderData['created_at']->format('M j, Y') }}</p>
                     </div>
                     <div>
                         <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
                             <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
-                            Payment
+                            {{ ui_copy('checkout_payment_label', 'checkout.payment_label') }}
                         </p>
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 border font-mono text-[10px] font-bold uppercase tracking-[0.22em]
                                      {{ $isPaid ? 'border-amber bg-paper text-amber-ink' : 'border-ink bg-ivory-alt text-ink' }}">
@@ -133,7 +133,7 @@
                             @else
                                 <x-heroicon-s-clock class="w-3 h-3" />
                             @endif
-                            {{ ucfirst($orderData['payment_status']) }}
+                            {{ ui_copy('checkout_payment_status_'.$orderData['payment_status'], 'checkout.payment_status_'.$orderData['payment_status']) }}
                         </span>
                     </div>
                 </div>
@@ -141,8 +141,8 @@
                 {{-- Total --}}
                 <div class="flex items-end justify-between gap-3">
                     <div>
-                        <p class="bp-spec text-ink mb-1">Order total · {{ settings('store.currency', 'EUR') }}</p>
-                        <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">Including all taxes</p>
+                        <p class="bp-spec text-ink mb-1">{{ ui_copy('checkout_order_total_currency_label', 'checkout.order_total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</p>
+                        <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">{{ ui_copy('checkout_including_all_taxes', 'checkout.including_all_taxes') }}</p>
                     </div>
                     <p class="font-mono text-4xl md:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
                         {{ format_price($orderData['grand_total']) }}
@@ -159,15 +159,15 @@
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-map class="w-3.5 h-3.5" />
-                    What happens next · Protocol
+                    {{ ui_copy('checkout_whats_next_heading', 'checkout.whats_next_heading') }}
                 </span>
-                <span class="bp-spec-mono">03 steps</span>
+                <span class="bp-spec-mono">{{ ui_copy('checkout_three_steps', 'checkout.three_steps') }}</span>
             </header>
             <ul class="divide-y divide-rule">
                 @foreach([
-                    ['num' => '01', 'title' => 'Confirmation email', 'desc' => 'Check your inbox for detailed order confirmation and receipt.', 'icon' => 'envelope'],
-                    ['num' => '02', 'title' => 'Processing', 'desc' => 'We prepare and pack your order within 24 hours.', 'icon' => 'cog'],
-                    ['num' => '03', 'title' => 'Tracking updates', 'desc' => 'Receive real-time tracking updates by email once shipped.', 'icon' => 'truck'],
+                    ['num' => '01', 'title' => ui_copy('checkout_next_step_1_title', 'checkout.next_step_1_title'), 'desc' => ui_copy('checkout_next_step_1_desc', 'checkout.next_step_1_desc'), 'icon' => 'envelope'],
+                    ['num' => '02', 'title' => ui_copy('checkout_next_step_2_title', 'checkout.next_step_2_title'), 'desc' => ui_copy('checkout_next_step_2_desc', 'checkout.next_step_2_desc'), 'icon' => 'cog'],
+                    ['num' => '03', 'title' => ui_copy('checkout_next_step_3_title', 'checkout.next_step_3_title'), 'desc' => ui_copy('checkout_next_step_3_desc', 'checkout.next_step_3_desc'), 'icon' => 'truck'],
                 ] as $step)
                 <li class="flex items-start gap-5 p-5">
                     <span class="font-mono text-2xl font-medium text-ink-muted tabular-nums tracking-tight w-14 shrink-0">{{ $step['num'] }}</span>
@@ -194,11 +194,11 @@
         <div class="grid sm:grid-cols-2 gap-4">
             <a href="{{ route('frontend.account.orders', ['lang' => app()->getLocale()]) }}" class="bp-btn-primary justify-center py-4">
                 <x-heroicon-o-list-bullet class="w-5 h-5" />
-                View all orders
+                {{ ui_copy('checkout_view_all_orders', 'checkout.view_all_orders') }}
             </a>
             <a href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}" class="bp-btn-outline justify-center py-4">
                 <x-heroicon-o-magnifying-glass class="w-5 h-5" />
-                Continue shopping
+                {{ ui_copy('checkout_continue_shopping', 'checkout.continue_shopping') }}
             </a>
         </div>
 
@@ -213,19 +213,19 @@
 
             <div class="relative p-8 md:p-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                 <div class="md:col-span-8">
-                    <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber mb-3">Continue · Shop</p>
+                    <p class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber mb-3">{{ ui_copy('checkout_continue_shop_eyebrow', 'checkout.continue_shop_eyebrow') }}</p>
                     <h3 class="font-display text-2xl md:text-3xl font-extrabold text-ivory tracking-[-0.02em] leading-tight">
-                        Need more parts<span class="text-amber">?</span>
+                        {{ ui_copy('checkout_need_more_parts_heading', 'checkout.need_more_parts_heading') }}<span class="text-amber">?</span>
                     </h3>
                     <p class="mt-3 text-ivory/80 text-sm md:text-base">
-                        Continue shopping and discover more genuine OEM parts for your vehicle.
+                        {{ ui_copy('checkout_need_more_parts_note', 'checkout.need_more_parts_note') }}
                     </p>
                 </div>
                 <div class="md:col-span-4 flex md:justify-end">
                     <a href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}"
                        class="bp-btn-amber">
                         <x-heroicon-o-magnifying-glass class="w-5 h-5" />
-                        Search OEM parts
+                        {{ ui_copy('checkout_search_oem_parts', 'checkout.search_oem_parts') }}
                     </a>
                 </div>
             </div>
@@ -233,11 +233,11 @@
 
         {{-- Support --}}
         <div class="text-center pt-6 border-t border-rule">
-            <p class="bp-spec text-ink-muted mb-3">Need help</p>
+            <p class="bp-spec text-ink-muted mb-3">{{ ui_copy('checkout_need_help_short', 'checkout.need_help_short') }}</p>
             <a href="{{ route('frontend.contact.show', ['lang' => app()->getLocale()]) }}"
                class="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
                 <x-heroicon-o-chat-bubble-left-right class="w-4 h-4" />
-                Contact support
+                {{ ui_copy('checkout_contact_support', 'checkout.contact_support') }}
                 <x-heroicon-s-arrow-long-right class="w-4 h-4" />
             </a>
         </div>

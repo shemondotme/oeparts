@@ -32,10 +32,10 @@
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-            Shipping method<span class="text-amber">.</span>
+            {{ ui_copy('checkout_shipping_method_heading', 'checkout.shipping_method_heading') }}<span class="text-amber">.</span>
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-            Carrier · Transit time · Cost
+            {{ ui_copy('checkout_shipping_method_subtitle', 'checkout.shipping_method_subtitle') }}
         </p>
     </header>
 
@@ -81,11 +81,11 @@
                     <p class="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
                         <x-heroicon-o-clock class="w-3 h-3" />
                         @if($option['days_min'] && $option['days_max'])
-                            Estimated delivery within {{ $option['days_min'] }}–{{ $option['days_max'] }} business days
+                            {{ ui_copy('checkout_delivery_estimate_range', 'checkout.delivery_estimate_range', ['min' => $option['days_min'], 'max' => $option['days_max']]) }}
                         @elseif($option['days_max'])
-                            Estimated delivery within up to {{ $option['days_max'] }} business days
+                            {{ ui_copy('checkout_delivery_estimate_upto', 'checkout.delivery_estimate_upto', ['max' => $option['days_max']]) }}
                         @else
-                            Fast EU delivery
+                            {{ ui_copy('checkout_fast_eu_delivery', 'checkout.fast_eu_delivery') }}
                         @endif
                     </p>
                 </div>
@@ -97,7 +97,7 @@
             </label>
         @empty
             <div class="p-8 text-center">
-                <p class="text-sm text-ink-muted">No shipping methods available. Please contact support.</p>
+                <p class="text-sm text-ink-muted">{{ ui_copy('checkout_no_shipping_methods', 'checkout.no_shipping_methods') }}</p>
             </div>
         @endforelse
     </div>
@@ -115,7 +115,7 @@
             <x-heroicon-s-information-circle class="w-4 h-4 text-amber-ink" />
         </div>
         <div>
-            <p class="bp-spec text-amber-ink mb-1">Shipping note</p>
+            <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_shipping_note_heading', 'checkout.shipping_note_heading') }}</p>
             <p class="text-xs text-body">{{ settings('shipping.note_text', 'All shipments tracked and insured. Delivery times are estimates from dispatch.') }}</p>
         </div>
     </div>

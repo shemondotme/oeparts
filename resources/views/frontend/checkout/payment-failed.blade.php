@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('Payment failed') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('checkout_payment_failed_title', 'checkout.payment_failed_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('content')
 <div class="relative min-h-screen bg-ivory text-ink">
@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-red-600 text-ivory">
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase font-bold flex items-center gap-2">
                     <x-heroicon-s-exclamation-triangle class="w-3.5 h-3.5" />
-                    Payment · Failed
+                    {{ ui_copy('checkout_payment_failed_eyebrow', 'checkout.payment_failed_eyebrow') }}
                 </span>
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase">
                     {{ $order->order_number }}
@@ -23,26 +23,26 @@
                     <x-heroicon-s-x-mark class="w-7 h-7 text-red-600" />
                 </div>
                 <h1 class="font-display text-3xl md:text-4xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-                    Payment could not be completed<span class="text-amber">.</span>
+                    {{ ui_copy('checkout_payment_failed_heading', 'checkout.payment_failed_heading') }}<span class="text-amber">.</span>
                 </h1>
                 <p class="mt-4 text-body leading-relaxed">
-                    {{ __('Your payment was declined or interrupted. No charges were made. You can try again or choose a different payment method.') }}
+                    {{ ui_copy('checkout_payment_failed_note', 'checkout.payment_failed_note') }}
                 </p>
 
                 <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                     <a href="{{ route('frontend.checkout.payment', ['lang' => $lang, 'order' => $order->order_number]) }}"
                        class="bp-btn-primary justify-center">
                         <x-heroicon-s-arrow-path class="w-5 h-5" />
-                        {{ __('Try again') }}
+                        {{ ui_copy('checkout_try_again', 'checkout.try_again') }}
                     </a>
                     <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                        class="bp-btn-outline justify-center">
-                        {{ __('Back to browse') }}
+                        {{ ui_copy('checkout_back_to_browse', 'checkout.back_to_browse') }}
                     </a>
                 </div>
 
                 <div class="mt-8 inline-flex items-center gap-3 px-4 py-3 border border-rule-strong bg-ivory-alt">
-                    <span class="bp-spec-mono">Order</span>
+                    <span class="bp-spec-mono">{{ ui_copy('checkout_order_word', 'checkout.order_word') }}</span>
                     <span class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</span>
                 </div>
             </div>

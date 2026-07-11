@@ -4,52 +4,20 @@
 @php
     $addr = $checkoutData['shipping_address'] ?? [];
 
-    $europeanCountries = [
-        'AT' => 'Austria',
-        'BE' => 'Belgium',
-        'BG' => 'Bulgaria',
-        'HR' => 'Croatia',
-        'CY' => 'Cyprus',
-        'CZ' => 'Czech Republic',
-        'DK' => 'Denmark',
-        'EE' => 'Estonia',
-        'FI' => 'Finland',
-        'FR' => 'France',
-        'DE' => 'Germany',
-        'GR' => 'Greece',
-        'HU' => 'Hungary',
-        'IE' => 'Ireland',
-        'IT' => 'Italy',
-        'LV' => 'Latvia',
-        'LT' => 'Lithuania',
-        'LU' => 'Luxembourg',
-        'MT' => 'Malta',
-        'NL' => 'Netherlands',
-        'PL' => 'Poland',
-        'PT' => 'Portugal',
-        'RO' => 'Romania',
-        'SK' => 'Slovakia',
-        'SI' => 'Slovenia',
-        'ES' => 'Spain',
-        'SE' => 'Sweden',
-        'GB' => 'United Kingdom',
-        'CH' => 'Switzerland',
-        'NO' => 'Norway',
-        'IS' => 'Iceland',
-        'LI' => 'Liechtenstein',
-        'MC' => 'Monaco',
-        'AD' => 'Andorra',
-        'SM' => 'San Marino',
-        'VA' => 'Vatican City',
-        'AL' => 'Albania',
-        'BA' => 'Bosnia and Herzegovina',
-        'ME' => 'Montenegro',
-        'MK' => 'North Macedonia',
-        'RS' => 'Serbia',
-        'XK' => 'Kosovo',
-        'MD' => 'Moldova',
-        'UA' => 'Ukraine',
+    $europeanCountryCodes = [
+        'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR',
+        'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK',
+        'SI', 'ES', 'SE', 'GB', 'CH', 'NO', 'IS', 'LI', 'MC', 'AD', 'SM', 'VA',
+        'AL', 'BA', 'ME', 'MK', 'RS', 'XK', 'MD', 'UA',
     ];
+
+    // Localized country display names via PHP's intl extension (app/helpers.php
+    // localized_country_name()) — avoids hand-translating 42 names x4 locales,
+    // and correctly reflects whatever locale the storefront visitor is in.
+    $europeanCountries = collect($europeanCountryCodes)
+        ->mapWithKeys(fn ($code) => [$code => localized_country_name($code)])
+        ->sort()
+        ->all();
 @endphp
 
 <div class="space-y-6">
@@ -57,10 +25,10 @@
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-            Shipping address<span class="text-amber">.</span>
+            {{ ui_copy('checkout_shipping_address_heading', 'checkout.shipping_address_heading') }}<span class="text-amber">.</span>
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-            Delivery · EU-Wide · Tracked
+            {{ ui_copy('checkout_shipping_address_subtitle', 'checkout.shipping_address_subtitle') }}
         </p>
     </header>
 
@@ -68,7 +36,7 @@
     <div class="grid sm:grid-cols-2 gap-4">
         <div>
             <label class="bp-spec block mb-2 text-ink">
-                First name <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
+                {{ ui_copy('checkout_first_name_label', 'checkout.first_name_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
             <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('first_name') border-red-600 @enderror">
                 <input type="text" name="first_name"
@@ -82,7 +50,7 @@
         </div>
         <div>
             <label class="bp-spec block mb-2 text-ink">
-                Last name <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
+                {{ ui_copy('checkout_last_name_label', 'checkout.last_name_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
             <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('last_name') border-red-600 @enderror">
                 <input type="text" name="last_name"
@@ -99,12 +67,12 @@
     {{-- Street --}}
     <div>
         <label class="bp-spec block mb-2 text-ink">
-            Street address <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
+            {{ ui_copy('checkout_street_address_label', 'checkout.street_address_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
         </label>
         <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('street') border-red-600 @enderror">
             <input type="text" name="street"
                    value="{{ old('street', $addr['street'] ?? '') }}"
-                   placeholder="e.g. Musterstraße 12"
+                   placeholder="{{ ui_copy('checkout_street_placeholder', 'checkout.street_placeholder') }}"
                    required autocomplete="street-address"
                    class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
         </div>
@@ -117,7 +85,7 @@
     <div class="grid sm:grid-cols-2 gap-4">
         <div>
             <label class="bp-spec block mb-2 text-ink">
-                City <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
+                {{ ui_copy('checkout_city_label', 'checkout.city_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
             <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('city') border-red-600 @enderror">
                 <input type="text" name="city"
@@ -131,7 +99,7 @@
         </div>
         <div>
             <label class="bp-spec block mb-2 text-ink">
-                Postal code <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
+                {{ ui_copy('checkout_postal_code_label', 'checkout.postal_code_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
             <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('postal_code') border-red-600 @enderror">
                 <input type="text" name="postal_code"
@@ -148,13 +116,13 @@
     {{-- Country --}}
     <div>
         <label class="bp-spec block mb-2 text-ink">
-            Country <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
+            {{ ui_copy('checkout_country_label', 'checkout.country_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
         </label>
         <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors @error('country_code') border-red-600 @enderror">
             <select name="country_code"
                     required autocomplete="country"
                     class="w-full px-4 py-3 pr-10 bg-transparent font-mono text-sm text-ink focus:outline-none appearance-none cursor-pointer">
-                <option value="">— Select country —</option>
+                <option value="">{{ ui_copy('checkout_select_country_placeholder', 'checkout.select_country_placeholder') }}</option>
                 @foreach($europeanCountries as $code => $name)
                     <option value="{{ $code }}" {{ old('country_code', $addr['country_code'] ?? '') === $code ? 'selected' : '' }}>
                         {{ $code }} · {{ $name }}
@@ -176,9 +144,9 @@
             <x-heroicon-o-globe-europe-africa class="w-4 h-4 text-ink" />
         </div>
         <div>
-            <p class="bp-spec text-amber-ink mb-1">Pan-European delivery</p>
+            <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_pan_european_delivery', 'checkout.pan_european_delivery') }}</p>
             <p class="text-xs text-body">
-                Express, Standard and Economy shipping available across all listed European countries.
+                {{ ui_copy('checkout_pan_european_delivery_note', 'checkout.pan_european_delivery_note') }}
             </p>
         </div>
     </div>
@@ -211,28 +179,28 @@
                         this.vatStatus = 'valid';
                         this.vatValid = true;
                         this.vatCompany = data.company_name || '';
-                        this.vatMessage = '{{ __("VAT number is valid. VAT exemption will be applied.") }}';
+                        this.vatMessage = '{{ addslashes(ui_copy('checkout_vat_valid_message', 'checkout.vat_valid_message')) }}';
                     } else if (data.unavailable) {
                         this.vatStatus = 'unavailable';
                         this.vatValid = false;
-                        this.vatMessage = '{{ __("VIES service is temporarily unavailable.") }}';
+                        this.vatMessage = '{{ addslashes(ui_copy('checkout_vies_unavailable_message', 'checkout.vies_unavailable_message')) }}';
                     } else {
                         this.vatStatus = 'invalid';
                         this.vatValid = false;
-                        this.vatMessage = '{{ __("VAT number is invalid. Please check and try again.") }}';
+                        this.vatMessage = '{{ addslashes(ui_copy('checkout_vat_invalid_message', 'checkout.vat_invalid_message')) }}';
                     }
                 })
                 .catch(() => {
                     this.vatStatus = 'unavailable';
                     this.vatValid = false;
-                    this.vatMessage = '{{ __("VIES service is temporarily unavailable.") }}';
+                    this.vatMessage = '{{ addslashes(ui_copy('checkout_vies_unavailable_message', 'checkout.vies_unavailable_message')) }}';
                 });
             }, 500);
         }
     }">
         <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-            <span class="bp-spec text-amber-ink">Company details</span>
-            <span class="bp-spec-mono">{{ __('Optional · B2B') }}</span>
+            <span class="bp-spec text-amber-ink">{{ ui_copy('checkout_company_details_heading', 'checkout.company_details_heading') }}</span>
+            <span class="bp-spec-mono">{{ ui_copy('checkout_optional_b2b', 'checkout.optional_b2b') }}</span>
         </div>
         <div class="p-5 space-y-5">
 
@@ -243,7 +211,7 @@
                        {{ old('is_b2b', $checkoutData['is_b2b'] ?? false) ? 'checked' : '' }}
                        class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0">
                 <span class="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-ink">
-                    {{ __('I am ordering as a business') }}
+                    {{ ui_copy('checkout_ordering_as_business', 'checkout.ordering_as_business') }}
                 </span>
             </label>
 
@@ -253,7 +221,7 @@
                 {{-- Company name --}}
                 <div>
                     <label for="company_name" class="bp-spec block mb-2 text-ink">
-                        {{ __('Company name') }}
+                        {{ ui_copy('checkout_company_name_label', 'checkout.company_name_label') }}
                     </label>
                     <div class="border border-ink bg-paper focus-within:border-amber transition-colors">
                         <input type="text" id="company_name" name="company_name"
@@ -266,8 +234,8 @@
                 {{-- VAT number with validation --}}
                 <div>
                     <label for="vat_number" class="bp-spec block mb-2 text-ink">
-                        {{ __('EU VAT number') }}
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">({{ __('required for exemption') }})</span>
+                        {{ ui_copy('checkout_eu_vat_number_label', 'checkout.eu_vat_number_label') }}
+                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_required_for_exemption', 'checkout.required_for_exemption') }}</span>
                     </label>
                     <div class="relative">
                         <div class="border border-ink bg-paper focus-within:border-amber transition-colors"
@@ -302,7 +270,7 @@
                     <div x-show="vatStatus === 'valid' && vatCompany" x-cloak class="mt-3 flex items-start gap-2 text-emerald-700">
                         <x-heroicon-s-check-circle class="w-4 h-4 shrink-0 mt-0.5" />
                         <div>
-                            <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-emerald-600">{{ __('Valid VAT number') }}</p>
+                            <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-emerald-600">{{ ui_copy('checkout_valid_vat_number', 'checkout.valid_vat_number') }}</p>
                             <p class="text-xs text-body mt-0.5" x-text="vatCompany"></p>
                         </div>
                     </div>
