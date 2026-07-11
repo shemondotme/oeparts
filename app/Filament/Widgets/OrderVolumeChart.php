@@ -13,7 +13,8 @@ class OrderVolumeChart extends ChartWidget
     use Concerns\HasWidgetRoles;
     use Concerns\InteractsWithDashboardCache;
 
-    protected static bool $isLazy = true;
+    // Eager: async-alpine never initializes charts on lazily-morphed HTML (see RevenueChart).
+    protected static bool $isLazy = false;
 
     protected ?string $heading = 'Order Volume';
 

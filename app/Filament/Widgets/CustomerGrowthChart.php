@@ -15,6 +15,9 @@ class CustomerGrowthChart extends ChartWidget
 
     protected ?string $heading = 'Customer Growth';
 
+    // Eager: async-alpine never initializes charts on lazily-morphed HTML (see RevenueChart).
+    protected static bool $isLazy = false;
+
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected function getType(): string
