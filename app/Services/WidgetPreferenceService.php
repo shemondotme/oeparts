@@ -55,7 +55,7 @@ class WidgetPreferenceService
         'dashboard_header' => [
             'class' => \App\Filament\Widgets\DashboardHeader::class,
             'label' => 'Dashboard Header',
-            'description' => 'Period selector and customization link',
+            'description' => "Today's revenue, orders, and customer KPIs",
             'group' => 'business-overview',
             'default_visible' => true,
             'default_sort' => 0,

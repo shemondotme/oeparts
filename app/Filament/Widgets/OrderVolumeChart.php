@@ -10,6 +10,7 @@ use Flowframe\Trend\TrendValue;
 class OrderVolumeChart extends ChartWidget
 {
     use Concerns\HasDashboardPeriod;
+    use Concerns\HasPeriodFilterPills;
     use Concerns\HasWidgetRoles;
     use Concerns\InteractsWithDashboardCache;
 
@@ -26,36 +27,6 @@ class OrderVolumeChart extends ChartWidget
     protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected static ?int $sort = -34;
-
-    public ?string $filter = '30';
-
-    protected function getFilters(): ?array
-    {
-        return [
-            '1' => 'Today',
-            '7' => '7d',
-            '30' => '30d',
-            '90' => '90d',
-            '365' => '1y',
-        ];
-    }
-
-    public function updatedFilter(string $value): void
-    {
-        $this->period = $value;
-        $this->dispatch('cc-date-range-changed', range: $value);
-    }
-
-    #[\Livewire\Attributes\On('cc-date-range-changed')]
-    public function onCcDateRangeChanged(string $range): void
-    {
-        if ($this->filter !== $range) {
-            $this->filter = $range;
-            $this->period = $range;
-            $this->updateChartData();
-        }
-    }
-
 
     protected function getType(): string
     {

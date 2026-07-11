@@ -4,16 +4,19 @@ namespace App\Filament\Widgets;
 
 use App\Models\User;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CustomerGrowthChart extends ChartWidget
 {
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
+    use \App\Filament\Widgets\Concerns\HasPeriodFilterPills;
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
     use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 
     protected ?string $heading = 'Customer Growth';
+
+    // Segmented pill period selector (the global period control).
+    protected string $view = 'filament.widgets.chart-with-period';
 
     // Eager: async-alpine never initializes charts on lazily-morphed HTML (see RevenueChart).
     protected static bool $isLazy = false;
@@ -27,7 +30,7 @@ class CustomerGrowthChart extends ChartWidget
 
     protected function getData(): array
     {
-        $start = Carbon::now()->subDays((int) $this->period);
+        $start = $this->periodStart();
 
         $data = User::where('created_at', '>=', $start)
             ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as count'))
