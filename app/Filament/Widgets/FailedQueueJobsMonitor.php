@@ -95,12 +95,18 @@ class FailedQueueJobsMonitor extends TableWidget
                     ->color('warning')
                     ->size('sm')
                     ->action(function ($record): void {
-                        $payload = json_decode($record->payload ?? '{}', true);
-                        $command = unserialize($payload['data']['command'] ?? '') ?? null;
-                        if ($command) {
-                            dispatch($command);
-                            DB::table('failed_jobs')->where('id', $record->id)->delete();
-                        }
+                        // queue:retry handles payload decoding (incl. encrypted
+                        // commands) and removes the failed_jobs row itself —
+                        // hand-unserializing here silently no-opped on failure.
+                        \Illuminate\Support\Facades\Artisan::call('queue:retry', ['id' => [$record->uuid]]);
+
+                        $requeued = ! DB::table('failed_jobs')->where('uuid', $record->uuid)->exists();
+
+                        \Filament\Notifications\Notification::make()
+                            ->title($requeued ? 'Job pushed back onto the queue' : 'Retry failed')
+                            ->body($requeued ? null : 'The job could not be re-dispatched — retry it from the CLI with queue:retry.')
+                            ->{$requeued ? 'success' : 'danger'}()
+                            ->send();
                     }),
                 Tables\Actions\Action::make('delete')
                     ->label('Delete')

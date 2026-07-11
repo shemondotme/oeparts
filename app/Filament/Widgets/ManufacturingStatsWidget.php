@@ -11,7 +11,7 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
 {
     public function getDescription(): ?string
     {
-        return 'OEM manufacturer statistics';
+        return 'Manufacturers, products, and stock coverage';
     }
 
     use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
@@ -22,7 +22,7 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
 
     protected static ?int $sort = -17;
 
-    protected ?string $heading = 'Manufacturing';
+    protected ?string $heading = 'Catalog';
 
     // Full-width so the 3 stats lay out horizontally (matches the other
     // full-width stat strips) instead of stacking in a half-width column.
@@ -36,14 +36,14 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
                 ->first();
 
             $productCount = \App\Models\Product::where('is_active', true)->count();
-            $defective = \App\Models\Product::where('is_in_stock', false)->count();
-            $defectRate = $productCount > 0 ? round(($defective / $productCount) * 100, 1) : 0;
+            $outOfStock = \App\Models\Product::where('is_active', true)->where('is_in_stock', false)->count();
+            $outOfStockRate = $productCount > 0 ? round(($outOfStock / $productCount) * 100, 1) : 0;
 
             return [
                 'manufacturers' => \App\Models\Manufacturer::count(),
                 'activeManufacturers' => \App\Models\Manufacturer::where('is_active', true)->count(),
                 'products' => $productCount,
-                'defectRate' => $defectRate,
+                'outOfStockRate' => $outOfStockRate,
                 'topId' => $top?->id,
                 'topName' => $top ? \App\Filament\Support\AdminUi::localizedName($top->name, '—') : null,
                 'topOrders' => $top?->order_items_count ?? 0,
@@ -67,9 +67,9 @@ class ManufacturingStatsWidget extends StatsOverviewWidget
                 ->color('info')
                 ->url(ManufacturerResource::getUrl('index')),
             Stat::make('Products', number_format($d['products']))
-                ->description("Defect rate: {$d['defectRate']}%")
+                ->description("{$d['outOfStockRate']}% out of stock")
                 ->descriptionIcon('heroicon-o-cube')
-                ->color($d['defectRate'] > 5 ? 'danger' : 'success'),
+                ->color($d['outOfStockRate'] > 25 ? 'danger' : ($d['outOfStockRate'] > 10 ? 'warning' : 'success')),
             Stat::make('Top Mfr (' . $this->periodLabel() . ')', $d['topName'] ?? '—')
                 ->description($d['topOrders'] . ' orders')
                 ->descriptionIcon('heroicon-o-trophy')

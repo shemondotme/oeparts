@@ -173,25 +173,15 @@ class AbandonedCartResource extends Resource
                         ? 'A recovery email was already sent for this cart — sending another should be a deliberate choice.'
                         : 'Send a cart recovery email to the customer. This will remind them of the items left in their cart.')
                     ->action(function (AbandonedCart $record) {
-                        $email = $record->guest_email ?? $record->user?->email;
-
-                        if (!$email) {
+                        if (! app(\App\Services\CartRecoveryService::class)->send($record)) {
                             Notification::make()
                                 ->title('No email address')
                                 ->body('This abandoned cart has no associated customer or guest email.')
                                 ->danger()
                                 ->send();
+
                             return;
                         }
-
-                        dispatch(new \App\Jobs\SendAbandonedCartEmail(
-                            email: $email,
-                            cartSnapshot: $record->cart_snapshot,
-                            customerName: $record->user?->name ?? 'Customer',
-                            locale: $record->user?->preferred_locale ?? 'en'
-                        ));
-
-                        $record->update(['recovery_email_sent' => true]);
 
                         Notification::make()
                             ->title('Recovery email sent')

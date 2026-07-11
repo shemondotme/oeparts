@@ -89,7 +89,7 @@ class FailedSearchesWidget extends TableWidget
                     ->icon('heroicon-o-chat-bubble-left-right')
                     ->color('info')
                     ->size('sm')
-                    ->url(fn ($record): string => PartInquiryResource::getUrl('create', ['data' => ['search' => $record->search_query]])),
+                    ->url(fn ($record): string => PartInquiryResource::getUrl('create', ['data' => ['oem_number' => $record->search_query]])),
             ])
             ->striped()
             ->emptyStateIcon('heroicon-o-magnifying-glass-circle')

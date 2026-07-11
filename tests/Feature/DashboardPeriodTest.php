@@ -144,7 +144,6 @@ class DashboardPeriodTest extends TestCase
             \App\Filament\Widgets\NewMessagesInbox::class,
             \App\Filament\Widgets\FailedQueueJobsMonitor::class,
             \App\Filament\Widgets\CacheStatusWidget::class,
-            \App\Filament\Widgets\QueueWorkerStatusWidget::class,
         ];
 
         foreach ($exemptClasses as $class) {
