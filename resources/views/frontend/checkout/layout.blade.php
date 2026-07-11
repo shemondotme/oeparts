@@ -1,17 +1,17 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('Secure Checkout') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('checkout_title', 'checkout.title') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
 @section('content')
 @php
     $steps = [
-        1 => 'Contact',
-        2 => 'Address',
-        3 => 'Shipping',
-        4 => 'Review',
-        5 => 'Payment',
+        1 => ui_copy('checkout_step_contact', 'checkout.step_contact'),
+        2 => ui_copy('checkout_step_address', 'checkout.step_address'),
+        3 => ui_copy('checkout_step_shipping', 'checkout.step_shipping'),
+        4 => ui_copy('checkout_step_review', 'checkout.step_review'),
+        5 => ui_copy('checkout_step_payment', 'checkout.step_payment'),
     ];
     $currentStep = $step ?? 1;
 @endphp
@@ -27,14 +27,14 @@
             {{-- Breadcrumb --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">{{ ui_copy('checkout_breadcrumb_home', 'checkout.breadcrumb_home') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}" class="hover:text-amber transition-colors">Cart</a>
+                    <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}" class="hover:text-amber transition-colors">{{ ui_copy('checkout_breadcrumb_cart', 'checkout.breadcrumb_cart') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <span class="text-ivory">Checkout</span>
+                    <span class="text-ivory">{{ ui_copy('checkout_breadcrumb_checkout', 'checkout.breadcrumb_checkout') }}</span>
                 </nav>
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    DOC · CHECKOUT-SHEET · STEP {{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} of 05
+                    DOC · CHECKOUT-SHEET · {{ ui_copy('checkout_step_of_five', 'checkout.step_of_five', ['n' => str_pad($currentStep, 2, '0', STR_PAD_LEFT)]) }}
                 </span>
             </div>
 
@@ -42,14 +42,14 @@
                 <div>
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · Secure checkout</span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · {{ ui_copy('checkout_secure_checkout_eyebrow', 'checkout.secure_checkout_eyebrow') }}</span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
-                        Secure Checkout<span class="text-amber">.</span>
+                        {{ ui_copy('checkout_heading', 'checkout.heading') }}<span class="text-amber">.</span>
                     </h1>
                     <p class="mt-4 inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
                         <x-heroicon-s-lock-closed class="w-3 h-3 text-amber" />
-                        TLS 1.3 · 256-bit SSL · Protected by Airwallex
+                        {{ ui_copy('checkout_tls_ssl_badge', 'checkout.tls_ssl_badge') }}
                     </p>
                 </div>
                 <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}"
@@ -57,7 +57,7 @@
                           font-mono text-[11px] font-bold uppercase tracking-[0.22em]
                           hover:border-amber hover:text-amber transition-colors">
                     <x-heroicon-s-arrow-long-left class="w-4 h-4" />
-                    Back to Cart
+                    {{ ui_copy('checkout_back_to_cart', 'checkout.back_to_cart') }}
                 </a>
             </div>
         </div>
@@ -116,16 +116,16 @@
             <div class="flex items-center gap-2 min-w-0">
                 <x-heroicon-s-clock class="w-4 h-4 shrink-0" />
                 <span class="font-mono text-[10px] tracking-[0.18em] uppercase truncate">
-                    Session expires in
+                    {{ ui_copy('checkout_session_expires_in', 'checkout.session_expires_in') }}
                     <span class="font-bold tabular-nums" x-text="Math.floor(remaining / 60) + ':' + String(remaining % 60).padStart(2, '0')"></span>
                     @if($currentStep < 5)
-                        — please complete <span class="font-bold">{{ $steps[$currentStep] ?? 'current step' }}</span> before time runs out.
+                        {{ ui_copy('checkout_session_expires_complete_before', 'checkout.session_expires_complete_before', ['step' => $steps[$currentStep] ?? ui_copy('checkout_current_step_fallback', 'checkout.current_step_fallback')]) }}
                     @endif
                 </span>
             </div>
             <button @click="remaining = 0"
                     class="shrink-0 font-mono text-[9px] uppercase tracking-[0.22em] hover:underline">
-                Dismiss
+                {{ ui_copy('checkout_dismiss', 'checkout.dismiss') }}
             </button>
         </div>
     </div>
@@ -153,7 +153,7 @@
                         <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                             <span class="bp-spec text-amber-ink">{{ str_pad($currentStep, 2, '0', STR_PAD_LEFT) }} · {{ $steps[$currentStep] ?? '' }}</span>
                             <span class="bp-spec-mono">
-                                Step {{ $currentStep }}/5
+                                {{ ui_copy('checkout_step_n_of_5', 'checkout.step_n_of_5', ['n' => $currentStep]) }}
                             </span>
                         </div>
                         <div class="p-6 sm:p-8">
@@ -167,13 +167,13 @@
                             <a href="{{ route('frontend.checkout', ['lang' => app()->getLocale()]) }}?_back=1"
                                class="bp-btn-outline justify-center sm:justify-start">
                                 <x-heroicon-s-arrow-long-left class="w-5 h-5" />
-                                Back
+                                {{ ui_copy('checkout_back', 'checkout.back') }}
                             </a>
                         @else
                             <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}"
                                class="bp-btn-outline justify-center sm:justify-start">
                                 <x-heroicon-s-arrow-long-left class="w-5 h-5" />
-                                Return to Cart
+                                {{ ui_copy('checkout_return_to_cart', 'checkout.return_to_cart') }}
                             </a>
                         @endif
 
@@ -191,7 +191,7 @@
                                     <x-heroicon-s-arrow-long-right class="w-5 h-5" />
                                 @endif
                             </span>
-                            <span x-text="submitting ? '{{ __("Processing…") }}' : '{{ $currentStep === 5 ? __("Place Order") : __("Continue") }}'"></span>
+                            <span x-text="submitting ? '{{ addslashes(ui_copy('checkout_processing', 'checkout.processing')) }}' : '{{ addslashes($currentStep === 5 ? ui_copy('checkout_place_order', 'checkout.place_order') : ui_copy('checkout_continue', 'checkout.continue')) }}'"></span>
                             @if($currentStep !== 5)
                                 <x-heroicon-s-arrow-long-right class="w-5 h-5" x-show="!submitting" x-cloak />
                             @endif
@@ -210,7 +210,7 @@
 
                     <div class="border border-ink bg-paper">
                         <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                            <span class="bp-spec text-amber-ink">Order summary</span>
+                            <span class="bp-spec text-amber-ink">{{ ui_copy('checkout_order_summary', 'checkout.order_summary') }}</span>
                             <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
                         </div>
 
@@ -230,13 +230,13 @@
                                             </div>
                                             <div class="min-w-0" x-data="clipboard()">
                                                 <p class="font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer"
-                                                   @click="copy('{{ $item->product->oem_number }}')" title="Copy OEM number">
+                                                   @click="copy('{{ $item->product->oem_number }}')" title="{{ ui_copy('checkout_copy_oem_title', 'checkout.copy_oem_title') }}">
                                                     {{ $item->product->oem_number }}
                                                 </p>
                                                 <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
-                                                    Qty · {{ $item->quantity }}
+                                                    {{ ui_copy('checkout_qty_short', 'checkout.qty_short', ['qty' => $item->quantity]) }}
                                                 </p>
-                                                <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
+                                                <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('checkout_copied', 'checkout.copied') }}</span>
                                             </div>
                                         </div>
                                         <span class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">
@@ -261,37 +261,37 @@
                                     </div>
                                     @endif
                                     <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
-                                        <dt class="bp-spec-mono">Subtotal</dt>
+                                        <dt class="bp-spec-mono">{{ ui_copy('checkout_subtotal_label', 'checkout.subtotal_label') }}</dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             {{ format_price($summarySidebar['subtotal'] ?? 0) }}
                                         </dd>
                                     </div>
                                     <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
-                                        <dt class="bp-spec-mono">Shipping</dt>
+                                        <dt class="bp-spec-mono">{{ ui_copy('checkout_shipping_label', 'checkout.shipping_label') }}</dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             @if(($summarySidebar['shipping_cost'] ?? null) !== null)
                                                 @if(($summarySidebar['shipping_cost'] ?? null) === '0.00')
-                                                    <span class="text-amber-ink uppercase tracking-[0.22em] text-[10px]">FREE</span>
+                                                    <span class="text-amber-ink uppercase tracking-[0.22em] text-[10px]">{{ ui_copy('checkout_shipping_free', 'checkout.shipping_free') }}</span>
                                                 @else
                                                     {{ format_price($summarySidebar['shipping_cost'] ?? 0) }}
                                                 @endif
                                             @else
-                                                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">Next step</span>
+                                                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">{{ ui_copy('checkout_shipping_next_step', 'checkout.shipping_next_step') }}</span>
                                             @endif
                                         </dd>
                                     </div>
                                     <div class="flex items-baseline justify-between gap-3 py-2">
                                         <dt class="bp-spec-mono">
-                                            VAT · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? 21) }}%
+                                            {{ ui_copy('checkout_vat_short', 'checkout.vat_short') }} · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? 21) }}%
                                         </dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             @if($currentStep >= 2)
                                                 {{ format_price($summarySidebar['vat_amount'] ?? 0) }}
                                             @else
-                                                <span class="bp-spec-mono">TBD</span>
+                                                <span class="bp-spec-mono">{{ ui_copy('checkout_vat_tbd', 'checkout.vat_tbd') }}</span>
                                             @endif
                                         </dd>
                                     </div>
@@ -301,8 +301,8 @@
                                 <div class="mt-4 pt-4 border-t-2 border-ink">
                                     <div class="flex items-end justify-between gap-3">
                                         <div>
-                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Total · {{ settings('store.currency', 'EUR') }}</p>
-                                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">Incl. all taxes</p>
+                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('checkout_total_currency_label', 'checkout.total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</p>
+                                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ ui_copy('checkout_including_all_taxes', 'checkout.including_all_taxes') }}</p>
                                         </div>
                                         <p class="font-mono text-3xl sm:text-4xl font-medium text-ink tabular-nums leading-none tracking-tight">
                                             {{ format_price($summarySidebar['grand_total'] ?? 0) }}
@@ -314,7 +314,7 @@
                                 <div class="mt-5 pt-4 border-t border-rule flex items-center justify-between gap-3">
                                     <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                                         <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
-                                        SSL · TLS 1.3
+                                        {{ ui_copy('checkout_ssl_tls_badge', 'checkout.ssl_tls_badge') }}
                                     </span>
                                     <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                                         <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
@@ -324,7 +324,7 @@
                             @else
                                 <div class="text-center py-10">
                                     <x-heroicon-o-shopping-bag class="w-10 h-10 text-rule-strong mx-auto mb-3" />
-                                    <p class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">Your cart is empty</p>
+                                    <p class="font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('checkout_cart_empty', 'checkout.cart_empty') }}</p>
                                 </div>
                             @endif
 
@@ -339,11 +339,11 @@
                             <x-heroicon-o-chat-bubble-left-ellipsis class="w-4 h-4 text-ink" />
                         </div>
                         <div class="flex-1">
-                            <p class="bp-spec text-amber-ink mb-1">Need help?</p>
-                            <p class="text-xs text-body mb-2">Mon-Fri 09:00-18:00 CET. Our team is ready.</p>
+                            <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_need_help_heading', 'checkout.need_help_heading') }}</p>
+                            <p class="text-xs text-body mb-2">{{ ui_copy('checkout_support_hours_note', 'checkout.support_hours_note') }}</p>
                             <a href="{{ url('/'.app()->getLocale().'/contact') }}"
                                class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
-                                Contact support
+                                {{ ui_copy('checkout_contact_support', 'checkout.contact_support') }}
                                 <x-heroicon-s-arrow-long-right class="w-3 h-3" />
                             </a>
                         </div>
@@ -359,7 +359,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     window.dispatchEvent(new CustomEvent('toast', {
-        detail: { message: @json(session('error')), type: 'error', title: 'Error', duration: 6000 }
+        detail: { message: @json(session('error')), type: 'error', title: @json(ui_copy('checkout_toast_error_title', 'checkout.toast_error_title')), duration: 6000 }
     }));
 });
 </script>
@@ -377,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     window.dispatchEvent(new CustomEvent('toast', {
-        detail: { message: @json(session('warning')), type: 'warning', title: 'Warning', duration: 5000 }
+        detail: { message: @json(session('warning')), type: 'warning', title: @json(ui_copy('checkout_toast_warning_title', 'checkout.toast_warning_title')), duration: 5000 }
     }));
 });
 </script>

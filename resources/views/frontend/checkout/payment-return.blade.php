@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('Payment processing') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('checkout_payment_processing_title', 'checkout.payment_processing_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('content')
 <div class="relative min-h-screen bg-ivory text-ink">
@@ -11,7 +11,7 @@
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-arrow-path class="w-3.5 h-3.5 animate-spin" />
-                    Payment · Processing
+                    {{ ui_copy('checkout_payment_processing_eyebrow', 'checkout.payment_processing_eyebrow') }}
                 </span>
                 <span class="bp-spec-mono">
                     {{ $order->order_number }}
@@ -23,13 +23,13 @@
                     <x-heroicon-o-arrow-path class="w-6 h-6 text-ink animate-spin" />
                 </div>
                 <h1 class="font-display text-3xl md:text-4xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-                    Verifying your payment<span class="text-amber">.</span>
+                    {{ ui_copy('checkout_verifying_payment_heading', 'checkout.verifying_payment_heading') }}<span class="text-amber">.</span>
                 </h1>
                 <p class="mt-4 text-body leading-relaxed">
-                    {{ __('We are waiting for confirmation from your bank. This usually takes a few seconds. This page will refresh automatically.') }}
+                    {{ ui_copy('checkout_verifying_payment_note', 'checkout.verifying_payment_note') }}
                 </p>
                 <div class="mt-8 inline-flex items-center gap-3 px-4 py-3 border border-rule-strong bg-ivory-alt">
-                    <span class="bp-spec-mono">Order</span>
+                    <span class="bp-spec-mono">{{ ui_copy('checkout_order_word', 'checkout.order_word') }}</span>
                     <span class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</span>
                 </div>
             </div>

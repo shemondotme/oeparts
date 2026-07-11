@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('Payment') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('checkout_payment_title', 'checkout.payment_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -20,11 +20,11 @@
             {{-- Breadcrumb --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">{{ ui_copy('checkout_breadcrumb_home', 'checkout.breadcrumb_home') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <span class="text-ivory/80">Checkout</span>
+                    <span class="text-ivory/80">{{ ui_copy('checkout_breadcrumb_checkout', 'checkout.breadcrumb_checkout') }}</span>
                     <span class="text-ivory/30">/</span>
-                    <span class="text-ivory">Payment</span>
+                    <span class="text-ivory">{{ ui_copy('checkout_step_payment', 'checkout.step_payment') }}</span>
                 </nav>
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
                     DOC · PAYMENT-SHEET · {{ $order->order_number }}
@@ -35,14 +35,14 @@
                 <div>
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">06 · Payment · Finalise</span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">06 · {{ ui_copy('checkout_payment_title', 'checkout.payment_title') }} · Finalise</span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
-                        Complete payment<span class="text-amber">.</span>
+                        {{ ui_copy('checkout_complete_payment_heading', 'checkout.complete_payment_heading') }}<span class="text-amber">.</span>
                     </h1>
                     <p class="mt-4 inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
                         <x-heroicon-s-lock-closed class="w-3 h-3 text-amber" />
-                        TLS 1.3 · 256-bit SSL · Encrypted channel
+                        {{ ui_copy('checkout_tls_encrypted_channel', 'checkout.tls_encrypted_channel') }}
                     </p>
                 </div>
             </div>
@@ -69,9 +69,9 @@
 
                 <div class="border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">Payment method</span>
+                        <span class="bp-spec text-amber-ink">{{ ui_copy('checkout_payment_method_heading', 'checkout.payment_method_heading') }}</span>
                         <span class="bp-spec-mono">
-                            Order · {{ $order->order_number }}
+                            {{ ui_copy('checkout_order_label', 'checkout.order_label', ['number' => $order->order_number]) }}
                         </span>
                     </div>
 
@@ -112,7 +112,7 @@
                                         <x-heroicon-o-credit-card class="w-5 h-5 text-ink" />
                                     </div>
                                     <div class="flex-1">
-                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ __('Credit/Debit Card') }}</p>
+                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_credit_debit_card', 'checkout.credit_debit_card') }}</p>
                                         <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
                                             Airwallex · Visa · Mastercard · Amex
                                         </p>
@@ -130,9 +130,9 @@
                                         <x-heroicon-o-building-library class="w-5 h-5 text-ink" />
                                     </div>
                                     <div class="flex-1">
-                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ __('Bank Transfer') }}</p>
+                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_bank_transfer', 'checkout.bank_transfer') }}</p>
                                         <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-                                            SEPA · Order processed on confirmed payment
+                                            {{ ui_copy('checkout_bank_transfer_sepa_note', 'checkout.bank_transfer_sepa_note') }}
                                         </p>
                                     </div>
                                 </label>
@@ -144,7 +144,7 @@
                                  role="alert" aria-live="assertive">
                                 <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
                                 <div class="flex-1 min-w-0">
-                                    <p class="bp-spec-mono text-red-600 mb-0.5">{{ __('Payment Error') }}</p>
+                                    <p class="bp-spec-mono text-red-600 mb-0.5">{{ ui_copy('checkout_payment_error_heading', 'checkout.payment_error_heading') }}</p>
                                     <p class="text-sm text-red-800" x-text="errorMessage"></p>
                                 </div>
                                 <button type="button" @click="clearError()"
@@ -160,9 +160,9 @@
                                         <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
                                     </div>
                                     <div>
-                                        <p class="bp-spec text-amber-ink mb-1">Secure payment</p>
+                                        <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_secure_payment', 'checkout.secure_payment') }}</p>
                                         <p class="text-sm text-body leading-relaxed">
-                                            {{ __('Your payment is processed securely by Airwallex. We never store your card details.') }}
+                                            {{ ui_copy('checkout_secure_payment_note', 'checkout.secure_payment_note') }}
                                         </p>
                                     </div>
                                 </div>
@@ -181,9 +181,9 @@
                                         <x-heroicon-s-exclamation-circle class="w-4 h-4 text-amber-ink" />
                                     </div>
                                     <div>
-                                        <p class="bp-spec text-amber-ink mb-1">Important instructions</p>
+                                        <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_important_instructions', 'checkout.important_instructions') }}</p>
                                         <p class="text-sm text-body leading-relaxed">
-                                            {{ __('Please include your order number in the payment reference. Bank transfers may take 1-2 business days to process.') }}
+                                            {{ ui_copy('checkout_important_instructions_note', 'checkout.important_instructions_note') }}
                                         </p>
                                     </div>
                                 </div>
@@ -192,7 +192,7 @@
                                     <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
                                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                                             <x-heroicon-o-building-library class="w-3.5 h-3.5" />
-                                            {{ __('Bank Transfer Details') }}
+                                            {{ ui_copy('checkout_bank_transfer_details', 'checkout.bank_transfer_details') }}
                                         </span>
                                     </header>
                                     <div class="p-5">
@@ -210,7 +210,7 @@
                                                                        font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink transition-colors copy-btn"
                                                                 data-clipboard-text="{{ $value }}">
                                                             <x-heroicon-o-document-duplicate class="w-3 h-3" />
-                                                            {{ __('Copy') }}
+                                                            {{ ui_copy('checkout_copy_btn', 'checkout.copy_btn') }}
                                                         </button>
                                                     </dd>
                                                 </div>
@@ -218,15 +218,15 @@
                                                 @endforeach
                                             </dl>
                                         @else
-                                            <p class="font-mono text-xs tracking-[0.18em] uppercase text-ink-muted">{{ __('Bank transfer details will appear after the method is confirmed.') }}</p>
+                                            <p class="font-mono text-xs tracking-[0.18em] uppercase text-ink-muted">{{ ui_copy('checkout_bank_details_pending', 'checkout.bank_details_pending') }}</p>
                                         @endif
                                     </div>
                                 </section>
 
                                 <div>
                                     <label for="payment_proof" class="bp-spec block mb-2 text-ink">
-                                        {{ __('Upload Payment Proof') }}
-                                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
+                                        {{ ui_copy('checkout_upload_payment_proof', 'checkout.upload_payment_proof') }}
+                                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
                                     </label>
                                     <input type="file" id="payment_proof" name="payment_proof"
                                            class="block w-full text-sm text-body font-mono
@@ -235,7 +235,7 @@
                                                   file:cursor-pointer hover:file:bg-amber hover:file:text-ink transition-colors
                                                   border border-ink bg-paper">
                                     <p class="mt-2 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                                        {{ __('Upload a screenshot or scan of your bank transfer confirmation.') }}
+                                        {{ ui_copy('checkout_upload_payment_proof_note', 'checkout.upload_payment_proof_note') }}
                                     </p>
                                 </div>
                             </div>
@@ -251,7 +251,7 @@
                                 <span x-show="!submitting" x-cloak>
                                     <x-heroicon-s-lock-closed class="w-5 h-5" />
                                 </span>
-                                <span x-text="submitting ? '{{ __("Processing…") }}' : '{{ __("Complete Payment") }}'"></span>
+                                <span x-text="submitting ? '{{ addslashes(ui_copy('checkout_processing', 'checkout.processing')) }}' : '{{ addslashes(ui_copy('checkout_complete_payment_btn', 'checkout.complete_payment_btn')) }}'"></span>
                             </button>
                         </form>
 
@@ -263,33 +263,33 @@
             <aside class="col-span-12 lg:col-span-4 lg:sticky lg:top-10 lg:h-fit mt-8 lg:mt-0">
                 <div class="border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">Order summary</span>
+                        <span class="bp-spec text-amber-ink">{{ ui_copy('checkout_order_summary', 'checkout.order_summary') }}</span>
                         <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
                     </div>
 
                     <div class="p-5 space-y-2">
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="bp-spec-mono">Order number</dt>
+                            <dt class="bp-spec-mono">{{ ui_copy('checkout_order_number_label', 'checkout.order_number_label') }}</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="bp-spec-mono">Items</dt>
+                            <dt class="bp-spec-mono">{{ ui_copy('checkout_items_label', 'checkout.items_label') }}</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->items->count() }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="bp-spec-mono">Subtotal</dt>
+                            <dt class="bp-spec-mono">{{ ui_copy('checkout_subtotal_label', 'checkout.subtotal_label') }}</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->subtotal) }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="bp-spec-mono">Shipping</dt>
+                            <dt class="bp-spec-mono">{{ ui_copy('checkout_shipping_label', 'checkout.shipping_label') }}</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->shipping_cost) }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="bp-spec-mono">VAT</dt>
+                            <dt class="bp-spec-mono">{{ ui_copy('checkout_vat_short', 'checkout.vat_short') }}</dt>
                             <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->vat_amount) }}</dd>
                         </div>
@@ -297,8 +297,8 @@
 
                     <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                         <div>
-                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Grand total</p>
-                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · incl. VAT</p>
+                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('checkout_grand_total_label', 'checkout.grand_total_label') }}</p>
+                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('checkout_incl_vat_short', 'checkout.incl_vat_short') }}</p>
                         </div>
                         <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
                             {{ format_price($order->grand_total) }}
@@ -374,7 +374,7 @@
                     const text = this.getAttribute('data-clipboard-text');
                     navigator.clipboard.writeText(text).then(() => {
                         const original = this.innerHTML;
-                        this.textContent = '{{ __("Copied!") }}';
+                        this.textContent = '{{ addslashes(ui_copy('checkout_copied_btn', 'checkout.copied_btn')) }}';
                         this.classList.add('bg-amber', 'border-amber', 'text-ink');
                         setTimeout(() => {
                             this.innerHTML = original;
@@ -412,7 +412,7 @@
                             },
                             onError: (error) => {
                                 console.error('Payment error:', error);
-                                showPaymentError('{{ __("Payment failed. Please try again.") }}');
+                                showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
                             }
                         });
                         dropin.mount('airwallex-dropin');

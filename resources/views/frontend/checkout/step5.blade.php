@@ -6,10 +6,10 @@
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-            Payment method<span class="text-amber">.</span>
+            {{ ui_copy('checkout_payment_method_heading', 'checkout.payment_method_heading') }}<span class="text-amber">.</span>
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-            Choose protocol · Secure · Encrypted
+            {{ ui_copy('checkout_payment_method_subtitle', 'checkout.payment_method_subtitle') }}
         </p>
     </header>
 
@@ -30,9 +30,9 @@
                 <x-heroicon-o-credit-card class="w-5 h-5 text-ink" />
             </div>
             <div class="flex-1">
-                <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">Credit / Debit card</p>
+                <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_card_option_title', 'checkout.card_option_title') }}</p>
                 <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-                    Pay securely via Airwallex · Visa · Mastercard · Amex
+                    {{ ui_copy('checkout_card_option_note', 'checkout.card_option_note') }}
                 </p>
             </div>
         </label>
@@ -51,9 +51,9 @@
                 <x-heroicon-o-building-library class="w-5 h-5 text-ink" />
             </div>
             <div class="flex-1">
-                <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">Bank transfer · SEPA</p>
+                <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_bank_option_title', 'checkout.bank_option_title') }}</p>
                 <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-                    Bank details provided after order confirmation
+                    {{ ui_copy('checkout_bank_option_note', 'checkout.bank_option_note') }}
                 </p>
             </div>
         </label>
@@ -66,9 +66,9 @@
                 <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
             </div>
             <div class="flex-1">
-                <p class="bp-spec text-amber-ink mb-1">Secure card checkout</p>
+                <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_secure_card_checkout', 'checkout.secure_card_checkout') }}</p>
                 <p class="text-sm text-body leading-relaxed">
-                    Card details are collected securely by Airwallex after the order is created. This step stores only your payment preference.
+                    {{ ui_copy('checkout_secure_card_checkout_note', 'checkout.secure_card_checkout_note') }}
                 </p>
             </div>
         </div>
@@ -81,9 +81,9 @@
                 <x-heroicon-s-information-circle class="w-4 h-4 text-amber-ink" />
             </div>
             <div class="flex-1">
-                <p class="bp-spec text-amber-ink mb-1">Bank transfer instructions</p>
+                <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_bank_transfer_instructions', 'checkout.bank_transfer_instructions') }}</p>
                 <p class="text-sm text-body leading-relaxed">
-                    We create the order first, then show your bank details and payment reference on the next page.
+                    {{ ui_copy('checkout_bank_transfer_instructions_note', 'checkout.bank_transfer_instructions_note') }}
                 </p>
             </div>
         </div>
@@ -92,14 +92,14 @@
     {{-- Customer note --}}
     <div>
         <label for="customer_note" class="bp-spec block mb-2 text-ink">
-            Order note
-            <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
+            {{ ui_copy('checkout_order_note_label', 'checkout.order_note_label') }}
+            <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
         </label>
         <div class="border border-ink bg-paper focus-within:border-amber transition-colors">
             <textarea id="customer_note"
                       name="customer_note"
                       rows="3"
-                      placeholder="Any delivery or order notes"
+                      placeholder="{{ ui_copy('checkout_order_note_placeholder', 'checkout.order_note_placeholder') }}"
                        class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs placeholder:tracking-normal focus:outline-none resize-y">{{ old('customer_note', $checkoutData['customer_note'] ?? '') }}</textarea>
         </div>
     </div>

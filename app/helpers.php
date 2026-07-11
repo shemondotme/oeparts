@@ -120,6 +120,20 @@ function trans_field(array|string|null $field, ?string $locale = null): string
 }
 
 /**
+ * Localized display name for an ISO 3166-1 alpha-2 country code, in the
+ * current (or given) storefront locale — via PHP's intl extension, so
+ * adding a checkout country never means hand-translating a name x4 locales.
+ */
+function localized_country_name(string $code, ?string $locale = null): string
+{
+    $locale = $locale ?? app()->getLocale();
+
+    $name = \Locale::getDisplayRegion('und-'.strtoupper($code), $locale);
+
+    return $name !== '' ? $name : $code;
+}
+
+/**
  * Detect the preferred language from the browser Accept-Language header.
  * Falls back to 'en' if no supported language is found.
  */
