@@ -14,7 +14,7 @@ class RequestMetricsWidget extends BaseWidget
 {
     public function getDescription(): ?string
     {
-        return 'HTTP request performance metrics';
+        return 'Queue, email, and search activity (last hour)';
     }
 
     use \App\Filament\Widgets\Concerns\HasWidgetRoles;
@@ -30,7 +30,7 @@ class RequestMetricsWidget extends BaseWidget
 
     protected static ?int $sort = -14;
 
-    protected ?string $heading = 'Request Metrics';
+    protected ?string $heading = 'Activity Metrics';
 
     protected function getStats(): array
     {

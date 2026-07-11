@@ -18,25 +18,8 @@
 
 <x-filament-panels::page>
     <div class="space-y-6" @if($firstSlug) x-data="{ tab: @js($firstSlug) }" @endif>
-        {{-- Header --}}
-        <div class="flex items-center justify-between gap-4">
-            <div>
-                <h2 class="text-xl font-semibold" style="color: var(--color-text-primary);">
-                    Customize Dashboard
-                </h2>
-                <p class="mt-1 text-sm" style="color: var(--color-text-secondary);">
-                    Select which widgets appear on your dashboard. Changes are saved automatically.
-                </p>
-            </div>
-
-            <x-filament::button
-                color="gray"
-                icon="heroicon-o-arrow-uturn-left"
-                wire:click="resetToDefaults"
-            >
-                Reset to Defaults
-            </x-filament::button>
-        </div>
+        {{-- Page title/subheading and the Back/Reset actions render in the
+             native page header (WidgetPreferences::getHeaderActions). --}}
 
         {{-- Tabs --}}
         @if(!empty($this->groupedWidgets))

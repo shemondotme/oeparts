@@ -71,6 +71,34 @@ class WidgetPreferencesVerifyTest extends TestCase
     }
 
     #[Test]
+    public function toggle_rejects_unknown_always_on_and_forbidden_widget_ids(): void
+    {
+        // §5q polish: toggleWidget used to persist ANY string into
+        // dashboard_preferences and let a role toggle widgets it cannot see.
+        Livewire::test(WidgetPreferences::class)
+            ->call('toggleWidget', 'not_a_widget')
+            ->call('toggleWidget', 'dashboard_header');
+
+        $saved = ($this->admin->fresh()->dashboard_preferences ?? [])['widget_visibility'] ?? [];
+        $this->assertArrayNotHasKey('not_a_widget', $saved);
+        $this->assertArrayNotHasKey('dashboard_header', $saved);
+
+        // A support admin cannot toggle a management-only widget.
+        $support = Admin::create([
+            'name' => 'Support Toggle Test',
+            'email' => 'support-toggle@oeparts.test',
+            'password' => bcrypt('password'),
+        ]);
+        $support->assignRole('support');
+        $this->actingAs($support, 'admin');
+
+        Livewire::test(WidgetPreferences::class)->call('toggleWidget', 'revenue_chart');
+
+        $saved = ($support->fresh()->dashboard_preferences ?? [])['widget_visibility'] ?? [];
+        $this->assertArrayNotHasKey('revenue_chart', $saved);
+    }
+
+    #[Test]
     public function dashboard_hides_toggled_off_widget(): void
     {
         $service = app(WidgetPreferenceService::class);

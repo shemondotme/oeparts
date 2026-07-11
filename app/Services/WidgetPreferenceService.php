@@ -369,8 +369,8 @@ class WidgetPreferenceService
         ],
         'request_metrics' => [
             'class' => \App\Filament\Widgets\RequestMetricsWidget::class,
-            'label' => 'Request Metrics',
-            'description' => 'HTTP response times and error rates',
+            'label' => 'Activity Metrics',
+            'description' => 'Queue, email, and search activity (last hour)',
             'group' => 'system-health',
             'default_visible' => false,
             'default_sort' => 26,

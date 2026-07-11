@@ -11,7 +11,7 @@ class WidgetPreferences extends Page
 {
     protected string $view = 'filament.pages.widget-preferences';
 
-    protected static ?string $title = 'Widget Preferences';
+    protected static ?string $title = 'Customize Dashboard';
 
     protected static ?string $slug = 'preferences/widgets';
 
@@ -20,6 +20,31 @@ class WidgetPreferences extends Page
     public array $visibility = [];
 
     public array $groupedWidgets = [];
+
+    public function getSubheading(): ?string
+    {
+        return 'Select which widgets appear on your dashboard. Changes are saved automatically.';
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            \Filament\Actions\Action::make('backToDashboard')
+                ->label('Back to Dashboard')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->outlined()
+                ->url(Dashboard::getUrl()),
+            \Filament\Actions\Action::make('resetToDefaults')
+                ->label('Reset to Defaults')
+                ->icon('heroicon-o-arrow-uturn-left')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalHeading('Reset dashboard preferences')
+                ->modalDescription('Your widget choices will be replaced by the defaults for your role.')
+                ->action('resetToDefaults'),
+        ];
+    }
 
     public function mount(): void
     {
@@ -41,6 +66,20 @@ class WidgetPreferences extends Page
     public function toggleWidget(string $widgetId): void
     {
         $service = app(WidgetPreferenceService::class);
+
+        // Only real, role-visible, toggleable widgets — otherwise a crafted
+        // Livewire call could persist junk keys into dashboard_preferences.
+        $config = WidgetPreferenceService::WIDGETS[$widgetId] ?? null;
+        $role = auth('admin')->user()?->roles()->first()?->name ?? 'support';
+
+        if (
+            $config === null
+            || in_array($widgetId, WidgetPreferenceService::ALWAYS_ON, true)
+            || ! in_array($role, $config['roles'], true)
+        ) {
+            return;
+        }
+
         $currentValue = $this->visibility[$widgetId] ?? false;
         $newValue = ! $currentValue;
 
