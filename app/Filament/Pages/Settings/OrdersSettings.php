@@ -63,23 +63,16 @@ class OrdersSettings extends SettingsPage
 
                         Forms\Components\TextInput::make('auto_complete_days')
                             ->label('Auto-Complete Order Fulfillment (Days)')
-                            ->helperText('Orders automatically marked as delivered after this many days from shipment')
+                            ->helperText('Shipped orders are automatically marked as delivered after this many days (runs nightly). Set to 0 to disable.')
                             ->numeric()
-                            ->minValue(1)
+                            ->minValue(0)
                             ->maxValue(90)
                             ->default(14),
 
-                        Forms\Components\Toggle::make('urgent_processing_enabled')
-                            ->label('Enable Fast-Track Processing Option')
-                            ->helperText('Gives customers the option to request prioritized warehouse packing for a fee')
-                            ->default(false),
-
-                        Forms\Components\TextInput::make('urgent_processing_fee')
-                            ->label('Urgent Processing Surcharge (€)')
-                            ->numeric()
-                            ->minValue(0)
-                            ->prefix('€')
-                            ->default(5.00),
+                        // Urgent-processing fee/enabled knobs removed: they
+                        // promised a customer-facing paid fast-track option the
+                        // checkout never offered. The admin-side urgent flag on
+                        // orders is unaffected. Checkout upsell = Phase 3 backlog.
 
                         Forms\Components\TextInput::make('expected_delivery_days')
                             ->label('Expected Supplier Delivery (Days)')

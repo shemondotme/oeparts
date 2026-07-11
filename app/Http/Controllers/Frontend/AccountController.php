@@ -31,6 +31,14 @@ class AccountController extends Controller
                 ->with('error', 'This order cannot be cancelled.');
         }
 
+        // Operator-configured grace period (OrdersSettings). 0 = status-only,
+        // no time limit — the knob previously existed but was never checked.
+        $windowHours = (int) settings('orders.customer_cancel_window_hours', 0);
+        if ($windowHours > 0 && $order->created_at->addHours($windowHours)->isPast()) {
+            return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
+                ->with('error', "The {$windowHours}-hour cancellation window for this order has passed. Please contact support.");
+        }
+
         app(OrderService::class)->transitionStatus($order, OrderStatus::Cancelled, 'Cancelled by customer.');
 
         return redirect()->route('frontend.account.orders', ['lang' => $lang])
@@ -306,7 +314,9 @@ class AccountController extends Controller
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
                 ->with('error', 'Only delivered orders can be refunded.');
         }
-        $windowDays = settings('refund.refund_window_days', 14);
+        // orders.* is the group OrdersSettings manages — this read previously
+        // used a 'refund' group no page edited, so the knob did nothing.
+        $windowDays = settings('orders.refund_window_days', 14);
         if (Carbon::parse($order->updated_at)->diffInDays(now()) > $windowDays) {
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
                 ->with('error', "Refund window of {$windowDays} days has passed.");
@@ -330,7 +340,9 @@ class AccountController extends Controller
         if ($order->status !== OrderStatus::Delivered) {
             abort(403);
         }
-        $windowDays = settings('refund.refund_window_days', 14);
+        // orders.* is the group OrdersSettings manages — this read previously
+        // used a 'refund' group no page edited, so the knob did nothing.
+        $windowDays = settings('orders.refund_window_days', 14);
         if (Carbon::parse($order->updated_at)->diffInDays(now()) > $windowDays) {
             abort(403);
         }
