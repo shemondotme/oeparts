@@ -133,7 +133,7 @@ class CheckoutController extends Controller
                     return back()->with('error', $e->getMessage())->withInput();
                 }
 
-                return back()->with('status', __('Verification code sent to your email.'))->withInput();
+                return back()->with('status', __('checkout.verification_code_sent'))->withInput();
             }
 
             // Verify OTP
@@ -304,7 +304,7 @@ class CheckoutController extends Controller
         } catch (\Throwable $e) {
             report($e);
 
-            $message = __('We could not create your order. Please try again.');
+            $message = __('checkout.order_creation_failed');
             if (config('app.debug')) {
                 $message .= ' [debug: ' . $e->getMessage() . ']';
             }

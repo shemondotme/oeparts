@@ -92,14 +92,14 @@
             <div class="sm:border-r border-white/15 py-10 sm:pr-8 lg:pr-10">
                 <div class="flex items-baseline gap-3 mb-5">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">01</span>
-                    <h3 class="bp-spec-light">{{ __('Catalogue') }}</h3>
+                    <h3 class="bp-spec-light">{{ ui_copy('footer_catalogue', 'footer.catalogue') }}</h3>
                 </div>
                 <ul class="space-y-3">
                     @foreach([
-                        [route('frontend.search.console', ['lang' => $lang]), __('Search by OEM')],
-                        [url('/'.$lang.'/brands'),  __('Browse Brands')],
-                        [url('/'.$lang.'/blog'),    __('Journal')],
-                        [url('/'.$lang.'/contact'), __('navbar.label_contact')],
+                        [route('frontend.search.console', ['lang' => $lang]), ui_copy('footer_search_by_oem', 'footer.search_by_oem')],
+                        [url('/'.$lang.'/brands'),  ui_copy('footer_browse_brands', 'footer.browse_brands')],
+                        [url('/'.$lang.'/blog'),    ui_copy('footer_journal', 'footer.journal')],
+                        [url('/'.$lang.'/contact'), ui_copy('nav_label_contact', 'navbar.label_contact')],
                     ] as [$href, $label])
                         <li>
                             <a href="{{ $href }}"
@@ -116,15 +116,15 @@
             <div class="lg:border-r border-white/15 py-10 sm:pl-8 lg:pr-10 lg:pl-10 border-t sm:border-t-0">
                 <div class="flex items-baseline gap-3 mb-5">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">02</span>
-                    <h3 class="bp-spec-light">{{ __('Account') }}</h3>
+                    <h3 class="bp-spec-light">{{ ui_copy('footer_account_heading', 'footer.account_heading') }}</h3>
                 </div>
                 <ul class="space-y-3">
                     @auth
                         @foreach([
-                            [url('/'.$lang.'/account/dashboard'), __('Dashboard')],
-                            [url('/'.$lang.'/account/orders'),    __('Orders')],
-                            [url('/'.$lang.'/account/addresses'), __('Addresses')],
-                            [url('/'.$lang.'/account/refunds'),   __('Refunds')],
+                            [url('/'.$lang.'/account/dashboard'), ui_copy('account_nav_dashboard', 'account.nav_dashboard')],
+                            [url('/'.$lang.'/account/orders'),    ui_copy('account_nav_orders', 'account.nav_orders')],
+                            [url('/'.$lang.'/account/addresses'), ui_copy('account_nav_addresses', 'account.nav_addresses')],
+                            [url('/'.$lang.'/account/refunds'),   ui_copy('account_nav_refunds', 'account.nav_refunds')],
                         ] as [$href, $label])
                             <li>
                                 <a href="{{ $href }}" class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
@@ -139,7 +139,7 @@
                                @click.prevent="$dispatch('open-auth-modal')"
                                class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                                 <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
-                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ __('Sign in') }}</span>
+                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ ui_copy('auth_sign_in', 'auth.sign_in') }}</span>
                             </a>
                         </li>
                         <li>
@@ -147,14 +147,14 @@
                                @click.prevent="$dispatch('open-auth-modal', { tab: 'register' })"
                                class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                                 <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
-                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ __('Register') }}</span>
+                                <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ ui_copy('auth_register', 'auth.register') }}</span>
                             </a>
                         </li>
                     @endauth
                     <li>
                         <a href="{{ url('/'.$lang.'/cart') }}" class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                             <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
-                            <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ __('Basket') }}</span>
+                            <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ ui_copy('footer_basket', 'footer.basket') }}</span>
                         </a>
                     </li>
                 </ul>
@@ -164,12 +164,12 @@
             <div class="sm:border-r border-white/15 py-10 sm:pr-8 lg:pr-10 lg:pl-10 border-t lg:border-t-0">
                 <div class="flex items-baseline gap-3 mb-5">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">03</span>
-                    <h3 class="bp-spec-light">{{ __('navbar.label_contact') }}</h3>
+                    <h3 class="bp-spec-light">{{ ui_copy('nav_label_contact', 'navbar.label_contact') }}</h3>
                 </div>
 
                 <dl class="space-y-4 text-sm">
                     <div>
-                        <dt class="bp-spec-light text-[9px]">{{ __('Phone') }}</dt>
+                        <dt class="bp-spec-light text-[9px]">{{ ui_copy('footer_phone_label', 'footer.phone_label') }}</dt>
                         <dd class="mt-1">
                             <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}"
                                class="font-mono text-ivory hover:text-amber transition-colors tabular-nums">
@@ -178,7 +178,7 @@
                         </dd>
                     </div>
                     <div>
-                        <dt class="bp-spec-light text-[9px]">{{ __('Email') }}</dt>
+                        <dt class="bp-spec-light text-[9px]">{{ ui_copy('footer_email_label', 'footer.email_label') }}</dt>
                         <dd class="mt-1">
                             <a href="mailto:{{ $email }}"
                                class="text-ivory hover:text-amber transition-colors">
@@ -187,7 +187,7 @@
                         </dd>
                     </div>
                     <div>
-                        <dt class="bp-spec-light text-[9px]">{{ __('Hours') }}</dt>
+                        <dt class="bp-spec-light text-[9px]">{{ ui_copy('footer_hours_label', 'footer.hours_label') }}</dt>
                         <dd class="mt-1 font-mono text-ivory/80 text-[13px]">{{ $hours }}</dd>
                     </div>
                 </dl>
@@ -216,7 +216,7 @@
             <div class="py-10 sm:pl-8 lg:pl-10 border-t sm:border-t-0">
                 <div class="flex items-baseline gap-3 mb-5">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] text-amber">04</span>
-                    <h3 class="bp-spec-light">{{ __('Languages') }}</h3>
+                    <h3 class="bp-spec-light">{{ ui_copy('footer_languages_heading', 'footer.languages_heading') }}</h3>
                 </div>
 
                 <div class="grid grid-cols-5 gap-1 mb-8">
@@ -232,7 +232,7 @@
                     @endforeach
                 </div>
 
-                <p class="bp-spec-light mb-3">{{ __('Payments') }}</p>
+                <p class="bp-spec-light mb-3">{{ ui_copy('footer_payments_heading', 'footer.payments_heading') }}</p>
                 <div class="flex flex-wrap gap-1.5">
                     @php
                         // settings() returns raw strings — an operator-saved
@@ -296,14 +296,14 @@
             <div class="flex items-center gap-3">
                 <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">©</span>
                 <span class="font-mono text-[11px] text-ivory/50 tracking-[0.12em] uppercase tabular-nums">
-                    {{ $year }} · {{ strtoupper($siteName) }} · ALL RIGHTS RESERVED
+                    {{ $year }} · {{ strtoupper($siteName) }} · {{ ui_copy('footer_all_rights_reserved', 'footer.all_rights_reserved') }}
                 </span>
             </div>
             <nav class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.18em]" aria-label="Legal">
-                <a href="{{ url('/'.$lang.'/privacy-policy') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Privacy</a>
-                <a href="{{ url('/'.$lang.'/terms-of-service') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Terms</a>
-                <a href="#cookies" @click.prevent="$dispatch('open-cookie-consent')" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Cookies</a>
-                <a href="{{ route('frontend.sitemap', ['lang' => $lang]) }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">Sitemap</a>
+                <a href="{{ url('/'.$lang.'/privacy-policy') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_privacy', 'footer.privacy') }}</a>
+                <a href="{{ url('/'.$lang.'/terms-of-service') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_terms', 'footer.terms') }}</a>
+                <a href="#cookies" @click.prevent="$dispatch('open-cookie-consent')" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_cookies', 'footer.cookies') }}</a>
+                <a href="{{ route('frontend.sitemap', ['lang' => $lang]) }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_sitemap', 'footer.sitemap') }}</a>
             </nav>
         </div>
     </div>

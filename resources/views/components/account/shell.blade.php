@@ -14,35 +14,35 @@
     $nav = [
         [
             'key'   => 'dashboard',
-            'label' => __('Dashboard'),
+            'label' => ui_copy('account_nav_dashboard', 'account.nav_dashboard'),
             'num'   => '01',
             'href'  => route('frontend.account.dashboard', ['lang' => $lang]),
             'icon'  => 'heroicon-o-squares-2x2',
         ],
         [
             'key'   => 'orders',
-            'label' => __('Orders'),
+            'label' => ui_copy('account_nav_orders', 'account.nav_orders'),
             'num'   => '02',
             'href'  => route('frontend.account.orders', ['lang' => $lang]),
             'icon'  => 'heroicon-o-shopping-bag',
         ],
         [
             'key'   => 'refunds',
-            'label' => __('Refunds'),
+            'label' => ui_copy('account_nav_refunds', 'account.nav_refunds'),
             'num'   => '03',
             'href'  => route('frontend.account.refunds', ['lang' => $lang]),
             'icon'  => 'heroicon-o-arrow-path',
         ],
         [
             'key'   => 'addresses',
-            'label' => __('Addresses'),
+            'label' => ui_copy('account_nav_addresses', 'account.nav_addresses'),
             'num'   => '04',
             'href'  => route('frontend.account.addresses', ['lang' => $lang]),
             'icon'  => 'heroicon-o-map-pin',
         ],
         [
             'key'   => 'settings',
-            'label' => __('Settings'),
+            'label' => ui_copy('account_nav_settings', 'account.nav_settings'),
             'num'   => '05',
             'href'  => route('frontend.account.settings', ['lang' => $lang]),
             'icon'  => 'heroicon-o-cog-6-tooth',
@@ -64,9 +64,9 @@
             {{-- Breadcrumb / Doc-ID row --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">{{ ui_copy('account_breadcrumb_home', 'account.breadcrumb_home') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <a href="{{ route('frontend.account.dashboard', ['lang' => $lang]) }}" class="hover:text-amber transition-colors">Account</a>
+                    <a href="{{ route('frontend.account.dashboard', ['lang' => $lang]) }}" class="hover:text-amber transition-colors">{{ ui_copy('account_breadcrumb_account', 'account.breadcrumb_account') }}</a>
                     @foreach($breadcrumb as $crumb)
                         <span class="text-ivory/30">/</span>
                         @if(!empty($crumb['href']))
@@ -88,7 +88,7 @@
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
                         <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">
-                            {{ $eyebrow ?: 'Customer · Operating · Console' }}
+                            {{ $eyebrow ?: ui_copy('account_default_eyebrow', 'account.default_eyebrow') }}
                         </span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
@@ -141,10 +141,10 @@
                 {{-- User identity panel --}}
                 <div class="border border-ink bg-paper mb-4" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
-                        <span class="bp-spec text-amber-ink">Account · ID</span>
+                        <span class="bp-spec text-amber-ink">{{ ui_copy('account_account_id_label', 'account.account_id_label') }}</span>
                         <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-emerald-700 flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 bg-emerald-600 rounded-full"></span>
-                            Active
+                            {{ ui_copy('account_active_label', 'account.active_label') }}
                         </span>
                     </div>
                     <div class="p-4 flex items-center gap-3">
@@ -165,7 +165,7 @@
                 {{-- Nav --}}
                 <nav class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">Nav · Index</span>
+                        <span class="bp-spec text-amber-ink">{{ ui_copy('account_nav_index_label', 'account.nav_index_label') }}</span>
                     </div>
                     <ul class="divide-y divide-rule">
                         @foreach($nav as $item)
@@ -201,21 +201,21 @@
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ink
                                    hover:bg-red-600 hover:text-ivory hover:border-red-600 transition-colors">
                         <x-heroicon-o-arrow-left-on-rectangle class="w-4 h-4" />
-                        {{ __('Sign out') }}
+                        {{ ui_copy('account_sign_out', 'account.sign_out') }}
                     </button>
                 </form>
 
                 {{-- Support strip --}}
                 <div class="mt-4 border border-rule bg-ivory-alt p-4">
-                    <p class="bp-spec text-amber-ink mb-1.5">Support · Desk</p>
-                    <p class="font-display text-sm font-bold text-ink leading-tight">Need help?</p>
+                    <p class="bp-spec text-amber-ink mb-1.5">{{ ui_copy('account_support_desk_label', 'account.support_desk_label') }}</p>
+                    <p class="font-display text-sm font-bold text-ink leading-tight">{{ ui_copy('account_need_help', 'account.need_help') }}</p>
                     <p class="mt-1 text-xs text-ink-muted leading-relaxed">
-                        Our B2B team replies within 2 business hours.
+                        {{ ui_copy('account_support_reply_note', 'account.support_reply_note') }}
                     </p>
                     <a href="mailto:{{ settings('general.contact_email', 'info@oeparts.lt') }}"
                        class="mt-3 inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
                               border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
-                        Contact support
+                        {{ ui_copy('account_contact_support', 'account.contact_support') }}
                         <x-heroicon-s-arrow-long-right class="w-3 h-3" />
                     </a>
                 </div>

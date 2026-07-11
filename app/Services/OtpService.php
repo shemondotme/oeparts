@@ -49,7 +49,7 @@ class OtpService
 
             if (now()->lt($cooldownEnd)) {
                 $wait = (int) ceil(now()->diffInSeconds($cooldownEnd, false));
-                throw new \RuntimeException("Please wait {$wait} seconds before requesting a new code.");
+                throw new \RuntimeException(__('otp.wait_before_resend', ['wait' => $wait]));
             }
 
             // Invalidate old OTPs
@@ -141,12 +141,12 @@ class OtpService
     public function message(string $result): string
     {
         return match ($result) {
-            self::RESULT_OK           => 'Code verified successfully.',
-            self::RESULT_INVALID      => 'Invalid verification code.',
-            self::RESULT_EXPIRED      => 'This code has expired. Please request a new one.',
-            self::RESULT_MAX_ATTEMPTS => 'Too many incorrect attempts. Please request a new code.',
-            self::RESULT_ALREADY_USED => 'This code has already been used.',
-            default                   => 'Verification failed.',
+            self::RESULT_OK           => __('otp.code_verified'),
+            self::RESULT_INVALID      => __('otp.invalid_code'),
+            self::RESULT_EXPIRED      => __('otp.code_expired'),
+            self::RESULT_MAX_ATTEMPTS => __('otp.max_attempts'),
+            self::RESULT_ALREADY_USED => __('otp.already_used'),
+            default                   => __('otp.verification_failed'),
         };
     }
 

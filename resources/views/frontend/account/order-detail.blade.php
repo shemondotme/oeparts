@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('Order :number', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('account_order_title', 'account.order_title', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -9,11 +9,11 @@
 
     // Normalise order-status progression (order of fulfilment, not all cases).
     $timeline = [
-        ['key' => 'pending',    'label' => __('Placed'),     'icon' => 'heroicon-s-pencil-square',    'done' => true],
-        ['key' => 'paid',       'label' => __('Paid'),       'icon' => 'heroicon-s-credit-card',      'done' => false],
-        ['key' => 'processing', 'label' => __('Processing'), 'icon' => 'heroicon-s-cog-6-tooth',      'done' => false],
-        ['key' => 'shipped',    'label' => __('Shipped'),    'icon' => 'heroicon-s-truck',            'done' => false],
-        ['key' => 'delivered',  'label' => __('Delivered'),  'icon' => 'heroicon-s-check-circle',     'done' => false],
+        ['key' => 'pending',    'label' => ui_copy('account_timeline_placed', 'account.timeline_placed'),        'icon' => 'heroicon-s-pencil-square',    'done' => true],
+        ['key' => 'paid',       'label' => ui_copy('account_timeline_paid', 'account.timeline_paid'),            'icon' => 'heroicon-s-credit-card',      'done' => false],
+        ['key' => 'processing', 'label' => ui_copy('account_timeline_processing', 'account.timeline_processing'), 'icon' => 'heroicon-s-cog-6-tooth',      'done' => false],
+        ['key' => 'shipped',    'label' => ui_copy('account_timeline_shipped', 'account.timeline_shipped'),       'icon' => 'heroicon-s-truck',            'done' => false],
+        ['key' => 'delivered',  'label' => ui_copy('account_timeline_delivered', 'account.timeline_delivered'),   'icon' => 'heroicon-s-check-circle',     'done' => false],
     ];
 
     $statusValue = $order->status?->value ?? 'pending';
@@ -44,12 +44,12 @@
 @section('content')
 <x-account.shell
     active="orders"
-    eyebrow="Order · Detail · Record"
+    eyebrow="{{ ui_copy('account_order_detail_eyebrow', 'account.order_detail_eyebrow') }}"
     :title="'Order ' . $order->order_number"
-    :subtitle="__('Placed on :date', ['date' => $order->created_at->format('F j, Y · H:i')])"
+    :subtitle="ui_copy('account_placed_on', 'account.placed_on', ['date' => $order->created_at->format('F j, Y · H:i')])"
     :docId="'DOC · ' . $order->order_number"
     :breadcrumb="[
-        ['label' => 'Orders', 'href' => route('frontend.account.orders', ['lang' => $lang])],
+        ['label' => ui_copy('account_nav_orders', 'account.nav_orders'), 'href' => route('frontend.account.orders', ['lang' => $lang])],
         ['label' => $order->order_number],
     ]"
 >
@@ -60,21 +60,21 @@
                       font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                       hover:border-amber hover:text-amber transition-colors">
                 <x-heroicon-s-document-arrow-down class="w-4 h-4" />
-                Invoice
+                {{ ui_copy('account_invoice', 'account.invoice') }}
             </a>
         @endif
 
         @if(in_array($statusValue, ['pending', 'paid']))
             <form method="POST"
                   action="{{ route('frontend.account.order.cancel', ['lang' => $lang, 'order' => $order]) }}"
-                  onsubmit="return confirm('{{ __('Are you sure you want to cancel this order?') }}');">
+                  onsubmit="return confirm('{{ addslashes(ui_copy('account_cancel_order_confirm', 'account.cancel_order_confirm')) }}');">
                 @csrf
                 <button type="submit"
                         class="inline-flex items-center gap-2 px-4 py-2.5 border border-red-400 bg-transparent text-red-200
                                font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                hover:bg-red-600 hover:border-red-600 hover:text-ivory transition-colors">
                     <x-heroicon-s-x-mark class="w-4 h-4" />
-                    Cancel order
+                    {{ ui_copy('account_cancel_order', 'account.cancel_order') }}
                 </button>
             </form>
         @endif
@@ -85,7 +85,7 @@
                       font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                       hover:border-amber hover:text-amber transition-colors">
                 <x-heroicon-s-arrow-path class="w-4 h-4" />
-                Request refund
+                {{ ui_copy('account_request_refund', 'account.request_refund') }}
             </a>
         @endif
     </x-slot>
@@ -98,9 +98,9 @@
                 <x-heroicon-s-exclamation-circle class="w-4 h-4 text-amber-ink" />
             </div>
             <div>
-                <p class="bp-spec text-amber-ink mb-1">Awaiting · Bank · Transfer</p>
+                <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('account_bank_transfer_awaiting_eyebrow', 'account.bank_transfer_awaiting_eyebrow') }}</p>
                 <p class="text-sm text-body leading-relaxed">
-                    {{ __('Your order is held until we confirm the bank transfer. Please complete the transfer using :ref as the reference. Processing starts within 1 business day after funds clear.', ['ref' => $order->order_number]) }}
+                    {{ ui_copy('account_bank_transfer_awaiting_note', 'account.bank_transfer_awaiting_note', ['ref' => $order->order_number]) }}
                 </p>
             </div>
         </div>
@@ -111,12 +111,12 @@
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-signal class="w-3.5 h-3.5" />
-                01 · Fulfilment · Status
+                {{ ui_copy('account_fulfilment_status_eyebrow', 'account.fulfilment_status_eyebrow') }}
             </span>
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase
                          {{ $isTerminalNegative ? 'text-red-700' : 'text-emerald-700' }} flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 {{ $isTerminalNegative ? 'bg-red-600' : 'bg-emerald-600' }} rounded-full"></span>
-                {{ $order->status->label() }}
+                {{ ui_copy('account_order_status_'.$order->status->value, 'account.order_status_'.$order->status->value) }}
             </span>
         </header>
 
@@ -127,9 +127,9 @@
                         <x-heroicon-s-x-mark class="w-5 h-5 text-red-600" />
                     </div>
                     <div>
-                        <p class="font-display text-lg font-bold text-ink">Order cancelled</p>
+                        <p class="font-display text-lg font-bold text-ink">{{ ui_copy('account_order_cancelled', 'account.order_cancelled') }}</p>
                         <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-1">
-                            Last updated · {{ $order->updated_at->format('Y-m-d · H:i') }}
+                            {{ ui_copy('account_last_updated', 'account.last_updated', ['datetime' => $order->updated_at->format('Y-m-d · H:i')]) }}
                         </p>
                     </div>
                 </div>
@@ -171,13 +171,13 @@
                                 <x-heroicon-s-truck class="w-4 h-4 text-emerald-700" />
                             </div>
                             <div>
-                                <p class="bp-spec text-emerald-700 mb-0.5">Tracking · Number</p>
+                                <p class="bp-spec text-emerald-700 mb-0.5">{{ ui_copy('account_tracking_number_label', 'account.tracking_number_label') }}</p>
                                 <p class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->tracking_number }}</p>
                             </div>
                         </div>
                         @if($order->carrier)
                             <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-emerald-800">
-                                via {{ $order->carrier }}
+                                {{ ui_copy('account_via_carrier', 'account.via_carrier', ['carrier' => $order->carrier]) }}
                             </span>
                         @endif
                     </div>
@@ -196,19 +196,20 @@
                 <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-cube class="w-3.5 h-3.5" />
-                        02 · Line · Items
+                        {{ ui_copy('account_line_items_eyebrow', 'account.line_items_eyebrow') }}
                     </span>
                     <span class="bp-spec-mono">
-                        {{ $order->items->count() }} {{ \Illuminate\Support\Str::plural('row', $order->items->count()) }}
+                        {{ $order->items->count() }} {{ ui_trans_choice('account_row_word', 'account.row_word', $order->items->count()) }}
                     </span>
                 </header>
 
                 <ul class="divide-y divide-rule">
                     @foreach($order->items as $i => $item)
                         @php
+                            $partFallback = ui_copy('account_part_fallback', 'account.part_fallback');
                             $productName = $item->product
-                                ? (is_array($item->product->name) ? (trans_field($item->product->name) ?: 'Part') : $item->product->name)
-                                : ($item->oem_number_snapshot ?: 'Part');
+                                ? (is_array($item->product->name) ? (trans_field($item->product->name) ?: $partFallback) : $item->product->name)
+                                : ($item->oem_number_snapshot ?: $partFallback);
                             $isNew = $item->condition_snapshot === 'new';
                             $lineTotal = $item->total_price ?? bcmul((string) $item->unit_price, (string) $item->quantity, 2);
                         @endphp
@@ -225,10 +226,10 @@
                                 </p>
                                 <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
                                     <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink cursor-pointer"
-                                          @click="copy('{{ $item->oem_number_snapshot }}')" title="Copy OEM number">
+                                          @click="copy('{{ $item->oem_number_snapshot }}')" title="{{ ui_copy('account_copy_oem_title', 'account.copy_oem_title') }}">
                                         OEM · {{ $item->oem_number_snapshot }}
                                     </span>
-                                    <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600 ml-2">Copied</span>
+                                    <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600 ml-2">{{ ui_copy('account_copied', 'account.copied') }}</span>
                                     @if($item->manufacturer_snapshot)
                                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
                                             {{ $item->manufacturer_snapshot }}
@@ -263,37 +264,37 @@
                 <header class="px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-calculator class="w-3.5 h-3.5" />
-                        03 · Totals · Ledger
+                        {{ ui_copy('account_totals_ledger_eyebrow', 'account.totals_ledger_eyebrow') }}
                     </span>
                 </header>
                 <dl class="px-5 py-4 space-y-2">
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="bp-spec-mono">Subtotal</dt>
+                        <dt class="bp-spec-mono">{{ ui_copy('account_subtotal', 'account.subtotal') }}</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->subtotal) }}</dd>
                     </div>
                     @if($hasDiscount)
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="bp-spec-mono">Discount</dt>
+                        <dt class="bp-spec-mono">{{ ui_copy('account_discount', 'account.discount') }}</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm text-emerald-700 tabular-nums">−{{ format_price($order->discount_amount) }}</dd>
                     </div>
                     @endif
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="bp-spec-mono">Shipping</dt>
+                        <dt class="bp-spec-mono">{{ ui_copy('account_shipping', 'account.shipping') }}</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->shipping_cost) }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
-                        <dt class="bp-spec-mono">VAT</dt>
+                        <dt class="bp-spec-mono">{{ ui_copy('account_vat', 'account.vat') }}</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->vat_amount) }}</dd>
                     </div>
                 </dl>
                 <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                     <div>
-                        <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">Grand total</p>
-                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · incl. VAT</p>
+                        <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('account_grand_total', 'account.grand_total') }}</p>
+                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('account_incl_vat_short', 'account.incl_vat_short') }}</p>
                     </div>
                     <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
                         {{ format_price($order->grand_total) }}
@@ -306,7 +307,7 @@
                     <header class="px-5 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-pencil-square class="w-3.5 h-3.5" />
-                            04 · Customer · Note
+                            {{ ui_copy('account_customer_note_eyebrow', 'account.customer_note_eyebrow') }}
                         </span>
                     </header>
                     <div class="p-5 text-sm text-body leading-relaxed whitespace-pre-line">
@@ -324,7 +325,7 @@
                 <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-map-pin class="w-3.5 h-3.5" />
-                        Ship-to · Address
+                        {{ ui_copy('account_ship_to_address_eyebrow', 'account.ship_to_address_eyebrow') }}
                     </span>
                 </div>
                 <address class="p-4 not-italic text-sm text-body leading-relaxed space-y-1">
@@ -337,7 +338,7 @@
                         {{ $order->shipping_postal_code }} · {{ $order->shipping_city }}
                     </p>
                     <p class="font-mono text-xs text-ink-muted uppercase tracking-[0.2em] pt-1">
-                        {{ $order->shipping_country_code }}
+                        {{ $order->shipping_country_code ? localized_country_name($order->shipping_country_code) : '' }}
                     </p>
                 </address>
             </div>
@@ -348,7 +349,7 @@
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-truck class="w-3.5 h-3.5" />
-                            Shipping · Method
+                            {{ ui_copy('account_shipping_method_eyebrow', 'account.shipping_method_eyebrow') }}
                         </span>
                     </div>
                     <div class="p-4">
@@ -357,7 +358,7 @@
                         </p>
                         @if($order->shipping_estimated_days_min || $order->shipping_estimated_days_max)
                             <p class="mt-1 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                                Est. delivery · {{ $order->shipping_estimated_days_min }}–{{ $order->shipping_estimated_days_max }} days
+                                {{ ui_copy('account_est_delivery_days', 'account.est_delivery_days', ['min' => $order->shipping_estimated_days_min, 'max' => $order->shipping_estimated_days_max]) }}
                             </p>
                         @endif
                     </div>
@@ -369,7 +370,7 @@
                 <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-credit-card class="w-3.5 h-3.5" />
-                        Payment · Record
+                        {{ ui_copy('account_payment_record_eyebrow', 'account.payment_record_eyebrow') }}
                     </span>
                 </div>
                 <div class="p-4">
@@ -383,18 +384,18 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="font-display text-sm font-bold text-ink tracking-[-0.01em]">
-                                {{ $order->payment_method?->value === 'card' ? __('Credit/Debit Card') : __('Bank Transfer') }}
+                                {{ $order->payment_method?->value === 'card' ? ui_copy('account_credit_debit_card', 'account.credit_debit_card') : ui_copy('account_bank_transfer', 'account.bank_transfer') }}
                             </p>
                             @if($order->payment_reference)
                                 <p class="mt-1 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                                    Ref · {{ $order->payment_reference }}
+                                    {{ ui_copy('account_ref_label', 'account.ref_label', ['reference' => $order->payment_reference]) }}
                                 </p>
                             @endif
                         </div>
                     </div>
 
                     <div class="mt-4 pt-4 border-t border-rule flex items-center justify-between">
-                        <span class="bp-spec-mono">Status</span>
+                        <span class="bp-spec-mono">{{ ui_copy('account_status_label', 'account.status_label') }}</span>
                         @php
                             $ps = $order->payment_status?->value ?? 'pending';
                             $psBg = match($ps) {
@@ -408,7 +409,7 @@
                         <span class="inline-flex items-center gap-2">
                             <span class="inline-block w-1.5 h-3 {{ $psBg }}"></span>
                             <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink">
-                                {{ ucfirst($ps) }}
+                                {{ ui_copy('account_payment_status_'.$ps, 'account.payment_status_'.$ps) }}
                             </span>
                         </span>
                     </div>
@@ -420,19 +421,19 @@
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-briefcase class="w-3.5 h-3.5" />
-                            B2B · Record
+                            {{ ui_copy('account_b2b_record_eyebrow', 'account.b2b_record_eyebrow') }}
                         </span>
                     </div>
                     <dl class="p-4 space-y-2">
                         @if($order->company_name)
                             <div class="flex items-baseline justify-between gap-3">
-                                <dt class="bp-spec-mono">Company</dt>
+                                <dt class="bp-spec-mono">{{ ui_copy('account_company_label', 'account.company_label') }}</dt>
                                 <dd class="font-mono text-xs font-bold text-ink truncate">{{ $order->company_name }}</dd>
                             </div>
                         @endif
                         @if($order->vat_number)
                             <div class="flex items-baseline justify-between gap-3">
-                                <dt class="bp-spec-mono">VAT</dt>
+                                <dt class="bp-spec-mono">{{ ui_copy('account_vat_label', 'account.vat_label') }}</dt>
                                 <dd class="font-mono text-xs font-bold text-ink tabular-nums">{{ $order->vat_number }}</dd>
                             </div>
                         @endif

@@ -28,7 +28,7 @@ class AccountController extends Controller
         }
         if (!$order->status->canBeCancelled()) {
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
-                ->with('error', 'This order cannot be cancelled.');
+                ->with('error', __('account.cancel_order_not_cancellable'));
         }
 
         // Operator-configured grace period (OrdersSettings). 0 = status-only,
@@ -36,13 +36,13 @@ class AccountController extends Controller
         $windowHours = (int) settings('orders.customer_cancel_window_hours', 0);
         if ($windowHours > 0 && $order->created_at->addHours($windowHours)->isPast()) {
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
-                ->with('error', "The {$windowHours}-hour cancellation window for this order has passed. Please contact support.");
+                ->with('error', __('account.cancel_window_passed', ['hours' => $windowHours]));
         }
 
         app(OrderService::class)->transitionStatus($order, OrderStatus::Cancelled, 'Cancelled by customer.');
 
         return redirect()->route('frontend.account.orders', ['lang' => $lang])
-            ->with('success', 'Your order has been cancelled.');
+            ->with('success', __('account.order_cancelled_success'));
     }
 
     public function dashboard(Request $request, string $lang)
@@ -164,7 +164,7 @@ class AccountController extends Controller
         }
 
         return redirect()->route('frontend.account.addresses', ['lang' => $lang])
-            ->with('success', __('Address saved successfully.'));
+            ->with('success', __('account.address_saved'));
     }
 
     /**
@@ -180,7 +180,7 @@ class AccountController extends Controller
         $address->delete();
 
         return redirect()->route('frontend.account.addresses', ['lang' => $lang])
-            ->with('success', __('Address deleted.'));
+            ->with('success', __('account.address_deleted'));
     }
 
     /**
@@ -209,7 +209,7 @@ class AccountController extends Controller
         // Change password if provided
         if (!empty($validated['current_password']) && !empty($validated['new_password'])) {
             if (!\Hash::check($validated['current_password'], $user->password)) {
-                return back()->withErrors(['current_password' => __('Current password is incorrect.')]);
+                return back()->withErrors(['current_password' => __('account.current_password_incorrect')]);
             }
             $user->password = \Hash::make($validated['new_password']);
         }
@@ -217,7 +217,7 @@ class AccountController extends Controller
         $user->save();
 
         return redirect()->route('frontend.account.settings', ['lang' => $lang])
-            ->with('success', __('Settings updated successfully.'));
+            ->with('success', __('account.settings_updated'));
     }
 
     /**
@@ -230,14 +230,14 @@ class AccountController extends Controller
         $validated = $request->validated();
 
         if (! \Hash::check($validated['current_password'], $user->password)) {
-            return back()->withErrors(['current_password' => __('Current password is incorrect.')]);
+            return back()->withErrors(['current_password' => __('account.current_password_incorrect')]);
         }
 
         $user->password = \Hash::make($validated['new_password']);
         $user->save();
 
         return redirect()->route('frontend.account.settings', ['lang' => $lang])
-            ->with('success', __('Password updated successfully.'));
+            ->with('success', __('account.password_updated'));
     }
 
     /**
@@ -257,7 +257,7 @@ class AccountController extends Controller
         $user->save();
 
         return redirect()->route('frontend.account.settings', ['lang' => $lang])
-            ->with('success', __('Notification preferences updated.'));
+            ->with('success', __('account.notification_prefs_updated'));
     }
 
     /**
@@ -277,7 +277,7 @@ class AccountController extends Controller
         $user->save();
 
         return redirect()->route('frontend.account.settings', ['lang' => $validated['language']])
-            ->with('success', __('Language preferences updated.'));
+            ->with('success', __('account.language_prefs_updated'));
     }
 
     /**
@@ -298,7 +298,7 @@ class AccountController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('frontend.home', ['lang' => $lang])
-            ->with('success', __('Your account has been deleted.'));
+            ->with('success', __('account.account_deleted'));
     }
 
     /**
@@ -312,18 +312,18 @@ class AccountController extends Controller
         }
         if ($order->status !== OrderStatus::Delivered) {
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
-                ->with('error', 'Only delivered orders can be refunded.');
+                ->with('error', __('account.refund_only_delivered'));
         }
         // orders.* is the group OrdersSettings manages — this read previously
         // used a 'refund' group no page edited, so the knob did nothing.
         $windowDays = settings('orders.refund_window_days', 14);
         if (Carbon::parse($order->updated_at)->diffInDays(now()) > $windowDays) {
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
-                ->with('error', "Refund window of {$windowDays} days has passed.");
+                ->with('error', __('account.refund_window_passed', ['days' => $windowDays]));
         }
         if ($order->refundRequest()->exists()) {
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
-                ->with('error', 'A refund request has already been submitted for this order.');
+                ->with('error', __('account.refund_already_submitted'));
         }
         return view('frontend.account.refund-form', compact('order'));
     }
@@ -389,7 +389,7 @@ class AccountController extends Controller
         ))->onQueue('critical');
 
         return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
-            ->with('success', 'Your refund request has been submitted.');
+            ->with('success', __('account.refund_submitted_success'));
     }
 
     /**

@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('Refund Requests') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('account_refunds_title', 'account.refunds_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -9,11 +9,11 @@
 @section('content')
 <x-account.shell
     active="refunds"
-    eyebrow="03 · Refunds · Ledger"
-    title="Refund requests"
-    :subtitle="__('Track every refund submission — from initial request through admin decision and payout.')"
+    eyebrow="{{ ui_copy('account_refunds_eyebrow', 'account.refunds_eyebrow') }}"
+    title="{{ ui_copy('account_refund_requests', 'account.refund_requests') }}"
+    :subtitle="ui_copy('account_refunds_subtitle', 'account.refunds_subtitle')"
     docId="DOC · REFUND-INDEX · {{ now()->format('Y.m.d') }}"
-    :breadcrumb="[['label' => 'Refunds']]"
+    :breadcrumb="[['label' => ui_copy('account_nav_refunds', 'account.nav_refunds')]]"
 >
     <x-slot name="actions">
         <a href="{{ route('frontend.account.orders', ['lang' => $lang]) }}"
@@ -21,7 +21,7 @@
                   font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                   hover:border-amber hover:text-amber transition-colors">
             <x-heroicon-s-arrow-long-left class="w-4 h-4" />
-            {{ __('Back to orders') }}
+            {{ ui_copy('account_back_to_orders', 'account.back_to_orders') }}
         </a>
     </x-slot>
 
@@ -32,26 +32,26 @@
                 <x-heroicon-o-arrow-path class="w-7 h-7 text-ink-muted" />
             </div>
             <h3 class="font-display text-3xl font-extrabold text-ink tracking-[-0.02em]">
-                {{ __('No refund requests') }}<span class="text-amber">.</span>
+                {{ ui_copy('account_no_refund_requests', 'account.no_refund_requests') }}<span class="text-amber">.</span>
             </h3>
             <p class="mt-3 text-sm text-ink-muted max-w-md mx-auto leading-relaxed">
-                {{ __('You have not submitted any refund requests yet. If you need help with a delivered order, open its detail page to start the process.') }}
+                {{ ui_copy('account_no_refund_requests_note', 'account.no_refund_requests_note') }}
             </p>
             <a href="{{ route('frontend.account.orders', ['lang' => $lang]) }}"
                class="mt-8 inline-flex items-center gap-2 px-5 py-3 bg-ink text-ivory border border-ink
                       font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                       hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                 <x-heroicon-s-shopping-bag class="w-4 h-4" />
-                {{ __('View my orders') }}
+                {{ ui_copy('account_view_my_orders', 'account.view_my_orders') }}
             </a>
         </div>
     @else
         @php
             $statusConfig = [
-                'pending'   => ['bar' => 'bg-amber',         'text' => 'text-amber-ink', 'label' => __('Pending')],
-                'approved'  => ['bar' => 'bg-blue-600',      'text' => 'text-blue-700',  'label' => __('Approved')],
-                'processed' => ['bar' => 'bg-emerald-600',   'text' => 'text-emerald-700', 'label' => __('Processed')],
-                'rejected'  => ['bar' => 'bg-red-600',       'text' => 'text-red-700',   'label' => __('Rejected')],
+                'pending'   => ['bar' => 'bg-amber',         'text' => 'text-amber-ink', 'label' => ui_copy('account_refund_status_pending', 'account.refund_status_pending')],
+                'approved'  => ['bar' => 'bg-blue-600',      'text' => 'text-blue-700',  'label' => ui_copy('account_refund_status_approved', 'account.refund_status_approved')],
+                'processed' => ['bar' => 'bg-emerald-600',   'text' => 'text-emerald-700', 'label' => ui_copy('account_refund_status_processed', 'account.refund_status_processed')],
+                'rejected'  => ['bar' => 'bg-red-600',       'text' => 'text-red-700',   'label' => ui_copy('account_refund_status_rejected', 'account.refund_status_rejected')],
             ];
             $totals = [
                 'all'       => $refunds->total(),
@@ -65,25 +65,25 @@
         <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule"
              style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">{{ __('Total') }}</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_total', 'account.total') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $totals['all'], 3, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">{{ __('Pending') }}</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_pending', 'account.pending') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-amber-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $totals['pending'], 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">{{ __('Processed') }}</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_processed', 'account.processed') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-emerald-700 tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $totals['processed'], 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">{{ __('Value') }}</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_value', 'account.value') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ format_price($totals['amount']) }}
                 </p>
@@ -94,19 +94,19 @@
         <div class="hidden md:block border border-ink bg-paper overflow-hidden"
              style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
-                <span class="bp-spec text-amber-ink">{{ __('Refunds · Register') }}</span>
-                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · {{ __('amount requested') }}</span>
+                <span class="bp-spec text-amber-ink">{{ ui_copy('account_refunds_register', 'account.refunds_register') }}</span>
+                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('account_amount_requested', 'account.amount_requested') }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-ink-tint border-b border-ink">
                         <tr>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted w-12">#</th>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ __('Order') }}</th>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ __('Submitted') }}</th>
-                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ __('Amount') }}</th>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ __('Status') }}</th>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ __('Admin note') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted w-12">{{ ui_copy('account_th_hash', 'account.th_hash') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_order_short', 'account.th_order_short') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_submitted', 'account.th_submitted') }}</th>
+                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_amount', 'account.th_amount') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_status', 'account.th_status') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_admin_note', 'account.th_admin_note') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-rule">
@@ -179,7 +179,7 @@
                         </span>
                     </div>
                     <div class="flex items-baseline justify-between gap-3 pt-3 border-t border-rule">
-                        <span class="bp-spec-mono">{{ __('Requested') }}</span>
+                        <span class="bp-spec-mono">{{ ui_copy('account_requested', 'account.requested') }}</span>
                         <span class="font-mono text-lg font-medium text-ink tabular-nums">
                             {{ format_price($refund->amount_requested) }}
                         </span>

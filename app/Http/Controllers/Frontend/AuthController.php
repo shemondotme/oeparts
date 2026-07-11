@@ -31,7 +31,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => __('auth.validation_failed'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -42,7 +42,7 @@ class AuthController extends Controller
         if (! RateLimiter::attempt("login:{$request->ip()}", $maxAttempts, function () {
             return true;
         }, $decayMinutes * 60)) {
-            throw new TooManyRequestsHttpException($decayMinutes * 60, 'Too many login attempts. Please try again in '.$decayMinutes.' minutes.');
+            throw new TooManyRequestsHttpException($decayMinutes * 60, __('auth.too_many_login_attempts', ['minutes' => $decayMinutes]));
         }
 
         $credentials = $request->only('email', 'password');
@@ -51,7 +51,7 @@ class AuthController extends Controller
         if (! Auth::guard('web')->attempt($credentials, $remember)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid email or password.',
+                'message' => __('auth.invalid_email_or_password'),
             ], 401);
         }
 
@@ -61,7 +61,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Your account has been deactivated.',
+                'message' => __('auth.account_deactivated'),
             ], 403);
         }
 
@@ -74,7 +74,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Email verification required.',
+                'message' => __('auth.email_verification_required'),
                 'data' => [
                     'requires_otp' => true,
                 ],
@@ -83,7 +83,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Login successful.',
+            'message' => __('auth.login_successful'),
             'data' => [
                 'user' => [
                     'id' => $user->id,
@@ -112,7 +112,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
+                'message' => __('auth.validation_failed'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -134,7 +134,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Registration successful. Please verify your email.',
+            'message' => __('auth.registration_successful'),
             'data' => [
                 'requires_otp' => true,
                 'user' => [
@@ -158,11 +158,11 @@ class AuthController extends Controller
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Logged out successfully.',
+                'message' => __('auth.logged_out_successfully'),
             ]);
         }
 
-        return redirect()->to("/{$lang}/")->with('status', 'Logged out successfully.');
+        return redirect()->to("/{$lang}/")->with('status', __('auth.logged_out_successfully'));
     }
 
     /**
@@ -179,7 +179,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid input',
+                'message' => __('auth.invalid_input'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -209,7 +209,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'OTP verified successfully.',
+            'message' => __('auth.otp_verified_successfully'),
         ]);
     }
 
@@ -226,7 +226,7 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid input',
+                'message' => __('auth.invalid_input'),
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -238,7 +238,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'OTP resent successfully.',
+                'message' => __('auth.otp_resent_successfully'),
             ]);
         } catch (\RuntimeException $e) {
             return response()->json([

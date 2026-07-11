@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('My Orders') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('account_orders_title', 'account.orders_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -9,11 +9,11 @@
 @section('content')
 <x-account.shell
     active="orders"
-    eyebrow="02 · Orders · Ledger"
-    title="Orders"
-    :subtitle="__('Track every procurement transaction — from submission through shipment and refund.')"
+    eyebrow="{{ ui_copy('account_orders_eyebrow', 'account.orders_eyebrow') }}"
+    title="{{ ui_copy('account_orders_heading', 'account.orders_heading') }}"
+    :subtitle="ui_copy('account_orders_subtitle', 'account.orders_subtitle')"
     docId="DOC · ORDER-INDEX · {{ now()->format('Y.m.d') }}"
-    :breadcrumb="[['label' => 'Orders']]"
+    :breadcrumb="[['label' => ui_copy('account_nav_orders', 'account.nav_orders')]]"
 >
     <x-slot name="actions">
         <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
@@ -21,7 +21,7 @@
                   font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                   hover:bg-paper hover:text-ink transition-colors">
             <x-heroicon-s-plus class="w-4 h-4" />
-            New order
+            {{ ui_copy('account_new_order', 'account.new_order') }}
         </a>
     </x-slot>
 
@@ -31,14 +31,14 @@
                 <x-heroicon-o-shopping-bag class="w-7 h-7 text-ink-muted" />
             </div>
             <h3 class="font-display text-3xl font-extrabold text-ink tracking-[-0.02em]">
-                No orders yet<span class="text-amber">.</span>
+                {{ ui_copy('account_no_orders_yet', 'account.no_orders_yet') }}<span class="text-amber">.</span>
             </h3>
             <p class="mt-3 text-sm text-ink-muted max-w-md mx-auto leading-relaxed">
-                You haven't placed any orders yet. Start searching for OEM parts and place your first B2B procurement order today.
+                {{ ui_copy('account_no_orders_note_long', 'account.no_orders_note_long') }}
             </p>
             <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="bp-btn-primary mt-8">
                 <x-heroicon-s-magnifying-glass class="w-5 h-5" />
-                Search OEM parts
+                {{ ui_copy('account_search_oem_parts', 'account.search_oem_parts') }}
             </a>
         </div>
     @else
@@ -46,19 +46,19 @@
         <div class="mb-6 border border-ink bg-paper grid grid-cols-3 divide-x divide-rule"
              style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">Total records</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_total_records', 'account.total_records') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $orders->total(), 3, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">Page</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_page_label', 'account.page_label') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ $orders->currentPage() }} / {{ max(1, $orders->lastPage()) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">Showing</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_showing_label', 'account.showing_label') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ $orders->count() }}
                 </p>
@@ -69,20 +69,20 @@
         <div class="hidden md:block border border-ink bg-paper overflow-hidden"
              style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
-                <span class="bp-spec text-amber-ink">Orders · List</span>
-                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · VAT included</span>
+                <span class="bp-spec text-amber-ink">{{ ui_copy('account_orders_list', 'account.orders_list') }}</span>
+                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('account_vat_included', 'account.vat_included') }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-ink-tint border-b border-ink">
                         <tr>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted w-12">#</th>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Order No.</th>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Date</th>
-                            <th class="px-5 py-3 text-center font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Items</th>
-                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Total</th>
-                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Status</th>
-                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">Action</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted w-12">{{ ui_copy('account_th_hash', 'account.th_hash') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_order_no', 'account.th_order_no') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_date', 'account.th_date') }}</th>
+                            <th class="px-5 py-3 text-center font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_items', 'account.th_items') }}</th>
+                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_total', 'account.th_total') }}</th>
+                            <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_status', 'account.th_status') }}</th>
+                            <th class="px-5 py-3 text-right font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_action', 'account.th_action') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-rule">
@@ -124,7 +124,7 @@
                                     <span class="inline-flex items-center gap-2">
                                         <span class="inline-block w-1.5 h-3 {{ $statusBar }}"></span>
                                         <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink">
-                                            {{ $order->status->label() }}
+                                            {{ ui_copy('account_order_status_'.$order->status->value, 'account.order_status_'.$order->status->value) }}
                                         </span>
                                     </span>
                                 </td>
@@ -132,7 +132,7 @@
                                     <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order]) }}"
                                        class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
                                               border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
-                                        View
+                                        {{ ui_copy('account_view', 'account.view') }}
                                         <x-heroicon-s-arrow-long-right class="w-3 h-3" />
                                     </a>
                                 </td>
@@ -178,13 +178,13 @@
                         <span class="inline-flex items-center gap-2 shrink-0">
                             <span class="inline-block w-1.5 h-3 {{ $statusBar }}"></span>
                             <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase text-ink">
-                                {{ $order->status->label() }}
+                                {{ ui_copy('account_order_status_'.$order->status->value, 'account.order_status_'.$order->status->value) }}
                             </span>
                         </span>
                     </div>
                     <div class="flex items-baseline justify-between gap-3 pt-3 border-t border-rule">
                         <span class="bp-spec-mono">
-                            {{ $order->items_count }} items
+                            {{ $order->items_count }} {{ ui_trans_choice('account_item_word', 'account.item_word', $order->items_count) }}
                         </span>
                         <span class="font-mono text-lg font-medium text-ink tabular-nums">
                             {{ format_price($order->grand_total) }}
