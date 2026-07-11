@@ -8,6 +8,9 @@ use App\Filament\Pages\Settings\AppearanceSettings;
 use App\Filament\Pages\Settings\AuthSettings;
 use App\Filament\Pages\Settings\CartSettings;
 use App\Filament\Pages\Settings\CheckoutSettings;
+use App\Filament\Pages\Settings\CustomersSettings;
+use App\Filament\Pages\Settings\FooterSettings;
+use App\Filament\Pages\Settings\NavbarSettings;
 use App\Filament\Pages\Settings\CompanySettings;
 use App\Filament\Pages\Settings\ContactSettings;
 use App\Filament\Pages\Settings\DashboardSettings;
@@ -115,6 +118,24 @@ final class SettingsRegistry
             'icon' => 'heroicon-o-megaphone',
             'sort' => 40,
         ],
+        'navbar-settings' => [
+            'class' => NavbarSettings::class,
+            'section' => 'General & Brand',
+            'title' => 'Navbar & Mini-Cart',
+            'url' => '/admin/settings/navbar-settings',
+            'description' => 'Navigation and mini-cart labels',
+            'icon' => 'heroicon-o-bars-3-bottom-left',
+            'sort' => 45,
+        ],
+        'footer-settings' => [
+            'class' => FooterSettings::class,
+            'section' => 'General & Brand',
+            'title' => 'Footer Badges',
+            'url' => '/admin/settings/footer-settings',
+            'description' => 'Trust badges, stats, payment labels',
+            'icon' => 'heroicon-o-rectangle-group',
+            'sort' => 46,
+        ],
         'company-settings' => [
             'class' => CompanySettings::class,
             'section' => 'Store Operations',
@@ -141,6 +162,15 @@ final class SettingsRegistry
             'description' => 'Order expiry, prefix formats, status defaults',
             'icon' => 'heroicon-o-shopping-bag',
             'sort' => 30,
+        ],
+        'customers-settings' => [
+            'class' => CustomersSettings::class,
+            'section' => 'Store Operations',
+            'title' => 'Customers',
+            'url' => '/admin/settings/customers-settings',
+            'description' => 'VIP and repeat segment thresholds',
+            'icon' => 'heroicon-o-users',
+            'sort' => 33,
         ],
         'cart-settings' => [
             'class' => CartSettings::class,

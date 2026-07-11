@@ -234,7 +234,15 @@
 
                 <p class="bp-spec-light mb-3">{{ __('Payments') }}</p>
                 <div class="flex flex-wrap gap-1.5">
-                    @foreach(settings('footer.payment_methods', ['VISA', 'MASTERCARD', 'APPLE PAY', 'GOOGLE PAY', 'SEPA', 'BANK TRANSFER']) as $method)
+                    @php
+                        // settings() returns raw strings — an operator-saved
+                        // list arrives JSON-encoded; the default is an array.
+                        $footerPayments = settings('footer.payment_methods', ['VISA', 'MASTERCARD', 'APPLE PAY', 'GOOGLE PAY', 'SEPA', 'BANK TRANSFER']);
+                        if (is_string($footerPayments)) {
+                            $footerPayments = json_decode($footerPayments, true) ?: ['VISA', 'MASTERCARD', 'APPLE PAY', 'GOOGLE PAY', 'SEPA', 'BANK TRANSFER'];
+                        }
+                    @endphp
+                    @foreach($footerPayments as $method)
                         <span class="inline-flex items-center h-8 px-3 border border-white/25 font-mono text-[10px] font-bold tracking-[0.16em] text-ivory/80 whitespace-nowrap">
                             {{ $method }}
                         </span>

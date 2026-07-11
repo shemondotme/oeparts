@@ -17,6 +17,7 @@ class ListShippingMethods extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Support\AdminUi::settingsLinkAction(\App\Filament\Pages\Settings\ShippingSettings::class),
             ...$this->getSavedViewHeaderActions(),
             Actions\CreateAction::make(),
         ];
