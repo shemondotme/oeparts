@@ -195,4 +195,8 @@ return [
     'need_more_parts_note' => 'Setzen Sie Ihren Einkauf fort und entdecken Sie weitere Original-OEM-Teile für Ihr Fahrzeug.',
     'search_oem_parts' => 'OEM-Teile suchen',
     'need_help_short' => 'Brauchen Sie Hilfe',
+
+    // Controller flash messages (App\Http\Controllers\Frontend\CheckoutController)
+    'verification_code_sent' => 'Verifizierungscode an Ihre E-Mail gesendet.',
+    'order_creation_failed' => 'Ihre Bestellung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.',
 ];

@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', ($address ? __('Edit Address') : __('Add Address')) . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ($address ? ui_copy('account_edit_address_title', 'account.edit_address_title') : ui_copy('account_add_address_title', 'account.add_address_title')) . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -12,13 +12,13 @@
 @section('content')
 <x-account.shell
     active="addresses"
-    :eyebrow="$isEdit ? 'Edit · Address · Record' : 'New · Address · Record'"
-    :title="$isEdit ? __('Edit address') : __('Add new address')"
-    :subtitle="$isEdit ? __('Update this saved ship-to record.') : __('Save a new ship-to record for faster checkout on future orders.')"
+    :eyebrow="$isEdit ? ui_copy('account_edit_address_eyebrow', 'account.edit_address_eyebrow') : ui_copy('account_new_address_eyebrow', 'account.new_address_eyebrow')"
+    :title="$isEdit ? ui_copy('account_edit_address', 'account.edit_address') : ui_copy('account_add_new_address', 'account.add_new_address')"
+    :subtitle="$isEdit ? ui_copy('account_edit_address_subtitle', 'account.edit_address_subtitle') : ui_copy('account_add_address_subtitle', 'account.add_address_subtitle')"
     :docId="$isEdit ? 'DOC · ADDRESS-EDIT · ' . $address->id : 'DOC · ADDRESS-NEW'"
     :breadcrumb="[
-        ['label' => 'Addresses', 'href' => route('frontend.account.addresses', ['lang' => $lang])],
-        ['label' => $isEdit ? 'Edit' : 'New'],
+        ['label' => ui_copy('account_nav_addresses', 'account.nav_addresses'), 'href' => route('frontend.account.addresses', ['lang' => $lang])],
+        ['label' => $isEdit ? ui_copy('account_edit', 'account.edit') : ui_copy('account_new_label', 'account.new_label')],
     ]"
 >
     {{-- Validation errors --}}
@@ -30,7 +30,7 @@
                     <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-red-600" />
                 </div>
                 <div class="flex-1">
-                    <p class="bp-spec text-red-700 mb-1">Validation · Error</p>
+                    <p class="bp-spec text-red-700 mb-1">{{ ui_copy('account_validation_error', 'account.validation_error') }}</p>
                     <ul class="text-sm text-red-800 space-y-0.5 list-disc list-inside">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -45,10 +45,10 @@
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-map-pin class="w-3.5 h-3.5" />
-                Address · Details
+                {{ ui_copy('account_address_details_eyebrow', 'account.address_details_eyebrow') }}
             </span>
             <span class="bp-spec-mono">
-                * = required
+                {{ ui_copy('account_required_note', 'account.required_note') }}
             </span>
         </header>
 
@@ -62,12 +62,12 @@
 
             {{-- Recipient --}}
             <fieldset class="space-y-5">
-                <legend class="bp-spec text-amber-ink mb-3">01 · Recipient</legend>
+                <legend class="bp-spec text-amber-ink mb-3">{{ ui_copy('account_recipient_legend', 'account.recipient_legend') }}</legend>
 
                 <div class="grid sm:grid-cols-2 gap-5">
                     <div>
                         <label for="first_name" class="bp-spec block mb-2 text-ink">
-                            First name <span class="text-red-600">*</span>
+                            {{ ui_copy('account_first_name', 'account.first_name') }} <span class="text-red-600">*</span>
                         </label>
                         <input type="text" id="first_name" name="first_name" required
                                value="{{ old('first_name', $address->first_name ?? '') }}"
@@ -76,7 +76,7 @@
                     </div>
                     <div>
                         <label for="last_name" class="bp-spec block mb-2 text-ink">
-                            Last name <span class="text-red-600">*</span>
+                            {{ ui_copy('account_last_name', 'account.last_name') }} <span class="text-red-600">*</span>
                         </label>
                         <input type="text" id="last_name" name="last_name" required
                                value="{{ old('last_name', $address->last_name ?? '') }}"
@@ -87,8 +87,8 @@
 
                 <div>
                     <label for="company" class="bp-spec block mb-2 text-ink">
-                        Company
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
+                        {{ ui_copy('account_company', 'account.company') }}
+                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
                     </label>
                     <input type="text" id="company" name="company"
                            value="{{ old('company', $address->company ?? '') }}"
@@ -98,8 +98,8 @@
 
                 <div>
                     <label for="phone" class="bp-spec block mb-2 text-ink">
-                        Phone
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
+                        {{ ui_copy('account_phone', 'account.phone') }}
+                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
                     </label>
                     <input type="tel" id="phone" name="phone"
                            value="{{ old('phone', $address->phone ?? '') }}"
@@ -112,11 +112,11 @@
 
             {{-- Location --}}
             <fieldset class="space-y-5">
-                <legend class="bp-spec text-amber-ink mb-3">02 · Location</legend>
+                <legend class="bp-spec text-amber-ink mb-3">{{ ui_copy('account_location_legend', 'account.location_legend') }}</legend>
 
                 <div>
                     <label for="address_line_1" class="bp-spec block mb-2 text-ink">
-                        Address line 1 <span class="text-red-600">*</span>
+                        {{ ui_copy('account_address_line_1', 'account.address_line_1') }} <span class="text-red-600">*</span>
                     </label>
                     <input type="text" id="address_line_1" name="address_line_1" required
                            value="{{ old('address_line_1', $address->address_line1 ?? $address->address_line_1 ?? '') }}"
@@ -126,8 +126,8 @@
 
                 <div>
                     <label for="address_line_2" class="bp-spec block mb-2 text-ink">
-                        Address line 2
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">(optional)</span>
+                        {{ ui_copy('account_address_line_2', 'account.address_line_2') }}
+                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
                     </label>
                     <input type="text" id="address_line_2" name="address_line_2"
                            value="{{ old('address_line_2', $address->address_line2 ?? $address->address_line_2 ?? '') }}"
@@ -138,7 +138,7 @@
                 <div class="grid sm:grid-cols-2 gap-5">
                     <div>
                         <label for="city" class="bp-spec block mb-2 text-ink">
-                            City <span class="text-red-600">*</span>
+                            {{ ui_copy('account_city', 'account.city') }} <span class="text-red-600">*</span>
                         </label>
                         <input type="text" id="city" name="city" required
                                value="{{ old('city', $address->city ?? '') }}"
@@ -147,7 +147,7 @@
                     </div>
                     <div>
                         <label for="state" class="bp-spec block mb-2 text-ink">
-                            State / province <span class="text-red-600">*</span>
+                            {{ ui_copy('account_state_province', 'account.state_province') }} <span class="text-red-600">*</span>
                         </label>
                         <input type="text" id="state" name="state" required
                                value="{{ old('state', $address->state ?? '') }}"
@@ -159,7 +159,7 @@
                 <div class="grid sm:grid-cols-2 gap-5">
                     <div>
                         <label for="postal_code" class="bp-spec block mb-2 text-ink">
-                            Postal code <span class="text-red-600">*</span>
+                            {{ ui_copy('account_postal_code', 'account.postal_code') }} <span class="text-red-600">*</span>
                         </label>
                         <input type="text" id="postal_code" name="postal_code" required
                                value="{{ old('postal_code', $address->postal_code ?? '') }}"
@@ -168,14 +168,14 @@
                     </div>
                     <div>
                         <label for="country_code" class="bp-spec block mb-2 text-ink">
-                            Country <span class="text-red-600">*</span>
+                            {{ ui_copy('account_country', 'account.country') }} <span class="text-red-600">*</span>
                         </label>
                         <select id="country_code" name="country_code" required class="bp-input w-full">
-                            <option value="">{{ __('Select a country') }}</option>
-                            @foreach(\App\Services\ViesService::getEuCountries() as $code => $name)
+                            <option value="">{{ ui_copy('account_select_a_country', 'account.select_a_country') }}</option>
+                            @foreach(array_keys(\App\Services\ViesService::getEuCountries()) as $code)
                                 <option value="{{ $code }}"
                                     {{ old('country_code', $address->country_code ?? '') === $code ? 'selected' : '' }}>
-                                    {{ $name }}
+                                    {{ localized_country_name($code) }}
                                 </option>
                             @endforeach
                         </select>
@@ -187,7 +187,7 @@
 
             {{-- Flags --}}
             <fieldset>
-                <legend class="bp-spec text-amber-ink mb-3">03 · Flags</legend>
+                <legend class="bp-spec text-amber-ink mb-3">{{ ui_copy('account_flags_legend', 'account.flags_legend') }}</legend>
 
                 <label class="flex items-start gap-3 p-4 border border-rule-strong bg-ivory-alt cursor-pointer
                               hover:border-ink transition-colors">
@@ -196,10 +196,10 @@
                            class="w-4 h-4 mt-0.5 border-ink text-amber focus:ring-amber focus:ring-offset-0 shrink-0">
                     <div class="flex-1">
                         <p class="font-display text-sm font-bold text-ink tracking-[-0.01em]">
-                            {{ __('Set as default address') }}
+                            {{ ui_copy('account_set_as_default', 'account.set_as_default') }}
                         </p>
                         <p class="mt-1 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                            Pre-selected on future checkouts
+                            {{ ui_copy('account_preselected_note', 'account.preselected_note') }}
                         </p>
                     </div>
                 </label>
@@ -210,11 +210,11 @@
                 <a href="{{ route('frontend.account.addresses', ['lang' => $lang]) }}"
                    class="bp-btn-outline justify-center sm:justify-start">
                     <x-heroicon-s-arrow-long-left class="w-4 h-4" />
-                    {{ __('Cancel') }}
+                    {{ ui_copy('account_cancel', 'account.cancel') }}
                 </a>
                 <button type="submit" class="bp-btn-primary justify-center flex-1 sm:flex-none">
                     <x-heroicon-s-check class="w-5 h-5" />
-                    <span>{{ $isEdit ? __('Update address') : __('Save address') }}</span>
+                    <span>{{ $isEdit ? ui_copy('account_update_address', 'account.update_address') : ui_copy('account_save_address', 'account.save_address') }}</span>
                     <x-heroicon-s-arrow-long-right class="w-5 h-5" />
                 </button>
             </div>

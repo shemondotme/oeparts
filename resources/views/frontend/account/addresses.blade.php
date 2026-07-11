@@ -1,6 +1,6 @@
 ﻿@extends('layouts.app')
 
-@section('title', __('Addresses') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', ui_copy('account_addresses_title', 'account.addresses_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
 @section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
 
@@ -9,11 +9,11 @@
 @section('content')
 <x-account.shell
     active="addresses"
-    eyebrow="04 · Addresses · Register"
-    title="Saved addresses"
-    :subtitle="__('Dispatch endpoints tied to your account — ready to auto-fill at checkout and keep your procurement flow fast.')"
+    eyebrow="{{ ui_copy('account_addresses_eyebrow', 'account.addresses_eyebrow') }}"
+    title="{{ ui_copy('account_saved_addresses', 'account.saved_addresses') }}"
+    :subtitle="ui_copy('account_addresses_subtitle', 'account.addresses_subtitle')"
     docId="DOC · ADDRESS-REGISTER · {{ now()->format('Y.m.d') }}"
-    :breadcrumb="[['label' => 'Addresses']]"
+    :breadcrumb="[['label' => ui_copy('account_nav_addresses', 'account.nav_addresses')]]"
 >
     <x-slot name="actions">
         <a href="{{ route('frontend.account.addresses.create', ['lang' => $lang]) }}"
@@ -21,7 +21,7 @@
                   font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                   hover:bg-paper hover:text-ink transition-colors">
             <x-heroicon-s-plus class="w-4 h-4" />
-            {{ __('New address') }}
+            {{ ui_copy('account_new_address', 'account.new_address') }}
         </a>
     </x-slot>
 
@@ -32,17 +32,17 @@
                 <x-heroicon-o-map-pin class="w-7 h-7 text-ink-muted" />
             </div>
             <h3 class="font-display text-3xl font-extrabold text-ink tracking-[-0.02em]">
-                {{ __('No addresses on file') }}<span class="text-amber">.</span>
+                {{ ui_copy('account_no_addresses_on_file', 'account.no_addresses_on_file') }}<span class="text-amber">.</span>
             </h3>
             <p class="mt-3 text-sm text-ink-muted max-w-md mx-auto leading-relaxed">
-                {{ __("Add a dispatch address to speed up checkout on your next OEM order. We'll keep it on file for repeat procurement.") }}
+                {{ ui_copy('account_no_addresses_note', 'account.no_addresses_note') }}
             </p>
             <a href="{{ route('frontend.account.addresses.create', ['lang' => $lang]) }}"
                class="mt-8 inline-flex items-center gap-2 px-5 py-3 bg-ink text-ivory border border-ink
                       font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                       hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                 <x-heroicon-s-plus class="w-4 h-4" />
-                {{ __('Add first address') }}
+                {{ ui_copy('account_add_first_address', 'account.add_first_address') }}
             </a>
         </div>
     @else
@@ -50,19 +50,19 @@
         <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-3 divide-x divide-rule"
              style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">{{ __('On file') }}</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_on_file', 'account.on_file') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $addresses->count(), 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="px-5 py-4">
-                <p class="bp-spec-mono">{{ __('Default') }}</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_default', 'account.default') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-amber-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $addresses->where('is_default', true)->count(), 2, '0', STR_PAD_LEFT) }}
                 </p>
             </div>
             <div class="hidden sm:block px-5 py-4">
-                <p class="bp-spec-mono">{{ __('Countries') }}</p>
+                <p class="bp-spec-mono">{{ ui_copy('account_countries', 'account.countries') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
                     {{ str_pad((string) $addresses->pluck('country_code')->filter()->unique()->count(), 2, '0', STR_PAD_LEFT) }}
                 </p>
@@ -74,7 +74,7 @@
             @foreach($addresses as $idx => $addr)
                 @php
                     $rowNum = $idx + 1;
-                    $countryLabel = \App\Services\ViesService::getEuCountries()[$addr->country_code] ?? $addr->country_code;
+                    $countryLabel = localized_country_name($addr->country_code);
                 @endphp
                 <div class="relative border border-ink bg-paper flex flex-col
                             {{ $addr->is_default ? 'ring-1 ring-amber' : '' }}"
@@ -87,14 +87,14 @@
                                 {{ str_pad((string) $rowNum, 2, '0', STR_PAD_LEFT) }}
                             </span>
                             <span class="font-display text-sm font-bold tracking-[-0.01em] text-ink truncate">
-                                {{ ucfirst($addr->label ?: __('Address')) }}
+                                {{ ucfirst($addr->label ?: ui_copy('account_address_fallback', 'account.address_fallback')) }}
                             </span>
                         </div>
                         @if($addr->is_default)
                             <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-amber text-ink
                                          font-mono text-[9px] font-bold tracking-[0.22em] uppercase">
                                 <x-heroicon-s-check-badge class="w-3 h-3" />
-                                {{ __('Default') }}
+                                {{ ui_copy('account_default', 'account.default') }}
                             </span>
                         @else
                             <span class="font-mono text-[9px] tracking-[0.18em] uppercase text-ink-muted">
@@ -143,19 +143,19 @@
                            class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
                                   border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
                             <x-heroicon-s-pencil-square class="w-3.5 h-3.5" />
-                            {{ __('Edit') }}
+                            {{ ui_copy('account_edit', 'account.edit') }}
                         </a>
 
                         <form method="POST"
                               action="{{ route('frontend.account.addresses.destroy', ['lang' => $lang, 'address' => $addr]) }}"
-                              onsubmit="return confirm('{{ __('Are you sure you want to delete this address?') }}');">
+                              onsubmit="return confirm('{{ addslashes(ui_copy('account_delete_address_confirm', 'account.delete_address_confirm')) }}');">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
                                     class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-red-700
                                            border-b border-transparent hover:border-red-700 transition-colors pb-0.5">
                                 <x-heroicon-s-trash class="w-3.5 h-3.5" />
-                                {{ __('Delete') }}
+                                {{ ui_copy('account_delete', 'account.delete') }}
                             </button>
                         </form>
                     </div>

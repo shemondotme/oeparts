@@ -195,4 +195,8 @@ return [
     'need_more_parts_note' => 'Tęskite apsipirkimą ir raskite daugiau originalių OEM dalių savo automobiliui.',
     'search_oem_parts' => 'Ieškoti OEM dalių',
     'need_help_short' => 'Reikia pagalbos',
+
+    // Controller flash messages (App\Http\Controllers\Frontend\CheckoutController)
+    'verification_code_sent' => 'Patvirtinimo kodas išsiųstas jūsų el. paštu.',
+    'order_creation_failed' => 'Nepavyko sukurti jūsų užsakymo. Bandykite dar kartą.',
 ];

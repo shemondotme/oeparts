@@ -196,4 +196,8 @@ return [
     'need_more_parts_note' => 'Continue shopping and discover more genuine OEM parts for your vehicle.',
     'search_oem_parts' => 'Search OEM parts',
     'need_help_short' => 'Need help',
+
+    // Controller flash messages (App\Http\Controllers\Frontend\CheckoutController)
+    'verification_code_sent' => 'Verification code sent to your email.',
+    'order_creation_failed' => 'We could not create your order. Please try again.',
 ];
