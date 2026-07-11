@@ -12,8 +12,24 @@
     $cartPreviewRoute = route('frontend.cart.preview', ['lang' => $cartLocale]);
     $cartCouponApplyRoute = route('frontend.cart.coupon.apply', ['lang' => $cartLocale]);
     $cartCouponRemoveRoute = route('frontend.cart.coupon.remove', ['lang' => $cartLocale]);
+    $cartJsTranslations = [
+        'couponApplying'      => ui_copy('cart_coupon_applying', 'cart.coupon_applying'),
+        'couponAppliedToast'  => ui_copy('cart_coupon_applied_toast', 'cart.coupon_applied_toast'),
+        'couponInvalidDefault'=> ui_copy('cart_coupon_invalid_default', 'cart.coupon_invalid_default'),
+        'couponConnectionError' => ui_copy('cart_coupon_connection_error', 'cart.coupon_connection_error'),
+        'errorRemoveCoupon'   => ui_copy('cart_error_remove_coupon', 'cart.error_remove_coupon'),
+        'couponRemovedToast'  => ui_copy('cart_coupon_removed_toast', 'cart.coupon_removed_toast'),
+        'errorUpdateCart'     => ui_copy('cart_error_update_cart', 'cart.error_update_cart'),
+        'itemRemovedToast'    => ui_copy('cart_item_removed_toast', 'cart.item_removed_toast'),
+        'errorRemove'         => ui_copy('cart_error_remove', 'cart.error_remove'),
+        'cartClearedToast'    => ui_copy('cart_cart_cleared_toast', 'cart.cart_cleared_toast'),
+        'errorLoad'           => ui_copy('cart_error_load', 'cart.error_load'),
+        'priceChangeSingular' => ui_copy('cart_price_change_toast_singular', 'cart.price_change_toast_singular'),
+        'priceChangePlural'   => ui_copy('cart_price_change_toast_plural', 'cart.price_change_toast_plural'),
+        'conditionNewFallback'=> ui_copy('cart_condition_new_fallback', 'cart.condition_new_fallback'),
+    ];
 @endphp
-<div x-data="cartData(@js($cart), @js($summary), '{{ $cartLocale }}', '{{ $cartUpdateRoute }}', '{{ $cartRemoveRoute }}', '{{ $cartPreviewRoute }}', '{{ $cartCouponApplyRoute }}', '{{ $cartCouponRemoveRoute }}')" class="relative min-h-screen bg-ivory text-ink pt-10 pb-28">
+<div x-data="cartData(@js($cart), @js($summary), '{{ $cartLocale }}', '{{ $cartUpdateRoute }}', '{{ $cartRemoveRoute }}', '{{ $cartPreviewRoute }}', '{{ $cartCouponApplyRoute }}', '{{ $cartCouponRemoveRoute }}', @js($cartJsTranslations))" class="relative min-h-screen bg-ivory text-ink pt-10 pb-28">
     <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
 
     {{-- ── Clear Cart Confirm Modal ── --}}
@@ -35,18 +51,18 @@
             </div>
             <div class="p-6 md:p-8">
                 <h3 id="clear-cart-title" class="font-display text-2xl font-extrabold text-ink tracking-tight mb-3">
-                    Clear Cart<span class="text-amber">?</span>
+                    {{ ui_copy('cart_clear_cart_title', 'cart.clear_cart_title') }}<span class="text-amber">?</span>
                 </h3>
-                <p class="text-body mb-8">All items will be removed from your cart. This cannot be undone.</p>
+                <p class="text-body mb-8">{{ ui_copy('cart_clear_cart_confirm', 'cart.clear_cart_confirm') }}</p>
                 <div class="flex gap-3">
                     <button @click="confirmOpen = false" class="flex-1 bp-btn-outline justify-center">
-                        Cancel
+                        {{ ui_copy('cart_cancel', 'cart.cancel') }}
                     </button>
                     <button @click="confirmClearCart()"
                             class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 border border-red-600 bg-red-600 text-ivory
                                    font-mono text-xs font-bold uppercase tracking-[0.22em] hover:bg-red-700 transition-colors">
                         <x-heroicon-s-trash class="w-4 h-4" />
-                        Clear Cart
+                        {{ ui_copy('cart_clear_cart', 'cart.clear_cart') }}
                     </button>
                 </div>
             </div>
@@ -58,7 +74,7 @@
         {{-- ── Document header ── --}}
         <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-rule">
             <nav class="flex items-center gap-2 bp-spec-mono">
-                <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber-ink transition-colors">Home</a>
+                <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('cart_breadcrumb_home', 'cart.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink">{{ ui_copy('cart_title', 'cart.title') }}</span>
             </nav>
@@ -72,7 +88,7 @@
             <div class="col-span-12 md:col-span-7">
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">01 · Review Order</span>
+                    <span class="bp-spec text-amber-ink">01 · {{ ui_copy('cart_review_order_eyebrow', 'cart.review_order_eyebrow') }}</span>
                 </div>
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl">
@@ -81,8 +97,8 @@
                 <template x-if="summary.item_count > 0">
                     <p class="mt-6 font-mono text-sm tabular-nums text-body">
                         <span class="text-ink font-bold" x-text="summary.item_count"></span>
-                        <span x-text="summary.item_count === 1 ? 'item' : 'items'"></span>
-                        <span class="text-ink-muted">· ready for checkout</span>
+                        <span x-text="summary.item_count === 1 ? '{{ addslashes(ui_copy('cart_item_word_singular', 'cart.item_word_singular')) }}' : '{{ addslashes(ui_copy('cart_item_word_plural', 'cart.item_word_plural')) }}'"></span>
+                        <span class="text-ink-muted">· {{ ui_copy('cart_item_count_suffix', 'cart.item_count_suffix') }}</span>
                     </p>
                 </template>
             </div>
@@ -92,15 +108,15 @@
                 <div class="border border-ink">
                     <div class="grid grid-cols-3 text-center">
                         <div class="px-3 py-3 bg-ink text-ivory">
-                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-amber mb-1">Step 01</p>
+                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-amber mb-1">{{ ui_copy('cart_step_n', 'cart.step_n', ['n' => '01']) }}</p>
                             <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ ui_copy('cart_step_cart', 'cart.step_cart') }}</p>
                         </div>
                         <div class="px-3 py-3 border-l border-ink bg-paper text-ink-muted">
-                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase mb-1">Step 02</p>
+                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase mb-1">{{ ui_copy('cart_step_n', 'cart.step_n', ['n' => '02']) }}</p>
                             <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ ui_copy('cart_step_shipping', 'cart.step_shipping') }}</p>
                         </div>
                         <div class="px-3 py-3 border-l border-ink bg-paper text-ink-muted">
-                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase mb-1">Step 03</p>
+                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase mb-1">{{ ui_copy('cart_step_n', 'cart.step_n', ['n' => '03']) }}</p>
                             <p class="font-mono text-[11px] font-bold uppercase tracking-[0.18em]">{{ ui_copy('cart_step_payment', 'cart.step_payment') }}</p>
                         </div>
                     </div>
@@ -130,13 +146,13 @@
                 <a href="{{ url('/'.app()->getLocale().'/contact') }}"
                    class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink-muted hover:text-ink transition-colors">
                     <x-heroicon-s-chat-bubble-left-ellipsis class="w-3 h-3" />
-                    {{ __('Need help finding a part?') }}
+                    {{ ui_copy('cart_need_help_finding_part', 'cart.need_help_finding_part') }}
                 </a>
             </div>
 
             @if($popularOems->isNotEmpty())
             <div class="mt-10 pt-8 border-t border-rule">
-                <p class="bp-spec text-ink-muted mb-5">Popular · Indexed</p>
+                <p class="bp-spec text-ink-muted mb-5">{{ ui_copy('cart_empty_popular_label', 'cart.empty_popular_label') }}</p>
                 <div class="flex flex-wrap items-center justify-center gap-2">
                     @foreach($popularOems as $oem)
                     <a href="{{ url('/'.app()->getLocale().'/parts/'.$oem) }}"
@@ -170,7 +186,7 @@
 
                 {{-- Section header --}}
                 <div class="flex items-center justify-between mb-4">
-                    <span class="bp-spec text-amber-ink">01.a · Order items</span>
+                    <span class="bp-spec text-amber-ink">01.a · {{ ui_copy('cart_order_items_eyebrow', 'cart.order_items_eyebrow') }}</span>
                     <button @click="confirmOpen = true"
                             class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink-muted hover:text-red-600 transition-colors">
                         <x-heroicon-s-trash class="w-3 h-3" />
@@ -183,11 +199,11 @@
                     {{-- Column header --}}
                     <div class="hidden sm:grid grid-cols-12 gap-3 px-5 py-3 border-b border-ink bg-ivory-alt
                                 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
-                        <span class="col-span-5">Item · OEM</span>
-                        <span class="col-span-2 text-center">Unit {{ settings('store.currency_symbol', '€') }}</span>
-                        <span class="col-span-2 text-center">Qty</span>
-                        <span class="col-span-2 text-right">Subtotal {{ settings('store.currency_symbol', '€') }}</span>
-                        <span class="col-span-1 text-right">Act</span>
+                        <span class="col-span-5">{{ ui_copy('cart_th_item_oem', 'cart.th_item_oem') }}</span>
+                        <span class="col-span-2 text-center">{{ ui_copy('cart_th_unit', 'cart.th_unit') }} {{ settings('store.currency_symbol', '€') }}</span>
+                        <span class="col-span-2 text-center">{{ ui_copy('cart_th_qty', 'cart.th_qty') }}</span>
+                        <span class="col-span-2 text-right">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }} {{ settings('store.currency_symbol', '€') }}</span>
+                        <span class="col-span-1 text-right">{{ ui_copy('cart_th_action_short', 'cart.th_action_short') }}</span>
                     </div>
 
                     <template x-for="(item, index) in cart.items" :key="item.id">
@@ -207,41 +223,42 @@
                                               x-text="item.condition_name"></span>
                                     </div>
                                     <button @click="removeItem(item.id)"
+                                            aria-label="{{ ui_copy('cart_remove_item_aria', 'cart.remove_item_aria') }}"
                                             class="shrink-0 w-7 h-7 flex items-center justify-center border border-rule-strong text-ink-muted hover:bg-red-600 hover:text-ivory hover:border-red-600 transition-colors">
                                         <x-heroicon-s-trash class="w-3 h-3" />
                                     </button>
                                 </div>
                                 {{-- Row 2: product name --}}
-                                <p class="text-xs text-body line-clamp-2" x-text="item.name || 'Genuine OEM Part'"></p>
+                                <p class="text-xs text-body line-clamp-2" x-text="item.name || '{{ addslashes(ui_copy('cart_genuine_part', 'cart.genuine_part')) }}'"></p>
                                 {{-- Row 3: stock + unit price --}}
                                 <div class="flex items-center justify-between gap-2">
                                     <p class="font-mono text-[9px] tracking-[0.18em] uppercase"
                                        :class="item.in_stock ? 'text-amber-ink' : 'text-red-600'"
-                                       x-text="item.in_stock ? '· In stock' : '· Out of stock'"></p>
-                                    <span class="font-mono text-sm tabular-nums text-ink-muted">{{ settings('store.currency_symbol', '€') }}<span x-text="item.price.toFixed(2)"></span> <span class="text-[9px] uppercase tracking-[0.18em]">ea.</span></span>
+                                       x-text="item.in_stock ? '{{ addslashes(ui_copy('cart_in_stock_status', 'cart.in_stock_status')) }}' : '{{ addslashes(ui_copy('cart_out_of_stock_status', 'cart.out_of_stock_status')) }}'"></p>
+                                    <span class="font-mono text-sm tabular-nums text-ink-muted">{{ settings('store.currency_symbol', '€') }}<span x-text="item.price.toFixed(2)"></span> <span class="text-[9px] uppercase tracking-[0.18em]">{{ ui_copy('cart_each_short', 'cart.each_short') }}</span></span>
                                 </div>
                                 {{-- Row 4: qty stepper + subtotal --}}
                                 <div class="flex items-center justify-between gap-3 pt-2 border-t border-rule">
                                     <div class="inline-flex items-center border border-ink">
                                         <button @click="decrementItem(item.id)"
                                                 :disabled="item.quantity <= 1"
-                                                aria-label="Decrease quantity"
+                                                aria-label="{{ ui_copy('cart_aria_decrease_qty', 'cart.aria_decrease_qty') }}"
                                                 class="w-8 h-8 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors">
                                             <x-heroicon-s-minus class="w-3 h-3" />
                                         </button>
-                                        <input type="text" aria-label="Item quantity"
+                                        <input type="text" aria-label="{{ ui_copy('cart_aria_quantity', 'cart.aria_quantity') }}"
                                                x-model.number="item.quantity"
                                                @change="updateItemQuantity(item.id, item.quantity)"
                                                class="w-10 h-8 text-center font-mono text-xs font-bold text-ink bg-paper border-0 border-x border-ink focus:ring-0 focus:outline-none p-0">
                                         <button @click="incrementItem(item.id)"
                                                 :disabled="item.quantity >= 99"
-                                                aria-label="Increase quantity"
+                                                aria-label="{{ ui_copy('cart_aria_increase_qty', 'cart.aria_increase_qty') }}"
                                                 class="w-8 h-8 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors">
                                             <x-heroicon-s-plus class="w-3 h-3" />
                                         </button>
                                     </div>
                                     <div class="text-right">
-                                        <p class="bp-spec-mono text-[9px] mb-0.5">Subtotal</p>
+                                        <p class="bp-spec-mono text-[9px] mb-0.5">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }}</p>
                                         <p class="font-mono text-base font-bold text-ink tabular-nums leading-none">
                                             {{ settings('store.currency_symbol', '€') }}<span x-text="(item.price * item.quantity).toFixed(2)"></span>
                                         </p>
@@ -267,18 +284,18 @@
                                     <div class="min-w-0 flex-1" x-data="clipboard()">
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <span class="font-mono text-sm font-bold text-ink tabular-nums truncate cursor-pointer"
-                                                  @click="copy(item.oem_number)" title="Copy OEM number"
+                                                  @click="copy(item.oem_number)" title="{{ ui_copy('cart_copy_oem_title', 'cart.copy_oem_title') }}"
                                                   x-text="item.oem_number"></span>
                                             <span class="inline-flex items-center px-1.5 py-0.5 bp-spec-mono font-bold rounded-sm"
                                                   :style="`background-color: ${item.condition_bg}; color: ${item.condition_text};`"
                                                   x-text="item.condition_name"></span>
                                         </div>
                                         <span x-show="copied" x-cloak x-transition
-                                              class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
-                                        <p class="text-xs text-body line-clamp-2 mt-0.5" x-text="item.name || 'Genuine OEM Part'"></p>
+                                              class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('cart_copied', 'cart.copied') }}</span>
+                                        <p class="text-xs text-body line-clamp-2 mt-0.5" x-text="item.name || '{{ addslashes(ui_copy('cart_genuine_part', 'cart.genuine_part')) }}'"></p>
                                         <p class="mt-1 font-mono text-[9px] tracking-[0.18em] uppercase"
                                            :class="item.in_stock ? 'text-amber-ink' : 'text-red-600'"
-                                           x-text="item.in_stock ? '· In stock' : '· Out of stock'"></p>
+                                           x-text="item.in_stock ? '{{ addslashes(ui_copy('cart_in_stock_status', 'cart.in_stock_status')) }}' : '{{ addslashes(ui_copy('cart_out_of_stock_status', 'cart.out_of_stock_status')) }}'"></p>
                                     </div>
                                 </div>
 
@@ -292,17 +309,17 @@
                                     <div class="inline-flex items-center border border-ink">
                                         <button @click="decrementItem(item.id)"
                                                 :disabled="item.quantity <= 1"
-                                                aria-label="Decrease quantity"
+                                                aria-label="{{ ui_copy('cart_aria_decrease_qty', 'cart.aria_decrease_qty') }}"
                                                 class="w-8 h-8 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors">
                                             <x-heroicon-s-minus class="w-3 h-3" />
                                         </button>
-                                        <input type="text" aria-label="Item quantity"
+                                        <input type="text" aria-label="{{ ui_copy('cart_aria_quantity', 'cart.aria_quantity') }}"
                                                x-model.number="item.quantity"
                                                @change="updateItemQuantity(item.id, item.quantity)"
                                                class="w-10 h-8 text-center font-mono text-xs font-bold text-ink bg-paper border-0 border-x border-ink focus:ring-0 focus:outline-none p-0">
                                         <button @click="incrementItem(item.id)"
                                                 :disabled="item.quantity >= 99"
-                                                aria-label="Increase quantity"
+                                                aria-label="{{ ui_copy('cart_aria_increase_qty', 'cart.aria_increase_qty') }}"
                                                 class="w-8 h-8 flex items-center justify-center text-ink hover:bg-ink hover:text-ivory disabled:opacity-30 transition-colors">
                                             <x-heroicon-s-plus class="w-3 h-3" />
                                         </button>
@@ -319,7 +336,7 @@
                                 {{-- Remove --}}
                                 <div class="col-span-1 flex justify-end">
                                     <button @click="removeItem(item.id)"
-                                            aria-label="Remove item"
+                                            aria-label="{{ ui_copy('cart_remove_item_aria', 'cart.remove_item_aria') }}"
                                             class="w-8 h-8 flex items-center justify-center border border-rule-strong text-ink-muted
                                                    hover:bg-red-600 hover:text-ivory hover:border-red-600 transition-colors">
                                         <x-heroicon-s-trash class="w-3.5 h-3.5" />
@@ -333,8 +350,8 @@
                 {{-- Shipping carriers info strip --}}
                 <div class="mt-6 border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-rule bg-ivory-alt">
-                        <span class="bp-spec text-ink">01.b · EU shipping · carriers</span>
-                        <span class="bp-spec-mono">27 countries</span>
+                        <span class="bp-spec text-ink">01.b · {{ ui_copy('cart_shipping_carriers_eyebrow', 'cart.shipping_carriers_eyebrow') }}</span>
+                        <span class="bp-spec-mono">{{ ui_copy('cart_countries_count', 'cart.countries_count', ['count' => 27]) }}</span>
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-rule">
                         @foreach(['DHL', 'DPD', 'GLS'] as $carrier)
@@ -355,7 +372,7 @@
 
                     {{-- Header --}}
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">02 · Order summary</span>
+                        <span class="bp-spec text-amber-ink">02 · {{ ui_copy('cart_order_summary_eyebrow', 'cart.order_summary_eyebrow') }}</span>
                         <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
                     </div>
 
@@ -369,13 +386,13 @@
                             <div class="border border-amber-400 bg-amber-50 p-4 mb-4">
                                 <div class="flex items-center gap-2 mb-2">
                                     <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-amber-600 shrink-0" />
-                                    <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">Price Updated</span>
+                                    <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-amber-700">{{ ui_copy('cart_price_updated', 'cart.price_updated') }}</span>
                                 </div>
                                 <template x-for="change in summary.price_changes" :key="change.item.id">
                                     <p class="text-xs text-amber-800 mt-1">
-                                        <span x-text="change.item.product?.oem_number || 'Item'"></span> — price changed from
+                                        <span x-text="change.item.product?.oem_number || '{{ addslashes(ui_copy('cart_item_fallback', 'cart.item_fallback')) }}'"></span> {{ ui_copy('cart_price_change_prefix', 'cart.price_change_prefix') }}
                                         <span class="font-bold line-through" x-text="'{{ settings('store.currency_symbol', '€') }}' + change.old_price.toFixed(2)"></span>
-                                        to
+                                        {{ ui_copy('cart_price_change_to', 'cart.price_change_to') }}
                                         <span class="font-bold" x-text="'{{ settings('store.currency_symbol', '€') }}' + change.current_price.toFixed(2)"></span>
                                         (<span x-text="'+' + change.change_percent.toFixed(1) + '%'"></span>)
                                     </p>
@@ -386,7 +403,7 @@
                         {{-- Line items --}}
                         <dl class="space-y-0 border-t border-rule">
                             <div class="flex items-baseline justify-between gap-3 py-3 border-b border-rule">
-                                <dt class="bp-spec-mono">Subtotal</dt>
+                                <dt class="bp-spec-mono">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="summary.subtotal_excl_vat.toFixed(2)"></span></dd>
                             </div>
@@ -395,7 +412,7 @@
                                     <dt class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">
                                         <x-heroicon-s-ticket class="w-3 h-3" />
                                         <span x-text="summary.coupon_code"></span>
-                                        <button @click="removeCoupon()" title="Remove" class="text-red-600 hover:text-red-800 ml-1">
+                                        <button @click="removeCoupon()" title="{{ ui_copy('cart_remove', 'cart.remove') }}" class="text-red-600 hover:text-red-800 ml-1">
                                             <x-heroicon-s-x-mark class="w-3 h-3" />
                                         </button>
                                     </dt>
@@ -405,15 +422,15 @@
                             </template>
                             <div class="flex items-baseline justify-between gap-3 py-3 border-b border-rule">
                                 <dt class="bp-spec-mono">
-                                    VAT · <span x-text="summary.vat_rate"></span>%
+                                    {{ ui_copy('cart_vat_short', 'cart.vat_short') }} · <span x-text="summary.vat_rate"></span>%
                                 </dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="summary.vat_amount.toFixed(2)"></span></dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-3">
-                                <dt class="bp-spec-mono">Shipping</dt>
+                                <dt class="bp-spec-mono">{{ ui_copy('cart_shipping', 'cart.shipping') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                                <dd class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink">Calculated next</dd>
+                                <dd class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink">{{ ui_copy('cart_shipping_calculated', 'cart.shipping_calculated') }}</dd>
                             </div>
                         </dl>
 
@@ -421,14 +438,14 @@
                         <template x-if="summary.free_shipping_threshold > 0">
                             <div class="mt-6 p-4 border border-rule bg-ivory-alt">
                                 <div class="flex items-center justify-between mb-2">
-                                    <span class="bp-spec text-amber-ink">Free shipping</span>
+                                    <span class="bp-spec text-amber-ink">{{ ui_copy('cart_free_shipping_label', 'cart.free_shipping_label') }}</span>
                                     <template x-if="summary.shipping_needed > 0">
-                                        <span class="font-mono text-xs font-bold tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="summary.shipping_needed.toFixed(2)"></span> left</span>
+                                        <span class="font-mono text-xs font-bold tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="summary.shipping_needed.toFixed(2)"></span> {{ ui_copy('cart_left_suffix', 'cart.left_suffix') }}</span>
                                     </template>
                                     <template x-if="summary.shipping_needed <= 0">
                                         <span class="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink">
                                             <x-heroicon-s-check class="w-3 h-3" />
-                                            Qualified
+                                            {{ ui_copy('cart_qualified', 'cart.qualified') }}
                                         </span>
                                     </template>
                                 </div>
@@ -442,16 +459,16 @@
                         {{-- Promo code --}}
                         <template x-if="!summary.coupon_code">
                             <div class="mt-6">
-                                <label for="promo_code" class="bp-spec mb-2 inline-block">Promo code</label>
+                                <label for="promo_code" class="bp-spec mb-2 inline-block">{{ ui_copy('cart_promo_code_label', 'cart.promo_code_label') }}</label>
                                 <div class="flex border border-ink focus-within:border-amber transition-colors">
-                                    <input type="text" id="promo_code" x-model="couponCode" placeholder="Enter code"
+                                    <input type="text" id="promo_code" x-model="couponCode" placeholder="{{ ui_copy('cart_coupon_placeholder', 'cart.coupon_placeholder') }}"
                                            class="flex-1 px-3 py-2.5 bg-paper font-mono text-sm uppercase text-ink
                                                   placeholder:font-sans placeholder:text-ink-muted placeholder:normal-case
                                                   border-0 focus:outline-none focus:ring-0">
                                     <button @click="applyCoupon()" :disabled="!couponCode"
                                             class="px-4 py-2.5 bg-ink text-ivory font-mono text-[10px] font-bold uppercase tracking-[0.22em]
                                                    hover:bg-amber hover:text-ink transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                                        Apply
+                                        {{ ui_copy('cart_coupon_apply_btn', 'cart.coupon_apply_btn') }}
                                     </button>
                                 </div>
                                 <template x-if="couponMessage">
@@ -465,20 +482,20 @@
                         {{-- Grand total --}}
                         <div class="mt-6 pt-5 border-t-2 border-ink">
                             <div class="flex items-baseline justify-between gap-3 mb-2">
-                                <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink">Total · {{ settings('store.currency', 'EUR') }}</span>
+                                <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink">{{ ui_copy('cart_total_currency_label', 'cart.total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</span>
                                 <p class="font-mono text-4xl sm:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
                                     {{ settings('store.currency_symbol', '€') }}<span x-text="summary.grand_total.toFixed(2)"></span>
                                 </p>
                             </div>
                             <p class="text-right font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted">
-                                Including all taxes
+                                {{ ui_copy('cart_including_all_taxes', 'cart.including_all_taxes') }}
                             </p>
                         </div>
 
                         {{-- Checkout CTA --}}
                         <a href="{{ url('/'.app()->getLocale().'/checkout') }}"
                            class="mt-6 bp-btn-primary w-full justify-center">
-                            Checkout now
+                            {{ ui_copy('cart_checkout_now_btn', 'cart.checkout_now_btn') }}
                             <x-heroicon-s-arrow-long-right class="w-5 h-5" />
                         </a>
 
@@ -506,12 +523,12 @@
                             <x-heroicon-o-chat-bubble-left-ellipsis class="w-4 h-4 text-ink" />
                         </div>
                         <div class="flex-1">
-                            <p class="bp-spec text-amber-ink mb-1">Need help?</p>
-                            <p class="text-xs text-body mb-3">Mon-Fri 09:00-18:00. Our support team is ready to assist.</p>
+                            <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('cart_need_help_heading', 'cart.need_help_heading') }}</p>
+                            <p class="text-xs text-body mb-3">{{ ui_copy('cart_support_hours_note', 'cart.support_hours_note') }}</p>
                             <a href="{{ url('/'.app()->getLocale().'/contact') }}"
                                class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
                                 <x-heroicon-s-envelope class="w-3 h-3" />
-                                Contact us
+                                {{ ui_copy('cart_contact_us', 'cart.contact_us') }}
                                 <x-heroicon-s-arrow-long-right class="w-3 h-3" />
                             </a>
                         </div>
@@ -528,13 +545,13 @@
          x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0">
         <div class="flex items-center justify-between gap-4 max-w-lg mx-auto">
             <div>
-                <p class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted mb-0.5">Total · {{ settings('store.currency', 'EUR') }}</p>
+                <p class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted mb-0.5">{{ ui_copy('cart_total_currency_label', 'cart.total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</p>
                 <p class="font-mono text-2xl font-bold text-ink tabular-nums leading-none">
                     {{ settings('store.currency_symbol', '€') }}<span x-text="summary.grand_total.toFixed(2)"></span>
                 </p>
             </div>
             <a href="{{ url('/'.app()->getLocale().'/checkout') }}" class="bp-btn-primary flex-1 justify-center">
-                Checkout
+                {{ ui_copy('cart_mobile_checkout_btn', 'cart.mobile_checkout_btn') }}
                 <x-heroicon-s-arrow-long-right class="w-4 h-4" />
             </a>
         </div>
