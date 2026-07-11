@@ -16,11 +16,12 @@
         ?: ['en' => "We're currently performing scheduled maintenance. We'll be back shortly."];
 
     $brandName       = config('app.name');
-    $maintenanceTitle = 'Under maintenance';
-    $estimatedLabel  = 'Estimated return';
-    $helpLabel       = 'Need help?';
-    $checkBackLabel  = 'Please check back in a few minutes';
-    $rightsLabel     = 'All rights reserved';
+    $maintenanceTitle = __('maintenance.title');
+    $maintenanceSubtitle = __('maintenance.subtitle');
+    $estimatedLabel  = __('maintenance.estimated_return');
+    $helpLabel       = __('maintenance.need_help');
+    $checkBackLabel  = __('maintenance.check_back');
+    $rightsLabel     = __('maintenance.all_rights_reserved');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -165,7 +166,7 @@
                                     5<span class="text-amber">0</span>3
                                 </p>
                                 <p class="mt-2 font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">
-                                    Scheduled maintenance · Service unavailable
+                                    {{ $maintenanceSubtitle }}
                                 </p>
                             </div>
                         </div>

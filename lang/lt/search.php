@@ -105,6 +105,8 @@ return [
 
     'cross_refs_title' => 'Kryžminės nuorodos',
     'cross_refs_hint' => '— Suderinami OEM numeriai',
+    'cross_refs_view_all' => 'Rodyti visus :count atitikmenis',
+    'cross_refs_show_less' => 'Rodyti mažiau',
 
     'inquiry_title' => 'Nerandate ko reikia?',
     'inquiry_subtitle' => 'Siųskite užklausą — mūsų komanda atsakys per :hours val.',

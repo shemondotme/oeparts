@@ -105,6 +105,8 @@ return [
 
     'cross_refs_title' => 'Kreuzreferenzen',
     'cross_refs_hint' => '— Kompatible OEM-Nummern',
+    'cross_refs_view_all' => 'Alle :count Entsprechungen anzeigen',
+    'cross_refs_show_less' => 'Weniger anzeigen',
 
     'inquiry_title' => 'Nichts Passendes gefunden?',
     'inquiry_subtitle' => 'Senden Sie eine Teileanfrage — unser Team antwortet innerhalb von :hours Stunden.',
