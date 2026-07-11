@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\ActivityLog;
 use App\Models\NewsletterCampaign;
 use App\Services\CacheService;
+use App\Services\WidgetPreferenceService;
 use Illuminate\Support\Facades\Auth;
 
 class NewsletterCampaignObserver
@@ -43,7 +44,7 @@ class NewsletterCampaignObserver
 
             $cache->forget("newsletter_campaign.{$campaign->id}");
             $cache->forget('newsletter_campaigns.active');
-            $cache->forget('admin:dashboard:newsletter_campaigns');
+            WidgetPreferenceService::forgetCache('newsletter_growth');
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
         }

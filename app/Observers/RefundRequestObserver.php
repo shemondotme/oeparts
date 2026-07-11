@@ -6,6 +6,7 @@ use App\Filament\Resources\RefundRequestResource;
 use App\Models\ActivityLog;
 use App\Models\RefundRequest;
 use App\Services\CacheService;
+use App\Services\WidgetPreferenceService;
 use App\Support\AdminNotifier;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
@@ -72,7 +73,7 @@ class RefundRequestObserver
 
             $cache->forget("order.{$refundRequest->order_id}");
             $cache->forget("refund_request.{$refundRequest->id}");
-            $cache->forget('admin:dashboard:refund_requests');
+            WidgetPreferenceService::forgetCache('refunds_pending');
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
         }

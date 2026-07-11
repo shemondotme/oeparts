@@ -208,4 +208,81 @@ class DashboardCacheTest extends TestCase
             $this->assertGreaterThan(0, $ttl, "Widget [{$id}] must have a positive TTL");
         }
     }
+
+    // ── WidgetPreferenceService::forgetCache() — the performance-sweep fix ──
+    // (observers previously forgot hand-typed keys like `admin:dashboard:kpi_stats`
+    // that never matched the real, period-suffixed key — 100% dead invalidation)
+
+    #[Test]
+    public function forget_cache_clears_every_period_key_for_a_period_capable_widget(): void
+    {
+        AdminCacheService::$bypassArrayDriverCheck = true;
+
+        foreach (['1', '7', '30', '90', '365'] as $period) {
+            AdminCacheService::dashboard("order_stats_overview:p{$period}", fn () => ['p' => $period]);
+        }
+
+        WidgetPreferenceService::forgetCache('order_stats_overview');
+
+        foreach (['1', '7', '30', '90', '365'] as $period) {
+            $this->assertFalse(
+                Cache::has("admin:dashboard:order_stats_overview:p{$period}"),
+                "Period {$period} cache must be cleared",
+            );
+        }
+    }
+
+    #[Test]
+    public function forget_cache_clears_the_single_key_for_a_non_period_widget(): void
+    {
+        AdminCacheService::$bypassArrayDriverCheck = true;
+
+        AdminCacheService::dashboard('recent_orders:p-', fn () => ['orders' => []]);
+        $this->assertTrue(Cache::has('admin:dashboard:recent_orders:p-'));
+
+        WidgetPreferenceService::forgetCache('recent_orders');
+
+        $this->assertFalse(Cache::has('admin:dashboard:recent_orders:p-'));
+    }
+
+    #[Test]
+    public function forget_cache_is_a_noop_for_an_unknown_widget_id(): void
+    {
+        // Must never throw — observers call this from a CRUD hot path.
+        WidgetPreferenceService::forgetCache('nonexistent_widget');
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function product_observer_invalidates_stock_alert_and_catalog_widget_caches(): void
+    {
+        AdminCacheService::$bypassArrayDriverCheck = true;
+
+        AdminCacheService::dashboard('stock_alert:p-', fn () => ['stale' => true]);
+        AdminCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
+        AdminCacheService::dashboard('new_products_added:p30', fn () => ['stale' => true]);
+
+        \App\Models\Product::factory()->create();
+
+        $this->assertFalse(Cache::has('admin:dashboard:stock_alert:p-'));
+        $this->assertFalse(Cache::has('admin:dashboard:manufacturing_stats:p30'));
+        $this->assertFalse(Cache::has('admin:dashboard:new_products_added:p30'));
+    }
+
+    #[Test]
+    public function manufacturer_observer_invalidates_manufacturer_list_and_dashboard_caches(): void
+    {
+        AdminCacheService::$bypassArrayDriverCheck = true;
+
+        Cache::put('manufacturers.active', ['stale' => true], 3600);
+        AdminCacheService::dashboard('manufacturer_revenue:p30', fn () => ['stale' => true]);
+        AdminCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
+
+        $manufacturer = \App\Models\Manufacturer::factory()->create();
+        $manufacturer->update(['is_active' => false]);
+
+        $this->assertFalse(Cache::has('manufacturers.active'));
+        $this->assertFalse(Cache::has('admin:dashboard:manufacturer_revenue:p30'));
+        $this->assertFalse(Cache::has('admin:dashboard:manufacturing_stats:p30'));
+    }
 }
