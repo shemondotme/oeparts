@@ -1,4 +1,4 @@
-export default function cartData(initialCart, initialSummary, locale, routeUpdate, routeRemove, routePreview, routeCouponApply, routeCouponRemove) {
+export default function cartData(initialCart, initialSummary, locale, routeUpdate, routeRemove, routePreview, routeCouponApply, routeCouponRemove, t = {}) {
     function mapItem(item) {
         let itemName = item.product?.name;
         if (typeof itemName === 'object' && itemName !== null) {
@@ -19,7 +19,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
             oem_number:     item.product?.oem_number || item.oem_number,
             name:           itemName,
             condition_slug: item.condition_slug || item.product?.condition?.slug || 'new',
-            condition_name: item.condition_name || item.product?.condition?.name || 'New',
+            condition_name: item.condition_name || item.product?.condition?.name || t.conditionNewFallback || 'New',
             condition_bg:   item.condition_bg || item.product?.condition?.bg_color || '#DCFCE7',
             condition_text: item.condition_text || item.product?.condition?.text_color || '#16A34A',
             in_stock:       item.is_in_stock ?? item.in_stock ?? !!item.product?.is_in_stock,
@@ -53,11 +53,12 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
             .map(c => c.item?.oem_number || c.item?.product?.oem_number)
             .filter(Boolean)
             .join(', ');
+        const message = count > 1
+            ? (t.priceChangePlural || ':count items have changed in price: :oems').replace(':count', count).replace(':oems', oems)
+            : (t.priceChangeSingular || '1 item has changed in price: :oems').replace(':oems', oems);
         window.dispatchEvent(new CustomEvent('toast', {
             detail: {
-                message: count > 1
-                    ? `${count} items have changed in price: ${oems}`
-                    : `1 item has changed in price: ${oems}`,
+                message,
                 type: 'warning',
                 title: '§ PRICE · UPDATED',
                 duration: 8000,
@@ -84,7 +85,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
         async applyCoupon() {
             if (!this.couponCode) return;
             this.couponError = false;
-            this.couponMessage = 'Applying…';
+            this.couponMessage = t.couponApplying || 'Applying…';
             try {
                 const res = await fetch(routeCouponApply, {
                     method: 'POST',
@@ -96,14 +97,14 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                     this.couponMessage = '';
                     this.couponCode = '';
                     this.summary = normalizeSummary(data.cart_summary);
-                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Promo code applied!', type: 'success' } }));
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: t.couponAppliedToast || 'Promo code applied!', type: 'success' } }));
                 } else {
                     this.couponError = true;
-                    this.couponMessage = data.message || 'Invalid promo code';
+                    this.couponMessage = data.message || t.couponInvalidDefault || 'Invalid promo code';
                 }
             } catch (e) {
                 this.couponError = true;
-                this.couponMessage = 'Connection error';
+                this.couponMessage = t.couponConnectionError || 'Connection error';
             }
             if (this.couponMessage) setTimeout(() => this.couponMessage = '', 4000);
         },
@@ -117,10 +118,10 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                 const data = await res.json();
                 if (data.success) {
                     this.summary = normalizeSummary(data.cart_summary);
-                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Coupon removed.', type: 'info' } }));
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: t.couponRemovedToast || 'Coupon removed.', type: 'info' } }));
                 }
             } catch (e) {
-                this.showError('Error removing coupon');
+                this.showError(t.errorRemoveCoupon || 'Error removing coupon');
             }
         },
 
@@ -149,10 +150,10 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                 if (res.ok) {
                     await this.loadCart(false);
                 } else {
-                    this.showError('Error updating cart');
+                    this.showError(t.errorUpdateCart || 'Error updating cart');
                 }
             } catch (e) {
-                this.showError('Connection error');
+                this.showError(t.couponConnectionError || 'Connection error');
             }
         },
 
@@ -168,14 +169,14 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                 });
                 if (res.ok) {
                     await this.loadCart(false);
-                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Item removed from cart.', type: 'info' } }));
+                    window.dispatchEvent(new CustomEvent('toast', { detail: { message: t.itemRemovedToast || 'Item removed from cart.', type: 'info' } }));
                 } else {
                     item.removing = false;
-                    this.showError('Error removing item');
+                    this.showError(t.errorRemove || 'Error removing item');
                 }
             } catch (e) {
                 item.removing = false;
-                this.showError('Connection error');
+                this.showError(t.couponConnectionError || 'Connection error');
             }
         },
 
@@ -189,7 +190,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                 });
             }
             await this.loadCart(false);
-            window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Cart cleared.', type: 'info' } }));
+            window.dispatchEvent(new CustomEvent('toast', { detail: { message: t.cartClearedToast || 'Cart cleared.', type: 'info' } }));
         },
 
         async loadCart(showToast = true) {
@@ -206,7 +207,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
                     window.dispatchEvent(new CustomEvent('cartUpdated', { detail: { count: data.summary.item_count } }));
                 }
             } catch (e) {
-                this.showError('Error loading cart');
+                this.showError(t.errorLoad || 'Error loading cart');
             } finally {
                 this.loading = false;
             }
