@@ -16,6 +16,7 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            \App\Filament\Support\AdminUi::settingsLinkAction(\App\Filament\Pages\Settings\OrdersSettings::class),
             ...$this->getSavedViewHeaderActions(),
             Actions\CreateAction::make(),
         ];

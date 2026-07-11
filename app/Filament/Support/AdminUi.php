@@ -614,6 +614,24 @@ final class AdminUi
      * @param  string|null  $tableSearch    Search query string
      * @param  string|null  $tableSort      Sort string, e.g. 'created_at:desc'
      */
+    /**
+     * "Settings" header link from a module list to its settings page —
+     * the WooCommerce-style module↔settings bridge. Hidden for admins who
+     * can't access the settings page.
+     *
+     * @param  class-string<\App\Filament\Pages\Settings\SettingsPage>  $settingsPage
+     */
+    public static function settingsLinkAction(string $settingsPage, string $tooltip = 'Open the settings for this module'): Actions\Action
+    {
+        return Actions\Action::make('moduleSettings')
+            ->label('Settings')
+            ->icon('heroicon-o-cog-6-tooth')
+            ->color('gray')
+            ->url(fn (): string => $settingsPage::getUrl())
+            ->tooltip($tooltip)
+            ->visible(fn (): bool => $settingsPage::canAccess());
+    }
+
     public static function drilldownUrl(
         string $resourceClass,
         ?array $tableFilters = null,
