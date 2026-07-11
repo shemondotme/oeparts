@@ -39,6 +39,10 @@ Schedule::command('abandoned-cart:process')->hourlyAt(5);
 // this is what makes the admin's "Scheduled Send Date" actually fire.
 Schedule::command('oeparts:newsletter:send-due')->everyFiveMinutes();
 
+// Auto-complete shipped orders after the operator-configured window —
+// this is what makes OrdersSettings' "Auto-Complete Fulfillment" real.
+Schedule::command('oeparts:orders:auto-complete')->dailyAt('02:30');
+
 // Backup Engine (Module 21) — daily full encrypted backup + GFS prune.
 // Supersedes the old db:backup / mysqldump command (kept for now, no longer scheduled).
 Schedule::command('oeparts:backup --trigger=scheduled')
