@@ -190,7 +190,6 @@ class SettingsSeeder extends Seeder
 
             // ── INTEGRATIONS ─────────────────────────────────────────────────────
             ['group' => 'integrations', 'key' => 'gtm_id',           'value' => '', 'type' => $s],
-            ['group' => 'integrations', 'key' => 'gsc_verification', 'value' => '', 'type' => $s],
             ['group' => 'integrations', 'key' => 'ga4_measurement_id', 'value' => '', 'type' => $s],
             ['group' => 'integrations', 'key' => 'fb_pixel_id',      'value' => '', 'type' => $s],
             ['group' => 'integrations', 'key' => 'crisp_website_id', 'value' => '', 'type' => $s],

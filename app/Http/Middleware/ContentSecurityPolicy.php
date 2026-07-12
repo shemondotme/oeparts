@@ -44,14 +44,23 @@ class ContentSecurityPolicy
             .'https://api.airwallex.com https://api-demo.airwallex.com '
             .'https://pci-api.airwallex.com https://pci-api-demo.airwallex.com';
 
+        // integrations.* settings (GTM/GA4/Facebook Pixel — see layouts/app.blade.php)
+        // load a browser script, call out to their own analytics endpoints, and
+        // (GTM only) render a <noscript> fallback iframe. Grounded in each vendor's
+        // documented snippet origins.
+        $analyticsScript  = 'https://www.googletagmanager.com https://connect.facebook.net';
+        $analyticsConnect = 'https://www.google-analytics.com https://analytics.google.com '
+            .'https://www.googletagmanager.com https://www.facebook.com';
+        $analyticsFrame   = 'https://www.googletagmanager.com';
+
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com {$airwallexScript}",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com {$airwallexScript} {$analyticsScript}",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
             "img-src 'self' data: https: blob:",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
-            "connect-src 'self' https://api.qrserver.com {$airwallexConnect}",
-            "frame-src {$airwallexFrame}",
+            "connect-src 'self' https://api.qrserver.com {$airwallexConnect} {$analyticsConnect}",
+            "frame-src {$airwallexFrame} {$analyticsFrame}",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
