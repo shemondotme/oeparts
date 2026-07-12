@@ -56,19 +56,23 @@ class NewsletterController extends Controller
 
             $subscriber = $existing;
         } else {
-            // Create new subscription (requires confirmation)
+            $doubleOptIn = filter_var(settings('newsletter.double_opt_in', true), FILTER_VALIDATE_BOOLEAN);
+
+            // Create new subscription (requires confirmation unless double opt-in is disabled)
             $subscriber = NewsletterSubscriber::create([
                 'email' => $email,
                 'lang' => $locale,
-                'is_active' => false,
+                'is_active' => ! $doubleOptIn,
                 'subscribed_at' => now(),
                 'ip_address' => $request->ip(),
                 'unsubscribe_token' => $unsubscribeToken,
             ]);
 
-            // Send confirmation email
-            $confirmUrl = route('frontend.newsletter.confirm', ['lang' => $locale, 'token' => $unsubscribeToken]);
-            dispatch(new SendNewsletterConfirmationEmail($subscriber, $confirmUrl, $locale));
+            if ($doubleOptIn) {
+                // Send confirmation email
+                $confirmUrl = route('frontend.newsletter.confirm', ['lang' => $locale, 'token' => $unsubscribeToken]);
+                dispatch(new SendNewsletterConfirmationEmail($subscriber, $confirmUrl, $locale));
+            }
         }
 
         return response()->json([

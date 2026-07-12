@@ -459,6 +459,7 @@
                         </template>
 
                         {{-- Promo code --}}
+                        @if(settings('cart.coupon_enabled', true))
                         <template x-if="!summary.coupon_code">
                             <div class="mt-6">
                                 <label for="promo_code" class="bp-spec mb-2 inline-block">{{ ui_copy('cart_promo_code_label', 'cart.promo_code_label') }}</label>
@@ -480,6 +481,7 @@
                                 </template>
                             </div>
                         </template>
+                        @endif
 
                         {{-- Grand total --}}
                         <div class="mt-6 pt-5 border-t-2 border-ink">

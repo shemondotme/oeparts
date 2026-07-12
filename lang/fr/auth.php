@@ -44,6 +44,8 @@ return [
     // JS-side messages (component's Alpine script)
     'invalid_credentials' => 'Identifiants invalides',
     'registration_failed' => "Échec de l'inscription",
+    'registration_disabled' => "L'inscription de nouveaux comptes n'est pas disponible actuellement. Veuillez réessayer plus tard ou contacter le support.",
+    'session_expired' => 'Votre session a expiré en raison d\'inactivité. Veuillez vous reconnecter.',
     'invalid_or_expired_code' => 'Code invalide ou expiré.',
     'email_verified_please_sign_in' => 'E-mail vérifié — veuillez vous connecter.',
     'new_code_sent' => 'Un nouveau code a été envoyé à votre e-mail.',

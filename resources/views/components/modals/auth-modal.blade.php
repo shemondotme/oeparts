@@ -9,6 +9,7 @@
     $lang  = app()->getLocale();
     $loginUrl    = url("/{$lang}/login");
     $registerUrl = url("/{$lang}/register");
+    $registrationEnabled = filter_var(settings('auth.registration_enabled', true), FILTER_VALIDATE_BOOLEAN);
 @endphp
 <div
     x-data="authModal()"
@@ -97,6 +98,7 @@
                         >
                             {{ ui_copy('auth_sign_in', 'auth.sign_in') }}
                         </button>
+                        @if($registrationEnabled)
                         <button
                             @click="tab = 'register'; error = ''"
                             :class="tab === 'register' ? 'bg-amber text-ink' : 'text-ivory/70 hover:text-ivory hover:bg-white/5'"
@@ -108,6 +110,7 @@
                         >
                             {{ ui_copy('auth_register', 'auth.register') }}
                         </button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -190,6 +193,7 @@
                         </button>
                     </form>
 
+                    @if($registrationEnabled)
                     {{-- Divider --}}
                     <div class="mt-6 flex items-center gap-3">
                         <span class="flex-1 h-px bg-rule"></span>
@@ -201,10 +205,19 @@
                         {{ ui_copy('auth_create_free_account', 'auth.create_free_account') }}
                         <x-heroicon-s-user-plus class="w-4 h-4" />
                     </button>
+                    @endif
                 </div>
 
                 {{-- REGISTER FORM (Modern Inline OTP) --}}
                 <div x-show="tab === 'register'" x-cloak role="tabpanel" id="auth-panel-register" aria-labelledby="auth-tab-register" class="space-y-4">
+                    @if(! $registrationEnabled)
+                        <p class="text-sm font-sans text-body text-center py-6">{{ ui_copy('auth_registration_disabled_notice', 'auth.registration_disabled') }}</p>
+                        <button @click="tab = 'login'; error = ''"
+                                class="bp-btn-outline w-full justify-center py-3 text-sm">
+                            {{ ui_copy('auth_sign_in_instead', 'auth.sign_in_instead') }}
+                            <x-heroicon-s-arrow-long-right class="w-4 h-4" />
+                        </button>
+                    @else
                     <form
                         method="POST"
                         action="{{ $registerUrl }}"
@@ -290,6 +303,7 @@
                         {{ ui_copy('auth_sign_in_instead', 'auth.sign_in_instead') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                     </button>
+                    @endif
                 </div>
 
                 {{-- OTP VERIFICATION (inline email verify) --}}
@@ -401,6 +415,12 @@ function authModal() {
         otpContext: 'login',
         resendMsg: '',
         otpLength: otpLength,
+
+        init() {
+            if (@json((bool) session('show_auth_modal'))) {
+                this.open('login');
+            }
+        },
 
         open(tab = 'login') {
             this.tab = tab;

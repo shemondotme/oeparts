@@ -44,6 +44,8 @@ return [
     // JS-side messages (component's Alpine script)
     'invalid_credentials' => 'Credenciales no válidas',
     'registration_failed' => 'Error en el registro',
+    'registration_disabled' => 'El registro de nuevas cuentas no está disponible actualmente. Inténtelo más tarde o contacte con soporte.',
+    'session_expired' => 'Su sesión ha caducado por inactividad. Vuelva a iniciar sesión.',
     'invalid_or_expired_code' => 'Código no válido o caducado.',
     'email_verified_please_sign_in' => 'Correo verificado — inicie sesión.',
     'new_code_sent' => 'Se ha enviado un nuevo código a su correo.',

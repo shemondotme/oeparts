@@ -166,7 +166,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'cart', 'key' => 'max_items',                'value' => '50',   'type' => $i],
             ['group' => 'cart', 'key' => 'price_change_threshold',   'value' => '20',   'type' => $i],
             ['group' => 'cart', 'key' => 'otp_required_guest',       'value' => '1',    'type' => $b],
-            ['group' => 'cart', 'key' => 'checkout_timeout_minutes', 'value' => '30',   'type' => $i],
             ['group' => 'cart', 'key' => 'coupon_enabled',           'value' => '1',    'type' => $b],
             ['group' => 'cart', 'key' => 'merge_on_login',           'value' => '1',    'type' => $b],
 

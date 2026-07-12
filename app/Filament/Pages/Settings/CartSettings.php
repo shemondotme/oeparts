@@ -54,14 +54,13 @@ class CartSettings extends SettingsPage
                             ->required()
                             ->default(20),
 
-                        Forms\Components\TextInput::make('checkout_timeout_minutes')
-                            ->label('Checkout Lock Timeout (Minutes)')
-                            ->numeric()
-                            ->minValue(5)
-                            ->maxValue(120)
-                            ->required()
-                            ->helperText('Duration checkout sessions are locked to protect stock allocations')
-                            ->default(30),
+                        Forms\Components\Placeholder::make('checkout_timeout_minutes_note')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Checkout session timeout is set on the <a href="'
+                                . CheckoutSettings::getUrl()
+                                . '" class="fi-link text-primary-600">Checkout Settings</a> page → Checkout Timeout (minutes).'
+                            )),
 
                         Forms\Components\Toggle::make('otp_required_guest')
                             ->label('Require OTP for Guest Checkouts')

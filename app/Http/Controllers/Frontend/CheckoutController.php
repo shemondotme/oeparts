@@ -22,6 +22,16 @@ class CheckoutController extends Controller
         private PaymentService $paymentService
     ) {}
 
+    private function guestCheckoutAllowed(): bool
+    {
+        return filter_var(settings('auth.guest_checkout_enabled', true), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function guestOtpRequired(): bool
+    {
+        return filter_var(settings('cart.otp_required_guest', true), FILTER_VALIDATE_BOOLEAN);
+    }
+
     /**
      * Entry point: start checkout or show current step.
      * GET /{lang}/checkout
@@ -29,6 +39,13 @@ class CheckoutController extends Controller
     public function index(Request $request, string $lang)
     {
         $user = Auth::user();
+
+        if (!$user && !$this->guestCheckoutAllowed()) {
+            return redirect()->route('frontend.cart.index', compact('lang'))
+                ->with('error', __('checkout.guest_checkout_disabled'))
+                ->with('show_auth_modal', true);
+        }
+
         $guestToken = $request->cookie('guest_token');
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
 
@@ -119,7 +136,13 @@ class CheckoutController extends Controller
         $isGuest = !$user;
         $otpVerified = true;
 
-        if ($isGuest) {
+        if ($isGuest && !$this->guestCheckoutAllowed()) {
+            return redirect()->route('frontend.cart.index', compact('lang'))
+                ->with('error', __('checkout.guest_checkout_disabled'))
+                ->with('show_auth_modal', true);
+        }
+
+        if ($isGuest && $this->guestOtpRequired()) {
             $email = $request->input('email');
             $otpCode = $request->input('otp');
             $otpService = app(\App\Services\OtpService::class);

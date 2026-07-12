@@ -54,5 +54,6 @@ return [
     'error_generic' => 'Etwas ist schiefgelaufen. Bitte erneut versuchen.',
     'error_network' => 'Netzwerkfehler. Bitte erneut versuchen.',
     'rate_limited' => 'Zu viele Anfragen. Bitte später erneut versuchen.',
+    'guest_not_allowed' => 'Bitte melden Sie sich an, um eine Ersatzteilanfrage zu senden.',
     'submitted' => 'Ihre Anfrage wurde gesendet. Wir antworten innerhalb von :hours Stunden.',
 ];

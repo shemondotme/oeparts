@@ -192,6 +192,11 @@ class CartService
     public function mergeGuestCart(User $user, string $guestToken): Cart
     {
         $userCart = $this->getOrCreateCart($user);
+
+        if (! filter_var(settings('cart.merge_on_login', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $userCart;
+        }
+
         $guestCart = Cart::where('guest_token', $guestToken)->first();
 
         if (!$guestCart) {
