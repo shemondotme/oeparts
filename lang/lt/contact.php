@@ -65,6 +65,9 @@ return [
 
     // Sidebar info cards
     'email_us' => 'Rašykite mums',
+    'whatsapp_label' => 'WhatsApp',
+    'viber_label' => 'Viber',
+    'address_label' => 'Adresas',
     'response_time' => 'Atsakymo laikas',
     'response_time_value' => 'Per 1 darbo dieną',
     'secure' => 'Saugus kanalas',

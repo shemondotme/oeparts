@@ -4,7 +4,7 @@
     $tagline  = settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.');
     $phone    = settings('contact.phone', '');
     $email    = settings('contact.email', '');
-    $hours    = settings('contact.business_hours', 'MON–FRI · 09:00–18:00 CET');
+    $hours    = settings_trans('contact.hours', 'MON–FRI · 09:00–18:00 CET');
     $showSocialInFooter = filter_var(settings('social_links.show_in_footer', true), FILTER_VALIDATE_BOOLEAN);
     $socialIconStyle    = settings('social_links.footer_icon_style', 'outlined');
     $socialBadgeClass   = $socialIconStyle === 'filled'

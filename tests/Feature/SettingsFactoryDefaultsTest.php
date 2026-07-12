@@ -140,12 +140,12 @@ class SettingsFactoryDefaultsTest extends TestCase
     }
 
     #[Test]
-    public function performance_factory_defaults_includes_queue_retry_after(): void
+    public function performance_factory_defaults_includes_cache_ttl_manufacturers(): void
     {
         $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\PerformanceSettings::class);
 
-        $this->assertArrayHasKey('queue_retry_after', $defaults);
-        $this->assertSame(3700, $defaults['queue_retry_after']);
+        $this->assertArrayHasKey('cache_ttl_manufacturers', $defaults);
+        $this->assertSame(60, $defaults['cache_ttl_manufacturers']);
     }
 
     #[Test]

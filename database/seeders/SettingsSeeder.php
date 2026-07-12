@@ -168,16 +168,10 @@ class SettingsSeeder extends Seeder
             ['group' => 'cart', 'key' => 'merge_on_login',           'value' => '1',    'type' => $b],
 
             // ── PERFORMANCE ──────────────────────────────────────────────────────
-            ['group' => 'performance', 'key' => 'cache_driver',            'value' => 'redis', 'type' => $s],
             ['group' => 'performance', 'key' => 'cache_sections',          'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'cache_ttl_sections',      'value' => '60',    'type' => $i],
-            ['group' => 'performance', 'key' => 'cache_settings',          'value' => '1',     'type' => $b],
-            ['group' => 'performance', 'key' => 'cache_ttl_settings',      'value' => '5',     'type' => $i],
             ['group' => 'performance', 'key' => 'cache_manufacturers',     'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'cache_ttl_manufacturers', 'value' => '60',    'type' => $i],
-            ['group' => 'performance', 'key' => 'query_cache_enabled',     'value' => '1',     'type' => $b],
-            ['group' => 'performance', 'key' => 'query_cache_ttl',         'value' => '10',    'type' => $i],
-            ['group' => 'performance', 'key' => 'queue_retry_after',      'value' => '3700',  'type' => $i],
 
             // ── SECURITY ─────────────────────────────────────────────────────────
             ['group' => 'security', 'key' => 'login_max_attempts',    'value' => '5',  'type' => $i],

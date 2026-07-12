@@ -5,6 +5,12 @@
     $siteName = settings('general.site_name', 'OeParts');
     $phone    = settings('contact.phone', '');
     $email    = settings('contact.email', config('mail.from.address'));
+    $address  = settings('contact.address', '');
+    $whatsapp = settings('contact.whatsapp', '');
+    $viber    = settings('contact.viber', '');
+    $hours    = settings_trans('contact.hours', '09:00–18:00 CET');
+    $waDigits = $whatsapp ? preg_replace('/\D+/', '', $whatsapp) : '';
+    $viberDigits = $viber ? preg_replace('/\D+/', '', $viber) : '';
     $contactTitle = trans('contact.title', [], $lang);
     $contactDescr = trans('contact.description', [], $lang);
 @endphp
@@ -126,6 +132,32 @@
                             </dd>
                         </div>
                         @endif
+                        @if($whatsapp)
+                        <div>
+                            <dt class="bp-spec text-ink-muted">{{ trans('contact.whatsapp_label') }}</dt>
+                            <dd class="mt-1">
+                                <a href="https://wa.me/{{ $waDigits }}" target="_blank" rel="noopener noreferrer" class="font-mono text-sm font-bold text-ink hover:text-amber-ink transition-colors tabular-nums">
+                                    {{ $whatsapp }}
+                                </a>
+                            </dd>
+                        </div>
+                        @endif
+                        @if($viber)
+                        <div>
+                            <dt class="bp-spec text-ink-muted">{{ trans('contact.viber_label') }}</dt>
+                            <dd class="mt-1">
+                                <a href="viber://chat?number={{ $viberDigits }}" class="font-mono text-sm font-bold text-ink hover:text-amber-ink transition-colors tabular-nums">
+                                    {{ $viber }}
+                                </a>
+                            </dd>
+                        </div>
+                        @endif
+                        @if($address)
+                        <div>
+                            <dt class="bp-spec text-ink-muted">{{ trans('contact.address_label') }}</dt>
+                            <dd class="mt-1 font-mono text-sm font-bold text-ink whitespace-pre-line">{{ $address }}</dd>
+                        </div>
+                        @endif
                         <div>
                             <dt class="bp-spec text-ink-muted">{{ trans('contact.response_time') }}</dt>
                             <dd class="mt-1 font-mono text-sm font-bold text-ink">
@@ -134,7 +166,7 @@
                         </div>
                         <div>
                             <dt class="bp-spec text-ink-muted">{{ __('Hours') }}</dt>
-                            <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums">09:00–18:00 CET</dd>
+                            <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums">{{ $hours }}</dd>
                         </div>
                     </dl>
                 </div>
