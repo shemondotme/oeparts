@@ -8,6 +8,12 @@
     $lang = app()->getLocale();
 @endphp
 
+@push('styles')
+    {{-- Card payments dial out to Airwallex; open the connection early
+         without paying for the SDK download unless card is actually chosen. --}}
+    <link rel="preconnect" href="https://checkout.airwallex.com" crossorigin>
+@endpush
+
 @section('content')
 <div class="relative min-h-screen bg-ivory text-ink">
     <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
@@ -328,8 +334,6 @@
 @endsection
 
 @push('scripts')
-    <script src="https://checkout.airwallex.com/assets/elements.bundle.min.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const cardRadio = document.getElementById('method-card');
@@ -354,11 +358,33 @@
             }
             window.showPaymentError = showPaymentError;
 
+            // The Airwallex SDK (~sizeable bundle) is only fetched once the
+            // customer actually picks card payment — was an unconditional
+            // <script src> on every visit, including bank-transfer customers
+            // who never use it. A preconnect hint above still opens the
+            // connection early so choosing card doesn't pay the DNS/TLS cost.
+            var airwallexScriptPromise = null;
+            function loadAirwallexScript() {
+                if (!airwallexScriptPromise) {
+                    airwallexScriptPromise = new Promise(function (resolve, reject) {
+                        if (typeof Airwallex !== 'undefined') { resolve(); return; }
+                        var script = document.createElement('script');
+                        script.src = 'https://checkout.airwallex.com/assets/elements.bundle.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                return airwallexScriptPromise;
+            }
+
             function toggleSections() {
                 if (cardRadio.checked) {
                     cardSection.classList.remove('hidden');
                     bankSection.classList.add('hidden');
-                    initAirwallex();
+                    loadAirwallexScript().then(initAirwallex).catch(function () {
+                        showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
+                    });
                 } else if (bankRadio.checked) {
                     cardSection.classList.add('hidden');
                     bankSection.classList.remove('hidden');
