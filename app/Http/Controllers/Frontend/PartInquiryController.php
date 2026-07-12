@@ -15,6 +15,13 @@ class PartInquiryController extends Controller
 {
     public function store(PartInquiryRequest $request, string $lang)
     {
+        if (! auth()->check() && ! filter_var(settings('part_inquiry.guest_inquiries_allowed', true), FILTER_VALIDATE_BOOLEAN)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('part_inquiry.guest_not_allowed'),
+            ], 403);
+        }
+
         // Rate limit: 5 inquiries per hour per IP
         $maxInquiries = (int) settings('security.inquiry_max_per_email', 5);
         if (!RateLimiter::attempt("inquiry:{$request->ip()}", $maxInquiries, fn() => true, 3600)) {
@@ -33,7 +40,7 @@ class PartInquiryController extends Controller
             'manufacturer' => $validated['manufacturer'] ?? null,
             'car_model'    => $validated['car_model'] ?? null,
             'year'         => $validated['year'] ?? null,
-            'vin_number'   => $validated['vin_number'] ? strtoupper(trim($validated['vin_number'])) : null,
+            'vin_number'   => !empty($validated['vin_number']) ? strtoupper(trim($validated['vin_number'])) : null,
             'quantity'     => $validated['quantity'] ?? 1,
             'urgency'      => $validated['urgency'] ?? 'normal',
             'notes'        => $validated['notes'] ?? null,

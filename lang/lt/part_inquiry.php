@@ -54,5 +54,6 @@ return [
     'error_generic' => 'Įvyko klaida. Bandykite dar kartą.',
     'error_network' => 'Tinklo klaida. Bandykite dar kartą.',
     'rate_limited' => 'Per daug užklausų. Bandykite vėliau.',
+    'guest_not_allowed' => 'Norėdami pateikti užklausą dėl dalies, prisijunkite.',
     'submitted' => 'Užklausa išsiųsta. Atsakysime per :hours val.',
 ];

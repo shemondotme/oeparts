@@ -3,6 +3,16 @@ Toast Notification — Industrial Blueprint
 Position: Bottom-Right · Stack: vertical
 Types: success · error · warning · info
 --}}
+@php
+    $flashToast = null;
+    if (session('error')) {
+        $flashToast = ['message' => session('error'), 'type' => 'error'];
+    } elseif (session('success')) {
+        $flashToast = ['message' => session('success'), 'type' => 'success'];
+    } elseif (session('status')) {
+        $flashToast = ['message' => session('status'), 'type' => 'info'];
+    }
+@endphp
 <div
     x-data="toastComponent()"
     x-init="init()"
@@ -184,6 +194,14 @@ function toastComponent() {
                 const { productName, quantity } = e.detail;
                 this.showCartToast(productName, quantity);
             });
+
+            // Server-side flash messages (session('error')/'success'/'status') are
+            // set by full-page redirects on views that don't render their own flash
+            // banner — surfaced here as a toast so the message is never silently lost.
+            const flash = @json($flashToast);
+            if (flash) {
+                this.showToast(flash.message, flash.type);
+            }
         },
         defaultTitle(type) {
             switch (type) {

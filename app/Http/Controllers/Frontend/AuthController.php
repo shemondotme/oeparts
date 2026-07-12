@@ -100,6 +100,13 @@ class AuthController extends Controller
      */
     public function register(Request $request, string $lang)
     {
+        if (! filter_var(settings('auth.registration_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('auth.registration_disabled'),
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:200',
             'email' => 'required|email|unique:users,email',

@@ -44,6 +44,8 @@ return [
     // JS-side messages (component's Alpine script)
     'invalid_credentials' => 'Ungültige Anmeldedaten',
     'registration_failed' => 'Registrierung fehlgeschlagen',
+    'registration_disabled' => 'Die Neuregistrierung ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Support.',
+    'session_expired' => 'Ihre Sitzung ist wegen Inaktivität abgelaufen. Bitte melden Sie sich erneut an.',
     'invalid_or_expired_code' => 'Ungültiger oder abgelaufener Code.',
     'email_verified_please_sign_in' => 'E-Mail verifiziert — bitte melden Sie sich an.',
     'new_code_sent' => 'Ein neuer Code wurde an Ihre E-Mail gesendet.',

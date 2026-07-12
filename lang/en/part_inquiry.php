@@ -54,5 +54,6 @@ return [
     'error_generic' => 'Something went wrong. Please try again.',
     'error_network' => 'Network error. Please try again.',
     'rate_limited' => 'Too many inquiries. Please try again later.',
+    'guest_not_allowed' => 'Please sign in to submit a part inquiry.',
     'submitted' => 'Your inquiry has been submitted. We will respond within :hours hours.',
 ];

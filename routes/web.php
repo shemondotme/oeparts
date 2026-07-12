@@ -101,7 +101,7 @@ require __DIR__.'/installer.php';
 // Frontend routes — language-prefixed
 Route::prefix('{lang}')
     ->where(['lang' => 'en|de|lt|fr|es'])
-    ->middleware(['set.locale', 'ip.blocklist', 'maintenance', 'track.utm', 'handle.redirects'])
+    ->middleware(['set.locale', 'customer.idle-timeout', 'ip.blocklist', 'maintenance', 'track.utm', 'handle.redirects'])
     ->group(function () {
         // Homepage
         Route::get('/', [HomeController::class, 'index'])->name('frontend.home');

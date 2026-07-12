@@ -75,15 +75,18 @@ class SearchService
                 return $this->filteredEmptyResult($normalized, 'exact', $manufacturerId, $carModelId, $inStockOnly, $condition);
             }
 
-            // Step 2: Cross-reference match
-            $crossResult = $this->crossReferenceMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
-            if ($crossResult['total'] > 0) {
-                $logId = $log ? $this->logSearch($query, $normalized, $lang, $crossResult['total'], $manufacturerId, $carModelId) : null;
+            // Step 2: Cross-reference match (if enabled)
+            $crossRefEnabled = filter_var($this->settings->get('search.cross_ref_enabled', true), FILTER_VALIDATE_BOOLEAN);
+            if ($crossRefEnabled) {
+                $crossResult = $this->crossReferenceMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
+                if ($crossResult['total'] > 0) {
+                    $logId = $log ? $this->logSearch($query, $normalized, $lang, $crossResult['total'], $manufacturerId, $carModelId) : null;
 
-                return $this->buildResult('cross_reference', $crossResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
-            }
-            if ($hasActiveFilters && $this->unfilteredCount('cross_reference', $normalized, $manufacturerId, $carModelId) > 0) {
-                return $this->filteredEmptyResult($normalized, 'cross_reference', $manufacturerId, $carModelId, $inStockOnly, $condition);
+                    return $this->buildResult('cross_reference', $crossResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
+                }
+                if ($hasActiveFilters && $this->unfilteredCount('cross_reference', $normalized, $manufacturerId, $carModelId) > 0) {
+                    return $this->filteredEmptyResult($normalized, 'cross_reference', $manufacturerId, $carModelId, $inStockOnly, $condition);
+                }
             }
 
             // Step 3: Partial match (if enabled and query long enough to avoid full-table scans)
@@ -502,6 +505,10 @@ class SearchService
         ?int $manufacturerId = null,
         ?int $carModelId = null
     ): ?int {
+        if (! filter_var($this->settings->get('search.log_searches', true), FILTER_VALIDATE_BOOLEAN)) {
+            return null;
+        }
+
         try {
             $log = SearchLog::create([
                 'search_query' => $rawQuery,
@@ -531,6 +538,10 @@ class SearchService
         ?int $manufacturerId = null,
         ?int $carModelId = null
     ): ?int {
+        if (! filter_var($this->settings->get('search.log_failed', true), FILTER_VALIDATE_BOOLEAN)) {
+            return null;
+        }
+
         try {
             $log = FailedSearchLog::create([
                 'search_query' => $rawQuery,

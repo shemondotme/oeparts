@@ -54,5 +54,6 @@ return [
     'error_generic' => 'Une erreur s’est produite. Réessayez.',
     'error_network' => 'Erreur réseau. Réessayez.',
     'rate_limited' => 'Trop de demandes. Réessayez plus tard.',
+    'guest_not_allowed' => 'Veuillez vous connecter pour envoyer une demande de pièce.',
     'submitted' => 'Votre demande a été envoyée. Nous répondrons sous :hours heures.',
 ];

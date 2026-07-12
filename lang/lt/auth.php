@@ -44,6 +44,8 @@ return [
     // JS-side messages (component's Alpine script)
     'invalid_credentials' => 'Neteisingi prisijungimo duomenys',
     'registration_failed' => 'Registracija nepavyko',
+    'registration_disabled' => 'Naujų paskyrų registracija šiuo metu negalima. Bandykite vėliau arba susisiekite su pagalbos tarnyba.',
+    'session_expired' => 'Jūsų sesija baigėsi dėl neaktyvumo. Prisijunkite iš naujo.',
     'invalid_or_expired_code' => 'Kodas neteisingas arba nebegalioja.',
     'email_verified_please_sign_in' => 'El. paštas patvirtintas — prisijunkite.',
     'new_code_sent' => 'Naujas kodas išsiųstas jūsų el. paštu.',

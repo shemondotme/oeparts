@@ -202,4 +202,5 @@ return [
     // Controller flash messages (App\Http\Controllers\Frontend\CheckoutController)
     'verification_code_sent' => 'Code de vérification envoyé à votre e-mail.',
     'order_creation_failed' => "Nous n'avons pas pu créer votre commande. Veuillez réessayer.",
+    'guest_checkout_disabled' => "Le paiement en tant qu'invité n'est pas disponible actuellement. Veuillez vous connecter ou créer un compte pour continuer.",
 ];

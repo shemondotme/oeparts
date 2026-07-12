@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
 use App\Http\Middleware\InstallerMiddleware;
 use App\Http\Middleware\IpBlocklist;
@@ -32,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'set.locale' => SetLocale::class,
+            'customer.idle-timeout' => EnforceCustomerSessionLifetime::class,
             'normalize.oem' => NormalizeOemUrl::class,
             'maintenance' => MaintenanceMode::class,
             'ip.blocklist' => IpBlocklist::class,

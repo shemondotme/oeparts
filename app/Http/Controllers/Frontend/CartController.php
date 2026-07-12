@@ -250,6 +250,13 @@ class CartController extends Controller
      */
     public function applyCoupon(Request $request, string $lang)
     {
+        if (! filter_var(settings('cart.coupon_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('cart.coupon_disabled'),
+            ], 422);
+        }
+
         $request->validate([
             'coupon_code' => 'required|string|max:50',
         ]);

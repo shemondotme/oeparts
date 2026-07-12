@@ -54,5 +54,6 @@ return [
     'error_generic' => 'Algo salió mal. Inténtelo de nuevo.',
     'error_network' => 'Error de red. Inténtelo de nuevo.',
     'rate_limited' => 'Demasiadas consultas. Inténtelo más tarde.',
+    'guest_not_allowed' => 'Inicie sesión para enviar una consulta de pieza.',
     'submitted' => 'Su consulta se ha enviado. Responderemos en :hours horas.',
 ];
