@@ -194,7 +194,7 @@
     </div>
 
     @php
-        $vatTaxableBase = bcadd(bcadd((string) $order->subtotal, (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2);
+        $vatTaxableBase = bcadd(bcadd(bcadd((string) $order->subtotal, (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2), (string) $order->handling_fee, 2);
         $vatRatePercent = bccomp($vatTaxableBase, '0', 2) > 0
             ? bcmul(bcdiv((string) $order->vat_amount, $vatTaxableBase, 4), '100', 2)
             : '0.00';
@@ -218,6 +218,12 @@
                  keeps this line consistent with the rest of the document. --}}
             <span>Rush Processing:</span>
             <span>{{ format_price($order->urgent_processing_fee) }}</span>
+        </div>
+        @endif
+        @if(bccomp((string) $order->handling_fee, '0', 2) > 0)
+        <div class="totals-row">
+            <span>Handling Fee:</span>
+            <span>{{ format_price($order->handling_fee) }}</span>
         </div>
         @endif
         @if($order->discount_amount > 0)

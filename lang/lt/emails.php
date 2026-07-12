@@ -31,6 +31,7 @@ return [
         'subtotal'           => 'Tarpinė Suma',
         'discount'           => 'Nuolaida',
         'shipping'           => 'Pristatymas',
+        'handling_fee'       => 'Aptarnavimo mokestis',
         'vat'                => 'PVM',
         'grand_total'        => 'Bendra Suma',
         'footer'             => 'Užsakymo detales visada galite peržiūrėti savo paskyroje.',

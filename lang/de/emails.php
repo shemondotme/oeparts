@@ -31,6 +31,7 @@ return [
         'subtotal'           => 'Zwischensumme',
         'discount'           => 'Rabatt',
         'shipping'           => 'Versand',
+        'handling_fee'       => 'Bearbeitungsgebühr',
         'vat'                => 'MwSt.',
         'grand_total'        => 'Gesamtsumme',
         'footer'             => 'Sie können Ihre Bestelldetails jederzeit in Ihrem Konto einsehen.',

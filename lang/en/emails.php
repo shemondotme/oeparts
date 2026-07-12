@@ -42,6 +42,7 @@ return [
         'subtotal'          => 'Subtotal',
         'discount'          => 'Discount',
         'shipping'          => 'Shipping',
+        'handling_fee'      => 'Handling Fee',
         'vat'               => 'VAT',
         'grand_total'       => 'Grand Total',
         'footer'            => 'You can view your order details anytime from your account.',

@@ -37,7 +37,8 @@ class OrderService
     public function __construct(
         private SequenceService $sequenceService,
         private SettingsService $settings,
-        private CartService $cartService
+        private CartService $cartService,
+        private ShippingService $shippingService
     ) {}
 
     /**
@@ -299,12 +300,12 @@ class OrderService
 
     /**
      * Recalculate an order's money totals from its line items after an admin
-     * edits them. Shipping, VAT, rush-processing fee, and discount are kept
-     * as stored — only subtotal and grand_total are re-derived, using the
-     * same formula as CheckoutService's order creation: grand = (subtotal +
-     * shipping + urgent fee + vat) − discount, floored at 0.00. Omitting the
-     * urgent fee here would silently drop it from the total the moment an
-     * admin edits a line item on a rush-processing order.
+     * edits them. Shipping, VAT, rush-processing fee, handling fee, and
+     * discount are kept as stored — only subtotal and grand_total are
+     * re-derived, using the same formula as CheckoutService's order
+     * creation: grand = (subtotal + shipping + urgent fee + handling fee +
+     * vat) − discount, floored at 0.00. Omitting either fee here would
+     * silently drop it from the total the moment an admin edits a line item.
      */
     public function recalculateTotals(Order $order): void
     {
@@ -313,7 +314,7 @@ class OrderService
             $subtotal = bcadd($subtotal, (string) $item->total_price, 2);
         }
 
-        $taxableBase = bcadd(bcadd($subtotal, (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2);
+        $taxableBase = bcadd(bcadd(bcadd($subtotal, (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2), (string) $order->handling_fee, 2);
         $grandTotal = bcsub(bcadd($taxableBase, (string) $order->vat_amount, 2), (string) $order->discount_amount, 2);
 
         if (bccomp($grandTotal, '0.00', 2) === -1) {
@@ -335,21 +336,7 @@ class OrderService
             return '0.00';
         }
 
-        $method = \App\Models\ShippingMethod::find($shippingMethodId);
-        if (!$method || !$method->is_active) {
-            return '0.00';
-        }
-
-        // Check free shipping threshold
-        $cartSummary = $this->cartService->getSummary($cart);
-        $subtotal = $cartSummary['subtotal'] ?? '0.00';
-
-        if ($method->free_shipping_threshold !== null
-            && bccomp((string) $subtotal, (string) $method->free_shipping_threshold, 2) >= 0) {
-            return '0.00';
-        }
-
-        return (string) $method->flat_rate;
+        return $this->shippingService->calculateCost($cart, $shippingMethodId);
     }
 
     /**

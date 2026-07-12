@@ -83,6 +83,7 @@ return [
 
     'price_vs_avg' => ':arrow :percent% vs avg',
     'excl_vat_short' => 'excl. VAT',
+    'incl_vat_short' => 'incl. VAT',
     'btn_add_to_cart' => 'Add to Cart',
     'btn_added' => 'Added!',
     'request_this_part' => 'Request This Part',

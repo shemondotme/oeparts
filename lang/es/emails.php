@@ -31,6 +31,7 @@ return [
         'subtotal'           => 'Subtotal',
         'discount'           => 'Descuento',
         'shipping'           => 'Envío',
+        'handling_fee'       => 'Gastos de gestión',
         'vat'                => 'IVA',
         'grand_total'        => 'Total General',
         'footer'             => 'Puede ver los detalles de su pedido en cualquier momento desde su cuenta.',

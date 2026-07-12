@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\CheckoutService;
 use App\Services\CartService;
 use App\Services\PaymentService;
+use App\Services\ShippingService;
 use App\Enums\PaymentMethod;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -19,7 +20,8 @@ class CheckoutController extends Controller
     public function __construct(
         private CheckoutService $checkoutService,
         private CartService $cartService,
-        private PaymentService $paymentService
+        private PaymentService $paymentService,
+        private ShippingService $shippingService
     ) {}
 
     private function guestCheckoutAllowed(): bool
@@ -241,26 +243,42 @@ class CheckoutController extends Controller
 
         return $this->renderCheckoutStep('frontend.checkout.step3', $checkoutId, $checkout, $lang, [
             'selectedId' => $data['shipping_method_id'] ?? null,
-            'shippingOptions' => $this->buildShippingOptions(),
+            'shippingOptions' => $this->buildShippingOptions($data['shipping_address']['country_code'] ?? null),
             'urgentProcessingEnabled' => (bool) settings('checkout.urgent_processing_enabled', false),
             'urgentProcessingFee' => (string) settings('checkout.urgent_processing_fee', '0.00'),
             'urgentProcessingSelected' => (bool) ($data['urgent_processing'] ?? false),
+            'handlingFee' => (string) settings('shipping.handling_fee', '0.00'),
         ]);
     }
 
     /**
      * Active shipping methods for the step3 picker — was a raw query embedded
      * directly in the Blade view.
+     *
+     * Zone-restricted when the customer's shipping country resolves to a
+     * configured zone (via ShippingCountry rows); falls back to every active
+     * method when no zone is configured for the country (or none at all —
+     * the common single-zone setup), so simple installs keep working exactly
+     * as before.
      */
-    private function buildShippingOptions(): array
+    private function buildShippingOptions(?string $countryCode): array
     {
-        return \App\Models\ShippingMethod::where('is_active', true)
-            ->orderBy('sort_order')
-            ->get()
+        $methods = $countryCode
+            ? $this->shippingService->getMethodsForCountry($countryCode)
+            : collect();
+
+        if ($methods->isEmpty()) {
+            $methods = \App\Models\ShippingMethod::where('is_active', true)
+                ->orderBy('sort_order')
+                ->get();
+        }
+
+        return $methods
             ->map(function ($m) {
                 // Display the localized name; keep icon-matching on the stable
                 // English keyword so the heuristic works regardless of locale.
                 $enName = strtolower(is_array($m->name) ? ($m->name['en'] ?? reset($m->name) ?? '') : (string) $m->name);
+                $window = $this->shippingService->getEstimatedDeliveryWindow($m);
 
                 return [
                     'id' => $m->id,
@@ -268,6 +286,10 @@ class CheckoutController extends Controller
                     'days_min' => $m->estimated_days_min,
                     'days_max' => $m->estimated_days_max,
                     'price' => (float) $m->flat_rate,
+                    'dispatch_date' => $window['dispatch_date'],
+                    'delivery_earliest' => $window['earliest'],
+                    'delivery_latest' => $window['latest'],
+                    'dispatches_today' => $window['dispatches_today'],
                     'icon' => match(true) {
                         str_contains($enName, 'express') => 'rocket-launch',
                         str_contains($enName, 'economy') => 'globe-alt',
@@ -452,16 +474,18 @@ class CheckoutController extends Controller
 
         $urgentProcessing = (bool) ($checkoutData['urgent_processing'] ?? false) && (bool) settings('checkout.urgent_processing_enabled', false);
         $urgentFee = $urgentProcessing ? bcadd((string) settings('checkout.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
+        $handlingFee = bcadd((string) settings('shipping.handling_fee', '0.00'), '0', 2);
+        $fees = bcadd($urgentFee, $handlingFee, 2);
 
         $vatBase = $shippingCost !== null
-            ? bcadd(bcadd($discountedSubtotal, $shipping, 2), $urgentFee, 2)
-            : bcadd($discountedSubtotal, $urgentFee, 2);
+            ? bcadd(bcadd($discountedSubtotal, $shipping, 2), $fees, 2)
+            : bcadd($discountedSubtotal, $fees, 2);
         $vatAmount = ($checkoutData['vat_exempt'] ?? false)
             ? '0.00'
             : bcmul($vatBase, bcdiv($vatRate, '100', 4), 2);
         $grandTotal = $shippingCost !== null
             ? bcadd($vatBase, $vatAmount, 2)
-            : bcadd(bcadd($discountedSubtotal, $urgentFee, 2), $vatAmount, 2);
+            : bcadd(bcadd($discountedSubtotal, $fees, 2), $vatAmount, 2);
 
         return [
             'subtotal' => $subtotal,
@@ -471,6 +495,7 @@ class CheckoutController extends Controller
             'shipping_cost' => $shippingCost,
             'urgent_processing' => $urgentProcessing,
             'urgent_processing_fee' => $urgentFee,
+            'handling_fee' => $handlingFee,
             'grand_total' => $grandTotal,
         ];
     }

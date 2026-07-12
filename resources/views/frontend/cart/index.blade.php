@@ -12,6 +12,9 @@
     $cartPreviewRoute = route('frontend.cart.preview', ['lang' => $cartLocale]);
     $cartCouponApplyRoute = route('frontend.cart.coupon.apply', ['lang' => $cartLocale]);
     $cartCouponRemoveRoute = route('frontend.cart.coupon.remove', ['lang' => $cartLocale]);
+    $nudgeEnabled = (bool) settings('shipping.nudge_enabled', true);
+    $nudgeThreshold = (float) settings('shipping.nudge_threshold', 10);
+    $nudgeTextTemplate = settings_trans('shipping.nudge_text', 'Add only €{amount} more to get free shipping!');
     $cartJsTranslations = [
         'couponApplying'      => ui_copy('cart_coupon_applying', 'cart.coupon_applying'),
         'couponAppliedToast'  => ui_copy('cart_coupon_applied_toast', 'cart.coupon_applied_toast'),
@@ -455,6 +458,12 @@
                                     <div class="h-full bg-amber transition-all duration-700 ease-out"
                                          :style="'width: ' + Math.min(100, (summary.subtotal / summary.free_shipping_threshold) * 100) + '%'"></div>
                                 </div>
+                                @if($nudgeEnabled)
+                                <template x-if="summary.shipping_needed > 0 && summary.shipping_needed <= {{ $nudgeThreshold }}">
+                                    <p class="mt-3 text-xs font-bold text-amber-ink"
+                                       x-text="'{{ addslashes($nudgeTextTemplate) }}'.replace('{amount}', summary.shipping_needed.toFixed(2))"></p>
+                                </template>
+                                @endif
                             </div>
                         </template>
 

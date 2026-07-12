@@ -31,6 +31,7 @@ return [
         'subtotal'           => 'Sous-total',
         'discount'           => 'Réduction',
         'shipping'           => 'Livraison',
+        'handling_fee'       => 'Frais de traitement',
         'vat'                => 'TVA',
         'grand_total'        => 'Total Général',
         'footer'             => 'Vous pouvez consulter les détails de votre commande à tout moment depuis votre compte.',

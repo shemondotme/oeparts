@@ -213,6 +213,17 @@
                                 </tr>
                                 @endif
 
+                                @if(bccomp((string) $order->handling_fee, '0', 2) > 0)
+                                <tr>
+                                    <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span style="font-size: 14px; color: #4E5A74;">{{ ui_copy('checkout_handling_fee_label', 'checkout.handling_fee_label') }}</span>
+                                    </td>
+                                    <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ number_format((float) $order->handling_fee, 2) }} €</span>
+                                    </td>
+                                </tr>
+                                @endif
+
                                 {{-- VAT --}}
                                 <tr>
                                     <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">

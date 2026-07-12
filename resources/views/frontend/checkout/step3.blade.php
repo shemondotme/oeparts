@@ -3,6 +3,7 @@
 @section('checkout_content')
 @php
     $selected = (string) old('shipping_method_id', $selectedId ?? '');
+    $originCountry = (string) settings('shipping.default_origin_country', '');
 @endphp
 
 <div class="space-y-6">
@@ -14,6 +15,9 @@
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
             {{ ui_copy('checkout_shipping_method_subtitle', 'checkout.shipping_method_subtitle') }}
+            @if($originCountry)
+                · {{ ui_copy('checkout_ships_from', 'checkout.ships_from', ['country' => localized_country_name($originCountry)]) }}
+            @endif
         </p>
     </header>
 
@@ -66,6 +70,23 @@
                             {{ ui_copy('checkout_fast_eu_delivery', 'checkout.fast_eu_delivery') }}
                         @endif
                     </p>
+                    @if(!empty($option['delivery_earliest']) && !empty($option['delivery_latest']))
+                        @php
+                            $deliveryFrom = $option['delivery_earliest']->clone()->locale(app()->getLocale());
+                            $deliveryTo = $option['delivery_latest']->clone()->locale(app()->getLocale());
+                            $sameDay = $deliveryFrom->isSameDay($deliveryTo);
+                        @endphp
+                        <p class="mt-1 font-mono text-[10px] tracking-[0.1em] text-ink-muted">
+                            @if($sameDay)
+                                {{ ui_copy('checkout_arrives_on', 'checkout.arrives_on', ['date' => $deliveryFrom->translatedFormat('D, j M')]) }}
+                            @else
+                                {{ ui_copy('checkout_arrives_between', 'checkout.arrives_between', ['from' => $deliveryFrom->translatedFormat('D, j M'), 'to' => $deliveryTo->translatedFormat('D, j M')]) }}
+                            @endif
+                            @if($option['dispatches_today'] ?? false)
+                                · {{ ui_copy('checkout_dispatches_today', 'checkout.dispatches_today') }}
+                            @endif
+                        </p>
+                    @endif
                 </div>
 
                 {{-- Price --}}
@@ -86,6 +107,12 @@
             {{ $message }}
         </p>
     @enderror
+
+    @if(bccomp((string) ($handlingFee ?? '0.00'), '0', 2) > 0)
+        <p class="font-mono text-[11px] text-ink-muted">
+            {{ ui_copy('checkout_handling_fee_note', 'checkout.handling_fee_note', ['amount' => format_price($handlingFee)]) }}
+        </p>
+    @endif
 
     {{-- Rush processing add-on --}}
     @if($urgentProcessingEnabled ?? false)
