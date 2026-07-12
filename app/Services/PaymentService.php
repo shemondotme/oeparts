@@ -127,7 +127,7 @@ class PaymentService
         }
 
         // Generate a unique reference for this order
-        $reference = settings('payment.reference_prefix', 'OEM') . '-' . $order->order_number;
+        $reference = $this->settings->get('payment.bank_reference_prefix', 'OEM') . '-' . $order->order_number;
 
         // Create payment record
         $payment = Payment::create([
