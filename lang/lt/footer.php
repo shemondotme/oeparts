@@ -18,5 +18,9 @@ return [
     'cookies' => 'Slapukai',
     'sitemap' => 'Svetainės žemėlapis',
     'social_facebook' => 'Apsilankykite mūsų Facebook puslapyje',
+    'social_instagram' => 'Apsilankykite mūsų Instagram puslapyje',
+    'social_twitter' => 'Apsilankykite mūsų X (Twitter) puslapyje',
     'social_linkedin' => 'Apsilankykite mūsų LinkedIn puslapyje',
+    'social_youtube' => 'Apsilankykite mūsų YouTube kanale',
+    'social_tiktok' => 'Apsilankykite mūsų TikTok puslapyje',
 ];
