@@ -21,6 +21,19 @@
 @endsection
 @section('og_type', 'website')
 
+@section('json_ld')
+<script type="application/ld+json">
+{!! json_encode([
+    '@@context' => 'https://schema.org',
+    '@type' => 'BreadcrumbList',
+    'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'), 'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => __('search.console_breadcrumb_current'), 'item' => route('frontend.search.console', ['lang' => $lang])],
+    ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endsection
+
 {{-- ══════════════════════════════════════════════════════════════════════
      INDUSTRIAL BLUEPRINT — PARTS SEARCH CONSOLE
      Universal landing page for any "Browse parts / Search parts / Parts
