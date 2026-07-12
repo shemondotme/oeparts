@@ -34,6 +34,7 @@
 
     {{-- ── Clear Cart Confirm Modal ── --}}
     <div x-show="confirmOpen" x-cloak x-trap.noscroll="confirmOpen"
+         @keydown.escape.window="confirmOpen = false"
          class="fixed inset-0 z-50 flex items-center justify-center p-4"
          role="dialog" aria-modal="true" aria-labelledby="clear-cart-title"
          x-transition:enter="transition ease-out duration-200"
@@ -45,7 +46,7 @@
              x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center justify-between px-6 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-ink">Confirm · Destructive</span>
-                <button @click="confirmOpen = false" class="text-ink-muted hover:text-ink">
+                <button @click="confirmOpen = false" class="text-ink-muted hover:text-ink" aria-label="{{ ui_copy('cart_cancel', 'cart.cancel') }}">
                     <x-heroicon-s-x-mark class="w-4 h-4" />
                 </button>
             </div>
@@ -283,9 +284,10 @@
                                     </div>
                                     <div class="min-w-0 flex-1" x-data="clipboard()">
                                         <div class="flex items-center gap-2 flex-wrap">
-                                            <span class="font-mono text-sm font-bold text-ink tabular-nums truncate cursor-pointer"
+                                            <button type="button"
+                                                  class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-sm font-bold text-ink tabular-nums truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                                   @click="copy(item.oem_number)" title="{{ ui_copy('cart_copy_oem_title', 'cart.copy_oem_title') }}"
-                                                  x-text="item.oem_number"></span>
+                                                  x-text="item.oem_number"></button>
                                             <span class="inline-flex items-center px-1.5 py-0.5 bp-spec-mono font-bold rounded-sm"
                                                   :style="`background-color: ${item.condition_bg}; color: ${item.condition_text};`"
                                                   x-text="item.condition_name"></span>

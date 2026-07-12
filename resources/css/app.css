@@ -193,12 +193,14 @@
 
     .bp-input {
         @apply block w-full rounded border border-rule px-4 py-2 text-sm font-sans;
-        @apply focus:outline-none focus:ring-2 focus:ring-amber focus:border-amber;
+        /* amber-ink (#9A5A00), not amber — raw amber is 1.94:1 on ivory/paper,
+           fails WCAG 1.4.11's 3:1 non-text contrast for a focus indicator. */
+        @apply focus:outline-none focus:ring-2 focus:ring-amber-ink focus:border-amber-ink;
     }
 
     .bp-input-mono {
         @apply block w-full rounded border border-rule px-4 py-2 text-sm font-mono;
-        @apply focus:outline-none focus:ring-2 focus:ring-amber focus:border-amber;
+        @apply focus:outline-none focus:ring-2 focus:ring-amber-ink focus:border-amber-ink;
     }
 
     .bp-register::before,

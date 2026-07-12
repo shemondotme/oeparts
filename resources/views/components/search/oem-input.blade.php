@@ -52,7 +52,7 @@
                inputmode="text"
                class="flex-1 bg-transparent font-mono uppercase tracking-wider {{ $inputSize }} font-medium text-ink
                       placeholder:normal-case placeholder:tracking-normal placeholder:font-sans placeholder:text-ink-muted/60
-                      border-0 focus:outline-none focus:ring-0 min-w-0 py-1">
+                      border-0 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm min-w-0 py-1">
         <button type="button"
                 x-show="q.length > 0"
                 x-cloak

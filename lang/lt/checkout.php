@@ -18,6 +18,8 @@ return [
     'step_payment' => 'Apmokėjimas',
     'session_expires_in' => 'Sesija baigsis po',
     'session_expires_complete_before' => '— prašome užbaigti :step, kol nesibaigė laikas.',
+    'session_expiring_soon_announcement' => 'Jūsų atsiskaitymo sesija baigsis po 2 minučių.',
+    'check_status_now' => 'Tikrinti būseną dabar',
     'current_step_fallback' => 'esamas žingsnis',
     'dismiss' => 'Atmesti',
     'step_n_of_5' => 'Žingsnis :n/5',

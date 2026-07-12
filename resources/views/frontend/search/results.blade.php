@@ -611,11 +611,11 @@
                                                 </div>
                                                 @endif
                                                 <div class="min-w-0" x-data="clipboard()">
-                                                    <p class="font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer"
+                                                    <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                                        @click="copy('{{ $product->oem_number }}')"
                                                        title="Copy OEM number">
                                                         {{ $product->oem_number }}
-                                                    </p>
+                                                    </button>
                                                     <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                                         {{ $manufacturer ? trans_field($manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand') }}
                                                     </p>
@@ -850,11 +850,11 @@
                                     </div>
                                     @endif
                                     <div class="min-w-0" x-data="clipboard()">
-                                        <p class="font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer"
+                                        <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                            @click="copy('{{ $product->oem_number }}')"
                                            title="Copy OEM number">
                                             {{ $product->oem_number }}
-                                        </p>
+                                        </button>
                                         <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                             {{ $manufacturer ? trans_field($manufacturer->name) : '—' }}
                                         </p>

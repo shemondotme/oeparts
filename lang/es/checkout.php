@@ -18,6 +18,8 @@ return [
     'step_payment' => 'Pago',
     'session_expires_in' => 'La sesión caduca en',
     'session_expires_complete_before' => '— complete :step antes de que se acabe el tiempo.',
+    'session_expiring_soon_announcement' => 'Su sesión de pago caduca en 2 minutos.',
+    'check_status_now' => 'Comprobar estado ahora',
     'current_step_fallback' => 'paso actual',
     'dismiss' => 'Descartar',
     'step_n_of_5' => 'Paso :n/5',

@@ -18,6 +18,8 @@ return [
     'step_payment' => 'Zahlung',
     'session_expires_in' => 'Sitzung läuft ab in',
     'session_expires_complete_before' => '— bitte schließen Sie :step ab, bevor die Zeit abläuft.',
+    'session_expiring_soon_announcement' => 'Ihre Sitzung läuft in 2 Minuten ab.',
+    'check_status_now' => 'Status jetzt prüfen',
     'current_step_fallback' => 'aktueller Schritt',
     'dismiss' => 'Schließen',
     'step_n_of_5' => 'Schritt :n/5',

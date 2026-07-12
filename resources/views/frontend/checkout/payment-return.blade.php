@@ -32,9 +32,36 @@
                     <span class="bp-spec-mono">{{ ui_copy('checkout_order_word', 'checkout.order_word') }}</span>
                     <span class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</span>
                 </div>
+                <button type="button" onclick="window.location.reload()"
+                        class="mt-8 bp-btn-outline">
+                    {{ ui_copy('checkout_check_status_now', 'checkout.check_status_now') }}
+                </button>
+                <p class="sr-only" role="status" aria-live="polite">
+                    {{ ui_copy('checkout_verifying_payment_note', 'checkout.verifying_payment_note') }}
+                </p>
             </div>
         </div>
     </div>
 </div>
-<meta http-equiv="refresh" content="5">
+{{-- Background poll (no full-page reload) — checks whether the server-side
+     webhook has confirmed payment yet, and navigates ONLY once, when it has.
+     Was an unconditional `<meta http-equiv="refresh" content="5">` reloading
+     the whole page every 5s with no way to pause/extend it (WCAG 2.2.1). The
+     "Check status now" button above and this noscript fallback both cover
+     JS-disabled visitors. --}}
+<noscript><meta http-equiv="refresh" content="5"></noscript>
+<script nonce="{{ csp_nonce() }}">
+    (function () {
+        var poll = setInterval(function () {
+            fetch(window.location.href, { credentials: 'same-origin' })
+                .then(function (response) {
+                    if (response.redirected) {
+                        clearInterval(poll);
+                        window.location.href = response.url;
+                    }
+                })
+                .catch(function () { /* transient network error — try again next tick */ });
+        }, 5000);
+    })();
+</script>
 @endsection

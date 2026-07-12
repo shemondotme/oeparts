@@ -179,31 +179,36 @@
                         </a>
                     </div>
                 @else
-                    <div class="border border-ink bg-paper overflow-hidden">
+                    {{-- Genuinely tabular data — ARIA table roles layered onto the
+                         CSS grid/card markup so screen readers get real column/row
+                         structure without disturbing the existing responsive layout. --}}
+                    <div class="border border-ink bg-paper overflow-hidden" role="table" aria-label="{{ __('Parts · Ledger') }}">
                         {{-- Table header --}}
-                        <div class="hidden md:grid grid-cols-[5rem_1.2fr_1fr_8rem_6rem_7rem] items-center gap-4 px-5 py-3 bg-ink text-ivory">
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70">#</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70">{{ __('OEM number') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70">{{ __('Name') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70">{{ __('Condition') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right">{{ __('Price') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right">{{ __('Action') }}</span>
+                        <div class="hidden md:grid grid-cols-[5rem_1.2fr_1fr_8rem_6rem_7rem] items-center gap-4 px-5 py-3 bg-ink text-ivory" role="rowgroup">
+                            <div class="contents" role="row">
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">#</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('OEM number') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('Name') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('Condition') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('Price') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('Action') }}</span>
+                            </div>
                         </div>
 
-                        <ul class="divide-y divide-rule">
+                        <ul class="divide-y divide-rule" role="rowgroup">
                             @foreach($products as $product)
-                                <li class="group grid grid-cols-1 md:grid-cols-[5rem_1.2fr_1fr_8rem_6rem_7rem] items-center gap-2 md:gap-4 px-5 py-4 hover:bg-ivory-alt transition-colors">
+                                <li class="group grid grid-cols-1 md:grid-cols-[5rem_1.2fr_1fr_8rem_6rem_7rem] items-center gap-2 md:gap-4 px-5 py-4 hover:bg-ivory-alt transition-colors" role="row">
                                     {{-- # index --}}
-                                    <span class="font-mono text-[10px] font-bold text-ink-muted tabular-nums tracking-[0.18em] uppercase">
+                                    <span class="font-mono text-[10px] font-bold text-ink-muted tabular-nums tracking-[0.18em] uppercase" role="cell">
                                         #{{ str_pad(($products->currentPage() - 1) * $products->perPage() + $loop->iteration, 3, '0', STR_PAD_LEFT) }}
                                     </span>
                                     {{-- OEM --}}
-                                    <div class="min-w-0" x-data="clipboard()">
-                                        <p class="font-mono text-sm font-bold text-ink truncate cursor-pointer"
+                                    <div class="min-w-0" x-data="clipboard()" role="cell">
+                                        <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-sm font-bold text-ink truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                            @click="copy('{{ $product->oem_number }}')"
                                            title="Copy OEM number">
                                             {{ $product->oem_number }}
-                                        </p>
+                                        </button>
                                         <p class="md:hidden mt-0.5 text-xs text-ink-muted truncate">
                                             {{ trans_field($product->name) }}
                                         </p>
@@ -211,11 +216,11 @@
                                               class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                     </div>
                                     {{-- Name --}}
-                                    <p class="hidden md:block text-sm text-body truncate">
+                                    <p class="hidden md:block text-sm text-body truncate" role="cell">
                                         {{ trans_field($product->name) ?: '—' }}
                                     </p>
                                     {{-- Condition --}}
-                                    <div class="hidden md:flex items-center gap-2">
+                                    <div class="hidden md:flex items-center gap-2" role="cell">
                                         @if($product->condition)
                                             <x-ui.condition-badge :condition="$product->condition" />
                                         @else
@@ -225,7 +230,7 @@
                                         @endif
                                     </div>
                                     {{-- Price --}}
-                                    <div class="md:text-right">
+                                    <div class="md:text-right" role="cell">
                                         @if($product->price)
                                             <p class="font-mono text-sm font-bold text-ink tabular-nums">
                                                 {{ format_price($product->price) }}
@@ -237,7 +242,7 @@
                                         @endif
                                     </div>
                                     {{-- CTA --}}
-                                    <div class="md:text-right">
+                                    <div class="md:text-right" role="cell">
                                         <a href="{{ url('/'.$lang.'/parts/'.urlencode($product->oem_number)) }}"
                                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2
                                                   border border-ink bg-paper

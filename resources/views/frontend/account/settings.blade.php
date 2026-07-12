@@ -134,9 +134,10 @@
                     <div class="relative">
                         <input :type="curr ? 'text' : 'password'" id="current_password" name="current_password" required
                                class="bp-input w-full pr-11 font-mono">
-                        <button type="button" @click="curr = !curr" tabindex="-1"
+                        <button type="button" @click="curr = !curr"
+                                :aria-label="curr ? '{{ addslashes(ui_copy('account_hide_password', 'account.hide_password')) }}' : '{{ addslashes(ui_copy('account_show_password', 'account.show_password')) }}'"
                                 class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 border border-rule-strong bg-paper
-                                       flex items-center justify-center text-ink-muted hover:text-ink hover:border-ink transition-colors">
+                                       flex items-center justify-center text-ink-muted hover:text-ink hover:border-ink transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink">
                             <x-heroicon-s-eye x-show="!curr" class="w-3.5 h-3.5" />
                             <x-heroicon-s-eye-slash x-show="curr" x-cloak class="w-3.5 h-3.5" />
                         </button>
@@ -150,9 +151,10 @@
                     <div class="relative">
                         <input :type="np ? 'text' : 'password'" id="new_password" name="new_password" required minlength="8"
                                class="bp-input w-full pr-11 font-mono">
-                        <button type="button" @click="np = !np" tabindex="-1"
+                        <button type="button" @click="np = !np"
+                                :aria-label="np ? '{{ addslashes(ui_copy('account_hide_password', 'account.hide_password')) }}' : '{{ addslashes(ui_copy('account_show_password', 'account.show_password')) }}'"
                                 class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 border border-rule-strong bg-paper
-                                       flex items-center justify-center text-ink-muted hover:text-ink hover:border-ink transition-colors">
+                                       flex items-center justify-center text-ink-muted hover:text-ink hover:border-ink transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink">
                             <x-heroicon-s-eye x-show="!np" class="w-3.5 h-3.5" />
                             <x-heroicon-s-eye-slash x-show="np" x-cloak class="w-3.5 h-3.5" />
                         </button>
@@ -170,9 +172,10 @@
                         <input :type="npc ? 'text' : 'password'" id="new_password_confirmation"
                                name="new_password_confirmation" required minlength="8"
                                class="bp-input w-full pr-11 font-mono">
-                        <button type="button" @click="npc = !npc" tabindex="-1"
+                        <button type="button" @click="npc = !npc"
+                                :aria-label="npc ? '{{ addslashes(ui_copy('account_hide_password', 'account.hide_password')) }}' : '{{ addslashes(ui_copy('account_show_password', 'account.show_password')) }}'"
                                 class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 border border-rule-strong bg-paper
-                                       flex items-center justify-center text-ink-muted hover:text-ink hover:border-ink transition-colors">
+                                       flex items-center justify-center text-ink-muted hover:text-ink hover:border-ink transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink">
                             <x-heroicon-s-eye x-show="!npc" class="w-3.5 h-3.5" />
                             <x-heroicon-s-eye-slash x-show="npc" x-cloak class="w-3.5 h-3.5" />
                         </button>

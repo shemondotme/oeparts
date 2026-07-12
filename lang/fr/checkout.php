@@ -18,6 +18,8 @@ return [
     'step_payment' => 'Paiement',
     'session_expires_in' => 'La session expire dans',
     'session_expires_complete_before' => '— veuillez terminer :step avant la fin du délai.',
+    'session_expiring_soon_announcement' => 'Votre session de paiement expire dans 2 minutes.',
+    'check_status_now' => 'Vérifier le statut maintenant',
     'current_step_fallback' => "l'étape en cours",
     'dismiss' => 'Ignorer',
     'step_n_of_5' => 'Étape :n/5',
