@@ -296,6 +296,18 @@
                                             @endif
                                         </dd>
                                     </div>
+                                    @if(($summarySidebar['urgent_processing'] ?? false))
+                                    <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
+                                        <dt class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">
+                                            <x-heroicon-s-bolt class="w-3 h-3" />
+                                            {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+                                        </dt>
+                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dd class="font-mono text-sm font-bold tabular-nums text-ink">
+                                            {{ format_price($summarySidebar['urgent_processing_fee'] ?? 0) }}
+                                        </dd>
+                                    </div>
+                                    @endif
                                     <div class="flex items-baseline justify-between gap-3 py-2">
                                         <dt class="bp-spec-mono">
                                             {{ ui_copy('checkout_vat_short', 'checkout.vat_short') }} · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? 21) }}%

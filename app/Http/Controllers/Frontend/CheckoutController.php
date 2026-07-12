@@ -219,6 +219,9 @@ class CheckoutController extends Controller
         return $this->renderCheckoutStep('frontend.checkout.step3', $checkoutId, $checkout, $lang, [
             'selectedId' => $data['shipping_method_id'] ?? null,
             'shippingOptions' => $this->buildShippingOptions(),
+            'urgentProcessingEnabled' => (bool) settings('checkout.urgent_processing_enabled', false),
+            'urgentProcessingFee' => (string) settings('checkout.urgent_processing_fee', '0.00'),
+            'urgentProcessingSelected' => (bool) ($data['urgent_processing'] ?? false),
         ]);
     }
 
@@ -268,6 +271,9 @@ class CheckoutController extends Controller
 
         $this->checkoutService->update($checkoutId, [
             'shipping_method_id' => (int) $request->input('shipping_method_id'),
+            // Re-checked against the merchant toggle again at order creation —
+            // this is just what the customer opted into this session.
+            'urgent_processing' => settings('checkout.urgent_processing_enabled', false) && $request->boolean('urgent_processing'),
         ]);
 
         $this->checkoutService->advance($checkoutId);
@@ -420,15 +426,19 @@ class CheckoutController extends Controller
         $discountedSubtotal = bcsub($subtotal, $couponDiscount, 2);
         $vatRate = (string) ($summary['vat_rate'] ?? settings('tax.default_vat_rate', 21));
         $shipping = $shippingCost ?? '0.00';
+
+        $urgentProcessing = (bool) ($checkoutData['urgent_processing'] ?? false) && (bool) settings('checkout.urgent_processing_enabled', false);
+        $urgentFee = $urgentProcessing ? bcadd((string) settings('checkout.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
+
         $vatBase = $shippingCost !== null
-            ? bcadd($discountedSubtotal, $shipping, 2)
-            : $discountedSubtotal;
+            ? bcadd(bcadd($discountedSubtotal, $shipping, 2), $urgentFee, 2)
+            : bcadd($discountedSubtotal, $urgentFee, 2);
         $vatAmount = ($checkoutData['vat_exempt'] ?? false)
             ? '0.00'
             : bcmul($vatBase, bcdiv($vatRate, '100', 4), 2);
         $grandTotal = $shippingCost !== null
             ? bcadd($vatBase, $vatAmount, 2)
-            : bcadd($discountedSubtotal, $vatAmount, 2);
+            : bcadd(bcadd($discountedSubtotal, $urgentFee, 2), $vatAmount, 2);
 
         return [
             'subtotal' => $subtotal,
@@ -436,6 +446,8 @@ class CheckoutController extends Controller
             'vat_rate' => $vatRate,
             'vat_amount' => $vatAmount,
             'shipping_cost' => $shippingCost,
+            'urgent_processing' => $urgentProcessing,
+            'urgent_processing_fee' => $urgentFee,
             'grand_total' => $grandTotal,
         ];
     }

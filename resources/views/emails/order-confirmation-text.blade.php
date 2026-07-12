@@ -33,6 +33,9 @@
 {{ trans('emails.order_confirmation.discount', [], $locale) }}: -{{ number_format($order->discount_amount, 2) }} €
 @endif
 {{ trans('emails.order_confirmation.shipping', [], $locale) }}: {{ number_format($order->shipping_cost, 2) }} €
+@if($order->urgent_processing && bccomp((string) $order->urgent_processing_fee, '0', 2) > 0)
+{{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}: {{ number_format((float) $order->urgent_processing_fee, 2) }} €
+@endif
 {{ trans('emails.order_confirmation.vat', [], $locale) }}: {{ number_format($order->vat_amount, 2) }} €
 {{ trans('emails.order_confirmation.grand_total', [], $locale) }}: {{ number_format($order->grand_total, 2) }} €
 

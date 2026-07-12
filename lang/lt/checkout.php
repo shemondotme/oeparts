@@ -87,6 +87,7 @@ return [
     'fast_eu_delivery' => 'Greitas pristatymas ES',
     'no_shipping_methods' => 'Nėra galimų pristatymo būdų. Susisiekite su pagalbos komanda.',
     'shipping_note_heading' => 'Pastaba apie pristatymą',
+    'urgent_processing_eyebrow' => 'Papildoma paslauga',
 
     // Step 4 — review
     'review_order_heading' => 'Peržiūrėti užsakymą',

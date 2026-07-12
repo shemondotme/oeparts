@@ -361,8 +361,11 @@ class SettingsSeeder extends Seeder
             ['group' => 'checkout', 'key' => 'allowed_payment_methods', 'value' => json_encode(['card', 'bank_transfer']), 'type' => $j],
             ['group' => 'checkout', 'key' => 'proof_max_size_kb',      'value' => '5120', 'type' => $i],
             ['group' => 'checkout', 'key' => 'guest_password_length',  'value' => '12',   'type' => $i],
+            ['group' => 'checkout', 'key' => 'urgent_processing_enabled',    'value' => '0',    'type' => $b],
+            ['group' => 'checkout', 'key' => 'urgent_processing_fee',        'value' => '9.99', 'type' => $s],
+            ['group' => 'checkout', 'key' => 'urgent_processing_label',       'value' => $ml('Rush processing'), 'type' => $j],
+            ['group' => 'checkout', 'key' => 'urgent_processing_description', 'value' => $ml('Priority same-day dispatch for orders placed before 2pm on a business day.'), 'type' => $j],
             ['group' => 'contact', 'key' => 'success_message', 'value' => 'Your message has been sent successfully. We will get back to you soon.', 'type' => $s],
-            ['group' => 'orders', 'key' => 'expected_delivery_days', 'value' => '5', 'type' => $i],
 
             // ── DASHBOARD (widget thresholds — defaults mirrored in code) ─────────
             ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],

@@ -2,9 +2,11 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 
 class CheckoutSettings extends SettingsPage
 {
@@ -53,6 +55,48 @@ class CheckoutSettings extends SettingsPage
                             ->helperText('Enter: card, bank_transfer')
                             ->default(['card', 'bank_transfer']),
                     ])->columns(2),
+
+                Section::make('Rush Processing Upsell')
+                    ->description('Customer-facing paid fast-track option offered at checkout, alongside shipping method selection.')
+                    ->schema([
+                        Forms\Components\Toggle::make('urgent_processing_enabled')
+                            ->label('Offer Rush Processing at Checkout')
+                            ->helperText('When on, customers can pay an extra fee to have their order flagged Urgent (same-day dispatch priority) — the same flag operators already set manually from the order view.')
+                            ->live()
+                            ->default(false),
+
+                        Forms\Components\TextInput::make('urgent_processing_fee')
+                            ->label('Rush Processing Fee')
+                            ->numeric()
+                            ->prefix('€')
+                            ->minValue(0)
+                            ->step(0.01)
+                            ->required()
+                            ->visible(fn (Get $get) => $get('urgent_processing_enabled'))
+                            ->default(9.99),
+
+                    ])->columns(2),
+
+                Section::make('Rush Processing — Customer-Facing Copy')
+                    ->description('Shown at checkout in the customer\'s own language. Leave a locale blank to fall back to English.')
+                    ->visible(fn (Get $get) => $get('urgent_processing_enabled'))
+                    ->schema([
+                        AdminUi::translatableTabs('Rush Processing Copy', [
+                            'urgent_processing_label' => [
+                                'label' => 'Checkout Option Label',
+                                'required' => true,
+                                'maxLength' => 100,
+                                'placeholder' => 'Rush processing',
+                            ],
+                            'urgent_processing_description' => [
+                                'label' => 'Checkout Option Description',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'maxLength' => 300,
+                                'placeholder' => 'Priority same-day dispatch for orders placed before 2pm on a business day.',
+                            ],
+                        ]),
+                    ]),
 
                 Section::make('Customer Messages')
                     ->description('Customize checkout feedback messages.')

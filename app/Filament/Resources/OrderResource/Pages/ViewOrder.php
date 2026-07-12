@@ -393,6 +393,13 @@ class ViewOrder extends ViewRecord
                                         ->money('EUR')
                                         ->size('sm')
                                         ->extraAttributes(['class' => 'op-fin-line']),
+                                    TextEntry::make('urgent_processing_fee')
+                                        ->label('Rush Processing')
+                                        ->money('EUR')
+                                        ->size('sm')
+                                        ->color('warning')
+                                        ->visible(fn ($record): bool => $record->urgent_processing && bccomp((string) $record->urgent_processing_fee, '0.00', 2) === 1)
+                                        ->extraAttributes(['class' => 'op-fin-line']),
                                     TextEntry::make('vat_amount')
                                         ->label('VAT')
                                         ->money('EUR')
