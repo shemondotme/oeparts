@@ -99,7 +99,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+            font-family: "Geist Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
             transition: opacity .45s ease, visibility .45s ease;
         }
         #bp-preloader.is-hidden {
@@ -377,13 +377,20 @@
                 }, delay);
             }
 
-            if (document.readyState === 'complete') {
+            // Ready on DOM-parsed (not window `load`): `load` waits for every
+            // image/iframe/third-party script to finish, which ties reveal
+            // time to subresources that have nothing to do with the page
+            // being visually/functionally ready — a real Core Web Vitals
+            // regression the moment this preloader is enabled. DOMContentLoaded
+            // fires once the DOM + deferred scripts are parsed, which is the
+            // actual "ready to show" signal for a server-rendered Blade page.
+            if (document.readyState !== 'loading') {
                 markReady();
             } else {
-                window.addEventListener('load', markReady, { once: true });
+                document.addEventListener('DOMContentLoaded', markReady, { once: true });
             }
 
-            // Hard safety — if `load` never fires (slow asset, error), finish anyway.
+            // Hard safety — if DOMContentLoaded never fires (slow asset, error), finish anyway.
             setTimeout(function () {
                 markReady();
                 if (!finished) {
