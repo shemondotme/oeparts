@@ -119,6 +119,11 @@ return [
         'greeting' => 'Sie sind nur einen Schritt davon entfernt, dem Oe Parts Journal beizutreten.',
         'body'     => 'Wir senden technische Updates, Neuankunftsbenachrichtigungen und Brancheneinblicke. Kein Spam. Nur echte Teile-Intelligenz.',
     ],
+
+    'newsletter_campaign' => [
+        'unsubscribe' => 'Newsletter abbestellen',
+    ],
+
     'contact_reply' => [
         'subject'          => 'Wir haben auf Ihre Anfrage geantwortet',
         'title'            => 'Antwort auf Ihre Anfrage',

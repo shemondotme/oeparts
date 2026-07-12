@@ -4,4 +4,4 @@ Hello!
 
 ---
 You are receiving this because you subscribed to our newsletter.
-To unsubscribe, please visit: {{ url('/unsubscribe?email=' . urlencode($recipient->email)) }}
+To unsubscribe, please visit: {{ $unsubscribeUrl }}

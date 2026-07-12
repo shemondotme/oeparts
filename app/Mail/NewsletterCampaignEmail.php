@@ -33,12 +33,20 @@ class NewsletterCampaignEmail extends Mailable
 
     public function content(): Content
     {
+        $locale = $this->recipient->subscriber?->lang ?: 'en';
+        $unsubscribeUrl = route('frontend.newsletter.unsubscribe', [
+            'lang' => $locale,
+            'token' => $this->recipient->subscriber?->unsubscribe_token,
+        ]);
+
         return new Content(
-            htmlString: $this->campaign->html_content,
+            view: 'emails.newsletter-campaign',
             text: 'emails.newsletter-campaign-text',
             with: [
                 'campaign'   => $this->campaign,
                 'recipient'  => $this->recipient,
+                'locale'     => $locale,
+                'unsubscribeUrl' => $unsubscribeUrl,
             ],
         );
     }

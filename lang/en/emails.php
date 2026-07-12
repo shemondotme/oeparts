@@ -153,6 +153,11 @@ return [
         'body'     => 'We send technical updates, new arrival alerts, and industry insights. No spam, no fluff. Just genuine parts intelligence.',
     ],
 
+    // ─── Newsletter Campaign — compliance footer (appended server-side) ──
+    'newsletter_campaign' => [
+        'unsubscribe' => 'Unsubscribe from this newsletter',
+    ],
+
     // ─── Contact Reply ───────────────────────────────────────────────────
     'contact_reply' => [
         'subject'          => 'We replied to your inquiry',

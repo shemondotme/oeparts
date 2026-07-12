@@ -124,6 +124,9 @@
                 @if($billingAddress->company)
                     <div>{{ $billingAddress->company }}</div>
                 @endif
+                @if($order->is_b2b && $order->vat_number)
+                    <div>VAT: {{ $order->vat_number }}</div>
+                @endif
                 <div>{{ $billingAddress->address_line_1 }}</div>
                 @if($billingAddress->address_line_2)
                     <div>{{ $billingAddress->address_line_2 }}</div>
@@ -187,6 +190,12 @@
         </table>
     </div>
 
+    @php
+        $vatTaxableBase = bcadd((string) $order->subtotal, (string) $order->shipping_cost, 2);
+        $vatRatePercent = bccomp($vatTaxableBase, '0', 2) > 0
+            ? bcmul(bcdiv((string) $order->vat_amount, $vatTaxableBase, 4), '100', 2)
+            : '0.00';
+    @endphp
     <div class="totals">
         <div class="totals-row">
             <span>Subtotal:</span>
@@ -204,9 +213,14 @@
             <span>-{{ format_price($order->discount_amount) }}</span>
         </div>
         @endif
-        @if(isset($order->vat_amount) && bccomp((string) $order->vat_amount, '0', 2) > 0)
+        @if($order->vat_exempt)
         <div class="totals-row">
-            <span>Tax (VAT):</span>
+            <span>VAT:</span>
+            <span>{{ format_price('0.00') }}</span>
+        </div>
+        @elseif(isset($order->vat_amount) && bccomp((string) $order->vat_amount, '0', 2) > 0)
+        <div class="totals-row">
+            <span>VAT ({{ rtrim(rtrim($vatRatePercent, '0'), '.') }}%):</span>
             <span>{{ format_price($order->vat_amount) }}</span>
         </div>
         @endif
@@ -215,6 +229,15 @@
             <span>{{ format_price($order->grand_total) }}</span>
         </div>
     </div>
+
+    @if($order->vat_exempt)
+    <div class="section" style="margin-top: 20px; padding: 12px 15px; border: 1px solid #cbd5e1; background-color: #f8fafc;">
+        <strong>Reverse charge</strong> — VAT to be accounted for by the recipient under Article 194/196 of Council Directive 2006/112/EC.
+        @if($order->vat_number)
+            Buyer VAT ID: {{ $order->vat_number }}.
+        @endif
+    </div>
+    @endif
 
     <div class="footer">
         <div>{{ settings('invoice.thank_you_text', 'Thank you for your business!') }}</div>
