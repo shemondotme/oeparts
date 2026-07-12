@@ -36,19 +36,6 @@ class SEOSettings extends SettingsPage
                             ->helperText('Ideal: 150-160 characters')
                             ->default(null),
 
-                        Forms\Components\TextInput::make('oem_title_template')
-                            ->label('OEM Parts Page Title Template')
-                            ->maxLength(100)
-                            ->helperText('Available placeholders: {oem}, {min}, {manufacturer}')
-                            ->default('Buy {oem} — From €{min} | OeParts'),
-
-                        Forms\Components\Textarea::make('oem_description_template')
-                            ->label('OEM Parts Page Description Template')
-                            ->rows(2)
-                            ->maxLength(200)
-                            ->helperText('Available placeholders: {oem}, {manufacturer}')
-                            ->default('Genuine {oem} parts from {manufacturer}.'),
-
                         Forms\Components\TextInput::make('brand_title_template')
                             ->label('Brand/Manufacturer Page Title Template')
                             ->maxLength(100)
@@ -68,11 +55,6 @@ class SEOSettings extends SettingsPage
                                 'noindex,nofollow' => 'No Index, No Follow',
                             ])
                             ->default('index,follow'),
-
-                        Forms\Components\Toggle::make('maintenance_noindex')
-                            ->label('Enforce Noindex During Maintenance')
-                            ->helperText('Appends noindex tag when site is set offline')
-                            ->default(true),
 
                         Forms\Components\Toggle::make('google_ping_enabled')
                             ->label('Ping Google on Sitemap Updates')
@@ -95,13 +77,8 @@ class SEOSettings extends SettingsPage
                     ])->columns(2),
 
                 Section::make('Open Graph Defaults')
-                    ->description('Default meta shares rendered across social feeds (Facebook, LinkedIn, Discord).')
+                    ->description('Default meta shares rendered across social feeds (Facebook, LinkedIn, Discord). Site name is taken automatically from General Settings.')
                     ->schema([
-                        Forms\Components\TextInput::make('og_site_name')
-                            ->label('OG Site Name Attribute')
-                            ->maxLength(255)
-                            ->default('OeParts'),
-
                         Forms\Components\FileUpload::make('default_og_image')
                             ->label('Default OG Fallback Image')
                             ->image()
@@ -113,20 +90,20 @@ class SEOSettings extends SettingsPage
                     ])->columns(2),
 
                 Section::make('Search Results Templates')
-                    ->description('Customise the title and meta description shown on internal search result pages.')
+                    ->description('Customise the title and meta description shown on internal search result pages — including individual OEM part pages (/parts/{oem}), which are rendered by the search results page.')
                     ->schema([
                         Forms\Components\TextInput::make('search_results_title_template')
                             ->label('Search Results Title Template')
                             ->maxLength(100)
-                            ->helperText('Placeholders: {query}, {count}, {site}. e.g. "{query} — {count} results | {site}"')
-                            ->default('{query} — {count} results | OeParts'),
+                            ->helperText('Placeholders: {oem}, {count}, {site}, {min}, {max}. e.g. "Buy OEM Part {oem} — From €{min} | {site}"')
+                            ->default('Buy OEM Part {oem} — From €{min} | OeParts'),
 
                         Forms\Components\Textarea::make('search_results_meta_template')
                             ->label('Search Results Meta Description Template')
                             ->rows(2)
                             ->maxLength(200)
-                            ->helperText('Placeholders: {query}, {count}, {site}. e.g. "Showing {count} OEM results for {query} on {site}."')
-                            ->default('Showing {count} OEM auto part results for "{query}" on OeParts.'),
+                            ->helperText('Placeholders: {oem}, {count}, {site}, {min}, {max}. e.g. "Genuine OEM part {oem}, from €{min}, on {site}."')
+                            ->default('Genuine OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured delivery in 1–5 days to all 27 EU countries. VAT invoice included.'),
                     ])->columns(2),
 
                 Section::make('Webmaster Verification Codes')

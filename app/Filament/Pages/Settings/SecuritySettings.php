@@ -49,40 +49,18 @@ class SecuritySettings extends SettingsPage
                             ->default(10),
                     ])->columns(2),
 
-                Section::make('IP Restrictions')
-                    ->description('Control automated attacks by banning specific IPs or network ranges.')
+                Section::make('IP Restrictions & Core Protections')
+                    ->description('Automated-attack IP/CIDR banning is managed as data, not a setting. Honeypot spam protection, CSRF token verification, and production HTTPS enforcement are always active — core application behavior, not optional.')
                     ->schema([
-                        Forms\Components\Toggle::make('ip_blocklist_enabled')
-                            ->label('Enable IP Blocklist Restrictions')
-                            ->helperText('When active, matching client requests are instantly returned a 403 Forbidden')
-                            ->default(true),
-
-                        Forms\Components\Textarea::make('blocked_ips')
-                            ->label('Banned IP Whitelist/Blocklist')
-                            ->helperText('Enter one IP per line. Supports raw IP format and CIDR subnets (e.g. 192.168.1.0/24)')
-                            ->rows(4)
-                            ->columnSpanFull(),
+                        Forms\Components\Placeholder::make('ip_blocklist_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Banned IPs and CIDR ranges are managed on the <a href="'
+                                . \App\Filament\Resources\IpBlocklistResource::getUrl()
+                                . '" class="fi-link text-primary-600">IP Blocklist</a> page — each entry is checked on every request with no restart or cache-clear needed.'
+                            )),
                     ]),
-
-                Section::make('Global Security Flags')
-                    ->description('Toggle web security, HTTPS force flags, and MFA enforcement.')
-                    ->schema([
-                        Forms\Components\Toggle::make('honeypot_enabled')
-                            ->label('Enable Honeypot Spam Protection')
-                            ->helperText('Adds hidden inputs to trap automated bots filling forms')
-                            ->default(true),
-
-                        Forms\Components\Toggle::make('csrf_enabled')
-                            ->label('Enable CSRF Token Protection')
-                            ->helperText('Enforce cross-site forgery token matches on all POST forms')
-                            ->default(true),
-
-                        Forms\Components\Toggle::make('force_https')
-                            ->label('Force HTTPS SSL Encryption')
-                            ->helperText('Redirects all HTTP links to encrypted HTTPS automatically')
-                            ->default(false),
-
-                    ])->columns(2),
 
                 Section::make('Session')
                     ->description('Control admin panel session expiry for security compliance.')

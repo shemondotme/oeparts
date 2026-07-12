@@ -39,6 +39,11 @@ class SettingsSyncServiceProvider extends ServiceProvider
                         'mail.from.name' => $emailSettings->get('from_name')?->value ?? config('mail.from.name'),
                     ]);
                 }
+
+                $replyTo = $emailSettings->get('reply_to')?->value;
+                if ($replyTo) {
+                    config(['mail.reply_to.address' => $replyTo]);
+                }
             }
 
             $securitySettings = Setting::where('group', 'security')->get()->keyBy('key');

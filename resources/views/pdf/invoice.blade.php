@@ -105,6 +105,9 @@
             <h1>{{ $settings['company_name'] }}</h1>
             <div>{{ $settings['company_address'] }}</div>
             <div>VAT: {{ $settings['company_vat'] }}</div>
+            @if(!empty($settings['company_registration']))
+                <div>Reg. No: {{ $settings['company_registration'] }}</div>
+            @endif
             <div>Email: {{ $settings['company_email'] }}</div>
             <div>Phone: {{ $settings['company_phone'] }}</div>
         </div>

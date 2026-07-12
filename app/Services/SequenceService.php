@@ -82,7 +82,8 @@ class SequenceService
     private function format(SequenceType $type, int $value, bool $hasMonth): string
     {
         $prefix  = $this->prefix($type);
-        $padded  = str_pad((string) $value, 6, '0', STR_PAD_LEFT);
+        $padding = (int) settings('orders.order_number_padding', 6);
+        $padded  = str_pad((string) $value, $padding, '0', STR_PAD_LEFT);
 
         if ($hasMonth) {
             $month = now()->format('Ym');

@@ -43,12 +43,11 @@ class SettingsSeeder extends Seeder
             ['group' => 'general', 'key' => 'site_url',        'value' => 'http://localhost',         'type' => $s],
             ['group' => 'general', 'key' => 'site_email',      'value' => 'info@oeparts.lt',           'type' => $s],
             ['group' => 'general', 'key' => 'site_phone',      'value' => '+370 600 00000',           'type' => $s],
-            ['group' => 'general', 'key' => 'site_address',    'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'logo_id',         'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'favicon_id',      'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'header_scripts',  'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'footer_scripts',  'value' => '',                         'type' => $s],
-            ['group' => 'general', 'key' => 'tagline',         'value' => 'Genuine OEM Auto Parts',  'type' => $s],
+            ['group' => 'general', 'key' => 'site_tagline',    'value' => 'The central hub for genuine OEM auto parts in Europe.', 'type' => $s],
             ['group' => 'general', 'key' => 'default_locale',  'value' => 'en',                      'type' => $s],
             ['group' => 'general', 'key' => 'timezone',        'value' => 'Europe/Vilnius',           'type' => $s],
             ['group' => 'general', 'key' => 'date_format',     'value' => 'd/m/Y',                   'type' => $s],
@@ -127,8 +126,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'payment', 'key' => 'airwallex_api_key',     'value' => '',        'type' => $e, 'encrypted' => true],
             ['group' => 'payment', 'key' => 'airwallex_client_id',   'value' => '',        'type' => $e, 'encrypted' => true],
             ['group' => 'payment', 'key' => 'airwallex_webhook_secret', 'value' => '',     'type' => $e, 'encrypted' => true],
-            ['group' => 'payment', 'key' => 'card_enabled',          'value' => '1',       'type' => $b],
-            ['group' => 'payment', 'key' => 'bank_transfer_enabled', 'value' => '1',       'type' => $b],
 
             // ── AUTH ─────────────────────────────────────────────────────────────
             ['group' => 'auth', 'key' => 'otp_length',                'value' => '6',   'type' => $i],
@@ -189,10 +186,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'security', 'key' => 'login_max_attempts',    'value' => '5',  'type' => $i],
             ['group' => 'security', 'key' => 'login_window_minutes',  'value' => '15', 'type' => $i],
             ['group' => 'security', 'key' => 'inquiry_max_per_email', 'value' => '10', 'type' => $i],
-            ['group' => 'security', 'key' => 'ip_blocklist_enabled',  'value' => '1',  'type' => $b],
-            ['group' => 'security', 'key' => 'honeypot_enabled',      'value' => '1',  'type' => $b],
-            ['group' => 'security', 'key' => 'csrf_enabled',          'value' => '1',  'type' => $b],
-            ['group' => 'security', 'key' => 'force_https',           'value' => '0',  'type' => $b],
             ['group' => 'security', 'key' => 'session_lifetime',      'value' => '120', 'type' => $i],
 
             // ── INTEGRATIONS ─────────────────────────────────────────────────────
@@ -221,22 +214,13 @@ class SettingsSeeder extends Seeder
                 'value' => 'Search 500,000+ genuine OEM auto parts by part number. Compare verified prices from EU sellers. Fast delivery to all 27 EU countries. B2B invoicing available.',
                 'type' => $s],
 
-            // OEM part page title: keyword intent "buy {oem}" + price anchor + brand
-            ['group' => 'seo', 'key' => 'oem_title_template',
-                'value' => 'Buy OEM Part {oem} — From €{min} | Genuine {manufacturer} | OeParts',
-                'type' => $s],
-
-            // OEM part page description: specific, answers search intent, ≤155 chars
-            ['group' => 'seo', 'key' => 'oem_description_template',
-                'value' => 'Genuine {manufacturer} OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured delivery in 1–5 days to all 27 EU countries. VAT invoice included.',
-                'type' => $s],
-
-            // OEM search results list (/{lang}/parts/{oem}) — empty = use lang files
+            // OEM search results list (/{lang}/parts/{oem}) — keyword intent "buy {oem}"
+            // + price anchor + brand; ≤60/155 chars. This page IS the OEM part page.
             ['group' => 'seo', 'key' => 'search_results_title_template',
-                'value' => '',
+                'value' => 'Buy OEM Part {oem} — From €{min} | OeParts',
                 'type' => $s],
             ['group' => 'seo', 'key' => 'search_results_meta_template',
-                'value' => '',
+                'value' => 'Genuine OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured delivery in 1–5 days to all 27 EU countries. VAT invoice included.',
                 'type' => $s],
 
             // Brand page title: brand + OEM keyword + platform
@@ -247,7 +231,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'seo', 'key' => 'sitemap_search_log_days',  'value' => '90',           'type' => $i],
             ['group' => 'seo', 'key' => 'google_ping_enabled',      'value' => '1',            'type' => $b],
             ['group' => 'seo', 'key' => 'default_robots',           'value' => 'index,follow', 'type' => $s],
-            ['group' => 'seo', 'key' => 'maintenance_noindex',      'value' => '1',            'type' => $b],
             ['group' => 'seo', 'key' => 'default_og_image',         'value' => '',             'type' => $s],
             ['group' => 'seo', 'key' => 'twitter_handle',           'value' => '',             'type' => $s],
 
@@ -361,10 +344,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'social_links', 'key' => 'footer_icon_style', 'value' => 'outline', 'type' => $s],
 
             // ── Missing individual keys in existing groups ────────────────────────
-            ['group' => 'search', 'key' => 'max_results',       'value' => '20', 'type' => $i],
             ['group' => 'search', 'key' => 'log_failed',        'value' => '1',  'type' => $b],
-            ['group' => 'security', 'key' => 'blocked_ips',     'value' => '',   'type' => $s],
-            ['group' => 'seo', 'key' => 'og_site_name',         'value' => 'OeParts', 'type' => $s],
             ['group' => 'seo', 'key' => 'google_verification',  'value' => '',   'type' => $s],
             ['group' => 'seo', 'key' => 'bing_verification',    'value' => '',   'type' => $s],
 
@@ -385,7 +365,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'orders', 'key' => 'expected_delivery_days', 'value' => '5', 'type' => $i],
 
             // ── DASHBOARD (widget thresholds — defaults mirrored in code) ─────────
-            ['group' => 'dashboard', 'key' => 'pending_orders_warning',   'value' => '50', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],
             ['group' => 'dashboard', 'key' => 'orders_threshold',         'value' => '50', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'pending_delayed_minutes',  'value' => '120', 'type' => $i],

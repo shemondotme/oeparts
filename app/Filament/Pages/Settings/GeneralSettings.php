@@ -68,23 +68,24 @@ class GeneralSettings extends SettingsPage
                             ->placeholder('+370 600 00000')
                             ->default(null),
 
-                        Forms\Components\Textarea::make('site_address')
-                            ->label('Registered Address')
-                            ->helperText('Canonical registered address. Contact Settings page has a separate address for business/support locations.')
-                            ->rows(3)
-                            ->maxLength(1000)
-                            ->placeholder("e.g. Ulonų g. 5, Vilnius, Lithuania")
+                        Forms\Components\Placeholder::make('registered_address_note')
+                            ->label('')
                             ->columnSpanFull()
-                            ->default(null),
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Your registered company address (printed on invoices) is set on the <a href="'
+                                . CompanySettings::getUrl()
+                                . '" class="fi-link text-primary-600">Company Settings</a> page.'
+                            )),
                     ])->columns(2),
 
                 Section::make('Localization & Branding Defaults')
                     ->description('Set default currencies, languages, timezones, and display formatting rules.')
                     ->schema([
-                        Forms\Components\TextInput::make('tagline')
+                        Forms\Components\TextInput::make('site_tagline')
                             ->label('Store Tagline')
+                            ->helperText('Shown in the storefront footer.')
                             ->maxLength(255)
-                            ->default('Genuine OEM Auto Parts'),
+                            ->default('The central hub for genuine OEM auto parts in Europe.'),
 
                         Forms\Components\Select::make('default_locale')
                             ->label('Default Frontend Language')

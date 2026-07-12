@@ -45,6 +45,17 @@
     <meta name="twitter:title" content="@yield('og_title', settings('general.site_name', 'OeParts'))">
     <meta name="twitter:description" content="@yield('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.')">
     <meta name="twitter:image" content="{{ settings('seo.og_image', url('/og-default.png')) }}">
+    @if(settings('seo.twitter_handle', ''))
+        <meta name="twitter:site" content="{{ settings('seo.twitter_handle') }}">
+    @endif
+
+    {{-- Webmaster verification --}}
+    @if(settings('seo.google_verification', ''))
+        <meta name="google-site-verification" content="{{ settings('seo.google_verification') }}">
+    @endif
+    @if(settings('seo.bing_verification', ''))
+        <meta name="msvalidate.01" content="{{ settings('seo.bing_verification') }}">
+    @endif
 
     {{-- hreflang links (server-side, all 5 locales + x-default) --}}
     @yield('hreflang')
