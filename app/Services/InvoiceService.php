@@ -42,6 +42,7 @@ class InvoiceService
                     'company_name' => settings('company.name', 'OeParts'),
                     'company_address' => settings('company.address', ''),
                     'company_vat' => settings('company.vat_number', ''),
+                    'company_registration' => settings('company.registration_number', ''),
                     'company_email' => settings('company.email', 'info@oeparts.lt'),
                     'company_phone' => settings('company.phone', ''),
                 ],

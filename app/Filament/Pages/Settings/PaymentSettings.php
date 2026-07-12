@@ -149,18 +149,17 @@ class PaymentSettings extends SettingsPage
                     ])->columns(2),
 
                 Section::make('Storefront Payment Methods')
-                    ->description('Directly control active payment methods shown to storefront checkout flows.')
+                    ->description('Which payment methods appear at checkout is controlled on the Checkout Settings page.')
                     ->schema([
-                        Forms\Components\Toggle::make('card_enabled')
-                            ->label('Accept Online Card Payments')
-                            ->helperText('Enables Airwallex payment forms at checkout')
-                            ->default(true),
-
-                        Forms\Components\Toggle::make('bank_transfer_enabled')
-                            ->label('Accept Offline Bank Wire Transfers')
-                            ->helperText('Enables invoices with manual bank wire details at checkout')
-                            ->default(true),
-                    ])->columns(2),
+                        Forms\Components\Placeholder::make('payment_methods_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Enable or disable card / bank-transfer checkout on the <a href="'
+                                . CheckoutSettings::getUrl()
+                                . '" class="fi-link text-primary-600">Checkout Settings</a> page → Allowed Payment Methods.'
+                            )),
+                    ]),
             ]);
     }
 }

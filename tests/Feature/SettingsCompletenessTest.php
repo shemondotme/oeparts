@@ -39,7 +39,6 @@ class SettingsCompletenessTest extends TestCase
             'checkout.proof_max_size_kb'      => ['checkout.proof_max_size_kb', 5120],
             'checkout.guest_password_length'  => ['checkout.guest_password_length', 12],
             'contact.success_message'     => ['contact.success_message', 'Your message has been sent successfully. We will get back to you soon.'],
-            'orders.expected_delivery_days' => ['orders.expected_delivery_days', 5],
             'dashboard.orders_threshold'        => ['dashboard.orders_threshold', 50],
             'dashboard.pending_delayed_minutes' => ['dashboard.pending_delayed_minutes', 120],
         ];
@@ -81,12 +80,6 @@ class SettingsCompletenessTest extends TestCase
         $response = $this->getJson('/api/search/autocomplete?q=ABC&lang=de');
 
         $response->assertStatus(200);
-    }
-
-    #[Test]
-    public function orders_expected_delivery_days_replaces_the_wrong_group_name(): void
-    {
-        $this->assertNotSame('SENTINEL', settings('orders.expected_delivery_days', 'SENTINEL'));
     }
 
     #[Test]

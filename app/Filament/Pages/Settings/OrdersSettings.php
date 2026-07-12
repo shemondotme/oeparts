@@ -74,14 +74,10 @@ class OrdersSettings extends SettingsPage
                         // checkout never offered. The admin-side urgent flag on
                         // orders is unaffected. Checkout upsell = Phase 3 backlog.
 
-                        Forms\Components\TextInput::make('expected_delivery_days')
-                            ->label('Expected Supplier Delivery (Days)')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(90)
-                            ->required()
-                            ->helperText('Baseline days used to score supplier on-time delivery performance')
-                            ->default(5),
+                        // expected_delivery_days removed: its sole consumer,
+                        // SupplierPerformanceScorecardWidget, was itself removed
+                        // in the Cross-admin closeout chunk for fabricating
+                        // updated_at-derived metrics — the setting outlived it.
                     ])->columns(2),
 
                 Section::make('Documents & Numbering Prefixes')

@@ -155,7 +155,7 @@ class SettingsFactoryDefaultsTest extends TestCase
 
         $this->assertArrayNotHasKey('pending_orders_attention', $defaults);
         $this->assertArrayNotHasKey('backup_stale_hours', $defaults);
-        $this->assertArrayHasKey('pending_orders_warning', $defaults);
+        $this->assertArrayNotHasKey('pending_orders_warning', $defaults);
         $this->assertArrayHasKey('orders_threshold', $defaults);
         $this->assertArrayHasKey('pending_delayed_minutes', $defaults);
         $this->assertArrayHasKey('cart_abandoned_hours', $defaults);
