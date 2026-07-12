@@ -15,6 +15,17 @@
     $defaultOgImageUrl = $defaultOgImagePath
         ? \Illuminate\Support\Facades\Storage::disk('public')->url($defaultOgImagePath)
         : null;
+
+    $faviconPath = settings('general.favicon_id', '');
+    $faviconUrl = $faviconPath
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($faviconPath)
+        : null;
+    $faviconMime = match (strtolower(pathinfo($faviconPath, PATHINFO_EXTENSION))) {
+        'svg' => 'image/svg+xml',
+        'ico' => 'image/x-icon',
+        'jpg', 'jpeg' => 'image/jpeg',
+        default => 'image/png',
+    };
 @endphp
 
     {{-- Title --}}
@@ -70,10 +81,15 @@
     {{-- JSON-LD structured data --}}
     @yield('json_ld')
 
-    {{-- Favicon · Industrial Blueprint mark --}}
+    {{-- Favicon · operator-uploaded override, falling back to the coded Industrial Blueprint mark --}}
+    @if($faviconUrl)
+    <link rel="icon" type="{{ $faviconMime }}" href="{{ $faviconUrl }}">
+    <link rel="apple-touch-icon" href="{{ $faviconUrl }}">
+    @else
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/apple-touch-icon.svg">
+    @endif
     <link rel="mask-icon" href="/favicon.svg" color="#0B1A29">
     <link rel="manifest" href="/site.webmanifest">
     <meta name="theme-color" content="#0B1A29">
@@ -130,6 +146,24 @@
     <noscript><img height="1" width="1" style="display:none" alt=""
         src="https://www.facebook.com/tr?id={{ urlencode(settings('integrations.fb_pixel_id')) }}&ev=PageView&noscript=1"
     /></noscript>
+    @endif
+
+    {{-- Crisp Chat — grounded in Crisp's own published embed snippet;
+         CSP origins added in ContentSecurityPolicy middleware are grounded
+         in Crisp's documented domains but NOT live-verified (no browser
+         tool available this session) — validate in a real browser before
+         relying on this in production, same caveat as the Airwallex CSP. --}}
+    @if(settings('integrations.crisp_website_id', ''))
+    <script nonce="{{ csp_nonce() }}">
+        window.$crisp = [];
+        window.CRISP_WEBSITE_ID = {{ \Illuminate\Support\Js::from(settings('integrations.crisp_website_id')) }};
+        (function(){
+            var d = document, s = d.createElement('script');
+            s.src = 'https://client.crisp.chat/l.js';
+            s.async = 1;
+            d.getElementsByTagName('head')[0].appendChild(s);
+        })();
+    </script>
     @endif
 
     {{-- Header scripts (custom) from settings --}}

@@ -53,13 +53,25 @@ class ContentSecurityPolicy
             .'https://www.googletagmanager.com https://www.facebook.com';
         $analyticsFrame   = 'https://www.googletagmanager.com';
 
+        // Crisp Chat (integrations.crisp_website_id) — the widget loads its own
+        // script bundle, opens a real-time WebSocket relay, and self-hosts its
+        // fonts; it does NOT use an iframe (injected as regular DOM). Origins
+        // are grounded in Crisp's own published embed/CSP documentation but
+        // NOT live-verified in this session (no browser tool available) —
+        // this is the exact reason the master workflow deferred this
+        // integration; validate in a real browser before go-live, same
+        // caveat already carried for the Airwallex CSP block above.
+        $crispScript  = 'https://client.crisp.chat';
+        $crispConnect = 'https://client.crisp.chat wss://client.relay.crisp.chat';
+        $crispFont    = 'https://client.crisp.chat';
+
         $csp = implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com {$airwallexScript} {$analyticsScript}",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com {$airwallexScript} {$analyticsScript} {$crispScript}",
             "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
             "img-src 'self' data: https: blob:",
-            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
-            "connect-src 'self' https://api.qrserver.com {$airwallexConnect} {$analyticsConnect}",
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net {$crispFont}",
+            "connect-src 'self' https://api.qrserver.com {$airwallexConnect} {$analyticsConnect} {$crispConnect}",
             "frame-src {$airwallexFrame} {$analyticsFrame}",
             "object-src 'none'",
             "base-uri 'self'",
