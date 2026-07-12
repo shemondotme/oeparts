@@ -458,30 +458,37 @@ class SearchService
             return [];
         }
 
-        $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $normalized);
-        $products = Product::query()
-            ->where('normalized_oem', 'LIKE', "{$escaped}%")
-            ->where('is_active', true)
-            ->with('manufacturer')
-            ->limit($limit)
-            ->get();
+        // Backs every OEM search-box keystroke sitewide — was fully-loaded
+        // columns + an unloaded `condition` relation (N+1 per row) + uncached.
+        $cacheKey = 'search:autocomplete:' . md5(implode('|', [$normalized, $lang, $limit]));
 
-        return $products->map(function (Product $product) use ($lang) {
-            $name = is_array($product->name) ? trans_field($product->name, $lang) : null;
+        return Cache::remember($cacheKey, 300, function () use ($normalized, $lang, $limit) {
+            $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $normalized);
+            $products = Product::query()
+                ->select(['id', 'oem_number', 'normalized_oem', 'price', 'condition_id', 'is_in_stock', 'name', 'manufacturer_id'])
+                ->where('normalized_oem', 'LIKE', "{$escaped}%")
+                ->where('is_active', true)
+                ->with(['manufacturer:id,name', 'condition:id,slug,name'])
+                ->limit($limit)
+                ->get();
 
-            return [
-                'id' => $product->id,
-                'oem' => $product->oem_number,
-                'normalized_oem' => $product->normalized_oem,
-                'manufacturer' => $product->manufacturer ? trans_field($product->manufacturer->name, $lang) : null,
-                'title' => filled($name) ? $name : null,
-                'price' => bcadd((string) $product->price, '0', 2),
-                'condition' => $product->condition?->slug ?? 'new',
-                'condition_label' => $product->condition?->name ?? 'New',
-                'in_stock' => (bool) $product->is_in_stock,
-                'url' => route('frontend.search.results', ['lang' => $lang, 'oem' => $product->normalized_oem]),
-            ];
-        })->toArray();
+            return $products->map(function (Product $product) use ($lang) {
+                $name = is_array($product->name) ? trans_field($product->name, $lang) : null;
+
+                return [
+                    'id' => $product->id,
+                    'oem' => $product->oem_number,
+                    'normalized_oem' => $product->normalized_oem,
+                    'manufacturer' => $product->manufacturer ? trans_field($product->manufacturer->name, $lang) : null,
+                    'title' => filled($name) ? $name : null,
+                    'price' => bcadd((string) $product->price, '0', 2),
+                    'condition' => $product->condition?->slug ?? 'new',
+                    'condition_label' => $product->condition?->name ?? 'New',
+                    'in_stock' => (bool) $product->is_in_stock,
+                    'url' => route('frontend.search.results', ['lang' => $lang, 'oem' => $product->normalized_oem]),
+                ];
+            })->toArray();
+        });
     }
 
     /**

@@ -117,9 +117,7 @@
                        + ($manufacturer_filter ? 1 : 0)
                        + ($car_model_filter ? 1 : 0);
 
-    $allConditions = \App\Models\Condition::where('is_active', true)->orderBy('sort_order')->get();
-    $conditionLabels = $allConditions->pluck('name', 'slug')->toArray();
-    $conditionLabelMap = $allConditions->pluck('name', 'slug')->toArray();
+    $conditionLabels = $conditions->pluck('name', 'slug')->toArray();
 @endphp
 
 <div class="relative min-h-screen bg-ivory text-ink pb-20">
@@ -477,7 +475,7 @@
                             @if($condition_filter)
                             <a href="{{ request()->fullUrlWithQuery(['condition' => null, 'page' => null]) }}"
                                class="inline-flex items-center gap-1.5 px-2.5 py-1 border border-ink bg-paper font-mono text-[10px] font-bold uppercase tracking-[0.14em] text-ink hover:bg-ivory transition-colors">
-                                {{ ui_copy('search_condition_chip', 'search.condition_chip', ['condition' => $conditionLabelMap[$condition_filter] ?? ucfirst($condition_filter)]) }}
+                                {{ ui_copy('search_condition_chip', 'search.condition_chip', ['condition' => $conditionLabels[$condition_filter] ?? ucfirst($condition_filter)]) }}
                                 <x-heroicon-s-x-mark class="w-3 h-3 shrink-0" />
                             </a>
                             @endif

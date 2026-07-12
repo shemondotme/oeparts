@@ -44,6 +44,7 @@ class BlogPostObserver
             $cache->forget("blog_post.{$blogPost->id}");
             $cache->forget("blog_post.slug.{$blogPost->slug}");
             $cache->forget('sitemap_blog');
+            $cache->forgetHomeBlogPosts();
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
         }

@@ -86,6 +86,87 @@ class CacheService
         Cache::forget('manufacturers.active');
     }
 
+    // ── Condition cache ───────────────────────────────────────────────────────
+
+    /**
+     * Remember the active condition list (New/Used/Refurbished, etc.) — a
+     * tiny, rarely-changing reference table read on every search-results
+     * page render (was a raw uncached query, duplicated in the controller
+     * and again in the Blade view).
+     */
+    public function rememberActiveConditions(callable $callback): mixed
+    {
+        return Cache::remember('conditions.active', now()->addHour(), $callback);
+    }
+
+    /**
+     * Invalidate the active condition list cache.
+     */
+    public function forgetActiveConditions(): void
+    {
+        Cache::forget('conditions.active');
+    }
+
+    // ── Homepage content-block cache ─────────────────────────────────────────
+    // (testimonials/faqs/blog preview — the content rendered inside homepage
+    // sections, previously hit live on every render despite the section list
+    // itself already being cached above. Same on/off + TTL knob as sections —
+    // this content lives inside a section, not a separate configurable thing.)
+
+    public function rememberTestimonials(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('home.testimonials', $callback);
+    }
+
+    public function forgetTestimonials(): void
+    {
+        Cache::forget('home.testimonials');
+    }
+
+    public function rememberFaqs(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('home.faqs', $callback);
+    }
+
+    public function forgetFaqs(): void
+    {
+        Cache::forget('home.faqs');
+    }
+
+    public function rememberHomeBlogPosts(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('home.blog_posts', $callback);
+    }
+
+    public function forgetHomeBlogPosts(): void
+    {
+        Cache::forget('home.blog_posts');
+    }
+
+    private function rememberHomeContent(string $key, callable $callback): mixed
+    {
+        if (! settings('performance.cache_sections', true)) {
+            return $callback();
+        }
+
+        $ttl = (int) settings('performance.cache_ttl_sections', 60);
+
+        return Cache::remember($key, now()->addMinutes($ttl), $callback);
+    }
+
+    // ── Coupon cache ──────────────────────────────────────────────────────────
+
+    /**
+     * Remember a coupon lookup by code — hit on every cart/checkout
+     * coupon-apply request. Invalidated by CouponObserver on write (rule #6);
+     * the short TTL is a belt-and-suspenders freshness bound in case a coupon
+     * is ever edited outside Eloquent.
+     */
+    public function rememberCouponByCode(string $code, callable $callback): mixed
+    {
+        return Cache::remember("coupon.code.{$code}", now()->addMinutes(15), $callback);
+    }
+
     // ── Hero stats cache ──────────────────────────────────────────────────────
 
     /**

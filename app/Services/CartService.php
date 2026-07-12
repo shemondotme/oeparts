@@ -261,6 +261,15 @@ class CartService
         }
 
         return Cache::remember($cacheKey, 60, function () use ($cart) {
+            // Defensive: only CartController::index()/preview() eager-load
+            // this today. Every other caller (add/remove/update/merge/
+            // applyCoupon, Api\CartController, CouponAjaxController,
+            // OrderService, CheckoutService, ShippingService) hits getSummary()
+            // raw — and this cache is invalidated on every mutation, so a
+            // cache-miss here is common on the highest-frequency endpoint in
+            // the app (navbar cart-count/preview AJAX on every page load).
+            $cart->loadMissing('items.product');
+
             $subtotal = '0.00';
             $itemCount = 0;
 
@@ -276,12 +285,18 @@ class CartService
             $appliedCoupon = null;
 
             if ($couponCode) {
-                $coupon = Coupon::where('code', $couponCode)
-                    ->where('is_active', true)
-                    ->where(function($query) {
-                        $query->whereNull('expires_at')->orWhere('expires_at', '>=', Carbon::now());
-                    })
-                    ->first();
+                // Same cache entry as CouponService::validate() (keyed on code
+                // alone); is_active/expiry are checked here on the cached model
+                // rather than folded into the cached query, so both callers
+                // share one cache entry per code instead of two.
+                $coupon = app(CacheService::class)->rememberCouponByCode(
+                    $couponCode,
+                    fn () => Coupon::where('code', $couponCode)->first(),
+                );
+
+                if ($coupon && (! $coupon->is_active || ($coupon->expires_at !== null && $coupon->expires_at->lt(Carbon::now())))) {
+                    $coupon = null;
+                }
 
                 if ($coupon) {
                     // Check min order amount
