@@ -189,11 +189,11 @@
             <fieldset>
                 <legend class="bp-spec text-amber-ink mb-3">{{ ui_copy('account_flags_legend', 'account.flags_legend') }}</legend>
 
-                <label class="flex items-start gap-3 p-4 border border-rule-strong bg-ivory-alt cursor-pointer
+                <label class="flex items-start gap-3 p-4 border border-ink bg-ivory-alt cursor-pointer
                               hover:border-ink transition-colors">
                     <input type="checkbox" name="is_default" value="1"
                            {{ old('is_default', $address?->is_default) ? 'checked' : '' }}
-                           class="w-4 h-4 mt-0.5 border-ink text-amber focus:ring-amber focus:ring-offset-0 shrink-0">
+                           class="w-4 h-4 mt-0.5 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0 shrink-0">
                     <div class="flex-1">
                         <p class="font-display text-sm font-bold text-ink tracking-[-0.01em]">
                             {{ ui_copy('account_set_as_default', 'account.set_as_default') }}

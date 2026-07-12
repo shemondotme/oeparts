@@ -163,7 +163,7 @@
                             <div class="min-w-0 flex-1">
                                 <p class="bp-spec text-amber-ink mb-1">Status · Code</p>
                                 <p class="font-display text-5xl md:text-6xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
-                                    5<span class="text-amber">0</span>3
+                                    5<span class="text-amber-ink">0</span>3
                                 </p>
                                 <p class="mt-2 font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">
                                     {{ $maintenanceSubtitle }}
@@ -173,7 +173,7 @@
 
                         {{-- Title / Message --}}
                         <h1 class="font-display text-3xl md:text-4xl font-extrabold text-ink leading-[1.05] tracking-[-0.02em]">
-                            {{ $maintenanceTitle }}<span class="text-amber">.</span>
+                            {{ $maintenanceTitle }}<span class="text-amber-ink">.</span>
                         </h1>
 
                         <p class="mt-4 text-base text-ink-muted leading-relaxed">

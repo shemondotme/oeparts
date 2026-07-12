@@ -91,7 +91,7 @@
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl max-w-[20ch]">
-                    {{ __('search.zero_heading_new') }}<span class="text-amber">.</span>
+                    {{ __('search.zero_heading_new') }}<span class="text-amber-ink">.</span>
                 </h1>
 
                 <div class="mt-6 mb-8">
@@ -231,7 +231,7 @@
                     <div class="mt-8 pt-6 border-t border-rule">
                         <p class="bp-spec text-ink-muted mb-3">{{ ui_copy('search_typical_sla_label', 'search.typical_sla_label') }}</p>
                         <p class="font-mono text-4xl sm:text-5xl font-bold text-ink leading-none tabular-nums">
-                            {{ $inquiryHours }}<span class="text-amber">h</span>
+                            {{ $inquiryHours }}<span class="text-amber-ink">h</span>
                         </p>
                         <p class="mt-2 font-mono text-[11px] text-ink-muted uppercase tracking-[0.16em]">
                             {{ ui_copy('search_business_hours_response', 'search.business_hours_response') }}

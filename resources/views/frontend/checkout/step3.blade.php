@@ -10,7 +10,7 @@
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-            {{ ui_copy('checkout_shipping_method_heading', 'checkout.shipping_method_heading') }}<span class="text-amber">.</span>
+            {{ ui_copy('checkout_shipping_method_heading', 'checkout.shipping_method_heading') }}<span class="text-amber-ink">.</span>
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
             {{ ui_copy('checkout_shipping_method_subtitle', 'checkout.shipping_method_subtitle') }}
@@ -37,7 +37,7 @@
                            x-model="selected"
                            {{ $isSelected ? 'checked' : '' }}
                            required
-                           class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0">
+                           class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
                 </div>
 
                 {{-- Icon --}}

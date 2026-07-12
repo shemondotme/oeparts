@@ -220,7 +220,7 @@
                         $attr = 'prefers_' . $n['key'];
                         $checked = old('notifications.' . $n['key'], $user->{$attr} ?? $n['default']);
                     @endphp
-                    <label class="flex items-center justify-between gap-4 p-4 border border-rule-strong bg-ivory-alt
+                    <label class="flex items-center justify-between gap-4 p-4 border border-ink bg-ivory-alt
                                   hover:border-ink transition-colors cursor-pointer">
                         <div class="flex items-start gap-3 flex-1 min-w-0">
                             <span class="font-mono text-[10px] tabular-nums tracking-[0.22em] uppercase text-ink-muted w-6 pt-0.5">

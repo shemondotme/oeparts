@@ -8,7 +8,7 @@
 $configs = [
     'info'    => ['bg' => 'bg-blue-50',   'border' => 'border-blue-200',  'text' => 'text-blue-800',  'icon' => 'heroicon-o-information-circle', 'icon_color' => 'text-blue-400'],
     'success' => ['bg' => 'bg-green-50',  'border' => 'border-green-200', 'text' => 'text-green-800', 'icon' => 'heroicon-o-check-circle',        'icon_color' => 'text-green-400'],
-    'warning' => ['bg' => 'bg-amber/10',  'border' => 'border-amber/30',  'text' => 'text-amber-text','icon' => 'heroicon-o-exclamation-triangle', 'icon_color' => 'text-amber'],
+    'warning' => ['bg' => 'bg-amber/10',  'border' => 'border-amber/30',  'text' => 'text-amber-text','icon' => 'heroicon-o-exclamation-triangle', 'icon_color' => 'text-amber-ink'],
     'error'   => ['bg' => 'bg-red-50',    'border' => 'border-red-200',   'text' => 'text-red-800',   'icon' => 'heroicon-o-x-circle',            'icon_color' => 'text-red-400'],
 ];
 $c = $configs[$type] ?? $configs['info'];

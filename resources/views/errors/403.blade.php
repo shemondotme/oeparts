@@ -77,7 +77,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="bp-spec text-red-700 mb-1">Error · Code</p>
                         <p class="font-display text-6xl md:text-7xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
-                            4<span class="text-amber">0</span>3
+                            4<span class="text-amber-ink">0</span>3
                         </p>
                         <p class="mt-2 font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">
                             {{ __('Access Denied') }} · {{ __('Security restriction') }}

@@ -81,7 +81,7 @@
                 <span class="bp-spec text-amber-ink">{{ __('sitemap.eyebrow_section') }} · {{ __('sitemap.eyebrow_subject') }}</span>
             </div>
             <h1 class="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-[-0.03em] leading-[0.95] max-w-4xl">
-                {{ $pageTitle }}<span class="text-amber">.</span>
+                {{ $pageTitle }}<span class="text-amber-ink">.</span>
             </h1>
             <p class="mt-6 text-lg text-ink/80 leading-relaxed max-w-2xl">
                 {{ __('sitemap.intro', ['site' => $siteName]) }}
@@ -114,7 +114,7 @@
                 @foreach($jumpNav as [$href, $num, $label])
                     <li>
                         <a href="{{ $href }}" class="group inline-flex items-center gap-2 text-ink-muted hover:text-amber-ink transition-colors">
-                            <span class="text-amber">{{ $num }}</span>
+                            <span class="text-amber-ink">{{ $num }}</span>
                             <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ $label }}</span>
                         </a>
                     </li>
@@ -126,7 +126,7 @@
         <section id="core" class="scroll-mt-24 mb-16">
             <header class="flex items-baseline justify-between pb-4 mb-6 border-b border-ink">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber">01</span>
+                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">01</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_core') }}</h2>
                 </div>
                 <span class="bp-spec text-ink-muted">{{ str_pad((string) count($coreLinks), 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
@@ -136,10 +136,10 @@
                     <li class="border-b sm:border-b lg:[&:nth-last-child(-n+3)]:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 border-r-0 sm:border-r lg:[&:nth-child(3n)]:border-r-0 sm:[&:nth-child(2n)]:border-r-0 lg:[&:nth-child(2n)]:border-r border-rule last:border-b-0">
                         <a href="{{ $item['href'] }}" class="group flex items-center justify-between gap-4 p-5 hover:bg-paper transition-colors">
                             <span class="flex items-center gap-4 min-w-0">
-                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber shrink-0">{{ $item['num'] }}</span>
+                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink shrink-0">{{ $item['num'] }}</span>
                                 <span class="text-ink font-medium truncate">{{ $item['label'] }}</span>
                             </span>
-                            <span class="font-mono text-sm text-ink-muted group-hover:text-amber transition-colors shrink-0">→</span>
+                            <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors shrink-0">→</span>
                         </a>
                     </li>
                 @endforeach
@@ -150,7 +150,7 @@
         <section id="account" class="scroll-mt-24 mb-16" x-data>
             <header class="flex items-baseline justify-between pb-4 mb-6 border-b border-ink">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber">02</span>
+                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">02</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_account') }}</h2>
                 </div>
                 @auth
@@ -166,10 +166,10 @@
                         <li class="border-b lg:[&:nth-last-child(-n+3)]:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 sm:border-r lg:[&:nth-child(3n)]:border-r-0 sm:[&:nth-child(2n)]:border-r-0 lg:[&:nth-child(2n)]:border-r border-rule last:border-b-0">
                             <a href="{{ $item['href'] }}" class="group flex items-center justify-between gap-4 p-5 hover:bg-paper transition-colors">
                                 <span class="flex items-center gap-4 min-w-0">
-                                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber shrink-0">{{ $item['num'] }}</span>
+                                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink shrink-0">{{ $item['num'] }}</span>
                                     <span class="text-ink font-medium truncate">{{ $item['label'] }}</span>
                                 </span>
-                                <span class="font-mono text-sm text-ink-muted group-hover:text-amber transition-colors">→</span>
+                                <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors">→</span>
                             </a>
                         </li>
                     @endforeach
@@ -180,19 +180,19 @@
                        @click.prevent="$dispatch('open-auth-modal')"
                        class="group flex items-center justify-between gap-4 p-6 border-b sm:border-b-0 sm:border-r border-rule hover:bg-paper transition-colors">
                         <span class="flex items-center gap-4 min-w-0">
-                            <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber">02.01</span>
+                            <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink">02.01</span>
                             <span class="text-ink font-medium">{{ __('sitemap.link_signin') }}</span>
                         </span>
-                        <span class="font-mono text-sm text-ink-muted group-hover:text-amber transition-colors">→</span>
+                        <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors">→</span>
                     </a>
                     <a href="{{ url('/'.$lang.'/?auth=register') }}#register"
                        @click.prevent="$dispatch('open-auth-modal', { tab: 'register' })"
                        class="group flex items-center justify-between gap-4 p-6 hover:bg-paper transition-colors">
                         <span class="flex items-center gap-4 min-w-0">
-                            <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber">02.02</span>
+                            <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink">02.02</span>
                             <span class="text-ink font-medium">{{ __('sitemap.link_register') }}</span>
                         </span>
-                        <span class="font-mono text-sm text-ink-muted group-hover:text-amber transition-colors">→</span>
+                        <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors">→</span>
                     </a>
                 </div>
             @endauth
@@ -202,7 +202,7 @@
         <section id="brands" class="scroll-mt-24 mb-16">
             <header class="flex items-baseline justify-between pb-4 mb-6 border-b border-ink">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber">03</span>
+                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">03</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_brands') }}</h2>
                 </div>
                 <span class="bp-spec text-ink-muted">{{ str_pad((string) $manufacturerCount, 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
@@ -224,7 +224,7 @@
                     @foreach($manufacturersByLetter as $letter => $group)
                         <div id="brands-{{ $letter }}" class="scroll-mt-24">
                             <div class="flex items-baseline gap-4 mb-3 pb-2 border-b border-rule">
-                                <span class="font-display text-3xl font-extrabold text-amber leading-none tracking-[-0.02em]">{{ $letter }}</span>
+                                <span class="font-display text-3xl font-extrabold text-amber-ink leading-none tracking-[-0.02em]">{{ $letter }}</span>
                                 <span class="bp-spec text-ink-muted">{{ str_pad((string) $group->count(), 2, '0', STR_PAD_LEFT) }}</span>
                             </div>
                             <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2">
@@ -232,7 +232,7 @@
                                     <li>
                                         <a href="{{ url('/'.$lang.'/brand/'.$mfr['slug']) }}"
                                            class="group inline-flex items-center gap-2 py-1 text-sm text-ink hover:text-amber-ink transition-colors">
-                                            <span class="font-mono text-[10px] text-ink-muted group-hover:text-amber">→</span>
+                                            <span class="font-mono text-[10px] text-ink-muted group-hover:text-amber-ink">→</span>
                                             <span class="border-b border-transparent group-hover:border-amber pb-[1px] truncate">{{ $mfr['label'] }}</span>
                                         </a>
                                     </li>
@@ -248,7 +248,7 @@
         <section id="journal" class="scroll-mt-24 mb-16">
             <header class="flex items-baseline justify-between pb-4 mb-6 border-b border-ink">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber">04</span>
+                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">04</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_journal') }}</h2>
                 </div>
                 <span class="bp-spec text-ink-muted">{{ str_pad((string) $blogPosts->count(), 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
@@ -263,7 +263,7 @@
                         <li>
                             <a href="{{ url('/'.$lang.'/blog/'.$post->slug) }}"
                                class="group grid grid-cols-[auto_1fr_auto] gap-4 items-baseline p-4 hover:bg-paper transition-colors">
-                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber">04.{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink">04.{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span>
                                 <span class="text-ink truncate">
                                     <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ $postLabel }}</span>
                                 </span>
@@ -277,7 +277,7 @@
                 <div class="mt-4">
                     <a href="{{ url('/'.$lang.'/blog') }}"
                        class="inline-flex items-center gap-2 font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-ink-muted hover:text-amber-ink transition-colors">
-                        <span class="text-amber">→</span>
+                        <span class="text-amber-ink">→</span>
                         <span class="border-b border-transparent hover:border-amber pb-[1px]">{{ __('sitemap.view_all_articles') }}</span>
                     </a>
                 </div>
@@ -289,7 +289,7 @@
         <section id="content" class="scroll-mt-24 mb-16">
             <header class="flex items-baseline justify-between pb-4 mb-6 border-b border-ink">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber">05</span>
+                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">05</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_pages') }}</h2>
                 </div>
                 <span class="bp-spec text-ink-muted">{{ str_pad((string) $generalPages->count(), 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
@@ -301,10 +301,10 @@
                     <li class="border-b sm:[&:nth-last-child(-n+2)]:border-b-0 sm:[&:nth-child(2n-1)]:border-r border-rule last:border-b-0">
                         <a href="{{ url('/'.$lang.'/'.$page->slug) }}" class="group flex items-center justify-between gap-4 p-5 hover:bg-paper transition-colors">
                             <span class="flex items-center gap-4 min-w-0">
-                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber shrink-0">05.{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink shrink-0">05.{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span>
                                 <span class="text-ink font-medium truncate">{{ $pageLabel }}</span>
                             </span>
-                            <span class="font-mono text-sm text-ink-muted group-hover:text-amber transition-colors">→</span>
+                            <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors">→</span>
                         </a>
                     </li>
                 @endforeach
@@ -316,7 +316,7 @@
         <section id="legal" class="scroll-mt-24 mb-16">
             <header class="flex items-baseline justify-between pb-4 mb-6 border-b border-ink">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber">06</span>
+                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">06</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_legal') }}</h2>
                 </div>
                 <span class="bp-spec text-ink-muted">{{ str_pad((string) $legalPages->count(), 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
@@ -331,10 +331,10 @@
                         <li class="border-b lg:[&:nth-last-child(-n+3)]:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 sm:border-r lg:[&:nth-child(3n)]:border-r-0 sm:[&:nth-child(2n)]:border-r-0 lg:[&:nth-child(2n)]:border-r border-rule last:border-b-0">
                             <a href="{{ url('/'.$lang.'/'.$page->slug) }}" class="group flex items-center justify-between gap-4 p-5 hover:bg-paper transition-colors">
                                 <span class="flex items-center gap-4 min-w-0">
-                                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber shrink-0">06.{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink shrink-0">06.{{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}</span>
                                     <span class="text-ink font-medium truncate">{{ $pageLabel }}</span>
                                 </span>
-                                <span class="font-mono text-sm text-ink-muted group-hover:text-amber transition-colors">→</span>
+                                <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors">→</span>
                             </a>
                         </li>
                     @endforeach
@@ -346,7 +346,7 @@
         <section id="languages" class="scroll-mt-24 mb-16">
             <header class="flex items-baseline justify-between pb-4 mb-6 border-b border-ink">
                 <div class="flex items-baseline gap-4">
-                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber">07</span>
+                    <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">07</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_languages') }}</h2>
                 </div>
                 <span class="bp-spec text-ink-muted">{{ str_pad((string) count($languageNames), 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
@@ -358,13 +358,13 @@
                         <a href="{{ url('/'.$code.'/sitemap') }}"
                            class="group flex items-center justify-between gap-3 p-5 hover:bg-paper transition-colors {{ $code === $lang ? 'bg-ink text-ivory hover:bg-ink' : '' }}">
                             <span class="flex items-center gap-3 min-w-0">
-                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber shrink-0">{{ strtoupper($code) }}</span>
+                                <span class="font-mono text-[10px] font-bold tracking-[0.18em] {{ $code === $lang ? 'text-amber' : 'text-amber-ink' }} shrink-0">{{ strtoupper($code) }}</span>
                                 <span class="font-medium truncate">{{ $name }}</span>
                             </span>
                             @if($code === $lang)
                                 <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-amber">{{ __('sitemap.current') }}</span>
                             @else
-                                <span class="font-mono text-sm text-ink-muted group-hover:text-amber transition-colors">→</span>
+                                <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors">→</span>
                             @endif
                         </a>
                     </li>

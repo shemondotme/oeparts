@@ -18,7 +18,7 @@
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-            {{ ui_copy('checkout_review_order_heading', 'checkout.review_order_heading') }}<span class="text-amber">.</span>
+            {{ ui_copy('checkout_review_order_heading', 'checkout.review_order_heading') }}<span class="text-amber-ink">.</span>
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
             {{ ui_copy('checkout_review_order_subtitle', 'checkout.review_order_subtitle') }}
@@ -162,12 +162,12 @@
     </section>
 
     {{-- Agreement --}}
-    <label class="flex items-start gap-3 p-5 border border-rule-strong bg-ivory-alt cursor-pointer hover:border-ink transition-colors">
+    <label class="flex items-start gap-3 p-5 border border-ink bg-ivory-alt cursor-pointer hover:border-ink transition-colors">
         <input type="checkbox"
                name="agree_terms"
                value="1"
                required
-               class="mt-0.5 w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0 shrink-0">
+               class="mt-0.5 w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0 shrink-0">
         <span class="text-sm text-body leading-relaxed">
             {{ ui_copy('checkout_agree_terms_prefix', 'checkout.agree_terms_prefix') }}
             <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'terms']) }}" target="_blank" rel="noopener noreferrer"

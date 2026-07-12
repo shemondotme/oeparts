@@ -121,7 +121,7 @@
                     @php $hasLetter = isset($grouped[$letter]); @endphp
                     @if($hasLetter)
                         <a href="#letter-{{ $letter }}"
-                           class="flex items-center justify-center h-10 border border-rule-strong bg-paper
+                           class="flex items-center justify-center h-10 border border-ink bg-paper
                                   font-mono text-[12px] font-bold text-ink
                                   hover:bg-ink hover:text-amber hover:border-ink transition-colors">
                             {{ $letter }}
@@ -181,7 +181,7 @@
                                 @foreach($brands as $brand)
                                     <li>
                                         <a href="{{ route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $brand->slug]) }}"
-                                           class="group relative flex items-center justify-between gap-4 px-5 py-5 border border-rule-strong bg-paper
+                                           class="group relative flex items-center justify-between gap-4 px-5 py-5 border border-ink bg-paper
                                                   hover:bg-ink hover:border-ink transition-colors">
                                             <div class="flex items-center gap-4 min-w-0">
                                                 <span class="flex items-center justify-center w-14 h-14 shrink-0 border border-rule-strong bg-ivory-alt

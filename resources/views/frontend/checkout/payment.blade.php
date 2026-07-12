@@ -111,7 +111,7 @@
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
                                         <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">01</span>
                                         <input type="radio" id="method-card" name="payment_method" value="card"
-                                               class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0"
+                                               class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0"
                                                {{ old('payment_method', $selectedMethod) === 'card' ? 'checked' : '' }} required>
                                     </div>
                                     <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0">
@@ -129,7 +129,7 @@
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
                                         <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">02</span>
                                         <input type="radio" id="method-bank" name="payment_method" value="bank_transfer"
-                                               class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0"
+                                               class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0"
                                                {{ old('payment_method', $selectedMethod) === 'bank_transfer' ? 'checked' : '' }}>
                                     </div>
                                     <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0">

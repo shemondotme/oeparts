@@ -42,7 +42,7 @@
                     </span>
                     <div class="flex items-center gap-0.5" aria-label="{{ $rating }} out of 5 stars">
                         @for($i = 1; $i <= 5; $i++)
-                            <x-heroicon-s-star class="w-3.5 h-3.5 {{ $i <= $rating ? 'text-amber' : 'text-rule' }}" />
+                            <x-heroicon-s-star class="w-3.5 h-3.5 {{ $i <= $rating ? 'text-amber-ink' : 'text-rule' }}" />
                         @endfor
                     </div>
                 </div>
