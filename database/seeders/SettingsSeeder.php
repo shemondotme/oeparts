@@ -218,7 +218,6 @@ class SettingsSeeder extends Seeder
                 'value' => 'Genuine {brand} OEM Parts — Buy Online | OeParts',
                 'type' => $s],
 
-            ['group' => 'seo', 'key' => 'sitemap_search_log_days',  'value' => '90',           'type' => $i],
             ['group' => 'seo', 'key' => 'google_ping_enabled',      'value' => '1',            'type' => $b],
             ['group' => 'seo', 'key' => 'default_robots',           'value' => 'index,follow', 'type' => $s],
             ['group' => 'seo', 'key' => 'default_og_image',         'value' => '',             'type' => $s],

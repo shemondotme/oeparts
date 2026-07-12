@@ -61,14 +61,6 @@ class SEOSettings extends SettingsPage
                             ->helperText('Automatically requests recrawling when products updates trigger new sitemap builds')
                             ->default(true),
 
-                        Forms\Components\TextInput::make('sitemap_search_log_days')
-                            ->label('Sitemap Query History (Days)')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(365)
-                            ->helperText('Include custom keyword routes based on logs from the last X days')
-                            ->default(90),
-
                         Forms\Components\TextInput::make('twitter_handle')
                             ->label('Company Twitter Handle')
                             ->placeholder('@oeparts')

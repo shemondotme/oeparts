@@ -7,6 +7,7 @@ use App\Models\Page;
 use App\Models\Product;
 use App\Models\SeoMeta;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -149,8 +150,20 @@ class SeoService
             '@type' => 'Organization',
             'name' => $this->settings->get('general.site_name', 'OeParts'),
             'url' => URL::to('/'),
-            'logo' => $this->settings->get('general.logo_url') ? URL::asset($this->settings->get('general.logo_url')) : null,
+            'logo' => $this->resolvedLogoUrl(),
         ];
+    }
+
+    /**
+     * Resolve the operator-uploaded logo (general.logo_id, an upload path on
+     * the 'public' disk) into an absolute URL, same pattern as the
+     * seo.default_og_image resolution in layouts/app.blade.php.
+     */
+    private function resolvedLogoUrl(): ?string
+    {
+        $logoPath = $this->settings->get('general.logo_id', '');
+
+        return $logoPath ? Storage::disk('public')->url($logoPath) : null;
     }
 
     /**

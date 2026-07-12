@@ -28,6 +28,12 @@
     <link rel="alternate" hreflang="x-default" href="{{ url('/en/') }}">
 @endsection
 
+@php
+    $homeLogoPath = settings('general.logo_id', '');
+    $homeLogoUrl = $homeLogoPath
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($homeLogoPath)
+        : url('/favicon.svg');
+@endphp
 @section('json_ld')
 <script type="application/ld+json">
 {!! json_encode(array_filter([
@@ -35,7 +41,7 @@
     '@type' => 'Organization',
     'name' => settings('general.site_name', 'OeParts'),
     'url' => settings('general.site_url', url('/')),
-    'logo' => settings('general.logo_url', url('/favicon.svg')),
+    'logo' => $homeLogoUrl,
     'sameAs' => array_values(array_filter([
         settings('social_links.facebook_url', ''),
         settings('social_links.instagram_url', ''),
