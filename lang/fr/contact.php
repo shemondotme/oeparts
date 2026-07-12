@@ -65,6 +65,9 @@ return [
 
     // Sidebar info cards
     'email_us' => 'Envoyez-nous un e-mail',
+    'whatsapp_label' => 'WhatsApp',
+    'viber_label' => 'Viber',
+    'address_label' => 'Adresse',
     'response_time' => 'Délai de réponse',
     'response_time_value' => 'Sous 1 jour ouvré',
     'secure' => 'Canal sécurisé',
