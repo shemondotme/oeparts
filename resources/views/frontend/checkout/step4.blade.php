@@ -13,6 +13,7 @@
     $total = $sidebarSummary['grand_total'] ?? '0.00';
     $urgentProcessing = $sidebarSummary['urgent_processing'] ?? false;
     $urgentProcessingFee = $sidebarSummary['urgent_processing_fee'] ?? '0.00';
+    $handlingFee = $sidebarSummary['handling_fee'] ?? '0.00';
 @endphp
 
 <div class="space-y-6">
@@ -163,6 +164,13 @@
                 <dt class="bp-spec-mono">{{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}</dt>
                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($urgentProcessingFee) }}</dd>
+            </div>
+            @endif
+            @if(bccomp($handlingFee, '0', 2) > 0)
+            <div class="flex items-baseline justify-between gap-3 py-2.5">
+                <dt class="bp-spec-mono">{{ ui_copy('checkout_handling_fee_label', 'checkout.handling_fee_label') }}</dt>
+                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($handlingFee) }}</dd>
             </div>
             @endif
             <div class="flex items-baseline justify-between gap-3 py-2.5">

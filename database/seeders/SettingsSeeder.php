@@ -79,19 +79,10 @@ class SettingsSeeder extends Seeder
             // ── TAX ──────────────────────────────────────────────────────────────
             ['group' => 'tax', 'key' => 'default_vat_rate',  'value' => '21',            'type' => $i],
             ['group' => 'tax', 'key' => 'price_display',     'value' => 'inc_vat',        'type' => $s],
-            ['group' => 'tax', 'key' => 'vat_rates', 'value' => json_encode([
-                'AT' => 20, 'BE' => 21, 'BG' => 20, 'HR' => 25, 'CY' => 19,
-                'CZ' => 21, 'DK' => 25, 'EE' => 22, 'FI' => 24, 'FR' => 20,
-                'DE' => 19, 'GR' => 24, 'HU' => 27, 'IE' => 23, 'IT' => 22,
-                'LV' => 21, 'LT' => 21, 'LU' => 17, 'MT' => 18, 'NL' => 21,
-                'PL' => 23, 'PT' => 23, 'RO' => 19, 'SK' => 20, 'SI' => 22,
-                'ES' => 21, 'SE' => 25,
-            ]), 'type' => $j],
             ['group' => 'tax', 'key' => 'vat_validation_enabled', 'value' => '1',       'type' => $b],
             ['group' => 'tax', 'key' => 'b2b_exempt_on_valid_vat', 'value' => '1',      'type' => $b],
 
             // ── SHIPPING ─────────────────────────────────────────────────────────
-            ['group' => 'shipping', 'key' => 'free_shipping_threshold', 'value' => '150.00',                   'type' => $s],
             ['group' => 'shipping', 'key' => 'nudge_enabled',           'value' => '1',                         'type' => $b],
             ['group' => 'shipping', 'key' => 'nudge_threshold',         'value' => '10.00',                     'type' => $s],
             ['group' => 'shipping', 'key' => 'nudge_text',              'value' => $ml('Add €{amount} more for free shipping!'), 'type' => $j],

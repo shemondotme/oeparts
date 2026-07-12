@@ -332,7 +332,16 @@ class CartService
             // Subtotal after discount for VAT and Shipping calculation
             $discountedSubtotal = bcsub($subtotal, $couponDiscount, 2);
 
-            $freeShippingThreshold = (string) $this->settings->get('shipping.free_threshold', 0);
+            // Pre-checkout the customer's shipping country/zone isn't known
+            // yet, so this can't target one specific method's threshold —
+            // uses the lowest active per-method free_shipping_threshold as a
+            // "you might unlock free shipping" reference point. (Previously
+            // read a settings key, `shipping.free_threshold`, that was never
+            // seeded under that name — always fell back to 0, so this whole
+            // progress block silently never rendered.)
+            $freeShippingThreshold = (string) (\App\Models\ShippingMethod::where('is_active', true)
+                ->whereNotNull('free_shipping_threshold')
+                ->min('free_shipping_threshold') ?? 0);
             $shippingRemaining = bcsub($freeShippingThreshold, $discountedSubtotal, 2);
             $shippingNeeded = bccomp($shippingRemaining, '0', 2) > 0 ? $shippingRemaining : '0.00';
 

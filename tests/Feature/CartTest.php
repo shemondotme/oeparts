@@ -276,15 +276,10 @@ class CartTest extends TestCase
     {
         $this->actingAs($this->user);
 
-        // Set free shipping threshold
-        \App\Models\Setting::create([
-            'group' => 'shipping',
-            'key' => 'free_threshold',
-            'value' => '500',
-            'type' => 'string',
-        ]);
-
-        app(SettingsService::class)->forget('shipping');
+        // The cart-stage nudge threshold is the lowest active per-method
+        // free_shipping_threshold (the customer's shipping country/zone
+        // isn't known yet at this stage) — not a settings key.
+        \App\Models\ShippingMethod::factory()->create(['free_shipping_threshold' => '500.00']);
 
         // Add item with price 100
         $response = $this->postJson('/en/cart/add', [

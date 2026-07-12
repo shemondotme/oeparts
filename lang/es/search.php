@@ -74,6 +74,7 @@ return [
 
     'price_vs_avg' => ':arrow :percent% vs media',
     'excl_vat_short' => 'sin IVA',
+    'incl_vat_short' => 'con IVA',
     'btn_add_to_cart' => 'Añadir al carrito',
     'btn_added' => '¡Añadido!',
     'request_this_part' => 'Solicitar esta pieza',

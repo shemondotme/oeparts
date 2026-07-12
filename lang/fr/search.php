@@ -74,6 +74,7 @@ return [
 
     'price_vs_avg' => ':arrow :percent% vs moyenne',
     'excl_vat_short' => 'HT',
+    'incl_vat_short' => 'TTC',
     'btn_add_to_cart' => 'Ajouter au panier',
     'btn_added' => 'Ajouté !',
     'request_this_part' => 'Demander cette pièce',

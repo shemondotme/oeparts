@@ -6,6 +6,7 @@ use App\Models\ShippingZone;
 use App\Models\ShippingMethod;
 use App\Models\ShippingCountry;
 use App\Models\Cart;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -191,5 +192,88 @@ class ShippingService
             'max_days'   => $method->estimated_days_max,
             'zone_name'  => $method->zone?->name,
         ];
+    }
+
+    /**
+     * Compute a real calendar-date delivery window for a method, honoring
+     * the configured fulfillment cutoff time/timezone and business-day
+     * list — as opposed to the raw estimated_days_min/max day-COUNT the
+     * checkout/order/email views show today.
+     *
+     * @return array{dispatch_date: Carbon, earliest: Carbon, latest: Carbon, dispatches_today: bool}
+     */
+    public function getEstimatedDeliveryWindow(ShippingMethod $method, ?Carbon $now = null): array
+    {
+        $timezone = (string) $this->settings->get('shipping.cutoff_timezone', 'Europe/Vilnius');
+        $cutoffTime = (string) $this->settings->get('shipping.cutoff_time', '15:00');
+        $businessDays = $this->businessDayNumbers();
+
+        $now = ($now ?? Carbon::now())->clone()->setTimezone($timezone);
+        $cutoff = $now->clone()->setTimeFromTimeString($cutoffTime);
+
+        $dispatchesToday = $this->isBusinessDay($now, $businessDays) && $now->lessThanOrEqualTo($cutoff);
+
+        $dispatchDate = $now->clone()->startOfDay();
+        if (! $dispatchesToday) {
+            $dispatchDate->addDay();
+        }
+        while (! $this->isBusinessDay($dispatchDate, $businessDays)) {
+            $dispatchDate->addDay();
+        }
+
+        $minDays = $method->estimated_days_min ?? 0;
+        $maxDays = $method->estimated_days_max ?? $minDays;
+
+        return [
+            'dispatch_date' => $dispatchDate->clone(),
+            'earliest' => $this->addBusinessDays($dispatchDate, $minDays, $businessDays),
+            'latest' => $this->addBusinessDays($dispatchDate, $maxDays, $businessDays),
+            'dispatches_today' => $dispatchesToday,
+        ];
+    }
+
+    /**
+     * shipping.business_days (TagsInput) accepts either the seeded numeric
+     * Carbon dayOfWeek convention (0=Sun..6=Sat — SettingsSeeder's default)
+     * or 3-letter day-name tags an operator types into the widget (its own
+     * ->default()/suggestions are 'Mon'..'Sun' strings) — both are handled
+     * since the two representations can coexist depending on whether the
+     * page has ever been re-saved.
+     */
+    private function businessDayNumbers(): array
+    {
+        $nameMap = ['Sun' => 0, 'Mon' => 1, 'Tue' => 2, 'Wed' => 3, 'Thu' => 4, 'Fri' => 5, 'Sat' => 6];
+        $configured = (array) $this->settings->get('shipping.business_days', [1, 2, 3, 4, 5]);
+
+        $numbers = [];
+        foreach ($configured as $day) {
+            if (is_numeric($day)) {
+                $numbers[] = ((int) $day) % 7;
+            } elseif (isset($nameMap[$day])) {
+                $numbers[] = $nameMap[$day];
+            }
+        }
+
+        return $numbers ?: [1, 2, 3, 4, 5];
+    }
+
+    private function isBusinessDay(Carbon $date, array $businessDays): bool
+    {
+        return in_array($date->dayOfWeek, $businessDays, true);
+    }
+
+    private function addBusinessDays(Carbon $start, int $days, array $businessDays): Carbon
+    {
+        $date = $start->clone();
+        $remaining = max(0, $days);
+
+        while ($remaining > 0) {
+            $date->addDay();
+            if ($this->isBusinessDay($date, $businessDays)) {
+                $remaining--;
+            }
+        }
+
+        return $date;
     }
 }

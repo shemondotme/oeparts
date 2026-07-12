@@ -33,7 +33,8 @@ class CheckoutService
     public function __construct(
         private SequenceService $sequenceService,
         private SettingsService $settings,
-        private CartService $cartService
+        private CartService $cartService,
+        private ShippingService $shippingService
     ) {}
 
     /**
@@ -260,8 +261,9 @@ class CheckoutService
             // predate an operator disabling the feature mid-checkout.
             $urgentProcessing = (bool) ($data['urgent_processing'] ?? false) && (bool) settings('checkout.urgent_processing_enabled', false);
             $urgentProcessingFee = $urgentProcessing ? bcadd((string) settings('checkout.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
+            $handlingFee = bcadd((string) settings('shipping.handling_fee', '0.00'), '0', 2);
 
-            $taxableBase = bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2);
+            $taxableBase = bcadd(bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);
             $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase, $data);
             $grandTotal = bcadd($taxableBase, $vatAmount, 2);
 
@@ -338,6 +340,7 @@ class CheckoutService
                 'customer_note' => $data['customer_note'],
                 'urgent_processing' => $urgentProcessing,
                 'urgent_processing_fee' => $urgentProcessingFee,
+                'handling_fee' => $handlingFee,
                 'ip_address' => $resolvedIp,
                 'utm_source' => $utm['source'] ?? null,
                 'utm_medium' => $utm['medium'] ?? null,
@@ -403,19 +406,7 @@ class CheckoutService
             return '0.00';
         }
 
-        $method = \App\Models\ShippingMethod::where('is_active', true)->find($shippingMethodId);
-
-        if (! $method) {
-            return '0.00';
-        }
-
-        $rate = (string) $method->flat_rate;
-
-        if ($method->free_shipping_threshold && bccomp((string) $this->cartService->getSummary($cart)['subtotal'], $method->free_shipping_threshold, 2) >= 0) {
-            return '0.00';
-        }
-
-        return $rate;
+        return $this->shippingService->calculateCost($cart, $shippingMethodId);
     }
 
     /**

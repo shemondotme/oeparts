@@ -74,6 +74,7 @@ return [
 
     'price_vs_avg' => ':arrow :percent% vs vidurkis',
     'excl_vat_short' => 'be PVM',
+    'incl_vat_short' => 'su PVM',
     'btn_add_to_cart' => 'Į krepšelį',
     'btn_added' => 'Pridėta!',
     'request_this_part' => 'Užklausti šią dalį',

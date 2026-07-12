@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Services\ViesResult;
 use App\Services\ViesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,8 +44,12 @@ class VatValidationController extends ApiController
             $vatNumber = substr($vatNumber, strlen($countryCode));
         }
 
-        // Validate via VIES
-        $result = $this->viesService->validate($countryCode, $vatNumber);
+        // Validate via VIES, unless the operator has disabled the check
+        // entirely — treated the same as a temporarily-unavailable service:
+        // VAT is charged normally, nothing is silently exempted.
+        $result = settings('tax.vat_validation_enabled', true)
+            ? $this->viesService->validate($countryCode, $vatNumber)
+            : new ViesResult(valid: null, reason: 'validation_disabled', countryCode: $countryCode, vatNumber: $vatNumber);
 
         Log::info('VAT validation', [
             'country' => $countryCode,

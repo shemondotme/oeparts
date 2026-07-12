@@ -111,6 +111,7 @@
     };
 
     $vatMultiplier = bcadd('1', bcdiv((string) $vat_rate, '100', 4), 4);
+    $showIncVatPrimary = settings('tax.price_display', 'inc_vat') === 'inc_vat';
 
     $activeFilterCount = ($condition_filter ? 1 : 0)
                        + ($in_stock_only ? 1 : 0)
@@ -652,7 +653,10 @@
                                         {{-- Price --}}
                                         <td class="px-4 py-4 text-right align-middle">
                                             <p class="font-mono text-lg font-bold text-ink tabular-nums leading-none">
-                                                {{ format_price($product->price) }}
+                                                {{ format_price($showIncVatPrimary ? $priceWithVat : $product->price) }}
+                                            </p>
+                                            <p class="font-mono text-[9px] tracking-[0.18em] uppercase text-ink-muted mt-1">
+                                                {{ $showIncVatPrimary ? ui_copy('search_incl_vat_short', 'search.incl_vat_short') : ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}
                                             </p>
                                         </td>
 
@@ -740,8 +744,13 @@
                                                           style="background-color: {{ $condBg }}; color: {{ $condText }};">{{ $condLabel }}</span>
                                                 </div>
                                                 <div class="p-4">
-                                                    <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
-                                                    <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($priceWithVat) }}</p>
+                                                    @if($showIncVatPrimary)
+                                                        <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}</p>
+                                                        <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($product->price) }}</p>
+                                                    @else
+                                                        <p class="bp-spec text-ink-muted mb-2">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
+                                                        <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($priceWithVat) }}</p>
+                                                    @endif
                                                 </div>
                                             </div>
 
@@ -885,10 +894,10 @@
 
                                 <div class="text-right">
                                     <p class="font-mono text-xl font-bold text-ink tabular-nums leading-none">
-                                        {{ format_price($product->price) }}
+                                        {{ format_price($showIncVatPrimary ? $priceWithVat : $product->price) }}
                                     </p>
                                     <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">
-                                        {{ ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}
+                                        {{ $showIncVatPrimary ? ui_copy('search_incl_vat_short', 'search.incl_vat_short') : ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}
                                     </p>
                                 </div>
                             </div>
@@ -976,8 +985,13 @@
                                 </div>
                                 @endif
                                 <div class="p-3 {{ !$product->delivery_time ? 'col-span-2' : '' }}">
-                                    <p class="bp-spec text-ink-muted mb-1">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
-                                    <p class="font-mono text-xs font-bold tabular-nums text-ink">{{ format_price($priceWithVat) }}</p>
+                                    @if($showIncVatPrimary)
+                                        <p class="bp-spec text-ink-muted mb-1">{{ ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}</p>
+                                        <p class="font-mono text-xs font-bold tabular-nums text-ink">{{ format_price($product->price) }}</p>
+                                    @else
+                                        <p class="bp-spec text-ink-muted mb-1">{{ ui_copy('search_incl_vat', 'search.incl_vat', ['rate' => $vat_rate]) }}</p>
+                                        <p class="font-mono text-xs font-bold tabular-nums text-ink">{{ format_price($priceWithVat) }}</p>
+                                    @endif
                                 </div>
                             </div>
 

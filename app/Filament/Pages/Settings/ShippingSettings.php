@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\Settings;
 
 use App\Filament\Support\AdminUi;
+use App\Filament\Resources\ShippingZoneResource;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -20,15 +21,16 @@ class ShippingSettings extends SettingsPage
         return $schema
             ->components([
                 Section::make('Shipping Thresholds & Fees')
-                    ->description('Set free shipping trigger conditions, minimum nudge goals, and basic handling charges.')
+                    ->description('Set nudge goals and basic handling charges. Free shipping thresholds are set per shipping method.')
                     ->schema([
-                        Forms\Components\TextInput::make('free_shipping_threshold')
-                            ->label('Free Shipping Minimum Order Value')
-                            ->numeric()
-                            ->minValue(0)
-                            ->prefix('€')
-                            ->placeholder('150')
-                            ->default(150),
+                        Forms\Components\Placeholder::make('free_shipping_threshold_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Free shipping thresholds are set per shipping method, not globally — configure them on the <a href="'
+                                . ShippingZoneResource::getUrl()
+                                . '" class="fi-link text-primary-600">Shipping Zones</a> page (each method has its own "Free Shipping Threshold" field).'
+                            )),
 
                         Forms\Components\TextInput::make('handling_fee')
                             ->label('Standard Order Handling Fee')

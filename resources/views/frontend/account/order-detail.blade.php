@@ -295,6 +295,13 @@
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->urgent_processing_fee) }}</dd>
                     </div>
                     @endif
+                    @if(bccomp((string) $order->handling_fee, '0', 2) > 0)
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="bp-spec-mono">{{ ui_copy('checkout_handling_fee_label', 'checkout.handling_fee_label') }}</dt>
+                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->handling_fee) }}</dd>
+                    </div>
+                    @endif
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_vat', 'account.vat') }}</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>

@@ -27,7 +27,7 @@ class Order extends Model
         'is_b2b', 'company_name', 'vat_number', 'vat_exempt',
         'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
         'customer_note', 'ip_address', 'tracking_number', 'carrier', 'carrier_id',
-        'urgent_processing', 'urgent_processing_fee', 'invoice_number',
+        'urgent_processing', 'urgent_processing_fee', 'handling_fee', 'invoice_number',
     ];
 
     protected $casts = [
@@ -40,6 +40,7 @@ class Order extends Model
         'vat_amount' => 'decimal:2',
         'grand_total' => 'decimal:2',
         'urgent_processing_fee' => 'decimal:2',
+        'handling_fee' => 'decimal:2',
         'is_b2b' => 'boolean',
         'vat_exempt' => 'boolean',
         'urgent_processing' => 'boolean',

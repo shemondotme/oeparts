@@ -74,6 +74,7 @@ return [
 
     'price_vs_avg' => ':arrow :percent% vs. Durchschnitt',
     'excl_vat_short' => 'zzgl. MwSt.',
+    'incl_vat_short' => 'inkl. MwSt.',
     'btn_add_to_cart' => 'In den Warenkorb',
     'btn_added' => 'Hinzugefügt!',
     'request_this_part' => 'Dieses Teil anfragen',
