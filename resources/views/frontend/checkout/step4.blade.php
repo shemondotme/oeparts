@@ -58,7 +58,7 @@
                         <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
                             {{ ui_copy('checkout_qty_short', 'checkout.qty_short', ['qty' => str_pad($item->quantity, 2, '0', STR_PAD_LEFT)]) }} × {{ format_price($item->price_at_add) }}
                         </p>
-                        <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('checkout_copied', 'checkout.copied') }}</span>
+                        <span x-show="copied" x-cloak x-transition role="status" aria-live="polite" class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('checkout_copied', 'checkout.copied') }}</span>
                     </div>
                     <span class="col-span-4 text-right font-mono text-base font-bold tabular-nums text-ink">
                         {{ format_price(bcmul((string) $item->price_at_add, (string) $item->quantity, 2)) }}

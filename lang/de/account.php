@@ -245,6 +245,7 @@ return [
     'tab_notifications' => 'Benachrichtigungen',
     'tab_language' => 'Sprache',
     'tab_danger' => 'Gefahrenzone',
+    'settings_tabs_aria' => 'Einstellungsbereiche',
     'profile_info_eyebrow' => '01 · Profilinformationen',
     'email_address' => 'E-Mail-Adresse',
     'save_changes' => 'Änderungen speichern',

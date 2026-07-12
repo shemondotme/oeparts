@@ -17,4 +17,6 @@ return [
     'terms' => 'Sąlygos',
     'cookies' => 'Slapukai',
     'sitemap' => 'Svetainės žemėlapis',
+    'social_facebook' => 'Apsilankykite mūsų Facebook puslapyje',
+    'social_linkedin' => 'Apsilankykite mūsų LinkedIn puslapyje',
 ];

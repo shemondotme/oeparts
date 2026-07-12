@@ -619,7 +619,7 @@
                                                     <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                                         {{ $manufacturer ? trans_field($manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand') }}
                                                     </p>
-                                                    <span x-show="copied" x-cloak x-transition
+                                                    <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
                                                           class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                                 </div>
                                             </div>
@@ -709,7 +709,7 @@
                                                     </span>
                                                 </button>
                                             </div>
-                                            <p x-show="cartError" x-text="cartError" x-cloak class="text-center font-mono text-[10px] uppercase tracking-wider text-red-600 mt-1"></p>
+                                            <p x-show="cartError" x-text="cartError" x-cloak role="alert" aria-live="assertive" class="text-center font-mono text-[10px] uppercase tracking-wider text-red-600 mt-1"></p>
                                             @else
                                             <button type="button"
                                                     @click="$dispatch('open-inquiry-modal', { oem: '{{ $product->oem_number }}' })"
@@ -858,7 +858,7 @@
                                         <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                             {{ $manufacturer ? trans_field($manufacturer->name) : '—' }}
                                         </p>
-                                        <span x-show="copied" x-cloak x-transition
+                                        <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
                                               class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                     </div>
                                 </div>

@@ -10,4 +10,5 @@ return [
     'label_about' => 'Über uns',
     'label_contact' => 'Kontakt',
     'logo_subline' => 'Echter Teile-Index',
+    'dismiss_announcement' => 'Ankündigung schließen',
 ];

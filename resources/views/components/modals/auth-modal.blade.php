@@ -293,7 +293,7 @@
                 </div>
 
                 {{-- OTP VERIFICATION (inline email verify) --}}
-                <div x-show="tab === 'otp'" x-cloak role="tabpanel" class="space-y-5">
+                <div x-show="tab === 'otp'" x-cloak role="tabpanel" id="auth-panel-otp" aria-labelledby="auth-modal-title" class="space-y-5">
                     <div class="text-center">
                         <div class="inline-flex w-12 h-12 border border-ink bg-ivory-alt items-center justify-center mb-4">
                             <x-heroicon-o-envelope-open class="w-6 h-6 text-amber-ink" />
@@ -322,7 +322,7 @@
                         </button>
                     </form>
 
-                    <p x-show="resendMsg" x-cloak x-text="resendMsg"
+                    <p x-show="resendMsg" x-cloak x-text="resendMsg" role="status" aria-live="polite"
                        class="text-center font-mono text-[11px] tracking-[0.08em] text-emerald-700"></p>
 
                     <div class="flex items-center justify-between pt-1">

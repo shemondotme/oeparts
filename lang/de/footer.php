@@ -17,4 +17,6 @@ return [
     'terms' => 'AGB',
     'cookies' => 'Cookies',
     'sitemap' => 'Sitemap',
+    'social_facebook' => 'Besuchen Sie unsere Facebook-Seite',
+    'social_linkedin' => 'Besuchen Sie unsere LinkedIn-Seite',
 ];

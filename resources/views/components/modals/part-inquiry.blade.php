@@ -708,6 +708,7 @@
                              x-transition:enter="transition ease-out duration-200"
                              x-transition:enter-start="opacity-0 -translate-y-2"
                              x-transition:enter-end="opacity-100 translate-y-0"
+                             role="alert" aria-live="assertive"
                              class="flex items-start gap-3 px-4 py-3 border border-red-500 bg-red-50">
                             <x-heroicon-o-exclamation-triangle class="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
                             <div class="flex-1 min-w-0">

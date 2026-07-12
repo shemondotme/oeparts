@@ -229,7 +229,7 @@
                                           @click="copy('{{ $item->oem_number_snapshot }}')" title="{{ ui_copy('account_copy_oem_title', 'account.copy_oem_title') }}">
                                         OEM · {{ $item->oem_number_snapshot }}
                                     </button>
-                                    <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600 ml-2">{{ ui_copy('account_copied', 'account.copied') }}</span>
+                                    <span x-show="copied" x-cloak x-transition role="status" aria-live="polite" class="text-[10px] font-mono font-bold text-emerald-600 ml-2">{{ ui_copy('account_copied', 'account.copied') }}</span>
                                     @if($item->manufacturer_snapshot)
                                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
                                             {{ $item->manufacturer_snapshot }}

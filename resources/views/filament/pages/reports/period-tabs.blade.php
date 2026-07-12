@@ -12,7 +12,7 @@
             <button
                 type="button"
                 wire:click="$set('period', '{{ $value }}')"
-                class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                class="op-focus-ring rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
                 @style([
                     'background: var(--primary-600); color: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.2);' => $active,
                     'color: var(--color-text-secondary);' => ! $active,

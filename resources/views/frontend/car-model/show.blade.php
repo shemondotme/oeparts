@@ -212,7 +212,7 @@
                                         <p class="md:hidden mt-0.5 text-xs text-ink-muted truncate">
                                             {{ trans_field($product->name) }}
                                         </p>
-                                        <span x-show="copied" x-cloak x-transition
+                                        <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
                                               class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
                                     </div>
                                     {{-- Name --}}

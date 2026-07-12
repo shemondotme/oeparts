@@ -10,4 +10,5 @@ return [
     'label_about' => 'Apie',
     'label_contact' => 'Kontaktai',
     'logo_subline' => 'Originalių dalių rodyklė',
+    'dismiss_announcement' => 'Uždaryti pranešimą',
 ];

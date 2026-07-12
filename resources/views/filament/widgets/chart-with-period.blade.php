@@ -37,7 +37,7 @@
                             type="button"
                             wire:click="$set('filter', '{{ $value }}')"
                             wire:loading.attr="disabled"
-                            class="rounded-md px-2.5 py-1 text-xs font-semibold transition-colors"
+                            class="op-focus-ring rounded-md px-2.5 py-1 text-xs font-semibold transition-colors"
                             @style([
                                 'color: var(--color-text-secondary)' => ! $active,
                                 'background: var(--color-bg-surface-raised); color: var(--color-text-primary); box-shadow: 0 1px 2px rgba(0,0,0,.12)' => $active,

@@ -10,4 +10,5 @@ return [
     'label_about' => 'Nosotros',
     'label_contact' => 'Contacto',
     'logo_subline' => 'Índice de piezas genuinas',
+    'dismiss_announcement' => 'Cerrar aviso',
 ];

@@ -17,4 +17,6 @@ return [
     'terms' => 'Conditions',
     'cookies' => 'Cookies',
     'sitemap' => 'Plan du site',
+    'social_facebook' => 'Visitez notre page Facebook',
+    'social_linkedin' => 'Visitez notre page LinkedIn',
 ];

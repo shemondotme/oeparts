@@ -71,8 +71,12 @@
                         </label>
                         <input type="text" id="first_name" name="first_name" required
                                value="{{ old('first_name', $address->first_name ?? '') }}"
-                               placeholder="John"
-                               class="bp-input w-full">
+                               placeholder="John" autocomplete="given-name"
+                               @error('first_name') aria-invalid="true" aria-describedby="first_name-error" @enderror
+                               class="bp-input w-full @error('first_name') !border-red-500 @enderror">
+                        @error('first_name')
+                            <p id="first_name-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label for="last_name" class="bp-spec block mb-2 text-ink">
@@ -80,8 +84,12 @@
                         </label>
                         <input type="text" id="last_name" name="last_name" required
                                value="{{ old('last_name', $address->last_name ?? '') }}"
-                               placeholder="Smith"
-                               class="bp-input w-full">
+                               placeholder="Smith" autocomplete="family-name"
+                               @error('last_name') aria-invalid="true" aria-describedby="last_name-error" @enderror
+                               class="bp-input w-full @error('last_name') !border-red-500 @enderror">
+                        @error('last_name')
+                            <p id="last_name-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
@@ -92,8 +100,12 @@
                     </label>
                     <input type="text" id="company" name="company"
                            value="{{ old('company', $address->company ?? '') }}"
-                           placeholder="ACME GmbH"
-                           class="bp-input w-full">
+                           placeholder="ACME GmbH" autocomplete="organization"
+                           @error('company') aria-invalid="true" aria-describedby="company-error" @enderror
+                           class="bp-input w-full @error('company') !border-red-500 @enderror">
+                    @error('company')
+                        <p id="company-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
@@ -103,8 +115,12 @@
                     </label>
                     <input type="tel" id="phone" name="phone"
                            value="{{ old('phone', $address->phone ?? '') }}"
-                           placeholder="+49 30 12345678"
-                           class="bp-input w-full">
+                           placeholder="+49 30 12345678" autocomplete="tel"
+                           @error('phone') aria-invalid="true" aria-describedby="phone-error" @enderror
+                           class="bp-input w-full @error('phone') !border-red-500 @enderror">
+                    @error('phone')
+                        <p id="phone-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
             </fieldset>
 
@@ -120,8 +136,12 @@
                     </label>
                     <input type="text" id="address_line_1" name="address_line_1" required
                            value="{{ old('address_line_1', $address->address_line1 ?? $address->address_line_1 ?? '') }}"
-                           placeholder="123 Main Street"
-                           class="bp-input w-full">
+                           placeholder="123 Main Street" autocomplete="address-line1"
+                           @error('address_line_1') aria-invalid="true" aria-describedby="address_line_1-error" @enderror
+                           class="bp-input w-full @error('address_line_1') !border-red-500 @enderror">
+                    @error('address_line_1')
+                        <p id="address_line_1-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
@@ -131,8 +151,12 @@
                     </label>
                     <input type="text" id="address_line_2" name="address_line_2"
                            value="{{ old('address_line_2', $address->address_line2 ?? $address->address_line_2 ?? '') }}"
-                           placeholder="Apt, suite, unit, etc."
-                           class="bp-input w-full">
+                           placeholder="Apt, suite, unit, etc." autocomplete="address-line2"
+                           @error('address_line_2') aria-invalid="true" aria-describedby="address_line_2-error" @enderror
+                           class="bp-input w-full @error('address_line_2') !border-red-500 @enderror">
+                    @error('address_line_2')
+                        <p id="address_line_2-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="grid sm:grid-cols-2 gap-5">
@@ -142,8 +166,12 @@
                         </label>
                         <input type="text" id="city" name="city" required
                                value="{{ old('city', $address->city ?? '') }}"
-                               placeholder="Berlin"
-                               class="bp-input w-full">
+                               placeholder="Berlin" autocomplete="address-level2"
+                               @error('city') aria-invalid="true" aria-describedby="city-error" @enderror
+                               class="bp-input w-full @error('city') !border-red-500 @enderror">
+                        @error('city')
+                            <p id="city-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label for="state" class="bp-spec block mb-2 text-ink">
@@ -151,8 +179,12 @@
                         </label>
                         <input type="text" id="state" name="state" required
                                value="{{ old('state', $address->state ?? '') }}"
-                               placeholder="Berlin"
-                               class="bp-input w-full">
+                               placeholder="Berlin" autocomplete="address-level1"
+                               @error('state') aria-invalid="true" aria-describedby="state-error" @enderror
+                               class="bp-input w-full @error('state') !border-red-500 @enderror">
+                        @error('state')
+                            <p id="state-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
@@ -163,14 +195,20 @@
                         </label>
                         <input type="text" id="postal_code" name="postal_code" required
                                value="{{ old('postal_code', $address->postal_code ?? '') }}"
-                               placeholder="10115"
-                               class="bp-input w-full font-mono tabular-nums">
+                               placeholder="10115" autocomplete="postal-code"
+                               @error('postal_code') aria-invalid="true" aria-describedby="postal_code-error" @enderror
+                               class="bp-input w-full font-mono tabular-nums @error('postal_code') !border-red-500 @enderror">
+                        @error('postal_code')
+                            <p id="postal_code-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label for="country_code" class="bp-spec block mb-2 text-ink">
                             {{ ui_copy('account_country', 'account.country') }} <span class="text-red-600">*</span>
                         </label>
-                        <select id="country_code" name="country_code" required class="bp-input w-full">
+                        <select id="country_code" name="country_code" required autocomplete="country"
+                                @error('country_code') aria-invalid="true" aria-describedby="country_code-error" @enderror
+                                class="bp-input w-full @error('country_code') !border-red-500 @enderror">
                             <option value="">{{ ui_copy('account_select_a_country', 'account.select_a_country') }}</option>
                             @foreach(array_keys(\App\Services\ViesService::getEuCountries()) as $code)
                                 <option value="{{ $code }}"
@@ -179,6 +217,9 @@
                                 </option>
                             @endforeach
                         </select>
+                        @error('country_code')
+                            <p id="country_code-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
             </fieldset>

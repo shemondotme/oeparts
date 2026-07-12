@@ -292,7 +292,7 @@
                                                   :style="`background-color: ${item.condition_bg}; color: ${item.condition_text};`"
                                                   x-text="item.condition_name"></span>
                                         </div>
-                                        <span x-show="copied" x-cloak x-transition
+                                        <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
                                               class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('cart_copied', 'cart.copied') }}</span>
                                         <p class="text-xs text-body line-clamp-2 mt-0.5" x-text="item.name || '{{ addslashes(ui_copy('cart_genuine_part', 'cart.genuine_part')) }}'"></p>
                                         <p class="mt-1 font-mono text-[9px] tracking-[0.18em] uppercase"

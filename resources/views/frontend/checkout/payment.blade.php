@@ -214,7 +214,8 @@
                                                         <button type="button"
                                                                 class="inline-flex items-center gap-1 px-2 py-1 border border-ink bg-paper hover:bg-ink hover:text-ivory
                                                                        font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-ink transition-colors copy-btn"
-                                                                data-clipboard-text="{{ $value }}">
+                                                                data-clipboard-text="{{ $value }}"
+                                                                aria-live="polite">
                                                             <x-heroicon-o-document-duplicate class="w-3 h-3" />
                                                             {{ ui_copy('checkout_copy_btn', 'checkout.copy_btn') }}
                                                         </button>

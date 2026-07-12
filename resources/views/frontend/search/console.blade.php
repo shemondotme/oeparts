@@ -109,7 +109,7 @@
         {{-- ═══ 01 · Query input ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">{{ __('search.console_submit_query') }}</span>
+                <h2 class="bp-spec text-ink">{{ __('search.console_submit_query') }}</h2>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ __('search.console_submit_meta', ['min' => $minChars]) }}
                 </span>
@@ -121,7 +121,7 @@
         @if($popularOems && $popularOems->isNotEmpty())
         <section class="mb-16 bp-rise bp-rise-delay-3">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                <span class="bp-spec text-ink">{{ __('search.console_popular_heading') }}</span>
+                <h2 class="bp-spec text-ink">{{ __('search.console_popular_heading') }}</h2>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ __('search.console_popular_meta') }}
                 </span>
@@ -150,7 +150,7 @@
         @if($featuredBrands && $featuredBrands->isNotEmpty())
         <section class="mb-16 bp-rise bp-rise-delay-4">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                <span class="bp-spec text-ink">{{ __('search.console_brands_heading') }}</span>
+                <h2 class="bp-spec text-ink">{{ __('search.console_brands_heading') }}</h2>
                 <a href="{{ url('/'.$lang.'/brands') }}" class="hidden md:inline font-mono text-[10px] text-amber-ink tracking-[0.18em] uppercase hover:text-ink transition-colors">
                     {{ __('search.console_all_brands') }}
                 </a>
@@ -175,7 +175,7 @@
         {{-- ═══ 04 · Not finding it? concierge ═══ --}}
         <section class="bp-rise bp-rise-delay-5">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">{{ __('search.console_concierge_heading') }}</span>
+                <h2 class="bp-spec text-ink">{{ __('search.console_concierge_heading') }}</h2>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ __('search.console_concierge_meta', ['hours' => $inquiryHours]) }}
                 </span>

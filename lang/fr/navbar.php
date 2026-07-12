@@ -10,4 +10,5 @@ return [
     'label_about' => 'À propos',
     'label_contact' => 'Contact',
     'logo_subline' => 'Index pièces d\'origine',
+    'dismiss_announcement' => 'Fermer l\'annonce',
 ];
