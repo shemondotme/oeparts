@@ -119,6 +119,11 @@ return [
         'greeting' => 'Jūs esate per vieną žingsnį nuo prisijungimo prie Oe Parts Journal.',
         'body'     => 'Siunčiame techninius atnaujinimus, naujų prekių pranešimus ir pramonės įžvalgas. Jokio šlamšto. Tik tikra dalių informacija.',
     ],
+
+    'newsletter_campaign' => [
+        'unsubscribe' => 'Atsisakyti naujienlaiškio prenumeratos',
+    ],
+
     'contact_reply' => [
         'subject'          => 'Atsakėme į jūsų užklausą',
         'title'            => 'Atsakymas į Jūsų Užklausą',

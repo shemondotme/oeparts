@@ -81,7 +81,6 @@ class SettingsSeeder extends Seeder
 
             // ── TAX ──────────────────────────────────────────────────────────────
             ['group' => 'tax', 'key' => 'default_vat_rate',  'value' => '21',            'type' => $i],
-            ['group' => 'tax', 'key' => 'company_vat_number', 'value' => '',               'type' => $s],
             ['group' => 'tax', 'key' => 'price_display',     'value' => 'inc_vat',        'type' => $s],
             ['group' => 'tax', 'key' => 'vat_rates', 'value' => json_encode([
                 'AT' => 20, 'BE' => 21, 'BG' => 20, 'HR' => 25, 'CY' => 19,

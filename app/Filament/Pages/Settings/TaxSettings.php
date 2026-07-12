@@ -21,6 +21,15 @@ class TaxSettings extends SettingsPage
                 Section::make('EU VAT Configurations')
                     ->description('Specify standard VAT percents and localized country rates. Integrates automatically with VAT verification services.')
                     ->schema([
+                        Forms\Components\Placeholder::make('company_vat_number_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Your own company VAT registration number (printed on generated customer invoices) is set on the <a href="'
+                                . CompanySettings::getUrl()
+                                . '" class="fi-link text-primary-600">Company Settings</a> page, alongside your registered address and contact details.'
+                            )),
+
                         Forms\Components\TextInput::make('default_vat_rate')
                             ->label('Default Store VAT Percent (%)')
                             ->numeric()
@@ -30,13 +39,6 @@ class TaxSettings extends SettingsPage
                             ->required()
                             ->helperText('Standard rate used when customer country is not matched in custom rates list')
                             ->default(21),
-
-                        Forms\Components\TextInput::make('company_vat_number')
-                            ->label('Company VAT Registration Number')
-                            ->maxLength(50)
-                            ->placeholder('e.g. LT100000000012')
-                            ->helperText('Your organization VAT code, printed on generated customer invoices')
-                            ->default(null),
 
                         Forms\Components\Select::make('price_display')
                             ->label('Storefront Catalog Price Display')
