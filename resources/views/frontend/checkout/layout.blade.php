@@ -107,15 +107,29 @@
 
     {{-- ── Session timeout banner ── --}}
     @if(isset($secondsRemaining) && $secondsRemaining > 0)
-    <div x-data="{ remaining: {{ (int) $secondsRemaining }}, init() { setInterval(() => { this.remaining = Math.max(0, this.remaining - 1); }, 1000) } }"
+    <div x-data="{
+             remaining: {{ (int) $secondsRemaining }},
+             warned: false,
+             init() {
+                 setInterval(() => {
+                     this.remaining = Math.max(0, this.remaining - 1);
+                     if (this.remaining <= 120 && !this.warned) this.warned = true;
+                 }, 1000);
+             },
+         }"
          x-show="remaining > 0"
          x-cloak
+         role="timer"
          :class="remaining < 120 ? 'bg-red-50 border-red-400 text-red-800' : (remaining < 300 ? 'bg-amber/10 border-amber text-amber-ink' : 'bg-paper border-ink text-ink')"
          class="border-b transition-colors duration-500">
+        {{-- Screen readers get a single threshold announcement (2 min left),
+             not a per-second stream — the visible countdown below is
+             aria-hidden so it doesn't also spam the same live region. --}}
+        <div class="sr-only" role="status" aria-live="assertive" x-text="warned ? '{{ addslashes(ui_copy('checkout_session_expiring_soon_announcement', 'checkout.session_expiring_soon_announcement')) }}' : ''"></div>
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-2.5 flex items-center justify-between gap-3">
             <div class="flex items-center gap-2 min-w-0">
-                <x-heroicon-s-clock class="w-4 h-4 shrink-0" />
-                <span class="font-mono text-[10px] tracking-[0.18em] uppercase truncate">
+                <x-heroicon-s-clock class="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span class="font-mono text-[10px] tracking-[0.18em] uppercase truncate" aria-hidden="true">
                     {{ ui_copy('checkout_session_expires_in', 'checkout.session_expires_in') }}
                     <span class="font-bold tabular-nums" x-text="Math.floor(remaining / 60) + ':' + String(remaining % 60).padStart(2, '0')"></span>
                     @if($currentStep < 5)
@@ -229,10 +243,10 @@
                                                 <x-heroicon-o-cube class="w-4 h-4 text-ink" />
                                             </div>
                                             <div class="min-w-0" x-data="clipboard()">
-                                                <p class="font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer"
+                                                <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                                    @click="copy('{{ $item->product->oem_number }}')" title="{{ ui_copy('checkout_copy_oem_title', 'checkout.copy_oem_title') }}">
                                                     {{ $item->product->oem_number }}
-                                                </p>
+                                                </button>
                                                 <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
                                                     {{ ui_copy('checkout_qty_short', 'checkout.qty_short', ['qty' => $item->quantity]) }}
                                                 </p>

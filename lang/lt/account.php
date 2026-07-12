@@ -251,6 +251,8 @@ return [
     'password_credentials_eyebrow' => '02 · Slaptažodis',
     'tls_encrypted' => 'TLS · Šifruota',
     'current_password' => 'Dabartinis slaptažodis',
+    'show_password' => 'Rodyti slaptažodį',
+    'hide_password' => 'Slėpti slaptažodį',
     'new_password' => 'Naujas slaptažodis',
     'new_password_note' => 'Mažiausiai 8 simboliai · raidžių, skaičių, simbolių derinys',
     'confirm_new_password' => 'Patvirtinkite naują slaptažodį',

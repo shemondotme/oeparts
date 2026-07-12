@@ -113,7 +113,7 @@
             </div>
 
             {{-- Error alert --}}
-            <div x-show="error" x-transition class="px-7 pt-5" x-cloak>
+            <div x-show="error" x-transition class="px-7 pt-5" x-cloak role="alert" aria-live="assertive">
                 <div class="flex items-start gap-3 px-4 py-3 border border-red-600 bg-red-50">
                     <x-heroicon-s-exclamation-circle class="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
                     <span class="font-mono text-[11px] tracking-[0.1em] text-red-700 leading-relaxed" x-text="error"></span>

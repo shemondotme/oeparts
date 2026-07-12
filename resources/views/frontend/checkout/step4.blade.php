@@ -51,10 +51,10 @@
                         </div>
                     </div>
                     <div class="col-span-6 min-w-0" x-data="clipboard()">
-                        <p class="font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer"
+                        <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                            @click="copy('{{ $item->product->oem_number }}')" title="{{ ui_copy('checkout_copy_oem_title', 'checkout.copy_oem_title') }}">
                             {{ $item->product->oem_number }}
-                        </p>
+                        </button>
                         <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
                             {{ ui_copy('checkout_qty_short', 'checkout.qty_short', ['qty' => str_pad($item->quantity, 2, '0', STR_PAD_LEFT)]) }} × {{ format_price($item->price_at_add) }}
                         </p>

@@ -251,6 +251,8 @@ return [
     'password_credentials_eyebrow' => '02 · Mot de passe · Identifiants',
     'tls_encrypted' => 'TLS · Chiffré',
     'current_password' => 'Mot de passe actuel',
+    'show_password' => 'Afficher le mot de passe',
+    'hide_password' => 'Masquer le mot de passe',
     'new_password' => 'Nouveau mot de passe',
     'new_password_note' => 'Min. 8 caractères · mélange de lettres, chiffres, symboles',
     'confirm_new_password' => 'Confirmer le nouveau mot de passe',

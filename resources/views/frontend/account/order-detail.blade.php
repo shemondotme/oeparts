@@ -225,10 +225,10 @@
                                     {{ $productName }}
                                 </p>
                                 <div class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
-                                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink cursor-pointer"
+                                    <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                           @click="copy('{{ $item->oem_number_snapshot }}')" title="{{ ui_copy('account_copy_oem_title', 'account.copy_oem_title') }}">
                                         OEM · {{ $item->oem_number_snapshot }}
-                                    </span>
+                                    </button>
                                     <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600 ml-2">{{ ui_copy('account_copied', 'account.copied') }}</span>
                                     @if($item->manufacturer_snapshot)
                                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">

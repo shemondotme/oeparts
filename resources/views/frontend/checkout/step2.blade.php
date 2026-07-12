@@ -35,11 +35,11 @@
     {{-- First / Last name --}}
     <div class="grid sm:grid-cols-2 gap-4">
         <div>
-            <label class="bp-spec block mb-2 text-ink">
+            <label for="checkout_first_name" class="bp-spec block mb-2 text-ink">
                 {{ ui_copy('checkout_first_name_label', 'checkout.first_name_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
-            <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('first_name') border-red-600 @enderror">
-                <input type="text" name="first_name"
+            <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors @error('first_name') border-red-600 @enderror">
+                <input type="text" id="checkout_first_name" name="first_name"
                        value="{{ old('first_name', $addr['first_name'] ?? '') }}"
                        required autocomplete="given-name"
                        class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none">
@@ -49,11 +49,11 @@
             @enderror
         </div>
         <div>
-            <label class="bp-spec block mb-2 text-ink">
+            <label for="checkout_last_name" class="bp-spec block mb-2 text-ink">
                 {{ ui_copy('checkout_last_name_label', 'checkout.last_name_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
-            <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('last_name') border-red-600 @enderror">
-                <input type="text" name="last_name"
+            <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors @error('last_name') border-red-600 @enderror">
+                <input type="text" id="checkout_last_name" name="last_name"
                        value="{{ old('last_name', $addr['last_name'] ?? '') }}"
                        required autocomplete="family-name"
                        class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none">
@@ -66,11 +66,11 @@
 
     {{-- Street --}}
     <div>
-        <label class="bp-spec block mb-2 text-ink">
+        <label for="checkout_street" class="bp-spec block mb-2 text-ink">
             {{ ui_copy('checkout_street_address_label', 'checkout.street_address_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
         </label>
-        <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('street') border-red-600 @enderror">
-            <input type="text" name="street"
+        <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors @error('street') border-red-600 @enderror">
+            <input type="text" id="checkout_street" name="street"
                    value="{{ old('street', $addr['street'] ?? '') }}"
                    placeholder="{{ ui_copy('checkout_street_placeholder', 'checkout.street_placeholder') }}"
                    required autocomplete="street-address"
@@ -84,11 +84,11 @@
     {{-- City + Postal --}}
     <div class="grid sm:grid-cols-2 gap-4">
         <div>
-            <label class="bp-spec block mb-2 text-ink">
+            <label for="checkout_city" class="bp-spec block mb-2 text-ink">
                 {{ ui_copy('checkout_city_label', 'checkout.city_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
-            <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('city') border-red-600 @enderror">
-                <input type="text" name="city"
+            <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors @error('city') border-red-600 @enderror">
+                <input type="text" id="checkout_city" name="city"
                        value="{{ old('city', $addr['city'] ?? '') }}"
                        required autocomplete="address-level2"
                        class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none">
@@ -98,11 +98,11 @@
             @enderror
         </div>
         <div>
-            <label class="bp-spec block mb-2 text-ink">
+            <label for="checkout_postal_code" class="bp-spec block mb-2 text-ink">
                 {{ ui_copy('checkout_postal_code_label', 'checkout.postal_code_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
             </label>
-            <div class="border border-ink bg-paper focus-within:border-amber transition-colors @error('postal_code') border-red-600 @enderror">
-                <input type="text" name="postal_code"
+            <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors @error('postal_code') border-red-600 @enderror">
+                <input type="text" id="checkout_postal_code" name="postal_code"
                        value="{{ old('postal_code', $addr['postal_code'] ?? '') }}"
                        required inputmode="numeric" autocomplete="postal-code"
                        class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink tabular-nums placeholder:text-ink-muted/60 focus:outline-none">
@@ -115,11 +115,11 @@
 
     {{-- Country --}}
     <div>
-        <label class="bp-spec block mb-2 text-ink">
+        <label for="checkout_country_code" class="bp-spec block mb-2 text-ink">
             {{ ui_copy('checkout_country_label', 'checkout.country_label') }} <span class="text-red-600 normal-case tracking-normal font-normal">*</span>
         </label>
-        <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors @error('country_code') border-red-600 @enderror">
-            <select name="country_code"
+        <div class="relative border border-ink bg-paper focus-within:border-amber-ink transition-colors @error('country_code') border-red-600 @enderror">
+            <select id="checkout_country_code" name="country_code"
                     required autocomplete="country"
                     class="w-full px-4 py-3 pr-10 bg-transparent font-mono text-sm text-ink focus:outline-none appearance-none cursor-pointer">
                 <option value="">{{ ui_copy('checkout_select_country_placeholder', 'checkout.select_country_placeholder') }}</option>
@@ -209,7 +209,7 @@
                 <input type="checkbox" name="is_b2b" value="1"
                        x-model="isB2B"
                        {{ old('is_b2b', $checkoutData['is_b2b'] ?? false) ? 'checked' : '' }}
-                       class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0">
+                       class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
                 <span class="font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-ink">
                     {{ ui_copy('checkout_ordering_as_business', 'checkout.ordering_as_business') }}
                 </span>
@@ -223,7 +223,7 @@
                     <label for="company_name" class="bp-spec block mb-2 text-ink">
                         {{ ui_copy('checkout_company_name_label', 'checkout.company_name_label') }}
                     </label>
-                    <div class="border border-ink bg-paper focus-within:border-amber transition-colors">
+                    <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors">
                         <input type="text" id="company_name" name="company_name"
                                x-model="companyName"
                                autocomplete="organization"
@@ -238,7 +238,7 @@
                         <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_required_for_exemption', 'checkout.required_for_exemption') }}</span>
                     </label>
                     <div class="relative">
-                        <div class="border border-ink bg-paper focus-within:border-amber transition-colors"
+                        <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors"
                              :class="{ 'border-emerald-600': vatStatus === 'valid', 'border-red-600': vatStatus === 'invalid' }">
                             <div class="flex items-center">
                                 <input type="text" id="vat_number" name="vat_number"

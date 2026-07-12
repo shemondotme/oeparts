@@ -251,6 +251,8 @@ return [
     'password_credentials_eyebrow' => '02 · Password · Credentials',
     'tls_encrypted' => 'TLS · Encrypted',
     'current_password' => 'Current password',
+    'show_password' => 'Show password',
+    'hide_password' => 'Hide password',
     'new_password' => 'New password',
     'new_password_note' => 'Min 8 chars · mix letters, numbers, symbols',
     'confirm_new_password' => 'Confirm new password',

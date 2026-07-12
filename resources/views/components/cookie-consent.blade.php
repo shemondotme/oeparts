@@ -153,6 +153,7 @@
     x-on:open-cookie-preferences.window="open = true"
     x-show="open"
     x-cloak
+    @keydown.escape.window="open = false"
     class="fixed inset-0 z-[60] overflow-y-auto"
     aria-labelledby="cookie-pref-title"
     role="dialog"
@@ -172,6 +173,7 @@
         {{-- Modal panel --}}
         <div class="relative w-full max-w-xl bg-paper text-ink border border-ink overflow-hidden"
              style="box-shadow: 10px 10px 0 rgba(20,22,29,1);"
+             x-trap.noscroll.inert="open"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4"
              x-transition:enter-end="opacity-100 translate-y-0"
