@@ -23,7 +23,10 @@ class CouponService
     public function validate(string $code, string $subtotal, ?int $userId): array
     {
         // 1. Coupon exists
-        $coupon = Coupon::where('code', $code)->first();
+        $coupon = app(CacheService::class)->rememberCouponByCode(
+            $code,
+            fn () => Coupon::where('code', $code)->first(),
+        );
         if (!$coupon) {
             return [
                 'valid' => false,

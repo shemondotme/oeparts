@@ -39,11 +39,13 @@ class AwaitingConfirmationList extends TableWidget
 
     protected function getTableHeading(): string
     {
-        $count = Order::whereIn('status', [OrderStatus::Paid->value, OrderStatus::Processing->value])
-            ->where('created_at', '>=', now()->subDays(7))
-            ->count();
+        $d = $this->cachedWidgetData(fn (): array => [
+            'count' => Order::whereIn('status', [OrderStatus::Paid->value, OrderStatus::Processing->value])
+                ->where('created_at', '>=', now()->subDays(7))
+                ->count(),
+        ]);
 
-        return 'Awaiting Confirmation' . ($count > 0 ? " ({$count})" : '');
+        return 'Awaiting Confirmation' . ($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected function getTableHeaderActions(): array

@@ -18,6 +18,7 @@ class ProductsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return AdminUi::configureTable($table)->recordTitleAttribute('oem_number')
+            ->modifyQueryUsing(fn ($query) => $query->with('condition'))
             ->columns([
                 Tables\Columns\TextColumn::make('oem_number')
                     ->label('OEM Number')
@@ -29,7 +30,12 @@ class ProductsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('condition.name')
                     ->label('Condition')
                     ->badge()
-                    ->formatStateUsing(fn ($state): string => $state?->name ?? '—')
+                    // condition.name is a relation.column dot-path — the state IS
+                    // already the resolved string (rule #26), not the Condition
+                    // model. `$state?->name` here always evaluated to null (PHP
+                    // warns "Attempt to read property on string" and returns
+                    // null), so this column silently rendered "—" for every row.
+                    ->formatStateUsing(fn (?string $state): string => $state ?? '—')
                     ->extraAttributes(fn ($record): array => $record->condition ? [
                         'style' => "background-color: {$record->condition->bg_color} !important; color: {$record->condition->text_color} !important;",
                     ] : []),

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class CustomersGrowthChart extends ChartWidget
 {
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
     use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 
     protected ?string $heading = 'Customer Growth';
@@ -20,19 +21,26 @@ class CustomersGrowthChart extends ChartWidget
 
     protected function getData(): array
     {
-        $start = $this->periodStart();
+        $d = $this->cachedWidgetData(function (): array {
+            $start = $this->periodStart();
 
-        $data = User::where('created_at', '>=', $start)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as c'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('c', 'date')
-            ->toArray();
+            $data = User::where('created_at', '>=', $start)
+                ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as c'))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->pluck('c', 'date')
+                ->toArray();
+
+            return [
+                'values' => array_map('intval', array_values($data)),
+                'labels' => array_keys($data),
+            ];
+        });
 
         return [
             'datasets' => [[
                 'label' => 'New customers',
-                'data' => array_map('intval', array_values($data)),
+                'data' => $d['values'],
                 'borderColor' => '#F59E0B',
                 'backgroundColor' => 'transparent',
                 'fill' => false,
@@ -41,7 +49,7 @@ class CustomersGrowthChart extends ChartWidget
                 'pointHoverRadius' => 6,
                 'borderWidth' => 2,
             ]],
-            'labels' => array_keys($data),
+            'labels' => $d['labels'],
         ];
     }
 

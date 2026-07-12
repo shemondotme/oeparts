@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
  */
 class SalesRevenueChart extends ChartWidget
 {
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
     use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 
     protected ?string $heading = 'Revenue Trend';
@@ -24,20 +25,27 @@ class SalesRevenueChart extends ChartWidget
 
     protected function getData(): array
     {
-        $start = $this->periodStart();
+        $d = $this->cachedWidgetData(function (): array {
+            $start = $this->periodStart();
 
-        $data = Order::whereNotIn('status', ['cancelled', 'refunded'])
-            ->where('created_at', '>=', $start)
-            ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(grand_total) as total'))
-            ->groupBy('date')
-            ->orderBy('date')
-            ->pluck('total', 'date')
-            ->toArray();
+            $data = Order::whereNotIn('status', ['cancelled', 'refunded'])
+                ->where('created_at', '>=', $start)
+                ->select(DB::raw('DATE(created_at) as date'), DB::raw('SUM(grand_total) as total'))
+                ->groupBy('date')
+                ->orderBy('date')
+                ->pluck('total', 'date')
+                ->toArray();
+
+            return [
+                'values' => array_map(fn ($v) => (float) $v, array_values($data)),
+                'labels' => array_keys($data),
+            ];
+        });
 
         return [
             'datasets' => [[
                 'label' => 'Revenue (€)',
-                'data' => array_map(fn ($v) => (float) $v, array_values($data)),
+                'data' => $d['values'],
                 'borderColor' => '#F59E0B',
                 'backgroundColor' => 'transparent',
                 'fill' => false,
@@ -46,7 +54,7 @@ class SalesRevenueChart extends ChartWidget
                 'pointHoverRadius' => 6,
                 'borderWidth' => 2,
             ]],
-            'labels' => array_keys($data),
+            'labels' => $d['labels'],
         ];
     }
 

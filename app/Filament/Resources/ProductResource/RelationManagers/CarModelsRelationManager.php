@@ -18,6 +18,7 @@ class CarModelsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return AdminUi::configureTable($table)->recordTitleAttribute('name')
+            ->modifyQueryUsing(fn ($query) => $query->with('manufacturer'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Model Name'),
@@ -31,7 +32,9 @@ class CarModelsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('year_to')
                     ->label('Year To')
                     ->placeholder('—'),
-            ])
-            ->paginated(false);
+            ]);
+        // Pagination re-enabled (was ->paginated(false)): a widely-fitted part
+        // (e.g. a common brake pad) can match hundreds of car models — an
+        // unbounded, unpaginated list is a real risk, not just a theoretical one.
     }
 }

@@ -34,9 +34,9 @@ class RefundsPendingList extends TableWidget
 
     protected function getTableHeading(): string
     {
-        $count = RefundRequest::pending()->count();
+        $d = $this->cachedWidgetData(fn (): array => ['count' => RefundRequest::pending()->count()]);
 
-        return 'Refunds Pending' . ($count > 0 ? " ({$count})" : '');
+        return 'Refunds Pending' . ($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected function getTableHeaderActions(): array

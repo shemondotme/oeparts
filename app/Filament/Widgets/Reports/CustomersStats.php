@@ -10,32 +10,37 @@ use Illuminate\Support\Facades\DB;
 
 class CustomersStats extends StatsOverviewWidget
 {
+    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
     use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 
     protected function getStats(): array
     {
-        $start = $this->periodStart();
+        $d = $this->cachedWidgetData(function (): array {
+            $start = $this->periodStart();
 
-        $total = User::count();
-        $new = User::where('created_at', '>=', $start)->count();
-        $repeat = DB::table('orders')
-            ->select('user_id')
-            ->whereNotNull('user_id')
-            ->groupBy('user_id')
-            ->havingRaw('COUNT(*) > 1')
-            ->get()
-            ->count();
+            return [
+                'total' => User::count(),
+                'new' => User::where('created_at', '>=', $start)->count(),
+                'repeat' => DB::table('orders')
+                    ->select('user_id')
+                    ->whereNotNull('user_id')
+                    ->groupBy('user_id')
+                    ->havingRaw('COUNT(*) > 1')
+                    ->get()
+                    ->count(),
+            ];
+        });
 
         return [
-            Stat::make('Total Customers', number_format($total))
+            Stat::make('Total Customers', number_format($d['total']))
                 ->description('All-time registrations')
                 ->descriptionIcon('heroicon-o-users')
                 ->color('primary'),
-            Stat::make('New Customers', number_format($new))
+            Stat::make('New Customers', number_format($d['new']))
                 ->description('Joined in period')
                 ->descriptionIcon('heroicon-o-user-plus')
                 ->color('success'),
-            Stat::make('Repeat Customers', number_format($repeat))
+            Stat::make('Repeat Customers', number_format($d['repeat']))
                 ->description('More than one order')
                 ->descriptionIcon('heroicon-o-arrow-path')
                 ->color('warning'),
