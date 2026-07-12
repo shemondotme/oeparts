@@ -179,6 +179,8 @@
                     }"
                     @mouseenter="hovered = true; loadPreview()"
                     @mouseleave="hovered = false"
+                    @focusin="hovered = true; loadPreview()"
+                    @focusout="if (!$el.contains($event.relatedTarget)) hovered = false"
                 >
                     <a
                         href="{{ $cartUrl }}"

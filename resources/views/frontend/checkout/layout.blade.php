@@ -250,7 +250,7 @@
                                                 <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-0.5">
                                                     {{ ui_copy('checkout_qty_short', 'checkout.qty_short', ['qty' => $item->quantity]) }}
                                                 </p>
-                                                <span x-show="copied" x-cloak x-transition class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('checkout_copied', 'checkout.copied') }}</span>
+                                                <span x-show="copied" x-cloak x-transition role="status" aria-live="polite" class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('checkout_copied', 'checkout.copied') }}</span>
                                             </div>
                                         </div>
                                         <span class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">

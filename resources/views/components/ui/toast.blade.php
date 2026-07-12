@@ -33,6 +33,8 @@ Types: success · error · warning · info
             x-transition:leave-end="opacity-0 translate-x-8"
             @mouseenter="pauseToast(toast.id)"
             @mouseleave="resumeToast(toast.id)"
+            @focusin="pauseToast(toast.id)"
+            @focusout="if (!$el.contains($event.relatedTarget)) resumeToast(toast.id)"
             class="pointer-events-auto relative w-[360px] max-w-[calc(100vw-3rem)] bg-paper border border-ink
                    shadow-[6px_6px_0_0_#0A1228] motion-reduce:transition-none"
             :role="toast.type === 'error' ? 'alert' : 'status'"

@@ -13,7 +13,7 @@
         style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); color: var(--color-text-primary); --tw-ring-color: var(--primary-500);"
     />
     <div x-show="search.length > 0" class="absolute inset-y-0 right-0 pr-4 flex items-center">
-        <button @click="search = ''" class="text-xs font-medium px-2 py-1 rounded" style="color: var(--color-text-muted);">
+        <button @click="search = ''" class="op-focus-ring text-xs font-medium px-2 py-1 rounded" style="color: var(--color-text-muted);">
             Clear
         </button>
     </div>

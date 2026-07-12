@@ -15,23 +15,73 @@
     docId="DOC · SETTINGS · REV. {{ now()->format('Y.m.d') }}"
     :breadcrumb="[['label' => ui_copy('account_nav_settings', 'account.nav_settings')]]"
 >
-    <div x-data="{ tab: '{{ session('settings_tab', 'profile') }}' }" class="space-y-6">
+    @php
+        $tabs = [
+            ['key' => 'profile',       'num' => '01', 'label' => ui_copy('account_tab_profile', 'account.tab_profile'),             'icon' => 'heroicon-o-user',                 'fields' => ['first_name', 'last_name', 'email', 'phone']],
+            ['key' => 'security',      'num' => '02', 'label' => ui_copy('account_tab_security', 'account.tab_security'),           'icon' => 'heroicon-o-lock-closed',          'fields' => ['current_password', 'new_password', 'new_password_confirmation']],
+            ['key' => 'notifications', 'num' => '03', 'label' => ui_copy('account_tab_notifications', 'account.tab_notifications'), 'icon' => 'heroicon-o-bell',                 'fields' => ['notifications', 'notifications.order_updates', 'notifications.email_notifications', 'notifications.promotional_emails']],
+            ['key' => 'language',      'num' => '04', 'label' => ui_copy('account_tab_language', 'account.tab_language'),           'icon' => 'heroicon-o-globe-alt',            'fields' => ['language', 'timezone']],
+            ['key' => 'danger',        'num' => '05', 'label' => ui_copy('account_tab_danger', 'account.tab_danger'),               'icon' => 'heroicon-o-exclamation-triangle', 'fields' => []],
+        ];
+        $activeTab = session('settings_tab', 'profile');
+        if ($errors->any()) {
+            $erroredFields = array_keys($errors->toArray());
+            foreach ($tabs as $t) {
+                if (array_intersect($erroredFields, $t['fields'])) { $activeTab = $t['key']; break; }
+            }
+        }
+    @endphp
+    <div x-data="{
+            tab: '{{ $activeTab }}',
+            tabKeys: @json(array_column($tabs, 'key')),
+            moveTab(delta) {
+                const i = this.tabKeys.indexOf(this.tab);
+                this.tab = this.tabKeys[(i + delta + this.tabKeys.length) % this.tabKeys.length];
+                this.$nextTick(() => this.$refs['tabBtn_' + this.tab]?.focus());
+            },
+            gotoTab(key) {
+                this.tab = key;
+                this.$nextTick(() => this.$refs['tabBtn_' + key]?.focus());
+            }
+        }" class="space-y-6">
+
+        {{-- Validation errors --}}
+        @if($errors->any())
+            <div class="border border-red-600 bg-red-50 p-5" role="alert" aria-live="assertive"
+                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                <div class="flex items-start gap-3">
+                    <div class="w-9 h-9 border border-red-600 bg-paper flex items-center justify-center shrink-0">
+                        <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-red-600" />
+                    </div>
+                    <div class="flex-1">
+                        <p class="bp-spec text-red-700 mb-1">{{ ui_copy('account_validation_error', 'account.validation_error') }}</p>
+                        <ul class="text-sm text-red-800 space-y-0.5 list-disc list-inside">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         {{-- Tab nav --}}
         <nav class="border border-ink bg-paper flex overflow-x-auto"
+             role="tablist" aria-label="{{ ui_copy('account_settings_tabs_aria', 'account.settings_tabs_aria') }}"
+             @keydown.arrow-right.prevent="moveTab(1)"
+             @keydown.arrow-left.prevent="moveTab(-1)"
+             @keydown.home.prevent="gotoTab(tabKeys[0])"
+             @keydown.end.prevent="gotoTab(tabKeys[tabKeys.length - 1])"
              style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
-            @php
-                $tabs = [
-                    ['key' => 'profile',       'num' => '01', 'label' => ui_copy('account_tab_profile', 'account.tab_profile'),             'icon' => 'heroicon-o-user'],
-                    ['key' => 'security',      'num' => '02', 'label' => ui_copy('account_tab_security', 'account.tab_security'),           'icon' => 'heroicon-o-lock-closed'],
-                    ['key' => 'notifications', 'num' => '03', 'label' => ui_copy('account_tab_notifications', 'account.tab_notifications'), 'icon' => 'heroicon-o-bell'],
-                    ['key' => 'language',      'num' => '04', 'label' => ui_copy('account_tab_language', 'account.tab_language'),           'icon' => 'heroicon-o-globe-alt'],
-                    ['key' => 'danger',        'num' => '05', 'label' => ui_copy('account_tab_danger', 'account.tab_danger'),               'icon' => 'heroicon-o-exclamation-triangle'],
-                ];
-            @endphp
             @foreach($tabs as $i => $t)
                 <button type="button"
-                        @click="tab='{{ $t['key'] }}'"
+                        x-ref="tabBtn_{{ $t['key'] }}"
+                        role="tab"
+                        id="settings-tab-{{ $t['key'] }}"
+                        aria-controls="settings-panel-{{ $t['key'] }}"
+                        :aria-selected="tab === '{{ $t['key'] }}'"
+                        :tabindex="tab === '{{ $t['key'] }}' ? '0' : '-1'"
+                        @click="gotoTab('{{ $t['key'] }}')"
                         :class="tab==='{{ $t['key'] }}' ? 'bg-ink text-ivory' : 'bg-paper text-ink hover:bg-ivory-alt'"
                         class="flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-4 transition-colors
                                {{ $i > 0 ? 'border-l border-ink' : '' }}
@@ -48,6 +98,7 @@
 
         {{-- ── Profile tab ──────────────────────────────────────────── --}}
         <section x-show="tab === 'profile'" x-cloak
+                 role="tabpanel" id="settings-panel-profile" aria-labelledby="settings-tab-profile" tabindex="0"
                  class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
@@ -70,6 +121,7 @@
                         </label>
                         <input type="text" id="first_name" name="first_name" required
                                value="{{ old('first_name', $user->first_name ?? '') }}"
+                               autocomplete="given-name"
                                class="bp-input w-full">
                     </div>
                     <div>
@@ -78,6 +130,7 @@
                         </label>
                         <input type="text" id="last_name" name="last_name" required
                                value="{{ old('last_name', $user->last_name ?? '') }}"
+                               autocomplete="family-name"
                                class="bp-input w-full">
                     </div>
                 </div>
@@ -88,6 +141,7 @@
                     </label>
                     <input type="email" id="email" name="email" required
                            value="{{ old('email', $user->email ?? '') }}"
+                           autocomplete="email"
                            class="bp-input w-full font-mono">
                 </div>
 
@@ -98,6 +152,7 @@
                     </label>
                     <input type="tel" id="phone" name="phone"
                            value="{{ old('phone', $user->phone ?? '') }}"
+                           autocomplete="tel"
                            class="bp-input w-full">
                 </div>
 
@@ -113,6 +168,7 @@
 
         {{-- ── Security tab ─────────────────────────────────────────── --}}
         <section x-show="tab === 'security'" x-cloak
+                 role="tabpanel" id="settings-panel-security" aria-labelledby="settings-tab-security" tabindex="0"
                  class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
@@ -133,6 +189,7 @@
                     </label>
                     <div class="relative">
                         <input :type="curr ? 'text' : 'password'" id="current_password" name="current_password" required
+                               autocomplete="current-password"
                                class="bp-input w-full pr-11 font-mono">
                         <button type="button" @click="curr = !curr"
                                 :aria-label="curr ? '{{ addslashes(ui_copy('account_hide_password', 'account.hide_password')) }}' : '{{ addslashes(ui_copy('account_show_password', 'account.show_password')) }}'"
@@ -150,6 +207,7 @@
                     </label>
                     <div class="relative">
                         <input :type="np ? 'text' : 'password'" id="new_password" name="new_password" required minlength="8"
+                               autocomplete="new-password"
                                class="bp-input w-full pr-11 font-mono">
                         <button type="button" @click="np = !np"
                                 :aria-label="np ? '{{ addslashes(ui_copy('account_hide_password', 'account.hide_password')) }}' : '{{ addslashes(ui_copy('account_show_password', 'account.show_password')) }}'"
@@ -171,6 +229,7 @@
                     <div class="relative">
                         <input :type="npc ? 'text' : 'password'" id="new_password_confirmation"
                                name="new_password_confirmation" required minlength="8"
+                               autocomplete="new-password"
                                class="bp-input w-full pr-11 font-mono">
                         <button type="button" @click="npc = !npc"
                                 :aria-label="npc ? '{{ addslashes(ui_copy('account_hide_password', 'account.hide_password')) }}' : '{{ addslashes(ui_copy('account_show_password', 'account.show_password')) }}'"
@@ -194,6 +253,7 @@
 
         {{-- ── Notifications tab ────────────────────────────────────── --}}
         <section x-show="tab === 'notifications'" x-cloak
+                 role="tabpanel" id="settings-panel-notifications" aria-labelledby="settings-tab-notifications" tabindex="0"
                  class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
@@ -262,6 +322,7 @@
 
         {{-- ── Language tab ─────────────────────────────────────────── --}}
         <section x-show="tab === 'language'" x-cloak
+                 role="tabpanel" id="settings-panel-language" aria-labelledby="settings-tab-language" tabindex="0"
                  class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
@@ -319,6 +380,7 @@
 
         {{-- ── Danger zone tab ──────────────────────────────────────── --}}
         <section x-show="tab === 'danger'" x-cloak
+                 role="tabpanel" id="settings-panel-danger" aria-labelledby="settings-tab-danger" tabindex="0"
                  class="border border-red-600 bg-paper" style="box-shadow: 6px 6px 0 rgba(185,28,28,1);">
             <header class="flex items-center justify-between px-5 py-3 border-b border-red-600 bg-red-600 text-ivory">
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase font-bold flex items-center gap-2">

@@ -437,7 +437,7 @@
         <button
             @click="visible = false; localStorage.setItem('announcement_dismissed', '1')"
             class="absolute right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
-            aria-label="Dismiss"
+            aria-label="{{ ui_copy('navbar_dismiss_announcement', 'navbar.dismiss_announcement') }}"
         >
             <x-heroicon-o-x-mark class="w-4 h-4" />
         </button>

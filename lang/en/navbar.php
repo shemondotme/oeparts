@@ -10,4 +10,5 @@ return [
     'label_about' => 'About',
     'label_contact' => 'Contact',
     'logo_subline' => 'Genuine Parts Index',
+    'dismiss_announcement' => 'Dismiss announcement',
 ];

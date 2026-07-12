@@ -75,7 +75,11 @@
                         </label>
                         <textarea id="reason" name="reason" rows="6" required minlength="20" maxlength="2000"
                                   placeholder="{{ ui_copy('account_reason_placeholder', 'account.reason_placeholder') }}"
-                                  class="bp-input w-full resize-y">{{ old('reason') }}</textarea>
+                                  @error('reason') aria-invalid="true" aria-describedby="reason-error" @enderror
+                                  class="bp-input w-full resize-y @error('reason') !border-red-500 @enderror">{{ old('reason') }}</textarea>
+                        @error('reason')
+                            <p id="reason-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                         <div class="mt-2 flex items-center justify-between">
                             <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
                                 {{ ui_copy('account_reason_length_note', 'account.reason_length_note') }}
@@ -93,11 +97,19 @@
                         </label>
                         <input type="file" id="return_images" name="return_images[]" multiple
                                accept="image/jpeg,image/png"
+                               @error('return_images') aria-invalid="true" aria-describedby="return_images-error" @enderror
+                               @error('return_images.*') aria-invalid="true" aria-describedby="return_images-error" @enderror
                                class="block w-full text-sm text-body font-mono
                                       file:mr-4 file:py-2.5 file:px-4 file:border-0 file:border-r file:border-ink
                                       file:bg-ink file:text-ivory file:font-mono file:text-[10px] file:font-bold file:uppercase file:tracking-[0.22em]
                                       file:cursor-pointer hover:file:bg-amber hover:file:text-ink transition-colors
                                       border border-ink bg-paper">
+                        @error('return_images')
+                            <p id="return_images-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
+                        @error('return_images.*')
+                            <p id="return_images-error" role="alert" class="mt-1.5 font-mono text-[10px] font-bold tracking-[0.15em] uppercase text-red-600">{{ $message }}</p>
+                        @enderror
                         <p class="mt-2 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
                             {{ ui_copy('account_photo_evidence_note', 'account.photo_evidence_note') }}
                         </p>

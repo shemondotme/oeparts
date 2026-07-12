@@ -145,7 +145,7 @@
         {{-- ═══ Re-submit bar ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</span>
+                <h2 class="bp-spec text-ink">02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</h2>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ ui_copy('search_console_submit_meta', 'search.console_submit_meta', ['min' => $minChars]) }}
                 </span>
@@ -156,7 +156,7 @@
         {{-- ═══ Primary: Concierge inquiry card ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-3">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">03 · {{ __('search.zero_cta_title') }}</span>
+                <h2 class="bp-spec text-ink">03 · {{ __('search.zero_cta_title') }}</h2>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ __('search.console_concierge_meta', ['hours' => $inquiryHours]) }}
                 </span>
@@ -245,7 +245,7 @@
         @if($popularOems->isNotEmpty())
         <section class="mb-16 bp-rise">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">04 · {{ __('search.zero_popular_heading') }}</span>
+                <h2 class="bp-spec text-ink">04 · {{ __('search.zero_popular_heading') }}</h2>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     frequently indexed
                 </span>
@@ -277,7 +277,7 @@
         {{-- ═══ Diagnostic tips ═══ --}}
         <section class="mb-16 bp-rise">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">05 · {{ __('search.zero_tips_heading') }}</span>
+                <h2 class="bp-spec text-ink">05 · {{ __('search.zero_tips_heading') }}</h2>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     diagnostic
                 </span>

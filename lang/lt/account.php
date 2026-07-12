@@ -245,6 +245,7 @@ return [
     'tab_notifications' => 'Pranešimai',
     'tab_language' => 'Kalba',
     'tab_danger' => 'Pavojinga zona',
+    'settings_tabs_aria' => 'Nustatymų skiltys',
     'profile_info_eyebrow' => '01 · Profilio · Informacija',
     'email_address' => 'El. pašto adresas',
     'save_changes' => 'Išsaugoti pakeitimus',

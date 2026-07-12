@@ -157,10 +157,11 @@
                                     <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.01</span>
                                 </label>
                                 <input type="text" id="name" x-model="form.name" required
+                                       :aria-invalid="!!fieldErrors.name" aria-describedby="name-error"
                                        class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
                                               focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
                                        placeholder="{{ trans('contact.name_placeholder') }}">
-                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.name" x-text="fieldErrors.name"></p>
+                                <p id="name-error" role="alert" class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.name" x-text="fieldErrors.name"></p>
                             </div>
 
                             <div>
@@ -169,10 +170,11 @@
                                     <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.02</span>
                                 </label>
                                 <input type="email" id="email" x-model="form.email" required
+                                       :aria-invalid="!!fieldErrors.email" aria-describedby="email-error"
                                        class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
                                               focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
                                        placeholder="{{ trans('contact.email_placeholder') }}">
-                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.email" x-text="fieldErrors.email"></p>
+                                <p id="email-error" role="alert" class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.email" x-text="fieldErrors.email"></p>
                             </div>
 
                             {{-- Subject Type --}}
@@ -183,6 +185,7 @@
                                 </label>
                                 <div class="relative">
                                     <select id="subject_type" x-model="form.subject_type" required
+                                            :aria-invalid="!!fieldErrors.subject_type" aria-describedby="subject_type-error"
                                             class="w-full px-4 py-3 pr-10 border border-ink bg-ivory font-mono text-sm text-ink
                                                    focus:outline-none focus:bg-paper focus:border-amber appearance-none cursor-pointer">
                                         <option value="">{{ trans('contact.select_subject') }}</option>
@@ -196,7 +199,7 @@
                                     </select>
                                     <x-heroicon-s-chevron-down class="w-4 h-4 text-ink-muted absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                 </div>
-                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.subject_type" x-text="fieldErrors.subject_type"></p>
+                                <p id="subject_type-error" role="alert" class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.subject_type" x-text="fieldErrors.subject_type"></p>
                             </div>
 
                             {{-- ─── Conditional: Order details (order_issue / shipping_question / return_refund) ─── --}}
@@ -215,10 +218,11 @@
                                             <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.04</span>
                                         </label>
                                         <input type="text" id="order_number" x-model="form.order_number"
+                                               :aria-invalid="!!fieldErrors.order_number" aria-describedby="order_number-error"
                                                class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
                                                       focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
                                                placeholder="{{ trans('contact.order_number_placeholder') }}">
-                                        <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.order_number" x-text="fieldErrors.order_number"></p>
+                                        <p id="order_number-error" role="alert" class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.order_number" x-text="fieldErrors.order_number"></p>
                                     </div>
                                     <div x-show="form.subject_type === 'return_refund'">
                                         <label for="oem_number_r" class="flex items-center justify-between mb-2">
@@ -246,10 +250,11 @@
                                             <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.05</span>
                                         </label>
                                         <input type="text" id="oem_number" x-model="form.oem_number"
+                                               :aria-invalid="!!fieldErrors.oem_number" aria-describedby="oem_number-error"
                                                class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink tracking-wide
                                                       focus:outline-none focus:bg-paper focus:border-amber placeholder:text-ink-muted"
                                                placeholder="{{ trans('contact.oem_number_placeholder') }}">
-                                        <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.oem_number" x-text="fieldErrors.oem_number"></p>
+                                        <p id="oem_number-error" role="alert" class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.oem_number" x-text="fieldErrors.oem_number"></p>
                                     </div>
                                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                         <div class="sm:col-span-1">
@@ -321,6 +326,7 @@
                                     <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">01.11</span>
                                 </label>
                                 <textarea id="message" x-model="form.message" required rows="6"
+                                          :aria-invalid="!!fieldErrors.message" aria-describedby="message-error"
                                           class="w-full px-4 py-3 border border-ink bg-ivory font-mono text-sm text-ink
                                                  focus:outline-none focus:bg-paper focus:border-amber resize-y placeholder:text-ink-muted"
                                           placeholder="{{ trans('contact.message_placeholder') }}"></textarea>
@@ -330,7 +336,7 @@
                                         <span x-text="form.message.length"></span> / 5000
                                     </p>
                                 </div>
-                                <p class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.message" x-text="fieldErrors.message"></p>
+                                <p id="message-error" role="alert" class="mt-1 font-mono text-[11px] text-red-600" x-show="fieldErrors.message" x-text="fieldErrors.message"></p>
                             </div>
 
                             {{-- Honeypot --}}
