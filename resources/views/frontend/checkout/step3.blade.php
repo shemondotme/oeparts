@@ -87,6 +87,38 @@
         </p>
     @enderror
 
+    {{-- Rush processing add-on --}}
+    @if($urgentProcessingEnabled ?? false)
+    <div x-data="{ checked: {{ ($urgentProcessingSelected ?? false) ? 'true' : 'false' }} }"
+         class="border border-ink bg-paper">
+        <label class="flex items-start gap-4 p-4 sm:p-5 cursor-pointer transition-colors"
+               :class="checked ? 'bg-amber/10' : 'hover:bg-ivory-alt'">
+            <input type="checkbox" name="urgent_processing" value="1" x-model="checked"
+                   {{ ($urgentProcessingSelected ?? false) ? 'checked' : '' }}
+                   class="mt-1 w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
+
+            <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0"
+                 :class="checked ? 'border-ink bg-paper' : ''">
+                <x-heroicon-o-bolt class="w-5 h-5 text-amber-ink" />
+            </div>
+
+            <div class="flex-1 min-w-0">
+                <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink">{{ ui_copy('checkout_urgent_processing_eyebrow', 'checkout.urgent_processing_eyebrow') }}</p>
+                <p class="mt-0.5 font-display text-base font-bold text-ink tracking-[-0.01em]">
+                    {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+                </p>
+                <p class="mt-0.5 text-xs text-body">
+                    {{ settings_trans('checkout.urgent_processing_description', '') }}
+                </p>
+            </div>
+
+            <div class="shrink-0 text-right">
+                <span class="font-mono text-xl font-medium text-ink tabular-nums tracking-tight">+{{ format_price($urgentProcessingFee) }}</span>
+            </div>
+        </label>
+    </div>
+    @endif
+
     {{-- Info note --}}
     <div class="flex items-start gap-3 p-4 border border-rule-strong bg-ivory-alt">
         <div class="w-8 h-8 border border-ink bg-paper flex items-center justify-center shrink-0">

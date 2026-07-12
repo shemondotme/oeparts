@@ -87,6 +87,7 @@ return [
     'fast_eu_delivery' => 'Fast EU delivery',
     'no_shipping_methods' => 'No shipping methods available. Please contact support.',
     'shipping_note_heading' => 'Shipping note',
+    'urgent_processing_eyebrow' => 'Optional add-on',
 
     // Step 4 — review
     'review_order_heading' => 'Review order',

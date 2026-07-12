@@ -299,10 +299,12 @@ class OrderService
 
     /**
      * Recalculate an order's money totals from its line items after an admin
-     * edits them. Shipping, VAT, and discount are kept as stored — only
-     * subtotal and grand_total are re-derived, using the same formula as
-     * createFromCheckout(): grand = (subtotal + shipping + vat) − discount,
-     * floored at 0.00.
+     * edits them. Shipping, VAT, rush-processing fee, and discount are kept
+     * as stored — only subtotal and grand_total are re-derived, using the
+     * same formula as CheckoutService's order creation: grand = (subtotal +
+     * shipping + urgent fee + vat) − discount, floored at 0.00. Omitting the
+     * urgent fee here would silently drop it from the total the moment an
+     * admin edits a line item on a rush-processing order.
      */
     public function recalculateTotals(Order $order): void
     {
@@ -311,7 +313,7 @@ class OrderService
             $subtotal = bcadd($subtotal, (string) $item->total_price, 2);
         }
 
-        $taxableBase = bcadd($subtotal, (string) $order->shipping_cost, 2);
+        $taxableBase = bcadd(bcadd($subtotal, (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2);
         $grandTotal = bcsub(bcadd($taxableBase, (string) $order->vat_amount, 2), (string) $order->discount_amount, 2);
 
         if (bccomp($grandTotal, '0.00', 2) === -1) {

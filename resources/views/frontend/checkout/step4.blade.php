@@ -11,6 +11,8 @@
     $vatRate = $sidebarSummary['vat_rate'] ?? ($summary['vat_rate'] ?? settings('tax.default_vat_rate', 21));
     $vatAmount = $sidebarSummary['vat_amount'] ?? '0.00';
     $total = $sidebarSummary['grand_total'] ?? '0.00';
+    $urgentProcessing = $sidebarSummary['urgent_processing'] ?? false;
+    $urgentProcessingFee = $sidebarSummary['urgent_processing_fee'] ?? '0.00';
 @endphp
 
 <div class="space-y-6">
@@ -122,6 +124,19 @@
         </section>
     </div>
 
+    {{-- Rush processing (if selected) --}}
+    @if($urgentProcessing)
+    <section class="border border-amber bg-amber/5">
+        <div class="flex items-center justify-between px-4 py-3.5">
+            <span class="inline-flex items-center gap-2 font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-amber-ink">
+                <x-heroicon-s-bolt class="w-4 h-4" />
+                {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+            </span>
+            <span class="font-mono text-base font-bold tabular-nums text-ink">{{ format_price($urgentProcessingFee) }}</span>
+        </div>
+    </section>
+    @endif
+
     {{-- Pricing breakdown --}}
     <section class="border border-ink bg-paper">
         <header class="flex items-center px-4 py-3 border-b border-ink bg-ivory-alt">
@@ -143,6 +158,13 @@
                     {{ $shippingCost === '0.00' ? ui_copy('checkout_shipping_free', 'checkout.shipping_free') : format_price($shippingCost) }}
                 </dd>
             </div>
+            @if($urgentProcessing)
+            <div class="flex items-baseline justify-between gap-3 py-2.5">
+                <dt class="bp-spec-mono">{{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}</dt>
+                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($urgentProcessingFee) }}</dd>
+            </div>
+            @endif
             <div class="flex items-baseline justify-between gap-3 py-2.5">
                 <dt class="bp-spec-mono">{{ ui_copy('checkout_vat_short', 'checkout.vat_short') }} · {{ $vatRate }}%</dt>
                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>

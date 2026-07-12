@@ -56,6 +56,7 @@ class CheckoutService
                 'shipping_method_id' => null,
                 'payment_method' => settings('checkout.default_payment_method', 'card'),
                 'customer_note' => null,
+                'urgent_processing' => false,
             ],
             'created_at' => now()->toIso8601String(),
             'expires_at' => now()->addMinutes(
@@ -166,9 +167,10 @@ class CheckoutService
         }
 
         $allowed = [
-            'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes', 
+            'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes',
             'vat_number', 'vat_valid', 'vat_exempt', 'coupon_code', 'company_name',
-            'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'is_b2b', 'customer_note'
+            'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'is_b2b', 'customer_note',
+            'urgent_processing'
         ];
 
         foreach (['step', 'expires_at', 'created_at', 'cart_id'] as $topLevelKey) {
@@ -252,7 +254,14 @@ class CheckoutService
             $cartSummary = $this->cartService->getSummary($cart);
             $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
             $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id']);
-            $taxableBase = bcadd((string) $subtotal, (string) $shippingCost, 2);
+
+            // Rush-processing upsell: re-check the merchant toggle at charge
+            // time, not just the session flag — a customer's session could
+            // predate an operator disabling the feature mid-checkout.
+            $urgentProcessing = (bool) ($data['urgent_processing'] ?? false) && (bool) settings('checkout.urgent_processing_enabled', false);
+            $urgentProcessingFee = $urgentProcessing ? bcadd((string) settings('checkout.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
+
+            $taxableBase = bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2);
             $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase, $data);
             $grandTotal = bcadd($taxableBase, $vatAmount, 2);
 
@@ -327,6 +336,8 @@ class CheckoutService
                 'shipping_postal_code' => $shippingAddress['postal_code'] ?? null,
                 'shipping_country_code' => $shippingAddress['country_code'] ?? null,
                 'customer_note' => $data['customer_note'],
+                'urgent_processing' => $urgentProcessing,
+                'urgent_processing_fee' => $urgentProcessingFee,
                 'ip_address' => $resolvedIp,
                 'utm_source' => $utm['source'] ?? null,
                 'utm_medium' => $utm['medium'] ?? null,

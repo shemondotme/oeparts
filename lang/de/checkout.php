@@ -87,6 +87,7 @@ return [
     'fast_eu_delivery' => 'Schnelle EU-Lieferung',
     'no_shipping_methods' => 'Keine Versandarten verfügbar. Bitte kontaktieren Sie den Support.',
     'shipping_note_heading' => 'Versandhinweis',
+    'urgent_processing_eyebrow' => 'Optionales Add-on',
 
     // Step 4 — review
     'review_order_heading' => 'Bestellung prüfen',

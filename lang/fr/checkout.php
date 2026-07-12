@@ -87,6 +87,7 @@ return [
     'fast_eu_delivery' => 'Livraison rapide en UE',
     'no_shipping_methods' => 'Aucun mode de livraison disponible. Veuillez contacter le support.',
     'shipping_note_heading' => 'Remarque sur la livraison',
+    'urgent_processing_eyebrow' => 'Option supplémentaire',
 
     // Step 4 — review
     'review_order_heading' => 'Vérifier la commande',

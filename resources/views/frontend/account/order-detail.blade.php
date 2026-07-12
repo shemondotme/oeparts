@@ -285,6 +285,16 @@
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->shipping_cost) }}</dd>
                     </div>
+                    @if($order->urgent_processing && bccomp((string) $order->urgent_processing_fee, '0', 2) > 0)
+                    <div class="flex items-baseline justify-between gap-3">
+                        <dt class="bp-spec-mono inline-flex items-center gap-1.5 text-amber-ink">
+                            <x-heroicon-s-bolt class="w-3 h-3" />
+                            {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+                        </dt>
+                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->urgent_processing_fee) }}</dd>
+                    </div>
+                    @endif
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_vat', 'account.vat') }}</dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>

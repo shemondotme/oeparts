@@ -194,7 +194,7 @@
     </div>
 
     @php
-        $vatTaxableBase = bcadd((string) $order->subtotal, (string) $order->shipping_cost, 2);
+        $vatTaxableBase = bcadd(bcadd((string) $order->subtotal, (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2);
         $vatRatePercent = bccomp($vatTaxableBase, '0', 2) > 0
             ? bcmul(bcdiv((string) $order->vat_amount, $vatTaxableBase, 4), '100', 2)
             : '0.00';
@@ -208,6 +208,16 @@
         <div class="totals-row">
             <span>Shipping:</span>
             <span>{{ format_price($order->shipping_cost) }}</span>
+        </div>
+        @endif
+        @if($order->urgent_processing && bccomp((string) $order->urgent_processing_fee, '0', 2) > 0)
+        <div class="totals-row">
+            {{-- Invoice document is intentionally English-only throughout
+                 (see PREMIUM_GRADE_MASTER_WORKFLOW.md email/invoice chunk) —
+                 a fixed label here, not the customer-facing localized one,
+                 keeps this line consistent with the rest of the document. --}}
+            <span>Rush Processing:</span>
+            <span>{{ format_price($order->urgent_processing_fee) }}</span>
         </div>
         @endif
         @if($order->discount_amount > 0)
