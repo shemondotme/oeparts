@@ -24,6 +24,7 @@ class GeneralSettings extends SettingsPage
                     ->schema([
                         FileUpload::make('logo_id')
                             ->label('Site Logo')
+                            ->helperText('Used in structured data (Organization JSON-LD) shown to search engines. The storefront navbar itself uses a coded brand mark, not this upload.')
                             ->disk('public')
                             ->directory('branding')
                             ->image()
@@ -32,6 +33,7 @@ class GeneralSettings extends SettingsPage
 
                         FileUpload::make('favicon_id')
                             ->label('Favicon')
+                            ->helperText('Overrides the browser tab icon site-wide when set. Leave empty to keep the coded Industrial Blueprint mark.')
                             ->disk('public')
                             ->directory('branding')
                             ->image()
