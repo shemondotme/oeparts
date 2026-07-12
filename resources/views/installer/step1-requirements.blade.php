@@ -33,6 +33,23 @@
                     @endif
                 </div>
             </div>
+
+            @if(!empty($recommended))
+            <h2 class="text-lg font-semibold text-slate-800 mb-3 mt-6">Recommended (Optional)</h2>
+            <div class="space-y-2">
+                @foreach($recommended as $label => $met)
+                <div class="flex items-center gap-3">
+                    @if($met)
+                    <x-heroicon-o-check-circle class="w-5 h-5 text-green-500 shrink-0" />
+                    @else
+                    <x-heroicon-o-information-circle class="w-5 h-5 text-amber-500 shrink-0" />
+                    @endif
+                    <span class="{{ $met ? 'text-slate-700' : 'text-slate-600' }}">{{ $label }}</span>
+                </div>
+                @endforeach
+            </div>
+            <p class="mt-2 text-xs text-muted">Not required — the app runs fine on file/database cache and the sync queue driver. Install this only if you plan to use Redis for caching/queues.</p>
+            @endif
         </div>
 
         <div>
