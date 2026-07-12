@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Services\CacheService;
 use App\Services\SearchService;
 use App\Models\CarModel;
 use App\Models\Condition;
@@ -48,7 +49,10 @@ class SearchController extends Controller
         $sort      = in_array($request->query('sort'), ['price_asc', 'price_desc', 'default'], true)
                      ? $request->query('sort')
                      : 'default';
-        $validConditionSlugs = Condition::where('is_active', true)->pluck('slug')->toArray();
+        $activeConditions = app(CacheService::class)->rememberActiveConditions(
+            fn () => Condition::where('is_active', true)->orderBy('sort_order')->get()
+        );
+        $validConditionSlugs = $activeConditions->pluck('slug')->toArray();
         $condition = in_array($request->query('condition'), $validConditionSlugs, true)
                      ? $request->query('condition')
                      : null;
@@ -72,7 +76,7 @@ class SearchController extends Controller
         // Filtered-empty: has results but active filters removed them all → stay on results page
         if ($result['filtered_empty']) {
             return view('frontend.search.results', array_merge(
-                $this->buildResultsViewData($result, $lang, $sort, $condition, $inStockOnly, $manufacturerId, $carModelId),
+                $this->buildResultsViewData($result, $lang, $sort, $condition, $inStockOnly, $manufacturerId, $carModelId, $activeConditions),
                 ['filtered_empty' => true, 'unfiltered_total' => $result['unfiltered_total']]
             ));
         }
@@ -87,7 +91,7 @@ class SearchController extends Controller
         }
 
         return view('frontend.search.results',
-            $this->buildResultsViewData($result, $lang, $sort, $condition, $inStockOnly, $manufacturerId, $carModelId)
+            $this->buildResultsViewData($result, $lang, $sort, $condition, $inStockOnly, $manufacturerId, $carModelId, $activeConditions)
         );
     }
 
@@ -134,7 +138,7 @@ class SearchController extends Controller
     /**
      * Build the shared data array for the results view.
      */
-    private function buildResultsViewData(array $result, string $lang, string $sort, ?string $condition, bool $inStockOnly, ?int $manufacturerId, ?int $carModelId): array
+    private function buildResultsViewData(array $result, string $lang, string $sort, ?string $condition, bool $inStockOnly, ?int $manufacturerId, ?int $carModelId, \Illuminate\Support\Collection $activeConditions): array
     {
         // Breadcrumbs + car model entity (single query for filter chip / Alpine)
         $breadcrumbs = [];
@@ -189,6 +193,7 @@ class SearchController extends Controller
             'car_model_filter'           => $carModelEntity ? $carModelId : null,
             'car_model_filter_label'     => $carModelEntity?->name,
             'condition_counts'           => $result['condition_counts'],
+            'conditions'                 => $activeConditions,
             'manufacturer_filter_options' => $manufacturerFilterOptions,
             'price_stats'                => $result['price_stats'],
             'vat_rate'                   => (int) settings('tax.default_vat_rate', 21),

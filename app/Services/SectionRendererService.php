@@ -167,10 +167,12 @@ class SectionRendererService
     private function loadTestimonials(): Collection
     {
         try {
-            return Testimonial::where('is_active', true)
-                ->orderBy('sort_order')
-                ->limit((int) settings('sections.testimonials_limit', 6))
-                ->get();
+            return $this->cache->rememberTestimonials(function () {
+                return Testimonial::where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->limit((int) settings('sections.testimonials_limit', 6))
+                    ->get();
+            });
         } catch (\Exception $e) {
             Log::warning('SectionRendererService: failed to load testimonials', ['error' => $e->getMessage()]);
             return collect();
@@ -180,10 +182,12 @@ class SectionRendererService
     private function loadFaqs(): Collection
     {
         try {
-            return Faq::where('is_active', true)
-                ->orderBy('sort_order')
-                ->limit((int) settings('sections.faq_limit', 8))
-                ->get();
+            return $this->cache->rememberFaqs(function () {
+                return Faq::where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->limit((int) settings('sections.faq_limit', 8))
+                    ->get();
+            });
         } catch (\Exception $e) {
             Log::warning('SectionRendererService: failed to load faqs', ['error' => $e->getMessage()]);
             return collect();
@@ -193,12 +197,14 @@ class SectionRendererService
     private function loadBlogPosts(): Collection
     {
         try {
-            return BlogPost::where('status', 'published')
-                ->with(['category', 'author'])
-                ->whereNotNull('published_at')
-                ->orderByDesc('published_at')
-                ->limit((int) settings('sections.blog_limit', 6))
-                ->get();
+            return $this->cache->rememberHomeBlogPosts(function () {
+                return BlogPost::where('status', 'published')
+                    ->with(['category', 'author'])
+                    ->whereNotNull('published_at')
+                    ->orderByDesc('published_at')
+                    ->limit((int) settings('sections.blog_limit', 6))
+                    ->get();
+            });
         } catch (\Exception $e) {
             Log::warning('SectionRendererService: failed to load blog posts', ['error' => $e->getMessage()]);
             return collect();
