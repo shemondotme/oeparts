@@ -50,6 +50,38 @@
     ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
+@php
+    $manufacturerJsonLdItems = [];
+    foreach ($products->items() as $index => $product) {
+        $manufacturerJsonLdItems[] = [
+            '@type' => 'ListItem',
+            'position' => $index + 1,
+            'item' => [
+                '@type' => 'Product',
+                'name' => $product->oem_number,
+                'sku' => $product->oem_number,
+                'url' => url('/'.$lang.'/parts/'.urlencode($product->oem_number)),
+                'brand' => ['@type' => 'Brand', 'name' => $brandName],
+                'offers' => [
+                    '@type' => 'Offer',
+                    'price' => (string) $product->price,
+                    'priceCurrency' => settings('store.currency', 'EUR'),
+                    'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+                ],
+            ],
+        ];
+    }
+@endphp
+@if(!empty($manufacturerJsonLdItems))
+<script type="application/ld+json">
+{!! json_encode([
+    '@@context' => 'https://schema.org',
+    '@type' => 'ItemList',
+    'numberOfItems' => $products->total(),
+    'itemListElement' => $manufacturerJsonLdItems,
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endif
 @endsection
 
 {{-- ══════════════════════════════════════════════════════════════════════

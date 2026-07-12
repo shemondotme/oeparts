@@ -2,6 +2,8 @@
 
 @section('title', ui_copy('checkout_payment_failed_title', 'checkout.payment_failed_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
+@section('meta_robots')<meta name="robots" content="noindex, nofollow">@endsection
+
 @section('content')
 <div class="relative min-h-screen bg-ivory text-ink">
     <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>

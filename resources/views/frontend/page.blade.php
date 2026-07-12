@@ -49,6 +49,29 @@
     <link rel="alternate" hreflang="x-default" href="{{ url('/en/' . $page->slug) }}">
 @endsection
 
+@section('json_ld')
+<script type="application/ld+json">
+{!! json_encode(array_filter([
+    '@@context' => 'https://schema.org',
+    '@type' => 'WebPage',
+    'name' => $pageTitle,
+    'description' => $metaDescr,
+    'url' => url('/'.$lang.'/'.$page->slug),
+    'dateModified' => $updatedAt->toIso8601String(),
+])) !!}
+</script>
+<script type="application/ld+json">
+{!! json_encode([
+    '@@context' => 'https://schema.org',
+    '@type' => 'BreadcrumbList',
+    'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'), 'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => $pageTitle, 'item' => url('/'.$lang.'/'.$page->slug)],
+    ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endsection
+
 {{-- ══════════════════════════════════════════════════════════════════════
      INDUSTRIAL BLUEPRINT — CMS PAGE
      Catch-all renderer for About / Privacy / Terms / Cookies / etc.

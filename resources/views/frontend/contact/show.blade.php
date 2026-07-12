@@ -22,6 +22,40 @@
     <link rel="alternate" hreflang="x-default" href="{{ url('/en/contact') }}">
 @endsection
 
+@section('json_ld')
+<script type="application/ld+json">
+{!! json_encode(array_filter([
+    '@@context' => 'https://schema.org',
+    '@type' => 'ContactPage',
+    'name' => $contactTitle,
+    'description' => $contactDescr,
+    'url' => url('/'.$lang.'/contact'),
+    'mainEntity' => array_filter([
+        '@type' => 'Organization',
+        'name' => $siteName,
+        'url' => url('/'.$lang.'/'),
+        'contactPoint' => array_filter([
+            '@type' => 'ContactPoint',
+            'email' => $email ?: null,
+            'telephone' => $phone ?: null,
+            'contactType' => 'customer service',
+            'areaServed' => 'EU',
+        ]),
+    ]),
+])) !!}
+</script>
+<script type="application/ld+json">
+{!! json_encode([
+    '@@context' => 'https://schema.org',
+    '@type' => 'BreadcrumbList',
+    'itemListElement' => [
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'), 'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => __('Contact Us'), 'item' => url('/'.$lang.'/contact')],
+    ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endsection
+
 {{-- ══════════════════════════════════════════════════════════════════════
      INDUSTRIAL BLUEPRINT — CONTACT
      Document-style enquiry panel. Spam protection is honeypot + rate-limiting
