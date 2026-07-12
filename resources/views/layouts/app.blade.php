@@ -10,6 +10,11 @@
     $preloaderTiming = $preloaderService->timingConfig();
     $plMin = $preloaderTiming['min_ms'];
     $plMax = $preloaderTiming['max_ms'];
+
+    $defaultOgImagePath = settings('seo.default_og_image', '');
+    $defaultOgImageUrl = $defaultOgImagePath
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($defaultOgImagePath)
+        : null;
 @endphp
 
     {{-- Title --}}
@@ -34,8 +39,8 @@
     <meta property="og:url" content="{{ url()->current() }}">
     @hasSection('og_image')
         @yield('og_image')
-    @else
-        <meta property="og:image" content="{{ settings('seo.og_image', url('/og-default.png')) }}">
+    @elseif($defaultOgImageUrl)
+        <meta property="og:image" content="{{ $defaultOgImageUrl }}">
         <meta property="og:image:width" content="1200">
         <meta property="og:image:height" content="630">
         <meta property="og:image:alt" content="{{ settings('general.site_name', 'OeParts') }} — Genuine OEM Auto Parts">
@@ -44,7 +49,9 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="@yield('og_title', settings('general.site_name', 'OeParts'))">
     <meta name="twitter:description" content="@yield('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.')">
-    <meta name="twitter:image" content="{{ settings('seo.og_image', url('/og-default.png')) }}">
+    @if($defaultOgImageUrl)
+        <meta name="twitter:image" content="{{ $defaultOgImageUrl }}">
+    @endif
     @if(settings('seo.twitter_handle', ''))
         <meta name="twitter:site" content="{{ settings('seo.twitter_handle') }}">
     @endif
@@ -86,7 +93,46 @@
     </style>
     @endif
 
-    {{-- Header scripts (GTM etc.) from settings --}}
+    {{-- Google Tag Manager --}}
+    @if(settings('integrations.gtm_id', ''))
+    <script nonce="{{ csp_nonce() }}">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer',{{ \Illuminate\Support\Js::from(settings('integrations.gtm_id')) }});</script>
+    @endif
+
+    {{-- Google Analytics 4 --}}
+    @if(settings('integrations.ga4_measurement_id', ''))
+    <script async nonce="{{ csp_nonce() }}" src="https://www.googletagmanager.com/gtag/js?id={{ urlencode(settings('integrations.ga4_measurement_id')) }}"></script>
+    <script nonce="{{ csp_nonce() }}">
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', {{ \Illuminate\Support\Js::from(settings('integrations.ga4_measurement_id')) }});
+    </script>
+    @endif
+
+    {{-- Facebook Pixel --}}
+    @if(settings('integrations.fb_pixel_id', ''))
+    <script nonce="{{ csp_nonce() }}">
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', {{ \Illuminate\Support\Js::from(settings('integrations.fb_pixel_id')) }});
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none" alt=""
+        src="https://www.facebook.com/tr?id={{ urlencode(settings('integrations.fb_pixel_id')) }}&ev=PageView&noscript=1"
+    /></noscript>
+    @endif
+
+    {{-- Header scripts (custom) from settings --}}
     @if(settings('general.header_scripts', ''))
     <script nonce="{{ csp_nonce() }}">{!! settings('general.header_scripts', '') !!}</script>
     @endif
@@ -303,6 +349,12 @@
     @endif
 </head>
 <body class="font-sans text-body bg-ink antialiased min-h-screen flex flex-col">
+
+    {{-- Google Tag Manager (noscript) --}}
+    @if(settings('integrations.gtm_id', ''))
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ urlencode(settings('integrations.gtm_id')) }}"
+        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    @endif
 
     @if($showPreloader)
     {{-- ─── Industrial Blueprint · Preloader (copy from settings) ─── --}}

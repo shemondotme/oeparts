@@ -18,7 +18,7 @@ class CleanOldLogs extends Command
      *
      * @var string
      */
-    protected $signature = 'logs:clean {--days=90 : Number of days to retain logs}';
+    protected $signature = 'logs:clean {--days= : Number of days to retain logs (defaults to search.log_retention_days setting)}';
 
     /**
      * The console command description.
@@ -32,7 +32,9 @@ class CleanOldLogs extends Command
      */
     public function handle(): int
     {
-        $days = (int) $this->option('days');
+        $days = $this->option('days') !== null
+            ? (int) $this->option('days')
+            : (int) settings('search.log_retention_days', 90);
         $cutoffDate = now()->subDays($days);
 
         $this->info("Cleaning logs older than {$days} days (before {$cutoffDate->toDateString()})...");

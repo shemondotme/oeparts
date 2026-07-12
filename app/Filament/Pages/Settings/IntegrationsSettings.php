@@ -23,8 +23,8 @@ class IntegrationsSettings extends SettingsPage
     {
         return $schema
             ->components([
-                Section::make('Google Tag Manager & Console')
-                    ->description('Link Tag Manager containers and Search Console tracking metrics.')
+                Section::make('Google Tag Manager')
+                    ->description('Injects the standard GTM container snippet into every storefront page (head script + body noscript iframe).')
                     ->schema([
                         Forms\Components\TextInput::make('gtm_id')
                             ->label('Google Tag Manager Container ID')
@@ -33,12 +33,13 @@ class IntegrationsSettings extends SettingsPage
                             ->maxLength(50)
                             ->default(null),
 
-                        Forms\Components\TextInput::make('gsc_verification')
-                            ->label('Google Search Console Meta Token')
-                            ->placeholder('google-site-verification-token')
-                            ->helperText('The content attribute value from Google verification meta tags')
-                            ->maxLength(255)
-                            ->default(null),
+                        Forms\Components\Placeholder::make('gsc_verification_note')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Search Console verification is set on the <a href="'
+                                . SEOSettings::getUrl()
+                                . '" class="fi-link text-primary-600">SEO &amp; Meta</a> page, alongside the other webmaster verification codes.'
+                            )),
                     ])->columns(2),
 
                 Section::make('Google Analytics 4 (GA4)')
