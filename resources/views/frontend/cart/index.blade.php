@@ -157,7 +157,7 @@
                 <div class="flex flex-wrap items-center justify-center gap-2">
                     @foreach($popularOems as $oem)
                     <a href="{{ url('/'.app()->getLocale().'/parts/'.$oem) }}"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-rule-strong bg-paper
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 border border-ink bg-paper
                               font-mono text-sm font-bold tabular-nums text-ink
                               hover:bg-ink hover:text-ivory hover:border-ink transition-colors">
                         {{ $oem }}
@@ -225,7 +225,7 @@
                                     </div>
                                     <button @click="removeItem(item.id)"
                                             aria-label="{{ ui_copy('cart_remove_item_aria', 'cart.remove_item_aria') }}"
-                                            class="shrink-0 w-7 h-7 flex items-center justify-center border border-rule-strong text-ink-muted hover:bg-red-600 hover:text-ivory hover:border-red-600 transition-colors">
+                                            class="shrink-0 w-7 h-7 flex items-center justify-center border border-ink text-ink-muted hover:bg-red-600 hover:text-ivory hover:border-red-600 transition-colors">
                                         <x-heroicon-s-trash class="w-3 h-3" />
                                     </button>
                                 </div>
@@ -339,7 +339,7 @@
                                 <div class="col-span-1 flex justify-end">
                                     <button @click="removeItem(item.id)"
                                             aria-label="{{ ui_copy('cart_remove_item_aria', 'cart.remove_item_aria') }}"
-                                            class="w-8 h-8 flex items-center justify-center border border-rule-strong text-ink-muted
+                                            class="w-8 h-8 flex items-center justify-center border border-ink text-ink-muted
                                                    hover:bg-red-600 hover:text-ivory hover:border-red-600 transition-colors">
                                         <x-heroicon-s-trash class="w-3.5 h-3.5" />
                                     </button>

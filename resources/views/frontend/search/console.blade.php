@@ -130,7 +130,7 @@
                 @foreach($popularOems as $index => $oem)
                 <li>
                     <a href="{{ url('/'.$lang.'/parts/'.$oem) }}"
-                       class="group flex items-center gap-3 px-4 py-3 border border-rule-strong bg-paper
+                       class="group flex items-center gap-3 px-4 py-3 border border-ink bg-paper
                               hover:bg-ink hover:text-ivory hover:border-ink transition-colors">
                         <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted group-hover:text-ivory/60">
                             {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}
@@ -159,7 +159,7 @@
                 @foreach($featuredBrands as $brand)
                 <li>
                     <a href="{{ url('/'.$lang.'/brand/'.$brand->slug) }}"
-                       class="group flex items-center justify-between gap-3 px-4 py-3 border border-rule-strong bg-paper
+                       class="group flex items-center justify-between gap-3 px-4 py-3 border border-ink bg-paper
                               hover:bg-ink hover:text-ivory hover:border-ink transition-colors">
                         <span class="font-display text-sm font-bold tracking-[-0.01em] text-ink group-hover:text-ivory truncate">
                             {{ trans_field($brand->name) }}

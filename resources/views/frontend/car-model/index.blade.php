@@ -155,7 +155,7 @@
                             $sequenceNum = str_pad(($carModels->currentPage() - 1) * $carModels->perPage() + $loop->iteration, 2, '0', STR_PAD_LEFT);
                         @endphp
                         <a href="{{ route('frontend.car-model.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug, 'model' => $model->slug]) }}"
-                           class="group relative flex flex-col justify-between p-5 border border-rule-strong bg-paper hover:bg-ink hover:border-ink transition-colors">
+                           class="group relative flex flex-col justify-between p-5 border border-ink bg-paper hover:bg-ink hover:border-ink transition-colors">
                             <div>
                                 <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted group-hover:text-amber">
                                     {{ $sequenceNum }} · Platform

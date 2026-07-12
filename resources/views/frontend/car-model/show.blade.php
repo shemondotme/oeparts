@@ -80,7 +80,7 @@
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl break-words">
-                    {{ $modelName }}<span class="text-amber">.</span>
+                    {{ $modelName }}<span class="text-amber-ink">.</span>
                 </h1>
 
                 <div class="mt-5 mb-6">
@@ -295,7 +295,7 @@
                                                 </p>
                                             @endif
                                         </div>
-                                        <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted group-hover:text-amber transition-colors shrink-0" />
+                                        <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted group-hover:text-amber-ink transition-colors shrink-0" />
                                     </a>
                                 </li>
                             @endforeach

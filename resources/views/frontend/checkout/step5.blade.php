@@ -6,7 +6,7 @@
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-            {{ ui_copy('checkout_payment_method_heading', 'checkout.payment_method_heading') }}<span class="text-amber">.</span>
+            {{ ui_copy('checkout_payment_method_heading', 'checkout.payment_method_heading') }}<span class="text-amber-ink">.</span>
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
             {{ ui_copy('checkout_payment_method_subtitle', 'checkout.payment_method_subtitle') }}
@@ -23,7 +23,7 @@
                 <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">01</span>
                 <input type="radio" name="payment_method" value="card"
                        x-model="paymentMethod" required
-                       class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0">
+                       class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
             </div>
             <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0"
                  :class="paymentMethod === 'card' ? 'border-ink bg-paper' : ''">
@@ -44,7 +44,7 @@
                 <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">02</span>
                 <input type="radio" name="payment_method" value="bank_transfer"
                        x-model="paymentMethod" required
-                       class="w-4 h-4 border-ink text-amber focus:ring-amber focus:ring-offset-0">
+                       class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
             </div>
             <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0"
                  :class="paymentMethod === 'bank_transfer' ? 'border-ink bg-paper' : ''">

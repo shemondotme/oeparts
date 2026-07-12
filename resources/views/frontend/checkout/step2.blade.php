@@ -25,7 +25,7 @@
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink leading-tight tracking-[-0.02em]">
-            {{ ui_copy('checkout_shipping_address_heading', 'checkout.shipping_address_heading') }}<span class="text-amber">.</span>
+            {{ ui_copy('checkout_shipping_address_heading', 'checkout.shipping_address_heading') }}<span class="text-amber-ink">.</span>
         </h2>
         <p class="mt-2 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
             {{ ui_copy('checkout_shipping_address_subtitle', 'checkout.shipping_address_subtitle') }}
