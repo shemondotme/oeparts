@@ -18,16 +18,13 @@
                 class="form-select w-full @error('mail_driver') border-red-300 @enderror" required>
                 <option value="smtp" {{ old('mail_driver', 'smtp') == 'smtp' ? 'selected' : '' }}>SMTP</option>
                 <option value="sendmail" {{ old('mail_driver') == 'sendmail' ? 'selected' : '' }}>Sendmail</option>
-                <option value="mailgun" {{ old('mail_driver') == 'mailgun' ? 'selected' : '' }}>Mailgun</option>
-                <option value="ses" {{ old('mail_driver') == 'ses' ? 'selected' : '' }}>Amazon SES</option>
-                <option value="postmark" {{ old('mail_driver') == 'postmark' ? 'selected' : '' }}>Postmark</option>
                 <option value="log" {{ old('mail_driver') == 'log' ? 'selected' : '' }}>Log (testing)</option>
                 <option value="array" {{ old('mail_driver') == 'array' ? 'selected' : '' }}>Array (testing)</option>
             </select>
             @error('mail_driver')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
-            <p class="mt-1 text-xs text-muted">For production, use SMTP or a transactional service</p>
+            <p class="mt-1 text-xs text-muted">For production, use SMTP. To use a transactional service (Mailgun, SES, Postmark, etc.), install with SMTP or Log here, then add the provider's own credentials to <code>.env</code> afterwards — those need extra keys this installer doesn't collect.</p>
         </div>
 
         <div id="smtp-fields" class="space-y-6 mb-6">
@@ -135,6 +132,17 @@
                     <span class="font-medium">Note:</span> You can skip SMTP configuration for now and use the "log" driver for testing. Email settings can be updated later in <code>.env</code> file.
                 </div>
             </div>
+        </div>
+
+        <div class="mb-8 p-4 border border-slate-200 rounded-lg">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" name="import_demo_data" value="1" {{ old('import_demo_data') ? 'checked' : '' }}
+                    class="mt-1 rounded border-slate-300">
+                <span>
+                    <span class="block text-sm font-medium text-slate-700">Import demo catalog data</span>
+                    <span class="block text-xs text-muted mt-0.5">Adds sample manufacturers, OEM parts, and blog posts so the storefront isn't empty on first look. Safe to skip — this never creates extra admin/customer accounts, only your own admin account from the previous step is created.</span>
+                </span>
+            </label>
         </div>
 
         <div class="flex justify-between items-center pt-6 border-t border-slate-200">

@@ -20,6 +20,7 @@ class InstallerController extends Controller
     public function index()
     {
         $requirements = $this->checkRequirements();
+        $recommended = $this->checkRecommended();
         $permissions = $this->checkPermissions();
         $phpVersion = phpversion();
         $phpRequired = '8.2';
@@ -27,6 +28,7 @@ class InstallerController extends Controller
 
         return view('installer.step1-requirements', compact(
             'requirements',
+            'recommended',
             'permissions',
             'phpVersion',
             'phpRequired',
@@ -198,7 +200,7 @@ class InstallerController extends Controller
     public function processEmailSetup(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'mail_driver' => 'required|string|in:smtp,sendmail,mailgun,ses,postmark,log,array',
+            'mail_driver' => 'required|string|in:smtp,sendmail,log,array',
             'mail_host' => 'required_if:mail_driver,smtp|string',
             'mail_port' => 'required_if:mail_driver,smtp|numeric',
             'mail_username' => 'nullable|string',
@@ -224,6 +226,7 @@ class InstallerController extends Controller
             'installer.mail_encryption' => $request->mail_encryption,
             'installer.mail_from_address' => $request->mail_from_address,
             'installer.mail_from_name' => $request->mail_from_name,
+            'installer.import_demo_data' => $request->boolean('import_demo_data'),
         ]);
 
         return redirect()->route('installer.install');
@@ -238,12 +241,16 @@ class InstallerController extends Controller
             // 1. Run migrations from clean state
             Artisan::call('migrate:fresh', ['--force' => true, '--seed' => false]);
 
-            // 2. Run core seeders (roles must run before admin creation for Spatie)
+            // 2. Run core seeders (roles must run before admin creation for Spatie).
+            // SectionsSeeder is not demo-specific — it's the default homepage
+            // builder content (hero, trust bar, etc.); without it the storefront
+            // homepage renders with zero sections configured.
             Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SettingsSeeder',   '--force' => true]);
             Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\LanguagesSeeder',  '--force' => true]);
             Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesSeeder',      '--force' => true]);
             Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SequencesSeeder',  '--force' => true]);
             Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\CarriersSeeder',   '--force' => true]);
+            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SectionsSeeder',   '--force' => true]);
 
             // 3. Create super admin (password already hashed from processAdminAccount)
             $admin = Admin::create([
@@ -257,16 +264,24 @@ class InstallerController extends Controller
             // Assign Spatie role (requires roles to be seeded first)
             $admin->assignRole('super_admin');
 
-            // 4. Persist site settings
+            // 4. Persist site settings. Every one of these keys already exists
+            // (seeded by SettingsSeeder above) under the 'general' group — the
+            // match must include 'group', not just 'key': the settings table's
+            // unique constraint is (group, key), and several groups reuse the
+            // same key names (e.g. 'timezone'), so a key-only match risks
+            // silently updating an unrelated row instead of this one.
             $settingsMap = [
-                'site_name' => ['value' => session('installer.site_name'),      'type' => 'string', 'group' => 'general'],
-                'site_url' => ['value' => session('installer.site_url'),       'type' => 'string', 'group' => 'general'],
-                'default_locale' => ['value' => session('installer.default_locale'), 'type' => 'string', 'group' => 'localization'],
-                'timezone' => ['value' => session('installer.timezone'),       'type' => 'string', 'group' => 'localization'],
+                'site_name' => session('installer.site_name'),
+                'site_url' => session('installer.site_url'),
+                'default_locale' => session('installer.default_locale'),
+                'timezone' => session('installer.timezone'),
             ];
 
-            foreach ($settingsMap as $key => $data) {
-                Setting::updateOrCreate(['key' => $key], $data);
+            foreach ($settingsMap as $key => $value) {
+                Setting::updateOrCreate(
+                    ['group' => 'general', 'key' => $key],
+                    ['value' => $value, 'type' => 'string']
+                );
             }
 
             // 5. Persist email settings to .env
@@ -281,10 +296,22 @@ class InstallerController extends Controller
                 'MAIL_FROM_NAME' => session('installer.mail_from_name', ''),
             ]);
 
-            // 6. Write lock file — installer is now disabled
+            // 6. Optional demo catalog data (manufacturers/parts/blog posts —
+            // never touches admin/customer accounts). Best-effort: a failure
+            // here shouldn't fail an otherwise-successful installation, since
+            // the site is fully usable without it.
+            if (session('installer.import_demo_data')) {
+                try {
+                    Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\DemoDataSeeder', '--force' => true]);
+                } catch (\Throwable $e) {
+                    // swallow — demo data is a nice-to-have, not install-critical
+                }
+            }
+
+            // 7. Write lock file — installer is now disabled
             File::put(storage_path('installed.lock'), 'Installed at '.now()->toDateTimeString());
 
-            // 7. Clear installer session and compiled views
+            // 8. Clear installer session and compiled views
             session()->forget('installer');
             Artisan::call('view:clear');
 
@@ -296,7 +323,8 @@ class InstallerController extends Controller
     }
 
     /**
-     * Check PHP requirements.
+     * Check hard PHP requirements — the app cannot run at all without these,
+     * so they block installation.
      */
     private function checkRequirements()
     {
@@ -309,12 +337,27 @@ class InstallerController extends Controller
             'Mbstring PHP Extension' => extension_loaded('mbstring'),
             'OpenSSL PHP Extension' => extension_loaded('openssl'),
             'PDO PHP Extension' => extension_loaded('pdo'),
-            'Redis PHP Extension' => extension_loaded('redis'),
             'Tokenizer PHP Extension' => extension_loaded('tokenizer'),
             'XML PHP Extension' => extension_loaded('xml'),
         ];
 
         return $requirements;
+    }
+
+    /**
+     * Check recommended-but-optional extensions — informational only, never
+     * blocks installation. The app runs on array/file/sync cache+queue
+     * drivers (local dev, and many shared-hosting production installs);
+     * Redis is only required when the operator has configured it. The PHP
+     * `redis` C extension specifically isn't even the only way to use Redis
+     * from Laravel — `predis/predis` (pure PHP, bundled) works with zero
+     * extension at all.
+     */
+    private function checkRecommended()
+    {
+        return [
+            'Redis PHP Extension' => extension_loaded('redis'),
+        ];
     }
 
     /**
