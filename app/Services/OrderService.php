@@ -71,7 +71,7 @@ class OrderService
 
         return DB::transaction(function () use ($checkoutData, $cart, $userId, $ipAddress, $utmParams) {
             $data = $checkoutData['data'] ?? $checkoutData;
-            $cart->loadMissing('items.product.manufacturer');
+            $cart->loadMissing('items.product.manufacturer', 'items.product.condition');
 
             // Calculate totals
             $cartSummary = $this->cartService->getSummary($cart);

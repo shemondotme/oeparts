@@ -36,9 +36,11 @@ class NewMessagesInbox extends TableWidget
 
     protected function getTableHeading(): string
     {
-        $count = ContactMessage::where('status', ContactStatus::Unread->value)->count();
+        $d = $this->cachedWidgetData(fn (): array => [
+            'count' => ContactMessage::where('status', ContactStatus::Unread->value)->count(),
+        ]);
 
-        return 'New Messages' . ($count > 0 ? " ({$count})" : '');
+        return 'New Messages' . ($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected function getTableHeaderActions(): array

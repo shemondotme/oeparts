@@ -32,6 +32,7 @@ class OrderNotesRelationManager extends RelationManager
     {
         return AdminUi::configureTable($table)
             ->recordTitleAttribute('note')
+            ->modifyQueryUsing(fn ($query) => $query->with('admin'))
             ->columns([
                 Tables\Columns\TextColumn::make('note')
                     ->label('Note')

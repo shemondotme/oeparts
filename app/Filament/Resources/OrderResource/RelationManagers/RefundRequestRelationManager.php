@@ -19,6 +19,7 @@ class RefundRequestRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return AdminUi::configureTable($table)->recordTitleAttribute('reason')
+            ->modifyQueryUsing(fn ($query) => $query->with('user'))
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
                     ->label('Customer')

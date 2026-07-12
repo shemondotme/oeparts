@@ -132,7 +132,7 @@ class CouponResource extends Resource
     public static function table(Table $table): Table
     {
         return AdminUi::configureTable($table)
-            ->modifyQueryUsing(fn ($query) => $query->withCount('usages'))
+            ->modifyQueryUsing(fn ($query) => $query->withCount('usages')->with('user'))
             ->columns([
             Tables\Columns\TextColumn::make('code')
                 ->label('Coupon Code')

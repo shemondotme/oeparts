@@ -218,7 +218,38 @@ class CheckoutController extends Controller
 
         return $this->renderCheckoutStep('frontend.checkout.step3', $checkoutId, $checkout, $lang, [
             'selectedId' => $data['shipping_method_id'] ?? null,
+            'shippingOptions' => $this->buildShippingOptions(),
         ]);
+    }
+
+    /**
+     * Active shipping methods for the step3 picker — was a raw query embedded
+     * directly in the Blade view.
+     */
+    private function buildShippingOptions(): array
+    {
+        return \App\Models\ShippingMethod::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get()
+            ->map(function ($m) {
+                // Display the localized name; keep icon-matching on the stable
+                // English keyword so the heuristic works regardless of locale.
+                $enName = strtolower(is_array($m->name) ? ($m->name['en'] ?? reset($m->name) ?? '') : (string) $m->name);
+
+                return [
+                    'id' => $m->id,
+                    'name' => trans_field($m->name),
+                    'days_min' => $m->estimated_days_min,
+                    'days_max' => $m->estimated_days_max,
+                    'price' => (float) $m->flat_rate,
+                    'icon' => match(true) {
+                        str_contains($enName, 'express') => 'rocket-launch',
+                        str_contains($enName, 'economy') => 'globe-alt',
+                        default => 'truck',
+                    },
+                ];
+            })
+            ->toArray();
     }
 
     private function processStep3(Request $request, string $checkoutId, string $lang)

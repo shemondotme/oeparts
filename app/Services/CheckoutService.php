@@ -246,7 +246,7 @@ class CheckoutService
             }
 
             $data = $checkout['data'];
-            $cart->loadMissing('items.product.manufacturer');
+            $cart->loadMissing('items.product.manufacturer', 'items.product.condition');
 
             // Calculate totals using CartService
             $cartSummary = $this->cartService->getSummary($cart);

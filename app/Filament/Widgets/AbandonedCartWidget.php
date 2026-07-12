@@ -25,9 +25,11 @@ class AbandonedCartWidget extends TableWidget
 
     protected function getTableHeading(): string
     {
-        $count = AbandonedCart::where('recovery_email_sent', false)->count();
+        $d = $this->cachedWidgetData(fn (): array => [
+            'count' => AbandonedCart::where('recovery_email_sent', false)->count(),
+        ]);
 
-        return 'Abandoned Carts' . ($count > 0 ? " ({$count})" : '');
+        return 'Abandoned Carts' . ($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected ?string $pollingInterval = '60s';

@@ -43,6 +43,13 @@ class CouponObserver
 
             $cache->forget("coupon.{$coupon->id}");
             $cache->forget("coupon.code.{$coupon->code}");
+
+            // A renamed code must also drop the OLD code's cache entry — else
+            // a retired code keeps "working" off stale cache until TTL expiry.
+            $originalCode = $coupon->getOriginal('code');
+            if ($originalCode !== null && $originalCode !== $coupon->code) {
+                $cache->forget("coupon.code.{$originalCode}");
+            }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
         }

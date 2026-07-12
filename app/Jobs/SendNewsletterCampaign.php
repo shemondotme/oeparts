@@ -25,39 +25,80 @@ class SendNewsletterCampaign implements ShouldQueue
         $this->onQueue('default');
     }
 
+    /** Subscribers per chunk — bounds memory + query size on large lists. */
+    private const CHUNK_SIZE = 500;
+
     public function handle(): void
     {
         $this->campaign->update(['status' => 'sending']);
 
-        $subscribers = NewsletterSubscriber::where('is_active', true)->get();
+        $sentCount = 0;
+        $failedCount = 0;
 
-        foreach ($subscribers as $subscriber) {
-            $recipient = NewsletterCampaignRecipient::create([
+        // Chunked + batched (was: one create() + one status update() + one
+        // increment() per subscriber — thousands of individual queries on a
+        // large list, risking queue-worker timeouts). Recipient rows are
+        // bulk-inserted per chunk, then their sent/failed status is written
+        // back in at most two queries per chunk instead of one per row.
+        NewsletterSubscriber::where('is_active', true)
+            ->chunkById(self::CHUNK_SIZE, function ($subscribers) use (&$sentCount, &$failedCount) {
+                $recipients = $this->createRecipientsFor($subscribers);
+
+                $sentIds = [];
+                $failedIds = [];
+
+                foreach ($subscribers as $subscriber) {
+                    $recipient = $recipients->get($subscriber->id);
+
+                    try {
+                        Mail::to($subscriber->email)
+                            ->queue(new NewsletterCampaignEmail($this->campaign, $recipient));
+
+                        $sentIds[] = $recipient->id;
+                    } catch (\Exception $e) {
+                        $failedIds[] = $recipient->id;
+                    }
+                }
+
+                if ($sentIds !== []) {
+                    NewsletterCampaignRecipient::whereIn('id', $sentIds)
+                        ->update(['status' => 'sent', 'sent_at' => now()]);
+                }
+                if ($failedIds !== []) {
+                    NewsletterCampaignRecipient::whereIn('id', $failedIds)->update(['status' => 'failed']);
+                }
+
+                $sentCount += count($sentIds);
+                $failedCount += count($failedIds);
+            });
+
+        $this->campaign->update([
+            'status'       => 'sent',
+            'sent_at'      => now(),
+            'sent_count'   => $sentCount,
+            'failed_count' => $failedCount,
+        ]);
+    }
+
+    /**
+     * Bulk-insert a pending recipient row per subscriber in this chunk, then
+     * fetch them back (one INSERT + one SELECT, instead of one create() per
+     * subscriber) keyed by subscriber_id for the send loop above.
+     */
+    private function createRecipientsFor($subscribers): \Illuminate\Support\Collection
+    {
+        NewsletterCampaignRecipient::insert(
+            $subscribers->map(fn ($subscriber) => [
                 'campaign_id'   => $this->campaign->id,
                 'subscriber_id' => $subscriber->id,
                 'email'         => $subscriber->email,
                 'status'        => 'pending',
-            ]);
+            ])->all()
+        );
 
-            try {
-                Mail::to($subscriber->email)
-                    ->queue(new NewsletterCampaignEmail($this->campaign, $recipient));
-
-                $recipient->update([
-                    'status'  => 'sent',
-                    'sent_at' => now(),
-                ]);
-
-                $this->campaign->increment('sent_count');
-            } catch (\Exception $e) {
-                $recipient->update(['status' => 'failed']);
-                $this->campaign->increment('failed_count');
-            }
-        }
-
-        $this->campaign->update([
-            'status'  => 'sent',
-            'sent_at' => now(),
-        ]);
+        return NewsletterCampaignRecipient::where('campaign_id', $this->campaign->id)
+            ->whereIn('subscriber_id', $subscribers->pluck('id'))
+            ->get()
+            ->keyBy('subscriber_id');
     }
 }

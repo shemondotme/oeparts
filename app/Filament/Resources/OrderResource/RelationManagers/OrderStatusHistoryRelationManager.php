@@ -19,6 +19,7 @@ class OrderStatusHistoryRelationManager extends RelationManager
     {
         return AdminUi::configureTable($table)
             ->recordTitleAttribute('new_status')
+            ->modifyQueryUsing(fn ($query) => $query->with('admin'))
             ->columns([
                 Tables\Columns\TextColumn::make('old_status')
                     ->label('From')
