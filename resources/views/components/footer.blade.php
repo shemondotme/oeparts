@@ -5,8 +5,17 @@
     $phone    = settings('contact.phone', '');
     $email    = settings('contact.email', '');
     $hours    = settings('contact.business_hours', 'MON–FRI · 09:00–18:00 CET');
-    $facebook = settings('contact.facebook_url', '');
-    $linkedin = settings('contact.linkedin_url', '');
+    $showSocialInFooter = filter_var(settings('social_links.show_in_footer', true), FILTER_VALIDATE_BOOLEAN);
+    $socialIconStyle    = settings('social_links.footer_icon_style', 'outlined');
+    $socialBadgeClass   = $socialIconStyle === 'filled'
+        ? 'bg-white/10 border border-white/30'
+        : 'border border-white/30';
+    $facebook  = settings('social_links.facebook_url', '');
+    $instagram = settings('social_links.instagram_url', '');
+    $twitter   = settings('social_links.twitter_url', '');
+    $linkedin  = settings('social_links.linkedin_url', '');
+    $youtube   = settings('social_links.youtube_url', '');
+    $tiktok    = settings('social_links.tiktok_url', '');
     $year     = date('Y');
 
     $langSwitchUrl = function($code) {
@@ -192,20 +201,48 @@
                     </div>
                 </dl>
 
-                @if($facebook || $linkedin)
+                @if($showSocialInFooter && ($facebook || $instagram || $twitter || $linkedin || $youtube || $tiktok))
                 <div class="mt-6 flex gap-2">
                     @if($facebook)
                     <a href="{{ $facebook }}" target="_blank" rel="noopener noreferrer"
-                       class="inline-flex items-center justify-center w-9 h-9 border border-white/30 hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       class="inline-flex items-center justify-center w-9 h-9 {{ $socialBadgeClass }} hover:bg-amber hover:border-amber hover:text-ink transition-colors"
                        aria-label="{{ ui_copy('footer_social_facebook', 'footer.social_facebook') }}">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
                     </a>
                     @endif
+                    @if($instagram)
+                    <a href="{{ $instagram }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center w-9 h-9 {{ $socialBadgeClass }} hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       aria-label="{{ ui_copy('footer_social_instagram', 'footer.social_instagram') }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>
+                    </a>
+                    @endif
+                    @if($twitter)
+                    <a href="{{ $twitter }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center w-9 h-9 {{ $socialBadgeClass }} hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       aria-label="{{ ui_copy('footer_social_twitter', 'footer.social_twitter') }}">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                    @endif
                     @if($linkedin)
                     <a href="{{ $linkedin }}" target="_blank" rel="noopener noreferrer"
-                       class="inline-flex items-center justify-center w-9 h-9 border border-white/30 hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       class="inline-flex items-center justify-center w-9 h-9 {{ $socialBadgeClass }} hover:bg-amber hover:border-amber hover:text-ink transition-colors"
                        aria-label="{{ ui_copy('footer_social_linkedin', 'footer.social_linkedin') }}">
                         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z"/></svg>
+                    </a>
+                    @endif
+                    @if($youtube)
+                    <a href="{{ $youtube }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center w-9 h-9 {{ $socialBadgeClass }} hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       aria-label="{{ ui_copy('footer_social_youtube', 'footer.social_youtube') }}">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.016 3.016 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                    @endif
+                    @if($tiktok)
+                    <a href="{{ $tiktok }}" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center justify-center w-9 h-9 {{ $socialBadgeClass }} hover:bg-amber hover:border-amber hover:text-ink transition-colors"
+                       aria-label="{{ ui_copy('footer_social_tiktok', 'footer.social_tiktok') }}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 4c0 3 2 5 5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     </a>
                     @endif
                 </div>

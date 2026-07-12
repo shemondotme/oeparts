@@ -37,8 +37,12 @@
     'url' => settings('general.site_url', url('/')),
     'logo' => settings('general.logo_url', url('/favicon.svg')),
     'sameAs' => array_values(array_filter([
-        settings('contact.facebook_url', ''),
-        settings('contact.linkedin_url', ''),
+        settings('social_links.facebook_url', ''),
+        settings('social_links.instagram_url', ''),
+        settings('social_links.twitter_url', ''),
+        settings('social_links.linkedin_url', ''),
+        settings('social_links.youtube_url', ''),
+        settings('social_links.tiktok_url', ''),
     ])) ?: null,
     'contactPoint' => [
         '@type' => 'ContactPoint',

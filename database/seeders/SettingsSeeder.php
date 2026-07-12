@@ -60,8 +60,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'contact', 'key' => 'address',      'value' => '',                  'type' => $s],
             ['group' => 'contact', 'key' => 'whatsapp',     'value' => '',                  'type' => $s],
             ['group' => 'contact', 'key' => 'viber',        'value' => '',                  'type' => $s],
-            ['group' => 'contact', 'key' => 'facebook_url', 'value' => '',                  'type' => $s],
-            ['group' => 'contact', 'key' => 'linkedin_url', 'value' => '',                  'type' => $s],
             ['group' => 'contact', 'key' => 'hours', 'value' => $ml('Mon–Fri 9:00–18:00'), 'type' => $j],
 
             // ── ANNOUNCEMENT ─────────────────────────────────────────────────────
@@ -339,7 +337,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'social_links', 'key' => 'youtube_url',       'value' => '',       'type' => $s],
             ['group' => 'social_links', 'key' => 'tiktok_url',        'value' => '',       'type' => $s],
             ['group' => 'social_links', 'key' => 'show_in_footer',    'value' => '1',      'type' => $b],
-            ['group' => 'social_links', 'key' => 'footer_icon_style', 'value' => 'outline', 'type' => $s],
+            ['group' => 'social_links', 'key' => 'footer_icon_style', 'value' => 'outlined', 'type' => $s],
 
             // ── Missing individual keys in existing groups ────────────────────────
             ['group' => 'search', 'key' => 'log_failed',        'value' => '1',  'type' => $b],

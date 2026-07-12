@@ -94,22 +94,14 @@ class ContactSettings extends SettingsPage
                 Section::make('Social Profiles')
                     ->description('Links to verified company social pages.')
                     ->schema([
-                        Forms\Components\TextInput::make('facebook_url')
-                            ->label('Facebook Page URL')
-                            ->helperText('Quick link for contact page. For full social link management (display, footer icons), use the dedicated Social Links settings page.')
-                            ->url()
-                            ->placeholder('https://facebook.com/oeparts')
-                            ->maxLength(500)
-                            ->default(null),
-
-                        Forms\Components\TextInput::make('linkedin_url')
-                            ->label('LinkedIn Company URL')
-                            ->helperText('Quick link for contact page. For full social link management (display, footer icons), use the dedicated Social Links settings page.')
-                            ->url()
-                            ->placeholder('https://linkedin.com/company/oeparts')
-                            ->maxLength(500)
-                            ->default(null),
-                    ])->columns(2),
+                        Forms\Components\Placeholder::make('social_profiles_note')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Social profile links (Facebook, LinkedIn, and 4 more platforms), footer display, and icon style are managed on the <a href="'
+                                . SocialLinkSettings::getUrl()
+                                . '" class="fi-link text-primary-600">Social Links</a> page.'
+                            )),
+                    ]),
 
                 Section::make('Form Submission')
                     ->description('Feedback shown to customers after submitting the contact form.')

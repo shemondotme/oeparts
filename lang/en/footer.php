@@ -18,5 +18,9 @@ return [
     'cookies' => 'Cookies',
     'sitemap' => 'Sitemap',
     'social_facebook' => 'Visit our Facebook page',
+    'social_instagram' => 'Visit our Instagram page',
+    'social_twitter' => 'Visit our X (Twitter) page',
     'social_linkedin' => 'Visit our LinkedIn page',
+    'social_youtube' => 'Visit our YouTube channel',
+    'social_tiktok' => 'Visit our TikTok page',
 ];
