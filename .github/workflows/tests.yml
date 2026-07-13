@@ -29,6 +29,13 @@ jobs:
           extensions: mbstring, bcmath, pdo, pdo_sqlite, sqlite3, xml, zip, openssl, fileinfo, curl, gd, intl
           coverage: none
 
+      # Must run before `composer install` — its post-autoload-dump hook boots
+      # the framework (artisan package:discover), and without a .env present
+      # APP_ENV falls back to 'production', which trips AppServiceProvider's
+      # Redis-driver guard (CLAUDE.md rule #7) since CI has no Redis service.
+      - name: Copy test environment
+        run: cp .env.testing .env
+
       - name: Cache Composer packages
         uses: actions/cache@v4
         with:
@@ -38,9 +45,6 @@ jobs:
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Copy test environment
-        run: cp .env.testing .env
 
       - name: Generate app key
         run: php artisan key:generate
