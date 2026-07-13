@@ -17,6 +17,14 @@
 /playwright-report
 /tests/e2e/.auth
 
+# Test-runtime disk output (backup/restore fixtures, generated invoices, etc.
+# from PHPUnit's local/public testing disks) — never real project content.
+/storage/framework/testing/
+
+# Manual pre-refactor code snapshots (ad-hoc, not a real backup mechanism —
+# the actual Backup Engine writes to storage/app/, not here).
+/storage/dashboard-backups/
+
 # Environment — only .env.example and .env.testing are committed
 .env
 .env.*
