@@ -82,7 +82,7 @@ class PreflightService
     {
         $key = 'php';
         $label = 'PHP version';
-        $min = (string) ($manifest['min_php'] ?? '8.2');
+        $min = (string) ($manifest['min_php'] ?? '8.3');
         $max = $manifest['max_php'] ?? null;
 
         if (version_compare(PHP_VERSION, $min, '<')) {
