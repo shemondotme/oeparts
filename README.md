@@ -7,14 +7,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/oeparts/oeparts/actions/workflows/tests.yml">
-    <img src="https://github.com/oeparts/oeparts/actions/workflows/tests.yml/badge.svg" alt="Tests">
+  <a href="https://github.com/shemondotme/oeparts/actions/workflows/tests.yml">
+    <img src="https://github.com/shemondotme/oeparts/actions/workflows/tests.yml/badge.svg" alt="Tests">
   </a>
-  <a href="https://github.com/oeparts/oeparts/releases/latest">
+  <a href="https://github.com/shemondotme/oeparts/releases/latest">
     <img src="https://img.shields.io/github/v/release/oeparts/oeparts" alt="Latest Release">
   </a>
-  <img src="https://img.shields.io/badge/PHP-8.2%2B-blue" alt="PHP 8.2+">
-  <img src="https://img.shields.io/badge/Laravel-11-red" alt="Laravel 11">
+  <img src="https://img.shields.io/badge/PHP-8.3%2B-blue" alt="PHP 8.3+">
+  <img src="https://img.shields.io/badge/Laravel-12-red" alt="Laravel 12">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License">
 </p>
 
@@ -70,7 +70,7 @@ OeParts is a production-ready e-commerce platform built specifically for **genui
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/oeparts/oeparts.git
+git clone https://github.com/shemondotme/oeparts.git
 cd oeparts
 composer install
 cp .env.example .env
@@ -158,7 +158,7 @@ php artisan demo:setup --fresh --seed --yes
 ## Tech Stack
 
 ```
-Backend:   Laravel 11, PHP 8.2+
+Backend:   Laravel 12, PHP 8.3+
 Database:  MySQL 8.0.16+ (utf8mb4_unicode_ci)
 Cache:     Redis 6+
 Frontend:  Blade + Tailwind CSS + Alpine.js
