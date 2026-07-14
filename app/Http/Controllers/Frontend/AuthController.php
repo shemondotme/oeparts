@@ -74,7 +74,20 @@ class AuthController extends Controller
                 $user->forceFill(['email_verified_at' => now()])->save();
             } else {
                 $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());
-                dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
+
+                // dispatch() runs synchronously on the 'sync' queue
+                // connection (local dev, and some shared-hosting installs
+                // per rule #41), so a real SMTP failure throws right here.
+                // The OTP row above already exists regardless, so still
+                // send the user to the code-entry screen rather than
+                // stranding them with a raw crash — "Resend code" there
+                // gives them a natural retry path once the immediate
+                // failure (e.g. a transient SMTP hiccup) clears.
+                try {
+                    dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
 
                 Auth::guard('web')->logout();
 
@@ -142,11 +155,27 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
-        dispatch(new SendWelcomeEmail($user, $lang));
+        // Best-effort — a welcome-email send failure must never abort a
+        // registration that already succeeded.
+        try {
+            dispatch(new SendWelcomeEmail($user, $lang));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         if ($otpEnabled) {
             $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());
-            dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
+
+            // See the matching comment in login() — dispatch() runs
+            // synchronously on 'sync' queue connections, so a real SMTP
+            // failure throws right here. The OTP row already exists, so
+            // still send the user to the code-entry screen; "Resend code"
+            // is their retry path.
+            try {
+                dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
+            } catch (\Throwable $e) {
+                report($e);
+            }
         } else {
             // email_verified_at is intentionally not in User::$fillable (a
             // registration payload must never set it directly) — create()
@@ -257,20 +286,33 @@ class AuthController extends Controller
             ], 422);
         }
 
-        try {
-            $purpose = OtpPurpose::from($request->input('purpose'));
-            $otp = $otpService->generate($request->input('email'), $purpose, $request->ip());
-            dispatch(new SendOtpEmail($request->input('email'), $otp->otp_code, $lang));
+        $purpose = OtpPurpose::from($request->input('purpose'));
 
-            return response()->json([
-                'success' => true,
-                'message' => __('auth.otp_resent_successfully'),
-            ]);
+        try {
+            $otp = $otpService->generate($request->input('email'), $purpose, $request->ip());
         } catch (\RuntimeException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
             ], 429); // Too Many Requests
         }
+
+        // Separate from the cooldown catch above — a real SMTP failure here
+        // (Symfony's TransportException also extends RuntimeException) used
+        // to be caught by the same block and shown to the user as a raw,
+        // untranslated mail-transport error disguised as a 429 cooldown
+        // message. The OTP row already exists, so still report success —
+        // the user is already on the code-entry screen; this is their retry
+        // path, not a fresh request that could itself fail the same way.
+        try {
+            dispatch(new SendOtpEmail($request->input('email'), $otp->otp_code, $lang));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('auth.otp_resent_successfully'),
+        ]);
     }
 }

@@ -17,6 +17,7 @@ use App\Services\CheckoutService;
 use App\Services\OtpService;
 use App\Services\SequenceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -303,6 +304,62 @@ class CheckoutFlowTest extends TestCase
         $checkout = $checkoutService->get($checkoutId);
         $this->assertEquals(2, $checkout['step']);
         $this->assertTrue($checkout['data']['otp_verified']);
+    }
+
+    #[Test]
+    public function guest_checkout_otp_mail_failure_shows_generic_message_not_raw_smtp_error(): void
+    {
+        // Regression: found live via Playwright against a broken local SMTP
+        // config — a real mail-transport failure (Symfony's
+        // TransportException extends RuntimeException) used to be caught by
+        // the same catch(\RuntimeException) block as OtpService::generate()'s
+        // resend-cooldown exception, surfacing the raw SMTP protocol error
+        // text as a toast to the customer.
+        // Real production installs run with APP_DEBUG=false — that's the
+        // behavior this test protects. The testing environment defaults
+        // debug on (.env.testing), which deliberately appends exception
+        // detail to error messages (same pattern as the pre-existing
+        // order-creation-failure handling) for local troubleshooting.
+        config(['app.debug' => false]);
+
+        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail->shouldReceive('send')->andThrow(new \RuntimeException(
+            'Expected response code "250" but got code "530", with message "530 5.7.1 Authentication required".'
+        ));
+        Mail::shouldReceive('to')->andReturn($pendingMail);
+
+        $cart = Cart::create(['guest_token' => 'otp-mail-fail-test', 'expires_at' => now()->addDays(7)]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'price_at_add' => $this->product->price,
+        ]);
+
+        $this->withCookie('guest_token', 'otp-mail-fail-test')
+            ->get('/en/checkout')
+            ->assertOk();
+
+        $response = $this->withCookie('guest_token', 'otp-mail-fail-test')
+            ->post('/en/checkout', ['email' => 'mailfail@example.com']);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error', function ($message) {
+            return $message === __('checkout.otp_send_failed')
+                && ! str_contains($message, '530')
+                && ! str_contains($message, 'SMTP');
+        });
+
+        // The OTP row was still created (generate() ran before the mail
+        // send failure) and the user still lands on the code-entry
+        // sub-step, so "Resend code" remains a working retry path.
+        $checkoutId = Session::get('active_checkout_id');
+        $checkout = app(CheckoutService::class)->get($checkoutId);
+        $this->assertEquals('mailfail@example.com', $checkout['data']['otp_pending_email']);
+        $this->assertDatabaseHas('otps', [
+            'email' => 'mailfail@example.com',
+            'purpose' => OtpPurpose::GuestCheckout,
+        ]);
     }
 
     #[Test]

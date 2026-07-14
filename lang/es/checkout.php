@@ -215,6 +215,7 @@ return [
 
     // Controller flash messages (App\Http\Controllers\Frontend\CheckoutController)
     'verification_code_sent' => 'Código de verificación enviado a su correo.',
+    'otp_send_failed' => 'No pudimos enviar el correo de verificación en este momento. Inténtelo de nuevo en un momento.',
     'order_creation_failed' => 'No pudimos crear su pedido. Inténtelo de nuevo.',
     'guest_checkout_disabled' => 'La compra como invitado no está disponible actualmente. Inicie sesión o cree una cuenta para continuar.',
 ];

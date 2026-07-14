@@ -167,10 +167,11 @@ class CheckoutController extends Controller
             $otpService = app(\App\Services\OtpService::class);
 
             if (empty($otpCode) || $resend) {
-                // Generate and send (or resend) OTP
+                // Generate the code — OtpService::generate() throws a
+                // RuntimeException with a safe, pre-translated message for
+                // the resend cooldown; that's fine to show verbatim.
                 try {
                     $otp = $otpService->generate($email, \App\Enums\OtpPurpose::GuestCheckout, $request->ip());
-                    dispatch(new \App\Jobs\SendOtpEmail($email, $otp->otp_code, $lang));
                 } catch (\RuntimeException $e) {
                     $this->checkoutService->update($checkoutId, [
                         'otp_pending_email' => $email,
@@ -178,6 +179,35 @@ class CheckoutController extends Controller
                     ]);
 
                     return back()->with('error', $e->getMessage())->withInput();
+                }
+
+                // Sending the email is a separate failure mode — dispatch()
+                // runs synchronously on the 'sync' queue connection (used in
+                // local dev, and some shared-hosting installs per rule #41),
+                // so a real SMTP failure throws right here. That used to be
+                // caught by the RuntimeException block above (Symfony's
+                // TransportException extends RuntimeException) and shown to
+                // the customer as a raw, untranslated SMTP protocol error —
+                // confirmed live via Playwright with a broken local SMTP
+                // config. Report it and show a safe generic message instead,
+                // matching the pattern already used for order-creation
+                // failures below.
+                try {
+                    dispatch(new \App\Jobs\SendOtpEmail($email, $otp->otp_code, $lang));
+                } catch (\Throwable $e) {
+                    report($e);
+
+                    $this->checkoutService->update($checkoutId, [
+                        'otp_pending_email' => $email,
+                        'otp_pending_phone' => $phone,
+                    ]);
+
+                    $message = __('checkout.otp_send_failed');
+                    if (config('app.debug')) {
+                        $message .= ' [debug: ' . $e->getMessage() . ']';
+                    }
+
+                    return back()->with('error', $message)->withInput();
                 }
 
                 $this->checkoutService->update($checkoutId, [

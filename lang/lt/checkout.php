@@ -215,6 +215,7 @@ return [
 
     // Controller flash messages (App\Http\Controllers\Frontend\CheckoutController)
     'verification_code_sent' => 'Patvirtinimo kodas išsiųstas jūsų el. paštu.',
+    'otp_send_failed' => 'Šiuo metu nepavyko išsiųsti patvirtinimo laiško. Bandykite dar kartą po akimirkos.',
     'order_creation_failed' => 'Nepavyko sukurti jūsų užsakymo. Bandykite dar kartą.',
     'guest_checkout_disabled' => 'Pirkimas kaip svečias šiuo metu negalimas. Norėdami tęsti, prisijunkite arba susikurkite paskyrą.',
 ];
