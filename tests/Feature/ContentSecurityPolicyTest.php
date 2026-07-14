@@ -10,9 +10,14 @@ use Tests\TestCase;
  * required directive/domain without a test failing — nothing previously
  * asserted this at all (confirmed via grep before writing this file).
  * Airwallex domain grounding: app/Http/Middleware/ContentSecurityPolicy.php's
- * own comment block. A full live Airwallex sandbox run (real credentials,
- * card element mount -> 3DS -> confirm, watching DevTools for CSP
- * violations) is a separate, manual go-live step this test cannot replace.
+ * own comment block.
+ *
+ * The full live Airwallex sandbox run (real credentials, card element mount
+ * -> confirm, watching DevTools for CSP violations) this test couldn't
+ * replace has since happened — it found 3 more required domains beyond the
+ * ones already here (o11y[-demo], checkout-demo, bws[-demo]), each of which
+ * broke the payment step in a real, live-reproduced way when missing (see
+ * the middleware's own comments for exactly how). Asserted here too now.
  */
 class ContentSecurityPolicyTest extends TestCase
 {
@@ -31,23 +36,36 @@ class ContentSecurityPolicyTest extends TestCase
 
         foreach ([
             'https://checkout.airwallex.com',
+            'https://checkout-demo.airwallex.com',
             'https://static.airwallex.com',
             'https://static-demo.airwallex.com',
             'https://api.airwallex.com',
             'https://api-demo.airwallex.com',
             'https://pci-api.airwallex.com',
             'https://pci-api-demo.airwallex.com',
+            'https://o11y.airwallex.com',
+            'https://o11y-demo.airwallex.com',
+            'https://bws.airwallex.com',
+            'https://bws-demo.airwallex.com',
         ] as $domain) {
             $this->assertStringContainsString($domain, $csp, "CSP is missing required Airwallex domain: {$domain}");
         }
 
         // The SDK renders card-input / 3-D Secure iframes — frame-src 'none'
         // (the object-src/base-uri default-deny posture elsewhere in this
-        // policy) would silently kill the payment step.
+        // policy) would silently kill the payment step. checkout-demo (not
+        // just checkout) is the one actually framed when
+        // payment.airwallex_environment is 'sandbox' — confirmed live: this
+        // was missing and blocked the card iframe outright.
         $this->assertMatchesRegularExpression(
             '/frame-src[^;]*checkout\.airwallex\.com/',
             $csp,
             'Airwallex must be explicitly allowed in frame-src for the card/3DS iframe to render.'
+        );
+        $this->assertMatchesRegularExpression(
+            '/frame-src[^;]*checkout-demo\.airwallex\.com/',
+            $csp,
+            'checkout-demo.airwallex.com must be explicitly allowed in frame-src — the sandbox card iframe is framed from this origin, not checkout.airwallex.com.'
         );
     }
 

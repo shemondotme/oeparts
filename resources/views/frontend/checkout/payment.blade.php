@@ -429,7 +429,8 @@
                             locale: '{{ $lang }}'
                         });
 
-                        const dropin = Airwallex.createElement('dropin', {
+                        const dropin = Airwallex.createElement('card', {
+                            intent_id: data.payment_intent_id,
                             client_secret: data.client_secret,
                             currency: data.currency,
                             amount: data.amount,
@@ -451,12 +452,31 @@
             document.getElementById('payment-form').addEventListener('submit', function(e) {
                 if (cardRadio.checked && typeof Airwallex !== 'undefined') {
                     e.preventDefault();
+                    const returnUrl = '{{ route("frontend.checkout.payment.return", ["lang" => $lang, "order" => $order->order_number]) }}';
+                    // confirmPaymentIntent() resolves a promise for a card that
+                    // completes without a 3DS redirect (it only navigates the
+                    // top-level page itself when a redirect step is actually
+                    // required) — this call used to be fire-and-forget with no
+                    // .then()/.catch() at all, so a frictionless-success card
+                    // left the "Processing…" button spinning forever with no
+                    // navigation and no error, confirmed live against the real
+                    // Airwallex sandbox (frictionless test card 4012 0003 0000
+                    // 0005): the payment intent stayed REQUIRES_PAYMENT_METHOD
+                    // and the button spun indefinitely.
                     Airwallex.confirmPaymentIntent({
                         client_secret: document.getElementById('client-secret').value,
-                        element: Airwallex.getElement('dropin'),
+                        element: Airwallex.getElement('card'),
                         confirmParams: {
-                            return_url: '{{ route("frontend.checkout.payment.return", ["lang" => $lang, "order" => $order->order_number]) }}'
+                            return_url: returnUrl
                         }
+                    }).then(() => {
+                        window.location.href = returnUrl;
+                    }).catch((error) => {
+                        console.error('confirmPaymentIntent error:', error);
+                        showPaymentError(error?.message || '{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
+                        submitBtn.disabled = false;
+                        var alpine = getAlpineForm();
+                        if (alpine) alpine.submitting = false;
                     });
                 }
             });
