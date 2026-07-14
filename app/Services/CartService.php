@@ -266,14 +266,20 @@ class CartService
         }
 
         return Cache::remember($cacheKey, 60, function () use ($cart) {
-            // Defensive: only CartController::index()/preview() eager-load
-            // this today. Every other caller (add/remove/update/merge/
-            // applyCoupon, Api\CartController, CouponAjaxController,
-            // OrderService, CheckoutService, ShippingService) hits getSummary()
-            // raw — and this cache is invalidated on every mutation, so a
-            // cache-miss here is common on the highest-frequency endpoint in
-            // the app (navbar cart-count/preview AJAX on every page load).
-            $cart->loadMissing('items.product');
+            // Always a FRESH load, never loadMissing(): most callers
+            // (add/remove/update/merge/applyCoupon, Api\CartController,
+            // CouponAjaxController) hand this method a $cart fetched before
+            // whatever mutation just happened (e.g. update()/remove() load
+            // the cart first, then change a CartItem row, then call this).
+            // loadMissing() would see items.product already loaded from that
+            // earlier, now-stale fetch and skip reloading — returning a
+            // summary computed off pre-mutation data (confirmed by a real
+            // test failure: item_count stayed at the old value after
+            // update/remove once an eager-load was added upstream). A fresh
+            // load() here is exactly 2 queries regardless of cart size (not
+            // per-row N+1) and this whole block only runs on a cache miss
+            // anyway, so the correctness this buys is effectively free.
+            $cart->load('items.product');
 
             $subtotal = '0.00';
             $itemCount = 0;
