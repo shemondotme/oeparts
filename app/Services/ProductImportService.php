@@ -9,14 +9,17 @@ use App\Models\InventoryLog;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ProductImportService
 {
-    private const REQUIRED_COLUMNS = ['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock'];
+    public const REQUIRED_COLUMNS = ['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock'];
 
-    private const LANGUAGES = ['en', 'de', 'lt', 'fr', 'es'];
+    public const LANGUAGES = ['en', 'de', 'lt', 'fr', 'es'];
+
+    public const OPTIONAL_COLUMNS = ['moq', 'delivery_time', 'cross_oem_numbers'];
 
     /** @var array<string, Manufacturer|null> */
     private array $manufacturerCache = [];
@@ -36,13 +39,7 @@ class ProductImportService
     public function process(string $absolutePath, int $adminId, bool $updateExisting): array
     {
         $fileHash = hash_file('sha256', $absolutePath);
-        $recentDuplicate = BulkUpdateLog::where('action_type', BulkUpdateAction::Import->value)
-            ->where('created_at', '>=', now()->subHour())
-            ->whereJsonContains('payload->file_hash', $fileHash)
-            ->exists();
-        if ($recentDuplicate) {
-            Log::warning('Duplicate CSV import detected — same file hash within 1 hour', ['file_hash' => $fileHash]);
-        }
+        $this->checkDuplicateFileWarning($fileHash);
 
         $handle = fopen($absolutePath, 'r');
         if ($handle === false) {
@@ -92,26 +89,55 @@ class ProductImportService
                 'updated' => $updated++,
                 'skipped' => $skipped++,
                 default => (function () use ($result, $rowNum, &$rowErrors, &$skipped) {
-                    $rowErrors[] = "Row {$rowNum}: ".ltrim($result, 'error:');
+                    $rowErrors[] = "Row {$rowNum}: ".$this->stripErrorPrefix($result);
                     $skipped++;
                 })(),
             };
         }
 
         fclose($handle);
-        $this->logBulkAction($adminId, $created + $updated, $created, $updated, $skipped, $rowErrors, $fileHash);
-
-        \Illuminate\Support\Facades\Cache::forget('admin:dashboard:stock_alerts');
-        \Illuminate\Support\Facades\Cache::forget('sitemap_parts');
-        app(CacheService::class)->forgetHeroStats();
-        app(CacheService::class)->forgetPopularOems();
+        $this->recordCompletion($adminId, $created, $updated, $skipped, $rowErrors, $fileHash);
 
         return compact('created', 'updated', 'skipped', 'rowErrors');
     }
 
+    /** True if this exact file was already imported within the last hour (warning only, never blocks). */
+    public function checkDuplicateFileWarning(string $fileHash): void
+    {
+        $recentDuplicate = BulkUpdateLog::where('action_type', BulkUpdateAction::Import->value)
+            ->where('created_at', '>=', now()->subHour())
+            ->whereJsonContains('payload->file_hash', $fileHash)
+            ->exists();
+
+        if ($recentDuplicate) {
+            Log::warning('Duplicate CSV import detected — same file hash within 1 hour', ['file_hash' => $fileHash]);
+        }
+    }
+
+    /** Write the audit-log row and invalidate the caches a bulk import can make stale. Shared by process() and the chunked ImportManager. */
+    public function recordCompletion(int $adminId, int $created, int $updated, int $skipped, array $errors, string $fileHash = ''): void
+    {
+        $this->logBulkAction($adminId, $created + $updated, $created, $updated, $skipped, $errors, $fileHash);
+        $this->invalidateCaches();
+    }
+
+    public function invalidateCaches(): void
+    {
+        Cache::forget('admin:dashboard:stock_alerts');
+        Cache::forget('sitemap_parts');
+        app(CacheService::class)->forgetHeroStats();
+        app(CacheService::class)->forgetPopularOems();
+    }
+
+    /** 'error:message' → 'message' (a plain ltrim() would strip the wrong chars — it treats its 2nd arg as a character mask, not a literal prefix). */
+    public function stripErrorPrefix(string $result): string
+    {
+        return str_starts_with($result, 'error:') ? substr($result, strlen('error:')) : $result;
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function validateHeaders(array $headers): array
+    public function validateHeaders(array $headers): array
     {
         $missing = [];
         foreach (self::REQUIRED_COLUMNS as $col) {
@@ -126,7 +152,7 @@ class ProductImportService
     /**
      * @return 'created'|'updated'|'skipped'|string string starting with 'error:' on failure
      */
-    private function processRow(array $record, int $adminId, bool $updateExisting): string
+    public function processRow(array $record, int $adminId, bool $updateExisting): string
     {
         // ── required-field presence ──────────────────────────────────────────
         foreach (self::REQUIRED_COLUMNS as $col) {

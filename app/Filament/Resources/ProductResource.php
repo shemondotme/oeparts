@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Pages\Catalog\ProductImport;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Filament\Support\AdminUi;
-use App\Jobs\ProcessCsvImport;
 use App\Models\Condition;
 use App\Models\Product;
 use App\Services\OemNormalizerService;
@@ -548,12 +548,12 @@ class ProductResource extends Resource
                 ]),
             ])
             ->headerActions([
-                AdminUi::importCsvHeaderAction(
-                    ProcessCsvImport::class,
-                    'Import Products via CSV',
-                    'Upload a CSV file to bulk import or update products. A background job will process the file asynchronously.',
-                    'Upload a CSV with columns: oem_number, manufacturer, price, condition, etc.',
-                )->authorize(fn (): bool => auth('admin')->user()?->can('import products') ?? false),
+                Actions\Action::make('importCsv')
+                    ->label('Import CSV')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('gray')
+                    ->url(fn (): string => ProductImport::getUrl())
+                    ->authorize(fn (): bool => auth('admin')->user()?->can('import products') ?? false),
             ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-cube')
@@ -565,13 +565,10 @@ class ProductResource extends Resource
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),
-                AdminUi::importCsvHeaderAction(
-                    ProcessCsvImport::class,
-                    'Import Products via CSV',
-                    'Upload a CSV file to bulk import or update products. A background job will process the file asynchronously.',
-                    'Upload a CSV with columns: oem_number, manufacturer, price, condition, etc.',
-                )
-                    ->name('importCsvEmpty')
+                Actions\Action::make('importCsvEmpty')
+                    ->label('Import CSV')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->url(fn (): string => ProductImport::getUrl())
                     ->outlined()
                     ->authorize(fn (): bool => auth('admin')->user()?->can('import products') ?? false),
             ]);

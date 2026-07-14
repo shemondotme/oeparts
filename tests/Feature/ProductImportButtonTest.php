@@ -25,8 +25,8 @@ class ProductImportButtonTest extends TestCase
     {
         // Regression test for Option G: this empty-state button previously had
         // no ->action()/->url() at all and did nothing when clicked. It now
-        // reuses AdminUi::importCsvHeaderAction() (same form/job dispatch as
-        // the real header action), renamed to avoid colliding with it.
+        // links to the ProductImport page (Bulk Import redesign), renamed to
+        // avoid colliding with the header action of the same name.
         $manager = Admin::factory()->create();
         $manager->assignRole('manager'); // has 'import products'
         $this->actingAs($manager, 'admin');

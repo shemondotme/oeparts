@@ -7,7 +7,7 @@ use App\Filament\Resources\MenuResource\Pages\EditMenu;
 use App\Filament\Resources\MenuResource\RelationManagers\MenuItemRelationManager;
 use App\Jobs\GenerateInvoicePdf;
 use App\Jobs\ProcessAirwallexWebhook;
-use App\Jobs\ProcessCsvImport;
+use App\Jobs\RunBackupJob;
 use App\Jobs\SendOrderConfirmationEmail;
 use App\Jobs\SendOtpEmail;
 use App\Jobs\SendRefundProcessedEmail;
@@ -131,7 +131,7 @@ class PhasePerformanceAuditTest extends TestCase
         $retryAfter = config('queue.connections.redis.retry_after');
 
         $this->assertSame(3700, $retryAfter);
-        $this->assertGreaterThan((new ProcessCsvImport('x', 1, false))->timeout, $retryAfter);
+        $this->assertGreaterThan((new RunBackupJob())->timeout, $retryAfter);
     }
 
     #[Test]
