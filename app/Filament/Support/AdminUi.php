@@ -459,49 +459,6 @@ final class AdminUi
     }
 
     /**
-     * Reusable "Import CSV" header action — file upload + update-existing
-     * toggle, dispatches the given queued job. The job class must accept
-     * (string $storagePath, int $adminId, bool $updateExisting) as its
-     * constructor arguments (matching App\Jobs\ProcessCsvImport's shape).
-     */
-    public static function importCsvHeaderAction(
-        string $jobClass,
-        string $modalHeading = 'Import via CSV',
-        string $modalDescription = 'Upload a CSV file to bulk import or update records. A background job will process the file asynchronously.',
-        string $csvHelperText = 'Upload a CSV file.',
-    ): Actions\Action {
-        return Actions\Action::make('importCsv')
-            ->label('Import CSV')
-            ->icon('heroicon-o-arrow-up-tray')
-            ->color('gray')
-            ->modalHeading($modalHeading)
-            ->modalDescription($modalDescription)
-            ->schema([
-                \Filament\Forms\Components\FileUpload::make('csv_file')
-                    ->label('CSV File')
-                    ->acceptedFileTypes(['text/csv', 'application/vnd.ms-excel'])
-                    ->required()
-                    ->helperText($csvHelperText),
-                Toggle::make('update_existing')
-                    ->label('Update Existing Records')
-                    ->helperText('When enabled, records with matching identifiers will be updated instead of skipped.'),
-            ])
-            ->action(function (array $data) use ($jobClass): void {
-                dispatch(new $jobClass(
-                    $data['csv_file'],
-                    auth('admin')->id(),
-                    $data['update_existing'] ?? false,
-                ));
-
-                \Filament\Notifications\Notification::make()
-                    ->title('CSV import started')
-                    ->body('Processing in background')
-                    ->success()
-                    ->send();
-            });
-    }
-
-    /**
      * View / edit / delete grouped into a row action menu.
      *
      * @param  array<int, Actions\Action>  $before
