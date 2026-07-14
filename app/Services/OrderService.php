@@ -203,7 +203,20 @@ class OrderService
             \App\Events\OrderStatusChanged::dispatch($order, $oldStatus, $newStatus);
 
             if ($notifyCustomer) {
-                SendOrderStatusEmail::dispatch($order, $oldStatus, $newStatus);
+                // dispatch() runs synchronously on the 'sync' queue connection
+                // (local dev, and some shared-hosting installs per rule #41),
+                // so a real SMTP failure throws right here — and since this
+                // whole method runs inside DB::transaction(), an unguarded
+                // throw would roll back the status transition itself just
+                // because the notification email failed to send. Confirmed
+                // live (real refund-request submission against a broken local
+                // SMTP config threw the exact same class of error elsewhere
+                // in this flow). The status change must persist regardless.
+                try {
+                    SendOrderStatusEmail::dispatch($order, $oldStatus, $newStatus);
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
 
             // Auto-generate invoice number when order becomes paid

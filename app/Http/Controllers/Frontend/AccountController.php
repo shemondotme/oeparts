@@ -382,11 +382,21 @@ class AccountController extends Controller
             'status'           => \App\Enums\RefundStatus::Pending,
         ]);
 
-        dispatch(new SendRefundStatusEmail(
-            $refund,
-            \App\Enums\RefundStatus::Pending,
-            \App\Enums\RefundStatus::Pending
-        ))->onQueue('critical');
+        // dispatch() runs synchronously on the 'sync' queue connection (local
+        // dev, and some shared-hosting installs per rule #41) — a real SMTP
+        // failure throws right here, uncaught, and turns a genuinely
+        // successful refund submission (already saved above) into a raw 500
+        // error page for the customer. Confirmed live against a broken local
+        // SMTP config.
+        try {
+            dispatch(new SendRefundStatusEmail(
+                $refund,
+                \App\Enums\RefundStatus::Pending,
+                \App\Enums\RefundStatus::Pending
+            ))->onQueue('critical');
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
             ->with('success', __('account.refund_submitted_success'));
