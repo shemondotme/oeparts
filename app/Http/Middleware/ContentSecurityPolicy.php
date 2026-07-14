@@ -45,11 +45,34 @@ class ContentSecurityPolicy
         // watching DevTools for CSP violations) with real Airwallex sandbox
         // credentials still hasn't happened — this project has none configured.
         // If embedded 3-D Secure fails, use redirect-based 3DS.
-        $airwallexScript  = 'https://checkout.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
-        $airwallexFrame   = 'https://checkout.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
+        // checkout-demo.airwallex.com (distinct from checkout.airwallex.com) is
+        // where the actual card-input iframe is framed FROM when
+        // payment.airwallex_environment is 'sandbox' — confirmed live (real
+        // sandbox card checkout): frame-src without it throws "Framing
+        // 'https://checkout-demo.airwallex.com/' violates ... frame-src", and
+        // the dropin element's createElement() call returns null as a result
+        // (same failure mode as the o11y-demo connect-src gap below).
+        $airwallexScript  = 'https://checkout.airwallex.com https://checkout-demo.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
+        $airwallexFrame   = 'https://checkout.airwallex.com https://checkout-demo.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
+        // o11y[-demo].airwallex.com is the Elements SDK's own telemetry beacon
+        // (airtracker/logs) — confirmed via a real live sandbox card checkout
+        // (Playwright, real Airwallex sandbox credentials) that blocking it
+        // doesn't just drop a log line: Airwallex.createElement('dropin', ...)
+        // returned null immediately afterward, so dropin.mount() threw
+        // "Cannot read properties of null (reading 'mount')" and the card
+        // element never rendered — a fully broken card-payment step. This is
+        // exactly the live-verification gap the CSP work here previously
+        // couldn't close (no sandbox credentials were configured at the time).
+        // bws[-demo].airwallex.com ("browser web service") is a further
+        // connect-src call the Elements SDK makes from the top-level page
+        // during card-element session setup — confirmed live the same way
+        // as o11y above (blocked -> console CSP violation on the real
+        // sandbox run), separate from api[-demo]/pci-api[-demo].
         $airwallexConnect = 'https://checkout.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com '
             .'https://api.airwallex.com https://api-demo.airwallex.com '
-            .'https://pci-api.airwallex.com https://pci-api-demo.airwallex.com';
+            .'https://pci-api.airwallex.com https://pci-api-demo.airwallex.com '
+            .'https://o11y.airwallex.com https://o11y-demo.airwallex.com '
+            .'https://bws.airwallex.com https://bws-demo.airwallex.com';
 
         // integrations.* settings (GTM/GA4/Facebook Pixel — see layouts/app.blade.php)
         // load a browser script, call out to their own analytics endpoints, and
