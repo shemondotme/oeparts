@@ -7,13 +7,16 @@ use App\Enums\PaymentGateway;
 use App\Jobs\SendOrderConfirmationEmail;
 use App\Jobs\SendOrderStatusEmail;
 use App\Jobs\SendRefundStatusEmail;
+use App\Models\ActivityLog;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\Payment;
+use App\Models\RefundRequest;
 use App\Models\User;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -36,6 +39,28 @@ class OrderStatusEmailTest extends TestCase
                 && $job->oldStatus === OrderStatus::Pending
                 && $job->newStatus === OrderStatus::Paid;
         });
+    }
+
+    #[Test]
+    public function transition_status_persists_even_when_the_notification_email_fails(): void
+    {
+        // Regression: OrderService::transitionStatus() runs inside
+        // DB::transaction(). SendOrderStatusEmail::dispatch() used to be
+        // unguarded there too — on the 'sync' queue connection a real mail
+        // failure would throw mid-transaction and roll back the status
+        // change itself, just because the notification email failed. The
+        // status transition must survive regardless.
+        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail->shouldReceive('send')->andThrow(new \RuntimeException('SMTP unavailable'));
+        Mail::shouldReceive('to')->andReturn($pendingMail);
+
+        $order = Order::factory()->create(['status' => OrderStatus::Pending]);
+
+        $result = app(OrderService::class)->transitionStatus($order, OrderStatus::Paid, 'Payment verified');
+
+        $this->assertTrue($result);
+        $this->assertSame(OrderStatus::Paid, $order->refresh()->status);
+        $this->assertSame(1, OrderStatusHistory::where('order_id', $order->id)->count());
     }
 
     #[Test]
@@ -149,5 +174,48 @@ class OrderStatusEmailTest extends TestCase
 
         Queue::assertPushed(SendRefundStatusEmail::class);
         Queue::assertNotPushed(SendOrderStatusEmail::class);
+    }
+
+    #[Test]
+    public function customer_refund_request_survives_a_real_mail_send_failure(): void
+    {
+        // Regression: found live via Playwright against a broken local SMTP
+        // config — dispatch(new SendRefundStatusEmail(...)) in
+        // AccountController::requestRefund() ran synchronously (the 'sync'
+        // queue connection replays the real job inline, unlike Queue::fake()
+        // above) and was completely unguarded, so a real mail-transport
+        // failure turned an already-successful refund submission into a raw
+        // 500 error page. Also exercises the same-session finding that
+        // activity_logs.admin_id was NOT NULL, silently dropping the
+        // customer-initiated status-change log entry (LogOrderStatusChange's
+        // own try/catch swallowed the SQL integrity error) — now nullable.
+        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail->shouldReceive('send')->andThrow(new \RuntimeException(
+            'Expected response code "250" but got code "530", with message "530 5.7.1 Authentication required".'
+        ));
+        Mail::shouldReceive('to')->andReturn($pendingMail);
+
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => OrderStatus::Delivered,
+        ]);
+
+        $response = $this->actingAs($user, 'web')
+            ->post(route('frontend.account.order.refund.submit', ['lang' => 'en', 'order' => $order]), [
+                'reason' => 'The part arrived damaged and does not fit my vehicle as described.',
+            ]);
+
+        $response->assertRedirect(route('frontend.account.order.detail', ['lang' => 'en', 'order' => $order]));
+        $this->assertSame(OrderStatus::RefundRequested, $order->refresh()->status);
+        $this->assertDatabaseHas('refund_requests', ['order_id' => $order->id]);
+
+        // The activity-log entry for this customer-initiated transition must
+        // actually persist (admin_id nullable), not be silently dropped.
+        $this->assertDatabaseHas('activity_logs', [
+            'action' => 'order_status_changed',
+            'model_id' => $order->id,
+            'admin_id' => null,
+        ]);
     }
 }

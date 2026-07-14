@@ -284,7 +284,7 @@ class RefundRequestResource extends Resource
                         $record->admin_note = $data['admin_note'] ?? $record->admin_note;
                         $record->save();
 
-                        dispatch(new SendRefundProcessedEmail($record));
+                        static::dispatchSafely(new SendRefundProcessedEmail($record));
 
                         Notification::make()
                             ->title('Refund approved and processed')
@@ -357,7 +357,7 @@ class RefundRequestResource extends Resource
                 $record->status = RefundStatus::Approved;
                 $record->save();
 
-                dispatch(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Approved));
+                static::dispatchSafely(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Approved));
 
                 Notification::make()
                     ->title('Refund approved')
@@ -390,7 +390,7 @@ class RefundRequestResource extends Resource
                 $record->admin_note = $data['admin_note'];
                 $record->save();
 
-                dispatch(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Rejected));
+                static::dispatchSafely(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Rejected));
 
                 Notification::make()
                     ->title('Refund request rejected')
@@ -416,13 +416,31 @@ class RefundRequestResource extends Resource
                 $record->processed_at = now();
                 $record->save();
 
-                dispatch(new SendRefundProcessedEmail($record));
+                static::dispatchSafely(new SendRefundProcessedEmail($record));
 
                 Notification::make()
                     ->title('Refund marked as processed')
                     ->success()
                     ->send();
             });
+    }
+
+    /**
+     * dispatch() runs synchronously on the 'sync' queue connection (local
+     * dev, and some shared-hosting installs per rule #41) — a real SMTP
+     * failure throws right here, uncaught, and would blow up an otherwise
+     * successful refund action with a raw Livewire/Filament error instead of
+     * the intended success notification. The refund status change is
+     * already saved by the time this runs, so a failed notification must
+     * never undo it — report and move on.
+     */
+    private static function dispatchSafely(object $job): void
+    {
+        try {
+            dispatch($job);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public static function getGloballySearchableAttributes(): array
