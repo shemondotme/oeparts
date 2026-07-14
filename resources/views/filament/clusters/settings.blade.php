@@ -8,7 +8,7 @@
                         <x-heroicon-o-adjustments-horizontal class="w-5 h-5" style="color: var(--warning-500);" />
                         System Settings Engine
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Configure your B2B/B2C auto parts platform. Settings apply in real-time across storefront routing, pricing, and API integrations.
                     </p>
                 </div>

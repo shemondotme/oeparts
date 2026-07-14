@@ -8,7 +8,7 @@
                         <x-heroicon-o-clock class="w-5 h-5" style="color: var(--warning-500);" />
                         Settings Activity Log
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Audit trail of all settings modifications across your platform. Shows who changed what and when.
                     </p>
                 </div>

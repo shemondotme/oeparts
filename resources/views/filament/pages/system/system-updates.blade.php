@@ -26,7 +26,7 @@
                         <x-heroicon-o-arrow-up-circle class="w-5 h-5" style="color: var(--warning-500, #f59e0b);" />
                         System Updates
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted, #6b7280);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Check for new OeParts releases. Review the changelog before updating.
                         One-click updates are coming soon — for now, follow the release notes.
                     </p>

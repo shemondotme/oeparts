@@ -9,7 +9,7 @@
                         <x-heroicon-o-arrow-up-tray class="w-5 h-5" style="color: var(--warning-500, #f59e0b);" />
                         Import Products
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted, #6b7280);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Bulk create or update products from a CSV file. Large files are processed in
                         small chunks — safe for files with millions of rows, keep this window open
                         while it runs.
@@ -18,13 +18,13 @@
                 <div class="flex items-center gap-3">
                     <button wire:click="downloadQuickTemplate"
                         class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
-                        style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
+                        style="border: 1px solid rgba(255, 255, 255, 0.2); color: var(--color-text-on-accent, #ffffff);">
                         <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
                         Quick Template
                     </button>
                     <button wire:click="downloadFullTemplate"
                         class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
-                        style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
+                        style="border: 1px solid rgba(255, 255, 255, 0.2); color: var(--color-text-on-accent, #ffffff);">
                         <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
                         Full Template
                     </button>
