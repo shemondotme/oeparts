@@ -18,6 +18,15 @@ class SecuritySettings extends SettingsPage
     {
         return $schema
             ->components([
+                Section::make('OTP / Two-Step Verification')
+                    ->description('Master switch for every storefront OTP step. This is the single control for pausing verification during testing/staging.')
+                    ->schema([
+                        Forms\Components\Toggle::make('otp_enabled')
+                            ->label('Enable OTP / Two-Step Verification (Storefront)')
+                            ->helperText('When OFF, every storefront OTP step is skipped entirely — new accounts and guest checkouts are auto-verified with no code sent. Use this to unblock testing when no test SMTP is available. Always re-enable before going live.')
+                            ->default(true),
+                    ]),
+
                 Section::make('Rate Limiting & Protection')
                     ->description('Set throttle parameters to prevent password brute-forcing and form submission spams.')
                     ->schema([

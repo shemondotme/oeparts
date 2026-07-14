@@ -124,6 +124,18 @@ class OtpService
     }
 
     /**
+     * Master kill switch for storefront OTP/Two-Step verification
+     * (Admin → Settings → Security). When disabled, every storefront OTP
+     * touchpoint (registration/login email verify, guest checkout) must
+     * skip its verification step entirely rather than calling generate()/
+     * verify() — this is the single source of truth callers check first.
+     */
+    public function enabled(): bool
+    {
+        return filter_var(settings('security.otp_enabled', true), FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
      * Check if there is a valid (unexpired, unverified) OTP for the given email+purpose.
      */
     public function hasPending(string $email, OtpPurpose $purpose): bool

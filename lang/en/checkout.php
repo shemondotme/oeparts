@@ -56,6 +56,14 @@ return [
     'email_address_label' => 'Email address',
     'phone_label' => 'Phone',
     'optional' => '(optional)',
+    'otp_step_heading' => 'Verify your email',
+    'otp_step_subtitle' => 'Security · Verification · Guest checkout',
+    'otp_sent_to' => 'We emailed a verification code to',
+    'otp_code_label' => 'Verification code',
+    'otp_help_note' => 'Enter the code to continue as a guest.',
+    'resend_code' => 'Resend code',
+    'use_different_email' => 'Use a different email',
+    'verify_and_continue' => 'Verify & Continue',
 
     // Step 2 — address
     'shipping_address_heading' => 'Shipping address',

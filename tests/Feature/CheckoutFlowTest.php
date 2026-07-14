@@ -215,6 +215,94 @@ class CheckoutFlowTest extends TestCase
         $this->assertEquals('pending', $order->status->value);
         $this->assertEquals(1, $order->items->count()); // 1 order item with quantity 2
         $this->assertEquals(150.00 * 2, $order->subtotal);
+
+        // Regression: the auto-created guest account must actually be
+        // marked email-verified. email_verified_at is intentionally not in
+        // User::$fillable, so a plain User::create([..., 'email_verified_at'
+        // => now()]) silently discards it — every guest account created
+        // after checkout was left permanently unverified until this was
+        // fixed to use forceFill().
+        $guestUser = User::where('email', 'guest@example.com')->first();
+        $this->assertNotNull($guestUser, 'Guest account should be auto-created');
+        $this->assertNotNull($guestUser->email_verified_at, 'Auto-created guest account should be marked verified');
+    }
+
+    #[Test]
+    public function guest_checkout_otp_step_flashes_status_and_supports_change_email(): void
+    {
+        $cart = Cart::create([
+            'guest_token' => 'otp-ui-test',
+            'expires_at' => now()->addDays(7),
+        ]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'price_at_add' => $this->product->price,
+        ]);
+
+        $this->withCookie('guest_token', 'otp-ui-test')
+            ->get('/en/checkout')
+            ->assertOk();
+
+        $checkoutId = Session::get('active_checkout_id');
+        $checkoutService = app(CheckoutService::class);
+
+        // Initial submit with no code — should send an OTP, flash a
+        // 'success' message (the checkout layout only renders
+        // error/success/warning session keys — the controller used to flash
+        // 'status', which the layout never displayed), and persist the
+        // pending email/phone so the view can render the code-entry state.
+        $response = $this->withCookie('guest_token', 'otp-ui-test')
+            ->from('/en/checkout')
+            ->post('/en/checkout', [
+                'email' => 'pending@example.com',
+                'phone' => '+49123456',
+            ]);
+        $response->assertRedirect('/en/checkout');
+        $response->assertSessionHas('success');
+
+        $checkout = $checkoutService->get($checkoutId);
+        $this->assertEquals('pending@example.com', $checkout['data']['otp_pending_email']);
+        $this->assertEquals('+49123456', $checkout['data']['otp_pending_phone']);
+        $this->assertEquals(1, $checkout['step'], 'Should still be on step 1 awaiting the code');
+
+        $firstOtp = \App\Models\Otp::where('email', 'pending@example.com')
+            ->where('purpose', OtpPurpose::GuestCheckout)
+            ->first();
+        $this->assertNotNull($firstOtp);
+
+        // Resending immediately hits OtpService's own cooldown — the
+        // 'resend' flag correctly routes back into the same
+        // generate()-or-error branch as the initial send.
+        $response = $this->withCookie('guest_token', 'otp-ui-test')
+            ->post('/en/checkout', [
+                'email' => 'pending@example.com',
+                'phone' => '+49123456',
+                'resend' => '1',
+            ]);
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+
+        // "Use a different email" clears the pending state without sending
+        // anything new.
+        $response = $this->withCookie('guest_token', 'otp-ui-test')
+            ->post('/en/checkout', ['change_email' => '1']);
+        $response->assertRedirect();
+        $checkout = $checkoutService->get($checkoutId);
+        $this->assertNull($checkout['data']['otp_pending_email']);
+
+        // Verifying with the correct code advances to step 2.
+        $response = $this->withCookie('guest_token', 'otp-ui-test')
+            ->post('/en/checkout', [
+                'email' => 'pending@example.com',
+                'phone' => '+49123456',
+                'otp' => $firstOtp->otp_code,
+            ]);
+        $response->assertRedirect();
+        $checkout = $checkoutService->get($checkoutId);
+        $this->assertEquals(2, $checkout['step']);
+        $this->assertTrue($checkout['data']['otp_verified']);
     }
 
     #[Test]

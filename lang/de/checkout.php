@@ -56,6 +56,14 @@ return [
     'email_address_label' => 'E-Mail-Adresse',
     'phone_label' => 'Telefon',
     'optional' => '(optional)',
+    'otp_step_heading' => 'E-Mail verifizieren',
+    'otp_step_subtitle' => 'Sicherheit · Verifizierung · Gast-Checkout',
+    'otp_sent_to' => 'Wir haben einen Verifizierungscode gesendet an',
+    'otp_code_label' => 'Verifizierungscode',
+    'otp_help_note' => 'Geben Sie den Code ein, um als Gast fortzufahren.',
+    'resend_code' => 'Code erneut senden',
+    'use_different_email' => 'Andere E-Mail verwenden',
+    'verify_and_continue' => 'Verifizieren & Fortfahren',
 
     // Step 2 — address
     'shipping_address_heading' => 'Lieferadresse',

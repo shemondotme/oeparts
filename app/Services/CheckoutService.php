@@ -53,6 +53,8 @@ class CheckoutService
                 'contact_phone' => null,
                 'guest_email' => null,
                 'otp_verified' => false,
+                'otp_pending_email' => null,
+                'otp_pending_phone' => null,
                 'shipping_address' => null,
                 'shipping_method_id' => null,
                 'payment_method' => settings('checkout.default_payment_method', 'card'),
@@ -171,7 +173,7 @@ class CheckoutService
             'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes',
             'vat_number', 'vat_valid', 'vat_exempt', 'coupon_code', 'company_name',
             'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'is_b2b', 'customer_note',
-            'urgent_processing'
+            'urgent_processing', 'otp_pending_email', 'otp_pending_phone',
         ];
 
         foreach (['step', 'expires_at', 'created_at', 'cart_id'] as $topLevelKey) {
@@ -440,8 +442,13 @@ class CheckoutService
                 'name' => 'Guest ' . explode('@', $email)[0],
                 'email' => $email,
                 'password' => bcrypt($password),
-                'email_verified_at' => now(),
             ]);
+            // email_verified_at is intentionally not in User::$fillable, so
+            // create() silently discarded it here — every auto-created guest
+            // account was left permanently unverified despite the customer
+            // having already proven ownership of the email (guest checkout
+            // OTP, or a successful order). Set it via forceFill instead.
+            $user->forceFill(['email_verified_at' => now()])->save();
 
             $order->update(['user_id' => $user->id]);
 

@@ -31,7 +31,8 @@ class CheckoutController extends Controller
 
     private function guestOtpRequired(): bool
     {
-        return filter_var(settings('cart.otp_required_guest', true), FILTER_VALIDATE_BOOLEAN);
+        return app(\App\Services\OtpService::class)->enabled()
+            && filter_var(settings('cart.otp_required_guest', true), FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
@@ -119,11 +120,28 @@ class CheckoutController extends Controller
      */
     private function showStep1(string $checkoutId, array $checkout, string $lang)
     {
-        return $this->renderCheckoutStep('frontend.checkout.step1', $checkoutId, $checkout, $lang);
+        return $this->renderCheckoutStep('frontend.checkout.step1', $checkoutId, $checkout, $lang, [
+            'otpPending' => !empty($checkout['data']['otp_pending_email']),
+        ]);
     }
 
     private function processStep1(Request $request, string $checkoutId, string $lang)
     {
+        $user = Auth::user();
+        $isGuest = !$user;
+
+        // Escape hatch from the OTP-pending sub-step: clear the pending
+        // state and fall back to the plain email/phone form. No OTP is
+        // generated/sent by this branch.
+        if ($isGuest && $request->boolean('change_email')) {
+            $this->checkoutService->update($checkoutId, [
+                'otp_pending_email' => null,
+                'otp_pending_phone' => null,
+            ]);
+
+            return redirect()->route('frontend.checkout', compact('lang'));
+        }
+
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:50',
@@ -134,45 +152,61 @@ class CheckoutController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $user = Auth::user();
-        $isGuest = !$user;
-        $otpVerified = true;
-
         if ($isGuest && !$this->guestCheckoutAllowed()) {
             return redirect()->route('frontend.cart.index', compact('lang'))
                 ->with('error', __('checkout.guest_checkout_disabled'))
                 ->with('show_auth_modal', true);
         }
 
+        $email = $request->input('email');
+        $phone = $request->input('phone');
+
         if ($isGuest && $this->guestOtpRequired()) {
-            $email = $request->input('email');
             $otpCode = $request->input('otp');
+            $resend = $request->boolean('resend');
             $otpService = app(\App\Services\OtpService::class);
 
-            if (empty($otpCode)) {
-                // Generate and send OTP
+            if (empty($otpCode) || $resend) {
+                // Generate and send (or resend) OTP
                 try {
                     $otp = $otpService->generate($email, \App\Enums\OtpPurpose::GuestCheckout, $request->ip());
                     dispatch(new \App\Jobs\SendOtpEmail($email, $otp->otp_code, $lang));
                 } catch (\RuntimeException $e) {
+                    $this->checkoutService->update($checkoutId, [
+                        'otp_pending_email' => $email,
+                        'otp_pending_phone' => $phone,
+                    ]);
+
                     return back()->with('error', $e->getMessage())->withInput();
                 }
 
-                return back()->with('status', __('checkout.verification_code_sent'))->withInput();
+                $this->checkoutService->update($checkoutId, [
+                    'otp_pending_email' => $email,
+                    'otp_pending_phone' => $phone,
+                ]);
+
+                return back()->with('success', __('checkout.verification_code_sent'))->withInput();
             }
 
             // Verify OTP
             $result = $otpService->verify($email, $otpCode, \App\Enums\OtpPurpose::GuestCheckout);
             if ($result !== \App\Services\OtpService::RESULT_OK) {
+                $this->checkoutService->update($checkoutId, [
+                    'otp_pending_email' => $email,
+                    'otp_pending_phone' => $phone,
+                ]);
+
                 return back()->withErrors(['otp' => $otpService->message($result)])->withInput();
             }
         }
 
         $this->checkoutService->update($checkoutId, [
-            'contact_email' => $request->input('email'),
-            'contact_phone' => $request->input('phone'),
-            'guest_email' => $isGuest ? $request->input('email') : null,
-            'otp_verified' => $otpVerified,
+            'contact_email' => $email,
+            'contact_phone' => $phone,
+            'guest_email' => $isGuest ? $email : null,
+            'otp_verified' => true,
+            'otp_pending_email' => null,
+            'otp_pending_phone' => null,
         ]);
 
         $this->checkoutService->advance($checkoutId);

@@ -65,20 +65,27 @@ class AuthController extends Controller
             ], 403);
         }
 
+        $otpService = app(OtpService::class);
+
         if (is_null($user->email_verified_at)) {
-            $otpService = app(OtpService::class);
-            $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());
-            dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
+            if (! $otpService->enabled()) {
+                // Master OTP switch is off — treat as verified rather than
+                // leaving the account permanently stuck unverified.
+                $user->forceFill(['email_verified_at' => now()])->save();
+            } else {
+                $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());
+                dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
 
-            Auth::guard('web')->logout();
+                Auth::guard('web')->logout();
 
-            return response()->json([
-                'success' => true,
-                'message' => __('auth.email_verification_required'),
-                'data' => [
-                    'requires_otp' => true,
-                ],
-            ]);
+                return response()->json([
+                    'success' => true,
+                    'message' => __('auth.email_verification_required'),
+                    'data' => [
+                        'requires_otp' => true,
+                    ],
+                ]);
+            }
         }
 
         return response()->json([
@@ -124,26 +131,38 @@ class AuthController extends Controller
             ], 422);
         }
 
+        $otpService = app(OtpService::class);
+        $otpEnabled = $otpService->enabled();
+
         $user = User::create([
             'name' => $request->input('name'),
             'email' => $request->input('email'),
             'phone' => $request->input('phone'),
             'password' => Hash::make($request->input('password')),
             'is_active' => true,
-            'email_verified_at' => null,
         ]);
 
         dispatch(new SendWelcomeEmail($user, $lang));
 
-        $otpService = app(OtpService::class);
-        $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());
-        dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
+        if ($otpEnabled) {
+            $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());
+            dispatch(new SendOtpEmail($user->email, $otp->otp_code, $lang));
+        } else {
+            // email_verified_at is intentionally not in User::$fillable (a
+            // registration payload must never set it directly) — create()
+            // would silently discard it, so it's set via forceFill instead.
+            $user->forceFill(['email_verified_at' => now()])->save();
+            // Master OTP switch is off — the account is already verified
+            // above, so sign the new user in immediately instead of making
+            // them go through a login step that no longer needs one.
+            Auth::guard('web')->login($user);
+        }
 
         return response()->json([
             'success' => true,
             'message' => __('auth.registration_successful'),
             'data' => [
-                'requires_otp' => true,
+                'requires_otp' => $otpEnabled,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
