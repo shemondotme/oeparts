@@ -56,6 +56,14 @@ return [
     'email_address_label' => 'El. pašto adresas',
     'phone_label' => 'Telefonas',
     'optional' => '(nebūtina)',
+    'otp_step_heading' => 'Patvirtinkite el. paštą',
+    'otp_step_subtitle' => 'Sauga · Patvirtinimas · Pirkimas kaip svečias',
+    'otp_sent_to' => 'Išsiuntėme patvirtinimo kodą adresu',
+    'otp_code_label' => 'Patvirtinimo kodas',
+    'otp_help_note' => 'Įveskite kodą, kad tęstumėte kaip svečias.',
+    'resend_code' => 'Siųsti kodą dar kartą',
+    'use_different_email' => 'Naudoti kitą el. paštą',
+    'verify_and_continue' => 'Patvirtinti ir tęsti',
 
     // Step 2 — address
     'shipping_address_heading' => 'Pristatymo adresas',

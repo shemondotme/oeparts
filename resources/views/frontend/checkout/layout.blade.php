@@ -191,6 +191,11 @@
                             </a>
                         @endif
 
+                        {{-- Step 1's own OTP-verification sub-step renders its own
+                             submit buttons (Verify & Continue / Resend) inside the
+                             same <form> — the generic Continue button below would
+                             duplicate/conflict with those, so it's suppressed. --}}
+                        @unless($otpPending ?? false)
                         <button type="submit" form="checkout-form"
                                 :disabled="submitting"
                                 class="bp-btn-primary justify-center sm:min-w-[240px]"
@@ -210,6 +215,7 @@
                                 <x-heroicon-s-arrow-long-right class="w-5 h-5" x-show="!submitting" x-cloak />
                             @endif
                         </button>
+                        @endunless
                     </div>
                 </div>
 

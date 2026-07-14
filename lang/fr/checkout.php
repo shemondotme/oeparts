@@ -56,6 +56,14 @@ return [
     'email_address_label' => 'Adresse e-mail',
     'phone_label' => 'Téléphone',
     'optional' => '(facultatif)',
+    'otp_step_heading' => 'Vérifiez votre e-mail',
+    'otp_step_subtitle' => "Sécurité · Vérification · Achat invité",
+    'otp_sent_to' => 'Nous avons envoyé un code de vérification à',
+    'otp_code_label' => 'Code de vérification',
+    'otp_help_note' => "Entrez le code pour continuer en tant qu'invité.",
+    'resend_code' => 'Renvoyer le code',
+    'use_different_email' => 'Utiliser un autre e-mail',
+    'verify_and_continue' => 'Vérifier et continuer',
 
     // Step 2 — address
     'shipping_address_heading' => 'Adresse de livraison',
