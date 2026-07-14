@@ -43,16 +43,30 @@ class PaymentSettings extends SettingsPage
                         return;
                     }
 
-                    $baseUrl = $env === 'production'
+                    // Must match PaymentService::createAirwallexIntent() and
+                    // CheckoutController::paymentIntent()'s own check ('live') —
+                    // this previously checked 'production', a value neither of
+                    // those ever writes/reads, so selecting "Production (Live
+                    // Mode)" below silently never switched the actual checkout
+                    // off the sandbox API. Confirmed via a live sandbox test run.
+                    $baseUrl = $env === 'live'
                         ? 'https://api.airwallex.com'
                         : 'https://api-demo.airwallex.com';
 
                     try {
+                        // Airwallex has no GET /authentication/query endpoint — the
+                        // real (and only) way to verify credentials is the same
+                        // login exchange every other call needs: POST
+                        // /authentication/login with x-client-id/x-api-key headers,
+                        // returning a bearer token on success. Confirmed against
+                        // the real sandbox API directly (this previously hit a
+                        // nonexistent endpoint and would report "Connection
+                        // failed" even for valid credentials).
                         $response = Http::withHeaders([
                             'x-client-id' => $clientId,
                             'x-api-key' => $apiKey,
                             'Content-Type' => 'application/json',
-                        ])->timeout(10)->get("{$baseUrl}/api/v1/authentication/query");
+                        ])->timeout(10)->post("{$baseUrl}/api/v1/authentication/login", (object) []);
 
                         if ($response->successful()) {
                             Notification::make()
@@ -89,7 +103,10 @@ class PaymentSettings extends SettingsPage
                             ->label('Gateway API Environment')
                             ->options([
                                 'sandbox' => 'Sandbox (Testing Mode)',
-                                'production' => 'Production (Live Mode)',
+                                // Value must be 'live' — PaymentService and
+                                // CheckoutController both check for exactly
+                                // that string, not 'production'.
+                                'live' => 'Production (Live Mode)',
                             ])
                             ->default('sandbox'),
 

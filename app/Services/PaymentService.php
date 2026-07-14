@@ -71,8 +71,10 @@ class PaymentService
         ];
 
         try {
+            $token = $this->airwallexAuthToken($baseUrl, $clientId, $apiKey);
+
             $response = Http::withHeaders([
-                'Authorization' => "Bearer {$apiKey}",
+                'Authorization' => "Bearer {$token}",
                 'Content-Type' => 'application/json',
             ])->timeout(15)->retry(3, 1000)->post("{$baseUrl}/pa/payment_intents/create", $payload);
 
@@ -108,6 +110,37 @@ class PaymentService
             ]);
             throw new \RuntimeException('Payment gateway error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Exchange the configured Client ID / API Key for a short-lived bearer
+     * token via Airwallex's own login endpoint. The raw API key is NOT a
+     * bearer token — every other Airwallex REST call requires this exchange
+     * first. Confirmed against the real sandbox API (POST
+     * /api/v1/authentication/login with x-client-id/x-api-key headers
+     * returns {token, expires_at}); the previous code skipped this and sent
+     * the API key itself as "Authorization: Bearer {$apiKey}", which
+     * Airwallex always rejects — every payment intent creation would have
+     * failed. Tokens last ~30 minutes; cached for 25 to avoid a login round
+     * trip on every checkout while staying safely inside the real expiry.
+     */
+    private function airwallexAuthToken(string $baseUrl, string $clientId, string $apiKey): string
+    {
+        $cacheKey = 'airwallex_auth_token:' . md5($baseUrl . $clientId);
+
+        return Cache::remember($cacheKey, now()->addMinutes(25), function () use ($baseUrl, $clientId, $apiKey) {
+            $response = Http::withHeaders([
+                'x-client-id' => $clientId,
+                'x-api-key' => $apiKey,
+                'Content-Type' => 'application/json',
+            ])->timeout(15)->post("{$baseUrl}/authentication/login", (object) []);
+
+            if (! $response->successful() || ! $response->json('token')) {
+                throw new \RuntimeException('Airwallex authentication failed: HTTP ' . $response->status());
+            }
+
+            return $response->json('token');
+        });
     }
 
     /**
