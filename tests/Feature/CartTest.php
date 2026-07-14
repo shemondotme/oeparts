@@ -12,6 +12,7 @@ use App\Models\Manufacturer;
 use App\Models\Setting;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -388,5 +389,57 @@ class CartTest extends TestCase
         $this->assertArrayHasKey('condition_text', $items[0]);
         $this->assertEquals('new', $items[0]['condition_slug']);
         $this->assertEquals('New', $items[0]['condition_name']);
+    }
+
+    #[Test]
+    public function cart_summary_query_count_does_not_scale_with_item_count(): void
+    {
+        // Regression test for the Go-Live Blockers performance chunk:
+        // CartService::getSummary() used loadMissing('items.product'), which
+        // silently no-ops (stale data) once anything upstream in the same
+        // request already touched the relation, and — the actual audit
+        // concern — leaves every genuinely-cold caller doing a fresh N+1 on
+        // ->product per item. Now always does a flat load('items.product')
+        // (exactly 2 queries) regardless of item count.
+        $this->postJson('/en/cart/add', [
+            'product_id' => $this->product1->id,
+            'quantity' => 1,
+        ])->assertStatus(200);
+
+        DB::enableQueryLog();
+        $this->getJson('/en/cart/summary')->assertStatus(200);
+        $queryCountSmall = count(DB::getQueryLog());
+        DB::flushQueryLog();
+        DB::disableQueryLog();
+
+        for ($i = 0; $i < 6; $i++) {
+            $product = Product::create([
+                'manufacturer_id' => $this->manufacturer->id,
+                'oem_number' => "EXTRA-{$i}",
+                'normalized_oem' => "EXTRA{$i}",
+                'name' => "Extra Product {$i}",
+                'description' => 'test',
+                'price' => 10.00,
+                'condition_id' => $this->condition->id,
+                'is_in_stock' => true,
+                'is_active' => true,
+            ]);
+
+            $this->postJson('/en/cart/add', [
+                'product_id' => $product->id,
+                'quantity' => 1,
+            ])->assertStatus(200);
+        }
+
+        DB::enableQueryLog();
+        $this->getJson('/en/cart/summary')->assertStatus(200);
+        $queryCountLarge = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        $this->assertSame(
+            $queryCountSmall,
+            $queryCountLarge,
+            "Query count scaled with item count (1 item: {$queryCountSmall} queries, 7 items: {$queryCountLarge} queries) — CartService::getOrCreateCart() is not eager-loading items.product."
+        );
     }
 }

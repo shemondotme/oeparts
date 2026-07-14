@@ -42,7 +42,17 @@ class SettingsSyncServiceProvider extends ServiceProvider
 
                 $replyTo = $emailSettings->get('reply_to')?->value;
                 if ($replyTo) {
-                    config(['mail.reply_to.address' => $replyTo]);
+                    // Laravel's MailManager::setGlobalAddress() unconditionally reads
+                    // mail.reply_to (for every mailer resolution, not just mailables
+                    // that opt in) and dereferences both 'address' and 'name' — setting
+                    // only 'address' throws "Undefined array key 'name'" the moment ANY
+                    // mail is sent, breaking OTP/order-confirmation/contact emails
+                    // sitewide the instant an operator configures a Reply-To address.
+                    // Confirmed via a live reproduction (login -> SendOtpEmail -> 500).
+                    config([
+                        'mail.reply_to.address' => $replyTo,
+                        'mail.reply_to.name' => config('mail.from.name'),
+                    ]);
                 }
             }
 

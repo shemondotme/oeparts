@@ -33,14 +33,21 @@ class ContentSecurityPolicy
         // is dead (script blocked, connect blocked, and frame-src 'none' blocks
         // the card iframe). Grounded in the integration (payment.blade.php loads
         // https://checkout.airwallex.com/...; PaymentService uses api[-demo].
-        // airwallex.com). Only Airwallex origins are added — everything else stays
-        // locked down. NOTE: reconcile with Airwallex's current published CSP list
-        // and validate in their SANDBOX with real credentials before go-live —
-        // this project has no Airwallex keys configured, so it cannot be exercised
-        // end-to-end here. If embedded 3-D Secure fails, use redirect-based 3DS.
-        $airwallexScript  = 'https://checkout.airwallex.com https://static.airwallex.com';
-        $airwallexFrame   = 'https://checkout.airwallex.com https://static.airwallex.com';
-        $airwallexConnect = 'https://checkout.airwallex.com https://static.airwallex.com '
+        // airwallex.com). static-demo.airwallex.com is Airwallex's device-
+        // fingerprinting script + risk-iframe.html, loaded automatically by the
+        // SDK whenever env is 'demo' (i.e. every sandbox run, which is this
+        // project's default payment.airwallex_environment) — without it here,
+        // sandbox testing would silently CSP-block the fingerprint check the
+        // moment real credentials are configured. Only Airwallex origins are
+        // added — everything else stays locked down. NOTE: header + domain
+        // presence is asserted by tests/Feature/ContentSecurityPolicyTest.php,
+        // but a full live sandbox run (card element mount -> 3DS -> confirm,
+        // watching DevTools for CSP violations) with real Airwallex sandbox
+        // credentials still hasn't happened — this project has none configured.
+        // If embedded 3-D Secure fails, use redirect-based 3DS.
+        $airwallexScript  = 'https://checkout.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
+        $airwallexFrame   = 'https://checkout.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
+        $airwallexConnect = 'https://checkout.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com '
             .'https://api.airwallex.com https://api-demo.airwallex.com '
             .'https://pci-api.airwallex.com https://pci-api-demo.airwallex.com';
 
