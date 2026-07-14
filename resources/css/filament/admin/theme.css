@@ -27,6 +27,12 @@
     --color-text-inverse: #ffffff;      /* white */
     --color-text-link: #4f46e5;         /* indigo-600 */
     --color-text-on-accent: #ffffff;    /* white */
+    /* Deliberately mode-invariant: .page-header-gradient (below) is a fixed
+       dark ink surface in both light and dark mode, so its body copy needs
+       a fixed light-on-dark muted tone too — the canvas-tuned
+       --color-text-muted (zinc-500 light / zinc-400 dark) reads too low
+       contrast against it in light mode. */
+    --color-text-muted-on-accent: rgba(228, 228, 231, 0.72); /* zinc-200 @ 72% */
 
     /* Semantic aliases */
     --surface-base: var(--color-bg-canvas);
@@ -138,9 +144,22 @@
     color: var(--text-secondary);
 }
 
-/* Page header patterns */
+/* Page header patterns — native Filament primary color (whatever
+ * AdminPanelProvider's ->colors(['primary' => ...]) is set to, currently
+ * Indigo), not a hand-invented palette. Filament's --primary-* shades are
+ * static numbers that don't themselves change between light/dark, so we
+ * pick a different (lighter) shade per mode ourselves — standard practice
+ * for using any Tailwind-style color scale against a dark canvas: primary
+ * 600->500 reads as a strong, saturated accent on the white light-mode
+ * canvas; the same 600/500 pair sitting on the near-black dark-mode canvas
+ * read muddy, so dark mode steps up to the lighter 500/400 shades of the
+ * SAME native scale instead — still 100% Filament's own color, never a
+ * custom hex. */
 .page-header-gradient {
     background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+}
+.dark .page-header-gradient {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
 }
 .page-header-border {
     border: 1px solid var(--color-border-subtle);

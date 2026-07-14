@@ -8,7 +8,7 @@
                         <x-heroicon-o-key class="w-5 h-5" style="color: var(--warning-500);" />
                         Permission Matrix
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Visual grid of roles × permissions. Toggle permissions by clicking the checkboxes. Changes apply immediately.
                     </p>
                 </div>

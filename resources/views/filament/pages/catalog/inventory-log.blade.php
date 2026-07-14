@@ -8,7 +8,7 @@
                         <x-heroicon-o-clipboard-document-list class="w-5 h-5" style="color: var(--warning-500);" />
                         Inventory Change Log
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Complete audit trail of all inventory status changes. Tracks CSV imports, manual updates, bulk operations, and system changes.
                     </p>
                 </div>

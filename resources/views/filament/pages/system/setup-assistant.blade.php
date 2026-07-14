@@ -12,7 +12,7 @@
                         <x-heroicon-o-wrench-screwdriver class="w-5 h-5" style="color: var(--warning-500);" />
                         Setup Assistant
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Guided setup for your OeParts platform. Complete each step to ensure your system is production-ready.
                     </p>
                 </div>

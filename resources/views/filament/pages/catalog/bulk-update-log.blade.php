@@ -8,7 +8,7 @@
                         <x-heroicon-o-document-check class="w-5 h-5" style="color: var(--warning-500);" />
                         Bulk Update Audit Log
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Complete history of bulk price adjustments, stock changes, and CSV imports. Includes affected row counts and administrator details.
                     </p>
                 </div>

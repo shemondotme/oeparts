@@ -8,7 +8,7 @@
                         <x-heroicon-o-document-text class="w-5 h-5" style="color: var(--warning-500);" />
                         Log Viewer
                     </h2>
-                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted);">
+                    <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
                         Browse and filter application log files. Search by text or filter by log level.
                     </p>
                 </div>
