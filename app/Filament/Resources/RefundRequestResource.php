@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\OrderStatus;
 use App\Enums\RefundStatus;
 use App\Filament\Resources\RefundRequestResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendRefundProcessedEmail;
 use App\Models\RefundRequest;
+use App\Services\OrderService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -284,6 +286,7 @@ class RefundRequestResource extends Resource
                         $record->admin_note = $data['admin_note'] ?? $record->admin_note;
                         $record->save();
 
+                        static::transitionOrderToRefunded($record);
                         static::dispatchSafely(new SendRefundProcessedEmail($record));
 
                         Notification::make()
@@ -416,6 +419,7 @@ class RefundRequestResource extends Resource
                 $record->processed_at = now();
                 $record->save();
 
+                static::transitionOrderToRefunded($record);
                 static::dispatchSafely(new SendRefundProcessedEmail($record));
 
                 Notification::make()
@@ -423,6 +427,30 @@ class RefundRequestResource extends Resource
                     ->success()
                     ->send();
             });
+    }
+
+    /**
+     * OrderStatus::Refunded is a defined, styled enum value (icons, colors,
+     * the dashboard status chart) and the ONLY legal transition target from
+     * RefundRequested per OrderService::isTransitionAllowed() — but nothing
+     * ever actually set it: every processed refund left its order stuck
+     * showing "Refund Requested" forever. The customer already gets a
+     * dedicated SendRefundProcessedEmail, so this transition skips the
+     * generic per-status customer email to avoid a duplicate notification.
+     */
+    private static function transitionOrderToRefunded(RefundRequest $record): void
+    {
+        if (! $record->order || $record->order->status !== OrderStatus::RefundRequested) {
+            return;
+        }
+
+        app(OrderService::class)->transitionStatus(
+            $record->order,
+            OrderStatus::Refunded,
+            'Refund processed and completed.',
+            auth('admin')->id(),
+            notifyCustomer: false,
+        );
     }
 
     /**

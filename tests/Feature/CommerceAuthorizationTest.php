@@ -112,6 +112,45 @@ class CommerceAuthorizationTest extends TestCase
         $this->assertSame(RefundStatus::Processed, $pending2->refresh()->status);
     }
 
+    // ── Regression test: processing a refund never advanced the parent
+    // order past "Refund Requested" — OrderStatus::Refunded was a defined,
+    // styled enum value (icons/colors/dashboard chart) and the only legal
+    // transition target from RefundRequested, but no code path ever set it.
+
+    #[Test]
+    public function marking_a_refund_processed_transitions_the_order_to_refunded(): void
+    {
+        Queue::fake();
+
+        $manager = $this->adminWithRole('manager');
+        $this->actingAs($manager, 'admin');
+
+        $order = Order::factory()->create(['status' => OrderStatus::RefundRequested]);
+        $approved = RefundRequest::factory()->create(['order_id' => $order->id, 'status' => RefundStatus::Approved]);
+
+        Livewire::test(ListRefundRequests::class)->callTableAction('markProcessed', $approved);
+
+        $this->assertSame(RefundStatus::Processed, $approved->refresh()->status);
+        $this->assertSame(OrderStatus::Refunded, $order->refresh()->status);
+    }
+
+    #[Test]
+    public function approve_and_refund_also_transitions_the_order_to_refunded(): void
+    {
+        Queue::fake();
+
+        $manager = $this->adminWithRole('manager');
+        $this->actingAs($manager, 'admin');
+
+        $order = Order::factory()->create(['status' => OrderStatus::RefundRequested]);
+        $pending = RefundRequest::factory()->create(['order_id' => $order->id, 'status' => RefundStatus::Pending]);
+
+        Livewire::test(ListRefundRequests::class)->callTableAction('approveAndRefund', $pending);
+
+        $this->assertSame(RefundStatus::Processed, $pending->refresh()->status);
+        $this->assertSame(OrderStatus::Refunded, $order->refresh()->status);
+    }
+
     // ── Regression tests for Bug 1: OrderResource custom actions ──
 
     #[Test]

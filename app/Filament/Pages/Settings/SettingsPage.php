@@ -163,19 +163,31 @@ abstract class SettingsPage extends Page
         $admin = auth('admin')->user();
 
         foreach ($this->data as $key => $value) {
-            $raw = $value;
-
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
             }
 
             if (is_array($value)) {
-                $value = json_encode($value);
+                // Same empty-array normalization as buildDiffBetween() — an
+                // untouched FileUpload/CheckboxList/KeyValue field's "nothing
+                // selected" state is []; without this, saving ANY real
+                // change elsewhere on the same page would also silently
+                // overwrite this field's stored "" with the literal string
+                // "[]" (confirmSave() writes every key in $this->data, not
+                // just the ones that changed).
+                $value = empty($value) ? '' : json_encode($value);
             }
 
             $service->set(static::$settingsGroup . '.' . $key, $value);
 
-            if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $raw) {
+            // Compare against the already-string-normalized $value, not the
+            // original raw field value — for array-typed fields that used to
+            // mean (string) $rawArray, which throws "Array to string
+            // conversion" (a warning in production, but a hard failure under
+            // this project's test error-reporting) on every single save of
+            // any settings page with a FileUpload/CheckboxList/KeyValue
+            // field, confirmed live.
+            if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $value) {
                 $oldValues[$key] = '***';
             }
         }
@@ -294,8 +306,18 @@ abstract class SettingsPage extends Page
                 $raw = $value ? 'true' : 'false';
                 $display = $value ? 'true' : 'false';
             } elseif (is_array($value)) {
-                $raw = json_encode($value, JSON_UNESCAPED_UNICODE);
-                $display = json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                // An empty array is FileUpload/CheckboxList/KeyValue's "nothing
+                // selected" Livewire state — json_encode([]) is the string
+                // "[]", but a genuinely unset setting is stored as "". Without
+                // this, every settings page with an untouched array-typed
+                // field always reported a phantom change ("" -> "[]") on
+                // every single Save click, confirmed live via the raw
+                // Livewire response payload (GeneralSettings' logo_id/
+                // favicon_id) — never "No changes detected", and confirming
+                // it would have written the literal string "[]" into the
+                // setting, breaking whatever reads it expecting empty/null.
+                $raw = empty($value) ? '' : json_encode($value);
+                $display = empty($value) ? '—' : json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
             } else {
                 $raw = $value;
                 $display = (string) $value;
@@ -303,7 +325,56 @@ abstract class SettingsPage extends Page
 
             $oldRaw = $oldValues[$key] ?? null;
             $isEncrypted = in_array($key, $encryptedKeys);
-            $hasChanged = (string) ($oldRaw ?? '') !== (string) $raw;
+
+            // Toggle fields always re-serialize their live state as the
+            // literal strings "true"/"false" (see $raw above), but every
+            // single boolean setting in SettingsSeeder is seeded as "1"/"0"
+            // — a plain string comparison ("1" !== "true") therefore flagged
+            // EVERY Toggle-backed setting as changed on EVERY page load,
+            // confirmed live (SEOSettings' google_ping_enabled, seeded "1",
+            // always diffed against the untouched form's "true"). The rest
+            // of the app already treats both spellings as equivalent via
+            // filter_var(settings(...), FILTER_VALIDATE_BOOLEAN) — the diff
+            // must use the same equivalence, not a literal string match.
+            if (is_bool($value)) {
+                $hasChanged = filter_var($oldRaw, FILTER_VALIDATE_BOOLEAN) !== $value;
+            } elseif (is_array($value)) {
+                // Compare DECODED values, not re-encoded JSON strings. The
+                // seeded JSON in the settings table is inconsistently
+                // escaped across rows — some multilang values were seeded
+                // with escaped \uXXXX unicode sequences, others with the
+                // raw UTF-8 characters (e.g. a literal "…" byte vs "…")
+                // — a byte-for-byte string comparison of two re-encodings
+                // can never be made to agree with ALL of them at once
+                // (confirmed live: fixing one seeded-encoding style broke
+                // the other). Decoding both sides first sidesteps escaping,
+                // key-order, and whitespace differences entirely — two
+                // arrays with the same content are equal regardless of how
+                // either was originally serialized.
+                $oldDecoded = is_string($oldRaw)
+                    ? (json_decode($oldRaw, true) ?? ($oldRaw === '' ? [] : null))
+                    : ($oldRaw === null ? [] : $oldRaw);
+                $hasChanged = $oldDecoded === null || $oldDecoded !== $value;
+            } else {
+                $hasChanged = (string) ($oldRaw ?? '') !== (string) $raw;
+
+                // A numeric TextInput's live value silently reformats on
+                // hydration ("0.00" seeded -> live state "0", "10.00" -> "10"
+                // — confirmed live on ShippingSettings' handling_fee/
+                // nudge_threshold), and TimePicker always re-serializes with
+                // seconds ("15:00" seeded -> live "15:00:00" — cutoff_time).
+                // Both phantom-diffed on every load. Numerically/temporally
+                // equal values must not count as changed just because their
+                // string formatting differs.
+                if ($hasChanged && $oldRaw !== null && is_numeric($oldRaw) && is_numeric($raw)) {
+                    $hasChanged = bccomp((string) $oldRaw, (string) $raw, 6) !== 0;
+                } elseif ($hasChanged && is_string($oldRaw) && is_string($raw)
+                    && preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $oldRaw)
+                    && preg_match('/^\d{1,2}:\d{2}(:\d{2})?$/', $raw)
+                ) {
+                    $hasChanged = date('H:i:s', strtotime($oldRaw)) !== date('H:i:s', strtotime($raw));
+                }
+            }
 
             if (! $hasChanged) {
                 continue;
