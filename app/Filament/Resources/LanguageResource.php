@@ -71,20 +71,40 @@ class LanguageResource extends Resource
                                             ->label('Native Name')
                                             ->placeholder('e.g. English, Deutsch, Lietuvių')
                                             ->maxLength(100)
-                                            ->nullable()
-                                            ->helperText('Language name in its own script (e.g. "Deutsch" for German).'),
+                                            ->helperText('Language name in its own script (e.g. "Deutsch" for German).')
+                                            // Same NOT-NULL-but-form-nullable
+                                            // mismatch as flag_emoji above
+                                            // (column is string('native_name', 50)
+                                            // with no ->nullable(), migration
+                                            // 2026_03_26_100003) — confirmed live.
+                                            ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                                         Forms\Components\TextInput::make('locale')
                                             ->label('Locale Code')
                                             ->placeholder('e.g. en_US, de_DE, lt_LT')
                                             ->maxLength(10)
-                                            ->nullable()
-                                            ->helperText('Full locale code including country (e.g. "en_US" for US English).'),
+                                            ->helperText('Full locale code including country (e.g. "en_US" for US English).')
+                                            // Same NOT-NULL-but-form-nullable
+                                            // mismatch as native_name/flag_emoji
+                                            // above (column is string('locale', 10)
+                                            // with no ->nullable(), migration
+                                            // 2026_03_26_100003) — confirmed live.
+                                            ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                                         Forms\Components\TextInput::make('flag_emoji')
                                             ->label('Flag Emoji')
                                             ->placeholder('e.g. 🇬🇧, 🇩🇪, 🇱🇹')
                                             ->maxLength(10)
-                                            ->nullable()
-                                            ->helperText('Country flag emoji displayed next to the language name.'),
+                                            ->helperText('Country flag emoji displayed next to the language name.')
+                                            // The column is NOT NULL (migration
+                                            // 2026_03_26_100003, string('flag_emoji', 10)
+                                            // with no ->nullable()), but this field is
+                                            // legitimately optional (a decorative
+                                            // icon) — the form's own ->nullable() let
+                                            // an admin submit with none and hit a raw
+                                            // SQLSTATE NOT NULL constraint failure
+                                            // instead of a friendly validation message,
+                                            // confirmed live. Same fix pattern as
+                                            // CarrierResource.tracking_url.
+                                            ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                                     ])->columns(2),
                             ]),
 

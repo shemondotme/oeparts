@@ -97,4 +97,33 @@ class CatalogViewPagesTest extends TestCase
         $product->update(['is_active' => false]);
         $this->assertNull(Cache::get('sections.homepage'), 'visibility change must invalidate homepage cache');
     }
+
+    /**
+     * Regression: ConditionResource's name-field afterStateUpdated() type-hinted
+     * the pre-Filament-5 Forms\Get/Forms\Set classes instead of the real
+     * Schemas\Components\Utilities\Get/Set that Livewire actually injects —
+     * a TypeError on every keystroke, confirmed live, broke auto-slug-from-name
+     * on Condition create (the only resource in the codebase using this
+     * stale v3-era type-hint).
+     */
+    public function test_condition_name_field_auto_slug_does_not_throw(): void
+    {
+        Livewire::test(\App\Filament\Resources\ConditionResource\Pages\CreateCondition::class)
+            ->fillForm(['name' => 'Refurbished'])
+            ->assertHasNoErrors();
+    }
+
+    /**
+     * Regression: Manufacturer's country_code form field was ->nullable()
+     * but the migration column has no ->nullable() (NOT NULL) — submitting
+     * without a country threw a raw SQLSTATE constraint-violation 500
+     * instead of a friendly validation message, confirmed live.
+     */
+    public function test_manufacturer_create_without_country_shows_validation_error_not_a_500(): void
+    {
+        Livewire::test(\App\Filament\Resources\ManufacturerResource\Pages\CreateManufacturer::class)
+            ->fillForm(['name' => ['en' => 'Test Brand'], 'slug' => 'test-brand'])
+            ->call('create')
+            ->assertHasFormErrors(['country_code' => 'required']);
+    }
 }

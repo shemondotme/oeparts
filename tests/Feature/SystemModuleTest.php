@@ -134,4 +134,26 @@ class SystemModuleTest extends TestCase
         $this->assertTrue($de->fresh()->is_default);
         $this->assertFalse($en->fresh()->is_default, 'two default languages must be impossible');
     }
+
+    /**
+     * Regression: languages.flag_emoji, .native_name, and .locale are all
+     * NOT NULL (migration 2026_03_26_100003, string() with no ->nullable())
+     * but all three form fields were marked ->nullable() — submitting any
+     * of them blank crashed with a raw SQLSTATE NOT NULL constraint failure
+     * instead of saving, confirmed live. Same bug class as
+     * CarrierResource.tracking_url.
+     */
+    public function test_language_can_be_created_without_flag_emoji_native_name_or_locale(): void
+    {
+        Livewire::test(\App\Filament\Resources\LanguageResource\Pages\CreateLanguage::class)
+            ->fillForm(['code' => 'it', 'name' => 'Italian', 'is_active' => true])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $lang = Language::where('code', 'it')->first();
+        $this->assertNotNull($lang, 'Language creation failed');
+        $this->assertSame('', $lang->flag_emoji);
+        $this->assertSame('', $lang->locale);
+        $this->assertSame('', $lang->native_name);
+    }
 }

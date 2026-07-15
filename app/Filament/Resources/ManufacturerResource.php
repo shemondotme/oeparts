@@ -108,7 +108,15 @@ class ManufacturerResource extends Resource
                                             ->options(config('countries', []))
                                             ->searchable()
                                             ->native(false)
-                                            ->nullable()
+                                            // The column is NOT NULL (migration
+                                            // 2026_03_26_100012, string('country_code', 2)
+                                            // with no ->nullable()) — the form's own
+                                            // ->nullable() let an admin submit with no
+                                            // country selected and hit a raw SQLSTATE
+                                            // NOT NULL constraint failure instead of a
+                                            // friendly Filament validation message,
+                                            // confirmed live via a real create attempt.
+                                            ->required()
                                             ->helperText('Primary country associated with this manufacturer.'),
                                         Forms\Components\Toggle::make('is_verified_oem')
                                             ->label('Verified OEM Manufacturer')
