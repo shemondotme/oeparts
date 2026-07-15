@@ -4,10 +4,14 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\CarrierResource\Pages\CreateCarrier;
 use App\Filament\Resources\CouponResource\Pages\CreateCoupon;
+use App\Filament\Resources\OrderResource\Pages\CreateOrder;
+use App\Filament\Resources\SeoMetaResource\Pages\ListSeoMetas;
 use App\Filament\Resources\ShippingZoneResource\Pages\CreateShippingZone;
 use App\Models\Admin;
 use App\Models\Carrier;
 use App\Models\Coupon;
+use App\Models\Order;
+use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -102,5 +106,65 @@ class CommerceModuleCrudTest extends TestCase
 
         $this->assertTrue(ShippingZone::where('name', 'Test Zone')->exists());
         $this->assertSame('Test Zone', \DB::table('shipping_zones')->value('name'));
+    }
+
+    /**
+     * OrderResource's shipping_method_id Select used the relationship's raw
+     * 'name' column as the option label — but ShippingMethod.name is
+     * multilang JSON (array cast), so Filament's default option-label
+     * resolution handed the array to Select::getOptionLabel(), which
+     * requires ?string and threw immediately. Manual order creation was
+     * completely broken. Fixed with the same getOptionLabelFromRecordUsing
+     * override ProductResource's manufacturer_id select already used.
+     * Also covers a second bug found in the same flow: urgent_processing_fee
+     * has a DB-level default ('0.00') but Filament always submits every
+     * schema-declared field, so the untouched (readOnly, no form default)
+     * TextInput submitted an explicit null that overrode the DB default.
+     */
+    #[Test]
+    public function order_can_be_manually_created_with_a_shipping_method_selected(): void
+    {
+        $method = ShippingMethod::factory()->create();
+
+        Livewire::test(CreateOrder::class)
+            ->fillForm([
+                'order_number' => 'ORD-PLACEHOLDER', // overwritten by SequenceService in mutateFormDataBeforeCreate, but still validated as required first
+                'guest_email' => 'manual-order@example.com',
+                'shipping_name' => 'Test Customer',
+                'shipping_address_line1' => 'Teststrasse 1',
+                'shipping_city' => 'Berlin',
+                'shipping_postal_code' => '10115',
+                'shipping_country_code' => 'DE',
+                'shipping_method_id' => $method->id,
+                'status' => 'pending',
+                'payment_method' => 'bank_transfer',
+                'payment_status' => 'pending',
+                'subtotal' => '100.00',
+                'shipping_cost' => '10.00',
+                'vat_amount' => '21.00',
+                'grand_total' => '131.00',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $order = Order::where('guest_email', 'manual-order@example.com')->first();
+        $this->assertNotNull($order, 'Order creation failed');
+        $this->assertSame('0.00', $order->urgent_processing_fee);
+    }
+
+    /**
+     * seo_meta.metable_type/metable_id are NOT NULL polymorphic-target
+     * columns with no way to set them via the create form (they only ever
+     * render as read-only context fields for an EXISTING record) — clicking
+     * "New" on the SEO Metadata list and saving always crashed with a raw
+     * SQLSTATE NOT NULL constraint failure. Removed the reachable-but-
+     * guaranteed-broken create entry point (button + route).
+     */
+    #[Test]
+    public function seo_meta_list_no_longer_offers_a_broken_create_action(): void
+    {
+        Livewire::test(ListSeoMetas::class)->assertActionDoesNotExist('create');
+
+        $this->assertArrayNotHasKey('create', \App\Filament\Resources\SeoMetaResource::getPages());
     }
 }

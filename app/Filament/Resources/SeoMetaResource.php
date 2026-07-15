@@ -186,14 +186,13 @@ class SeoMetaResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-magnifying-glass-circle')
             ->emptyStateHeading('No SEO metadata configured yet')
-            ->emptyStateDescription('SEO metadata records for products, pages, and blog posts will appear here. You can also add them manually.')
-            ->emptyStateActions([
-                Tables\Actions\Action::make('create')
-                    ->label('Add SEO Meta')
-                    ->url(static::getUrl('create'))
-                    ->icon('heroicon-o-plus')
-                    ->button(),
-            ]);
+            // No emptyStateActions — see ListSeoMetas::getHeaderActions()
+            // for why there's no working "create" entry point (the
+            // polymorphic metable_type/metable_id target can't be set on
+            // a blank form). This empty-state button used to link to
+            // getUrl('create'), which threw RouteNotFoundException once
+            // that route was removed, confirmed live.
+            ->emptyStateDescription('SEO metadata records for products, pages, and blog posts will appear here once generated.');
     }
 
     public static function getRelations(): array
@@ -203,9 +202,12 @@ class SeoMetaResource extends Resource
 
     public static function getPages(): array
     {
+        // No 'create' route — see ListSeoMetas::getHeaderActions() for why:
+        // the polymorphic metable_type/metable_id target can never be set
+        // via a blank create form, so the route was reachable-but-always-
+        // guaranteed-to-crash even with its header button removed.
         return [
             'index' => Pages\ListSeoMetas::route('/'),
-            'create' => Pages\CreateSeoMeta::route('/create'),
             'edit'  => Pages\EditSeoMeta::route('/{record}/edit'),
         ];
     }
