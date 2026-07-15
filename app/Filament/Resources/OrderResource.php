@@ -180,6 +180,16 @@ class OrderResource extends Resource
                                         ->relationship('shippingMethod', 'name')
                                         ->searchable()
                                         ->preload()
+                                        // ShippingMethod.name is multilang JSON
+                                        // (array cast) — without this override,
+                                        // Filament's default option-label
+                                        // resolution hands the raw array to
+                                        // Select::getOptionLabel(), which
+                                        // requires a ?string and throws
+                                        // immediately, confirmed live. Same
+                                        // fix pattern as ProductResource's
+                                        // manufacturer_id select.
+                                        ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                                         ->required()
                                         ->helperText('The delivery method chosen by the customer.'),
                                 ])
@@ -318,6 +328,18 @@ class OrderResource extends Resource
                                         ->minValue(0)
                                         ->step(0.01)
                                         ->readOnly()
+                                        // The column has a DB-level default
+                                        // ('0.00', migration 2026_03_26_100047),
+                                        // but that only applies when the column
+                                        // is OMITTED from the INSERT — Filament
+                                        // always submits every schema-declared
+                                        // field, so an untouched (readOnly, no
+                                        // form default) TextInput submitted an
+                                        // explicit null that overrode the DB
+                                        // default, throwing a raw SQLSTATE NOT
+                                        // NULL failure on every manual order
+                                        // create, confirmed live.
+                                        ->default(0)
                                         ->helperText('Additional surcharge applied for urgent same-day dispatch.'),
                                 ])
                                 ->columns(2),

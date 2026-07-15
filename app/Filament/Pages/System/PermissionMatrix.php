@@ -69,15 +69,36 @@ class PermissionMatrix extends Page
         return $grouped;
     }
 
-    public function hasPermission(int $roleId, int $permissionId): bool
-    {
-        $role = Role::find($roleId);
+    /**
+     * @var array<int, array<int, true>>|null role_id => set of permission_ids, lazily built once per request.
+     */
+    private ?array $roleHasPermissionMap = null;
 
-        if (! $role) {
-            return false;
+    /**
+     * The Blade view calls hasPermission() up to 3× per matrix cell, for
+     * every role × every permission — previously each call did a fresh
+     * Role::find() + Spatie's own hasPermissionTo() lookup, so a real
+     * matrix (6 roles × ~80 permissions) fired 1000+ separate queries and
+     * took ~29s to render, confirmed live via direct page-load timing.
+     * One query against the pivot table, memoized for the rest of the
+     * request, replaces all of that.
+     */
+    private function getRoleHasPermissionMap(): array
+    {
+        if ($this->roleHasPermissionMap === null) {
+            $this->roleHasPermissionMap = [];
+
+            foreach (DB::table('role_has_permissions')->get(['role_id', 'permission_id']) as $row) {
+                $this->roleHasPermissionMap[$row->role_id][$row->permission_id] = true;
+            }
         }
 
-        return $role->hasPermissionTo($permissionId);
+        return $this->roleHasPermissionMap;
+    }
+
+    public function hasPermission(int $roleId, int $permissionId): bool
+    {
+        return isset($this->getRoleHasPermissionMap()[$roleId][$permissionId]);
     }
 
     public function togglePermission(int $roleId, int $permissionId): void
@@ -106,5 +127,10 @@ class PermissionMatrix extends Page
                 ->success()
                 ->send();
         }
+
+        // The re-render after this action reuses the same component
+        // instance's memoized map — without invalidating it, the toggled
+        // cell would render its pre-toggle state until the next full load.
+        $this->roleHasPermissionMap = null;
     }
 }
