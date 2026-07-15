@@ -49,7 +49,17 @@ class CarrierResource extends Resource
                             ->placeholder('e.g. https://www.dhl.com/track?trackingNo={tracking_no}')
                             ->helperText('Use {tracking_no} as a placeholder for the actual tracking number. The customer\'s tracking link is built from this template.')
                             ->url()
-                            ->maxLength(500),
+                            ->maxLength(500)
+                            // The column is NOT NULL (migration
+                            // 2026_03_26_100006, string('tracking_url', 500)
+                            // with no ->nullable()), but this field is
+                            // legitimately optional (a carrier without online
+                            // tracking is valid) — leaving it blank submits
+                            // null, not '', throwing a raw SQLSTATE NOT NULL
+                            // constraint failure instead of saving, confirmed
+                            // live. Cast null -> '' on dehydrate rather than
+                            // forcing every carrier to have a tracking URL.
+                            ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Carrier Active')
                             ->helperText('Inactive carriers cannot be assigned to new orders.')

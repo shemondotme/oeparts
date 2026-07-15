@@ -13,11 +13,6 @@ class ShippingZone extends Model
     protected $fillable = ['name', 'is_active', 'sort_order'];
 
     protected $casts = [
-        // Column is plain varchar, but this cast is load-bearing: existing rows
-        // were written through it (json_encode on save), so DB values are
-        // JSON-quoted strings (e.g. `"Europe"`). Removing the cast without a
-        // data migration would surface literal quote characters in the admin UI.
-        'name'      => 'array',
         'is_active' => 'boolean',
     ];
 

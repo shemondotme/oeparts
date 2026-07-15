@@ -11,6 +11,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -60,7 +62,17 @@ class ConditionResource extends Resource
                                             ->required()
                                             ->maxLength(100)
                                             ->live(onBlur: true)
-                                            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set, ?string $state, ?Condition $record) {
+                                            // Filament 5 moved Get/Set to Schemas\Components\Utilities — the
+                                            // old Filament\Forms\Get/Set type-hints are a distinct, incompatible
+                                            // class that Livewire's dependency injection never actually passes
+                                            // here, so every keystroke on this field threw a TypeError (the
+                                            // real runtime argument is Schemas\Components\Utilities\Get),
+                                            // confirmed live — auto-slug-from-name was completely broken on
+                                            // Condition create, the only resource in the codebase using this
+                                            // stale v3-era type-hint (rule #38's "grep the whole codebase"
+                                            // lesson applies here too — every other resource already uses the
+                                            // v5 Utilities namespace or doesn't use Get/Set at all).
+                                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state, ?Condition $record) {
                                                 if (! $record && blank($get('slug'))) {
                                                     $set('slug', str($state)->slug());
                                                 }

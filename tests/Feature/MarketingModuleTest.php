@@ -127,4 +127,25 @@ class MarketingModuleTest extends TestCase
             'the send-due command must be registered with the scheduler — otherwise "Scheduled Send Date" is a dead promise'
         );
     }
+
+    /**
+     * Regression: newsletter_subscribers.subscribed_at AND .ip_address are
+     * both NOT NULL (migration 2026_03_26_100032) with no form field for
+     * either and no mutateFormDataBeforeCreate hook — manually adding a
+     * subscriber via the admin UI crashed with a raw SQLSTATE NOT NULL
+     * constraint failure instead of saving, confirmed live. Same bug class
+     * as CreateCoupon/CreatePage (missing-required-column-on-create).
+     */
+    public function test_subscriber_creation_sets_subscribed_at_and_ip_address(): void
+    {
+        Livewire::test(\App\Filament\Resources\NewsletterSubscriberResource\Pages\CreateNewsletterSubscriber::class)
+            ->fillForm(['email' => 'new-subscriber@example.com', 'lang' => 'en', 'is_active' => true])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $subscriber = \App\Models\NewsletterSubscriber::where('email', 'new-subscriber@example.com')->first();
+        $this->assertNotNull($subscriber, 'Subscriber creation failed');
+        $this->assertNotNull($subscriber->subscribed_at);
+        $this->assertNotNull($subscriber->ip_address);
+    }
 }

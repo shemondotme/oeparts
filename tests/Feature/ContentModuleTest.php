@@ -167,4 +167,30 @@ class ContentModuleTest extends TestCase
         $this->assertSame('image/png', $record->mime_type);
         Storage::disk('public')->assertExists($record->file_path);
     }
+
+    /**
+     * Regression: pages.created_by is a NOT NULL foreign key (migration
+     * 2026_03_26_100033) with no form field for it anywhere and no
+     * mutateFormDataBeforeCreate hook — every single CMS page creation
+     * crashed with a raw SQLSTATE NOT NULL constraint failure instead of
+     * saving, confirmed live (same bug class as CreateCoupon).
+     */
+    public function test_page_creation_sets_created_by_from_the_authenticated_admin(): void
+    {
+        $admin = auth('admin')->user();
+
+        Livewire::test(\App\Filament\Resources\PageResource\Pages\CreatePage::class)
+            ->fillForm([
+                'slug' => 'test-cms-page',
+                'title' => ['en' => 'Test CMS Page'],
+                'content' => ['en' => 'Body'],
+                'status' => 'draft',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $page = \App\Models\Page::where('slug', 'test-cms-page')->first();
+        $this->assertNotNull($page, 'Page creation failed');
+        $this->assertSame($admin->id, $page->created_by);
+    }
 }
