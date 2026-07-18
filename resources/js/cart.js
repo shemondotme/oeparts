@@ -19,7 +19,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
             oem_number:     item.product?.oem_number || item.oem_number,
             name:           itemName,
             condition_slug: item.condition_slug || item.product?.condition?.slug || 'new',
-            condition_name: item.condition_name || item.product?.condition?.name || t.conditionNewFallback || 'New',
+            condition_name: item.condition_name || item.product?.condition?.label || item.product?.condition?.name || t.conditionNewFallback || 'New',
             condition_bg:   item.condition_bg || item.product?.condition?.bg_color || '#DCFCE7',
             condition_text: item.condition_text || item.product?.condition?.text_color || '#16A34A',
             in_stock:       item.is_in_stock ?? item.in_stock ?? !!item.product?.is_in_stock,
@@ -60,7 +60,7 @@ export default function cartData(initialCart, initialSummary, locale, routeUpdat
             detail: {
                 message,
                 type: 'warning',
-                title: '§ PRICE · UPDATED',
+                title: t.priceChangeToastTitle || '§ PRICE · UPDATED',
                 duration: 8000,
             }
         }));

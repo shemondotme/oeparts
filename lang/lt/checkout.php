@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'minimum_order_not_met' => 'Jūsų užsakymas nesiekia minimalios :amount sumos.',
     // Shared layout (layout.blade.php)
     'title' => 'Saugus atsiskaitymas',
     'breadcrumb_home' => 'Pradžia',
@@ -9,7 +10,6 @@ return [
     'step_of_five' => ':n ŽINGSNIS IŠ 05',
     'secure_checkout_eyebrow' => 'Saugus atsiskaitymas',
     'heading' => 'Saugus atsiskaitymas',
-    'tls_ssl_badge' => 'TLS 1.3 · 256 bitų SSL · Apsaugota „Airwallex“',
     'back_to_cart' => 'Grįžti į krepšelį',
     'step_contact' => 'Kontaktai',
     'step_address' => 'Adresas',
@@ -42,7 +42,6 @@ return [
     'vat_tbd' => 'Bus nustatyta',
     'total_currency_label' => 'Iš viso · :currency',
     'including_all_taxes' => 'Įskaičiuoti visi mokesčiai',
-    'ssl_tls_badge' => 'SSL · TLS 1.3',
     'cart_empty' => 'Jūsų krepšelis tuščias',
     'need_help_heading' => 'Reikia pagalbos?',
     'support_hours_note' => 'Pr.-Pn. 09:00-18:00 (CET). Mūsų komanda pasiruošusi padėti.',
@@ -78,16 +77,6 @@ return [
     'select_country_placeholder' => '— Pasirinkite šalį —',
     'pan_european_delivery' => 'Pristatymas visoje Europoje',
     'pan_european_delivery_note' => 'Express, Standard ir Economy pristatymas galimas į visas nurodytas Europos šalis.',
-    'company_details_heading' => 'Įmonės informacija',
-    'optional_b2b' => 'Nebūtina · B2B',
-    'ordering_as_business' => 'Užsakau kaip įmonė',
-    'company_name_label' => 'Įmonės pavadinimas',
-    'eu_vat_number_label' => 'ES PVM mokėtojo kodas',
-    'required_for_exemption' => '(būtina PVM neapmokestinimui)',
-    'vat_valid_message' => 'PVM mokėtojo kodas galioja. Bus pritaikytas PVM neapmokestinimas.',
-    'vies_unavailable_message' => 'VIES paslauga laikinai nepasiekiama.',
-    'vat_invalid_message' => 'PVM mokėtojo kodas negalioja. Patikrinkite ir bandykite dar kartą.',
-    'valid_vat_number' => 'Galiojantis PVM mokėtojo kodas',
 
     // Step 3 — shipping method
     'shipping_method_heading' => 'Pristatymo būdas',
@@ -121,6 +110,10 @@ return [
     'terms_and_conditions' => 'Naudojimo taisyklėmis',
     'and' => 'ir',
     'privacy_policy' => 'Privatumo politika',
+    'returns_policy' => 'Grąžinimo bei atsisakymo teisės politika',
+    'oversized_notice_heading' => 'Didelių gabaritų dalys — pristatymo pastaba',
+    'oversized_notice_body' => 'Rodomos pristatymo kainos yra fiksuotos standartinio dydžio siuntoms. Jei jūsų užsakyme yra didelių gabaritų ar sunki dalis, vežėjas gali pritaikyti papildomą krovinio mokestį — jis bus pateiktas atskira sąskaita po išsiuntimo.',
+    'oversized_ack_sentence' => 'Taip pat patvirtinu aukščiau pateiktą pastabą dėl didelių gabaritų dalių.',
     // Step 5 — payment method
     'payment_method_heading' => 'Apmokėjimo būdas',
     'payment_method_subtitle' => 'Pasirinkite būdą · Saugu · Šifruota',
@@ -134,15 +127,15 @@ return [
     'bank_transfer_instructions_note' => 'Pirmiausia sukuriame užsakymą, tada kitame puslapyje parodome banko duomenis ir mokėjimo nuorodą.',
     'order_note_label' => 'Užsakymo pastaba',
     'order_note_placeholder' => 'Bet kokios pristatymo ar užsakymo pastabos',
-    'trust_ssl_256' => '256 bitų SSL',
     'trust_encrypted' => 'Šifruota',
 
     // Payment page (payment.blade.php)
     'payment_title' => 'Apmokėjimas',
     'complete_payment_heading' => 'Užbaigti apmokėjimą',
-    'tls_encrypted_channel' => 'TLS 1.3 · 256 bitų SSL · Šifruotas kanalas',
     'order_label' => 'Užsakymas · :number',
-    'credit_debit_card' => 'Kredito / debeto kortelė',
+    'doc_payment_sheet' => 'DOC · PAYMENT-SHEET · :number',
+    'card_brands_caption' => 'Airwallex · Visa · Mastercard · Amex',
+    'credit_debit_card' => 'Kortelė',
     'bank_transfer' => 'Banko pavedimas',
     'bank_transfer_sepa_note' => 'SEPA · Užsakymas apdorojamas patvirtinus mokėjimą',
     'payment_error_heading' => 'Apmokėjimo klaida',
@@ -161,7 +154,6 @@ return [
     'items_label' => 'Prekės',
     'grand_total_label' => 'Bendra suma',
     'incl_vat_short' => 'su PVM',
-    'trust_ssl_256_short' => 'SSL 256',
     'payment_failed_js' => 'Apmokėjimas nepavyko. Bandykite dar kartą.',
 
     // Payment failed (payment-failed.blade.php)

@@ -8,196 +8,108 @@ use Illuminate\Database\Seeder;
 class HomepageSectionsSeeder extends Seeder
 {
     /**
-     * Homepage sections — Google SEO 2026.
-     * E-E-A-T, AI Overviews, People Also Ask, Helpful Content Update.
-     * 5 languages: EN / DE / LT / FR / ES.
+     * Homepage sections — 5 languages: EN / DE / LT / FR / ES.
      *
-     * Capitalisation rules enforced throughout:
-     *   OEM · EU · VIN · VAT · B2B · SEPA · PCI-DSS · DHL · DPD · GLS · FedEx · UPS
-     *   Grade A · Grade B · Grade C · Monday–Friday (en-dash)
-     *   Brand names: BMW · Volkswagen · Audi · Mercedes-Benz · Skoda · SEAT · Porsche
-     *   Eyebrow labels: ALL CAPS
+     * IMPORTANT: This is a direct export of the LIVE `sections` table
+     * (location=homepage) content, sort_order, and is_active flags — it is
+     * meant to always mirror production, NOT to hold aspirational/draft copy.
+     * If you edit homepage content or section order via the admin panel,
+     * re-export this file in the same pass (see the export script pattern
+     * used to generate this version) so the two never diverge again.
+     *
+     * sort_order also encodes the section rhythm: no two adjacent sections
+     * share the same background shade (bg-ivory / bg-ivory-alt / bg-paper /
+     * bg-ink), and the 3 bg-ink ("dark") sections — part_inquiry, banner,
+     * contact_cta — sit spread apart (positions 70, 100, 120) rather than
+     * clustered, so the page never has two dark or two identical-shade
+     * sections back to back. See `ReorderHomepageSectionsSeeder` /
+     * `sections:reorder-homepage` for the standalone reorder tools kept in
+     * sync with this same order.
      */
     private const SECTIONS = [
 
-        // ──────────────────────────────────────────────────────────────────────
-        // 1. HERO
-        //    Primary keyword: "genuine OEM auto parts"
-        //    Intent: transactional — buyer knows the OEM number, wants to buy
-        //    Headline: direct benefit, includes keyword naturally
-        //    Subheadline: three concrete USPs — catalogue size, trust, delivery
-        // ──────────────────────────────────────────────────────────────────────
+        // ── HERO (sort_order=10) ──
         [
             'type'  => 'hero',
-            'title' => [
-                'en' => 'Find Genuine OEM Auto Parts by Part Number — OeParts',
-                'de' => 'Originale OEM-Autoteile nach Teilenummer finden — OeParts',
-                'lt' => 'Raskite originalias OEM automobilių dalis pagal dalies numerį',
-                'fr' => 'Trouvez des pièces auto OEM d\'origine par numéro — OeParts',
-                'es' => 'Encuentre piezas de auto OEM genuinas por número de pieza',
-            ],
+            'title' => 'Hero',
             'content' => [
                 'headline' => [
-                    'en' => 'Genuine OEM Parts',
-                    'de' => 'Original OEM-Teile',
-                    'lt' => 'Originalios OEM dalys',
-                    'fr' => 'Pièces OEM d\'origine',
-                    'es' => 'Piezas OEM genuinas',
+                    'en' => 'Find Genuine OEM Parts — Fast',
+                    'de' => 'Originale OEM-Teile finden — Schnell',
+                    'lt' => 'Raskite originalias OEM dalis — Greitai',
+                    'fr' => 'Trouvez des pièces OEM d\'origine — Rapidement',
+                    'es' => 'Encuentre piezas OEM originales — Rápido',
                 ],
                 'subheadline' => [
-                    'en' => 'Save up to 40% off dealer prices. Enter your OEM number for a guaranteed perfect fit for your car.',
-                    'de' => 'Bis zu 40% sparen. OEM-Nummer eingeben für garantierte Passform.',
-                    'lt' => 'Sutaupykite iki 40%. Įveskite OEM numerį garantuotam tikslumui.',
-                    'fr' => 'Économisez jusqu\'à 40 %. Entrez votre numéro OEM pour un ajustement garanti.',
-                    'es' => 'Ahorre hasta un 40%. Ingrese su número OEM para un ajuste garantizado.',
+                    'en' => 'Enter your OEM number for guaranteed fitment — genuine parts only, shipped fast from EU warehouses.',
+                    'de' => 'OEM-Nummer eingeben für garantierte Passform — nur originale Teile, schneller Versand ab EU-Lager.',
+                    'lt' => 'Įveskite OEM numerį garantuotam tikslumui — tik originalios dalys, greitas siuntimas iš ES sandėlių.',
+                    'fr' => 'Entrez votre numéro OEM pour un ajustement garanti — pièces d\'origine uniquement, expédiées rapidement depuis nos entrepôts UE.',
+                    'es' => 'Introduzca su número OEM para un ajuste garantizado — solo piezas originales, envío rápido desde almacenes UE.',
                 ],
                 'placeholder' => [
                     'en' => 'Enter OEM number, e.g. 1K0407271F',
-                    'de' => 'OEM-Nummer, z. B. 1K0407271F',
-                    'lt' => 'OEM numeris, pvz. 1K0407271F',
-                    'fr' => 'Numéro OEM, ex. 1K0407271F',
-                    'es' => 'Número OEM, ej. 1K0407271F',
+                    'de' => 'OEM-Nummer eingeben, z. B. 1K0407271F',
+                    'lt' => 'Įveskite OEM numerį, pvz. 1K0407271F',
+                    'fr' => 'Entrez le numéro OEM, ex. 1K0407271F',
+                    'es' => 'Introduce el número OEM, ej. 1K0407271F',
                 ],
                 'button_text' => [
-                    'en' => 'Find Your Part',
-                    'de' => 'Teil Finden',
-                    'lt' => 'Rasti Dalį',
-                    'fr' => 'Trouver Votre Pièce',
-                    'es' => 'Encontrar Su Pieza',
-                ],
-                'popular_oem' => [
-                    '06L906036L',   // VW/Audi fuel injector — very high search volume
-                    '12137588837',  // BMW spark plug — popular
-                    'A2769060000',  // Mercedes-Benz throttle body
-                    '0280158837',   // Bosch/multi-brand MAF sensor
-                    '5Q0407271R',   // VW Passat driveshaft
-                    '3C0615301B',   // VW brake disc
+                    'en' => 'Find Part',
+                    'de' => 'Suchen',
+                    'lt' => 'Ieškoti',
+                    'fr' => 'Rechercher',
+                    'es' => 'Buscar',
                 ],
             ],
             'sort_order' => 10,
             'is_active'  => true,
         ],
 
-        // ──────────────────────────────────────────────────────────────────────
-        // 2. TRUST BAR
-        //    Four trust pillars — specific, verifiable, customer-focused.
-        //    Each item is a concrete claim, not a vague benefit.
-        // ──────────────────────────────────────────────────────────────────────
+        // ── TRUST_BAR (sort_order=20) ──
         [
             'type'  => 'trust_bar',
-            'title' => [
-                'en' => 'Why Buyers Choose OeParts',
-                'de' => 'Warum Käufer OeParts wählen',
-                'lt' => 'Kodėl pirkėjai renkasi OeParts',
-                'fr' => 'Pourquoi les acheteurs choisissent OeParts',
-                'es' => 'Por qué los compradores eligen OeParts',
-            ],
+            'title' => 'Trust Bar',
             'content' => [
                 'items' => [
                     [
                         'icon' => 'truck',
                         'text' => [
                             'en' => 'Fast, Tracked EU Delivery',
-                            'de' => '1-5 Tage verfolgte Lieferung',
-                            'lt' => '1-5 dienų sekamas pristatymas',
-                            'fr' => 'Livraison suivie 1-5 jours',
-                            'es' => 'Entrega rastreada 1-5 días',
+                            'de' => 'Schnelle, verfolgte EU-Lieferung',
+                            'lt' => 'Greitas, sekamas pristatymas ES viduje',
+                            'fr' => 'Livraison UE rapide et suivie',
+                            'es' => 'Entrega rápida y rastreada en la UE',
                         ],
                     ],
                     [
                         'icon' => 'shield-check',
                         'text' => [
-                            'en' => '100% Genuine OEM Only',
-                            'de' => '100 % Original OEM',
-                            'lt' => '100 % originalus OEM',
-                            'fr' => '100 % OEM d\'origine',
-                            'es' => '100 % OEM genuino',
+                            'en' => 'Genuine OEM Parts Only',
+                            'de' => 'Nur originale OEM-Teile',
+                            'lt' => 'Tik originalios OEM dalys',
+                            'fr' => 'Pièces OEM d\'origine uniquement',
+                            'es' => 'Solo piezas OEM originales',
                         ],
                     ],
                     [
                         'icon' => 'arrow-path',
                         'text' => [
-                            'en' => '14-Day Free Returns',
-                            'de' => '14 Tage kostenlose Rückgabe',
-                            'lt' => 'Nemokamas grąžinimas per 14 dienų',
-                            'fr' => 'Retours gratuits sous 14 jours',
-                            'es' => 'Devoluciones gratis en 14 días',
+                            'en' => '14-Day Returns',
+                            'de' => '14-tägiges Rückgaberecht',
+                            'lt' => '14 dienų grąžinimas',
+                            'fr' => 'Retours sous 14 jours',
+                            'es' => 'Devoluciones en 14 días',
                         ],
                     ],
                     [
                         'icon' => 'lock-closed',
                         'text' => [
-                            'en' => 'Secure Payment (Cards, Apple/Google Pay)',
-                            'de' => 'Sichere Zahlungen (Karte/SEPA)',
-                            'lt' => 'Saugūs mokėjimai (Kortele/SEPA)',
-                            'fr' => 'Paiements sécurisés (Carte/SEPA)',
-                            'es' => 'Pagos seguros (Tarjeta/SEPA)',
-                        ],
-                    ],
-                ],
-            ],
-            'sort_order' => 140,
-            'is_active'  => true,
-        ],
-
-        // ──────────────────────────────────────────────────────────────────────
-        // 3. STATS COUNTER
-        //    Specific, credible numbers — authority through precision.
-        //    Labels explain what the number means, not just what it is.
-        // ──────────────────────────────────────────────────────────────────────
-        [
-            'type'  => 'stats_counter',
-            'title' => [
-                'en' => 'OeParts by the Numbers',
-                'de' => 'OeParts in Zahlen',
-                'lt' => 'OeParts skaičiais',
-                'fr' => 'OeParts en chiffres',
-                'es' => 'OeParts en cifras',
-            ],
-            'content' => [
-                'items' => [
-                    [
-                        'key'    => 'parts_count',
-                        'suffix' => '+',
-                        'label'  => [
-                            'en' => 'Genuine OEM Parts',
-                            'de' => 'Original OEM-Teile',
-                            'lt' => 'Originalios OEM dalys',
-                            'fr' => 'Pièces OEM d\'origine',
-                            'es' => 'Piezas OEM genuinas',
-                        ],
-                    ],
-                    [
-                        'key'    => 'customers_count',
-                        'suffix' => '+',
-                        'label'  => [
-                            'en' => 'Happy Car Owners',
-                            'de' => 'Zufriedene Autobesitzer',
-                            'lt' => 'Laimingi automobilių savininkai',
-                            'fr' => 'Propriétaires de voitures heureux',
-                            'es' => 'Propietarios de coches felices',
-                        ],
-                    ],
-                    [
-                        'key'    => 'countries_count',
-                        'suffix' => '',
-                        'label'  => [
-                            'en' => 'EU Countries',
-                            'de' => 'EU-Länder',
-                            'lt' => 'ES šalys',
-                            'fr' => 'Pays UE',
-                            'es' => 'Países UE',
-                        ],
-                    ],
-                    [
-                        'key'    => 'rating',
-                        'suffix' => '',
-                        'label'  => [
-                            'en' => 'Customer Rating',
-                            'de' => 'Kundenbewertung',
-                            'lt' => 'Klientų įvertinimas',
-                            'fr' => 'Note clients',
-                            'es' => 'Calificación clientes',
+                            'en' => 'Secure Payment (Card/SEPA)',
+                            'de' => 'Sichere Zahlung (Karte/SEPA)',
+                            'lt' => 'Saugus mokėjimas (Kortele/SEPA)',
+                            'fr' => 'Paiement sécurisé (Carte/SEPA)',
+                            'es' => 'Pago seguro (Tarjeta/SEPA)',
                         ],
                     ],
                 ],
@@ -206,28 +118,17 @@ class HomepageSectionsSeeder extends Seeder
             'is_active'  => true,
         ],
 
-        // ──────────────────────────────────────────────────────────────────────
-        // 3. HOW IT WORKS
-        //    Target query: "how to order OEM parts online"
-        //    Featured snippet format: numbered 3-step process.
-        //    Descriptions are practical and specific — built for trust, not flair.
-        // ──────────────────────────────────────────────────────────────────────
+        // ── HOW_IT_WORKS (sort_order=30) ──
         [
             'type'  => 'how_it_works',
-            'title' => [
-                'en' => 'How to Order Genuine OEM Parts on OeParts',
-                'de' => 'So bestellen Sie originale OEM-Teile bei OeParts',
-                'lt' => 'Kaip užsakyti originalias OEM dalis OeParts',
-                'fr' => 'Comment commander des pièces OEM d\'origine sur OeParts',
-                'es' => 'Cómo pedir piezas OEM genuinas en OeParts',
-            ],
+            'title' => 'How It Works',
             'content' => [
                 'eyebrow' => [
-                    'en' => 'HOW IT WORKS',
-                    'de' => 'SO FUNKTIONIERT ES',
-                    'lt' => 'KAIP TAI VEIKIA',
-                    'fr' => 'COMMENT ÇA MARCHE',
-                    'es' => 'CÓMO FUNCIONA',
+                    'en' => 'PROCESS',
+                    'de' => 'ABLAUF',
+                    'lt' => 'PROCESAS',
+                    'fr' => 'PROCESSUS',
+                    'es' => 'PROCESO',
                 ],
                 'headline' => [
                     'en' => 'How It Works',
@@ -239,63 +140,63 @@ class HomepageSectionsSeeder extends Seeder
                 'subheadline' => [
                     'en' => 'Three simple steps to get the right part at the right price.',
                     'de' => 'Drei einfache Schritte zum richtigen Teil zum richtigen Preis.',
-                    'lt' => 'Trys paprasti žingsniai gauti tinkamą dalį už tinkamą kainą.',
+                    'lt' => 'Trys paprasti žingsniai norint gauti tinkamą dalį už tinkamą kainą.',
                     'fr' => 'Trois étapes simples pour obtenir la bonne pièce au bon prix.',
-                    'es' => 'Tres pasos simples para obtener la pieza correcta al precio correcto.',
+                    'es' => 'Tres simples pasos para obtener la pieza correcta al precio correcto.',
                 ],
                 'steps' => [
                     [
-                        'icon'        => 'magnifying-glass',
-                        'step_number' => '01',
-                        'title'       => [
-                            'en' => 'Search OEM Number',
-                            'de' => 'OEM-Nummer suchen',
-                            'lt' => 'Ieškoti OEM numerio',
-                            'fr' => 'Rechercher OEM',
-                            'es' => 'Buscar número OEM',
+                        'icon' => 'magnifying-glass',
+                        'step_number' => 1,
+                        'title' => [
+                            'en' => 'Search by OEM Number',
+                            'de' => 'Nach OEM-Nummer suchen',
+                            'lt' => 'Ieškokite pagal OEM numerį',
+                            'fr' => 'Cherchez par numéro OEM',
+                            'es' => 'Busca por número OEM',
                         ],
                         'description' => [
-                            'en' => 'Enter your OEM number or VIN. We\'ll find the exact part for your vehicle.',
-                            'de' => 'OEM-Nummer oder FIN eingeben. Wir finden das exakte Teil für Ihr Fahrzeug.',
-                            'lt' => 'Įveskite OEM numerį arba VIN. Mes rasime tikslią dalį jūsų transporto priemonei.',
-                            'fr' => 'Entrez votre numéro OEM ou VIN. Nous trouvons la pièce exacte pour votre véhicule.',
-                            'es' => 'Ingrese su número OEM o VIN. Encontramos la pieza exacta para su vehículo.',
+                            'en' => 'Enter the exact OEM part number from your vehicle manual or old part.',
+                            'de' => 'Geben Sie die genaue OEM-Teilenummer aus Ihrem Fahrzeughandbuch ein.',
+                            'lt' => 'Įveskite tikslų OEM dalies numerį iš jūsų automobilio vadovo.',
+                            'fr' => 'Entrez le numéro de pièce OEM exact de votre manuel de véhicule.',
+                            'es' => 'Introduce el número exacto de pieza OEM de tu manual de vehículo.',
                         ],
                     ],
                     [
-                        'icon'        => 'shopping-cart',
-                        'step_number' => '02',
-                        'title'       => [
-                            'en' => 'Compare & Choose',
-                            'de' => 'Vergleichen & Wählen',
-                            'lt' => 'Palyginti ir Pasirinkti',
-                            'fr' => 'Comparer & Choisir',
-                            'es' => 'Comparar y Elegir',
+                        'icon' => 'shopping-cart',
+                        'step_number' => 2,
+                        'title' => [
+                            'en' => 'Compare & Order',
+                            'de' => 'Vergleichen & Bestellen',
+                            'lt' => 'Lyginkite ir užsakykite',
+                            'fr' => 'Comparez & Commandez',
+                            'es' => 'Compara y Pide',
                         ],
                         'description' => [
-                            'en' => 'See real-time stock availability and condition. Pick the best option for your budget.',
-                            'de' => 'Echtzeit-Verfügbarkeit ansehen. Wählen Sie die beste Option für Ihr Budget.',
-                            'lt' => 'Matykite realaus laiko likučius. Pasirinkite geriausią variantą savo biudžetui.',
-                            'fr' => 'Voir dispo en temps réel. Choisissez la meilleure option pour votre budget.',
-                            'es' => 'Ver stock en tiempo real. Elija la mejor opción para su presupuesto.',
+                            'en' => 'See real-time stock availability and condition (Grade A/B/C). Add to cart securely.',
+                            'de' => 'Sieh dir Echtzeit-Verfügbarkeit an. Sicher in den Warenkorb und Kasse.',
+                            'lt' => 'Matykite realaus laiko likučius. Saugiai atsiskaitykite.',
+                            'fr' => 'Voir dispo en temps réel. Ajoutez au panier et payez en toute sécurité.',
+                            'es' => 'Ver stock en tiempo real. Añade al carrito y paga con seguridad.',
                         ],
                     ],
                     [
-                        'icon'        => 'truck',
-                        'step_number' => '03',
-                        'title'       => [
-                            'en' => 'Fast Delivery',
-                            'de' => 'Schnelle Lieferung',
-                            'lt' => 'Greitas pristatymas',
-                            'fr' => 'Livraison rapide',
-                            'es' => 'Entrega rápida',
+                        'icon' => 'truck',
+                        'step_number' => 3,
+                        'title' => [
+                            'en' => 'Fast EU Delivery',
+                            'de' => 'Schnelle EU-Lieferung',
+                            'lt' => 'Greitas pristatymas ES',
+                            'fr' => 'Livraison UE rapide',
+                            'es' => 'Entrega rápida en UE',
                         ],
                         'description' => [
-                            'en' => 'Tracked, insured delivery to your door across Europe. Get it in 5-7 days with Express.',
-                            'de' => 'Erhalten Sie Ihre Teile schnell mit vollständiger Sendungsverfolgung.',
-                            'lt' => 'Gaukite savo dalis greitai su pilnu sekimu ir draudimu.',
-                            'fr' => 'Recevez vos pièces rapidement avec suivi complet et assurance.',
-                            'es' => 'Reciba sus piezas rápidamente con seguimiento completo y seguro.',
+                            'en' => 'Your genuine OEM part ships from our EU warehouse within 24 hours.',
+                            'de' => 'Ihr originales OEM-Teil wird innerhalb von 24 Stunden aus unserem EU-Lager versendet.',
+                            'lt' => 'Jūsų originali OEM dalis išsiųsta iš mūsų ES sandėlio per 24 valandas.',
+                            'fr' => 'Votre pièce OEM d\'origine est expédiée depuis notre entrepôt UE en 24 heures.',
+                            'es' => 'Su pieza OEM original se envía desde nuestro almacén UE en 24 horas.',
                         ],
                     ],
                 ],
@@ -304,252 +205,58 @@ class HomepageSectionsSeeder extends Seeder
             'is_active'  => true,
         ],
 
-        // ──────────────────────────────────────────────────────────────────────
-        // 4. FEATURED BRANDS
-        //    Authority through association — top-tier OEM brands.
-        // ──────────────────────────────────────────────────────────────────────
+        // ── STATS_COUNTER (sort_order=40) ──
         [
-            'type'  => 'featured_brands',
-            'title' => [
-                'en' => 'Genuine Parts from Original OEM Manufacturers',
-                'de' => 'Originalteile von OEM-Herstellern',
-                'lt' => 'Originalios dalys iš OEM gamintojų',
-                'fr' => 'Pièces d\'origine des fabricants OEM',
-                'es' => 'Piezas genuinas de fabricantes OEM originales',
-            ],
+            'type'  => 'stats_counter',
+            'title' => 'Stats Counter',
             'content' => [
                 'eyebrow' => [
-                    'en' => 'ORIGINAL MANUFACTURERS',
-                    'de' => 'ORIGINALHERSTELLER',
-                    'lt' => 'ORIGINALŪS GAMINTOJAI',
-                    'fr' => 'FABRICANTS D\'ORIGINE',
-                    'es' => 'FABRICANTES ORIGINALES',
+                    'en' => 'BY THE NUMBERS',
+                    'de' => 'IN ZAHLEN',
+                    'lt' => 'SKAIČIAIS',
+                    'fr' => 'EN CHIFFRES',
+                    'es' => 'EN CIFRAS',
                 ],
                 'headline' => [
-                    'en' => 'Genuine OEM Brands',
-                    'de' => 'Original OEM-Marken',
-                    'lt' => 'Originalūs OEM prekės ženklai',
-                    'fr' => 'Marques OEM d\'origine',
-                    'es' => 'Marcas OEM genuinas',
+                    'en' => 'Trusted Across Europe',
+                    'de' => 'Europaweit vertraut',
+                    'lt' => 'Pasitikima visoje Europoje',
+                    'fr' => 'La confiance à travers l\'Europe',
+                    'es' => 'La confianza en toda Europa',
                 ],
                 'subheadline' => [
-                    'en' => 'BMW, Audi, Mercedes, VW, Porsche & more. Perfectly fitting parts sourced for your car.',
-                    'de' => 'Originalteile direkt vom OEM-Hersteller für garantierte Passform.',
-                    'lt' => 'Originalios dalys tiesiogiai iš OEM gamintojų garantuotam suderinamumui.',
-                    'fr' => 'Pièces d\'origine sourcées directement auprès de fabricants OEM.',
-                    'es' => 'Piezas originales obtenidas directamente de fabricantes OEM.',
+                    'en' => 'Real numbers from car owners and workshops who order with us every day.',
+                    'de' => 'Echte Zahlen von Autobesitzern und Werkstätten, die täglich bei uns bestellen.',
+                    'lt' => 'Realūs skaičiai iš automobilių savininkų ir dirbtuvių, kurie užsako pas mus kasdien.',
+                    'fr' => 'Des chiffres réels venant de propriétaires de véhicules et d\'ateliers qui commandent chez nous chaque jour.',
+                    'es' => 'Cifras reales de propietarios de vehículos y talleres que piden con nosotros cada día.',
                 ],
-                'view_all_text' => [
-                    'en' => 'View All Brands',
-                    'de' => 'Alle Marken Anzeigen',
-                    'lt' => 'Rodyti Visus Prekės Ženklus',
-                    'fr' => 'Voir Toutes les Marques',
-                    'es' => 'Ver Todas las Marcas',
-                ],
-            ],
-            'sort_order' => 40,
-            'is_active'  => true,
-        ],
-
-        // ──────────────────────────────────────────────────────────────────────
-        // 6. POPULAR SEARCHES
-        //    Social proof through real search data.
-        //    Subheadline adds urgency (availability / demand).
-        // ──────────────────────────────────────────────────────────────────────
-        [
-            'type'  => 'popular_searches',
-            'title' => [
-                'en' => 'Most Searched OEM Part Numbers This Month',
-                'de' => 'Meistgesuchte OEM-Teilenummern diesen Monat',
-                'lt' => 'Dažniausiai ieškomi OEM dalių numeriai šį mėnesį',
-                'fr' => 'Numéros OEM les plus recherchés ce mois',
-                'es' => 'Números OEM más buscados este mes',
-            ],
-            'content' => [
-                'eyebrow' => [
-                    'en' => 'TRENDING NOW',
-                    'de' => 'IM TREND',
-                    'lt' => 'POPULIARŪS',
-                    'fr' => 'TENDANCE',
-                    'es' => 'TENDENCIA',
-                ],
-                'headline' => [
-                    'en' => 'Popular OEM Numbers',
-                    'de' => 'Beliebte OEM-Nummern',
-                    'lt' => 'Populiariausi OEM numeriai',
-                    'fr' => 'Numéros OEM populaires',
-                    'es' => 'Números OEM populares',
-                ],
-                'subheadline' => [
-                    'en' => 'Limited stock available. Order now before these popular parts sell out.',
-                    'de' => 'Begrenzter Vorrat verfügbar. Jetzt bestellen bevor diese beliebten Teile ausverkauft sind.',
-                    'lt' => 'Ribotos atsargos. Užsakykite dabar, kol šios populiarios dalys neišparduotos.',
-                    'fr' => 'Stock limité disponible. Commandez maintenant avant que ces pièces populaires ne soient vendues.',
-                    'es' => 'Stock limitado disponible. Ordene ahora antes de que estas piezas populares se agoten.',
-                ],
-                'search_cta_text' => [
-                    'en' => 'Search Your Part',
-                    'de' => 'Ihr Teil Suchen',
-                    'lt' => 'Ieškokite Dalies',
-                    'fr' => 'Recherchez Votre Pièce',
-                    'es' => 'Busque Su Pieza',
-                ],
-            ],
-            'sort_order' => 50,
-            'is_active'  => true,
-        ],
-
-        // ──────────────────────────────────────────────────────────────────────
-        // 7. PART INQUIRY
-        //    Target: "can't find OEM part" — high-intent, high-frustration query.
-        //    Tone: helpful expert, not a sales pitch.
-        //    Subheadline explains the service concretely: what, how, how long.
-        // ──────────────────────────────────────────────────────────────────────
-        [
-            'type'  => 'part_inquiry',
-            'title' => [
-                'en' => 'Can\'t Find Your OEM Part Number? We\'ll Source It.',
-                'de' => 'OEM-Teilenummer nicht gefunden? Wir beschaffen es.',
-                'lt' => 'Neradote OEM dalies numerio? Mes jį surasime.',
-                'fr' => 'Numéro OEM introuvable ? Nous le sourçons.',
-                'es' => '¿No encuentra su número OEM? Nosotros lo localizamos.',
-            ],
-            'content' => [
-                'eyebrow' => [
-                    'en' => 'CAN\'T FIND YOUR PART?',
-                    'de' => 'TEIL NICHT GEFUNDEN?',
-                    'lt' => 'NERADOTE DALIES?',
-                    'fr' => 'PIÈCE INTROUVABLE ?',
-                    'es' => '¿NO ENCUENTRA SU PIEZA?',
-                ],
-                'headline' => [
-                    'en' => 'We\'ll Source Your Part',
-                    'de' => 'Wir beschaffen Ihr Teil',
-                    'lt' => 'Mes surasime jūsų dalį',
-                    'fr' => 'Nous sourçons votre pièce',
-                    'es' => 'Localizamos su pieza',
-                ],
-                'subheadline' => [
-                    'en' => 'Can\'t find it? Our specialists are available 7 days a week to source it for your car.',
-                    'de' => 'Nicht gefunden? Wir beschaffen es in 24 Stunden — kostenlos.',
-                    'lt' => 'Neradote? Mes surasime per 24 valandas — nemokamai.',
-                    'fr' => 'Introuvable ? Nous le sourçons en 24h — gratuitement.',
-                    'es' => '¿No lo encuentra? Lo localizamos en 24h — sin coste.',
-                ],
-                'button_text' => [
-                    'en' => 'Request Part',
-                    'de' => 'Teil Anfragen',
-                    'lt' => 'Pateikti Užklausą',
-                    'fr' => 'Demander Pièce',
-                    'es' => 'Solicitar Pieza',
-                ],
-            ],
-            'sort_order' => 60,
-            'is_active'  => true,
-        ],
-
-        // ──────────────────────────────────────────────────────────────────────
-        // 8. TESTIMONIALS
-        // ──────────────────────────────────────────────────────────────────────
-        [
-            'type'  => 'testimonials',
-            'title' => [
-                'en' => 'What Car Owners Across Europe Say About OeParts',
-                'de' => 'Was Kfz-Profis aus ganz Europa über OeParts sagen',
-                'lt' => 'Ką automobilių remonto profesionalai visoje Europoje sako apie OeParts',
-                'fr' => 'Ce que les professionnels de l\'auto à travers l\'Europe disent d\'OeParts',
-                'es' => 'Lo que los profesionales del automóvil en Europa dicen sobre OeParts',
-            ],
-            'content' => [
-                'eyebrow' => [
-                    'en' => 'VERIFIED REVIEWS',
-                    'de' => 'VERIFIZIERTE BEWERTUNGEN',
-                    'lt' => 'PATIKRINTI ATSILIEPIMAI',
-                    'fr' => 'AVIS VÉRIFIÉS',
-                    'es' => 'RESEÑAS VERIFICADAS',
-                ],
-                'headline' => [
-                    'en' => 'Trusted by EU Car Owners',
-                    'de' => 'Vertraut von EU-Käufern',
-                    'lt' => 'Pasitiki ES pirkėjai',
-                    'fr' => 'Approuvé par les acheteurs UE',
-                    'es' => 'Con la confianza de compradores UE',
-                ],
-                'subheadline' => [
-                    'en' => '2,500+ car owners across Europe trust us for genuine parts.',
-                    'de' => '3.500+ Werkstätten & Käufer in 27 EU-Ländern vertrauen uns für originale Teile.',
-                    'lt' => '3.500+ dirbtuvių ir pirkėjų 27 ES šalyse pasitiki mumis originalių dalių.',
-                    'fr' => '3 500+ ateliers et acheteurs dans 27 pays UE nous font confiance pour des pièces authentiques.',
-                    'es' => '3.500+ talleres y compradores en 27 países UE confían en nosotros para piezas genuinas.',
-                ],
-            ],
-            'sort_order' => 70,
-            'is_active'  => true,
-        ],
-
-        // ──────────────────────────────────────────────────────────────────────
-        // 9. SHIPPING INFO
-        //    Headline answers the top concern: "will it reach me?"
-        //    Subheadline addresses customs (EU-to-EU = no issues) — major objection.
-        // ──────────────────────────────────────────────────────────────────────
-        [
-            'type'  => 'shipping_info',
-            'title' => [
-                'en' => 'OEM Parts Delivered Across the EU — Tracked and Insured',
-                'de' => 'OEM-Teile in der gesamten EU geliefert — Verfolgt und Versichert',
-                'lt' => 'OEM dalys pristatomos visoje ES — Su sekimu ir draudimu',
-                'fr' => 'Pièces OEM livrées dans toute l\'UE — Suivies et Assurées',
-                'es' => 'Piezas OEM entregadas en toda la UE — Rastreadas y Aseguradas',
-            ],
-            'content' => [
-                'eyebrow' => [
-                    'en' => 'EU DELIVERY',
-                    'de' => 'EU-LIEFERUNG',
-                    'lt' => 'ES PRISTATYMAS',
-                    'fr' => 'LIVRAISON UE',
-                    'es' => 'ENTREGA UE',
-                ],
-                'headline' => [
-                    'en' => 'EU-Wide Delivery',
-                    'de' => 'EU-Lieferung',
-                    'lt' => 'Pristatymas ES',
-                    'fr' => 'Livraison UE',
-                    'es' => 'Entrega UE',
-                ],
-                'subheadline' => [
-                    'en' => 'No customs, no duties. Every order tracked and fully insured to your door.',
-                    'de' => 'Kein Zoll, keine Gebühren. Jede Bestellung verfolgt und vollständig versichert an Ihre Tür.',
-                    'lt' => 'Jokių muitų, jokių mokesčių. Kiekvienas užsakymas sekamas ir pilnai draustas prie durų.',
-                    'fr' => 'Pas de douane, pas de frais. Chaque commande suivie et entièrement assurée à votre porte.',
-                    'es' => 'Sin aduanas, sin aranceles. Cada pedido rastreado y completamente asegurado a su puerta.',
-                ],
-                'features' => [
+                'items' => [
                     [
-                        'icon'  => 'clock',
-                        'value' => [
-                            'en' => '5-14 Days',
-                            'de' => '1–5 Tage',
-                            'lt' => '1–5 Dienos',
-                            'fr' => '1–5 Jours',
-                            'es' => '1–5 Días',
-                        ],
+                        'key' => 'customers_count',
+                        'suffix' => '+',
                         'label' => [
-                            'en' => 'EU Delivery',
-                            'de' => 'EU-Lieferung',
-                            'lt' => 'ES pristatymas',
-                            'fr' => 'Livraison UE',
-                            'es' => 'Entrega UE',
+                            'en' => 'Customers',
+                            'de' => 'Kunden',
+                            'lt' => 'Klientai',
+                            'fr' => 'Clients',
+                            'es' => 'Clientes',
                         ],
                     ],
                     [
-                        'icon'  => 'globe-europe',
-                        'value' => [
-                            'en' => '27',
-                            'de' => '27',
-                            'lt' => '27',
-                            'fr' => '27',
-                            'es' => '27',
+                        'key' => 'parts_count',
+                        'suffix' => '+',
+                        'label' => [
+                            'en' => 'OEM Numbers Sourced',
+                            'de' => 'Beschaffte OEM-Nummern',
+                            'lt' => 'Surastų OEM numerių',
+                            'fr' => 'Références OEM sourcées',
+                            'es' => 'Números OEM abastecidos',
                         ],
+                    ],
+                    [
+                        'key' => 'countries_count',
+                        'suffix' => '',
                         'label' => [
                             'en' => 'EU Countries',
                             'de' => 'EU-Länder',
@@ -559,174 +266,512 @@ class HomepageSectionsSeeder extends Seeder
                         ],
                     ],
                     [
-                        'icon'  => 'shield-check',
-                        'value' => [
-                            'en' => '100%',
-                            'de' => '100 %',
-                            'lt' => '100 %',
-                            'fr' => '100 %',
-                            'es' => '100 %',
-                        ],
+                        'key' => 'rating',
+                        'suffix' => '',
                         'label' => [
-                            'en' => 'Insured',
-                            'de' => 'Versichert',
-                            'lt' => 'Drausta',
-                            'fr' => 'Assuré',
-                            'es' => 'Asegurado',
-                        ],
-                    ],
-                    [
-                        'icon'  => 'arrow-path',
-                        'value' => [
-                            'en' => '14 Days',
-                            'de' => '14 Tage',
-                            'lt' => '14 Dienų',
-                            'fr' => '14 Jours',
-                            'es' => '14 Días',
-                        ],
-                        'label' => [
-                            'en' => 'Free Returns',
-                            'de' => 'Kostenlose Rückgabe',
-                            'lt' => 'Nemokamas grąžinimas',
-                            'fr' => 'Retours gratuits',
-                            'es' => 'Devoluciones gratis',
+                            'en' => 'Customer Rating',
+                            'de' => 'Bewertung',
+                            'lt' => 'Įvertinimas',
+                            'fr' => 'Évaluation',
+                            'es' => 'Calificación',
                         ],
                     ],
                 ],
-                'carriers' => ['DHL', 'DPD', 'GLS', 'FedEx', 'UPS'],
+            ],
+            'sort_order' => 40,
+            'is_active'  => true,
+        ],
+
+        // ── POPULAR_SEARCHES (sort_order=50) ──
+        [
+            'type'  => 'popular_searches',
+            'title' => 'Popular Searches',
+            'content' => [
+                'eyebrow' => [
+                    'en' => 'TRENDING NOW',
+                    'de' => 'AKTUELL BELIEBT',
+                    'lt' => 'POPULIARU DABAR',
+                    'fr' => 'EN CE MOMENT',
+                    'es' => 'TENDENCIAS',
+                ],
+                'headline' => [
+                    'en' => 'Popular OEM Numbers',
+                    'de' => 'Beliebte OEM-Nummern',
+                    'lt' => 'Populiarūs OEM numeriai',
+                    'fr' => 'Numéros OEM populaires',
+                    'es' => 'Números OEM populares',
+                ],
+                'subheadline' => [
+                    'en' => 'Real search activity from drivers across Europe — updated live.',
+                    'de' => 'Echte Suchaktivität von Autofahrern in ganz Europa — live aktualisiert.',
+                    'lt' => 'Tikra vairuotojų paieškos veikla visoje Europoje — atnaujinama gyvai.',
+                    'fr' => 'Activité de recherche réelle des automobilistes à travers l\'Europe — mise à jour en direct.',
+                    'es' => 'Actividad de búsqueda real de conductores en toda Europa — actualizada en vivo.',
+                ],
+                'search_cta_text' => [
+                    'en' => 'Search by OEM Number',
+                    'de' => 'Nach OEM-Nummer suchen',
+                    'lt' => 'Ieškoti pagal OEM numerį',
+                    'fr' => 'Rechercher par numéro OEM',
+                    'es' => 'Buscar por número OEM',
+                ],
+            ],
+            'sort_order' => 50,
+            'is_active'  => true,
+        ],
+
+        // ── FEATURED_BRANDS (sort_order=60) ──
+        [
+            'type'  => 'featured_brands',
+            'title' => 'Featured Brands',
+            'content' => [
+                'eyebrow' => [
+                    'en' => 'OEM MANUFACTURERS',
+                    'de' => 'OEM-HERSTELLER',
+                    'lt' => 'OEM GAMINTOJAI',
+                    'fr' => 'FABRICANTS OEM',
+                    'es' => 'FABRICANTES OEM',
+                ],
+                'headline' => [
+                    'en' => 'Genuine Parts by Manufacturer',
+                    'de' => 'Originalteile nach Hersteller',
+                    'lt' => 'Originalios dalys pagal gamintoją',
+                    'fr' => 'Pièces d\'origine par fabricant',
+                    'es' => 'Piezas originales por fabricante',
+                ],
+                'view_all_text' => [
+                    'en' => 'View All Brands',
+                    'de' => 'Alle Marken ansehen',
+                    'lt' => 'Peržiūrėti visas markes',
+                    'fr' => 'Voir toutes les marques',
+                    'es' => 'Ver todas las marcas',
+                ],
+                'subheadline' => [
+                    'en' => 'Genuine parts sourced from verified EU distributors — guaranteed fitment for your vehicle.',
+                    'de' => 'Originalteile von geprüften EU-Distributoren — garantierte Passform für Ihr Fahrzeug.',
+                    'lt' => 'Originalios dalys iš patikrintų ES platintojų — garantuotas tikslumas jūsų automobiliui.',
+                    'fr' => 'Pièces d\'origine issues de distributeurs UE vérifiés — ajustement garanti pour votre véhicule.',
+                    'es' => 'Piezas originales de distribuidores UE verificados — ajuste garantizado para su vehículo.',
+                ],
+            ],
+            'sort_order' => 60,
+            'is_active'  => true,
+        ],
+
+        // ── PART_INQUIRY (sort_order=70) ──
+        [
+            'type'  => 'part_inquiry',
+            'title' => 'Part Inquiry',
+            'content' => [
+                'eyebrow' => [
+                    'en' => 'SOURCING SERVICE',
+                    'de' => 'BESCHAFFUNGSSERVICE',
+                    'lt' => 'PAIEŠKOS PASLAUGA',
+                    'fr' => 'SERVICE DE SOURCING',
+                    'es' => 'SERVICIO DE BÚSQUEDA',
+                ],
+                'headline' => [
+                    'en' => 'Can\'t Find Your Part?',
+                    'de' => 'Teil nicht gefunden?',
+                    'lt' => 'Nerandate savo dalies?',
+                    'fr' => 'Vous ne trouvez pas votre pièce ?',
+                    'es' => '¿No encuentras tu pieza?',
+                ],
+                'subheadline' => [
+                    'en' => 'Submit a part inquiry and our specialists will source it for you within 24 hours.',
+                    'de' => 'Senden Sie eine Teileanfrage und unsere Spezialisten beschaffen es innerhalb von 24 Stunden.',
+                    'lt' => 'Pateikite užklausą ir mūsų specialistai ją surinks per 24 valandas.',
+                    'fr' => 'Soumettez une demande de pièce et nos spécialistes la trouveront dans les 24 heures.',
+                    'es' => 'Envíe una consulta de pieza y nuestros especialistas la conseguirán en 24 horas.',
+                ],
+                'button_text' => [
+                    'en' => 'Submit Inquiry',
+                    'de' => 'Anfrage senden',
+                    'lt' => 'Pateikti užklausą',
+                    'fr' => 'Soumettre une demande',
+                    'es' => 'Enviar consulta',
+                ],
+            ],
+            'sort_order' => 70,
+            'is_active'  => true,
+        ],
+
+        // ── TESTIMONIALS (sort_order=80) ──
+        [
+            'type'  => 'testimonials',
+            'title' => 'Testimonials',
+            'content' => [
+                'eyebrow' => [
+                    'en' => 'CUSTOMER REVIEWS',
+                    'de' => 'KUNDENBEWERTUNGEN',
+                    'lt' => 'KLIENTŲ ATSILIEPIMAI',
+                    'fr' => 'AVIS CLIENTS',
+                    'es' => 'OPINIONES DE CLIENTES',
+                ],
+                'headline' => [
+                    'en' => 'What Our Customers Say',
+                    'de' => 'Was unsere Kunden sagen',
+                    'lt' => 'Ką sako mūsų klientai',
+                    'fr' => 'Ce que disent nos clients',
+                    'es' => 'Lo que dicen nuestros clientes',
+                ],
+                'subheadline' => [
+                    'en' => 'Verified feedback from car owners, mechanics, and fleet managers across Europe.',
+                    'de' => 'Verifiziertes Feedback von Autobesitzern, Mechanikern und Flottenmanagern in ganz Europa.',
+                    'lt' => 'Patikrintos apžvalgos iš automobilių savininkų, mechanikų ir transporto vadybininkų visoje Europoje.',
+                    'fr' => 'Retours vérifiés de propriétaires de véhicules, mécaniciens et gestionnaires de flotte à travers l\'Europe.',
+                    'es' => 'Opiniones verificadas de propietarios de vehículos, mecánicos y gestores de flotas en toda Europa.',
+                ],
             ],
             'sort_order' => 80,
             'is_active'  => true,
         ],
 
-        // ──────────────────────────────────────────────────────────────────────
-        // 10. FAQS
-        //     JSON-LD FAQPage schema — targets People Also Ask & AI Overviews.
-        //     Eyebrow invites rather than declares.
-        //     Subheadline removes jargon-anxiety: "plain answers from real experts."
-        // ──────────────────────────────────────────────────────────────────────
+        // ── SHIPPING_INFO (sort_order=90) ──
         [
-            'type'  => 'faqs',
-            'title' => [
-                'en' => 'Frequently Asked Questions About Buying OEM Auto Parts Online',
-                'de' => 'Häufig gestellte Fragen zum Kauf von OEM-Autoteilen online',
-                'lt' => 'Dažnai užduodami klausimai apie OEM automobilių dalių pirkimą internete',
-                'fr' => 'Questions fréquentes sur l\'achat de pièces auto OEM en ligne',
-                'es' => 'Preguntas frecuentes sobre la compra de piezas OEM en línea',
-            ],
+            'type'  => 'shipping_info',
+            'title' => 'Shipping Info',
             'content' => [
                 'eyebrow' => [
-                    'en' => 'FAQs',
-                    'de' => 'HÄUFIGE FRAGEN',
-                    'lt' => 'DUK',
-                    'fr' => 'QUESTIONS FRÉQUENTES',
-                    'es' => 'PREGUNTAS FRECUENTES',
+                    'en' => 'LOGISTICS',
+                    'de' => 'LOGISTIK',
+                    'lt' => 'LOGISTIKA',
+                    'fr' => 'LOGISTIQUE',
+                    'es' => 'LOGÍSTICA',
                 ],
                 'headline' => [
-                    'en' => 'Frequently Asked Questions',
-                    'de' => 'Häufig Gestellte Fragen',
-                    'lt' => 'Dažnai Užduodami Klausimai',
-                    'fr' => 'Questions Fréquemment Posées',
-                    'es' => 'Preguntas Frecuentes',
+                    'en' => 'Shipping Across the European Union',
+                    'de' => 'Versand in die gesamte Europäische Union',
+                    'lt' => 'Pristatymas visoje Europos Sąjungoje',
+                    'fr' => 'Livraison dans toute l\'Union européenne',
+                    'es' => 'Envío por toda la Unión Europea',
                 ],
                 'subheadline' => [
-                    'en' => 'Quick answers about OEM numbers, shipping, returns, and more.',
-                    'de' => 'Schnelle Antworten zu OEM-Nummern, Versand, Rückgabe und mehr.',
-                    'lt' => 'Greiti atsakymai apie OEM numerius, pristatymą, grąžinimą ir daugiau.',
-                    'fr' => 'Réponses rapides sur les numéros OEM, livraison, retours et plus encore.',
-                    'es' => 'Respuestas rápidas sobre números OEM, envío, devoluciones y más.',
+                    'en' => 'Fast, tracked delivery via DHL, DPD, GLS and more. Ships across all 27 EU member states.',
+                    'de' => 'Schnelle, verfolgte Lieferung per DHL, DPD, GLS und mehr. Lieferung in alle 27 EU-Mitgliedstaaten.',
+                    'lt' => 'Greitas siuntimas su sekimu per DHL, DPD, GLS ir kt. Pristatome į visas 27 ES valstybes nares.',
+                    'fr' => 'Livraison rapide et suivie via DHL, DPD, GLS et plus. Expédié dans les 27 États membres de l\'UE.',
+                    'es' => 'Entrega rápida y rastreada por DHL, DPD, GLS y más. Enviamos a los 27 estados miembros de la UE.',
+                ],
+                'carriers' => [
+                    'DHL',
+                    'DPD',
+                    'GLS',
+                    'FedEx',
+                    'UPS',
+                ],
+                'features' => [
+                    [
+                        'icon' => 'truck',
+                        'value' => [
+                            'en' => '3–5 Days',
+                            'de' => '3–5 Tage',
+                            'lt' => '3–5 dienos',
+                            'fr' => '3–5 jours',
+                            'es' => '3–5 días',
+                        ],
+                        'label' => [
+                            'en' => 'Express Delivery',
+                            'de' => 'Expresslieferung',
+                            'lt' => 'Greitas pristatymas',
+                            'fr' => 'Livraison express',
+                            'es' => 'Entrega exprés',
+                        ],
+                    ],
+                    [
+                        'icon' => 'globe-europe-africa',
+                        'value' => [
+                            'en' => '27 Countries',
+                            'de' => '27 Länder',
+                            'lt' => '27 šalys',
+                            'fr' => '27 pays',
+                            'es' => '27 países',
+                        ],
+                        'label' => [
+                            'en' => 'Full EU Coverage',
+                            'de' => 'Ganz EU abgedeckt',
+                            'lt' => 'Visa ES padengta',
+                            'fr' => 'Toute l\'UE couverte',
+                            'es' => 'Toda la UE cubierta',
+                        ],
+                    ],
+                    [
+                        'icon' => 'map-pin',
+                        'value' => [
+                            'en' => '100%',
+                            'de' => '100%',
+                            'lt' => '100%',
+                            'fr' => '100%',
+                            'es' => '100%',
+                        ],
+                        'label' => [
+                            'en' => 'Live Tracking',
+                            'de' => 'Live-Tracking',
+                            'lt' => 'Sekimas',
+                            'fr' => 'Suivi en direct',
+                            'es' => 'Seguimiento en vivo',
+                        ],
+                    ],
+                    [
+                        'icon' => 'arrow-path',
+                        'value' => [
+                            'en' => '14 Days',
+                            'de' => '14 Tage',
+                            'lt' => '14 dienų',
+                            'fr' => '14 jours',
+                            'es' => '14 días',
+                        ],
+                        'label' => [
+                            'en' => 'Easy Returns',
+                            'de' => 'Einfache Rückgabe',
+                            'lt' => 'Lengvas grąžinimas',
+                            'fr' => 'Retours faciles',
+                            'es' => 'Devoluciones fáciles',
+                        ],
+                    ],
                 ],
             ],
             'sort_order' => 90,
             'is_active'  => true,
         ],
 
-        // ──────────────────────────────────────────────────────────────────────
-        // 11. CONTACT CTA
-        //     Headline: surfaces the real doubt — "not sure which part."
-        //     Subheadline: explains the service, qualifies the specialist, gives hours.
-        // ──────────────────────────────────────────────────────────────────────
+        // ── BANNER (sort_order=100) ──
         [
-            'type'  => 'contact_cta',
-            'title' => [
-                'en' => 'Speak Directly with an OEM Parts Specialist',
-                'de' => 'Direkt mit einem OEM-Teile-Spezialisten sprechen',
-                'lt' => 'Kalbėkitės tiesiogiai su OEM dalių specialistu',
-                'fr' => 'Parlez directement à un spécialiste en pièces OEM',
-                'es' => 'Hable directamente con un especialista en piezas OEM',
-            ],
+            'type'  => 'banner',
+            'title' => 'Promo Banner',
             'content' => [
                 'eyebrow' => [
-                    'en' => 'FREE EXPERT HELP',
-                    'de' => 'KOSTENLOSE EXPERTENHILFE',
-                    'lt' => 'NEMOKAMA EKSPERTŲ PAGALBA',
-                    'fr' => 'AIDE EXPERT GRATUITE',
-                    'es' => 'AYUDA EXPERTA GRATUITA',
+                    'en' => 'FOR WORKSHOPS',
+                    'de' => 'FÜR WERKSTÄTTEN',
+                    'lt' => 'DIRBTUVĖMS',
+                    'fr' => 'POUR ATELIERS',
+                    'es' => 'PARA TALLERES',
                 ],
                 'headline' => [
-                    'en' => 'Need Help?',
-                    'de' => 'Hilfe benötigt?',
-                    'lt' => 'Reikia pagalbos?',
-                    'fr' => 'Besoin d\'aide ?',
-                    'es' => '¿Necesita ayuda?',
+                    'en' => 'Professional Workshop?',
+                    'de' => 'Professionelle Werkstatt?',
+                    'lt' => 'Profesionalios dirbtuvės?',
+                    'fr' => 'Atelier professionnel ?',
+                    'es' => '¿Taller profesional?',
                 ],
                 'subheadline' => [
-                    'en' => 'Call us or send a message. Free expert advice, available 7 days a week, 9 AM - 5 PM.',
-                    'de' => 'Rufen Sie an oder schreiben Sie. Kostenlose Beratung, verfügbar Mo–Fr.',
-                    'lt' => 'Paskambinkite arba parašykite. Nemokamos konsultacijos, galimos Pr–Pn.',
-                    'fr' => 'Appelez ou envoyez un message. Conseils gratuits, disponibles Lun–Ven.',
-                    'es' => 'Llámenos o envíe un mensaje. Asesoramiento gratuito, disponible Lun–Vie.',
+                    'en' => 'Open a trade account to get wholesale pricing and priority support.',
+                    'de' => 'Eröffnen Sie ein Geschäftskonto für Großhandelspreise und Support.',
+                    'lt' => 'Atidarykite verslo sąskaitą didmeninėms kainoms ir palaikymui gauti.',
+                    'fr' => 'Ouvrez un compte pro pour les tarifs grossistes et le support prioritaire.',
+                    'es' => 'Abra una cuenta comercial para precios al por mayor y soporte prioritario.',
                 ],
                 'button_text' => [
-                    'en' => 'Contact Expert',
-                    'de' => 'Experten Kontaktieren',
-                    'lt' => 'Susisiekti su Ekspertu',
-                    'fr' => 'Contacter l\'Expert',
-                    'es' => 'Contactar Experto',
+                    'en' => 'Register as Partner',
+                    'de' => 'Als Partner registrieren',
+                    'lt' => 'Registruotis partneriu',
+                    'fr' => 'S\'inscrire comme partenaire',
+                    'es' => 'Registrarse como socio',
                 ],
-                'phone' => '+370 600 00000',
+                'button_url' => '',
+                'features' => [
+                    [
+                        'icon' => 'wrench-screwdriver',
+                        'title' => [
+                            'en' => 'Workshop Pricing',
+                            'de' => 'Werkstattpreise',
+                            'lt' => 'Dirbtuvių kainos',
+                            'fr' => 'Tarifs Atelier',
+                            'es' => 'Precios de Taller',
+                        ],
+                        'desc' => [
+                            'en' => 'Volume-based pricing tiers — automatic on every invoice once you qualify.',
+                            'de' => 'Mengenbasierte Preisstaffeln — automatisch auf jeder Rechnung, sobald Sie qualifiziert sind.',
+                            'lt' => 'Kiekiu pagrįsti kainų lygiai — automatiškai kiekvienoje sąskaitoje, kai atitinkate reikalavimus.',
+                            'fr' => 'Paliers tarifaires basés sur le volume — appliqués automatiquement dès que vous êtes éligible.',
+                            'es' => 'Escalas de precios por volumen — automático en cada factura una vez que califique.',
+                        ],
+                    ],
+                    [
+                        'icon' => 'document-text',
+                        'title' => [
+                            'en' => 'Net-30 Terms',
+                            'de' => 'Zahlungsziel Netto-30',
+                            'lt' => '30 dienų atidėjimas',
+                            'fr' => 'Paiement à 30 jours',
+                            'es' => 'Pago a 30 días',
+                        ],
+                        'desc' => [
+                            'en' => 'Order on account, pay monthly. Credit lines from :low to :high based on history.',
+                            'de' => 'Auf Rechnung bestellen, monatlich zahlen. Kreditrahmen von :low bis :high je nach Historie.',
+                            'lt' => 'Užsakykite sąskaita, mokėkite kas mėnesį. Kredito linija nuo :low iki :high pagal istoriją.',
+                            'fr' => 'Commandez sur compte, payez mensuellement. Ligne de crédit de :low à :high selon votre historique.',
+                            'es' => 'Pida a cuenta, pague mensualmente. Línea de crédito desde :low hasta :high según su historial.',
+                        ],
+                    ],
+                    [
+                        'icon' => 'clipboard-check',
+                        'title' => [
+                            'en' => 'Bulk RFQ Desk',
+                            'de' => 'Sammelanfrage-Desk',
+                            'lt' => 'Didmeninių užklausų skyrius',
+                            'fr' => 'Bureau RFQ en gros',
+                            'es' => 'Mesa de solicitudes al por mayor',
+                        ],
+                        'desc' => [
+                            'en' => 'Quote 50+ OEM numbers in one request. Answers within 4 working hours.',
+                            'de' => 'Fordern Sie 50+ OEM-Nummern in einer Anfrage an. Antwort innerhalb von 4 Werkstunden.',
+                            'lt' => 'Užklauskite 50+ OEM numerių viena užklausa. Atsakymas per 4 darbo valandas.',
+                            'fr' => 'Demandez un devis pour 50+ références OEM en une seule requête. Réponse sous 4 heures ouvrées.',
+                            'es' => 'Solicite presupuesto de 50+ números OEM en una sola petición. Respuesta en 4 horas laborables.',
+                        ],
+                    ],
+                    [
+                        'icon' => 'chat-bubble',
+                        'title' => [
+                            'en' => 'Dedicated B2B Support',
+                            'de' => 'Persönlicher B2B-Support',
+                            'lt' => 'Asmeninis B2B palaikymas',
+                            'fr' => 'Support B2B Dédié',
+                            'es' => 'Soporte B2B Dedicado',
+                        ],
+                        'desc' => [
+                            'en' => 'Named account manager, direct line, DE · EN · FR · LT · ES.',
+                            'de' => 'Persönlicher Kundenbetreuer, Direktdurchwahl, DE · EN · FR · LT · ES.',
+                            'lt' => 'Asmeninis paskyros vadybininkas, tiesioginė linija, DE · EN · FR · LT · ES.',
+                            'fr' => 'Gestionnaire de compte dédié, ligne directe, DE · EN · FR · LT · ES.',
+                            'es' => 'Gestor de cuenta personal, línea directa, DE · EN · FR · LT · ES.',
+                        ],
+                    ],
+                    [
+                        'icon' => 'truck',
+                        'title' => [
+                            'en' => 'Scheduled Delivery',
+                            'de' => 'Planmäßige Lieferung',
+                            'lt' => 'Planinis pristatymas',
+                            'fr' => 'Livraison Planifiée',
+                            'es' => 'Entrega Programada',
+                        ],
+                        'desc' => [
+                            'en' => 'Daily courier runs across the EU. Morning-order, next-day-arrival on stocked SKUs.',
+                            'de' => 'Tägliche Kurierfahrten in der gesamten EU. Bei Bestellung am Vormittag Ankunft am nächsten Tag bei Lagerware.',
+                            'lt' => 'Kasdieniai kurjerio reisai visoje ES. Užsakius iki pietų — pristatymas kitą dieną, jei prekė sandėlyje.',
+                            'fr' => 'Tournées de coursier quotidiennes dans toute l\'UE. Commande le matin, livraison le lendemain pour les articles en stock.',
+                            'es' => 'Rutas de mensajería diarias en toda la UE. Pedido por la mañana, entrega al día siguiente en artículos con stock.',
+                        ],
+                    ],
+                    [
+                        'icon' => 'shield-check',
+                        'title' => [
+                            'en' => 'Certified Genuine',
+                            'de' => 'Zertifiziert Original',
+                            'lt' => 'Sertifikuota originalu',
+                            'fr' => 'Authenticité Certifiée',
+                            'es' => 'Autenticidad Certificada',
+                        ],
+                        'desc' => [
+                            'en' => 'Only OEM-authorised distributors. ISO 9001 supply chain, traceable lot numbers.',
+                            'de' => 'Nur OEM-autorisierte Distributoren. ISO-9001-Lieferkette, rückverfolgbare Chargennummern.',
+                            'lt' => 'Tik OEM autorizuoti platintojai. ISO 9001 tiekimo grandinė, atsekami partijos numeriai.',
+                            'fr' => 'Uniquement des distributeurs agréés OEM. Chaîne d\'approvisionnement ISO 9001, numéros de lot traçables.',
+                            'es' => 'Solo distribuidores autorizados OEM. Cadena de suministro ISO 9001, números de lote trazables.',
+                        ],
+                    ],
+                ],
             ],
             'sort_order' => 100,
             'is_active'  => true,
         ],
 
-        // ──────────────────────────────────────────────────────────────────────
-        // 12. NEWSLETTER
-        //     Eyebrow: social proof number — "50,000+" anchors scale.
-        //     Headline: solves a real problem — back-in-stock alerts.
-        //     Subheadline: two specific value props, not generic.
-        //     Placeholder: "professional email" signals B2B intent.
-        // ──────────────────────────────────────────────────────────────────────
+        // ── FAQS (sort_order=110) ──
         [
-            'type'  => 'newsletter',
-            'title' => [
-                'en' => 'OEM Part Alerts and Exclusive Subscriber Deals',
-                'de' => 'OEM-Teil-Benachrichtigungen und exklusive Abonnentenangebote',
-                'lt' => 'OEM dalių įspėjimai ir išskirtiniai prenumeratorių pasiūlymai',
-                'fr' => 'Alertes pièces OEM et offres exclusives abonnés',
-                'es' => 'Alertas de piezas OEM y ofertas exclusivas para suscriptores',
-            ],
+            'type'  => 'faqs',
+            'title' => 'FAQs',
             'content' => [
                 'eyebrow' => [
-                    'en' => 'JOIN 2,500+ BUYERS',
-                    'de' => '2.500+ KÄUFER BEITRETEN',
-                    'lt' => 'PRISIJUNKITE PRIE 2.500+',
-                    'fr' => 'REJOIGNEZ 2 500+ ACHETEURS',
-                    'es' => 'ÚNASE A 2.500+ COMPRADORES',
+                    'en' => 'SUPPORT',
+                    'de' => 'SUPPORT',
+                    'lt' => 'PAGALBA',
+                    'fr' => 'ASSISTANCE',
+                    'es' => 'SOPORTE',
                 ],
                 'headline' => [
-                    'en' => 'Get OEM Stock Alerts',
-                    'de' => 'OEM-Benachrichtigungen',
-                    'lt' => 'Gaukite OEM įspėjimus',
-                    'fr' => 'Alertes stock OEM',
-                    'es' => 'Alertas de stock OEM',
+                    'en' => 'Frequently Asked Questions',
+                    'de' => 'Häufig gestellte Fragen',
+                    'lt' => 'Dažniausiai užduodami klausimai',
+                    'fr' => 'Questions fréquemment posées',
+                    'es' => 'Preguntas frecuentes',
                 ],
                 'subheadline' => [
-                    'en' => 'Subscribe for personalized car part deals and restock alerts based on your vehicle history.',
-                    'de' => 'Verfügbarkeitsbenachrichtigungen + Rabatte bis 20% direkt in Ihren Posteingang.',
-                    'lt' => 'Atsargų įspėjimai + nuolaidos iki 20% tiesiai į jūsų pašto dėžutę.',
-                    'fr' => 'Alertes stock + réductions jusqu\'à 20% directement dans votre boîte mail.',
-                    'es' => 'Alertas de stock + descuentos hasta 20% directamente en su bandeja de entrada.',
+                    'en' => 'Everything you need to know about ordering genuine OEM parts.',
+                    'de' => 'Alles, was Sie über das Bestellen originaler OEM-Teile wissen müssen.',
+                    'lt' => 'Viskas, ką reikia žinoti apie originalių OEM dalių užsakymą.',
+                    'fr' => 'Tout ce que vous devez savoir sur la commande de pièces OEM d\'origine.',
+                    'es' => 'Todo lo que necesitas saber sobre cómo pedir piezas OEM originales.',
+                ],
+            ],
+            'sort_order' => 110,
+            'is_active'  => true,
+        ],
+
+        // ── CONTACT_CTA (sort_order=120) ──
+        [
+            'type'  => 'contact_cta',
+            'title' => 'Contact CTA',
+            'content' => [
+                'eyebrow' => [
+                    'en' => 'GET IN TOUCH',
+                    'de' => 'KONTAKT AUFNEHMEN',
+                    'lt' => 'SUSISIEKITE',
+                    'fr' => 'CONTACTEZ-NOUS',
+                    'es' => 'PONTE EN CONTACTO',
+                ],
+                'headline' => [
+                    'en' => 'Need Help? Talk to an Expert.',
+                    'de' => 'Brauchen Sie Hilfe? Sprechen Sie mit einem Experten.',
+                    'lt' => 'Reikia pagalbos? Pasikalbėkite su specialistu.',
+                    'fr' => 'Besoin d\'aide ? Parlez à un expert.',
+                    'es' => '¿Necesitas ayuda? Habla con un experto.',
+                ],
+                'subheadline' => [
+                    'en' => 'Our parts specialists are available Monday–Friday, 9:00–18:00 CET.',
+                    'de' => 'Unsere Teilespezialisten sind Montag–Freitag von 9:00–18:00 Uhr MEZ erreichbar.',
+                    'lt' => 'Mūsų specialistai dirba pirmadienį–penktadienį, 9:00–18:00 CET.',
+                    'fr' => 'Nos spécialistes sont disponibles du lundi au vendredi de 9h à 18h CET.',
+                    'es' => 'Nuestros especialistas están disponibles de lunes a viernes, de 9:00 a 18:00 CET.',
+                ],
+                'button_text' => [
+                    'en' => 'Contact Us',
+                    'de' => 'Kontaktieren Sie uns',
+                    'lt' => 'Susisiekite',
+                    'fr' => 'Nous contacter',
+                    'es' => 'Contáctenos',
+                ],
+            ],
+            'sort_order' => 120,
+            'is_active'  => true,
+        ],
+
+        // ── NEWSLETTER (sort_order=130) ──
+        [
+            'type'  => 'newsletter',
+            'title' => 'Newsletter',
+            'content' => [
+                'eyebrow' => [
+                    'en' => 'STAY INFORMED',
+                    'de' => 'BLEIBEN SIE INFORMIERT',
+                    'lt' => 'BŪKITE INFORMUOTI',
+                    'fr' => 'RESTEZ INFORMÉ',
+                    'es' => 'MANTENTE INFORMADO',
+                ],
+                'headline' => [
+                    'en' => 'Stay Updated on New Parts & Deals',
+                    'de' => 'Bleiben Sie über neue Teile & Angebote informiert',
+                    'lt' => 'Gaukite naujienas apie naujas dalis ir pasiūlymus',
+                    'fr' => 'Restez informé des nouvelles pièces & offres',
+                    'es' => 'Mantente informado sobre nuevas piezas y ofertas',
+                ],
+                'subheadline' => [
+                    'en' => 'Join :count+ verified customers across Europe. No spam, unsubscribe anytime.',
+                    'de' => 'Schließen Sie sich :count+ verifizierten Kunden in ganz Europa an. Kein Spam, jederzeit abmelden.',
+                    'lt' => 'Prisijunkite prie :count+ patikrintų klientų visoje Europoje. Šlamšto nėra, atsisakyti galima bet kada.',
+                    'fr' => 'Rejoignez :count+ clients vérifiés à travers l\'Europe. Pas de spam, désinscription à tout moment.',
+                    'es' => 'Únete a :count+ clientes verificados en toda Europa. Sin spam, cancela cuando quieras.',
                 ],
                 'button_text' => [
                     'en' => 'Subscribe',
@@ -738,101 +783,50 @@ class HomepageSectionsSeeder extends Seeder
                 'placeholder' => [
                     'en' => 'Your email address',
                     'de' => 'Ihre E-Mail-Adresse',
-                    'lt' => 'Jūsų el. pašto adresas',
+                    'lt' => 'Jūsų el. paštas',
                     'fr' => 'Votre adresse e-mail',
-                    'es' => 'Su correo electrónico',
+                    'es' => 'Tu dirección de correo',
                 ],
                 'success_text' => [
-                    'en' => 'You\'re in! Check your inbox.',
-                    'de' => 'Sie sind dabei! Prüfen Sie Ihren Posteingang.',
-                    'lt' => 'Jūs prisijungėte! Patikrinkite pašto dėžutę.',
-                    'fr' => 'Vous êtes inscrit ! Vérifiez votre boîte.',
-                    'es' => '¡Estás dentro! Revisa tu bandeja.',
+                    'en' => 'Thank you! Check your inbox.',
+                    'de' => 'Danke! Prüfen Sie Ihren Posteingang.',
+                    'lt' => 'Ačiū! Patikrinkite savo el. paštą.',
+                    'fr' => 'Merci ! Vérifiez votre boîte de réception.',
+                    'es' => '¡Gracias! Revisa tu bandeja de entrada.',
                 ],
-            ],
-            'sort_order' => 110,
-            'is_active'  => true,
-        ],
-        // ──────────────────────────────────────────────────────────────────────
-        // 13. BLOG PREVIEW
-        //     Internal linking, freshness, and helpful content (E-E-A-T).
-        // ──────────────────────────────────────────────────────────────────────
-        [
-            'type'  => 'blog_preview',
-            'title' => [
-                'en' => 'OEM Parts Guides & Automotive News',
-                'de' => 'OEM-Teile-Ratgeber & Automotive-News',
-                'lt' => 'OEM dalių vadovai ir automobilių naujienos',
-                'fr' => 'Guides de pièces OEM et actualités auto',
-                'es' => 'Guías de piezas OEM y noticias automotrices',
-            ],
-            'content' => [
-                'headline' => [
-                    'en' => 'From Our Experts',
-                    'de' => 'Von unseren Experten',
-                    'lt' => 'Iš mūsų ekspertų',
-                    'fr' => 'De nos experts',
-                    'es' => 'De nuestros expertos',
-                ],
-                'view_all_text' => [
-                    'en' => 'Read All Guides',
-                    'de' => 'Alle Ratgeber lesen',
-                    'lt' => 'Skaityti visus vadovus',
-                    'fr' => 'Lire tous les guides',
-                    'es' => 'Leer todas las guías',
-                ],
-            ],
-            'sort_order' => 120,
-            'is_active'  => false,
-        ],
-
-        // ──────────────────────────────────────────────────────────────────────
-        // 14. BANNER
-        //     Promotional banner for deals, new features, or urgent notices.
-        // ──────────────────────────────────────────────────────────────────────
-        [
-            'type'  => 'banner',
-            'title' => [
-                'en' => 'Special Deals on OEM Parts',
-                'de' => 'Spezielles Angebot für OEM-Teile',
-                'lt' => 'Specialūs OEM dalių pasiūlymai',
-                'fr' => 'Offres spéciales sur les pièces OEM',
-                'es' => 'Ofertas especiales en piezas OEM',
-            ],
-            'content' => [
-                'headline' => [
-                    'en' => 'New Arrivals: Genuine BMW & Mercedes Parts',
-                    'de' => 'Neuheiten: Originale BMW & Mercedes Teile',
-                    'lt' => 'Naujienos: Originalios BMW ir Mercedes dalys',
-                    'fr' => 'Nouveautés : Pièces d\'origine BMW & Mercedes',
-                    'es' => 'Novedades: Piezas genuinas de BMW y Mercedes',
-                ],
-                'subheadline' => [
-                    'en' => 'Over 1 Million+ genuine OEM parts for top European cars. Find yours today.',
-                    'de' => 'Frischer Bestand von geprüften EU-Distributoren. Heute bestellen, morgen versenden.',
-                    'lt' => 'Šviežios atsargos iš patikrintų ES platintojų. Užsakykite šiandien, išsiųsime rytoj.',
-                    'fr' => 'Stock frais de distributeurs de l\'UE vérifiés. Commandez aujourd\'hui, expédié demain.',
-                    'es' => 'Stock fresco de distribuidores verificados de la UE. Ordene hoy, se enviará mañana.',
-                ],
-                'button_text' => [
-                    'en' => 'Check Availability',
-                    'de' => 'Verfügbarkeit prüfen',
-                    'lt' => 'Tikrinti prieinamumą',
-                    'fr' => 'Vérifier la disponibilité',
-                    'es' => 'Ver disponibilidad',
-                ],
-                'button_url' => '',
-                'bg_color'   => '#0B3A68',
-                'text_color' => '#FFFFFF',
             ],
             'sort_order' => 130,
-            'is_active'  => false,
+            'is_active'  => true,
+        ],
+
+        // ── BLOG_PREVIEW (sort_order=140) ──
+        [
+            'type'  => 'blog_preview',
+            'title' => 'Blog Preview',
+            'content' => [
+                'headline' => [
+                    'en' => 'From the OeParts Blog',
+                    'de' => 'Aus dem OeParts Blog',
+                    'lt' => 'Iš OeParts tinklaraščio',
+                    'fr' => 'Du blog OeParts',
+                    'es' => 'Del blog de OeParts',
+                ],
+                'view_all_text' => [
+                    'en' => 'View All Articles',
+                    'de' => 'Alle Artikel ansehen',
+                    'lt' => 'Peržiūrėti visus straipsnius',
+                    'fr' => 'Voir tous les articles',
+                    'es' => 'Ver todos los artículos',
+                ],
+            ],
+            'sort_order' => 140,
+            'is_active'  => true,
         ],
     ];
 
     public function run(): void
     {
-        echo "Seeding homepage sections — Google SEO 2026 (E-E-A-T · AI Overviews · Helpful Content)...\n\n";
+        echo "Seeding homepage sections (synced from live content)...\n\n";
 
         foreach (self::SECTIONS as $sectionData) {
             Section::updateOrCreate(

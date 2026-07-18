@@ -46,7 +46,6 @@ return [
     'validation_fallback' => 'Please check the form above.',
     'submit' => 'Submit inquiry',
     'submitting' => 'Submitting…',
-    'trust_ssl' => 'SSL Encrypted',
     'trust_response' => ':hours h response',
     'trust_nospam' => 'No Spam',
     'keyboard_hint_html' => 'Press :kbd to submit',
@@ -56,4 +55,23 @@ return [
     'rate_limited' => 'Too many inquiries. Please try again later.',
     'guest_not_allowed' => 'Please sign in to submit a part inquiry.',
     'submitted' => 'Your inquiry has been submitted. We will respond within :hours hours.',
+
+    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    'inline_form_label' => 'Form · Quick Inquiry',
+    'inline_toggle_show' => 'Add Vehicle Details (optional)',
+    'inline_toggle_hide' => 'Hide Vehicle Details',
+    'inline_spec_sla' => 'SLA · Response',
+    'inline_spec_channel' => 'Channel',
+    'inline_spec_channel_value' => 'Email · Secure',
+    'inline_spec_coverage' => 'Coverage',
+    'inline_spec_coverage_value' => '27 EU Countries',
+
+    // Server-side validation messages (PartInquiryRequest)
+    'validation_email_required' => 'Please enter your email address.',
+    'validation_email_invalid' => 'Please enter a valid email address.',
+    'validation_oem_required' => 'Please enter the OEM part number.',
+    'validation_year_invalid' => 'Please enter a valid 4-digit year.',
+    'validation_urgency_invalid' => 'Please select a valid urgency level.',
+    'success_expected_label' => 'Est. Response',
+    'next_protocol' => 'Next Protocol',
 ];

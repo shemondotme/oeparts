@@ -171,8 +171,8 @@ class CheckoutService
 
         $allowed = [
             'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes',
-            'vat_number', 'vat_valid', 'vat_exempt', 'coupon_code', 'company_name',
-            'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'is_b2b', 'customer_note',
+            'coupon_code',
+            'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'customer_note',
             'urgent_processing', 'otp_pending_email', 'otp_pending_phone',
         ];
 
@@ -266,7 +266,7 @@ class CheckoutService
             $handlingFee = bcadd((string) settings('shipping.handling_fee', '0.00'), '0', 2);
 
             $taxableBase = bcadd(bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);
-            $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase, $data);
+            $vatAmount = $this->calculateVat($taxableBase);
             $grandTotal = bcadd($taxableBase, $vatAmount, 2);
 
             // --- Coupon application ---
@@ -412,15 +412,10 @@ class CheckoutService
     }
 
     /**
-     * Calculate VAT amount based on customer's country and B2B status.
+     * Calculate VAT amount on a taxable base using the storefront's default rate.
      */
-    private function calculateVat(string $amount, array $data): string
+    private function calculateVat(string $amount): string
     {
-        // Check if customer is VAT exempt (B2B with valid VIES)
-        if (!empty($data['vat_number']) && !empty($data['vat_valid']) && $data['vat_valid'] === true) {
-            return '0.00';
-        }
-
         $vatRate = (string) settings('tax.default_vat_rate', '21.00');
         return bcmul($amount, bcdiv($vatRate, '100', 4), 2);
     }

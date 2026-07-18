@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\UploadedImageSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -10,7 +11,7 @@ use Illuminate\Support\Facades\Validator;
 
 class EditorController extends Controller
 {
-    public function uploadImage(Request $request): JsonResponse
+    public function uploadImage(Request $request, UploadedImageSanitizer $sanitizer): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'file' => 'required|image|mimes:jpeg,png,gif,webp|max:2048',
@@ -20,7 +21,16 @@ class EditorController extends Controller
             return response()->json(['success' => false, 'errors' => $validator->errors()], 422);
         }
 
-        $path = $request->file('file')->store('editor', 'public');
+        $file = $request->file('file');
+
+        try {
+            $sanitizer->assertSafe($file);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'errors' => ['file' => [$e->getMessage()]]], 422);
+        }
+
+        $path = $file->store('editor/' . now()->format('Y/m'), 'public');
+        $sanitizer->sanitize('public', $path, $file->getMimeType());
 
         return response()->json([
             'success' => true,

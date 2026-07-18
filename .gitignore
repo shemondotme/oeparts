@@ -12,6 +12,10 @@
 /vendor
 /auth.json
 
+# Stray sqlite artifact some phpunit/Sail test runs leave at repo root
+/testing
+/testing-journal
+
 # Playwright
 /test-results
 /playwright-report

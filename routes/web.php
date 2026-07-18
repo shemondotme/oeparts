@@ -24,6 +24,7 @@ use App\Http\Controllers\Frontend\ContactController;
 use App\Http\Controllers\Frontend\CouponAjaxController;
 use App\Http\Controllers\Frontend\ForgotPasswordController;
 use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\ImpressumController;
 use App\Http\Controllers\Frontend\ManufacturerController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\PartInquiryController;
@@ -107,17 +108,20 @@ Route::prefix('{lang}')
         Route::get('/', [HomeController::class, 'index'])->name('frontend.home');
 
         // Authentication routes (Sprint 10)
-        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login')->name('frontend.auth.login');
-        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:register')->name('frontend.auth.register');
+        // No throttle:login here — AuthController::login() already runs its own
+        // admin-configurable rate limit (security.login_max_attempts/window). The
+        // hardcoded 5/min middleware limiter would silently override that setting.
+        Route::post('/login', [AuthController::class, 'login'])->middleware(['honeypot'])->name('frontend.auth.login');
+        Route::post('/register', [AuthController::class, 'register'])->middleware(['honeypot', 'throttle:register'])->name('frontend.auth.register');
         Route::post('/logout', [AuthController::class, 'logout'])->name('frontend.auth.logout');
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp'])->middleware('throttle:login')->name('frontend.auth.verify-otp');
         Route::post('/resend-otp', [AuthController::class, 'resendOtp'])->middleware('throttle:login')->name('frontend.auth.resend-otp');
 
         // Password reset routes
         Route::get('/reset-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('frontend.password.request');
-        Route::post('/reset-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware('throttle:password-reset')->name('frontend.password.email');
+        Route::post('/reset-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->middleware(['honeypot', 'throttle:password-reset'])->name('frontend.password.email');
         Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('frontend.password.reset');
-        Route::post('/reset-password/update', [ResetPasswordController::class, 'reset'])->middleware('throttle:password-reset')->name('frontend.password.update');
+        Route::post('/reset-password/update', [ResetPasswordController::class, 'reset'])->middleware(['honeypot', 'throttle:password-reset'])->name('frontend.password.update');
 
         // Social login routes
         Route::get('/auth/{provider}/redirect', [\App\Http\Controllers\Frontend\SocialAuthController::class, 'redirect'])
@@ -135,7 +139,9 @@ Route::prefix('{lang}')
             Route::get('/account/orders/{order}/invoice', [AccountController::class, 'downloadInvoice'])->name('frontend.account.order.invoice');
             // Refund routes
             Route::get('/account/orders/{order}/refund', [AccountController::class, 'refundForm'])->name('frontend.account.order.refund.form');
-            Route::post('/account/orders/{order}/refund', [AccountController::class, 'requestRefund'])->name('frontend.account.order.refund.submit');
+            Route::post('/account/orders/{order}/refund', [AccountController::class, 'requestRefund'])
+                ->middleware('throttle:refund-request')
+                ->name('frontend.account.order.refund.submit');
             Route::get('/account/refunds', [AccountController::class, 'refunds'])->name('frontend.account.refunds');
             Route::post('/account/orders/{order}/cancel', [AccountController::class, 'cancelOrder'])->name('frontend.account.order.cancel');
             Route::get('/account/addresses', [AccountController::class, 'addresses'])->name('frontend.account.addresses');
@@ -169,6 +175,10 @@ Route::prefix('{lang}')
         // Human-readable HTML sitemap (the machine-readable /sitemap.xml lives at root)
         Route::get('/sitemap', [SitemapController::class, 'index'])
             ->name('frontend.sitemap');
+
+        // Legal Notice / Impressum — must come before the CMS catch-all slug below
+        Route::get('/impressum', [ImpressumController::class, 'index'])
+            ->name('frontend.impressum');
 
         // Manufacturers
         Route::get('/brands', [ManufacturerController::class, 'index'])
@@ -298,6 +308,12 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
     Route::get('/orders/{order}/invoice', [\App\Http\Controllers\Admin\InvoiceController::class, 'download'])
         ->name('orders.invoice')
         ->middleware('auth.admin');
+
+    // ── Refund Image (private disk, signed URL only) ─────────────────────
+    Route::get('/refund-images/{path}', [\App\Http\Controllers\Admin\RefundImageController::class, 'show'])
+        ->name('refund-images.show')
+        ->where('path', '.*')
+        ->middleware(['auth.admin', 'signed']);
 
     // ── Backup Download ─────────────────────────────────────────────────
     Route::get('/backups/{filename}', function (string $filename) {

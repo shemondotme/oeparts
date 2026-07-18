@@ -103,15 +103,35 @@ class ContactSettings extends SettingsPage
                             )),
                     ]),
 
-                Section::make('Form Submission')
-                    ->description('Feedback shown to customers after submitting the contact form.')
+                Section::make('Form Submission — Success Message')
+                    ->description('Shown to the customer in their own language immediately after a successful submission. Leave a locale blank to fall back to English.')
                     ->schema([
-                        Forms\Components\Textarea::make('success_message')
-                            ->label('Success Message')
-                            ->rows(2)
-                            ->maxLength(500)
-                            ->columnSpanFull()
-                            ->default('Your message has been sent successfully. We will get back to you soon.'),
+                        AdminUi::translatableTabs('Success Message', [
+                            'success_message' => [
+                                'label' => 'Success Message',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'placeholders' => [
+                                    'en' => 'Your message has been sent successfully. We will get back to you soon.',
+                                    'de' => 'Ihre Nachricht wurde erfolgreich gesendet. Wir melden uns in Kürze bei Ihnen.',
+                                    'lt' => 'Jūsų žinutė sėkmingai išsiųsta. Netrukus su jumis susisieksime.',
+                                    'fr' => 'Votre message a été envoyé avec succès. Nous reviendrons vers vous sous peu.',
+                                    'es' => 'Su mensaje se ha enviado correctamente. Nos pondremos en contacto con usted en breve.',
+                                ],
+                            ],
+                        ]),
+                    ]),
+
+                Section::make('Abuse Protection')
+                    ->description('Rate limiting for contact form submissions.')
+                    ->schema([
+                        Forms\Components\TextInput::make('rate_limit_per_minute')
+                            ->label('Rate Limit (submissions / minute / IP)')
+                            ->helperText('Maximum contact form submissions allowed per IP address per minute.')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->default(5),
                     ]),
             ]);
     }

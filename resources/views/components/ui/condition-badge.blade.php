@@ -8,13 +8,13 @@
     if ($condition instanceof \App\Models\Condition) {
         $bg = $condition->bg_color;
         $text = $condition->text_color;
-        $label = $condition->name;
+        $label = condition_label($condition);
     } elseif (is_string($condition)) {
         $conditionModel = \App\Models\Condition::where('slug', $condition)->first();
         if ($conditionModel) {
             $bg = $conditionModel->bg_color;
             $text = $conditionModel->text_color;
-            $label = $conditionModel->name;
+            $label = condition_label($conditionModel);
         } else {
             $label = ucfirst($condition);
         }

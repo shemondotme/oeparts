@@ -1,6 +1,7 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', __('Reset Password') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('title', __('auth.reset_password_title') . ' — ' . settings('general.site_name', 'OeParts'))
+@section('meta_robots')<meta name="robots" content="noindex, follow">@endsection
 
 @section('content')
 <div class="relative min-h-screen bg-ivory text-ink overflow-hidden">
@@ -12,30 +13,27 @@
         <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-8">
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-5 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">Home</a>
+                    <a href="{{ url('/'.app()->getLocale().'/') }}" class="hover:text-amber transition-colors">{{ __('auth.breadcrumb_home') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <span class="text-ivory">Reset password</span>
+                    <span class="text-ivory">{{ __('auth.breadcrumb_reset_password') }}</span>
                 </nav>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    DOC · AUTH/RESET-REQ · STEP 01
-                </span>
             </div>
             <div class="flex items-center gap-4 mb-4">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">01 · Request link</span>
+                <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ __('auth.eyebrow_request_link') }}</span>
             </div>
             <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl">
-                Reset password<span class="text-amber">.</span>
+                {{ __('auth.reset_password_heading') }}<span class="text-amber">.</span>
             </h1>
             <p class="mt-3 font-mono text-[11px] tracking-[0.22em] uppercase text-ivory/70">
-                Enter your email · we'll send a secure reset link
+                {{ __('auth.request_link_subtitle') }}
             </p>
         </div>
     </div>
 
     {{-- Card --}}
     <div class="relative max-w-md mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div class="relative border border-ink bg-paper shadow-[8px_8px_0_0_rgba(11,26,41,0.10)]">
+        <div class="relative border border-ink bg-paper bp-shadow-lg" style="--bp-shadow-color: rgba(10,18,40,0.10);">
             <span class="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-amber" aria-hidden="true"></span>
             <span class="absolute -top-1 -right-1 w-3 h-3 border-r-2 border-t-2 border-amber" aria-hidden="true"></span>
             <span class="absolute -bottom-1 -left-1 w-3 h-3 border-l-2 border-b-2 border-amber" aria-hidden="true"></span>
@@ -43,8 +41,7 @@
 
             {{-- Card header --}}
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                <span class="bp-spec text-amber-ink">Email verification</span>
-                <span class="bp-spec-mono">Form · 01/01</span>
+                <span class="bp-spec text-amber-ink">{{ __('auth.email_verification_eyebrow') }}</span>
             </div>
 
             <div class="p-6 sm:p-8">
@@ -60,9 +57,11 @@
 
                 <form method="POST" action="{{ route('frontend.password.email', ['lang' => app()->getLocale()]) }}" class="space-y-5">
                     @csrf
+                    <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+                    @honeypot
 
                     <div>
-                        <label for="email" class="bp-spec block mb-2 text-ink">Email address</label>
+                        <label for="email" class="bp-spec block mb-2 text-ink">{{ __('auth.email_address') }}</label>
                         <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors
                                     @error('email') !border-red-600 @enderror">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
@@ -90,7 +89,7 @@
 
                     <button type="submit" class="bp-btn-primary w-full justify-center py-3.5 text-sm">
                         <x-heroicon-s-paper-airplane class="w-4 h-4" />
-                        {{ __('Send reset link') }}
+                        {{ __('auth.send_reset_link') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                     </button>
                 </form>
@@ -98,25 +97,21 @@
                 {{-- Divider --}}
                 <div class="mt-6 flex items-center gap-3">
                     <span class="flex-1 h-px bg-rule"></span>
-                    <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-ink-muted">or</span>
+                    <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-ink-muted">{{ __('auth.or_divider') }}</span>
                     <span class="flex-1 h-px bg-rule"></span>
                 </div>
 
                 <a href="{{ route('frontend.home', ['lang' => app()->getLocale()]) }}"
                    class="bp-btn-outline w-full justify-center mt-4 py-3 text-sm">
                     <x-heroicon-s-arrow-long-left class="w-4 h-4" />
-                    {{ __('Back to homepage') }}
+                    {{ __('auth.back_to_homepage') }}
                 </a>
             </div>
 
             {{-- Trust strip --}}
             <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
-                <span class="inline-flex items-center gap-1.5 bp-spec-mono">
-                    <x-heroicon-s-lock-closed class="w-3 h-3 text-amber-ink" />
-                    TLS 1.3 · Secure
-                </span>
                 <span class="bp-spec-mono">
-                    EXPIRES · 60 MIN
+                    {{ __('auth.expires_minutes', ['minutes' => config('auth.passwords.users.expire', 60)]) }}
                 </span>
             </div>
         </div>

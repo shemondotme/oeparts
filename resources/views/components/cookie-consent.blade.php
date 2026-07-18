@@ -1,4 +1,4 @@
-﻿{{-- Cookie Consent Banner — Industrial Blueprint (2026) --}}
+{{-- Cookie Consent Banner — Industrial Blueprint (2026) --}}
 @props(['enabled' => true])
 
 @if($enabled)
@@ -27,44 +27,41 @@
     class="fixed bottom-6 right-6 z-50"
     style="display: none;"
     role="region"
-    aria-label="Cookie consent"
+    aria-label="{{ __('cookie_consent.aria_cookie_consent') }}"
 >
     {{-- ── Banner panel ───────────────────────────────────────────── --}}
-    <div class="relative w-[420px] max-w-[calc(100vw-3rem)] bg-ink text-ivory border border-ink overflow-hidden"
-         style="box-shadow: 8px 8px 0 rgba(241,145,58,1);">
+    <div class="relative w-[420px] max-w-[calc(100vw-3rem)] bg-ink text-ivory border border-ink overflow-hidden bp-shadow-lg"
+         style="--bp-shadow-color: rgba(245,158,11,1);">
 
         {{-- Subtle grid background --}}
         <div class="absolute inset-0 bg-grid-navy bg-grid-md opacity-60 pointer-events-none" aria-hidden="true"></div>
 
         {{-- Top doc strip --}}
-        <div class="relative flex items-center justify-between px-5 py-2.5 border-b border-white/15 bg-black/20">
+        <div class="relative flex items-center px-5 py-2.5 border-b border-white/15 bg-black/20">
             <div class="flex items-center gap-2.5">
                 <span class="w-2.5 h-2.5 bg-amber"></span>
                 <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">
-                    Consent · 01
+                    {{ __('cookie_consent.consent_label') }}
                 </span>
             </div>
-            <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ivory/50">
-                GDPR · EU-{{ now()->format('Y') }}
-            </span>
         </div>
 
         <div class="relative p-6">
             {{-- Title --}}
             <h3 class="font-display text-2xl font-extrabold text-ivory leading-[1.05] tracking-[-0.02em]">
-                {{ __('Cookies on file') }}<span class="text-amber">.</span>
+                {{ __('cookie_consent.cookies_on_file') }}<span class="text-amber">.</span>
             </h3>
 
             {{-- Spec line --}}
             <div class="mt-3 flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/50">
-                <span>Purpose</span>
+                <span>{{ __('cookie_consent.purpose_label') }}</span>
                 <span class="flex-1 border-t border-dashed border-ivory/20"></span>
-                <span class="text-amber">Operational · Analytics</span>
+                <span class="text-amber">{{ __('cookie_consent.operational_analytics') }}</span>
             </div>
 
             {{-- Description --}}
             <p class="mt-4 text-sm text-ivory/75 leading-relaxed">
-                {{ __('We use cookies to keep the site secure, remember your session, and measure how pages perform. Necessary cookies are always on; everything else is opt-in.') }}
+                {{ __('cookie_consent.description') }}
             </p>
 
             {{-- Actions --}}
@@ -75,10 +72,10 @@
                     class="group flex items-center justify-center gap-2 px-4 py-3 border border-ivory/50
                            font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ivory
                            hover:border-amber hover:text-amber transition-colors"
-                    aria-label="Decline all cookies"
+                    aria-label="{{ __('cookie_consent.aria_decline_all') }}"
                 >
                     <x-heroicon-s-no-symbol class="w-3.5 h-3.5" />
-                    {{ __('Decline') }}
+                    {{ __('cookie_consent.decline') }}
                 </button>
 
                 <button
@@ -87,10 +84,10 @@
                     class="group flex items-center justify-center gap-2 px-4 py-3 bg-amber border border-amber
                            font-mono text-[11px] font-bold tracking-[0.22em] uppercase text-ink
                            hover:bg-ivory hover:border-ivory transition-colors"
-                    aria-label="Accept all cookies"
+                    aria-label="{{ __('cookie_consent.aria_accept_all') }}"
                 >
                     <x-heroicon-s-check class="w-3.5 h-3.5" />
-                    {{ __('Accept all') }}
+                    {{ __('cookie_consent.accept_all') }}
                 </button>
             </div>
 
@@ -103,31 +100,16 @@
                            border-b border-dashed border-ivory/30 hover:text-amber hover:border-amber transition-colors pb-0.5"
                 >
                     <x-heroicon-o-adjustments-horizontal class="w-3.5 h-3.5" />
-                    {{ __('Customize') }}
+                    {{ __('cookie_consent.customize') }}
                 </button>
                 <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'cookie-policy']) }}"
                    class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber
                           hover:text-ivory transition-colors">
-                    {{ __('Policy') }}
+                    {{ __('cookie_consent.policy') }}
                     <x-heroicon-s-arrow-long-right class="w-3 h-3" />
                 </a>
             </div>
 
-            {{-- Trust strip --}}
-            <div class="mt-5 grid grid-cols-3 gap-0 border border-white/15 divide-x divide-white/10">
-                <div class="px-2.5 py-2 flex items-center gap-1.5">
-                    <x-heroicon-s-lock-closed class="w-3 h-3 text-amber shrink-0" />
-                    <span class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ivory/65 truncate">GDPR</span>
-                </div>
-                <div class="px-2.5 py-2 flex items-center gap-1.5">
-                    <x-heroicon-s-shield-check class="w-3 h-3 text-amber shrink-0" />
-                    <span class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ivory/65 truncate">Secure</span>
-                </div>
-                <div class="px-2.5 py-2 flex items-center gap-1.5">
-                    <x-heroicon-s-arrow-path class="w-3 h-3 text-amber shrink-0" />
-                    <span class="font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ivory/65 truncate">Revocable</span>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -171,8 +153,7 @@
 
     <div class="flex items-center justify-center min-h-screen px-4 py-8">
         {{-- Modal panel --}}
-        <div class="relative w-full max-w-xl bg-paper text-ink border border-ink overflow-hidden"
-             style="box-shadow: 10px 10px 0 rgba(20,22,29,1);"
+        <div class="relative w-full max-w-xl bg-paper text-ink border border-ink overflow-hidden bp-shadow-lg"
              x-trap.noscroll.inert="open"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4"
@@ -186,16 +167,16 @@
                 <div class="flex items-center gap-3">
                     <span class="w-2 h-8 bg-amber"></span>
                     <div>
-                        <span class="bp-spec text-amber-ink">Consent · Detail</span>
+                        <span class="bp-spec text-amber-ink">{{ __('cookie_consent.consent_detail') }}</span>
                         <h3 id="cookie-pref-title" class="font-display text-lg font-extrabold text-ink tracking-[-0.02em] leading-tight">
-                            {{ __('Cookie preferences') }}
+                            {{ __('cookie_consent.cookie_preferences') }}
                         </h3>
                     </div>
                 </div>
                 <button type="button" @click="open = false"
                         class="w-9 h-9 flex items-center justify-center border border-ink text-ink
                                hover:bg-ink hover:text-ivory transition-colors"
-                        aria-label="Close">
+                        aria-label="{{ __('cookie_consent.aria_close') }}">
                     <x-heroicon-s-x-mark class="w-4 h-4" />
                 </button>
             </div>
@@ -204,7 +185,7 @@
             <div class="p-6 space-y-3">
 
                 <p class="text-sm text-body leading-relaxed mb-4">
-                    {{ __('Choose which categories of cookies this browser may store. Necessary cookies cannot be disabled — they keep the cart, session and basic security working.') }}
+                    {{ __('cookie_consent.preferences_description') }}
                 </p>
 
                 {{-- Necessary --}}
@@ -218,18 +199,18 @@
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2">
                                     <span class="font-display text-sm font-bold text-ink leading-tight">
-                                        {{ __('Necessary') }}
+                                        {{ __('cookie_consent.necessary') }}
                                     </span>
                                     <span class="font-mono text-[9px] font-bold tracking-[0.2em] uppercase text-emerald-700 px-1.5 py-0.5 border border-emerald-600 bg-emerald-50">
-                                        {{ __('Required') }}
+                                        {{ __('cookie_consent.required') }}
                                     </span>
                                 </div>
                                 <p class="mt-1 text-xs text-ink-muted leading-relaxed">
-                                    {{ __('Session, cart, CSRF, locale & security. Always on.') }}
+                                    {{ __('cookie_consent.necessary_description') }}
                                 </p>
                             </div>
                             <div class="shrink-0 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-emerald-700">
-                                {{ __('On') }}
+                                {{ __('cookie_consent.on_label') }}
                             </div>
                         </div>
                     </div>
@@ -247,10 +228,10 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <span class="font-display text-sm font-bold text-ink leading-tight">
-                                    {{ __('Analytics') }}
+                                    {{ __('cookie_consent.analytics') }}
                                 </span>
                                 <p class="mt-1 text-xs text-ink-muted leading-relaxed">
-                                    {{ __('Anonymous page-view and performance metrics.') }}
+                                    {{ __('cookie_consent.analytics_description') }}
                                 </p>
                             </div>
                             {{-- Toggle --}}
@@ -276,10 +257,10 @@
                             </div>
                             <div class="flex-1 min-w-0">
                                 <span class="font-display text-sm font-bold text-ink leading-tight">
-                                    {{ __('Marketing') }}
+                                    {{ __('cookie_consent.marketing') }}
                                 </span>
                                 <p class="mt-1 text-xs text-ink-muted leading-relaxed">
-                                    {{ __('Retargeting and campaign attribution cookies.') }}
+                                    {{ __('cookie_consent.marketing_description') }}
                                 </p>
                             </div>
                             <div class="relative shrink-0">
@@ -299,20 +280,20 @@
                    class="inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted
                           border-b border-dashed border-ink-muted hover:text-amber-ink hover:border-amber transition-colors pb-0.5 self-start">
                     <x-heroicon-o-document-text class="w-3.5 h-3.5" />
-                    {{ __('Read full policy') }}
+                    {{ __('cookie_consent.read_full_policy') }}
                 </a>
                 <div class="flex items-center gap-2.5">
                     <button type="button" @click="open = false"
                             class="px-4 py-2.5 border border-ink text-ink font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                    hover:bg-ink hover:text-ivory transition-colors">
-                        {{ __('Cancel') }}
+                        {{ __('cookie_consent.cancel') }}
                     </button>
                     <button type="button" @click="save()"
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-ink border border-ink text-ivory
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                    hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                         <x-heroicon-s-check class="w-3.5 h-3.5" />
-                        {{ __('Save') }}
+                        {{ __('cookie_consent.save') }}
                     </button>
                 </div>
             </div>

@@ -129,6 +129,13 @@ class PaymentSettings extends SettingsPage
                             ->revealable()
                             ->helperText('Saved encrypted in database')
                             ->default(null),
+
+                        Forms\Components\TextInput::make('airwallex_merchant_country_code')
+                            ->label('Merchant Country Code')
+                            ->placeholder('e.g. LT')
+                            ->helperText('ISO 3166-1 alpha-2 code of the country transactions are processed from. Required by Airwallex to offer Apple Pay / Google Pay in the Drop-in element.')
+                            ->maxLength(2)
+                            ->default('LT'),
                     ])->columns(2),
 
                 Section::make('B2B Offline Bank Transfer')

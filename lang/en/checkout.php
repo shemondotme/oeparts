@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'minimum_order_not_met' => 'Your order does not meet the minimum amount of :amount.',
+
     // Shared layout (layout.blade.php)
     'title' => 'Secure Checkout',
     'breadcrumb_home' => 'Home',
@@ -9,7 +11,6 @@ return [
     'step_of_five' => 'STEP :n of 05',
     'secure_checkout_eyebrow' => 'Secure checkout',
     'heading' => 'Secure Checkout',
-    'tls_ssl_badge' => 'TLS 1.3 · 256-bit SSL · Protected by Airwallex',
     'back_to_cart' => 'Back to Cart',
     'step_contact' => 'Contact',
     'step_address' => 'Address',
@@ -42,7 +43,6 @@ return [
     'vat_tbd' => 'TBD',
     'total_currency_label' => 'Total · :currency',
     'including_all_taxes' => 'Incl. all taxes',
-    'ssl_tls_badge' => 'SSL · TLS 1.3',
     'cart_empty' => 'Your cart is empty',
     'need_help_heading' => 'Need help?',
     'support_hours_note' => 'Mon-Fri 09:00-18:00 CET. Our team is ready.',
@@ -78,16 +78,6 @@ return [
     'select_country_placeholder' => '— Select country —',
     'pan_european_delivery' => 'Pan-European delivery',
     'pan_european_delivery_note' => 'Express, Standard and Economy shipping available across all listed European countries.',
-    'company_details_heading' => 'Company details',
-    'optional_b2b' => 'Optional · B2B',
-    'ordering_as_business' => 'I am ordering as a business',
-    'company_name_label' => 'Company name',
-    'eu_vat_number_label' => 'EU VAT number',
-    'required_for_exemption' => '(required for exemption)',
-    'vat_valid_message' => 'VAT number is valid. VAT exemption will be applied.',
-    'vies_unavailable_message' => 'VIES service is temporarily unavailable.',
-    'vat_invalid_message' => 'VAT number is invalid. Please check and try again.',
-    'valid_vat_number' => 'Valid VAT number',
 
     // Step 3 — shipping method
     'shipping_method_heading' => 'Shipping method',
@@ -121,6 +111,10 @@ return [
     'terms_and_conditions' => 'Terms and Conditions',
     'and' => 'and',
     'privacy_policy' => 'Privacy Policy',
+    'returns_policy' => 'Returns & Withdrawal Policy',
+    'oversized_notice_heading' => 'Oversized Parts — Shipping Notice',
+    'oversized_notice_body' => 'Shipping rates shown are fixed rates for standard-size parcels. If your order includes an oversized or heavy part, the carrier may apply an additional freight surcharge — invoiced to you separately after dispatch.',
+    'oversized_ack_sentence' => 'I also acknowledge the oversized parts shipping notice above.',
 
     // Step 5 — payment method
     'payment_method_heading' => 'Payment method',
@@ -135,15 +129,15 @@ return [
     'bank_transfer_instructions_note' => 'We create the order first, then show your bank details and payment reference on the next page.',
     'order_note_label' => 'Order note',
     'order_note_placeholder' => 'Any delivery or order notes',
-    'trust_ssl_256' => '256-bit SSL',
     'trust_encrypted' => 'Encrypted',
 
     // Payment page (payment.blade.php)
     'payment_title' => 'Payment',
     'complete_payment_heading' => 'Complete payment',
-    'tls_encrypted_channel' => 'TLS 1.3 · 256-bit SSL · Encrypted channel',
     'order_label' => 'Order · :number',
-    'credit_debit_card' => 'Credit/Debit Card',
+    'doc_payment_sheet' => 'DOC · PAYMENT-SHEET · :number',
+    'card_brands_caption' => 'Airwallex · Visa · Mastercard · Amex',
+    'credit_debit_card' => 'Card',
     'bank_transfer' => 'Bank Transfer',
     'bank_transfer_sepa_note' => 'SEPA · Order processed on confirmed payment',
     'payment_error_heading' => 'Payment Error',
@@ -162,7 +156,6 @@ return [
     'items_label' => 'Items',
     'grand_total_label' => 'Grand total',
     'incl_vat_short' => 'incl. VAT',
-    'trust_ssl_256_short' => 'SSL 256',
     'payment_failed_js' => 'Payment failed. Please try again.',
 
     // Payment failed (payment-failed.blade.php)

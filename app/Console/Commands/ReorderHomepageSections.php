@@ -14,20 +14,27 @@ class ReorderHomepageSections extends Command
     {
         $this->info('Reordering homepage sections...');
 
-        // New section order
+        // No two adjacent sections share a background shade (bg-ivory /
+        // bg-ivory-alt / bg-paper / bg-ink); the 3 bg-ink sections
+        // (part_inquiry, banner, contact_cta) sit spread apart rather than
+        // clustered. Kept in sync with HomepageSectionsSeeder::SECTIONS'
+        // sort_order and ReorderHomepageSectionsSeeder — update all three
+        // together. Previously missing trust_bar and blog_preview entirely.
         $order = [
-            'hero' => 1,
-            'stats_counter' => 2,
-            'how_it_works' => 3,
-            'featured_brands' => 4,
-            'popular_searches' => 5,
-            'part_inquiry' => 6,
-            'testimonials' => 7,
-            'shipping_info' => 8,
-            'faqs' => 9,
-            'contact_cta' => 10,
-            'newsletter' => 11,
-            'banner' => 12,
+            'hero' => 10,
+            'trust_bar' => 20,
+            'how_it_works' => 30,
+            'stats_counter' => 40,
+            'popular_searches' => 50,
+            'featured_brands' => 60,
+            'part_inquiry' => 70,
+            'testimonials' => 80,
+            'shipping_info' => 90,
+            'banner' => 100,
+            'faqs' => 110,
+            'contact_cta' => 120,
+            'newsletter' => 130,
+            'blog_preview' => 140,
         ];
 
         foreach ($order as $type => $sortOrder) {

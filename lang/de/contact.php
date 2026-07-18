@@ -1,6 +1,31 @@
 <?php
 
 return [
+    // Breadcrumb / page chrome
+    'breadcrumb_home' => 'Start',
+    'breadcrumb_contact_us' => 'Kontakt',
+    'eyebrow_contact_desk' => 'Kontakt · Team',
+    'eyebrow_direct_channel' => 'Direkt · Kanal',
+    'channel_email_label' => 'E-Mail',
+    'channel_phone_label' => 'Telefon',
+    'hours_label' => 'Öffnungszeiten',
+    'eyebrow_enquiry_form' => 'Anfrage · Formular',
+    'spam_protected_note' => 'Spam-geschützt · DSGVO-konform',
+    'eyebrow_info_rail' => 'Info · Leiste',
+    'looking_for_part_heading' => 'Suchen Sie ein Teil?',
+    'looking_for_part_body' => 'Nutzen Sie für Teilesuchen direkt die Suchkonsole — Sie erhalten Ergebnisse in Sekunden.',
+    'open_search_btn' => 'Suche öffnen',
+    'network_error' => 'Netzwerkfehler. Bitte versuchen Sie es erneut.',
+
+    // Validation messages (ContactFormRequest)
+    'validation_email_required' => 'Bitte geben Sie Ihre E-Mail-Adresse ein.',
+    'validation_email_invalid' => 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
+    'validation_name_required' => 'Bitte geben Sie Ihren Namen ein.',
+    'validation_subject_required' => 'Bitte wählen Sie einen Betreff.',
+    'validation_message_required' => 'Bitte geben Sie Ihre Nachricht ein.',
+    'validation_message_min' => 'Ihre Nachricht muss mindestens 10 Zeichen lang sein.',
+    'validation_message_max' => 'Ihre Nachricht darf 5000 Zeichen nicht überschreiten.',
+
     // Hero
     'title' => 'Kontaktieren Sie unser Team',
     'description' => 'Erreichen Sie das OeParts-Team bei Beschaffungs-, Bestell- oder Partnerschaftsanfragen. Jede Nachricht wird an den richtigen Spezialisten weitergeleitet und innerhalb eines Werktags beantwortet.',
@@ -8,8 +33,8 @@ return [
     // Form fields
     'name' => 'Vollständiger Name',
     'name_placeholder' => 'Erika Mustermann',
-    'email' => 'Geschäftliche E-Mail',
-    'email_placeholder' => 'name@firma.eu',
+    'email' => 'E-Mail-Adresse',
+    'email_placeholder' => 'name@beispiel.de',
 
     // Email verification
     'verify_email' => 'Code senden',
@@ -58,7 +83,7 @@ return [
     // Message
     'message' => 'Ihre Nachricht',
     'message_placeholder' => 'Sagen Sie uns, was Sie brauchen — Teil, Fahrzeug, Menge, Zeitrahmen…',
-    'message_min_length' => 'Mindestens 20 Zeichen.',
+    'message_min_length' => 'Mindestens 10 Zeichen.',
 
     // Submit
     'send_message' => 'Nachricht senden',
@@ -71,11 +96,10 @@ return [
     'response_time' => 'Antwortzeit',
     'response_time_value' => 'Innerhalb 1 Werktags',
     'secure' => 'Sicherer Kanal',
-    'secure_note' => 'Ihre Nachricht wird Ende-zu-Ende mit TLS 1.3 verschlüsselt und Ihre Daten werden DSGVO-konform verarbeitet.',
+    'secure_note' => 'Ihre Nachricht wird über eine verschlüsselte Verbindung (HTTPS/TLS) gesendet und Ihre Daten werden DSGVO-konform verarbeitet.',
 
     // Flash / status
     'sent_success' => 'Nachricht gesendet — wir melden uns in Kürze bei Ihnen.',
     'sent_failed' => 'Beim Senden Ihrer Nachricht ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.',
-    'otp_sent' => 'Verifizierungscode an Ihre E-Mail gesendet.',
     'otp_invalid' => 'Dieser Code ist falsch oder abgelaufen.',
 ];

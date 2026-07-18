@@ -18,6 +18,7 @@ class ManufacturerController extends Controller
     {
         $manufacturer = Manufacturer::where('slug', $manufacturer)
             ->where('is_active', true)
+            ->with('logo')
             ->firstOrFail();
 
         // Get products for this manufacturer (paginated). Eager-load only what the

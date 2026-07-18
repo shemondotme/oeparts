@@ -9,23 +9,26 @@ class ReorderHomepageSectionsSeeder extends Seeder
 {
     public function run(): void
     {
-        // 3 light → DARK → 3 light → DARK → 3 light → DARK → 2 light
-        // Dark (bg-ink) sections at positions 4, 8, 12 — never consecutive
+        // No two adjacent sections share a background shade (bg-ivory /
+        // bg-ivory-alt / bg-paper / bg-ink). Dark (bg-ink) sections at
+        // positions 7, 10, 12 — spread apart, never consecutive. Kept in
+        // sync with HomepageSectionsSeeder::SECTIONS' sort_order — update
+        // both together.
         $desiredOrder = [
-            'hero',              // Light - Above fold search
-            'trust_bar',         // Light - Trust signals
-            'stats_counter',     // Light - Credibility numbers
-            'part_inquiry',      // 🔵 DARK - Can't find part?
-            'how_it_works',      // Light - Process
-            'featured_brands',   // Light - Brand showcase
-            'popular_searches',  // Light - Trending numbers
-            'banner',            // 🔵 DARK - Workshop promo
-            'testimonials',      // Light - Reviews
-            'shipping_info',     // Light - EU delivery
-            'faqs',              // Light - Objections
-            'contact_cta',       // 🔵 DARK - Final contact
-            'newsletter',        // Light - Email capture
-            'blog_preview',      // Light - Content footer
+            'hero',              // ivory      - Above fold search
+            'trust_bar',         // ivory-alt  - Trust signals
+            'how_it_works',      // paper      - Process
+            'stats_counter',     // ivory      - Credibility numbers
+            'popular_searches',  // paper      - Trending numbers (live search data)
+            'featured_brands',   // ivory      - Brand showcase
+            'part_inquiry',      // 🔵 ink     - Can't find part?
+            'testimonials',      // paper      - Reviews
+            'shipping_info',     // ivory      - EU delivery
+            'banner',            // 🔵 ink     - Workshop promo
+            'faqs',              // ivory      - Objections
+            'contact_cta',       // 🔵 ink     - Direct contact
+            'newsletter',        // paper      - Email capture
+            'blog_preview',      // ivory      - Content footer
         ];
 
         // Get all active homepage sections

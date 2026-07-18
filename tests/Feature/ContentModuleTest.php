@@ -64,6 +64,13 @@ class ContentModuleTest extends TestCase
 
     private function makeNestedSection(): Section
     {
+        // Locale-map shape matches what every real Section row (and the
+        // SectionResource's structured Repeater/Tabs editor) actually
+        // produces — every translatable leaf carries all 5 locale keys
+        // (unset locales are null, not absent), so a no-op save round-trips
+        // byte-for-byte instead of the editor "filling in" missing keys.
+        $ml = fn (string $en) => ['en' => $en, 'de' => null, 'lt' => null, 'fr' => null, 'es' => null];
+
         return Section::create([
             'type'      => 'how_it_works',
             'location'  => 'homepage',
@@ -71,10 +78,12 @@ class ContentModuleTest extends TestCase
             // Real home sections carry nested structures — exactly what broke
             // both the view page (foreach on string) and the KeyValue editor.
             'content'   => [
-                'headline' => 'Three steps',
+                'eyebrow'     => $ml('Process'),
+                'headline'    => $ml('Three steps'),
+                'subheadline' => ['en' => null, 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'steps'    => [
-                    ['title' => 'Search', 'description' => 'Enter your OEM number'],
-                    ['title' => 'Order', 'description' => 'Checkout securely'],
+                    ['icon' => 'magnifying-glass', 'step_number' => 1, 'title' => $ml('Search'), 'description' => $ml('Enter your OEM number')],
+                    ['icon' => 'shopping-cart', 'step_number' => 2, 'title' => $ml('Order'), 'description' => $ml('Checkout securely')],
                 ],
             ],
             'is_active'  => true,

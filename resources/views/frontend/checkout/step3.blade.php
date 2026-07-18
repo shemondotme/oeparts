@@ -1,4 +1,4 @@
-﻿@extends('frontend.checkout.layout')
+@extends('frontend.checkout.layout')
 
 @section('checkout_content')
 @php
@@ -27,14 +27,12 @@
             @php
                 $optId = (string) $option['id'];
                 $isSelected = $selected === $optId;
-                $num = str_pad((string)($loop->iteration), 2, '0', STR_PAD_LEFT);
             @endphp
             <label class="flex items-center gap-4 p-4 sm:p-5 cursor-pointer transition-colors {{ $loop->last ? '' : 'border-b border-rule' }}"
                    :class="selected === '{{ $optId }}' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
 
-                {{-- Row number + radio --}}
+                {{-- Radio --}}
                 <div class="flex items-center gap-3 shrink-0">
-                    <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">{{ $num }}</span>
                     <input type="radio"
                            name="shipping_method_id"
                            value="{{ $option['id'] }}"
@@ -91,7 +89,7 @@
 
                 {{-- Price --}}
                 <div class="shrink-0 text-right">
-                    <span class="font-mono text-xl font-medium text-ink tabular-nums tracking-tight">{{ settings('store.currency_symbol', '€') }}{{ number_format($option['price'], 2) }}</span>
+                    <span class="font-mono text-xl font-medium text-ink tabular-nums tracking-tight">{{ format_price($option['price']) }}</span>
                 </div>
             </label>
         @empty
@@ -153,7 +151,7 @@
         </div>
         <div>
             <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_shipping_note_heading', 'checkout.shipping_note_heading') }}</p>
-            <p class="text-xs text-body">{{ settings('shipping.note_text', 'All shipments tracked and insured. Delivery times are estimates from dispatch.') }}</p>
+            <p class="text-xs text-body">{{ settings_trans('shipping.note_text', 'All shipments tracked and insured. Delivery times are estimates from dispatch.') }}</p>
         </div>
     </div>
 </div>

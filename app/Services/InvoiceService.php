@@ -102,7 +102,7 @@ class InvoiceService
         }
 
         try {
-            Storage::disk('private')->put($filename, $content);
+            Storage::disk('local')->put($filename, $content);
         } catch (\Exception $e) {
             Log::error('Failed to save invoice to storage', [
                 'order_id' => $order->id,
@@ -123,7 +123,7 @@ class InvoiceService
     {
         $filename = "invoices/{$order->order_number}.pdf";
 
-        return Storage::disk('private')->exists($filename);
+        return Storage::disk('local')->exists($filename);
     }
 
     /**
@@ -135,7 +135,7 @@ class InvoiceService
 
         $filename = "invoices/{$order->order_number}.pdf";
 
-        if (!Storage::disk('private')->exists($filename)) {
+        if (!Storage::disk('local')->exists($filename)) {
             Log::error('Invoice file not found in storage', [
                 'order_id' => $order->id,
                 'filename' => $filename,
@@ -144,7 +144,7 @@ class InvoiceService
             return null;
         }
 
-        return Storage::disk('private')->get($filename);
+        return Storage::disk('local')->get($filename);
     }
 
     /**

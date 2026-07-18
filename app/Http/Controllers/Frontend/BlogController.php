@@ -15,7 +15,7 @@ class BlogController extends Controller
      */
     public function index(Request $request, string $lang)
     {
-        $query = BlogPost::with(['author', 'category', 'tags', 'featuredImage'])
+        $query = BlogPost::with(['author', 'category', 'featuredImage'])
             ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
@@ -51,21 +51,33 @@ class BlogController extends Controller
             });
         }
 
+        // "Featured" is just the newest published post with an image — when no
+        // filter is active that's also list item 001, so exclude it from the
+        // main list below to avoid showing the same post twice on the page.
+        $featuredPost = BlogPost::with('featuredImage')
+            ->published()
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
+            ->whereNotNull('featured_image_id')
+            ->orderBy('published_at', 'desc')
+            ->first();
+
+        if ($featuredPost && ! $request->anyFilled(['category', 'tag', 'search'])) {
+            $query->where('id', '!=', $featuredPost->id);
+        }
+
         $posts = $query->orderBy('published_at', 'desc')
             ->paginate(settings('general.pagination_per_page', 10))
             ->withQueryString();
 
         // withCount avoids loading each category's full blogPosts collection just
         // to render the count badge in the sidebar (was an N+1 + heavy rows).
-        $categories = Category::whereHas('blogPosts')->withCount('blogPosts')->get();
-        $tags = BlogTag::whereHas('posts')->get();
-        $featuredPost = BlogPost::with('featuredImage')
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now())
-            ->whereNotNull('featured_image_id')
-            ->orderBy('published_at', 'desc')
-            ->first();
+        // Both scoped to published posts only — otherwise a category/tag whose
+        // only posts are drafts shows an inflated count and a dead-end filter link.
+        $categories = Category::whereHas('blogPosts', fn ($q) => $q->published())
+            ->withCount(['blogPosts as blog_posts_count' => fn ($q) => $q->published()])
+            ->get();
+        $tags = BlogTag::whereHas('posts', fn ($q) => $q->published())->get();
 
         return view('frontend.blog.index', compact('posts', 'categories', 'tags', 'featuredPost'));
     }
@@ -83,7 +95,7 @@ class BlogController extends Controller
             ->firstOrFail();
 
         // Get related posts (same category or tags)
-        $relatedPosts = BlogPost::with(['author', 'category', 'featuredImage'])
+        $relatedPosts = BlogPost::with('featuredImage')
             ->where('status', 'published')
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now())

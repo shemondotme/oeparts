@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('account_addresses_title', 'account.addresses_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -12,7 +12,6 @@
     eyebrow="{{ ui_copy('account_addresses_eyebrow', 'account.addresses_eyebrow') }}"
     title="{{ ui_copy('account_saved_addresses', 'account.saved_addresses') }}"
     :subtitle="ui_copy('account_addresses_subtitle', 'account.addresses_subtitle')"
-    docId="DOC · ADDRESS-REGISTER · {{ now()->format('Y.m.d') }}"
     :breadcrumb="[['label' => ui_copy('account_nav_addresses', 'account.nav_addresses')]]"
 >
     <x-slot name="actions">
@@ -27,7 +26,7 @@
 
     @if($addresses->isEmpty())
         {{-- ── Empty state ─────────────────────────────────────────────── --}}
-        <div class="border border-ink bg-paper p-16 text-center" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+        <div class="border border-ink bg-paper p-16 text-center bp-shadow">
             <div class="inline-flex items-center justify-center w-16 h-16 border border-ink bg-ivory-alt mb-6">
                 <x-heroicon-o-map-pin class="w-7 h-7 text-ink-muted" />
             </div>
@@ -47,8 +46,7 @@
         </div>
     @else
         {{-- ── Summary strip ──────────────────────────────────────────── --}}
-        <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-3 divide-x divide-rule"
-             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+        <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-3 divide-x divide-rule bp-shadow-sm">
             <div class="px-5 py-4">
                 <p class="bp-spec-mono">{{ ui_copy('account_on_file', 'account.on_file') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
@@ -73,19 +71,14 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
             @foreach($addresses as $idx => $addr)
                 @php
-                    $rowNum = $idx + 1;
                     $countryLabel = localized_country_name($addr->country_code);
                 @endphp
-                <div class="relative border border-ink bg-paper flex flex-col
-                            {{ $addr->is_default ? 'ring-1 ring-amber' : '' }}"
-                     style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                <div class="relative border border-ink bg-paper flex flex-col bp-shadow-sm
+                            {{ $addr->is_default ? 'ring-1 ring-amber' : '' }}">
 
                     {{-- Card header --}}
                     <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
                         <div class="flex items-center gap-3 min-w-0">
-                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber-ink">
-                                {{ str_pad((string) $rowNum, 2, '0', STR_PAD_LEFT) }}
-                            </span>
                             <span class="font-display text-sm font-bold tracking-[-0.01em] text-ink truncate">
                                 {{ ucfirst($addr->label ?: ui_copy('account_address_fallback', 'account.address_fallback')) }}
                             </span>

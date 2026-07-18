@@ -1,4 +1,4 @@
-﻿{{-- Section: shipping_info (Industrial Blueprint)
+{{-- Section: shipping_info (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml),
               features[] — each: icon, value(ml), label(ml)
               carriers[] — e.g. ['DHL','DPD','GLS','FedEx','UPS']
@@ -10,12 +10,22 @@
     $headline = trans_field($section->content['headline'] ?? null);
     $subheadline = trans_field($section->content['subheadline'] ?? null);
     $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+
+    // Recognizable brand accent per carrier — differentiates the tiles without
+    // reproducing any carrier's actual logo artwork (trademark reproduction risk).
+    $carrierColors = [
+        'dhl'   => '#D40511',
+        'dpd'   => '#DC0032',
+        'gls'   => '#0066B3',
+        'fedex' => '#4D148C',
+        'ups'   => '#351C15',
+    ];
 @endphp
 
 <section class="relative bg-ivory text-ink border-b border-rule overflow-hidden">
     <div class="absolute inset-0 bg-grid-ivory-fine bg-grid-md opacity-50 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-14 md:pt-20 pb-10 md:pb-14">
 
         {{-- Header --}}
         <x-section-header
@@ -90,24 +100,24 @@
                         {{ __('Trusted Carriers') }}
                     </span>
                 </div>
-                <span class="hidden sm:inline bp-spec-mono">
-                    {{ __('EU · Tracked · Insured') }}
-                </span>
             </div>
 
             {{-- Carrier row --}}
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 divide-x divide-rule">
                 @foreach($carriers as $index => $carrier)
+                @php
+                    $carrierKey = strtolower(preg_replace('/[^a-z0-9]/i', '', $carrier));
+                    $carrierColor = $carrierColors[$carrierKey] ?? null;
+                @endphp
                 <div class="p-6 flex flex-col items-center justify-center gap-3 text-center
                             {{ ($index >= 3 && count($carriers) > 3) ? 'md:border-t-0 border-t sm:border-t-0 border-rule' : '' }}">
-                    <div class="w-10 h-10 border border-rule flex items-center justify-center">
-                        <x-heroicon-o-truck class="w-5 h-5 text-ink" />
+                    <div class="w-10 h-10 border flex items-center justify-center {{ $carrierColor ? '' : 'border-rule' }}"
+                         @if($carrierColor) style="border-color: {{ $carrierColor }}" @endif>
+                        <x-heroicon-o-truck class="w-5 h-5 {{ $carrierColor ? '' : 'text-ink' }}"
+                                             style="{{ $carrierColor ? 'color: '.$carrierColor : '' }}" />
                     </div>
                     <span class="font-display text-lg font-bold text-ink tracking-tight">
                         {{ $carrier }}
-                    </span>
-                    <span class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted">
-                        {{ __('Carrier') }}
                     </span>
                 </div>
                 @endforeach

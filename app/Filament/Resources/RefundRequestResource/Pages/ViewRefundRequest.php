@@ -128,12 +128,42 @@ class ViewRefundRequest extends ViewRecord
                                     ->schema([
                                         ImageEntry::make('return_images')
                                             ->label('')
+                                            ->disk('local')
+                                            ->visibility('private')
+                                            // return_images holds either legacy flat path strings or
+                                            // (since the metadata upgrade) {path, original_name, size,
+                                            // uploaded_at} objects — normalize to bare paths for display.
+                                            ->getStateUsing(fn ($record) => collect($record->return_images ?? [])
+                                                ->map(fn ($item) => is_array($item) ? ($item['path'] ?? null) : $item)
+                                                ->filter()
+                                                ->all())
                                             ->hidden(fn ($record): bool => empty($record->return_images))
                                             ->circular()
                                             ->square()
                                             ->width(120)
                                             ->height(120)
                                             ->columnSpanFull(),
+                                        TextEntry::make('return_images_meta')
+                                            ->label('Image Details')
+                                            ->getStateUsing(function ($record): string {
+                                                $images = collect($record->return_images ?? []);
+                                                if ($images->isEmpty() || ! is_array($images->first())) {
+                                                    return '';
+                                                }
+
+                                                return $images->map(function ($item) {
+                                                    $size = isset($item['size'])
+                                                        ? number_format($item['size'] / 1024, 1) . ' KB'
+                                                        : '—';
+                                                    $when = isset($item['uploaded_at'])
+                                                        ? \Illuminate\Support\Carbon::parse($item['uploaded_at'])->format('Y-m-d H:i')
+                                                        : '—';
+
+                                                    return ($item['original_name'] ?? 'unknown') . ' · ' . $size . ' · ' . $when;
+                                                })->implode("\n");
+                                            })
+                                            ->visible(fn ($record): bool => filled($record->return_images) && is_array(collect($record->return_images)->first()))
+                                            ->extraAttributes(['class' => 'whitespace-pre-wrap']),
                                         TextEntry::make('return_images')
                                             ->label('')
                                             ->getStateUsing(fn ($record): string => empty($record->return_images) ? 'No return images uploaded' : '')

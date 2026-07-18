@@ -58,7 +58,7 @@ class UISettings extends SettingsPage
                             'hero_spec_r3_label' => ['label' => 'Row 3 Label'],
                             'hero_spec_r3_value' => ['label' => 'Row 3 Value'],
                             'hero_spec_r4_label' => ['label' => 'Row 4 Label'],
-                            'hero_spec_r4_value' => ['label' => 'Row 4 Value'],
+                            'hero_spec_r4_value' => ['label' => 'Row 4 Value', 'helperText' => 'Also shown as the dispatch-time trust badge on the search zero-results page — kept in sync automatically, no separate field to update.'],
                             'hero_spec_r5_label' => ['label' => 'Row 5 Label'],
                             'hero_spec_r5_value' => ['label' => 'Row 5 Value'],
                         ]),
@@ -70,7 +70,7 @@ class UISettings extends SettingsPage
                         AdminUi::translatableTabs('Footer Pills Locales', [
                             'hero_footer_pill_1' => ['label' => 'Pill 1'],
                             'hero_footer_pill_2' => ['label' => 'Pill 2'],
-                            'hero_footer_pill_3' => ['label' => 'Pill 3'],
+                            'hero_footer_pill_3' => ['label' => 'Pill 3', 'helperText' => 'If this states a countries count, keep the number in sync with Stats Counter Settings → Countries Count (also shown in the footer and search console page).'],
                         ]),
                     ]),
             ]);

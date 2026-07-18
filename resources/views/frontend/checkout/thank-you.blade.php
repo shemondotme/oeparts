@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('checkout_order_confirmed_title', 'checkout.order_confirmed_title') . ' - ' . settings('general.site_name', 'OeParts'))
 
@@ -6,24 +6,13 @@
 
 @section('content')
 @php
-    $order = session('checkout.order');
-    if (!$order) {
-        $orderData = [
-            'order_number' => 'ORD-202604-000123',
-            'email' => 'customer@example.com',
-            'created_at' => now(),
-            'grand_total' => 134.30,
-            'payment_status' => 'pending',
-        ];
-    } else {
-        $orderData = [
-            'order_number' => $order->order_number,
-            'email' => $order->email,
-            'created_at' => $order->created_at,
-            'grand_total' => $order->grand_total,
-            'payment_status' => $order->payment_status,
-        ];
-    }
+    $orderData = [
+        'order_number' => $order->order_number,
+        'email' => $order->email,
+        'created_at' => $order->created_at,
+        'grand_total' => $order->grand_total,
+        'payment_status' => $order->payment_status->value,
+    ];
     $isPaid = $orderData['payment_status'] === 'paid';
 @endphp
 
@@ -41,9 +30,6 @@
                     <span class="text-ivory/30">/</span>
                     <span class="text-ivory">{{ ui_copy('checkout_order_confirmed_breadcrumb', 'checkout.order_confirmed_breadcrumb') }}</span>
                 </nav>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    DOC · CONFIRMATION · 001
-                </span>
             </div>
 
             <div class="grid grid-cols-12 gap-6 items-center">
@@ -69,11 +55,17 @@
                         <span class="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-amber"></span>
 
                         <div class="w-10 h-10 border-2 border-amber bg-ink flex items-center justify-center shrink-0">
-                            <x-heroicon-s-check class="w-5 h-5 text-amber" />
+                            @if($isPaid)
+                                <x-heroicon-s-check class="w-5 h-5 text-amber" />
+                            @else
+                                <x-heroicon-s-clock class="w-5 h-5 text-amber" />
+                            @endif
                         </div>
                         <div>
                             <p class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">{{ ui_copy('checkout_filed_label', 'checkout.filed_label') }}</p>
-                            <p class="font-display text-xl font-extrabold text-ivory tracking-[-0.02em]">{{ ui_copy('checkout_confirmed_label', 'checkout.confirmed_label') }}</p>
+                            <p class="font-display text-xl font-extrabold text-ivory tracking-[-0.02em]">
+                                {{ $isPaid ? ui_copy('checkout_confirmed_label', 'checkout.confirmed_label') : ui_copy('checkout_payment_status_pending', 'checkout.payment_status_pending') }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -119,7 +111,7 @@
                             <x-heroicon-s-calendar class="w-3 h-3 text-amber-ink" />
                             {{ ui_copy('checkout_date_label', 'checkout.date_label') }}
                         </p>
-                        <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $orderData['created_at']->format('M j, Y') }}</p>
+                        <p class="font-mono text-sm font-bold tabular-nums text-ink">{{ $orderData['created_at']->clone()->locale(app()->getLocale())->translatedFormat('M j, Y') }}</p>
                     </div>
                     <div>
                         <p class="bp-spec text-ink-muted mb-2 flex items-center gap-1.5">
@@ -141,7 +133,7 @@
                 {{-- Total --}}
                 <div class="flex items-end justify-between gap-3">
                     <div>
-                        <p class="bp-spec text-ink mb-1">{{ ui_copy('checkout_order_total_currency_label', 'checkout.order_total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</p>
+                        <p class="bp-spec text-ink mb-1">{{ ui_copy('checkout_order_total_currency_label', 'checkout.order_total_currency_label', ['currency' => settings('general.currency', 'EUR')]) }}</p>
                         <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">{{ ui_copy('checkout_including_all_taxes', 'checkout.including_all_taxes') }}</p>
                     </div>
                     <p class="font-mono text-4xl md:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">

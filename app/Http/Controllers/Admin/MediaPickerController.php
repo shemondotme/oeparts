@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\MediaFile;
+use App\Services\UploadedImageSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
 
 class MediaPickerController extends Controller
 {
-    public function upload(Request $request): JsonResponse
+    public function upload(Request $request, UploadedImageSanitizer $sanitizer): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'file' => 'required|image|mimes:jpeg,png,gif,webp|max:5120',
@@ -25,7 +26,15 @@ class MediaPickerController extends Controller
         }
 
         $file = $request->file('file');
-        $path = $file->store('media', 'public');
+
+        try {
+            $sanitizer->assertSafe($file);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'errors' => ['file' => [$e->getMessage()]]], 422);
+        }
+
+        $path = $file->store('media/' . now()->format('Y/m'), 'public');
+        $sanitizer->sanitize('public', $path, $file->getMimeType());
 
         $media = MediaFile::create([
             'uploaded_by' => Auth::guard('admin')->id(),

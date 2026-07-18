@@ -1,4 +1,4 @@
-﻿@props(['normalizedQuery' => ''])
+@props(['normalizedQuery' => '', 'failedSearchLogId' => null])
 
 @php
     $lang = app()->getLocale();
@@ -18,6 +18,7 @@
         successFallback: @js(__('part_inquiry.success_fallback', ['hours' => $inquiryHours])),
         expandedVehicle: false,
         expandedMore: false,
+        failedSearchLogId: @json($failedSearchLogId ? (int) $failedSearchLogId : null),
         form: {
             email: '',
             phone: '',
@@ -94,7 +95,7 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ ...this.form, ...honeypotData })
+                    body: JSON.stringify({ ...this.form, ...honeypotData, failed_search_log_id: this.failedSearchLogId })
                 });
                 const data = await res.json();
                 if (data.success) {
@@ -162,7 +163,7 @@
 
     {{-- Panel — flat document with offset amber shadow --}}
     <div class="relative w-full max-w-xl bg-paper border border-ink flex flex-col max-h-[92vh] sm:max-h-[90vh]
-                shadow-[8px_8px_0_0_#F59E0B] motion-reduce:transition-none"
+                bp-shadow-lg motion-reduce:transition-none" style="--bp-shadow-color: rgba(245,158,11,1);"
          role="dialog"
          aria-modal="true"
          aria-labelledby="part-inquiry-modal-title"
@@ -193,13 +194,6 @@
                         <x-heroicon-o-paper-airplane class="h-6 w-6 text-amber" />
                     </div>
                     <div class="min-w-0 flex-1">
-                        {{-- Doc ID strip --}}
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-block w-6 h-[2px] bg-amber"></span>
-                            <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber">
-                                PART · INQUIRY · FORM-01
-                            </span>
-                        </div>
                         <h2 id="part-inquiry-modal-title" class="font-display text-lg sm:text-xl font-black leading-[1.05] tracking-tight text-ivory">
                             {{ __('part_inquiry.heading') }}<span class="text-amber">.</span>
                         </h2>
@@ -290,7 +284,7 @@
             <div class="mx-auto mt-6 max-w-md border border-ink bg-ivory-alt">
                 <div class="flex items-center justify-between px-4 py-2.5 border-b border-rule">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
-                        Est. Response
+                        {{ __('part_inquiry.success_expected_label') }}
                     </span>
                     <x-heroicon-o-clock class="h-4 w-4 text-amber-ink" />
                 </div>
@@ -308,7 +302,7 @@
             <div class="mx-auto mt-6 max-w-sm text-left border border-rule bg-paper">
                 <div class="px-4 py-2 border-b border-rule bg-ivory-alt">
                     <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">
-                        Next Protocol
+                        {{ __('part_inquiry.next_protocol') }}
                     </span>
                 </div>
                 <ol class="divide-y divide-rule">
@@ -750,11 +744,6 @@
 
                 {{-- Trust ledger --}}
                 <div class="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 font-mono text-[9px] font-bold tracking-[0.18em] uppercase text-ink-muted">
-                    <span class="inline-flex items-center gap-1.5">
-                        <x-heroicon-s-lock-closed class="h-3 w-3 text-amber-ink" />
-                        {{ __('part_inquiry.trust_ssl') }}
-                    </span>
-                    <span class="text-rule-strong">·</span>
                     <span class="inline-flex items-center gap-1.5">
                         <x-heroicon-s-clock class="h-3 w-3 text-amber-ink" />
                         {{ __('part_inquiry.trust_response', ['hours' => $inquiryHours]) }}

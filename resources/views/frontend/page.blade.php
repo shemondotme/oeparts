@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $lang      = app()->getLocale();
@@ -17,22 +17,22 @@
         'privacy'          => 'heroicon-s-lock-closed',
         'terms-of-service' => 'heroicon-s-document-text',
         'terms'            => 'heroicon-s-document-text',
-        'cookie-policy'    => 'heroicon-s-cake',
-        'cookies'          => 'heroicon-s-cake',
+        'cookie-policy'    => 'heroicon-s-shield-check',
+        'cookies'          => 'heroicon-s-shield-check',
     ];
     $icon = $iconMap[$slugKey] ?? 'heroicon-s-document-text';
 
     $labelMap = [
-        'about'            => __('About'),
-        'about-us'         => __('About'),
-        'privacy-policy'   => __('Legal · Privacy'),
-        'privacy'          => __('Legal · Privacy'),
-        'terms-of-service' => __('Legal · Terms'),
-        'terms'            => __('Legal · Terms'),
-        'cookie-policy'    => __('Legal · Cookies'),
-        'cookies'          => __('Legal · Cookies'),
+        'about'            => __('pages.eyebrow_about'),
+        'about-us'         => __('pages.eyebrow_about'),
+        'privacy-policy'   => __('pages.eyebrow_privacy'),
+        'privacy'          => __('pages.eyebrow_privacy'),
+        'terms-of-service' => __('pages.eyebrow_terms'),
+        'terms'            => __('pages.eyebrow_terms'),
+        'cookie-policy'    => __('pages.eyebrow_cookies'),
+        'cookies'          => __('pages.eyebrow_cookies'),
     ];
-    $eyebrow = $labelMap[$slugKey] ?? __('Document');
+    $eyebrow = $labelMap[$slugKey] ?? __('pages.eyebrow_document');
 @endphp
 
 @section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
@@ -65,7 +65,7 @@
     '@@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
     'itemListElement' => [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'), 'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('pages.breadcrumb_home'), 'item' => url('/'.$lang.'/')],
         ['@type' => 'ListItem', 'position' => 2, 'name' => $pageTitle, 'item' => url('/'.$lang.'/'.$page->slug)],
     ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
@@ -87,7 +87,7 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('pages.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink truncate max-w-[14rem]">{{ $pageTitle }}</span>
             </nav>
@@ -115,22 +115,22 @@
             {{-- Meta ledger --}}
             <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl">
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Document') }}</dt>
+                    <dt class="bp-spec text-ink-muted">{{ __('pages.meta_document') }}</dt>
                     <dd class="mt-1 font-mono text-sm font-bold text-ink uppercase tracking-[0.12em] truncate leading-tight">{{ $page->slug }}</dd>
                 </div>
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Language') }}</dt>
+                    <dt class="bp-spec text-ink-muted">{{ __('pages.meta_language') }}</dt>
                     <dd class="mt-1 font-mono text-sm font-bold text-ink uppercase tabular-nums leading-tight">{{ strtoupper($lang) }}</dd>
                 </div>
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Revised') }}</dt>
-                    <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums leading-tight">{{ $updatedAt->format('d M Y') }}</dd>
+                    <dt class="bp-spec text-ink-muted">{{ __('pages.meta_revised') }}</dt>
+                    <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums leading-tight">{{ $updatedAt->clone()->locale($lang)->translatedFormat('d M Y') }}</dd>
                 </div>
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Status') }}</dt>
+                    <dt class="bp-spec text-ink-muted">{{ __('pages.meta_status') }}</dt>
                     <dd class="mt-1 font-mono text-xs font-bold text-emerald-700 uppercase tracking-[0.18em] leading-tight flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 bg-emerald-600"></span>
-                        {{ __('Published') }}
+                        {{ __('pages.meta_published') }}
                     </dd>
                 </div>
             </dl>
@@ -139,13 +139,13 @@
         {{-- ═══ Featured image ═══ --}}
         @if($page->featured_image_id && $page->featuredImage)
             <figure class="mb-14 bp-rise bp-rise-delay-2">
-                <div class="border border-ink bg-paper p-2" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                <div class="border border-ink bg-paper p-2 bp-shadow">
                     <img src="{{ $page->featuredImage->file_url }}"
                          alt="{{ $pageTitle }}"
                          class="w-full h-auto block" />
                 </div>
                 <figcaption class="mt-2 font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                    FIG · 01 · {{ __('Featured asset') }}
+                    FIG · {{ __('pages.featured_asset') }}
                 </figcaption>
             </figure>
         @endif
@@ -156,9 +156,9 @@
             {{-- ── Body ── --}}
             <article class="col-span-12 lg:col-span-8">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-8">
-                    <span class="bp-spec text-ink">01 · {{ __('Body · Content') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ __('pages.body_content') }}</span>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        {{ __('Revision') }} {{ $updatedAt->format('Y.m.d') }}
+                        {{ __('pages.revision') }} {{ $updatedAt->format('Y.m.d') }}
                     </span>
                 </div>
 
@@ -183,7 +183,7 @@
 
                 {{-- Sign-off --}}
                 <div class="mt-12 pt-6 border-t border-ink flex flex-wrap items-center justify-between gap-3 bp-spec-mono">
-                    <span>{{ __('End of document') }} · {{ $page->slug }}</span>
+                    <span>{{ __('pages.end_of_document') }} · {{ $page->slug }}</span>
                     <span class="tabular-nums">{{ $updatedAt->format('d M Y') }}</span>
                 </div>
             </article>
@@ -192,10 +192,9 @@
             <aside class="col-span-12 lg:col-span-4 space-y-6 lg:sticky lg:top-10 lg:h-fit">
 
                 {{-- Doc identity --}}
-                <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
-                    <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Document · ID') }}</span>
-                        <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">CMS</span>
+                <div class="border border-ink bg-paper bp-shadow-sm">
+                    <div class="px-5 py-3 bg-ink text-ivory flex items-center">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('pages.document_id') }}</span>
                     </div>
                     <div class="p-5 flex items-start gap-4">
                         <div class="w-12 h-12 border border-ink bg-ivory-alt text-ink flex items-center justify-center shrink-0">
@@ -215,14 +214,14 @@
                 {{-- Legal/CMS nav links --}}
                 <div class="border border-ink bg-paper">
                     <div class="px-5 py-3 bg-ink text-ivory">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Related · Docs') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('pages.related_docs') }}</span>
                     </div>
                     <ul class="divide-y divide-rule">
                         @foreach([
-                            ['about',            __('About')],
-                            ['privacy-policy',   __('Privacy Policy')],
-                            ['terms-of-service', __('Terms of Service')],
-                            ['cookie-policy',    __('Cookie Policy')],
+                            ['about',            __('pages.nav_about')],
+                            ['privacy-policy',   __('pages.nav_privacy')],
+                            ['terms-of-service', __('pages.nav_terms')],
+                            ['cookie-policy',    __('pages.nav_cookies')],
                         ] as [$relSlug, $relLabel])
                             @php $isActive = $relSlug === $page->slug; @endphp
                             <li>
@@ -244,7 +243,7 @@
                 {{-- Language alternates --}}
                 <div class="border border-ink bg-paper">
                     <div class="px-5 py-3 bg-ink text-ivory">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Languages') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('pages.languages') }}</span>
                     </div>
                     <div class="p-4 grid grid-cols-5 gap-1">
                         @foreach(['en' => 'EN', 'de' => 'DE', 'lt' => 'LT', 'fr' => 'FR', 'es' => 'ES'] as $code => $label)
@@ -262,18 +261,18 @@
 
                 {{-- Contact CTA --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Questions?') }}</p>
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('pages.questions') }}</p>
                     <p class="font-display text-base font-extrabold tracking-[-0.02em] leading-tight">
-                        {{ __('Contact our desk') }}
+                        {{ __('pages.contact_our_desk') }}
                     </p>
                     <p class="mt-2 text-sm text-ivory/70 leading-relaxed">
-                        {{ __('For clarification on anything in this document, reach out directly.') }}
+                        {{ __('pages.clarification_note') }}
                     </p>
                     <a href="{{ url('/'.$lang.'/contact') }}"
                        class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-amber text-ink
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-paper transition-colors">
-                        {{ __('Open contact') }}
+                        {{ __('pages.open_contact') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                     </a>
                 </div>

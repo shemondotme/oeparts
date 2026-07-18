@@ -9,5 +9,5 @@
 {{ trans('emails.refund_status.view_orders', [], $locale) }}: {{ route('frontend.account.orders', ['lang' => $locale]) }}
 
 ---
-{{ trans('emails.layout.footer_line1', [], $locale) }}
+{{ trans('emails.layout.footer_line1', ['year' => now()->year], $locale) }}
 {{ config('app.url') }}

@@ -1,4 +1,4 @@
-﻿{{-- Section: how_it_works (Industrial Blueprint)
+{{-- Section: how_it_works (Industrial Blueprint)
      content: eyebrow, headline, subheadline, steps[] — each: icon, step_number, title(ml), description(ml)
 --}}
 @php
@@ -12,7 +12,7 @@
 @if(!empty($steps))
 <section id="how-it-works" class="relative bg-paper text-ink border-b border-rule">
 
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-14 md:pt-20 pb-10 md:pb-14">
 
         {{-- Header — stacked variant (breaks the split-header rhythm) --}}
         <x-section-header

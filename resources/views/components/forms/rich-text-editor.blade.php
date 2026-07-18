@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
         plugins: 'anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount',
         toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | link image media',
         images_upload_url: '{{ route("admin.editor.upload-image") }}',
-        images_upload_base_path: '{{ asset("storage/editor-images") }}',
+        images_upload_base_path: '{{ asset("storage/editor") }}',
         automatic_uploads: true,
         file_picker_types: 'image',
         height: 400,

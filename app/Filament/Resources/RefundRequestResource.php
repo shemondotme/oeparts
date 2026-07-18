@@ -151,7 +151,11 @@ class RefundRequestResource extends Resource
                                                 if (empty($images)) {
                                                     return 'No images submitted with this refund request.';
                                                 }
-                                                return implode("\n", $images);
+                                                // return_images holds either legacy flat path strings or
+                                                // {path, original_name, size, uploaded_at} objects.
+                                                return collect($images)
+                                                    ->map(fn ($item) => is_array($item) ? ($item['original_name'] ?? $item['path'] ?? 'unknown') : $item)
+                                                    ->implode("\n");
                                             })
                                             ->extraAttributes(['class' => 'whitespace-pre-wrap']),
                                     ])

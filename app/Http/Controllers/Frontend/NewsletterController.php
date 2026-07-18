@@ -19,6 +19,7 @@ class NewsletterController extends Controller
         $validated = $request->validate([
             'email' => 'required|email',
             'lang' => 'nullable|in:en,de,lt,fr,es',
+            'website' => 'max:0',
         ]);
 
         // Rate limit: max subscriptions per hour per IP
@@ -27,12 +28,13 @@ class NewsletterController extends Controller
         if (!RateLimiter::attempt("newsletter:{$request->ip()}", $maxSubscriptions, function () {
             return true;
         }, $windowSeconds)) {
-            throw new TooManyRequestsHttpException(3600, 'Too many subscription attempts. Please try again later.');
+            throw new TooManyRequestsHttpException(3600, __('newsletter.rate_limited'));
         }
 
         $email = $validated['email'];
         $locale = $validated['lang'] ?? $lang;
         $unsubscribeToken = hash_hmac('sha256', $email, config('app.key'));
+        $doubleOptIn = filter_var(settings('newsletter.double_opt_in', true), FILTER_VALIDATE_BOOLEAN);
 
         // Check if already subscribed
         $existing = NewsletterSubscriber::where('email', $email)->first();
@@ -40,24 +42,37 @@ class NewsletterController extends Controller
         if ($existing && $existing->is_active) {
             return response()->json([
                 'success' => false,
-                'message' => __('You are already subscribed to our newsletter.'),
+                'message' => __('newsletter.already_subscribed'),
             ], 422);
         }
 
         if ($existing) {
-            // Reactivate subscription
+            // Reactivate subscription — still gated by double_opt_in, same as a
+            // brand-new subscription, so a previously-unsubscribed address can't
+            // skip re-confirmation.
             $existing->update([
-                'is_active' => true,
+                'is_active' => ! $doubleOptIn,
                 'lang' => $locale,
                 'subscribed_at' => now(),
                 'unsubscribed_at' => null,
                 'ip_address' => $request->ip(),
+                'unsubscribe_token' => $existing->unsubscribe_token ?: $unsubscribeToken,
             ]);
 
             $subscriber = $existing;
-        } else {
-            $doubleOptIn = filter_var(settings('newsletter.double_opt_in', true), FILTER_VALIDATE_BOOLEAN);
 
+            if ($doubleOptIn) {
+                $confirmUrl = route('frontend.newsletter.confirm', ['lang' => $locale, 'token' => $subscriber->unsubscribe_token]);
+                // Best-effort — a 'sync' queue connection (rule #41) runs this
+                // inline, so a real SMTP failure must not 500 a subscription
+                // that already saved successfully.
+                try {
+                    dispatch(new SendNewsletterConfirmationEmail($subscriber, $confirmUrl, $locale));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+            }
+        } else {
             // Create new subscription (requires confirmation unless double opt-in is disabled)
             $subscriber = NewsletterSubscriber::create([
                 'email' => $email,
@@ -69,17 +84,21 @@ class NewsletterController extends Controller
             ]);
 
             if ($doubleOptIn) {
-                // Send confirmation email
+                // Send confirmation email — best-effort, see the comment above.
                 $confirmUrl = route('frontend.newsletter.confirm', ['lang' => $locale, 'token' => $unsubscribeToken]);
-                dispatch(new SendNewsletterConfirmationEmail($subscriber, $confirmUrl, $locale));
+                try {
+                    dispatch(new SendNewsletterConfirmationEmail($subscriber, $confirmUrl, $locale));
+                } catch (\Throwable $e) {
+                    report($e);
+                }
             }
         }
 
         return response()->json([
             'success' => true,
             'message' => $subscriber->is_active
-                ? __('Thank you for subscribing to our newsletter!')
-                : __('Please check your email to confirm your subscription.'),
+                ? __('newsletter.subscribed_active')
+                : __('newsletter.subscribed_pending'),
         ]);
     }
 
@@ -92,7 +111,7 @@ class NewsletterController extends Controller
 
         if (!$subscriber) {
             return redirect()->route('frontend.home', compact('lang'))
-                ->with('error', __('Invalid unsubscribe link.'));
+                ->with('error', __('newsletter.invalid_unsubscribe_link'));
         }
 
         $subscriber->update([
@@ -101,7 +120,7 @@ class NewsletterController extends Controller
         ]);
 
         return redirect()->route('frontend.home', compact('lang'))
-            ->with('success', __('You have been unsubscribed from our newsletter.'));
+            ->with('success', __('newsletter.unsubscribed_success'));
     }
 
     /**
@@ -113,7 +132,7 @@ class NewsletterController extends Controller
 
         if (!$subscriber) {
             return redirect()->route('frontend.home', compact('lang'))
-                ->with('error', __('Invalid confirmation link.'));
+                ->with('error', __('newsletter.invalid_confirmation_link'));
         }
 
         $subscriber->update([
@@ -122,6 +141,6 @@ class NewsletterController extends Controller
         ]);
 
         return redirect()->route('frontend.home', compact('lang'))
-            ->with('success', __('Your newsletter subscription has been confirmed!'));
+            ->with('success', __('newsletter.confirmed_success'));
     }
 }

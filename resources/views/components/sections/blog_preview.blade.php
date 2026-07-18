@@ -1,4 +1,4 @@
-﻿{{-- Section: blog_preview (Industrial Blueprint)
+{{-- Section: blog_preview (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), view_all_text(ml)
      $sectionData['blog_posts'] injected by SectionRendererService.
 --}}
@@ -17,7 +17,7 @@
 @endphp
 
 <section class="relative bg-ivory text-ink border-b border-rule">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-14 md:pt-20 pb-10 md:pb-14">
 
         <x-section-header
             :eyebrow="$eyebrow"
@@ -98,10 +98,7 @@
         </div>
 
         {{-- CTA --}}
-        <div class="mt-10 flex flex-wrap items-center justify-between gap-4">
-            <span class="bp-spec-mono">
-                {{ __('Technical Articles · OEM Parts Expertise') }}
-            </span>
+        <div class="mt-10 flex flex-wrap items-center justify-end gap-4">
             <a href="{{ url('/'.$lang.'/blog/') }}" class="bp-btn-outline">
                 {{ $viewAllText }}
                 <x-heroicon-s-arrow-long-right class="w-5 h-5" />

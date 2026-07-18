@@ -122,6 +122,12 @@ class SearchService
                 'price_stats' => ['min' => null, 'max' => null, 'avg' => null],
                 'filtered_empty' => false,
                 'unfiltered_total' => 0,
+                // The zero-results page's status ledger shows a "Cross-refs · 0 hits"
+                // row as if it were always a verified fact — it's only true when the
+                // cross-reference step above actually ran (search.cross_ref_enabled).
+                // Surfacing this lets the view avoid asserting "0 hits" when the check
+                // was skipped entirely.
+                'cross_ref_checked' => $crossRefEnabled,
             ];
         };
 

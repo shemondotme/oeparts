@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Enums\OtpPurpose;
+use App\Events\ContactMessageReceived;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\ContactFormRequest;
 use App\Models\ContactMessage;
+use App\Services\OtpService;
 use Illuminate\Http\Request;
 
 class ContactController extends Controller
@@ -19,10 +22,26 @@ class ContactController extends Controller
 
     /**
      * Submit contact form.
+     *
+     * OTP-gated (PRD: "/{lang}/contact — Contact (OTP-gated)"): the email must
+     * already have been verified via the generic /verify-otp endpoint
+     * (purpose=contact_form) before this endpoint will persist the message —
+     * see the emailVerified widget in frontend.contact.show's Blade/JS.
      */
     public function submit(ContactFormRequest $request)
     {
-        ContactMessage::create([
+        $otpService = app(OtpService::class);
+        $otpRequired = $otpService->enabled();
+
+        if ($otpRequired && ! $otpService->isRecentlyVerified($request->email, OtpPurpose::ContactForm)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('contact.otp_invalid'),
+                'data' => ['requires_otp' => true],
+            ], 422);
+        }
+
+        $contactMessage = ContactMessage::create([
             'email' => $request->email,
             'name' => $request->name,
             'subject_type' => $request->subject_type,
@@ -34,10 +53,25 @@ class ContactController extends Controller
             'vin_number' => $request->vin_number,
             'message' => $request->message,
             'status' => 'unread',
-            'otp_verified' => true,
+            'otp_verified' => $otpRequired,
             'ip_address' => $request->ip(),
         ]);
 
-        return response()->json(['success' => true, 'message' => settings('contact.success_message', 'Your message has been sent successfully. We will get back to you soon.')]);
+        // Best-effort — on a 'sync' queue connection (rule #41: many installs
+        // run without a worker) this notification's mail send happens inline,
+        // so a real SMTP failure would otherwise throw right here and 500 a
+        // submission whose ContactMessage row is already safely persisted.
+        try {
+            event(new ContactMessageReceived(
+                $contactMessage->name,
+                $contactMessage->email,
+                $contactMessage->subject_type->value,
+                $contactMessage->message
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        return response()->json(['success' => true, 'message' => settings_trans('contact.success_message', __('contact.sent_success'))]);
     }
 }

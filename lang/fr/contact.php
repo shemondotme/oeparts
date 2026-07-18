@@ -1,6 +1,31 @@
 <?php
 
 return [
+    // Breadcrumb / page chrome
+    'breadcrumb_home' => 'Accueil',
+    'breadcrumb_contact_us' => 'Contact',
+    'eyebrow_contact_desk' => 'Contact · Équipe',
+    'eyebrow_direct_channel' => 'Direct · Canal',
+    'channel_email_label' => 'E-mail',
+    'channel_phone_label' => 'Téléphone',
+    'hours_label' => 'Horaires',
+    'eyebrow_enquiry_form' => 'Demande · Formulaire',
+    'spam_protected_note' => 'Protégé contre le spam · Conforme RGPD',
+    'eyebrow_info_rail' => 'Info · Colonne',
+    'looking_for_part_heading' => 'Vous cherchez une pièce ?',
+    'looking_for_part_body' => 'Pour rechercher une pièce, utilisez directement la console de recherche — vous obtiendrez des résultats en quelques secondes.',
+    'open_search_btn' => 'Ouvrir la recherche',
+    'network_error' => 'Erreur réseau. Veuillez réessayer.',
+
+    // Validation messages (ContactFormRequest)
+    'validation_email_required' => 'Veuillez saisir votre adresse e-mail.',
+    'validation_email_invalid' => 'Veuillez saisir une adresse e-mail valide.',
+    'validation_name_required' => 'Veuillez saisir votre nom.',
+    'validation_subject_required' => 'Veuillez sélectionner un sujet.',
+    'validation_message_required' => 'Veuillez saisir votre message.',
+    'validation_message_min' => 'Votre message doit contenir au moins 10 caractères.',
+    'validation_message_max' => 'Votre message ne peut pas dépasser 5000 caractères.',
+
     // Hero
     'title' => 'Contactez notre équipe',
     'description' => 'Contactez l\'équipe OeParts pour toute question de sourcing, de commande ou de partenariat. Chaque message est acheminé vers le bon spécialiste et traité sous un jour ouvré.',
@@ -8,8 +33,8 @@ return [
     // Form fields
     'name' => 'Nom complet',
     'name_placeholder' => 'Jeanne Dupont',
-    'email' => 'E-mail professionnel',
-    'email_placeholder' => 'nom@entreprise.eu',
+    'email' => 'Adresse e-mail',
+    'email_placeholder' => 'nom@exemple.fr',
 
     // Email verification
     'verify_email' => 'Envoyer le code',
@@ -58,7 +83,7 @@ return [
     // Message
     'message' => 'Votre message',
     'message_placeholder' => 'Indiquez-nous ce dont vous avez besoin — pièce, véhicule, quantité, délai…',
-    'message_min_length' => 'Minimum 20 caractères.',
+    'message_min_length' => 'Minimum 10 caractères.',
 
     // Submit
     'send_message' => 'Envoyer le message',
@@ -71,11 +96,10 @@ return [
     'response_time' => 'Délai de réponse',
     'response_time_value' => 'Sous 1 jour ouvré',
     'secure' => 'Canal sécurisé',
-    'secure_note' => 'Votre message est chiffré de bout en bout avec TLS 1.3 et vos données sont traitées conformément au RGPD.',
+    'secure_note' => 'Votre message est envoyé via une connexion chiffrée (HTTPS/TLS) et vos données sont traitées conformément au RGPD.',
 
     // Flash / status
     'sent_success' => 'Message envoyé — nous reviendrons vers vous rapidement.',
     'sent_failed' => 'Une erreur est survenue lors de l\'envoi de votre message. Veuillez réessayer.',
-    'otp_sent' => 'Code de vérification envoyé à votre e-mail.',
     'otp_invalid' => 'Ce code est incorrect ou a expiré.',
 ];

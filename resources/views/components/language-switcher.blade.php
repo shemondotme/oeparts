@@ -1,4 +1,4 @@
-﻿@props(['align' => 'right', 'theme' => 'light'])
+@props(['align' => 'right', 'theme' => 'light'])
 
 {{--
     ═══════════════════════════════════════════════════════════════════
@@ -122,7 +122,7 @@
         @keydown.tab="closeMenu(false)"
         class="absolute {{ $alignPosition }} mt-2 w-56 z-50
                {{ $isDark ? 'border border-amber/40 bg-ink text-ivory' : 'border border-ink bg-paper text-ink' }}
-               shadow-[6px_6px_0_0_rgba(11,26,41,0.12)]"
+               bp-shadow" style="--bp-shadow-color: rgba(10,18,40,0.12);"
         style="display: none;"
         role="menu"
         aria-labelledby="lang-switcher-trigger"
@@ -133,7 +133,7 @@
             <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase
                          {{ $isDark ? 'text-amber' : 'text-amber-ink' }}">Locale</span>
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase
-                         {{ $isDark ? 'text-ivory/50' : 'text-ink-muted' }}">5 options</span>
+                         {{ $isDark ? 'text-ivory/50' : 'text-ink-muted' }}">{{ count($availableLanguages) }} options</span>
         </div>
 
         {{-- Ledger of languages --}}
@@ -141,7 +141,6 @@
             @foreach($availableLanguages as $lang)
                 @php
                     $active = $currentLocale === $lang['code'];
-                    $num = str_pad((string)($loop->iteration), 2, '0', STR_PAD_LEFT);
                 @endphp
                 <li>
                     <a
@@ -157,14 +156,6 @@
                                    {{ $isDark ? 'hover:bg-white/5' : 'hover:bg-ivory-alt' }}
                                @endif"
                     >
-                        <span class="font-mono text-[10px] font-bold tabular-nums tracking-[0.14em]
-                                     @if($active)
-                                         {{ $isDark ? 'text-ink/70' : 'text-amber' }}
-                                     @else
-                                         {{ $isDark ? 'text-ivory/40' : 'text-ink-muted' }}
-                                     @endif">
-                            {{ $num }}
-                        </span>
                         <img src="{{ asset('flags/' . $lang['fi'] . '.svg') }}"
                              alt="{{ $lang['name'] }}"
                              class="w-5 h-[14px] object-cover border

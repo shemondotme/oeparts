@@ -1,4 +1,4 @@
-﻿{{-- Section: testimonials (Industrial Blueprint)
+{{-- Section: testimonials (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml)
      $sectionData['testimonials'] is injected by SectionRendererService
 --}}
@@ -12,15 +12,13 @@
 
 @if($testimonials->isNotEmpty())
 <section class="relative bg-paper text-ink border-b border-rule">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-14 md:pt-20 pb-10 md:pb-14">
 
-        {{-- Header — center variant (breaks the split-header rhythm) --}}
         <x-section-header
-            variant="center"
             :eyebrow="$eyebrow"
             :headline="$headline"
             :subheadline="$subheadline"
-            :meta="'Log · ' . $testimonials->count() . ' verified entries'" />
+            :meta="'Log · ' . $testimonials->count() . ' entries'" />
 
         {{-- Testimonial cards in ledger grid --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border border-ink bg-paper">
@@ -69,19 +67,11 @@
                             {{ $testimonial->name }}
                         </p>
                         @if($meta)
-                        <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
+                        <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted line-clamp-2 mt-0.5">
                             {{ $meta }}
                         </p>
                         @endif
                     </div>
-
-                    {{-- Verified tick --}}
-                    <span class="inline-flex items-center gap-1.5 border border-rule px-2 py-1
-                                 font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted"
-                          title="{{ __('Verified customer') }}">
-                        <x-heroicon-s-check-badge class="w-3 h-3 text-amber-ink" />
-                        {{ __('Verified') }}
-                    </span>
                 </footer>
             </article>
             @endforeach

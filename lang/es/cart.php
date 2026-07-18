@@ -40,6 +40,7 @@ return [
     'remove_item_aria'        => 'Eliminar artículo',
     'clear_cart'              => 'Vaciar carrito',
     'clear_cart_title'        => 'Vaciar carrito',
+    'confirm_destructive_eyebrow' => 'Confirmación · Irreversible',
     'clear_cart_confirm'      => 'Se eliminarán todos los artículos de su carrito. Esta acción no se puede deshacer.',
     'cancel'                  => 'Cancelar',
     'copied'                  => 'Copiado',
@@ -58,7 +59,7 @@ return [
     'subtotal_label'          => 'Subtotal',
 
     'shipping_carriers_eyebrow' => 'Envío UE · transportistas',
-    'countries_count'         => ':count países',
+    'countries_count'         => ':count países UE',
 
     'order_summary'           => 'Resumen del pedido',
     'order_summary_eyebrow'   => 'Resumen del pedido',
@@ -95,7 +96,6 @@ return [
     'review_order_eyebrow'    => 'Revisar pedido',
     'breadcrumb_home'         => 'Inicio',
 
-    'trust_ssl'               => 'Cifrado SSL',
     'trust_payment'           => 'Pago seguro',
     'trust_protection'        => 'Protección al comprador',
 
@@ -104,7 +104,7 @@ return [
     'mobile_checkout_btn'     => 'Finalizar compra',
 
     'need_help_heading'      => '¿Necesita ayuda?',
-    'support_hours_note'     => 'Lun-Vie 09:00-18:00. Nuestro equipo de soporte está listo para ayudarle.',
+    'support_hours_note'     => 'Lun-Vie 09:00-18:00 CET. Nuestro equipo de soporte está listo para ayudarle.',
     'contact_us'             => 'Contáctenos',
 
     'error_update'            => 'No se pudo actualizar el artículo. Inténtelo de nuevo.',
@@ -121,4 +121,5 @@ return [
     'price_change_toast_singular' => '1 artículo ha cambiado de precio: :oems',
     'price_change_toast_plural'   => ':count artículos han cambiado de precio: :oems',
     'condition_new_fallback'  => 'Nuevo',
+    'price_change_toast_title' => '§ PRECIO · ACTUALIZADO',
 ];

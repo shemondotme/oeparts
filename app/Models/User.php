@@ -75,15 +75,28 @@ class User extends Authenticatable
             'token' => $token,
         ], false)).'?email='.urlencode($this->email);
 
-        dispatch(new SendPasswordResetEmail(
-            email: $this->email,
-            resetUrl: $resetUrl,
-            locale: $locale,
-        ));
+        // Best-effort — on a 'sync' queue connection (rule #41: many installs
+        // run without a worker) this job's mail send happens inline, so a real
+        // SMTP failure would otherwise throw right here and 500 the password
+        // reset request even though the reset token was already generated.
+        try {
+            dispatch(new SendPasswordResetEmail(
+                email: $this->email,
+                resetUrl: $resetUrl,
+                locale: $locale,
+            ));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function getFirstNameAttribute(): string
     {
-        return explode(' ', $this->name)[0];
+        return explode(' ', trim($this->name), 2)[0];
+    }
+
+    public function getLastNameAttribute(): string
+    {
+        return explode(' ', trim($this->name), 2)[1] ?? '';
     }
 }

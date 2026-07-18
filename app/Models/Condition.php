@@ -19,6 +19,19 @@ class Condition extends Model
         'is_active' => 'boolean',
     ];
 
+    // 'name' is a single plain-string DB column (not multilingual JSON like every
+    // other translatable field in this codebase) — 'label' is the per-locale
+    // display value (search.condition_label_* in lang files, falling back to the
+    // raw name for a slug without a translation key). Appended so it round-trips
+    // through @js()/toArray() serialization for JS consumers (e.g. cart.js),
+    // not just server-rendered Blade.
+    protected $appends = ['label'];
+
+    public function getLabelAttribute(): string
+    {
+        return condition_label($this);
+    }
+
     public function products(): HasMany
     {
         return $this->hasMany(Product::class, 'condition_id');

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $lang     = app()->getLocale();
@@ -18,16 +18,33 @@
 @section('og_title'){{ $pageTitle }}@endsection
 @section('og_description'){{ $pageDescr }}@endsection
 
+@php
+    // Canonical/hreflang must reflect active filters and pagination — otherwise
+    // every filtered/paginated view canonicalizes to the bare unfiltered page 1.
+    $filterQuery = array_filter(request()->only(['category', 'tag', 'search', 'page']));
+@endphp
+
 @section('canonical')
-    <link rel="canonical" href="{{ route('frontend.blog.index', ['lang' => $lang]) }}">
+    <link rel="canonical" href="{{ route('frontend.blog.index', array_merge(['lang' => $lang], $filterQuery)) }}">
 @endsection
 
 @section('hreflang')
     @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.blog.index', ['lang' => $hLang]) }}">
+        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.blog.index', array_merge(['lang' => $hLang], $filterQuery)) }}">
     @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.blog.index', ['lang' => 'en']) }}">
+    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.blog.index', array_merge(['lang' => 'en'], $filterQuery)) }}">
 @endsection
+
+@if($posts->hasPages())
+    @section('pagination_links')
+        @if(!$posts->onFirstPage())
+            <link rel="prev" href="{{ route('frontend.blog.index', array_merge(request()->query(), ['lang' => $lang, 'page' => $posts->currentPage() - 1])) }}">
+        @endif
+        @if($posts->hasMorePages())
+            <link rel="next" href="{{ route('frontend.blog.index', array_merge(request()->query(), ['lang' => $lang, 'page' => $posts->currentPage() + 1])) }}">
+        @endif
+    @endsection
+@endif
 
 @section('json_ld')
 <script type="application/ld+json">
@@ -53,8 +70,8 @@
     "@@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "{{ __('Home') }}", "item": "{{ url('/'.$lang.'/') }}"},
-        {"@type": "ListItem", "position": 2, "name": "{{ __('Journal') }}", "item": "{{ route('frontend.blog.index', ['lang' => $lang]) }}"}
+        {"@type": "ListItem", "position": 1, "name": "{{ trans('blog.breadcrumb_home') }}", "item": "{{ url('/'.$lang.'/') }}"},
+        {"@type": "ListItem", "position": 2, "name": "{{ trans('blog.breadcrumb_journal') }}", "item": "{{ route('frontend.blog.index', ['lang' => $lang]) }}"}
     ]
 }
 </script>
@@ -75,13 +92,10 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ trans('blog.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
-                <span class="text-ink">{{ __('Journal') }}</span>
+                <span class="text-ink">{{ trans('blog.breadcrumb_journal') }}</span>
             </nav>
-            <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                DOC · JOURNAL · VOL.{{ now()->format('Y.m') }}
-            </div>
         </div>
 
         {{-- ═══ Hero ═══ --}}
@@ -89,7 +103,7 @@
             <div class="col-span-12 lg:col-span-8">
                 <div class="flex items-center gap-4 mb-8">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">{{ __('Editorial · Ledger') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ trans('blog.editorial_ledger_eyebrow') }}</span>
                 </div>
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl max-w-[18ch]">
@@ -108,11 +122,11 @@
                 <form action="{{ route('frontend.blog.index', ['lang' => $lang]) }}" method="GET"
                       class="border border-ink bg-paper bp-register">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Search · Archive') }}</span>
-                        <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ $posts->total() }} {{ Str::plural('entry', $posts->total()) }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ trans('blog.search_archive_eyebrow') }}</span>
+                        <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ trans_choice('blog.entry_count', $posts->total(), ['count' => $posts->total()]) }}</span>
                     </div>
                     <div class="p-5 space-y-3">
-                        <label for="blog-search" class="bp-spec text-ink-muted">{{ __('Query') }}</label>
+                        <label for="blog-search" class="bp-spec text-ink-muted">{{ trans('blog.query_label') }}</label>
                         <div class="flex">
                             <input id="blog-search" type="text" name="search"
                                    value="{{ $searchQuery }}"
@@ -132,7 +146,7 @@
                             <a href="{{ route('frontend.blog.index', ['lang' => $lang]) }}"
                                class="inline-flex items-center gap-1.5 pt-1 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted hover:text-amber-ink">
                                 <x-heroicon-s-x-mark class="w-3 h-3" />
-                                {{ __('Clear filters') }}
+                                {{ trans('blog.clear_filters') }}
                             </a>
                         @endif
                     </div>
@@ -142,21 +156,25 @@
 
         {{-- Active filter chips --}}
         @if($hasFilter)
+            @php
+                $activeCatName = $activeCat ? trans_field(optional($categories->firstWhere('slug', $activeCat))->name) : null;
+                $activeTagName = $activeTag ? trans_field(optional($tags->firstWhere('slug', $activeTag))->name) : null;
+            @endphp
             <div class="mb-8 flex flex-wrap items-center gap-2 bp-rise bp-rise-delay-2">
-                <span class="bp-spec text-ink-muted mr-2">{{ __('Active filter') }}</span>
+                <span class="bp-spec text-ink-muted mr-2">{{ trans('blog.active_filter_label') }}</span>
                 @if($activeCat)
                     <span class="inline-flex items-center gap-2 px-3 py-1.5 border border-ink bg-paper font-mono text-[10px] tracking-[0.18em] uppercase text-ink">
-                        {{ __('Category') }} · {{ $activeCat }}
+                        {{ trans('blog.category_label') }} · {{ $activeCatName ?: $activeCat }}
                     </span>
                 @endif
                 @if($activeTag)
                     <span class="inline-flex items-center gap-2 px-3 py-1.5 border border-ink bg-paper font-mono text-[10px] tracking-[0.18em] uppercase text-ink">
-                        {{ __('Tag') }} · {{ $activeTag }}
+                        {{ trans('blog.tag_label') }} · {{ $activeTagName ?: $activeTag }}
                     </span>
                 @endif
                 @if($searchQuery)
                     <span class="inline-flex items-center gap-2 px-3 py-1.5 border border-ink bg-paper font-mono text-[10px] tracking-[0.18em] uppercase text-ink">
-                        {{ __('Query') }} · "{{ $searchQuery }}"
+                        {{ trans('blog.query_label') }} · "{{ $searchQuery }}"
                     </span>
                 @endif
             </div>
@@ -168,9 +186,9 @@
             {{-- ── Entries column ── --}}
             <main class="col-span-12 lg:col-span-8">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                    <span class="bp-spec text-ink">01 · {{ __('Entries') }}</span>
+                    <span class="bp-spec text-ink">01 · {{ trans('blog.entries_label') }}</span>
                     <span class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        {{ __('Page') }} {{ $posts->currentPage() }}/{{ max(1, $posts->lastPage()) }}
+                        {{ trans('blog.page_label') }} {{ $posts->currentPage() }}/{{ max(1, $posts->lastPage()) }}
                     </span>
                 </div>
 
@@ -215,7 +233,7 @@
                                             @endif
                                             <span class="text-rule-strong">│</span>
                                             <time datetime="{{ $post->published_at }}" class="tabular-nums">
-                                                {{ \Carbon\Carbon::parse($post->published_at)->format('d M Y') }}
+                                                {{ \Carbon\Carbon::parse($post->published_at)->clone()->locale($lang)->translatedFormat('d M Y') }}
                                             </time>
                                         </div>
 
@@ -260,7 +278,7 @@
                     {{-- Pagination --}}
                     @if($posts->hasPages())
                         <div class="mt-10 pt-5 border-t border-ink">
-                            {{ $posts->links() }}
+                            {{ $posts->links('components.ui.pagination') }}
                         </div>
                     @endif
                 @else
@@ -271,7 +289,7 @@
                         </div>
                         <p class="font-display text-xl font-bold text-ink leading-tight">{{ trans('blog.no_posts') }}</p>
                         <p class="mt-2 text-sm text-ink-muted max-w-md mx-auto">
-                            {{ __('The archive is empty or no entries match the current filter.') }}
+                            {{ trans('blog.empty_note') }}
                         </p>
                         @if($hasFilter)
                             <a href="{{ route('frontend.blog.index', ['lang' => $lang]) }}"
@@ -279,7 +297,7 @@
                                       font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                       hover:bg-amber hover:text-ink transition-colors">
                                 <x-heroicon-s-x-mark class="w-4 h-4" />
-                                {{ __('Reset filters') }}
+                                {{ trans('blog.reset_filters') }}
                             </a>
                         @endif
                     </div>
@@ -291,10 +309,9 @@
 
                 {{-- Featured --}}
                 @if($featuredPost)
-                    <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
-                        <div class="px-5 py-3 bg-amber text-ink flex items-center justify-between">
+                    <div class="border border-ink bg-paper bp-shadow-sm">
+                        <div class="px-5 py-3 bg-amber text-ink flex items-center">
                             <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ trans('blog.featured') }}</span>
-                            <span class="font-mono text-[10px] tracking-[0.18em] uppercase">00</span>
                         </div>
                         @if($featuredPost->featuredImage)
                             <div class="aspect-[16/9] bg-ivory-alt overflow-hidden">
@@ -311,7 +328,7 @@
                                 </a>
                             </h3>
                             <p class="mt-3 font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                                {{ \Carbon\Carbon::parse($featuredPost->published_at)->format('d M Y') }}
+                                {{ \Carbon\Carbon::parse($featuredPost->published_at)->clone()->locale($lang)->translatedFormat('d M Y') }}
                             </p>
                         </div>
                     </div>
@@ -367,18 +384,17 @@
 
                 {{-- Newsletter / CTA --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Pro · Bulletin') }}</p>
                     <p class="font-display text-lg font-extrabold tracking-[-0.02em] leading-tight">
-                        {{ __('Catalogue updates, direct.') }}
+                        {{ trans('blog.newsletter_heading') }}
                     </p>
                     <p class="mt-2 text-sm text-ivory/70 leading-relaxed">
-                        {{ __('Subscribe to receive new part listings and technical deep-dives — one email, once a month.') }}
+                        {{ trans('blog.newsletter_body') }}
                     </p>
                     <a href="{{ url('/'.$lang.'/#newsletter') }}"
                        class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-amber text-ink border border-amber
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-paper hover:border-paper transition-colors">
-                        {{ __('Subscribe') }}
+                        {{ trans('blog.subscribe_btn') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                     </a>
                 </div>

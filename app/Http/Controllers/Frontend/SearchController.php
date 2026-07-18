@@ -38,7 +38,11 @@ class SearchController extends Controller
         if (!RateLimiter::attempt("search:{$request->ip()}", $maxSearches, function () {
             return true;
         })) {
-            throw new TooManyRequestsHttpException(60, 'Too many search requests. Please slow down.');
+            // No message here — bootstrap/app.php's TooManyRequestsHttpException
+            // renderer falls back to the translated search.error_429_message
+            // ONLY when getMessage() is empty; a hardcoded string here would
+            // silently win over the per-locale translation for every visitor.
+            throw new TooManyRequestsHttpException(60);
         }
 
         // Optional manufacturer/model filters from query string
@@ -84,9 +88,11 @@ class SearchController extends Controller
         // True zero results → zero-results page
         if ($result['total'] === 0) {
             return view('frontend.search.zero-results', [
-                'normalized_query' => $result['normalized_query'],
-                'search_type'      => $result['search_type'],
-                'popularOems'      => $this->getPopularOems(),
+                'normalized_query'     => $result['normalized_query'],
+                'search_type'          => $result['search_type'],
+                'popularOems'          => $this->getPopularOems(),
+                'failed_search_log_id' => $result['search_log_id'],
+                'cross_ref_checked'    => $result['cross_ref_checked'] ?? true,
             ]);
         }
 

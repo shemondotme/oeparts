@@ -1,4 +1,4 @@
-﻿{{-- Section: banner (Industrial Blueprint)
+{{-- Section: banner (Industrial Blueprint)
      content: eyebrow(ml), headline(ml), subheadline(ml), button_text(ml), button_url
      6 feature cards with trust indicators.
 --}}
@@ -9,21 +9,34 @@
     $buttonText = trans_field($section->content['button_text'] ?? null) ?: __('Open a Workshop Account');
     $buttonUrl = $section->content['button_url'] ?: null;
 
-    $features = [
+    // Fallback mirrors the original English-only copy in case a Section row predates
+    // the 'features' content key — trans_field() on plain strings returns them as-is.
+    $defaultFeatures = [
         ['icon' => 'wrench-screwdriver', 'title' => 'Workshop Pricing',     'desc' => 'Volume tiers up to 35% off retail — automatic on every invoice once you qualify.'],
-        ['icon' => 'document-text',      'title' => 'Net-30 Terms',         'desc' => 'Order on account, pay monthly. Credit lines from ' . settings('store.currency_symbol', '€') . '2K to ' . settings('store.currency_symbol', '€') . '100K based on history.'],
+        ['icon' => 'document-text',      'title' => 'Net-30 Terms',         'desc' => 'Order on account, pay monthly. Credit lines from :low to :high based on history.'],
         ['icon' => 'clipboard-check',    'title' => 'Bulk RFQ Desk',        'desc' => 'Quote 50+ OEM numbers in one request. Answers within 4 working hours.'],
         ['icon' => 'chat-bubble',        'title' => 'Dedicated B2B Support', 'desc' => 'Named account manager, direct line, DE · EN · FR · LT · ES.'],
         ['icon' => 'truck',              'title' => 'Scheduled Delivery',   'desc' => 'Daily courier runs across the EU. Morning-order, next-day-arrival on stocked SKUs.'],
         ['icon' => 'shield-check',       'title' => 'Certified Genuine',    'desc' => 'Only OEM-authorised distributors. ISO 9001 supply chain, traceable lot numbers.'],
     ];
+    $currencySymbol = settings('general.currency_symbol', '€');
+    $features = array_map(function ($f) use ($currencySymbol) {
+        $desc = trans_field($f['desc'] ?? null) ?: '';
+        $desc = strtr($desc, [':low' => $currencySymbol . '2K', ':high' => $currencySymbol . '100K']);
+
+        return [
+            'icon'  => $f['icon'] ?? 'check-circle',
+            'title' => trans_field($f['title'] ?? null) ?: '',
+            'desc'  => $desc,
+        ];
+    }, $section->content['features'] ?? $defaultFeatures);
     $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
 @endphp
 
 <section class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
     <div class="absolute inset-0 bg-grid-navy bg-grid-lg opacity-60 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-16 md:pt-24 pb-12 md:pb-16">
 
         {{-- Header --}}
         <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-white/20">
@@ -112,24 +125,5 @@
             @endforeach
         </div>
 
-        {{-- B2B Trust indicators --}}
-        <div class="mt-12 pt-8 border-t border-white/20 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
-                <x-heroicon-s-building-storefront class="w-3.5 h-3.5 text-amber" />
-                500+ Active Workshops
-            </span>
-            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
-                <x-heroicon-s-globe-europe-africa class="w-3.5 h-3.5 text-amber" />
-                27 EU Countries
-            </span>
-            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
-                <x-heroicon-s-check-badge class="w-3.5 h-3.5 text-amber" />
-                ISO 9001 Supply Chain
-            </span>
-            <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
-                <x-heroicon-s-clock class="w-3.5 h-3.5 text-amber" />
-                4h RFQ Response
-            </span>
-        </div>
     </div>
 </section>

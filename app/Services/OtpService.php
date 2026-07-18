@@ -148,6 +148,23 @@ class OtpService
     }
 
     /**
+     * Check whether the given email+purpose was successfully verified recently.
+     *
+     * Used by multi-step flows where verification happens in an earlier request
+     * than the action it gates (e.g. verify-email-then-submit-a-form) — the OTP
+     * row's verified_at is the server-authoritative proof, since the client
+     * cannot be trusted to self-report "I verified".
+     */
+    public function isRecentlyVerified(string $email, OtpPurpose $purpose, int $withinMinutes = 30): bool
+    {
+        return Otp::where('email', $email)
+            ->where('purpose', $purpose)
+            ->whereNotNull('verified_at')
+            ->where('verified_at', '>=', now()->subMinutes($withinMinutes))
+            ->exists();
+    }
+
+    /**
      * Get the human-readable message for a verification result code.
      */
     public function message(string $result): string

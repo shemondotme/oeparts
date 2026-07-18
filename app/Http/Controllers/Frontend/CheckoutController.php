@@ -245,7 +245,7 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Step 2: Shipping address and optional B2B details.
+     * Step 2: Shipping address.
      */
     private function showStep2(string $checkoutId, array $checkout, string $lang)
     {
@@ -261,10 +261,6 @@ class CheckoutController extends Controller
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
             'country_code' => 'required|string|size:2',
-            'is_b2b' => 'nullable|boolean',
-            'company_name' => 'nullable|string|max:255',
-            'vat_number' => 'nullable|string|max:50',
-            'vat_valid' => 'nullable|boolean',
         ];
 
         $validator = Validator::make($request->all(), $rules);
@@ -272,9 +268,6 @@ class CheckoutController extends Controller
         if ($validator->fails()) {
             return back()->withErrors($validator)->withInput();
         }
-
-        $vatValid = $request->boolean('vat_valid');
-        $vatExempt = $vatValid && settings('tax.b2b_exempt_on_valid_vat', true);
 
         $this->checkoutService->update($checkoutId, [
             'shipping_address' => [
@@ -284,13 +277,7 @@ class CheckoutController extends Controller
                 'city' => $request->input('city'),
                 'postal_code' => $request->input('postal_code'),
                 'country_code' => $request->input('country_code'),
-                'company_name' => $request->input('company_name'),
             ],
-            'is_b2b' => $request->boolean('is_b2b'),
-            'company_name' => $request->input('company_name'),
-            'vat_number' => $request->input('vat_number'),
-            'vat_valid' => $vatValid,
-            'vat_exempt' => $vatExempt,
         ]);
 
         $this->checkoutService->advance($checkoutId);
@@ -349,7 +336,7 @@ class CheckoutController extends Controller
                     'name' => trans_field($m->name),
                     'days_min' => $m->estimated_days_min,
                     'days_max' => $m->estimated_days_max,
-                    'price' => (float) $m->flat_rate,
+                    'price' => (string) $m->flat_rate,
                     'dispatch_date' => $window['dispatch_date'],
                     'delivery_earliest' => $window['earliest'],
                     'delivery_latest' => $window['latest'],
@@ -437,9 +424,9 @@ class CheckoutController extends Controller
         $cart = $this->cartService->getCartByCheckout($checkoutId);
         if ($cart) {
             $summary = $this->cartService->getSummary($cart);
-            $minimumOrder = (float) settings('orders.minimum_order_amount', 0);
-            if ($minimumOrder > 0 && $summary['subtotal'] < $minimumOrder) {
-                return back()->with('error', __('Your order does not meet the minimum amount of :amount.', [
+            $minimumOrder = (string) settings('orders.minimum_order_amount', 0);
+            if (bccomp($minimumOrder, '0', 2) > 0 && bccomp((string) $summary['subtotal'], $minimumOrder, 2) < 0) {
+                return back()->with('error', __('checkout.minimum_order_not_met', [
                     'amount' => format_price($minimumOrder),
                 ]));
             }
@@ -530,8 +517,8 @@ class CheckoutController extends Controller
 
     private function buildSidebarSummary(array $checkoutData, ?array $summary, ?string $shippingCost): array
     {
-        $subtotal = number_format((float) ($summary['subtotal'] ?? '0'), 2, '.', '');
-        $couponDiscount = number_format((float) ($summary['coupon_discount'] ?? '0'), 2, '.', '');
+        $subtotal = bcadd((string) ($summary['subtotal'] ?? '0'), '0', 2);
+        $couponDiscount = bcadd((string) ($summary['coupon_discount'] ?? '0'), '0', 2);
         $discountedSubtotal = bcsub($subtotal, $couponDiscount, 2);
         $vatRate = (string) ($summary['vat_rate'] ?? settings('tax.default_vat_rate', 21));
         $shipping = $shippingCost ?? '0.00';
@@ -621,8 +608,11 @@ class CheckoutController extends Controller
             'client_secret' => $intent['client_secret'],
             'payment_id' => $intent['payment_id'],
             'env' => settings('payment.airwallex_environment', 'sandbox') === 'live' ? 'prod' : 'demo',
-            'currency' => settings('store.currency', 'EUR'),
+            'currency' => settings('general.currency', 'EUR'),
             'amount' => (int) bcmul((string) $order->grand_total, '100', 0),
+            'country_code' => strtoupper((string) settings('payment.airwallex_merchant_country_code', 'LT')),
+            'enable_apple_pay' => (bool) settings('checkout.enable_apple_pay', true),
+            'enable_google_pay' => (bool) settings('checkout.enable_google_pay', true),
         ]);
     }
     

@@ -40,6 +40,7 @@ return [
     'remove_item_aria'        => 'Remove item',
     'clear_cart'              => 'Clear Cart',
     'clear_cart_title'        => 'Clear Cart',
+    'confirm_destructive_eyebrow' => 'Confirm · Destructive',
     'clear_cart_confirm'      => 'All items will be removed from your cart. This cannot be undone.',
     'cancel'                  => 'Cancel',
     'copied'                  => 'Copied',
@@ -58,7 +59,7 @@ return [
     'subtotal_label'          => 'Subtotal',
 
     'shipping_carriers_eyebrow' => 'EU shipping · carriers',
-    'countries_count'         => ':count countries',
+    'countries_count'         => ':count EU countries',
 
     'order_summary'           => 'Order Summary',
     'order_summary_eyebrow'   => 'Order summary',
@@ -95,7 +96,6 @@ return [
     'review_order_eyebrow'    => 'Review Order',
     'breadcrumb_home'         => 'Home',
 
-    'trust_ssl'               => 'SSL Encrypted',
     'trust_payment'           => 'Secure Payment',
     'trust_protection'        => 'Buyer Protection',
 
@@ -104,7 +104,7 @@ return [
     'mobile_checkout_btn'     => 'Checkout',
 
     'need_help_heading'      => 'Need help?',
-    'support_hours_note'     => 'Mon-Fri 09:00-18:00. Our support team is ready to assist.',
+    'support_hours_note'     => 'Mon-Fri 09:00-18:00 CET. Our support team is ready to assist.',
     'contact_us'             => 'Contact us',
 
     'error_update'            => 'Failed to update item. Please try again.',
@@ -121,4 +121,5 @@ return [
     'price_change_toast_singular' => '1 item has changed in price: :oems',
     'price_change_toast_plural'   => ':count items have changed in price: :oems',
     'condition_new_fallback'  => 'New',
+    'price_change_toast_title' => '§ PRICE · UPDATED',
 ];

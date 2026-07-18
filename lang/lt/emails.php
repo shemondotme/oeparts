@@ -36,6 +36,8 @@ return [
         'grand_total'        => 'Bendra Suma',
         'footer'             => 'Užsakymo detales visada galite peržiūrėti savo paskyroje.',
         'view_order'         => 'Peržiūrėti Užsakymą',
+        'oversized_notice_heading' => 'Didelių gabaritų dalys — pristatymo pastaba',
+        'oversized_notice_body' => 'Aukščiau nurodyta pristatymo kaina yra fiksuota kaina standartinio dydžio siuntoms. Jei šiame užsakyme yra didelių gabaritų ar sunki dalis, vežėjas gali pritaikyti papildomą krovinio mokestį, kuris bus pateiktas atskira sąskaita po išsiuntimo.',
     ],
     'order_status' => [
         'subject'         => 'Užsakymo :order_number būsena: :status',
@@ -136,7 +138,7 @@ return [
         'subject'   => 'Nauja dalių užklausa: :oem',
         'title'     => 'Dalių Užklausa Gauta',
         'greeting'  => 'Gerb. :name,',
-        'body_intro'=> 'Mūsų techninė komanda tikrina jūsų dalių užklausą. Atsakysime su prieinamumu, kainomis ir kryžminės nuorodos parinktimis per 24 valandas.',
+        'body_intro'=> 'Mūsų techninė komanda tikrina jūsų dalių užklausą. Atsakysime su prieinamumu, kainomis ir kryžminės nuorodos parinktimis per :hours valandas.',
     ],
     'part_inquiry_status' => [
         'subject_sourced'     => 'Geros naujienos — radome jūsų detalę :oem',

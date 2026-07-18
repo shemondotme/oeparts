@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('account_request_refund_title', 'account.request_refund_title', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -30,8 +30,7 @@
     </x-slot>
 
     @if($errors->any())
-        <div class="mb-6 border border-red-600 bg-red-50 p-5"
-             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+        <div class="mb-6 border border-red-600 bg-red-50 p-5 bp-shadow-sm">
             <div class="flex items-start gap-3">
                 <div class="w-9 h-9 border border-red-600 bg-paper flex items-center justify-center shrink-0">
                     <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-red-600" />
@@ -52,7 +51,7 @@
 
         {{-- ── Left: Form ──────────────────────────────────────────── --}}
         <div class="col-span-12 lg:col-span-8">
-            <section class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+            <section class="border border-ink bg-paper bp-shadow">
                 <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-document-text class="w-3.5 h-3.5" />
@@ -133,7 +132,7 @@
 
         {{-- ── Right: Order summary ─────────────────────────────────── --}}
         <aside class="col-span-12 lg:col-span-4 lg:sticky lg:top-10 lg:h-fit">
-            <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper bp-shadow-sm">
                 <header class="flex items-center justify-between px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-receipt-refund class="w-3.5 h-3.5" />
@@ -160,7 +159,7 @@
                 <div class="px-4 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                     <div>
                         <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('account_order_total', 'account.order_total') }}</p>
-                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('account_incl_vat_short', 'account.incl_vat_short') }}</p>
+                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('general.currency', 'EUR') }} · {{ ui_copy('account_incl_vat_short', 'account.incl_vat_short') }}</p>
                     </div>
                     <p class="font-mono text-2xl font-medium text-ink tabular-nums leading-none tracking-tight">
                         {{ format_price($order->grand_total) }}

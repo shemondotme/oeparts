@@ -46,7 +46,6 @@ return [
     'validation_fallback' => 'Revise el formulario de arriba.',
     'submit' => 'Enviar consulta',
     'submitting' => 'Enviando…',
-    'trust_ssl' => 'Cifrado SSL',
     'trust_response' => 'Respuesta :hours h',
     'trust_nospam' => 'Sin spam',
     'keyboard_hint_html' => 'Pulse :kbd para enviar',
@@ -56,4 +55,23 @@ return [
     'rate_limited' => 'Demasiadas consultas. Inténtelo más tarde.',
     'guest_not_allowed' => 'Inicie sesión para enviar una consulta de pieza.',
     'submitted' => 'Su consulta se ha enviado. Responderemos en :hours horas.',
+
+    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    'inline_form_label' => 'Formulario · Consulta rápida',
+    'inline_toggle_show' => 'Añadir datos del vehículo (opcional)',
+    'inline_toggle_hide' => 'Ocultar datos del vehículo',
+    'inline_spec_sla' => 'SLA · Respuesta',
+    'inline_spec_channel' => 'Canal',
+    'inline_spec_channel_value' => 'Correo · Seguro',
+    'inline_spec_coverage' => 'Cobertura',
+    'inline_spec_coverage_value' => '27 países UE',
+
+    // Server-side validation messages (PartInquiryRequest)
+    'validation_email_required' => 'Introduzca su dirección de correo electrónico.',
+    'validation_email_invalid' => 'Introduzca una dirección de correo electrónico válida.',
+    'validation_oem_required' => 'Introduzca el número de pieza OEM.',
+    'validation_year_invalid' => 'Introduzca un año válido de 4 dígitos.',
+    'validation_urgency_invalid' => 'Seleccione un nivel de urgencia válido.',
+    'success_expected_label' => 'Resp. estimada',
+    'next_protocol' => 'Siguiente paso',
 ];

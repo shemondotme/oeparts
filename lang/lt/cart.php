@@ -40,6 +40,7 @@ return [
     'remove_item_aria'        => 'Pašalinti prekę',
     'clear_cart'              => 'Išvalyti krepšelį',
     'clear_cart_title'        => 'Išvalyti krepšelį',
+    'confirm_destructive_eyebrow' => 'Patvirtinimas · Negrįžtama',
     'clear_cart_confirm'      => 'Visos prekės bus pašalintos iš krepšelio. Šio veiksmo atšaukti negalėsite.',
     'cancel'                  => 'Atšaukti',
     'copied'                  => 'Nukopijuota',
@@ -58,7 +59,7 @@ return [
     'subtotal_label'          => 'Tarpinė suma',
 
     'shipping_carriers_eyebrow' => 'ES pristatymas · vežėjai',
-    'countries_count'         => ':count šalys',
+    'countries_count'         => ':count ES šalys',
 
     'order_summary'           => 'Užsakymo suvestinė',
     'order_summary_eyebrow'   => 'Užsakymo suvestinė',
@@ -95,7 +96,6 @@ return [
     'review_order_eyebrow'    => 'Peržiūrėti užsakymą',
     'breadcrumb_home'         => 'Pradžia',
 
-    'trust_ssl'               => 'SSL šifravimas',
     'trust_payment'           => 'Saugus mokėjimas',
     'trust_protection'        => 'Pirkėjo apsauga',
 
@@ -104,7 +104,7 @@ return [
     'mobile_checkout_btn'     => 'Apmokėti',
 
     'need_help_heading'      => 'Reikia pagalbos?',
-    'support_hours_note'     => 'Pr.-Pn. 09:00-18:00. Mūsų pagalbos komanda pasiruošusi padėti.',
+    'support_hours_note'     => 'Pr.-Pn. 09:00-18:00 CET. Mūsų pagalbos komanda pasiruošusi padėti.',
     'contact_us'             => 'Susisiekite su mumis',
 
     'error_update'            => 'Nepavyko atnaujinti prekės. Bandykite dar kartą.',
@@ -121,4 +121,5 @@ return [
     'price_change_toast_singular' => 'Pasikeitė 1 prekės kaina: :oems',
     'price_change_toast_plural'   => 'Pasikeitė :count prekių kaina: :oems',
     'condition_new_fallback'  => 'Nauja',
+    'price_change_toast_title' => '§ KAINA · ATNAUJINTA',
 ];

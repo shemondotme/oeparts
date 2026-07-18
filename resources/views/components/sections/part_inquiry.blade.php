@@ -1,6 +1,7 @@
-﻿{{-- Section: part_inquiry (Industrial Blueprint)
+{{-- Section: part_inquiry (Industrial Blueprint)
      content: eyebrow(ml), headline(ml), subheadline(ml), button_text(ml)
-     Inline quick-inquiry form posting to /api/inquiry.
+     Inline quick-inquiry form posting to frontend.inquiry.store (same
+     endpoint/validation/settings as the search zero-results modal).
 --}}
 @php
     $eyebrow = trans_field($section->content['eyebrow'] ?? null);
@@ -8,6 +9,8 @@
     $subheadline = trans_field($section->content['subheadline'] ?? null);
     $buttonText = trans_field($section->content['button_text'] ?? null) ?: 'Submit Inquiry';
     $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+    $sectionLang = app()->getLocale();
+    $inquiryHours = (int) settings('part_inquiry.response_hours', 24);
 @endphp
 
 <section class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
@@ -16,7 +19,7 @@
     {{-- Amber tick strip --}}
     <div class="relative h-[3px] bg-amber"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-16 md:pt-24 pb-12 md:pb-16">
 
         {{-- Grid: headline left, form right --}}
         <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 gap-y-10">
@@ -46,9 +49,9 @@
                 {{-- Spec panel --}}
                 <dl class="mt-10 border-t border-white/15">
                     @foreach([
-                        ['SLA · Response', '24 h'],
-                        ['Channel', 'Email · Secure'],
-                        ['Coverage', '27 EU Countries'],
+                        [__('part_inquiry.inline_spec_sla'), $inquiryHours . ' h'],
+                        [__('part_inquiry.inline_spec_channel'), __('part_inquiry.inline_spec_channel_value')],
+                        [__('part_inquiry.inline_spec_coverage'), __('part_inquiry.inline_spec_coverage_value')],
                     ] as $row)
                     <div class="flex items-baseline justify-between gap-4 py-3 border-b border-white/15">
                         <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/55 shrink-0">
@@ -66,10 +69,12 @@
                  x-data="{
                     oem: '',
                     email: '',
-                    vehicle_make: '',
-                    vehicle_model: '',
-                    vehicle_year: '',
+                    manufacturer: '',
+                    car_model: '',
+                    year: '',
+                    vin_number: '',
                     notes: '',
+                    website: '',
                     state: 'idle',
                     error: '',
                     async submit() {
@@ -77,7 +82,11 @@
                         this.state = 'loading';
                         this.error = '';
                         try {
-                            const res = await fetch('{{ route('api.inquiry.store') }}', {
+                            const honeypotData = {};
+                            document.querySelectorAll('[name^=my_name], [name=valid_from]').forEach(el => {
+                                honeypotData[el.name] = el.value;
+                            });
+                            const res = await fetch('{{ route('frontend.inquiry.store', ['lang' => $sectionLang]) }}', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
@@ -87,11 +96,13 @@
                                 body: JSON.stringify({
                                     oem_number: this.oem,
                                     email: this.email,
-                                    vehicle_make: this.vehicle_make,
-                                    vehicle_model: this.vehicle_model,
-                                    vehicle_year: this.vehicle_year,
+                                    manufacturer: this.manufacturer,
+                                    car_model: this.car_model,
+                                    year: this.year,
+                                    vin_number: this.vin_number,
                                     notes: this.notes,
-                                    lang: '{{ app()->getLocale() }}'
+                                    website: this.website,
+                                    ...honeypotData,
                                 }),
                             });
                             const json = await res.json();
@@ -109,10 +120,12 @@
                     reset() {
                         this.oem = '';
                         this.email = '';
-                        this.vehicle_make = '';
-                        this.vehicle_model = '';
-                        this.vehicle_year = '';
+                        this.manufacturer = '';
+                        this.car_model = '';
+                        this.year = '';
+                        this.vin_number = '';
                         this.notes = '';
+                        this.website = '';
                         this.state = 'idle';
                         this.error = '';
                     }
@@ -127,12 +140,9 @@
                     <span class="absolute -bottom-px -right-px w-3 h-3 border-r-2 border-b-2 border-amber" aria-hidden="true"></span>
 
                     {{-- Form header bar --}}
-                    <div class="flex items-center justify-between px-6 py-3 border-b border-rule bg-ivory-alt">
+                    <div class="flex items-center px-6 py-3 border-b border-rule bg-ivory-alt">
                         <span class="font-mono text-[10px] tracking-[0.22em] uppercase font-bold text-ink">
-                            Form · Quick Inquiry
-                        </span>
-                        <span class="bp-spec-mono">
-                            REV · {{ now()->format('Y.m') }}
+                            {{ __('part_inquiry.inline_form_label') }}
                         </span>
                     </div>
 
@@ -140,7 +150,8 @@
                     <div x-show="state !== 'success'" class="p-6 sm:p-8">
                         <form @submit.prevent="submit" class="space-y-6" novalidate>
                             {{-- Honeypot --}}
-                            <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+                            <input type="text" name="website" x-model="website" class="hidden" tabindex="-1" autocomplete="off">
+                            @honeypot
 
                             {{-- OEM Part Number --}}
                             <div>
@@ -194,31 +205,38 @@
                                         class="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.22em] text-ink hover:text-amber-ink transition-colors">
                                     <x-heroicon-o-plus-small class="w-4 h-4" x-show="!expanded" />
                                     <x-heroicon-o-minus-small class="w-4 h-4" x-show="expanded" x-cloak />
-                                    <span x-text="expanded ? 'Hide Vehicle Details' : 'Add Vehicle Details (optional)'"></span>
+                                    <span x-text="expanded ? @js(__('part_inquiry.inline_toggle_hide')) : @js(__('part_inquiry.inline_toggle_show'))"></span>
                                 </button>
 
                                 <div id="vehicle-details-panel" x-show="expanded" x-collapse x-cloak class="mt-5 space-y-4">
                                     <div class="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label for="vehicle-make" class="bp-spec mb-2 inline-block">Make</label>
-                                            <input type="text" x-model="vehicle_make" id="vehicle-make"
-                                                   placeholder="VW" class="bp-input" :disabled="state === 'loading'">
+                                            <label for="vehicle-make" class="bp-spec mb-2 inline-block">{{ __('part_inquiry.label_brand') }}</label>
+                                            <input type="text" x-model="manufacturer" id="vehicle-make"
+                                                   placeholder="{{ __('part_inquiry.placeholder_brand') }}" class="bp-input" :disabled="state === 'loading'">
                                         </div>
                                         <div>
-                                            <label for="vehicle-model" class="bp-spec mb-2 inline-block">Model</label>
-                                            <input type="text" x-model="vehicle_model" id="vehicle-model"
-                                                   placeholder="Golf" class="bp-input" :disabled="state === 'loading'">
+                                            <label for="vehicle-model" class="bp-spec mb-2 inline-block">{{ __('part_inquiry.label_model') }}</label>
+                                            <input type="text" x-model="car_model" id="vehicle-model"
+                                                   placeholder="{{ __('part_inquiry.placeholder_model') }}" class="bp-input" :disabled="state === 'loading'">
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="vehicle-year" class="bp-spec mb-2 inline-block">{{ __('part_inquiry.label_year') }}</label>
+                                            <input type="text" x-model="year" id="vehicle-year" inputmode="numeric" maxlength="4"
+                                                   placeholder="{{ __('part_inquiry.placeholder_year') }}" class="bp-input-mono" :disabled="state === 'loading'">
+                                        </div>
+                                        <div>
+                                            <label for="vehicle-vin" class="bp-spec mb-2 inline-block">{{ __('part_inquiry.label_vin') }}</label>
+                                            <input type="text" x-model="vin_number" id="vehicle-vin" maxlength="17" autocapitalize="characters"
+                                                   placeholder="{{ __('part_inquiry.placeholder_vin') }}" class="bp-input-mono uppercase" :disabled="state === 'loading'">
                                         </div>
                                     </div>
                                     <div>
-                                        <label for="vehicle-year" class="bp-spec mb-2 inline-block">Year</label>
-                                        <input type="text" x-model="vehicle_year" id="vehicle-year"
-                                               placeholder="2015" class="bp-input-mono" :disabled="state === 'loading'">
-                                    </div>
-                                    <div>
-                                        <label for="inquiry-notes" class="bp-spec mb-2 inline-block">Notes</label>
+                                        <label for="inquiry-notes" class="bp-spec mb-2 inline-block">{{ __('part_inquiry.label_notes') }}</label>
                                         <textarea x-model="notes" id="inquiry-notes" rows="2"
-                                                  placeholder="Any additional notes..."
+                                                  placeholder="{{ __('part_inquiry.notes_placeholder') }}"
                                                   class="bp-input resize-none" :disabled="state === 'loading'"></textarea>
                                     </div>
                                 </div>
@@ -251,7 +269,7 @@
 
                             <p class="flex items-center gap-2 bp-spec-mono">
                                 <x-heroicon-s-lock-closed class="w-3 h-3 text-amber-ink" />
-                                {{ __('Secure · TLS 1.3 · Response within 24 h') }}
+                                {{ __('Response within :hours h', ['hours' => $inquiryHours]) }}
                             </p>
                         </form>
                     </div>
@@ -268,7 +286,7 @@
                             {{ __('Inquiry logged') }}<span class="text-amber">.</span>
                         </h3>
                         <p class="text-body max-w-sm mx-auto mb-8">
-                            {{ __('We will review your request and respond within 24 hours.') }}
+                            {{ __('We will review your request and respond within :hours hours.', ['hours' => $inquiryHours]) }}
                         </p>
                         <button @click="reset()"
                                 class="inline-flex items-center gap-2 bp-spec text-ink hover:text-amber-ink transition-colors">

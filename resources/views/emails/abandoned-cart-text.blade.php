@@ -5,5 +5,5 @@
 {{ trans('emails.abandoned_cart.cta', [], $locale) }}: {{ route('frontend.cart.index', ['lang' => $locale]) }}
 
 ---
-{{ trans('emails.layout.footer_line1', [], $locale) }}
+{{ trans('emails.layout.footer_line1', ['year' => now()->year], $locale) }}
 {{ config('app.url') }}

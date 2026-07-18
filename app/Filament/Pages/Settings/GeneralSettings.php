@@ -123,7 +123,7 @@ class GeneralSettings extends SettingsPage
 
                         Forms\Components\Select::make('currency')
                             ->label('Base Store Currency')
-                            ->helperText('This is the canonical currency setting. It is duplicated in Store Settings for convenience — both control the same value.')
+                            ->helperText('This is the single canonical currency setting used everywhere prices are displayed or charged. Store Settings shows it read-only for reference.')
                             ->options([
                                 'EUR' => 'EUR (€)',
                                 'USD' => 'USD ($)',
@@ -137,7 +137,7 @@ class GeneralSettings extends SettingsPage
 
                         Forms\Components\TextInput::make('currency_symbol')
                             ->label('Currency Character')
-                            ->helperText('Must match the Base Store Currency. Also appears in Store Settings.')
+                            ->helperText('Must match the Base Store Currency.')
                             ->maxLength(10)
                             ->placeholder('€')
                             ->required()

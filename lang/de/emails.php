@@ -36,6 +36,8 @@ return [
         'grand_total'        => 'Gesamtsumme',
         'footer'             => 'Sie können Ihre Bestelldetails jederzeit in Ihrem Konto einsehen.',
         'view_order'         => 'Bestellung Anzeigen',
+        'oversized_notice_heading' => 'Übergroße Teile — Versandhinweis',
+        'oversized_notice_body' => 'Die oben genannten Versandkosten sind ein Festpreis für Standardpakete. Enthält diese Bestellung ein übergroßes oder schweres Teil, kann der Transporteur einen zusätzlichen Frachtzuschlag berechnen, der Ihnen nach dem Versand separat in Rechnung gestellt wird.',
     ],
     'order_status' => [
         'subject'         => 'Bestellung :order_number ist jetzt :status',
@@ -136,7 +138,7 @@ return [
         'subject'   => 'Neue Teileanfrage: :oem',
         'title'     => 'Teileanfrage Erhalten',
         'greeting'  => 'Sehr geehrte/r :name,',
-        'body_intro'=> 'Unser technisches Team prüft Ihre Teileanfrage. Wir werden innerhalb von 24 Stunden mit Verfügbarkeit, Preisen und Cross-Reference-Optionen antworten.',
+        'body_intro'=> 'Unser technisches Team prüft Ihre Teileanfrage. Wir werden innerhalb von :hours Stunden mit Verfügbarkeit, Preisen und Cross-Reference-Optionen antworten.',
     ],
     'part_inquiry_status' => [
         'subject_sourced'     => 'Gute Nachrichten — wir haben Ihr Teil gefunden: :oem',

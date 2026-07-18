@@ -1,8 +1,8 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
-@section('title', __('419 · Verification Expired'))
+@section('title', '419 · ' . __('errors.419.heading'))
 
-@section('meta_description', __('Your security token handshake has expired. Reload the page to request new transaction keys.'))
+@section('meta_description', __('errors.419.intro'))
 
 @section('meta_robots')
     <meta name="robots" content="noindex,follow">
@@ -26,13 +26,10 @@
         <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-8">
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60" aria-label="Breadcrumb">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">{{ __('Home') }}</a>
+                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">{{ __('errors.home') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <span class="text-ivory">{{ __('Session Expired') }}</span>
+                    <span class="text-ivory">{{ __('errors.419.breadcrumb') }}</span>
                 </nav>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    DOC · ERR/419 · TIMEOUT
-                </span>
             </div>
             <div class="flex items-center gap-4 mb-4">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
@@ -41,18 +38,17 @@
                 </span>
             </div>
             <h1 class="font-display font-extrabold text-ivory leading-[0.9] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
-                {{ __('Session Handshake Expired') }}<span class="text-amber">.</span>
+                {{ __('errors.419.heading') }}<span class="text-amber">.</span>
             </h1>
             <p class="mt-4 max-w-xl text-ivory/70 text-sm md:text-base leading-relaxed">
-                {{ __('Your cross-site request validation key timed out due to a period of inactive connection. A page reload is required.') }}
+                {{ __('errors.419.intro') }}
             </p>
         </div>
     </div>
 
     {{-- ── Main card ────────────────────────────────────────────────── --}}
     <div class="relative max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <div class="relative border border-ink bg-paper"
-             style="box-shadow: 8px 8px 0 rgba(245, 158, 11, 1);">
+        <div class="relative border border-ink bg-paper bp-shadow-lg" style="--bp-shadow-color: rgba(245,158,11,1);">
             {{-- Corner ticks --}}
             <span class="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-amber" aria-hidden="true"></span>
             <span class="absolute -top-1 -right-1 w-3 h-3 border-r-2 border-t-2 border-amber" aria-hidden="true"></span>
@@ -60,8 +56,7 @@
             <span class="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-amber" aria-hidden="true"></span>
 
             {{-- Card header --}}
-            <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                <span class="bp-spec text-amber-ink">Incident · Report</span>
+            <div class="flex items-center justify-end px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec-mono">
                     {{ now()->format('Y-m-d H:i T') }}
                 </span>
@@ -70,17 +65,15 @@
             <div class="p-6 sm:p-10">
                 {{-- Giant code glyph + icon --}}
                 <div class="flex items-center gap-6 pb-8 mb-8 border-b border-rule">
-                    <div class="w-16 h-16 border border-ink bg-ivory-alt flex items-center justify-center shrink-0"
-                          style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                    <div class="w-16 h-16 border border-ink bg-ivory-alt flex items-center justify-center shrink-0 bp-shadow-sm">
                         <x-heroicon-o-clock class="w-7 h-7 text-amber-ink" />
                     </div>
                     <div class="min-w-0 flex-1">
-                        <p class="bp-spec text-amber-ink mb-1">Error · Code</p>
                         <p class="font-display text-6xl md:text-7xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
                             4<span class="text-amber-ink">1</span>9
                         </p>
                         <p class="mt-2 font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">
-                            {{ __('Handshake Mismatch') }} · {{ __('Page Expired') }}
+                            {{ __('errors.419.glyph_label') }}
                         </p>
                     </div>
                 </div>
@@ -88,31 +81,31 @@
                 {{-- Spec grid --}}
                 <dl class="grid grid-cols-1 sm:grid-cols-3 gap-0 border border-ink divide-y sm:divide-y-0 sm:divide-x divide-rule mb-8">
                     <div class="px-4 py-3 bg-paper">
-                        <dt class="bp-spec text-ink-muted">{{ __('Status') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('errors.status') }}</dt>
                         <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 bg-amber"></span>
-                            419 · EXPIRED
+                            419
                         </dd>
                     </div>
                     <div class="px-4 py-3 bg-paper">
-                        <dt class="bp-spec text-ink-muted">{{ __('Handshake') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('errors.419.handshake_label') }}</dt>
                         <dd class="mt-1 font-mono text-sm font-bold text-ink uppercase tracking-wide">
-                            {{ __('CSRF Token') }}
+                            {{ __('errors.419.handshake_value') }}
                         </dd>
                     </div>
                     <div class="px-4 py-3 bg-paper">
-                        <dt class="bp-spec text-ink-muted">{{ __('Action') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('errors.419.action_label') }}</dt>
                         <dd class="mt-1 font-mono text-sm font-bold text-ink uppercase tracking-wide">
-                            {{ __('Reload page') }}
+                            {{ __('errors.419.action_value') }}
                         </dd>
                     </div>
                 </dl>
 
                 {{-- Explanation block --}}
                 <div class="border border-rule bg-ivory-alt p-5 mb-8">
-                    <p class="bp-spec text-amber-ink mb-2">{{ __('What occurred') }}</p>
+                    <p class="bp-spec text-amber-ink mb-2">{{ __('errors.what_occurred') }}</p>
                     <p class="text-sm text-body leading-relaxed">
-                        {{ __('For security, all forms submit session-based verification tokens (CSRF keys). Since your connection has remained idle, the session key expired. Reload the document to request a new cryptographic token.') }}
+                        {{ __('errors.419.explanation') }}
                     </p>
                 </div>
 
@@ -124,28 +117,18 @@
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                    hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                         <x-heroicon-s-arrow-path class="w-4 h-4" />
-                        {{ __('Reload Page') }}
+                        {{ __('errors.419.reload_page') }}
                     </button>
                     <a href="{{ $backUrl }}"
                        class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ink text-ink
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-ink hover:text-ivory transition-colors">
                         <x-heroicon-s-arrow-long-left class="w-4 h-4" />
-                        {{ __('Return Back') }}
+                        {{ __('errors.return_back') }}
                     </a>
                 </div>
             </div>
 
-            {{-- Trust strip --}}
-            <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
-                <span class="inline-flex items-center gap-1.5 bp-spec-mono">
-                    <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
-                    {{ __('Automatic session protection') }}
-                </span>
-                <span class="bp-spec-mono">
-                    CSRF · verified
-                </span>
-            </div>
         </div>
     </div>
 </div>

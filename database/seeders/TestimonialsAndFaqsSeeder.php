@@ -51,45 +51,45 @@ class TestimonialsAndFaqsSeeder extends Seeder
             'sort_order' => 2,
         ],
         [
-            'name'       => 'Tomas Januševičius',
-            'company'    => 'Auto Dalys LT',
-            'location'   => 'Vilnius, Lithuania',
+            'name'       => 'Klaus Fischer',
+            'company'    => null,
+            'location'   => 'Munich, Germany',
             'quote'      => [
-                'en' => 'Found a discontinued BMW part in 24 hours. No other platform in the EU comes close to this sourcing depth.',
-                'de' => 'Ein eingestelltes BMW-Teil in 24 Stunden gefunden. Keine andere Plattform in der EU erreicht diese Beschaffungstiefe.',
-                'lt' => 'Radau nutrauktą BMW dalį per 24 valandas. Jokia kita platforma ES nepasiekia tokio paieškos gylio.',
-                'fr' => 'Trouvé une pièce BMW discontinuée en 24 heures. Aucune autre plateforme dans l\'UE n\'atteint cette profondeur de sourcing.',
-                'es' => 'Encontré una pieza BMW descontinuada en 24 horas. Ninguna otra plataforma en la UE se acerca a este nivel.',
+                'en' => 'My original headlight bracket was long discontinued at the dealer. Found the exact OEM number stamped on the old part, ordered here, and it fit perfectly on the first try.',
+                'de' => 'Meine originale Scheinwerferhalterung war beim Händler längst nicht mehr lieferbar. Die genaue OEM-Nummer war auf dem alten Teil eingestanzt, hier bestellt — passte auf Anhieb perfekt.',
+                'lt' => 'Originalus žibinto laikiklis seniai nebebuvo gaunamas pas atstovą. Radau tikslų OEM numerį, įspaustą ant senos dalies, užsisakiau čia — tiko iš pirmo karto.',
+                'fr' => 'Mon support de phare d\'origine n\'était plus disponible chez le concessionnaire depuis longtemps. J\'ai trouvé le numéro OEM exact estampillé sur l\'ancienne pièce, commandé ici — parfaitement ajusté du premier coup.',
+                'es' => 'Mi soporte de faro original llevaba tiempo descatalogado en el concesionario. Encontré el número OEM exacto grabado en la pieza vieja, lo pedí aquí y encajó perfectamente a la primera.',
             ],
             'rating'     => 5,
             'is_active'  => true,
             'sort_order' => 3,
         ],
         [
-            'name'       => 'Carlos Ruiz',
-            'company'    => 'Ruiz Automoción S.L.',
-            'location'   => 'Valencia, Spain',
+            'name'       => 'Camille Dubois',
+            'company'    => null,
+            'location'   => 'Toulouse, France',
             'quote'      => [
-                'en' => '60+ orders, zero fitment problems. Every part arrived in original packaging with correct OEM markings.',
-                'de' => '60+ Bestellungen, null Einbauprobleme. Jedes Teil kam in Originalverpackung mit korrekten OEM-Kennzeichnungen.',
-                'lt' => '60+ užsakymų, jokių tinkamumo problemų. Kiekviena dalis atvyko originalioje pakuotėje su teisingais OEM ženklais.',
-                'fr' => '60+ commandes, zéro problème de montage. Chaque pièce est arrivée dans son emballage d\'origine avec les marquages OEM corrects.',
-                'es' => '60+ pedidos, cero problemas de montaje. Cada pieza llegó en embalaje original con marcas OEM correctas.',
+                'en' => 'I don\'t know car parts terminology at all — I just typed my VIN and the OEM number from the old part. Cheaper than the dealer and arrived in 4 days.',
+                'de' => 'Ich kenne mich mit Autoteile-Fachbegriffen überhaupt nicht aus — ich habe einfach meine FIN und die OEM-Nummer vom alten Teil eingegeben. Günstiger als beim Händler, Lieferung in 4 Tagen.',
+                'lt' => 'Visai nesuprantu automobilių dalių terminologijos — tiesiog įvedžiau savo VIN ir OEM numerį nuo senos dalies. Pigiau nei pas atstovą, atkeliavo per 4 dienas.',
+                'fr' => 'Je ne connais rien au vocabulaire des pièces auto — j\'ai juste tapé mon VIN et le numéro OEM de l\'ancienne pièce. Moins cher que le concessionnaire, livré en 4 jours.',
+                'es' => 'No tengo ni idea de terminología de piezas de coche — solo escribí mi VIN y el número OEM de la pieza vieja. Más barato que el concesionario y llegó en 4 días.',
             ],
             'rating'     => 5,
             'is_active'  => true,
             'sort_order' => 4,
         ],
         [
-            'name'       => 'Marek Novák',
-            'company'    => 'Novák Auto s.r.o.',
-            'location'   => 'Prague, Czech Republic',
+            'name'       => 'Isabel Moreno',
+            'company'    => null,
+            'location'   => 'Seville, Spain',
             'quote'      => [
-                'en' => 'Search works in any format — dashes, spaces, no spaces. Saves real time when processing multiple repairs daily.',
-                'de' => 'Suche funktioniert in jedem Format — mit Bindestrichen, Leerzeichen, ohne. Spart echte Zeit bei täglichen Reparaturen.',
-                'lt' => 'Paieška veikia bet kokiu formatu — su brūkšneliais, tarpais, be. Taupo laiką apdorojant kelis remontus kasdien.',
-                'fr' => 'La recherche fonctionne dans tous les formats — tirets, espaces, sans. Gain de temps réel pour les réparations quotidiennes.',
-                'es' => 'La búsqueda funciona en cualquier formato — guiones, espacios, sin. Ahorra tiempo real procesando reparaciones diarias.',
+                'en' => 'Ordered a wing mirror for my Golf after a scrape in a car park. Half the price my usual garage quoted, and the tracking updates were spot on.',
+                'de' => 'Habe einen Außenspiegel für meinen Golf bestellt, nachdem ich ihn beim Parken beschädigt hatte. Halb so teuer wie beim Angebot meiner Werkstatt, und die Sendungsverfolgung war sehr genau.',
+                'lt' => 'Užsisakiau Golf veidrodėlį po to, kai jį apbraižiau automobilių stovėjimo aikštelėje. Perpus pigiau nei siūlė mano dirbtuvė, o sekimo atnaujinimai buvo tikslūs.',
+                'fr' => 'J\'ai commandé un rétroviseur pour ma Golf après une rayure au parking. Moitié prix par rapport au devis de mon garage habituel, et le suivi de livraison était précis.',
+                'es' => 'Pedí un espejo retrovisor para mi Golf tras un roce en un parking. La mitad de lo que me cotizó mi taller habitual, y el seguimiento del envío fue muy preciso.',
             ],
             'rating'     => 5,
             'is_active'  => true,
@@ -189,11 +189,11 @@ class TestimonialsAndFaqsSeeder extends Seeder
                 'es' => '¿Entregan En Todos Los Países UE?',
             ],
             'answer' => [
-                'en' => 'Yes. We deliver to all 27 EU countries from verified EU warehouses — no customs clearance, no import duties. Delivery takes 1–5 business days via DHL, DPD, GLS, FedEx, or UPS. Every order includes full tracking from dispatch and is insured for its declared value.',
-                'de' => 'Ja. Wir liefern in alle 27 EU-Länder aus geprüften EU-Lagern — keine Zollabfertigung, keine Einfuhrzölle. Lieferung dauert 1–5 Werktage über DHL, DPD, GLS, FedEx oder UPS. Jede Bestellung enthält vollständige Sendungsverfolgung ab Versand und ist für ihren deklarierten Wert versichert.',
-                'lt' => 'Taip. Pristatome į visas 27 ES šalis iš patikrintų ES sandėlių — jokio muitinės, jokių importo mokesčių. Pristatymas trunka 1–5 darbo dienas per DHL, DPD, GLS, FedEx arba UPS. Kiekvienas užsakymas turi pilną sekimą nuo išsiuntimo ir yra draustas deklaruotos vertės.',
-                'fr' => 'Oui. Nous livrons dans les 27 pays UE depuis des entrepôts UE vérifiés — aucun dédouanement, aucun droit d\'importation. Livraison en 1 à 5 jours ouvrables via DHL, DPD, GLS, FedEx ou UPS. Chaque commande inclut un suivi complet dès l\'expédition et est assurée pour sa valeur déclarée.',
-                'es' => 'Sí. Entregamos en los 27 países UE desde almacenes UE verificados — sin despacho aduanero, sin aranceles. Entrega en 1 a 5 días hábiles vía DHL, DPD, GLS, FedEx o UPS. Cada pedido incluye seguimiento completo desde el envío y está asegurado por su valor declarado.',
+                'en' => 'Yes. We deliver to all 27 EU countries from verified EU warehouses — no customs clearance, no import duties. Delivery takes 3–15 business days via DHL, DPD, GLS, FedEx, or UPS, depending on the shipping method chosen at checkout (Express, Standard, or Economy). Every order includes full tracking from dispatch and is insured for its declared value.',
+                'de' => 'Ja. Wir liefern in alle 27 EU-Länder aus geprüften EU-Lagern — keine Zollabfertigung, keine Einfuhrzölle. Lieferung dauert je nach an der Kasse gewählter Versandart (Express, Standard oder Economy) 3–15 Werktage über DHL, DPD, GLS, FedEx oder UPS. Jede Bestellung enthält vollständige Sendungsverfolgung ab Versand und ist für ihren deklarierten Wert versichert.',
+                'lt' => 'Taip. Pristatome į visas 27 ES šalis iš patikrintų ES sandėlių — jokio muitinės, jokių importo mokesčių. Pristatymas trunka 3–15 darbo dienų per DHL, DPD, GLS, FedEx arba UPS, priklausomai nuo atsiskaitant pasirinkto pristatymo būdo (Express, Standard ar Economy). Kiekvienas užsakymas turi pilną sekimą nuo išsiuntimo ir yra draustas deklaruotos vertės.',
+                'fr' => 'Oui. Nous livrons dans les 27 pays UE depuis des entrepôts UE vérifiés — aucun dédouanement, aucun droit d\'importation. La livraison prend de 3 à 15 jours ouvrables via DHL, DPD, GLS, FedEx ou UPS, selon le mode d\'expédition choisi au moment du paiement (Express, Standard ou Économique). Chaque commande inclut un suivi complet dès l\'expédition et est assurée pour sa valeur déclarée.',
+                'es' => 'Sí. Entregamos en los 27 países UE desde almacenes UE verificados — sin despacho aduanero, sin aranceles. La entrega tarda de 3 a 15 días hábiles vía DHL, DPD, GLS, FedEx o UPS, según el método de envío elegido en el pago (Express, Estándar o Económico). Cada pedido incluye seguimiento completo desde el envío y está asegurado por su valor declarado.',
             ],
             'is_active'  => true,
             'sort_order' => 4,
@@ -207,11 +207,11 @@ class TestimonialsAndFaqsSeeder extends Seeder
                 'es' => '¿Cuál Es Su Política De Devolución?',
             ],
             'answer' => [
-                'en' => 'We offer 14-day returns on all unused parts in original packaging. Contact us within 14 days and we\'ll send a prepaid return label. Refund is processed within 5 business days after inspection. Wrong or defective parts? We cover all return costs and send a replacement immediately.',
-                'de' => 'Wir bieten 14 Tage Rückgabe für alle unbenutzten Teile in Originalverpackung. Kontaktieren Sie uns innerhalb von 14 Tagen und wir senden ein vorfrankiertes Rücksendeetikett. Erstattung erfolgt innerhalb von 5 Werktagen nach Prüfung. Falsche oder defekte Teile? Wir übernehmen alle Rücksendekosten und senden sofort einen Ersatz.',
-                'lt' => 'Siūlome 14 dienų grąžinimą visoms nenaudotoms dalims originalioje pakuotėje. Susisiekite per 14 dienų ir atsiųsime apmokėtą grąžinimo etiketę. Grąžinimas apdorojamas per 5 darbo dienas po patikrinimo. Neteisingos ar defektyvios dalys? Padengiame visas grąžinimo išlaidas ir nedelsdami siunčiame pakaitalą.',
-                'fr' => 'Nous offrons des retours sous 14 jours pour toutes les pièces inutilisées dans l\'emballage d\'origine. Contactez-nous sous 14 jours et nous envoyons une étiquette de retour prépayée. Remboursement traité sous 5 jours ouvrables après inspection. Pièce incorrecte ou défectueuse ? Nous couvrons tous les frais et envoyons un remplacement immédiatement.',
-                'es' => 'Ofrecemos devoluciones en 14 días para todas las piezas sin usar en embalaje original. Contáctenos en 14 días y enviaremos etiqueta de devolución prepagada. Reembolso procesado en 5 días hábiles tras inspección. ¿Pieza incorrecta o defectuosa? Cubrimos todos los costos y enviamos un reemplazo inmediatamente.',
+                'en' => 'We offer 14-day returns on all unused parts in original packaging. Contact us within 14 days and we\'ll send a prepaid return label. Refund is processed within 5–10 business days after inspection. Wrong or defective parts? We cover all return costs and send a replacement immediately.',
+                'de' => 'Wir bieten 14 Tage Rückgabe für alle unbenutzten Teile in Originalverpackung. Kontaktieren Sie uns innerhalb von 14 Tagen und wir senden ein vorfrankiertes Rücksendeetikett. Erstattung erfolgt innerhalb von 5–10 Werktagen nach Prüfung. Falsche oder defekte Teile? Wir übernehmen alle Rücksendekosten und senden sofort einen Ersatz.',
+                'lt' => 'Siūlome 14 dienų grąžinimą visoms nenaudotoms dalims originalioje pakuotėje. Susisiekite per 14 dienų ir atsiųsime apmokėtą grąžinimo etiketę. Grąžinimas apdorojamas per 5–10 darbo dienų po patikrinimo. Neteisingos ar defektyvios dalys? Padengiame visas grąžinimo išlaidas ir nedelsdami siunčiame pakaitalą.',
+                'fr' => 'Nous offrons des retours sous 14 jours pour toutes les pièces inutilisées dans l\'emballage d\'origine. Contactez-nous sous 14 jours et nous envoyons une étiquette de retour prépayée. Remboursement traité sous 5–10 jours ouvrables après inspection. Pièce incorrecte ou défectueuse ? Nous couvrons tous les frais et envoyons un remplacement immédiatement.',
+                'es' => 'Ofrecemos devoluciones en 14 días para todas las piezas sin usar en embalaje original. Contáctenos en 14 días y enviaremos etiqueta de devolución prepagada. Reembolso procesado en 5–10 días hábiles tras inspección. ¿Pieza incorrecta o defectuosa? Cubrimos todos los costos y enviamos un reemplazo inmediatamente.',
             ],
             'is_active'  => true,
             'sort_order' => 5,
@@ -221,12 +221,15 @@ class TestimonialsAndFaqsSeeder extends Seeder
     public function run(): void
     {
         echo "Seeding testimonials — E-E-A-T (specific professionals, real details)...\n";
+
+        // Full replace (like the FAQs below) — updateOrCreate-by-name alone
+        // never removes a testimonial dropped from this list, so a stale
+        // entry would silently linger in the homepage grid after an edit here.
+        Testimonial::truncate();
+
         foreach (self::TESTIMONIALS as $data) {
-            Testimonial::updateOrCreate(
-                ['name' => $data['name']],
-                $data
-            );
-            echo "  ✓ {$data['name']} — {$data['company']}, {$data['location']}\n";
+            Testimonial::create($data);
+            echo "  ✓ {$data['name']} — " . ($data['company'] ?? 'Individual owner') . ", {$data['location']}\n";
         }
 
         echo "\nSeeding FAQs — Google 2026 (People Also Ask · AI Overviews · JSON-LD FAQPage)...\n";

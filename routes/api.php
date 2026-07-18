@@ -35,7 +35,6 @@ Route::middleware('throttle:api')->group(function () {
     // ─── Public Utility Endpoints ────────────────────────────────────
     Route::post('/validate-vat', [\App\Http\Controllers\Api\VatValidationController::class, 'validate'])->name('api.validate-vat');
     Route::get('/search/autocomplete', [\App\Http\Controllers\Api\SearchController::class, 'autocomplete'])->name('api.search.autocomplete');
-    Route::post('/inquiry', [\App\Http\Controllers\Api\InquiryController::class, 'store'])->name('api.inquiry.store');
 
     // ─── Sections (public, CMS-driven) ──────────────────────────────
     Route::get('/sections/homepage', [\App\Http\Controllers\Api\SectionController::class, 'homepage'])->name('api.sections.homepage');

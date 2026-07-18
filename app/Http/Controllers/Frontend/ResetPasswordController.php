@@ -26,10 +26,13 @@ class ResetPasswordController extends Controller
      */
     public function reset(Request $request, string $lang)
     {
+        $pwMin = (int) settings('auth.customer_password_min', 8);
+
         $request->validate([
             'token'    => 'required',
             'email'    => 'required|email',
-            'password' => ['required', 'string', 'confirmed', PasswordRule::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
+            'password' => ['required', 'string', 'confirmed', PasswordRule::min($pwMin)->mixedCase()->numbers()->symbols()->uncompromised()],
+            'website'  => 'max:0',
         ]);
 
         $status = Password::reset(

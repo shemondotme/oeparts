@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('account_orders_title', 'account.orders_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -12,7 +12,6 @@
     eyebrow="{{ ui_copy('account_orders_eyebrow', 'account.orders_eyebrow') }}"
     title="{{ ui_copy('account_orders_heading', 'account.orders_heading') }}"
     :subtitle="ui_copy('account_orders_subtitle', 'account.orders_subtitle')"
-    docId="DOC · ORDER-INDEX · {{ now()->format('Y.m.d') }}"
     :breadcrumb="[['label' => ui_copy('account_nav_orders', 'account.nav_orders')]]"
 >
     <x-slot name="actions">
@@ -26,7 +25,7 @@
     </x-slot>
 
     @if($orders->isEmpty())
-        <div class="border border-ink bg-paper p-16 text-center" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+        <div class="border border-ink bg-paper p-16 text-center bp-shadow">
             <div class="inline-flex items-center justify-center w-16 h-16 border border-ink bg-ivory-alt mb-6">
                 <x-heroicon-o-shopping-bag class="w-7 h-7 text-ink-muted" />
             </div>
@@ -43,8 +42,7 @@
         </div>
     @else
         {{-- Summary strip --}}
-        <div class="mb-6 border border-ink bg-paper grid grid-cols-3 divide-x divide-rule"
-             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+        <div class="mb-6 border border-ink bg-paper grid grid-cols-3 divide-x divide-rule bp-shadow-sm">
             <div class="px-5 py-4">
                 <p class="bp-spec-mono">{{ ui_copy('account_total_records', 'account.total_records') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
@@ -66,15 +64,14 @@
         </div>
 
         {{-- Orders table (desktop) --}}
-        <div class="hidden md:block border border-ink bg-paper overflow-hidden"
-             style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+        <div class="hidden md:block border border-ink bg-paper overflow-hidden bp-shadow">
             <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
                 <span class="bp-spec text-amber-ink">{{ ui_copy('account_orders_list', 'account.orders_list') }}</span>
-                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('account_vat_included', 'account.vat_included') }}</span>
+                <span class="bp-spec-mono">{{ settings('general.currency', 'EUR') }} · {{ ui_copy('account_vat_included', 'account.vat_included') }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-ink-tint border-b border-ink">
+                    <thead class="bg-ivory-alt border-b border-ink">
                         <tr>
                             <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted w-12">{{ ui_copy('account_th_hash', 'account.th_hash') }}</th>
                             <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_order_no', 'account.th_order_no') }}</th>
@@ -144,7 +141,7 @@
 
             @if($orders->hasPages())
                 <div class="px-5 py-4 border-t border-ink bg-ivory-alt">
-                    {{ $orders->links() }}
+                    {{ $orders->links('components.ui.pagination') }}
                 </div>
             @endif
         </div>
@@ -166,8 +163,7 @@
                     };
                 @endphp
                 <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order]) }}"
-                   class="block border border-ink bg-paper p-5 hover:bg-ivory-alt transition-colors"
-                   style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                   class="block border border-ink bg-paper p-5 hover:bg-ivory-alt transition-colors bp-shadow-sm">
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
                             <p class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</p>
@@ -194,7 +190,7 @@
             @endforeach
 
             @if($orders->hasPages())
-                <div class="pt-2">{{ $orders->links() }}</div>
+                <div class="pt-2">{{ $orders->links('components.ui.pagination') }}</div>
             @endif
         </div>
     @endif

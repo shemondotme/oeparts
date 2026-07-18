@@ -175,11 +175,11 @@ class SectionsSeeder extends Seeder
                             'step_number' => 3,
                             'title' => $this->ml('Fast EU Delivery', 'Schnelle EU-Lieferung', 'Greitas pristatymas ES', 'Livraison UE rapide', 'Entrega rápida en UE'),
                             'description' => $this->ml(
-                                'Your genuine OEM part ships from our EU warehouse within 1–2 business days.',
-                                'Ihr originales OEM-Teil wird innerhalb von 1–2 Werktagen aus unserem EU-Lager versendet.',
-                                'Jūsų originali OEM dalis išsiųsta iš mūsų ES sandėlio per 1–2 darbo dienas.',
-                                'Votre pièce OEM d\'origine est expédiée depuis notre entrepôt UE en 1–2 jours ouvrables.',
-                                'Su pieza OEM original se envía desde nuestro almacén UE en 1–2 días hábiles.'
+                                'Your genuine OEM part ships from our EU warehouse within 24 hours.',
+                                'Ihr originales OEM-Teil wird innerhalb von 24 Stunden aus unserem EU-Lager versendet.',
+                                'Jūsų originali OEM dalis išsiųsta iš mūsų ES sandėlio per 24 valandas.',
+                                'Votre pièce OEM d\'origine est expédiée depuis notre entrepôt UE en 24 heures.',
+                                'Su pieza OEM original se envía desde nuestro almacén UE en 24 horas.'
                             ),
                         ],
                     ],
@@ -450,7 +450,7 @@ class SectionsSeeder extends Seeder
                     'features' => [
                         [
                             'icon' => 'truck',
-                            'value' => $this->ml('1–3 Days', '1–3 Tage', '1–3 dienos', '1–3 jours', '1–3 días'),
+                            'value' => $this->ml('3–5 Days', '3–5 Tage', '3–5 dienos', '3–5 jours', '3–5 días'),
                             'label' => $this->ml('Express Delivery', 'Expresslieferung', 'Greitas pristatymas', 'Livraison express', 'Entrega exprés'),
                         ],
                         [

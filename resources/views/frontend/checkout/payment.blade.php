@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('checkout_payment_title', 'checkout.payment_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -6,11 +6,34 @@
 
 @php
     $lang = app()->getLocale();
+
+    // Apple Pay / Google Pay are instruments inside the single Airwallex
+    // "card" payment_method (there's no separate PaymentMethod enum case for
+    // them) — admin toggles under Checkout Settings → Payment Methods decide
+    // whether the Drop-in element is allowed to offer each wallet. Brand
+    // names are proper nouns and stay untranslated across all locales.
+    $appleEnabled = (bool) settings('checkout.enable_apple_pay', true);
+    $googleEnabled = (bool) settings('checkout.enable_google_pay', true);
+    $enabledWallets = array_filter([
+        $appleEnabled ? 'Apple Pay' : null,
+        $googleEnabled ? 'Google Pay' : null,
+    ]);
+
+    $cardMethodLabel = ui_copy('checkout_credit_debit_card', 'checkout.credit_debit_card');
+    $cardBrandsCaption = ui_copy('checkout_card_brands_caption', 'checkout.card_brands_caption');
+    if (!empty($enabledWallets)) {
+        $cardMethodLabel .= ' / ' . implode(' / ', $enabledWallets);
+        $cardBrandsCaption .= ' · ' . implode(' · ', $enabledWallets);
+    }
 @endphp
 
 @push('styles')
-    {{-- Card payments dial out to Airwallex; open the connection early
-         without paying for the SDK download unless card is actually chosen. --}}
+    {{-- Card/Apple Pay/Google Pay payments dial out to Airwallex; open the
+         connection early without paying for the SDK download unless that
+         method is actually chosen. static.airwallex.com serves the
+         Components SDK bundle, checkout.airwallex.com frames the card/3-DS
+         iframe inside the mounted Drop-in element. --}}
+    <link rel="preconnect" href="https://static.airwallex.com" crossorigin>
     <link rel="preconnect" href="https://checkout.airwallex.com" crossorigin>
 @endpush
 
@@ -33,7 +56,7 @@
                     <span class="text-ivory">{{ ui_copy('checkout_step_payment', 'checkout.step_payment') }}</span>
                 </nav>
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    DOC · PAYMENT-SHEET · {{ $order->order_number }}
+                    {{ ui_copy('checkout_doc_payment_sheet', 'checkout.doc_payment_sheet', ['number' => $order->order_number]) }}
                 </span>
             </div>
 
@@ -41,15 +64,11 @@
                 <div>
                     <div class="flex items-center gap-4 mb-4">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">06 · {{ ui_copy('checkout_payment_title', 'checkout.payment_title') }} · Finalise</span>
+                        <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">{{ ui_copy('checkout_payment_title', 'checkout.payment_title') }}</span>
                     </div>
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
                         {{ ui_copy('checkout_complete_payment_heading', 'checkout.complete_payment_heading') }}<span class="text-amber">.</span>
                     </h1>
-                    <p class="mt-4 inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
-                        <x-heroicon-s-lock-closed class="w-3 h-3 text-amber" />
-                        {{ ui_copy('checkout_tls_encrypted_channel', 'checkout.tls_encrypted_channel') }}
-                    </p>
                 </div>
             </div>
         </div>
@@ -109,7 +128,6 @@
                             <div class="border border-ink bg-paper">
                                 <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors hover:bg-ivory-alt">
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
-                                        <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">01</span>
                                         <input type="radio" id="method-card" name="payment_method" value="card"
                                                class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0"
                                                {{ old('payment_method', $selectedMethod) === 'card' ? 'checked' : '' }} required>
@@ -118,16 +136,15 @@
                                         <x-heroicon-o-credit-card class="w-5 h-5 text-ink" />
                                     </div>
                                     <div class="flex-1">
-                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_credit_debit_card', 'checkout.credit_debit_card') }}</p>
+                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ $cardMethodLabel }}</p>
                                         <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-                                            Airwallex · Visa · Mastercard · Amex
+                                            {{ $cardBrandsCaption }}
                                         </p>
                                     </div>
                                 </label>
 
                                 <label class="flex items-start gap-4 p-5 cursor-pointer transition-colors hover:bg-ivory-alt">
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
-                                        <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">02</span>
                                         <input type="radio" id="method-bank" name="payment_method" value="bank_transfer"
                                                class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0"
                                                {{ old('payment_method', $selectedMethod) === 'bank_transfer' ? 'checked' : '' }}>
@@ -176,8 +193,6 @@
                                 <div id="airwallex-dropin" class="border border-ink bg-paper p-5 min-h-[200px]"></div>
 
                                 <input type="hidden" name="payment_intent_id" id="payment-intent-id">
-                                <input type="hidden" name="payment_method_id" id="payment-method-id">
-                                <input type="hidden" name="client_secret" id="client-secret">
                             </div>
 
                             {{-- Bank transfer section --}}
@@ -271,7 +286,7 @@
                 <div class="border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink">{{ ui_copy('checkout_order_summary', 'checkout.order_summary') }}</span>
-                        <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
+                        <span class="bp-spec-mono">{{ settings('general.currency', 'EUR') }}</span>
                     </div>
 
                     <div class="p-5 space-y-2">
@@ -305,7 +320,7 @@
                     <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                         <div>
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('checkout_grand_total_label', 'checkout.grand_total_label') }}</p>
-                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('checkout_incl_vat_short', 'checkout.incl_vat_short') }}</p>
+                            <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('general.currency', 'EUR') }} · {{ ui_copy('checkout_incl_vat_short', 'checkout.incl_vat_short') }}</p>
                         </div>
                         <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
                             {{ format_price($order->grand_total) }}
@@ -314,18 +329,10 @@
                 </div>
 
                 {{-- Trust strip --}}
-                <div class="mt-4 border border-rule bg-ivory-alt p-4 grid grid-cols-3 divide-x divide-rule">
-                    <div class="flex items-center justify-center gap-2 px-2">
-                        <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink shrink-0" />
-                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">SSL 256</span>
-                    </div>
-                    <div class="flex items-center justify-center gap-2 px-2">
-                        <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink shrink-0" />
-                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">Encrypted</span>
-                    </div>
+                <div class="mt-4 border border-rule bg-ivory-alt p-4">
                     <div class="flex items-center justify-center gap-2 px-2">
                         <x-heroicon-s-credit-card class="w-4 h-4 text-amber-ink shrink-0" />
-                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">Airwallex</span>
+                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">Airwallex{{ !empty($enabledWallets) ? ' · ' . implode(' · ', $enabledWallets) : '' }}</span>
                     </div>
                 </div>
             </aside>
@@ -359,18 +366,19 @@
             }
             window.showPaymentError = showPaymentError;
 
-            // The Airwallex SDK (~sizeable bundle) is only fetched once the
-            // customer actually picks card payment — was an unconditional
-            // <script src> on every visit, including bank-transfer customers
-            // who never use it. A preconnect hint above still opens the
-            // connection early so choosing card doesn't pay the DNS/TLS cost.
+            // The Airwallex Components SDK (~sizeable bundle) is only fetched
+            // once the customer actually picks card/wallet payment — was an
+            // unconditional <script src> on every visit, including
+            // bank-transfer customers who never use it. A preconnect hint
+            // above still opens the connection early so choosing this method
+            // doesn't pay the DNS/TLS cost.
             var airwallexScriptPromise = null;
             function loadAirwallexScript() {
                 if (!airwallexScriptPromise) {
                     airwallexScriptPromise = new Promise(function (resolve, reject) {
-                        if (typeof Airwallex !== 'undefined') { resolve(); return; }
+                        if (typeof window.AirwallexComponentsSDK !== 'undefined') { resolve(); return; }
                         var script = document.createElement('script');
-                        script.src = 'https://checkout.airwallex.com/assets/elements.bundle.min.js';
+                        script.src = 'https://static.airwallex.com/components/sdk/v1/index.js';
                         script.onload = resolve;
                         script.onerror = reject;
                         document.head.appendChild(script);
@@ -383,12 +391,17 @@
                 if (cardRadio.checked) {
                     cardSection.classList.remove('hidden');
                     bankSection.classList.add('hidden');
+                    // The Drop-in element renders its own Pay/Apple Pay/Google
+                    // Pay button inside #airwallex-dropin — our own submit
+                    // button would be a confusing second "pay" control.
+                    submitBtn.classList.add('hidden');
                     loadAirwallexScript().then(initAirwallex).catch(function () {
                         showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
                     });
                 } else if (bankRadio.checked) {
                     cardSection.classList.add('hidden');
                     bankSection.classList.remove('hidden');
+                    submitBtn.classList.remove('hidden');
                 }
             }
 
@@ -414,72 +427,76 @@
             let airwallexInitialized = false;
             function initAirwallex() {
                 if (airwallexInitialized) return;
-                if (typeof Airwallex === 'undefined') return;
+                if (typeof window.AirwallexComponentsSDK === 'undefined') return;
 
                 fetch('{{ route("frontend.checkout.payment.intent", ["lang" => $lang, "order" => $order->order_number]) }}')
                     .then(r => r.json())
-                    .then(data => {
-                        if (!data.success) return;
+                    .then(async (data) => {
+                        if (!data.success) {
+                            showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
+                            return;
+                        }
                         document.getElementById('payment-intent-id').value = data.payment_intent_id;
-                        document.getElementById('client-secret').value = data.client_secret;
 
-                        Airwallex.init({
+                        await window.AirwallexComponentsSDK.init({
                             env: data.env,
-                            origin: window.location.origin,
-                            locale: '{{ $lang }}'
+                            enabledElements: ['payments'],
                         });
 
-                        const dropin = Airwallex.createElement('card', {
+                        // dropIn covers card, Apple Pay and Google Pay in a
+                        // single embedded element — it auto-detects which of
+                        // the offered wallets the current browser/device
+                        // actually supports and only shows those. Which
+                        // wallets are OFFERED at all is admin-controlled
+                        // (Checkout Settings → Payment Methods); 'methods'
+                        // restricts the element to exactly that list, and the
+                        // per-wallet *RequestOptions are only sent when that
+                        // wallet is enabled (both require countryCode — the
+                        // merchant's processing country, not the customer's).
+                        const dropInMethods = ['card'];
+                        const dropInOptions = {
                             intent_id: data.payment_intent_id,
                             client_secret: data.client_secret,
                             currency: data.currency,
-                            amount: data.amount,
-                            onSuccess: (response) => {
-                                document.getElementById('payment-method-id').value = response.id;
-                                document.getElementById('payment-form').submit();
-                            },
-                            onError: (error) => {
-                                console.error('Payment error:', error);
-                                showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
-                            }
+                        };
+                        if (data.enable_apple_pay) {
+                            dropInMethods.push('applepay');
+                            dropInOptions.applePayRequestOptions = { countryCode: data.country_code };
+                        }
+                        if (data.enable_google_pay) {
+                            dropInMethods.push('googlepay');
+                            dropInOptions.googlePayRequestOptions = { countryCode: data.country_code };
+                        }
+                        dropInOptions.methods = dropInMethods;
+
+                        const dropIn = await window.AirwallexComponentsSDK.createElement('dropIn', dropInOptions);
+
+                        dropIn.mount('airwallex-dropin');
+
+                        const returnUrl = '{{ route("frontend.checkout.payment.return", ["lang" => $lang, "order" => $order->order_number]) }}';
+
+                        // The Drop-in element owns the entire confirm flow
+                        // internally (including any 3-DS / wallet sheet) —
+                        // 'success' only fires once the payment has actually
+                        // gone through, so we just hand off to the
+                        // return/waiting page (webhook is still the source of
+                        // truth for the order's paid status).
+                        dropIn.on('success', () => {
+                            window.location.href = returnUrl;
                         });
-                        dropin.mount('airwallex-dropin');
+
+                        dropIn.on('error', (event) => {
+                            console.error('Payment error:', event.detail);
+                            showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
+                        });
+
                         airwallexInitialized = true;
                     })
-                    .catch(err => console.error('intent error', err));
-            }
-
-            document.getElementById('payment-form').addEventListener('submit', function(e) {
-                if (cardRadio.checked && typeof Airwallex !== 'undefined') {
-                    e.preventDefault();
-                    const returnUrl = '{{ route("frontend.checkout.payment.return", ["lang" => $lang, "order" => $order->order_number]) }}';
-                    // confirmPaymentIntent() resolves a promise for a card that
-                    // completes without a 3DS redirect (it only navigates the
-                    // top-level page itself when a redirect step is actually
-                    // required) — this call used to be fire-and-forget with no
-                    // .then()/.catch() at all, so a frictionless-success card
-                    // left the "Processing…" button spinning forever with no
-                    // navigation and no error, confirmed live against the real
-                    // Airwallex sandbox (frictionless test card 4012 0003 0000
-                    // 0005): the payment intent stayed REQUIRES_PAYMENT_METHOD
-                    // and the button spun indefinitely.
-                    Airwallex.confirmPaymentIntent({
-                        client_secret: document.getElementById('client-secret').value,
-                        element: Airwallex.getElement('card'),
-                        confirmParams: {
-                            return_url: returnUrl
-                        }
-                    }).then(() => {
-                        window.location.href = returnUrl;
-                    }).catch((error) => {
-                        console.error('confirmPaymentIntent error:', error);
-                        showPaymentError(error?.message || '{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
-                        submitBtn.disabled = false;
-                        var alpine = getAlpineForm();
-                        if (alpine) alpine.submitting = false;
+                    .catch(err => {
+                        console.error('intent error', err);
+                        showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
                     });
-                }
-            });
+            }
         });
     </script>
 @endpush

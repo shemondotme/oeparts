@@ -30,6 +30,7 @@ class ContactFormRequest extends FormRequest
             'year' => 'nullable|string|max:10',
             'vin_number' => 'nullable|string|max:50',
             'message' => 'required|string|min:10|max:5000',
+            'website' => 'max:0', // honeypot
         ];
     }
 
@@ -39,13 +40,13 @@ class ContactFormRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required' => 'Please enter your email address.',
-            'email.email' => 'Please enter a valid email address.',
-            'name.required' => 'Please enter your name.',
-            'subject_type.required' => 'Please select a subject.',
-            'message.required' => 'Please enter your message.',
-            'message.min' => 'Your message must be at least 10 characters.',
-            'message.max' => 'Your message cannot exceed 5000 characters.',
+            'email.required' => trans('contact.validation_email_required'),
+            'email.email' => trans('contact.validation_email_invalid'),
+            'name.required' => trans('contact.validation_name_required'),
+            'subject_type.required' => trans('contact.validation_subject_required'),
+            'message.required' => trans('contact.validation_message_required'),
+            'message.min' => trans('contact.validation_message_min'),
+            'message.max' => trans('contact.validation_message_max'),
         ];
     }
 }

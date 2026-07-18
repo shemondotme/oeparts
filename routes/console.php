@@ -54,3 +54,10 @@ Schedule::command('oeparts:update:check')->dailyAt('06:00');
 
 // Scheduler heartbeat — every minute (for health monitoring)
 Schedule::command('scheduler:heartbeat')->everyMinute();
+
+// Purge customer refund evidence photos long after the refund was resolved —
+// GDPR data minimization (default 180 days after processed_at).
+Schedule::command('oeparts:refunds:clean-images')->dailyAt('04:15');
+
+// Purge the (disposable, regenerate-on-demand) invoice PDF cache — default 30 days.
+Schedule::command('oeparts:invoices:clean-cache')->dailyAt('04:20');

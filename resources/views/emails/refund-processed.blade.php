@@ -1,4 +1,4 @@
-﻿@extends('emails.layout')
+@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -140,7 +140,7 @@
                     PROCESSING TIME
                 </p>
                 <p style="margin: 0 0 12px 0; font-size: 14px; line-height: 20px; color: #0A1228;">
-                    The refunded amount will appear in your original payment method within <strong>{{ settings('email.refund_processing_time', '5–10 business days') }}</strong>, depending on your bank or card issuer.
+                    {{ trans('emails.refund_processed.processing_time', ['days' => '5–10'], $locale) }}
                 </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
                     {{ settings('email.refund_notification', 'You will receive a separate notification once the funds have cleared.') }}

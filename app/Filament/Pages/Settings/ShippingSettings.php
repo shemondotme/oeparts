@@ -68,6 +68,24 @@ class ShippingSettings extends SettingsPage
                                 ],
                             ],
                         ]),
+
+                        // Checkout step 3's shipping note (resources/views/frontend/checkout/step3.blade.php)
+                        // read this key via settings() with a hardcoded English default and no admin
+                        // field ever existed for it — it could never actually be changed or translated.
+                        AdminUi::translatableTabs('Shipping Note (checkout step 3)', [
+                            'note_text' => [
+                                'label' => 'Note',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'placeholders' => [
+                                    'en' => 'All shipments tracked and insured. Delivery times are estimates from dispatch.',
+                                    'de' => 'Alle Sendungen werden verfolgt und sind versichert. Lieferzeiten sind Schätzungen ab Versand.',
+                                    'lt' => 'Visos siuntos sekamos ir apdraustos. Pristatymo laikas skaičiuojamas nuo išsiuntimo.',
+                                    'fr' => 'Tous les envois sont suivis et assurés. Les délais de livraison sont estimés à partir de l\'expédition.',
+                                    'es' => 'Todos los envíos son rastreados y están asegurados. Los plazos de entrega son estimaciones desde el envío.',
+                                ],
+                            ],
+                        ]),
                     ])->columns(2),
 
                 Section::make('Business Days & Origin')

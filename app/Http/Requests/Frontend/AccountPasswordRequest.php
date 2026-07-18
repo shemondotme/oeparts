@@ -15,7 +15,7 @@ class AccountPasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'current_password' => 'required|string|min:8',
+            'current_password' => 'required|string',
             'new_password'     => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
         ];
     }
@@ -23,9 +23,9 @@ class AccountPasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'current_password.required' => 'Please enter your current password.',
-            'new_password.required'     => 'Please enter a new password.',
-            'new_password.confirmed'    => 'The new password confirmation does not match.',
+            'current_password.required' => trans('account.validation_current_password_required'),
+            'new_password.required'     => trans('account.validation_new_password_required'),
+            'new_password.confirmed'    => trans('account.validation_new_password_confirmed'),
         ];
     }
 }

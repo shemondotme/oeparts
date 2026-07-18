@@ -46,7 +46,6 @@ return [
     'validation_fallback' => 'Bitte prüfen Sie das Formular oben.',
     'submit' => 'Anfrage senden',
     'submitting' => 'Wird gesendet…',
-    'trust_ssl' => 'SSL-verschlüsselt',
     'trust_response' => ':hours h Antwort',
     'trust_nospam' => 'Kein Spam',
     'keyboard_hint_html' => 'Zum Senden :kbd drücken',
@@ -56,4 +55,23 @@ return [
     'rate_limited' => 'Zu viele Anfragen. Bitte später erneut versuchen.',
     'guest_not_allowed' => 'Bitte melden Sie sich an, um eine Ersatzteilanfrage zu senden.',
     'submitted' => 'Ihre Anfrage wurde gesendet. Wir antworten innerhalb von :hours Stunden.',
+
+    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    'inline_form_label' => 'Formular · Schnellanfrage',
+    'inline_toggle_show' => 'Fahrzeugdaten hinzufügen (optional)',
+    'inline_toggle_hide' => 'Fahrzeugdaten ausblenden',
+    'inline_spec_sla' => 'SLA · Antwort',
+    'inline_spec_channel' => 'Kanal',
+    'inline_spec_channel_value' => 'E-Mail · Sicher',
+    'inline_spec_coverage' => 'Abdeckung',
+    'inline_spec_coverage_value' => '27 EU-Länder',
+
+    // Server-side validation messages (PartInquiryRequest)
+    'validation_email_required' => 'Bitte geben Sie Ihre E-Mail-Adresse ein.',
+    'validation_email_invalid' => 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
+    'validation_oem_required' => 'Bitte geben Sie die OEM-Teilenummer ein.',
+    'validation_year_invalid' => 'Bitte geben Sie ein gültiges 4-stelliges Jahr ein.',
+    'validation_urgency_invalid' => 'Bitte wählen Sie eine gültige Dringlichkeitsstufe.',
+    'success_expected_label' => 'Vorauss. Antwort',
+    'next_protocol' => 'Nächster Schritt',
 ];
