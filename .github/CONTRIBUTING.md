@@ -1,6 +1,6 @@
 # Contributing to OeParts
 
-Thank you for taking the time to contribute.
+Thank you for taking the time to contribute. By participating in this project you agree to abide by our [Code of Conduct](../CODE_OF_CONDUCT.md).
 
 ## Before You Start
 
@@ -66,11 +66,11 @@ chore(deps): update filament to 5.7.0
 3. Run `php artisan test` — all must pass
 4. Run `php artisan view:cache && php artisan view:clear` — no Blade errors
 5. Open a PR against `main` and fill in the template
-6. Ensure commit messages follow [Conventional Commits](.github/commit_convention.md)
+6. Ensure commit messages follow [Conventional Commits](commit_convention.md)
 
 ## Reporting Security Issues
 
-Do **not** open a public GitHub issue for security vulnerabilities. Use GitHub Security Advisories (private disclosure) instead.
+Do **not** open a public GitHub issue for security vulnerabilities. See [SECURITY.md](../SECURITY.md) for the private disclosure process.
 
 ## License
 
