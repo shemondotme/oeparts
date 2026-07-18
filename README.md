@@ -109,7 +109,7 @@ The installer will:
 ### 4. Start queue workers
 
 ```bash
-php artisan queue:work redis --queue=critical,default
+php artisan queue:work redis --queue=critical,default,low
 ```
 
 In production, run this under a process supervisor so it auto-restarts
@@ -134,6 +134,23 @@ Add to crontab:
 ---
 
 ## Local Development
+
+### Docker (recommended for contributors)
+
+```bash
+cp .env.docker.example .env
+docker compose up -d
+docker compose exec laravel.test composer install
+docker compose exec laravel.test php artisan migrate --seed
+```
+
+Full guide, including the PHP 8.3/8.4/8.5 compatibility matrix and the
+shared-hosting simulation used before every release: see
+[`docs/DOCKER_DEV_ENVIRONMENT.md`](docs/DOCKER_DEV_ENVIRONMENT.md). Opening
+this repo in VS Code and choosing "Reopen in Container" sets everything up
+automatically — no manual steps at all.
+
+### XAMPP / local PHP (alternative)
 
 ```bash
 # Install JS deps and build assets (once)

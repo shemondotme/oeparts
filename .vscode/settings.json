@@ -1,0 +1,13 @@
+{
+  "files.associations": {
+    "*.blade.php": "blade"
+  },
+  "blade.format.enable": true,
+  "[blade]": {
+    "editor.defaultFormatter": "onecentlin.laravel-blade"
+  },
+  "[php]": {
+    "editor.formatOnSave": false
+  },
+  "intelephense.diagnostics.embeddedLanguages": false
+}
