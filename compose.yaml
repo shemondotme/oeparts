@@ -17,6 +17,16 @@ services:
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
+            # Sail's default web server is `php artisan serve`, which spawns its
+            # real dev-server process via Symfony Process — confirmed empirically
+            # that spawned child does NOT reliably inherit env_file-sourced
+            # container env vars (DB_HOST etc. from .env.docker.overrides resolved
+            # correctly everywhere else — exec, tinker, a direct `php -S` — but
+            # not through this specific child process). Run PHP's built-in server
+            # directly instead, same fix as the hostingsim service.
+            SUPERVISOR_PHP_COMMAND: 'php -d variables_order=EGPCS -S 0.0.0.0:80 -t /var/www/html/public /var/www/html/public/index.php'
+        env_file:
+            - .env.docker.overrides
         volumes:
             - '.:/var/www/html'
             # vendor/ is an isolated named volume, NOT part of the Windows bind
@@ -41,8 +51,15 @@ services:
             MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
             MYSQL_ROOT_HOST: '%'
             MYSQL_DATABASE: '${DB_DATABASE}'
-            MYSQL_USER: '${DB_USERNAME}'
-            MYSQL_PASSWORD: '${DB_PASSWORD}'
+            # Hardcoded, NOT ${DB_USERNAME}/${DB_PASSWORD}: the real .env (shared
+            # with XAMPP, see .env.docker.overrides) has DB_USERNAME=root, and the
+            # official mysql image's entrypoint REJECTS MYSQL_USER=root outright
+            # (confirmed — it crash-loops with "MYSQL_USER and MYSQL_PASSWORD are
+            # for configuring a regular user and cannot be used for the root
+            # user"). This account is what laravel.test/queue-worker actually
+            # connect as, via .env.docker.overrides' DB_USERNAME/DB_PASSWORD.
+            MYSQL_USER: sail
+            MYSQL_PASSWORD: password
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
             MYSQL_EXTRA_OPTIONS: '${MYSQL_EXTRA_OPTIONS:-}'
         volumes:
@@ -94,6 +111,8 @@ services:
         environment:
             WWWUSER: '${WWWUSER:-1000}'
             LARAVEL_SAIL: 1
+        env_file:
+            - .env.docker.overrides
         volumes:
             - '.:/var/www/html'
             # Same image/PHP version as laravel.test — shares its vendor volume

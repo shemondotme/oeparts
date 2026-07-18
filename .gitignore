@@ -42,6 +42,7 @@
 !.env.testing
 !.env.docker.example
 !.env.docker.hostingsim
+!.env.docker.overrides
 
 # PHPUnit / Pest
 .phpunit.result.cache
