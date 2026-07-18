@@ -151,7 +151,7 @@ return [
             '.git', '.github', '.gitignore', '.gitattributes',
             'tests', 'node_modules', 'build', 'dist',
             '.env', '.env.testing', '.env.backup',
-            '.env.docker.example', '.env.docker.hostingsim',
+            '.env.docker.example', '.env.docker.hostingsim', '.env.docker.overrides',
             '.editorconfig', '.vscode', '.devcontainer', '.idea', '.cursor',
             'phpunit.xml', 'pint.json', '.php-cs-fixer.php', '.php-cs-fixer.dist.php', '.styleci.yml',
             'storage/app/backups', 'storage/app/updates', 'storage/logs',
