@@ -68,7 +68,10 @@
 
                 {{-- Previous --}}
                 @if ($paginator->onFirstPage())
-                    <span aria-disabled="true" aria-label="{{ __('pagination.previous') }}"
+                    {{-- role="link": a plain <span> has role=generic, which doesn't
+                         support naming — aria-label on it is an ARIA-prohibited-
+                         attribute violation (confirmed via axe-core). --}}
+                    <span role="link" aria-disabled="true" aria-label="{{ __('pagination.previous') }}"
                           class="inline-flex items-center justify-center w-12 border-l border-rule
                                  font-mono text-[11px] text-ink-muted/40 bg-ivory-alt cursor-not-allowed">
                         <x-heroicon-s-chevron-left class="w-4 h-4" />
@@ -129,7 +132,7 @@
                         <x-heroicon-s-chevron-right class="w-4 h-4" />
                     </a>
                 @else
-                    <span aria-disabled="true" aria-label="{{ __('pagination.next') }}"
+                    <span role="link" aria-disabled="true" aria-label="{{ __('pagination.next') }}"
                           class="inline-flex items-center justify-center w-12 border-l border-rule
                                  font-mono text-[11px] text-ink-muted/40 bg-ivory-alt cursor-not-allowed">
                         <x-heroicon-s-chevron-right class="w-4 h-4" />

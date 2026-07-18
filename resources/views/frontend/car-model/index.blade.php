@@ -97,23 +97,20 @@
                         <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('car_model.stats_models_stats') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ now()->format('Y.m.d') }}</span>
                     </div>
-                    <div class="p-5 space-y-3">
+                    <dl class="p-5 space-y-3">
                         <div class="bp-leader pt-0.5">
                             <dt class="text-sm text-ink-muted">{{ __('car_model.stats_manufacturer') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink uppercase tracking-wide">{{ $brandName }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('car_model.stats_chassis_lines') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ number_format($totalModels) }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('car_model.stats_page') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $carModels->currentPage() }}/{{ $carModels->lastPage() }}</dd>
                         </div>
-                    </div>
+                    </dl>
                 </div>
             </aside>
         </div>

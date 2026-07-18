@@ -97,10 +97,10 @@
                 @foreach($faqs as $i => $faq)
                 {
                     "@type": "Question",
-                    "name": {{ json_encode(trans_field($faq->question)) }},
+                    "name": {!! json_encode(trans_field($faq->question)) !!},
                     "acceptedAnswer": {
                         "@type": "Answer",
-                        "text": {{ json_encode(trans_field($faq->answer)) }}
+                        "text": {!! json_encode(trans_field($faq->answer)) !!}
                     }
                 }{{ !$loop->last ? ',' : '' }}
                 @endforeach

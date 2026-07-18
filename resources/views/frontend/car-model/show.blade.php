@@ -157,24 +157,20 @@
                     <dl class="space-y-3 text-sm">
                         <div class="bp-leader pt-0.5">
                             <dt class="text-ink-muted">{{ __('car_model.brand_word') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink uppercase">{{ $brandName }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ __('car_model.chassis_word') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink truncate">{{ $modelName }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ __('car_model.years_word') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">
                                 {{ $carModel->year_from ?? '—' }}–{{ $carModel->year_to ?? __('car_model.now_word') }}
                             </dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ __('car_model.parts_indexed') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">{{ number_format($totalParts) }}</dd>
                         </div>
                     </dl>

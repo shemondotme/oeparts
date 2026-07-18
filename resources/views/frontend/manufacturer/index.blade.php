@@ -119,28 +119,24 @@
                         <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('manufacturer.stats_directory_stats') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ now()->format('Y.m.d') }}</span>
                     </div>
-                    <div class="p-5 space-y-3">
+                    <dl class="p-5 space-y-3">
                         <div class="bp-leader pt-0.5">
                             <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_listed') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ number_format($manufacturers->total()) }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_verified_oem') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-amber-ink tabular-nums">{{ $verifiedCount }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_coverage') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink uppercase tracking-wide">EU · {{ settings('stats_counter.countries_count', 27) }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_page') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $manufacturers->currentPage() }}/{{ $manufacturers->lastPage() }}</dd>
                         </div>
-                    </div>
+                    </dl>
                 </div>
             </aside>
         </div>

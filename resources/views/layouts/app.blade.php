@@ -26,13 +26,26 @@
         'jpg', 'jpeg' => 'image/jpeg',
         default => 'image/png',
     };
+
+    // trim(): every page sets these via block-style @section('title')...
+    // @endsection (not the inline @section('title', 'x') form), so the
+    // captured section content includes the newline + indentation on
+    // either side of the {{ }} expression — confirmed live via curl, e.g.
+    // <title>    Genuine OEM Auto Parts...\n</title>. $__env->yieldContent()
+    // (what @yield compiles to) has no built-in trim, so every title/
+    // description/OG/Twitter tag needs it wrapped here once rather than
+    // reformatting all 14 page templates to the inline @section form.
+    $pageTitleTag = trim($__env->yieldContent('title', settings('general.site_name', 'OeParts')));
+    $pageMetaDescription = trim($__env->yieldContent('meta_description', settings('seo.default_description', '')));
+    $pageOgTitle = trim($__env->yieldContent('og_title', settings('general.site_name', 'OeParts')));
+    $pageOgDescription = trim($__env->yieldContent('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.'));
 @endphp
 
     {{-- Title --}}
-    <title>@yield('title', settings('general.site_name', 'OeParts'))</title>
+    <title>{{ $pageTitleTag }}</title>
 
     {{-- Primary meta --}}
-    <meta name="description" content="@yield('meta_description', settings('seo.default_description', ''))">
+    <meta name="description" content="{{ $pageMetaDescription }}">
     @hasSection('meta_robots')
         @yield('meta_robots')
     @else
@@ -45,8 +58,8 @@
     {{-- Open Graph --}}
     <meta property="og:site_name" content="{{ settings('general.site_name', 'OeParts') }}">
     <meta property="og:type" content="@yield('og_type', 'website')">
-    <meta property="og:title" content="@yield('og_title', settings('general.site_name', 'OeParts'))">
-    <meta property="og:description" content="@yield('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.')">
+    <meta property="og:title" content="{{ $pageOgTitle }}">
+    <meta property="og:description" content="{{ $pageOgDescription }}">
     <meta property="og:url" content="{{ url()->current() }}">
     @hasSection('og_image')
         @yield('og_image')
@@ -58,8 +71,8 @@
     @endif
     {{-- Twitter Card --}}
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="@yield('og_title', settings('general.site_name', 'OeParts'))">
-    <meta name="twitter:description" content="@yield('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.')">
+    <meta name="twitter:title" content="{{ $pageOgTitle }}">
+    <meta name="twitter:description" content="{{ $pageOgDescription }}">
     @if($defaultOgImageUrl)
         <meta name="twitter:image" content="{{ $defaultOgImageUrl }}">
     @endif

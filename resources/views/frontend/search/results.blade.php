@@ -184,26 +184,22 @@
                             </span>
                         </div>
 
-                        <dl class="space-y-0 flex-1">
+                        <dl class="space-y-0 flex-1 bp-leader-underline">
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
                                 <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_query_label', 'search.query_label') }}</dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0 truncate max-w-[180px]">{{ $normalized_query }}</dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
                                 <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_match_type_label', 'search.match_type_label') }}</dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-amber-ink shrink-0">{{ $matchBadge['code'] }}</dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
                                 <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_hits_label', 'search.hits_label') }}</dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">{{ number_format($total) }}</dd>
                             </div>
                             @if($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
                             <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
                                 <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_page_label', 'search.page_label') }}</dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm tabular-nums text-ink shrink-0">
                                     {{ $products->currentPage() }} / {{ $products->lastPage() }}
                                 </dd>
@@ -211,7 +207,6 @@
                             @endif
                             <div class="flex items-baseline justify-between gap-3 py-2.5">
                                 <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_filters', 'search.filters') }}</dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0">
                                     {{ ui_trans_choice('search_filters_active_choice', 'search.filters_active_choice', $activeFilterCount) }}
                                 </dd>
@@ -627,7 +622,7 @@
                                         $condKey = $cCond?->slug ?? 'new';
                                         $condLabel = condition_label($cCond);
                                         $condBg = $cCond?->bg_color ?? '#DCFCE7';
-                                        $condText = $cCond?->text_color ?? '#16A34A';
+                                        $condText = $cCond?->text_color ?? '#166534';
                                         $rowNum = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
                                         if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator) {
                                             $rowNum = str_pad(($products->firstItem() + $index), 3, '0', STR_PAD_LEFT);
@@ -878,7 +873,7 @@
                         $condKey = $cCond?->slug ?? 'new';
                         $condLabel = condition_label($cCond);
                         $condBg = $cCond?->bg_color ?? '#DCFCE7';
-                        $condText = $cCond?->text_color ?? '#16A34A';
+                        $condText = $cCond?->text_color ?? '#166534';
                         $crossRefs = $product->crossReferences ?? collect();
                         $rowNum = str_pad($loop->index + 1, 3, '0', STR_PAD_LEFT);
                         if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator) {
@@ -1106,20 +1101,23 @@
                             {{ ui_copy('search_inquiry_subtitle', 'search.inquiry_subtitle', ['hours' => (int) settings('part_inquiry.response_hours', 24)]) }}
                         </p>
 
-                        <dl class="mt-6 space-y-0 border-t border-rule">
-                            <div class="flex items-center gap-3 py-3 border-b border-rule">
+                        {{-- Plain trust-indicator list, not label/value pairs — <ul>, not
+                             <dl> (a <dl> with neither dt nor dd inside is an invalid,
+                             axe/WCAG-flagged content model). --}}
+                        <ul class="mt-6 space-y-0 border-t border-rule">
+                            <li class="flex items-center gap-3 py-3 border-b border-rule">
                                 <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink shrink-0" />
                                 <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ ui_copy('search_inquiry_trust_suppliers', 'search.inquiry_trust_suppliers') }}</span>
-                            </div>
-                            <div class="flex items-center gap-3 py-3 border-b border-rule">
+                            </li>
+                            <li class="flex items-center gap-3 py-3 border-b border-rule">
                                 <x-heroicon-s-building-storefront class="w-4 h-4 text-amber-ink shrink-0" />
                                 <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ ui_copy('search_inquiry_trust_warehouse', 'search.inquiry_trust_warehouse') }}</span>
-                            </div>
-                            <div class="flex items-center gap-3 py-3">
+                            </li>
+                            <li class="flex items-center gap-3 py-3">
                                 <x-heroicon-s-trophy class="w-4 h-4 text-amber-ink shrink-0" />
                                 <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink">{{ ui_copy('search_inquiry_trust_quality', 'search.inquiry_trust_quality') }}</span>
-                            </div>
-                        </dl>
+                            </li>
+                        </ul>
                     </div>
 
                     <div class="p-6 md:p-8 bg-ivory-alt/40 flex flex-col justify-center">
