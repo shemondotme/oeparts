@@ -18,8 +18,8 @@ return [
 
     // Where the updater looks for new releases (raw over HTTPS — no API rate limit).
     'check' => [
-        'manifest_url' => env('OE_UPDATE_CHECK_URL', 'https://raw.githubusercontent.com/oeparts/oeparts/main/version.json'),
-        'catalog_url'  => env('OE_UPDATE_CATALOG_URL', 'https://raw.githubusercontent.com/oeparts/oeparts/main/releases.json'),
+        'manifest_url' => env('OE_UPDATE_CHECK_URL', 'https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json'),
+        'catalog_url'  => env('OE_UPDATE_CATALOG_URL', 'https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json'),
         'frequency'    => env('OE_UPDATE_CHECK_FREQUENCY', 'daily'), // scheduled cadence
         'cache_ttl'    => (int) env('OE_UPDATE_CHECK_TTL', 21600),   // lazy-check cache (6h)
         'timeout'      => (int) env('OE_UPDATE_CHECK_TIMEOUT', 10),  // seconds
@@ -167,7 +167,7 @@ return [
         'licenses_file' => 'THIRD-PARTY-LICENSES.md',
         // Release download URL template (Chunk 5.2). {version} = SemVer, {asset} = zip name.
         // Versioned (not /latest/) so the updater can resolve a sequential upgrade path.
-        'release_url_template' => env('OE_RELEASE_URL', 'https://github.com/oeparts/oeparts/releases/download/v{version}/{asset}'),
+        'release_url_template' => env('OE_RELEASE_URL', 'https://github.com/shemondotme/oeparts/releases/download/v{version}/{asset}'),
         'asset_name'           => 'oeparts-{version}.zip',
     ],
 ];
