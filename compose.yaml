@@ -24,7 +24,21 @@ services:
             # correctly everywhere else — exec, tinker, a direct `php -S` — but
             # not through this specific child process). Run PHP's built-in server
             # directly instead, same fix as the hostingsim service.
-            SUPERVISOR_PHP_COMMAND: 'php -d variables_order=EGPCS -S 0.0.0.0:80 -t /var/www/html/public /var/www/html/public/index.php'
+            #
+            # Router MUST be docker/serve-router.php, NOT public/index.php
+            # directly — index.php never `return false`s for a request whose
+            # path matches a real file on disk, so every request (including
+            # existing static assets under public/build/*) gets bootstrapped
+            # through the full Laravel kernel instead of served as a file; the
+            # locale-detection middleware then 302-redirects asset requests
+            # (e.g. app.css -> app.css/en), which is why the storefront loaded
+            # with completely broken CSS/JS. docker/serve-router.php is a copy
+            # of Laravel's own vendor/.../resources/server.php (the router
+            # `artisan serve` uses internally for exactly this) with a fix: the
+            # original derives the public path from getcwd(), which assumes
+            # cwd is already public/ — false here, since supervisor starts PHP
+            # with cwd = /var/www/html (the container WORKDIR).
+            SUPERVISOR_PHP_COMMAND: 'php -d variables_order=EGPCS -S 0.0.0.0:80 -t /var/www/html/public /var/www/html/docker/serve-router.php'
         env_file:
             - .env.docker.overrides
         volumes:
@@ -199,7 +213,12 @@ services:
             # which requires proc_open — exactly what this container disables.
             # Run PHP's built-in server directly instead (what artisan serve
             # wraps anyway), so the web server itself doesn't need proc_open.
-            SUPERVISOR_PHP_COMMAND: 'php -d variables_order=EGPCS -S 0.0.0.0:80 -t /var/www/html/public /var/www/html/public/index.php'
+            # Router MUST be docker/serve-router.php, not index.php directly —
+            # see the matching comment on laravel.test's SUPERVISOR_PHP_COMMAND
+            # above for why (index.php never serves static files as-is, so
+            # every public/build/* asset request gets 302-redirected by locale
+            # middleware instead of served).
+            SUPERVISOR_PHP_COMMAND: 'php -d variables_order=EGPCS -S 0.0.0.0:80 -t /var/www/html/public /var/www/html/docker/serve-router.php'
         env_file:
             - .env.docker.hostingsim
         volumes:
