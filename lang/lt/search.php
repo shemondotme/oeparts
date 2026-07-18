@@ -243,4 +243,6 @@ return [
     'console_need_vehicle' => 'Automobilio markė ir modelis',
     'console_need_vin' => 'VIN (nebūtina, pagreitina)',
     'console_need_quantity' => 'Reikiamas kiekis',
+
+    'start_button_label' => 'Pradėti paiešką',
 ];

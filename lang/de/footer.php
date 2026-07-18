@@ -29,4 +29,14 @@ return [
     'social_linkedin' => 'Besuchen Sie unsere LinkedIn-Seite',
     'social_youtube' => 'Besuchen Sie unseren YouTube-Kanal',
     'social_tiktok' => 'Besuchen Sie unsere TikTok-Seite',
+
+    'security_badge_text' => 'SSL-verschlüsselt',
+    'security_badge_subtext' => 'TLS 1.3',
+    'shipping_badge_text' => 'EU-weiter Versand',
+    'shipping_badge_subtext' => 'DHL · DPD · GLS',
+    'returns_badge_text' => 'Rückgabefrist',
+    'returns_badge_subtext' => '14 Tage',
+    'oem_badge_text' => 'Original-OEM',
+    'oem_badge_subtext' => 'Geprüfte Quelle',
+    'site_tagline' => 'Die zentrale Anlaufstelle für Original-OEM-Autoteile in Europa.',
 ];

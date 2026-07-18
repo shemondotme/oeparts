@@ -56,4 +56,5 @@ return [
     'need_part_body'     => 'Ieškokite pagal OEM numerį ir mes iškart sutikrinsime su katalogu.',
     'open_search_btn'    => 'Atidaryti paiešką',
     'nearby_label'       => 'panašūs',
+    'search_submit_aria' => 'Ieškoti',
 ];

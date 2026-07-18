@@ -91,11 +91,21 @@
                 @foreach($navLinks as $link)
                     <a href="{{ $link['href'] }}"
                        @if($link['active']) aria-current="page" @endif
-                       class="group relative flex items-center gap-2.5 px-5
+                       class="group relative flex items-center gap-2.5 px-3.5 xl:px-5
                               text-ink hover:bg-ink/[0.04]
                               transition-colors duration-150
                               focus-visible:outline-none focus-visible:bg-ink/10">
-                        <span class="font-sans text-[13px] font-bold uppercase tracking-[0.14em]">
+                        {{-- whitespace-nowrap: at the lg: floor (1024px) longer
+                             translations (confirmed with German "Über uns")
+                             wrapped to two lines inside this nav item, which
+                             looked broken next to the other single-line
+                             items. Reduced side padding at this breakpoint
+                             (back to the original px-5 from xl: up, where
+                             there's slack again) recovers just enough width
+                             to keep every current locale's label on one
+                             line at 1024px — verified via Playwright across
+                             en/de/lt/fr/es. --}}
+                        <span class="font-sans text-[13px] font-bold uppercase tracking-[0.14em] whitespace-nowrap">
                             {{ $link['label'] }}
                         </span>
                         {{-- Amber tick — persistent when active, grows on hover otherwise --}}
@@ -202,7 +212,7 @@
                     >
                         <x-heroicon-o-shopping-cart class="w-5 h-5" aria-hidden="true" />
                         <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase hidden sm:inline">
-                            {{ settings('navbar.cart_label', 'CART') }}
+                            {{ ui_copy('navbar_cart_label', 'navbar.cart_label') }}
                         </span>
                         <span
                             x-show="count > 0"
@@ -230,7 +240,7 @@
                         {{-- Spec header --}}
                         <div class="flex items-center justify-between px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                {{ settings('navbar.cart_title', 'DOC · BASKET /') }} <span class="text-amber" x-text="('0' + count).slice(-2)"></span>
+                                {{ ui_copy('navbar_cart_title', 'navbar.cart_title') }} <span class="text-amber" x-text="('0' + count).slice(-2)"></span>
                             </p>
                             <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/70">
                                 <span x-text="count + ' LINE' + (count !== 1 ? 'S' : '')"></span>
@@ -263,7 +273,7 @@
                                             <div class="flex-1 min-w-0 space-y-1">
                                                 <p class="font-mono text-[13px] font-bold text-ink tracking-wide truncate uppercase"
                                                    x-text="item.oem_number"></p>
-                                                <p class="text-[11px] text-ink-muted truncate"                                                    x-text="item.name || '{{ settings('cart.fallback_name', 'Genuine OEM Part') }}'"></p>
+                                                <p class="text-[11px] text-ink-muted truncate"                                                    x-text="item.name || '{{ ui_copy('cart_genuine_part', 'cart.genuine_part') }}'"></p>
                                                 <p class="text-[10px] font-mono text-ink-muted uppercase tracking-[0.18em]">
                                                     QTY <span x-text="item.quantity"></span>
                                                 </p>
@@ -274,7 +284,7 @@
                                                 <button @click.stop="removeItem(item.id)"
                                                         aria-label="Remove"
                                                         class="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted hover:text-red-700 border-b border-transparent hover:border-red-700">
-                                                    {{ settings('navbar.remove_label', 'REMOVE') }}
+                                                    {{ ui_copy('navbar_remove_label', 'navbar.remove_label') }}
                                                 </button>
                                             </div>
                                         </div>
@@ -290,17 +300,21 @@
                         {{-- Footer: total + CTAs --}}
                         <div class="border-t border-ink px-5 py-4 space-y-3 bg-ivory">
                             <div class="bp-leader">
-                                <span class="bp-spec">{{ settings('navbar.subtotal_label', 'SUBTOTAL') }}</span>
+                                <span class="bp-spec">{{ ui_copy('navbar_subtotal_label', 'navbar.subtotal_label') }}</span>
+                                {{-- Plain <span>s here (no dt/dd — this isn't a definition
+                                     list), so the dotted-line divider is a real standalone
+                                     element again, unlike the .bp-leader dt::after fix
+                                     used everywhere else this pattern wraps a real <dl>. --}}
                                 <span class="bp-leader-dots"></span>
                                 <span class="font-mono text-lg font-bold text-ink tabular-nums"
                                       x-text="'{{ settings('general.currency_symbol', '€') }}' + Number(subtotal).toFixed(2)"></span>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <a href="{{ $cartUrl }}" class="bp-btn-outline text-[11px] py-2.5">
-                                    {{ settings('navbar.view_cart_label', 'VIEW CART') }}
+                                    {{ ui_copy('navbar_view_cart_label', 'navbar.view_cart_label') }}
                                 </a>
                                 <a href="{{ url("/{$lang}/checkout") }}" class="bp-btn-amber text-[11px] py-2.5">
-                                    {{ settings('navbar.checkout_label', 'CHECKOUT') }}
+                                    {{ ui_copy('navbar_checkout_label', 'navbar.checkout_label') }}
                                     <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                                 </a>
                             </div>
@@ -318,19 +332,19 @@
                     >
                         <div class="px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                {{ settings('navbar.cart_title', 'DOC · BASKET /') }} 00
+                                {{ ui_copy('navbar_cart_title', 'navbar.cart_title') }} 00
                             </p>
                         </div>
                         <div class="px-5 py-6 text-center">
-                             <p class="font-display text-lg font-bold text-ink leading-tight">{{ settings('cart.empty_message', 'Empty basket') }}</p>
-                            <p class="mt-1.5 text-xs text-ink-muted">{{ settings('cart.empty_description', 'Search an OEM number to begin.') }}</p>
+                             <p class="font-display text-lg font-bold text-ink leading-tight">{{ ui_copy('cart_empty_message', 'cart.empty_message') }}</p>
+                            <p class="mt-1.5 text-xs text-ink-muted">{{ ui_copy('cart_empty_description', 'cart.empty_description') }}</p>
                             <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                                class="mt-4 inline-flex items-center justify-center gap-2 w-full
                                       px-4 py-2.5 bg-ink text-ivory
                                       font-mono text-[10px] font-bold tracking-[0.22em] uppercase
                                       hover:bg-amber hover:text-ink transition-colors">
                                 <x-heroicon-s-magnifying-glass class="w-4 h-4" />
-                                {{ settings('search.start_button_label', 'Start search') }}
+                                {{ ui_copy('search_start_button_label', 'search.start_button_label') }}
                             </a>
                         </div>
                     </div>
@@ -354,7 +368,7 @@
                                focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
                     >
                         <x-heroicon-o-user-circle class="w-5 h-5" aria-hidden="true" />
-                        <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase">{{ settings('navbar.account_label', 'ACCOUNT') }}</span>
+                        <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase">{{ ui_copy('navbar_account_label', 'navbar.account_label') }}</span>
                     </a>
 
                     {{-- Account dropdown --}}
@@ -371,7 +385,7 @@
                     >
                         <div class="px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                {{ settings('navbar.account_title', 'DOC · ACCOUNT') }}
+                                {{ ui_copy('navbar_account_title', 'navbar.account_title') }}
                             </p>
                         </div>
                         <ul class="divide-y divide-rule">
@@ -394,7 +408,7 @@
                             @csrf
                             <button type="submit"
                                     class="w-full flex items-center justify-between px-5 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted hover:text-red-700 hover:bg-ivory transition-colors">
-                                {{ settings('navbar.sign_out_label', 'SIGN OUT') }}
+                                {{ ui_copy('navbar_sign_out_label', 'navbar.sign_out_label') }}
                                 <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
                             </button>
                         </form>
@@ -409,7 +423,7 @@
                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-0"
                 >
                     <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" aria-hidden="true" />
-                    <span class="font-sans text-[11px] font-bold tracking-[0.16em] uppercase">{{ settings('navbar.sign_in_label', 'SIGN IN') }}</span>
+                    <span class="font-sans text-[11px] font-bold tracking-[0.16em] uppercase">{{ ui_copy('navbar_sign_in_label', 'navbar.sign_in_label') }}</span>
                 </button>
                 @endauth
 
@@ -513,13 +527,13 @@
                 class="w-full bp-btn-primary"
             >
                 <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
-                {{ settings('navbar.sign_in_register_label', 'SIGN IN · REGISTER') }}
+                {{ ui_copy('navbar_sign_in_register_label', 'navbar.sign_in_register_label') }}
             </button>
             @endguest
             @auth
             <a href="{{ url('/'.$lang.'/account/dashboard') }}" class="w-full bp-btn-outline">
                 <x-heroicon-o-user-circle class="w-5 h-5" />
-                {{ settings('navbar.my_account_label', 'MY ACCOUNT') }}
+                {{ ui_copy('navbar_my_account_label', 'navbar.my_account_label') }}
             </a>
             @endauth
         </div>

@@ -11,4 +11,17 @@ return [
     'label_contact' => 'Kontaktai',
     'logo_subline' => 'Originalių dalių rodyklė',
     'dismiss_announcement' => 'Uždaryti pranešimą',
+
+    'cart_label' => 'Krepšelis',
+    'cart_title' => 'Doc · Krepšelis /',
+    'remove_label' => 'Pašalinti',
+    'subtotal_label' => 'Tarpinė suma',
+    'view_cart_label' => 'Peržiūrėti krepšelį',
+    'checkout_label' => 'Apmokėti',
+    'account_label' => 'Paskyra',
+    'account_title' => 'Doc · Paskyra',
+    'sign_out_label' => 'Atsijungti',
+    'sign_in_label' => 'Prisijungti',
+    'sign_in_register_label' => 'Prisijungti · Registruotis',
+    'my_account_label' => 'Mano paskyra',
 ];

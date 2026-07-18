@@ -58,7 +58,7 @@
         <tr>
             <td align="center" style="padding: 24px 0; border-top: 1px solid #D8CFB6;">
                 <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    {{ settings('email.contact_reply_cta', 'If you have further questions, simply reply to this email.') }}
+                    {{ trans('emails.contact_reply.cta', [], $locale) }}
                 </p>
                 <a href="{{ route('frontend.contact.show', ['lang' => $locale]) }}"
                    class="btn-primary"

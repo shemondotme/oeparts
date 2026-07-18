@@ -243,4 +243,6 @@ return [
     'console_need_vehicle' => 'Fahrzeugmarke & Modell',
     'console_need_vin' => 'FIN (optional, beschleunigt)',
     'console_need_quantity' => 'Benötigte Menge',
+
+    'start_button_label' => 'Suche starten',
 ];

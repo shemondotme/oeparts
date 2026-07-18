@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>{{ $subject ?? settings('email.default_subject', 'OeParts Notification') }}</title>
+    <title>{{ $subject ?? trans('emails.layout.default_subject', [], $locale ?? null) }}</title>
     <style type="text/css">
         /* =========================================
            INDUSTRIAL BLUEPRINT EMAIL RESET
@@ -109,7 +109,7 @@
 
     <!-- Preheader (Hidden) -->
     <div style="display:none;font-size:1px;color:#F7F3E7;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        {{ $preheader ?? settings('email.default_subject', 'OeParts Notification') }}
+        {{ $preheader ?? trans('emails.layout.default_subject', [], $locale ?? null) }}
     </div>
 
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
@@ -132,7 +132,7 @@
                                     <td>
                                         <!-- Eyebrow / Spec Label -->
                                         <p class="spec-label" style="margin: 0 0 12px 0;">
-                                            {{ settings('email.header_text', 'OEPARTS · NOTIFICATION') }}
+                                            {{ trans('emails.layout.header_text', [], $locale ?? null) }}
                                         </p>
 
                                         <!-- Logo / Brand Name (text-based wordmark — same split-weight lockup as the storefront navbar) -->
@@ -169,7 +169,7 @@
                                         </p>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #F7F3E7;">
                                             <strong>{{ settings('company.name', 'OeParts') }}</strong><br>
-                                            {{ settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.') }}
+                                            {{ ui_copy('footer_site_tagline', 'footer.site_tagline') }}
                                         </p>
                                     </td>
                                 </tr>

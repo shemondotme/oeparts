@@ -29,4 +29,14 @@ return [
     'social_linkedin' => 'Visita nuestra página de LinkedIn',
     'social_youtube' => 'Visita nuestro canal de YouTube',
     'social_tiktok' => 'Visita nuestra página de TikTok',
+
+    'security_badge_text' => 'Cifrado SSL',
+    'security_badge_subtext' => 'TLS 1.3',
+    'shipping_badge_text' => 'Envío en toda la UE',
+    'shipping_badge_subtext' => 'DHL · DPD · GLS',
+    'returns_badge_text' => 'Plazo de devolución',
+    'returns_badge_subtext' => '14 días',
+    'oem_badge_text' => 'OEM original',
+    'oem_badge_subtext' => 'Fuente verificada',
+    'site_tagline' => 'El centro de referencia para piezas de automóvil OEM originales en Europa.',
 ];

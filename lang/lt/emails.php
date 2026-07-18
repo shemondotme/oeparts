@@ -5,6 +5,8 @@ return [
         'tagline'      => 'Genuine OEM Parts · European Distributor',
         'footer_line1' => '© :year Oe Parts. Visos teisės saugomos.',
         'footer_line2' => 'Šį el. laišką gavote, nes turite paskyrą arba užsakymą pas mus.',
+        'default_subject' => 'OeParts pranešimas',
+        'header_text' => 'OEPARTS · PRANEŠIMAS',
     ],
     'otp' => [
         'subject' => 'Jūsų patvirtinimo kodas: :code',
@@ -12,6 +14,7 @@ return [
         'body'    => 'Jūsų vienkartinis patvirtinimo kodas:',
         'expiry'  => 'Šis kodas galioja :minutes minutes.',
         'ignore'  => 'Jei neprašėte šio kodo, ignoruokite šį el. laišką.',
+        'warning' => 'Šis kodas galioja trumpą laiką. Niekam jo neatskleiskite.',
     ],
     'order_confirmation' => [
         'subject'            => 'Užsakymas :order_number patvirtintas — :site',
@@ -38,6 +41,7 @@ return [
         'view_order'         => 'Peržiūrėti Užsakymą',
         'oversized_notice_heading' => 'Didelių gabaritų dalys — pristatymo pastaba',
         'oversized_notice_body' => 'Aukščiau nurodyta pristatymo kaina yra fiksuota kaina standartinio dydžio siuntoms. Jei šiame užsakyme yra didelių gabaritų ar sunki dalis, vežėjas gali pritaikyti papildomą krovinio mokestį, kuris bus pateiktas atskira sąskaita po išsiuntimo.',
+        'headline' => 'Dėkojame už jūsų užsakymą',
     ],
     'order_status' => [
         'subject'         => 'Užsakymo :order_number būsena: :status',
@@ -79,6 +83,13 @@ return [
         'body_secondary' => 'Reikia pagalbos ieškant detalės? Mūsų techninė komanda pasiruošusi padėti.',
         'cta'            => 'Naršyti Katalogą',
         'support_text'   => 'Jei turite klausimų, tiesiog atsakykite į šį el. laišką.',
+        'headline'       => 'Sveiki atvykę į OeParts',
+        'step1_title'    => 'Ieškokite pagal OEM numerį',
+        'step1_body'     => 'Įveskite bet kokį gamintojo dalies numerį ir raskite tikslius atitikmenis bei kryžmines nuorodas 27 ES šalyse.',
+        'step2_title'    => 'Patikrinkite tiekėją ir kainą',
+        'step2_body'     => 'Palyginkite patikrintų platintojų kainas. Visos dalys garantuotai originalios ir su pilna garantija.',
+        'step3_title'    => 'Sekite savo užsakymą',
+        'step3_body'     => 'Sekite siuntos būseną nuo išsiuntimo iki pristatymo savo paskyros suvestinėje.',
     ],
     'refund_status' => [
         'subject'         => 'Grąžinimo būsenos atnaujinimas užsakymui :order_number',
@@ -103,6 +114,7 @@ return [
         'payment_method'  => 'Mokėjimo Būdas',
         'processing_time' => 'Prašome leisti :days darbo dienas, kol grąžinimas pasirodys jūsų sąskaitoje.',
         'view_orders'     => 'Peržiūrėti Užsakymus',
+        'notification_note' => 'Kai lėšos bus įskaitytos, gausite atskirą pranešimą.',
     ],
     'abandoned_cart' => [
         'subject'  => 'Palikote dalių krepšelyje',
@@ -110,6 +122,8 @@ return [
         'greeting' => 'Gerb. :name,',
         'body'     => 'Palikote originalių OEM dalių savo krepšelyje. Atsargos nerezervuojamos, kol nebaigsite užsakymo.',
         'cta'      => 'Grįžti į Krepšelį',
+        'support_note' => 'Kyla klausimų dėl tikimo ar suderinamumo? Atsakykite į šį laišką – gausite techninę pagalbą.',
+        'urgency_note' => '⚠ Dėmesio: kainos ir prieinamumas gali keistis.',
     ],
     'newsletter_confirm' => [
         'subject' => 'Patvirtinkite savo naujienlaiškio prenumeratą',
@@ -121,6 +135,7 @@ return [
     'newsletter_confirmation' => [
         'greeting' => 'Jūs esate per vieną žingsnį nuo prisijungimo prie Oe Parts Journal.',
         'body'     => 'Siunčiame techninius atnaujinimus, naujų prekių pranešimus ir pramonės įžvalgas. Jokio šlamšto. Tik tikra dalių informacija.',
+        'expiry'   => 'Šios nuorodos galiojimas baigsis po 24 valandų.',
     ],
 
     'newsletter_campaign' => [
@@ -133,6 +148,7 @@ return [
         'greeting'         => 'Gerb. :name,',
         'intro'            => 'Atsakėme į jūsų užklausą.',
         'original_message' => 'Jūsų originali žinutė:',
+        'cta'              => 'Jei kiltų daugiau klausimų, tiesiog atsakykite į šį laišką.',
     ],
     'part_inquiry' => [
         'subject'   => 'Nauja dalių užklausa: :oem',

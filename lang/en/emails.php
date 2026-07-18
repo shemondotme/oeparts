@@ -12,6 +12,10 @@ return [
         'tagline'     => 'Genuine OEM Parts · European Distributor',
         'footer_line1' => '© :year Oe Parts. All rights reserved.',
         'footer_line2' => 'You received this email because you have an account or placed an order with us.',
+        // Fallback subject/header for any mail that doesn't set its own —
+        // previously hardcoded English via settings() instead of trans().
+        'default_subject' => 'OeParts Notification',
+        'header_text' => 'OEPARTS · NOTIFICATION',
     ],
 
     // ─── OTP (One-Time Password) ─────────────────────────────────────────
@@ -21,6 +25,7 @@ return [
         'body'    => 'Your one-time verification code is:',
         'expiry'  => 'This code will expire in :minutes minutes.',
         'ignore'  => 'If you did not request this code, please ignore this email.',
+        'warning' => 'This code is valid for a short period. Do not share it with anyone.',
     ],
 
     // ─── Order Confirmation ──────────────────────────────────────────────
@@ -49,6 +54,10 @@ return [
         'view_order'        => 'View Order',
         'oversized_notice_heading' => 'Oversized Parts — Shipping Notice',
         'oversized_notice_body' => 'The shipping cost above is a fixed rate for standard-size parcels. If this order includes an oversized or heavy part, the carrier may apply an additional freight surcharge, invoiced to you separately after dispatch.',
+        // In-body H2 headline — distinct from 'subject' above (the actual
+        // email subject line metadata). Previously hardcoded English via
+        // settings() instead of trans().
+        'headline' => 'Thank you for your order',
     ],
 
     // ─── Order Status Update ─────────────────────────────────────────────
@@ -100,6 +109,15 @@ return [
         'body_secondary'=> 'Need help finding a part? Our technical team is ready to assist.',
         'cta'           => 'Browse Catalog',
         'support_text'  => 'If you have any questions, simply reply to this email.',
+        // In-body H2 headline — distinct from 'subject' above. Previously
+        // hardcoded English via settings() instead of trans().
+        'headline'      => 'Welcome to OeParts',
+        'step1_title'   => 'Search by OEM Number',
+        'step1_body'    => 'Enter any manufacturer part number to find exact matches and cross-references across 27 EU countries.',
+        'step2_title'   => 'Verify Supplier & Price',
+        'step2_body'    => 'Compare prices from verified distributors. All parts are guaranteed genuine with full warranty support.',
+        'step3_title'   => 'Track Your Order',
+        'step3_body'    => 'Monitor shipment status from dispatch to delivery via your account dashboard.',
     ],
 
     // ─── Refund Status Update ────────────────────────────────────────────
@@ -130,6 +148,7 @@ return [
         'payment_method'  => 'Payment Method',
         'processing_time' => 'Please allow :days business days for the refund to appear on your statement.',
         'view_orders'     => 'View Orders',
+        'notification_note' => 'You will receive a separate notification once the funds have cleared.',
     ],
 
     // ─── Abandoned Cart ──────────────────────────────────────────────────
@@ -139,6 +158,8 @@ return [
         'greeting' => 'Dear :name,',
         'body'     => 'You left some genuine OEM parts in your cart. Inventory is not reserved until checkout is complete.',
         'cta'      => 'Return to Cart',
+        'support_note' => 'Questions about fitment or compatibility? Reply to this email for technical support.',
+        'urgency_note' => '⚠ Attention: Prices and availability are subject to change.',
     ],
 
     // ─── Newsletter Confirmation ─────────────────────────────────────────
@@ -154,6 +175,7 @@ return [
     'newsletter_confirmation' => [
         'greeting' => 'You are one step away from joining the Oe Parts Journal.',
         'body'     => 'We send technical updates, new arrival alerts, and industry insights. No spam, no fluff. Just genuine parts intelligence.',
+        'expiry'   => 'This link will expire in 24 hours.',
     ],
 
     // ─── Newsletter Campaign — compliance footer (appended server-side) ──
@@ -168,6 +190,7 @@ return [
         'greeting'         => 'Dear :name,',
         'intro'            => 'We have replied to your inquiry.',
         'original_message' => 'Your original message:',
+        'cta'              => 'If you have further questions, simply reply to this email.',
     ],
 
     // ─── Part Inquiry ───────────────────────────────────────────────────

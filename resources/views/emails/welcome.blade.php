@@ -15,7 +15,7 @@
                     ACCOUNT · ACTIVATED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
-                    {{ settings('email.welcome_subject', 'Welcome to OeParts') }}<span class="text-amber">.</span>
+                    {{ trans('emails.welcome.headline', [], $locale) }}<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.welcome.greeting', ['name' => $user->name], $locale) }}
@@ -52,9 +52,9 @@
                                         <span class="font-mono" style="font-size: 14px; font-weight: bold; color: #0A1228;">01</span>
                                     </td>
                                     <td valign="top">
-                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ settings('email.welcome_step1_title', 'Search by OEM Number') }}</strong>
+                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ trans('emails.welcome.step1_title', [], $locale) }}</strong>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                                            {{ settings('email.welcome_step1_body', 'Enter any manufacturer part number to find exact matches and cross-references across 27 EU countries.') }}
+                                            {{ trans('emails.welcome.step1_body', [], $locale) }}
                                         </p>
                                     </td>
                                 </tr>
@@ -70,9 +70,9 @@
                                         <span class="font-mono" style="font-size: 14px; font-weight: bold; color: #0A1228;">02</span>
                                     </td>
                                     <td valign="top">
-                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ settings('email.welcome_step2_title', 'Verify Supplier & Price') }}</strong>
+                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ trans('emails.welcome.step2_title', [], $locale) }}</strong>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                                            {{ settings('email.welcome_step2_body', 'Compare prices from verified distributors. All parts are guaranteed genuine with full warranty support.') }}
+                                            {{ trans('emails.welcome.step2_body', [], $locale) }}
                                         </p>
                                     </td>
                                 </tr>
@@ -88,9 +88,9 @@
                                         <span class="font-mono" style="font-size: 14px; font-weight: bold; color: #0A1228;">03</span>
                                     </td>
                                     <td valign="top">
-                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ settings('email.welcome_step3_title', 'Track Your Order') }}</strong>
+                                        <strong style="display: block; margin-bottom: 4px; color: #0A1228; font-size: 15px;">{{ trans('emails.welcome.step3_title', [], $locale) }}</strong>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                                            {{ settings('email.welcome_step3_body', 'Monitor shipment status from dispatch to delivery via your account dashboard.') }}
+                                            {{ trans('emails.welcome.step3_body', [], $locale) }}
                                         </p>
                                     </td>
                                 </tr>

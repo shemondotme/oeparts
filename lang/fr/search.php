@@ -243,4 +243,6 @@ return [
     'console_need_vehicle' => 'Marque et modèle du véhicule',
     'console_need_vin' => 'VIN (optionnel, accélère le traitement)',
     'console_need_quantity' => 'Quantité nécessaire',
+
+    'start_button_label' => 'Lancer la recherche',
 ];
