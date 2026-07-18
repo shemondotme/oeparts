@@ -5,6 +5,8 @@ return [
         'tagline'      => 'Genuine OEM Parts · European Distributor',
         'footer_line1' => '© :year Oe Parts. Todos los derechos reservados.',
         'footer_line2' => 'Recibió este correo porque tiene una cuenta o realizó un pedido con nosotros.',
+        'default_subject' => 'Notificación de OeParts',
+        'header_text' => 'OEPARTS · NOTIFICACIÓN',
     ],
     'otp' => [
         'subject' => 'Su código de verificación: :code',
@@ -12,6 +14,7 @@ return [
         'body'    => 'Su código de verificación único es:',
         'expiry'  => 'Este código caducará en :minutes minutos.',
         'ignore'  => 'Si no solicitó este código, ignore este correo.',
+        'warning' => 'Este código solo es válido durante un breve período. No lo comparta con nadie.',
     ],
     'order_confirmation' => [
         'subject'            => 'Pedido :order_number confirmado — :site',
@@ -38,6 +41,7 @@ return [
         'view_order'         => 'Ver Pedido',
         'oversized_notice_heading' => 'Piezas de gran tamaño — aviso de envío',
         'oversized_notice_body' => 'El coste de envío anterior es una tarifa fija para paquetes de tamaño estándar. Si este pedido incluye una pieza de gran tamaño o pesada, el transportista puede aplicar un recargo de flete adicional, que se le facturará por separado tras el envío.',
+        'headline' => 'Gracias por su pedido',
     ],
     'order_status' => [
         'subject'         => 'El pedido :order_number ahora está :status',
@@ -79,6 +83,13 @@ return [
         'body_secondary' => '¿Necesita ayuda para encontrar una pieza? Nuestro equipo técnico está listo para ayudarle.',
         'cta'            => 'Explorar Catálogo',
         'support_text'   => 'Si tiene alguna pregunta, simplemente responda a este correo.',
+        'headline'       => 'Bienvenido a OeParts',
+        'step1_title'    => 'Busque por número OEM',
+        'step1_body'     => 'Introduzca cualquier número de pieza del fabricante para encontrar coincidencias exactas y referencias cruzadas en 27 países de la UE.',
+        'step2_title'    => 'Verifique proveedor y precio',
+        'step2_body'     => 'Compare precios de distribuidores verificados. Todas las piezas son originales garantizadas y cuentan con garantía completa.',
+        'step3_title'    => 'Siga su pedido',
+        'step3_body'     => 'Supervise el estado del envío, desde la salida hasta la entrega, en el panel de su cuenta.',
     ],
     'refund_status' => [
         'subject'         => 'Actualización de reembolso para el pedido :order_number',
@@ -102,6 +113,7 @@ return [
         'refund_amount'   => 'Monto del Reembolso',
         'payment_method'  => 'Método de Pago',
         'processing_time' => 'Por favor, permita :days días hábiles para que el reembolso aparezca en su estado de cuenta.',
+        'notification_note' => 'Recibirá una notificación aparte en cuanto se acredite el importe.',
         'view_orders'     => 'Ver Pedidos',
     ],
     'abandoned_cart' => [
@@ -110,6 +122,8 @@ return [
         'greeting' => 'Estimado/a :name,',
         'body'     => 'Dejó algunas piezas OEM originales en su carrito. El inventario no se reserva hasta que finalice el pago.',
         'cta'      => 'Volver al Carrito',
+        'support_note' => '¿Dudas sobre el ajuste o la compatibilidad? Responda a este correo para recibir soporte técnico.',
+        'urgency_note' => '⚠ Atención: los precios y la disponibilidad están sujetos a cambios.',
     ],
     'newsletter_confirm' => [
         'subject' => 'Confirme su suscripción al boletín',
@@ -121,6 +135,7 @@ return [
     'newsletter_confirmation' => [
         'greeting' => 'Está a un paso de unirse al Journal de Oe Parts.',
         'body'     => 'Enviamos actualizaciones técnicas, alertas de nuevas llegadas e información de la industria. Sin spam. Solo inteligencia de piezas genuinas.',
+        'expiry'   => 'Este enlace caducará en 24 horas.',
     ],
 
     'newsletter_campaign' => [
@@ -133,6 +148,7 @@ return [
         'greeting'         => 'Estimado/a :name,',
         'intro'            => 'Hemos respondido a su consulta.',
         'original_message' => 'Su mensaje original:',
+        'cta'              => 'Si tiene más preguntas, simplemente responda a este correo.',
     ],
     'part_inquiry' => [
         'subject'   => 'Nueva consulta de pieza: :oem',

@@ -122,4 +122,7 @@ return [
     'price_change_toast_plural'   => ':count artículos han cambiado de precio: :oems',
     'condition_new_fallback'  => 'Nuevo',
     'price_change_toast_title' => '§ PRECIO · ACTUALIZADO',
+
+    'empty_message' => 'Cesta vacía',
+    'empty_description' => 'Busque un número OEM para empezar.',
 ];

@@ -21,7 +21,7 @@
                     {{ trans('emails.otp.body', [], $locale) }}
                 </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    {{ settings('email.otp_warning', 'This code is valid for a short period. Do not share it with anyone.') }}
+                    {{ trans('emails.otp.warning', [], $locale) }}
                 </p>
             </td>
         </tr>

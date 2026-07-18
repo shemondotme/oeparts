@@ -122,4 +122,7 @@ return [
     'price_change_toast_plural'   => 'Pasikeitė :count prekių kaina: :oems',
     'condition_new_fallback'  => 'Nauja',
     'price_change_toast_title' => '§ KAINA · ATNAUJINTA',
+
+    'empty_message' => 'Krepšelis tuščias',
+    'empty_description' => 'Pradėkite ieškodami OEM numerio.',
 ];

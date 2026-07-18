@@ -50,7 +50,7 @@
         <tr>
             <td style="padding-top: 24px;">
                 <p style="margin: 0 0 8px 0; font-size: 13px; line-height: 18px; color: #4E5A74; text-align: center;">
-                    {{ settings('email.newsletter_expiry', 'This link will expire in 24 hours.') }}
+                    {{ trans('emails.newsletter_confirmation.expiry', [], $locale) }}
                 </p>
                 <p style="margin: 0; font-size: 13px; line-height: 18px; color: #4E5A74; text-align: center;">
                     If you did not request this subscription, you can safely ignore this email.

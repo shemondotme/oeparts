@@ -15,7 +15,7 @@
                     ORDER · CONFIRMED
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
-                    {{ settings('email.order_confirmation_subject', 'Thank you for your order') }}<span class="text-amber">.</span>
+                    {{ trans('emails.order_confirmation.headline', [], $locale) }}<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.order_confirmation.greeting', ['name' => $order->shipping_name], $locale) }}

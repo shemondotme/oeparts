@@ -56,4 +56,7 @@ return [
     'need_part_body'     => 'Search by OEM number and we will cross-reference the catalogue instantly.',
     'open_search_btn'    => 'Open search',
     'nearby_label'       => 'nearby',
+    // Icon-only search submit button — no visible text, so it needs an
+    // aria-label to have a discernible name (confirmed via axe-core).
+    'search_submit_aria' => 'Search',
 ];

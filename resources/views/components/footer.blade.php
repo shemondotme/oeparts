@@ -1,7 +1,7 @@
 @php
     $lang     = app()->getLocale();
     $siteName = settings('general.site_name', 'OeParts');
-    $tagline  = settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.');
+    $tagline  = ui_copy('footer_site_tagline', 'footer.site_tagline');
     $phone    = settings('general.site_phone', '');
     $email    = settings('general.site_email', '');
     $hours    = settings_trans('contact.hours', 'MON–FRI · 09:00–18:00 CET');
@@ -321,8 +321,8 @@
                     <x-heroicon-s-lock-closed class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.security_badge_text', 'SSL Encrypted') }}</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.security_badge_subtext', 'TLS 1.3') }}</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ ui_copy('footer_security_badge_text', 'footer.security_badge_text') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ ui_copy('footer_security_badge_subtext', 'footer.security_badge_subtext') }}</p>
                 </div>
             </div>
             <div class="flex items-start gap-3 p-5">
@@ -330,8 +330,8 @@
                     <x-heroicon-o-truck class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.shipping_badge_text', 'EU-Wide Despatch') }}</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.shipping_badge_subtext', 'DHL · DPD · GLS') }}</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ ui_copy('footer_shipping_badge_text', 'footer.shipping_badge_text') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ ui_copy('footer_shipping_badge_subtext', 'footer.shipping_badge_subtext') }}</p>
                 </div>
             </div>
             <div class="flex items-start gap-3 p-5">
@@ -339,8 +339,8 @@
                     <x-heroicon-o-arrow-path class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.returns_badge_text', 'Return Window') }}</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.returns_badge_subtext', '14 Days') }}</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ ui_copy('footer_returns_badge_text', 'footer.returns_badge_text') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ ui_copy('footer_returns_badge_subtext', 'footer.returns_badge_subtext') }}</p>
                 </div>
             </div>
             <div class="flex items-start gap-3 p-5">
@@ -348,8 +348,8 @@
                     <x-heroicon-s-shield-check class="w-4 h-4 text-amber" aria-hidden="true" />
                 </div>
                 <div class="min-w-0">
-                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ settings('footer.oem_badge_text', 'Genuine OEM') }}</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ settings('footer.oem_badge_subtext', 'Verified Source') }}</p>
+                    <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ ui_copy('footer_oem_badge_text', 'footer.oem_badge_text') }}</p>
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ ui_copy('footer_oem_badge_subtext', 'footer.oem_badge_subtext') }}</p>
                 </div>
             </div>
         </div>

@@ -143,7 +143,7 @@
                     {{ trans('emails.refund_processed.processing_time', ['days' => '5–10'], $locale) }}
                 </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    {{ settings('email.refund_notification', 'You will receive a separate notification once the funds have cleared.') }}
+                    {{ trans('emails.refund_processed.notification_note', [], $locale) }}
                 </p>
             </td>
         </tr>

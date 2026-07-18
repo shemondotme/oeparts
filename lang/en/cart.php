@@ -122,4 +122,9 @@ return [
     'price_change_toast_plural'   => ':count items have changed in price: :oems',
     'condition_new_fallback'  => 'New',
     'price_change_toast_title' => '§ PRICE · UPDATED',
+
+    // Mini-cart dropdown empty state (navbar.blade.php) — previously hardcoded
+    // English via settings() instead of ui_copy().
+    'empty_message' => 'Empty basket',
+    'empty_description' => 'Search an OEM number to begin.',
 ];

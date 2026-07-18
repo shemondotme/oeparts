@@ -246,4 +246,8 @@ return [
     'console_need_vehicle' => 'Vehicle make & model',
     'console_need_vin' => 'VIN (optional, speeds things up)',
     'console_need_quantity' => 'Quantity needed',
+
+    // Empty mini-cart CTA (navbar.blade.php) — previously hardcoded English
+    // via settings() instead of ui_copy().
+    'start_button_label' => 'Start search',
 ];

@@ -29,4 +29,14 @@ return [
     'social_linkedin' => 'Apsilankykite mūsų LinkedIn puslapyje',
     'social_youtube' => 'Apsilankykite mūsų YouTube kanale',
     'social_tiktok' => 'Apsilankykite mūsų TikTok puslapyje',
+
+    'security_badge_text' => 'SSL šifravimas',
+    'security_badge_subtext' => 'TLS 1.3',
+    'shipping_badge_text' => 'Siuntimas visoje ES',
+    'shipping_badge_subtext' => 'DHL · DPD · GLS',
+    'returns_badge_text' => 'Grąžinimo laikotarpis',
+    'returns_badge_subtext' => '14 dienų',
+    'oem_badge_text' => 'Originalios OEM dalys',
+    'oem_badge_subtext' => 'Patikrintas šaltinis',
+    'site_tagline' => 'Pagrindinis originalių OEM automobilių dalių centras Europoje.',
 ];

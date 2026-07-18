@@ -25,7 +25,7 @@
             <td style="padding: 16px 0;">
                 <div style="background-color: #F59E0B; padding: 12px 16px; border-left: 4px solid #0A1228;">
                     <p style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; color: #0A1228;">
-                        {{ settings('email.abandoned_cart_urgency', '⚠ Attention: Prices and availability are subject to change.') }}
+                        {{ trans('emails.abandoned_cart.urgency_note', [], $locale) }}
                     </p>
                 </div>
             </td>
@@ -120,7 +120,7 @@
         <tr>
             <td style="padding-top: 24px;">
                 <p style="margin: 0; font-size: 13px; line-height: 18px; color: #4E5A74; text-align: center;">
-                    {{ settings('email.abandoned_cart_support_note', 'Questions about fitment or compatibility? Reply to this email for technical support.') }}
+                    {{ trans('emails.abandoned_cart.support_note', [], $locale) }}
                 </p>
             </td>
         </tr>

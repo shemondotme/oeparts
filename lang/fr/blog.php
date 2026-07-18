@@ -56,4 +56,5 @@ return [
     'need_part_body'     => 'Recherchez par numéro OEM et nous ferons immédiatement la correspondance avec le catalogue.',
     'open_search_btn'    => 'Ouvrir la recherche',
     'nearby_label'       => 'similaires',
+    'search_submit_aria' => 'Rechercher',
 ];

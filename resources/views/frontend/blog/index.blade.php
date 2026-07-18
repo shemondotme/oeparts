@@ -135,6 +135,7 @@
                                           font-mono text-sm text-ink
                                           focus:outline-none focus:bg-paper focus:border-amber" />
                             <button type="submit"
+                                    aria-label="{{ trans('blog.search_submit_aria') }}"
                                     class="inline-flex items-center justify-center px-4 py-2.5
                                            bg-ink text-ivory border border-ink border-l-0
                                            hover:bg-amber hover:text-ink hover:border-amber
