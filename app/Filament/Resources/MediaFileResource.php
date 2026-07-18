@@ -269,7 +269,11 @@ class MediaFileResource extends Resource
                     'uploaded_by' => auth('admin')->id(),
                     'file_name'   => $data['original_name'] ?? basename($path),
                     'file_path'   => $path,
-                    'file_url'    => \Illuminate\Support\Facades\Storage::url($path),
+                    // $disk (public), not the bare Storage::url() facade call —
+                    // that resolves against config('filesystems.default'), which
+                    // is 'local' here (a private disk with no url mapping), not
+                    // the public disk this file actually lives on.
+                    'file_url'    => $disk->url($path),
                     'mime_type'   => $disk->mimeType($path) ?: 'application/octet-stream',
                     'size'        => $disk->size($path) ?: null,
                     'alt_text'    => $data['alt_text'] ?? null,
