@@ -52,7 +52,7 @@
                                             } elseif (str_contains($status, 'shipped') || str_contains($status, 'dispatched')) {
                                                 $chipBg = '#FEF3C7'; $chipText = '#D97706'; // Amber
                                             } elseif (str_contains($status, 'delivered') || str_contains($status, 'completed')) {
-                                                $chipBg = '#DCFCE7'; $chipText = '#16A34A'; // Green
+                                                $chipBg = '#DCFCE7'; $chipText = '#166534'; // Green
                                             } elseif (str_contains($status, 'cancelled') || str_contains($status, 'failed')) {
                                                 $chipBg = '#FEE2E2'; $chipText = '#DC2626'; // Red
                                             }

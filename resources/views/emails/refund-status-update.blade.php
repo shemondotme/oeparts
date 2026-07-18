@@ -46,7 +46,7 @@
                                             if (str_contains($status, 'processing')) {
                                                 $chipBg = '#DBEAFE'; $chipText = '#1D4ED8'; // Blue
                                             } elseif (str_contains($status, 'completed') || str_contains($status, 'refunded')) {
-                                                $chipBg = '#DCFCE7'; $chipText = '#16A34A'; // Green
+                                                $chipBg = '#DCFCE7'; $chipText = '#166534'; // Green
                                             } elseif (str_contains($status, 'failed') || str_contains($status, 'rejected')) {
                                                 $chipBg = '#FEE2E2'; $chipText = '#DC2626'; // Red
                                             }

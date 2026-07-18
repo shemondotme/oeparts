@@ -49,7 +49,13 @@
                 <span class="relative z-0 inline-flex rtl:flex-row-reverse rounded-xl shadow-sm">
                     {{-- Previous Page Link --}}
                     @if ($paginator->onFirstPage())
-                        <span aria-disabled="true" aria-label="{{ __('pagination.previous') }}">
+                        {{-- role="link": a plain <span> has role=generic, which doesn't
+                             support naming — aria-label on it is an ARIA-prohibited-
+                             attribute violation (confirmed via axe-core). role="link"
+                             makes the name valid while the element stays non-focusable
+                             (there's no href), matching Laravel's own disabled-link
+                             pattern for the enabled <a> case below it. --}}
+                        <span role="link" aria-disabled="true" aria-label="{{ __('pagination.previous') }}">
                             <span class="relative inline-flex items-center px-3 py-2.5 text-admin-sm font-medium text-slate-400 bg-white border border-slate-200/80 cursor-default rounded-l-xl leading-none" aria-hidden="true">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
                             </span>
@@ -91,7 +97,7 @@
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
                         </a>
                     @else
-                        <span aria-disabled="true" aria-label="{{ __('pagination.next') }}">
+                        <span role="link" aria-disabled="true" aria-label="{{ __('pagination.next') }}">
                             <span class="relative inline-flex items-center px-3 py-2.5 -ml-px text-admin-sm font-medium text-slate-400 bg-white border border-slate-200/80 cursor-default rounded-r-xl leading-none" aria-hidden="true">
                                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
                             </span>

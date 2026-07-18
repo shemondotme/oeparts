@@ -222,14 +222,46 @@
         @apply flex items-baseline w-full gap-1;
     }
 
-    /* dotted spacer that fills the gap between label and value */
-    .bp-leader-dots {
+    /* Dotted spacer, rendered as ::after on <dt> (see below) rather than a
+       standalone element sandwiched between <dt> and <dd> — a <span> there
+       fails the HTML5 <dl> content model (a <div> child of <dl> may only
+       contain dt's-then-dd's, optionally intermixed with script-supporting
+       elements), which axe-core / WCAG 2 flags as a `definition-list`
+       violation. Confirmed via automated axe scan across every page using
+       this component (hero, manufacturer/car-model spec ledgers, search
+       console, navbar, zero-results). Moving the dots into dt's own ::after
+       keeps <dt> immediately followed by <dd> — a valid pair — while
+       reproducing the identical "label ···· value" visual via a flex
+       layout inside <dt> itself (text content becomes an anonymous flex
+       item alongside the pseudo-element). No blade template needs its own
+       class for this — just remove the old <span class="bp-leader-dots">
+       from between dt/dd; this selector picks up every dt inside
+       .bp-leader automatically. */
+    .bp-leader dt {
+        @apply flex items-baseline flex-1 min-w-0 gap-1;
+    }
+
+    .bp-leader dt::after {
+        content: "";
         @apply flex-1 min-w-0 self-end;
         height: 1px;
         margin-bottom: 4px;
         background: radial-gradient(circle, rgba(10,18,40,0.25) 1px, transparent 1.5px);
         background-size: 6px 1px;
         background-repeat: repeat-x;
+    }
+
+    /* Same ::after-on-dt technique as .bp-leader above, for rows styled with
+       a dotted underline instead of a dot-fill background (e.g. the search
+       results query-detail panel) — same WCAG dl content-model reason. */
+    .bp-leader-underline dt {
+        @apply flex items-baseline flex-1 min-w-0 gap-3;
+    }
+
+    .bp-leader-underline dt::after {
+        content: "";
+        @apply flex-1 min-w-0 border-b border-dotted border-rule-strong;
+        transform: translateY(-4px);
     }
 
     .bp-amber-rule {

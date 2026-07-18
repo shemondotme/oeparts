@@ -98,28 +98,24 @@
                         <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('search.console_status_heading') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ now()->format('Y.m.d · H:i') }}</span>
                     </div>
-                    <div class="p-5 space-y-3">
+                    <dl class="p-5 space-y-3">
                         <div class="bp-leader pt-0.5">
                             <dt class="text-sm text-ink-muted">{{ __('search.console_status_brands') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink">{{ $brandCount }}+</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('search.console_status_skus') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink">{{ number_format($productCount) }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('search.console_status_coverage') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-amber-ink uppercase tracking-wide">{{ __('search.console_status_coverage_value', ['count' => (int) settings('stats_counter.countries_count', 27)]) }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('search.console_status_response') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink">≤ {{ $inquiryHours }}h</dd>
                         </div>
-                    </div>
+                    </dl>
                 </div>
             </aside>
         </div>

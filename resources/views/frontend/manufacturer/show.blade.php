@@ -310,7 +310,7 @@
                                     @php
                                         $cCond = $product->condition;
                                         $condBg = $cCond?->bg_color ?? '#DCFCE7';
-                                        $condText = $cCond?->text_color ?? '#16A34A';
+                                        $condText = $cCond?->text_color ?? '#166534';
                                         $condLabel = condition_label($cCond);
                                     @endphp
                                     <span class="inline-flex items-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm"

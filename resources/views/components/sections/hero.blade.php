@@ -87,29 +87,24 @@
                     <dl class="space-y-3 text-sm">
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ $heroR1l }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">{{ $catCount }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ $heroR2l }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">{{ $heroR2v }}</dd>
                         </div>
                         @if($showCrossRefs)
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ $heroR3l }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">{{ $heroR3v }}</dd>
                         </div>
                         @endif
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ $heroR4l }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink">{{ $heroR4v }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-ink-muted">{{ $heroR5l }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink">{{ $heroR5v }}</dd>
                         </div>
                     </dl>

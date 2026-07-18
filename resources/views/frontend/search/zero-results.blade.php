@@ -116,19 +116,21 @@
                                 {{ $normalized_query }}
                             </p>
                         </div>
+                        {{-- Own <dl>, not merged into the wrapping div above: a <dl>'s
+                             content model only allows dt/dd (grouped in divs), and the
+                             query-display block above uses <p> tags, not dt/dd — mixing
+                             them under one <dl> would itself be a WCAG/axe violation. --}}
+                        <dl class="space-y-3">
                         <div class="bp-leader pt-2">
                             <dt class="text-sm text-ink-muted">{{ ui_copy('search_normalized_label', 'search.normalized_label') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink">✓</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ ui_copy('search_catalogue_label', 'search.catalogue_label') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-red-700">{{ ui_copy('search_zero_hits', 'search.zero_hits') }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ ui_copy('search_console_status_crossrefs', 'search.console_status_crossrefs') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             {{-- "0 hits" only when the cross-reference step actually ran
                                  (search.cross_ref_enabled) — otherwise it was never
                                  checked at all, and "0 hits" would misrepresent that
@@ -141,9 +143,9 @@
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ ui_copy('search_status_label', 'search.status_label') }}</dt>
-                            <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-amber-ink uppercase tracking-wide">{{ ui_copy('search_concierge_label', 'search.concierge_label') }}</dd>
                         </div>
+                        </dl>
                     </div>
                 </div>
             </aside>
@@ -212,29 +214,34 @@
                 <aside class="col-span-12 md:col-span-5 p-6 sm:p-10 bg-ivory border-t md:border-t-0 border-rule">
                     <p class="bp-spec text-ink mb-5">{{ ui_copy('search_trust_record_label', 'search.trust_record_label') }}</p>
 
-                    <dl class="space-y-4">
-                        <div class="flex items-start gap-3">
+                    {{-- <ul>, not <dl>: each item mixes an icon with the text (a <dl>'s
+                         content model only allows dt/dd inside its direct-child divs,
+                         not an icon alongside a nested wrapper div — confirmed via
+                         axe-core). This is a feature/trust list, not term/definition
+                         pairs, so <ul>/<li> is the semantically correct choice too. --}}
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
                             <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
                             <div>
-                                <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_suppliers') }}</dt>
-                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_background_checked', 'search.trust_sub_background_checked') }}</dd>
+                                <p class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_suppliers') }}</p>
+                                <p class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_background_checked', 'search.trust_sub_background_checked') }}</p>
                             </div>
-                        </div>
-                        <div class="flex items-start gap-3">
+                        </li>
+                        <li class="flex items-start gap-3">
                             <x-heroicon-s-building-storefront class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
                             <div>
-                                <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_warehouse') }}</dt>
-                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_eu_despatch', 'search.trust_sub_eu_despatch', ['despatch' => settings_trans('ui.hero_spec_r4_value', '24h')]) }}</dd>
+                                <p class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_warehouse') }}</p>
+                                <p class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_eu_despatch', 'search.trust_sub_eu_despatch', ['despatch' => settings_trans('ui.hero_spec_r4_value', '24h')]) }}</p>
                             </div>
-                        </div>
-                        <div class="flex items-start gap-3">
+                        </li>
+                        <li class="flex items-start gap-3">
                             <x-heroicon-s-trophy class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
                             <div>
-                                <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_quality') }}</dt>
-                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_genuine_warranty', 'search.trust_sub_genuine_warranty') }}</dd>
+                                <p class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_quality') }}</p>
+                                <p class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_genuine_warranty', 'search.trust_sub_genuine_warranty') }}</p>
                             </div>
-                        </div>
-                    </dl>
+                        </li>
+                    </ul>
 
                     <div class="mt-8 pt-6 border-t border-rule">
                         <p class="bp-spec text-ink-muted mb-3">{{ ui_copy('search_typical_sla_label', 'search.typical_sla_label') }}</p>

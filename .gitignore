@@ -61,6 +61,21 @@ build/
 !public/build/
 !public/build/**
 
+# Generated sitemap output (App\Services\SitemapService via `sitemap:generate`,
+# scheduled daily — see routes/console.php). Never commit these: a static
+# public/sitemap.xml on disk silently shadows the dynamic route entirely
+# (docker/serve-router.php serves any file that exists on disk before Laravel
+# routing ever runs — same root cause as robots.txt below). This is exactly
+# what happened here — an initial-scaffold sitemap.xml pointing at a
+# now-dead domain (oemhub.test) sat committed and untouched for 40+ days,
+# because nothing regenerated it in this environment. robots.txt is
+# similarly meant to be served ONLY by App\Http\Controllers\RobotsController
+# (environment-aware Disallow rules + Sitemap: directive) — never add a
+# static public/robots.txt back.
+/public/sitemap.xml
+/public/sitemaps/
+/public/robots.txt
+
 # Logs
 *.log
 npm-debug.log*
