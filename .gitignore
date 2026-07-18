@@ -25,11 +25,14 @@
 # the actual Backup Engine writes to storage/app/, not here).
 /storage/dashboard-backups/
 
-# Environment — only .env.example and .env.testing are committed
+# Environment — only .env.example, .env.testing, and the committed Docker env
+# templates are tracked (the real .env stays local/untracked).
 .env
 .env.*
 !.env.example
 !.env.testing
+!.env.docker.example
+!.env.docker.hostingsim
 
 # PHPUnit / Pest
 .phpunit.result.cache

@@ -151,9 +151,12 @@ return [
             '.git', '.github', '.gitignore', '.gitattributes',
             'tests', 'node_modules', 'build', 'dist',
             '.env', '.env.testing', '.env.backup',
+            '.env.docker.example', '.env.docker.hostingsim',
             '.editorconfig', '.vscode', '.idea', '.cursor',
             'phpunit.xml', 'pint.json', '.php-cs-fixer.php', '.php-cs-fixer.dist.php', '.styleci.yml',
             'storage/app/backups', 'storage/app/updates', 'storage/logs',
+            // Local Docker dev environment (Sail) — never relevant to an installed release.
+            'compose.yaml', 'docker',
             // Internal dev docs (CHANGELOG.md + README.md still ship).
             'UPDATE_SYSTEM_MASTER_WORKFLOW.md', 'ADMIN_PANEL_MASTER_WORKFLOW.md',
             'PRD.md', 'ARCHITECTURE.md', 'CLAUDE.md',
