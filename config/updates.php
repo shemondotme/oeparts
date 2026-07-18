@@ -152,7 +152,7 @@ return [
             'tests', 'node_modules', 'build', 'dist',
             '.env', '.env.testing', '.env.backup',
             '.env.docker.example', '.env.docker.hostingsim',
-            '.editorconfig', '.vscode', '.idea', '.cursor',
+            '.editorconfig', '.vscode', '.devcontainer', '.idea', '.cursor',
             'phpunit.xml', 'pint.json', '.php-cs-fixer.php', '.php-cs-fixer.dist.php', '.styleci.yml',
             'storage/app/backups', 'storage/app/updates', 'storage/logs',
             // Local Docker dev environment (Sail) — never relevant to an installed release.

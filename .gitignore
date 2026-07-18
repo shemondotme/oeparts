@@ -16,6 +16,11 @@
 /testing
 /testing-journal
 
+# Google Drive Desktop's own sync staging folders (this project folder is
+# synced to Google Drive on this machine) — transient, never project content.
+/.tmp.drivedownload
+/.tmp.driveupload
+
 # Playwright
 /test-results
 /playwright-report
@@ -95,7 +100,13 @@ public/phpinfo.php
 /.fleet
 /.idea
 /.nova
-/.vscode
+# .vscode is ignored by default (personal IDE state), except the shared
+# workspace config this project checks in on purpose (extensions, Xdebug
+# launch config, formatter settings) — see docs/DOCKER_DEV_ENVIRONMENT.md.
+/.vscode/*
+!/.vscode/extensions.json
+!/.vscode/settings.json
+!/.vscode/launch.json
 /.zed
 .cursor/
 *.swp

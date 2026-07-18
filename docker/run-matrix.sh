@@ -11,6 +11,13 @@
 # Exits non-zero on the first version that fails.
 set -euo pipefail
 
+# phpunit.xml forces DB_DATABASE=testing (a real SQLite file, not :memory: —
+# .env.testing uses :memory: instead, but phpunit.xml's <env> wins during
+# `php artisan test`). Nothing creates this file automatically, so a fresh
+# clone/container throws SQLiteDatabaseDoesNotExistException on first run.
+# Guard it here so every matrix run is self-contained.
+[ -f testing ] || touch testing
+
 VERSIONS=(83 84 85)
 
 for v in "${VERSIONS[@]}"; do
