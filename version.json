@@ -20,9 +20,9 @@
   "sha256": null,
   "size_bytes": null,
   "signature": null,
-  "download_url": "https://github.com/oeparts/oeparts/releases/latest/download/oeparts.zip",
+  "download_url": "https://github.com/shemondotme/oeparts/releases/latest/download/oeparts.zip",
   "mirror_url": null,
-  "changelog_url": "https://raw.githubusercontent.com/oeparts/oeparts/main/CHANGELOG.md",
-  "update_check_url": "https://raw.githubusercontent.com/oeparts/oeparts/main/version.json",
-  "releases_catalog_url": "https://raw.githubusercontent.com/oeparts/oeparts/main/releases.json"
+  "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
+  "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
+  "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json"
 }

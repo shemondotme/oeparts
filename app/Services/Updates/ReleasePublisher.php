@@ -23,7 +23,7 @@ class ReleasePublisher
     {
         $config ??= (array) config('updates.build', []);
         $this->urlTemplate = (string) ($config['release_url_template']
-            ?? 'https://github.com/oeparts/oeparts/releases/download/v{version}/{asset}');
+            ?? 'https://github.com/shemondotme/oeparts/releases/download/v{version}/{asset}');
         $this->assetName = (string) ($config['asset_name'] ?? 'oeparts-{version}.zip');
     }
 
