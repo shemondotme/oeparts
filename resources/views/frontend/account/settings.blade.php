@@ -29,10 +29,27 @@
                 if (array_intersect($erroredFields, $t['fields'])) { $activeTab = $t['key']; break; }
             }
         }
+        // @json() on an array of strings always renders as ["profile","security",...]
+        // — literal double-quotes delimiting each element. That's correct,
+        // valid JSON, but this whole object literal sits inside a
+        // double-quoted x-data="..." HTML attribute below: the FIRST quote
+        // in the JSON array closes the attribute early (no JSON_HEX_* flag
+        // combination changes this — those only escape quote characters
+        // that appear INSIDE a string's content, never the structural
+        // quotes JSON itself requires to delimit a string). Confirmed via
+        // direct tinker test: json_encode(['profile','security'], 15) still
+        // outputs literal ["profile","security"]. Everything after that
+        // first quote (the rest of the moveTab/gotoTab methods) then spilled
+        // out as literal visible page text. Illuminate\Support\Js::from()
+        // (used below) sidesteps this correctly — it wraps the value as
+        // JSON.parse('...') and unicode-escapes every quote character,
+        // structural or content, so the resulting attribute value contains
+        // zero literal quote characters of either kind.
+        $tabKeys = array_column($tabs, 'key');
     @endphp
     <div x-data="{
             tab: '{{ $activeTab }}',
-            tabKeys: @json(array_column($tabs, 'key')),
+            tabKeys: {{ \Illuminate\Support\Js::from($tabKeys) }},
             moveTab(delta) {
                 const i = this.tabKeys.indexOf(this.tab);
                 this.tab = this.tabKeys[(i + delta + this.tabKeys.length) % this.tabKeys.length];

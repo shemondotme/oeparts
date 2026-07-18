@@ -91,7 +91,13 @@
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink truncate max-w-[14rem]">{{ $pageTitle }}</span>
             </nav>
-            <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
+            {{-- min-w-0 + truncate: $slugUpper's '-' -> '·' swap (see top of
+                 file) strips the hyphen break points browsers normally wrap
+                 slugs on — a long CMS page slug (e.g. a policy page) forces
+                 horizontal page overflow on mobile without this. Flex items
+                 default to min-width:auto, so truncate alone doesn't clip
+                 inside the sm:flex-row layout without min-w-0 too. --}}
+            <div class="min-w-0 max-w-full sm:max-w-xs truncate font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
                 DOC · {{ $slugUpper }} · REV. {{ $updatedAt->format('Y.m.d') }}
             </div>
         </div>

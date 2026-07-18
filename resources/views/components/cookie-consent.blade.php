@@ -24,7 +24,16 @@
     x-transition:leave="transition ease-in duration-200"
     x-transition:leave-start="translate-x-0 opacity-100"
     x-transition:leave-end="translate-x-6 opacity-0"
-    class="fixed bottom-6 right-6 z-50"
+    {{-- z-40, NOT z-50: the header/mobile-nav-dropdown and the real content
+         modals (auth-modal, part-inquiry — both z-[70]) also use fixed
+         positioning; at equal z-index, later DOM order wins regardless of
+         visual priority, and this banner is included after both in
+         layouts/app.blade.php. Confirmed via Playwright viewport screenshot:
+         at z-50 this banner rendered on top of the open mobile nav panel AND
+         fully covered the login modal's password field and submit button,
+         blocking sign-in for any first-time mobile visitor who hadn't yet
+         dismissed the cookie banner. --}}
+    class="fixed bottom-6 right-6 z-40"
     style="display: none;"
     role="region"
     aria-label="{{ __('cookie_consent.aria_cookie_consent') }}"

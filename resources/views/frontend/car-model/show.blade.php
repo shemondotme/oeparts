@@ -98,7 +98,14 @@
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink truncate max-w-[14rem]">{{ $modelName }}</span>
             </nav>
-            <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
+            {{-- min-w-0 + truncate: the '-' -> '·' swap below strips the hyphen
+                 break points browsers normally wrap slugs on, turning a long
+                 car-model slug into one unbreakable string that forced
+                 horizontal page overflow on mobile (confirmed via Playwright:
+                 375px viewport rendered a 528px-wide document). Flex items
+                 default to min-width:auto, so truncate alone doesn't clip
+                 inside the sm:flex-row layout without min-w-0 too. --}}
+            <div class="min-w-0 max-w-full sm:max-w-xs truncate font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
                 {{ __('car_model.doc_platform_prefix') }} · {{ strtoupper($manufacturer->slug) }} · {{ strtoupper(str_replace('-', '·', $carModel->slug)) }}
             </div>
         </div>

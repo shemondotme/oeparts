@@ -27,7 +27,7 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="close()"
-        class="fixed inset-0 z-50 bg-ink/85 bg-grid-navy bg-grid-md"
+        class="fixed inset-0 z-70 bg-ink/85 bg-grid-navy bg-grid-md"
     ></div>
 
     {{-- Modal panel wrapper --}}
@@ -39,7 +39,7 @@
         x-transition:leave="transition ease-in duration-200"
         x-transition:leave-start="opacity-100 translate-y-0"
         x-transition:leave-end="opacity-0 translate-y-4"
-        class="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
+        class="fixed inset-0 z-70 overflow-y-auto overscroll-contain"
         @click.self="close()"
     >
         <div class="flex min-h-full items-center justify-center p-4" @click.self="close()">
