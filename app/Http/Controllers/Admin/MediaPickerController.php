@@ -40,7 +40,12 @@ class MediaPickerController extends Controller
             'uploaded_by' => Auth::guard('admin')->id(),
             'file_name' => $file->getClientOriginalName(),
             'file_path' => $path,
-            'file_url' => Storage::url($path),
+            // Storage::url() alone resolves against config('filesystems.default')
+            // (currently 'local', a private disk with no url mapping — see
+            // MediaFile::getFileUrlAttribute()), NOT the 'public' disk this file
+            // was just stored to two lines up. Explicit disk keeps the stored
+            // value correct regardless of what the default disk is set to.
+            'file_url' => Storage::disk('public')->url($path),
             'mime_type' => $file->getMimeType(),
             'size' => $file->getSize(),
             'alt_text' => $request->input('alt_text'),
