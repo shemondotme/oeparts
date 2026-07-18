@@ -227,13 +227,21 @@
                                 <span class="font-display text-3xl font-extrabold text-amber-ink leading-none tracking-[-0.02em]">{{ $letter }}</span>
                                 <span class="bp-spec text-ink-muted">{{ str_pad((string) $group->count(), 2, '0', STR_PAD_LEFT) }}</span>
                             </div>
+                            {{-- min-w-0 on the <li> and flex (not inline-flex) + min-w-0 on
+                                 the <a>: grid/flex items default to min-width:auto (content-
+                                 based), so a long manufacturer name (e.g. "Attenwerth,
+                                 Christiansen and Gottlieb") refused to shrink to the
+                                 grid-cols-2 track width — the truncate span never got a
+                                 chance to clip, forcing the whole page to overflow
+                                 horizontally on mobile (confirmed: 375px viewport rendered a
+                                 455px-wide document). --}}
                             <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-2">
                                 @foreach($group as $mfr)
-                                    <li>
+                                    <li class="min-w-0">
                                         <a href="{{ url('/'.$lang.'/brand/'.$mfr['slug']) }}"
-                                           class="group inline-flex items-center gap-2 py-1 text-sm text-ink hover:text-amber-ink transition-colors">
+                                           class="group flex min-w-0 items-center gap-2 py-1 text-sm text-ink hover:text-amber-ink transition-colors">
                                             <span class="font-mono text-[10px] text-ink-muted group-hover:text-amber-ink">→</span>
-                                            <span class="border-b border-transparent group-hover:border-amber pb-[1px] truncate">{{ $mfr['label'] }}</span>
+                                            <span class="min-w-0 truncate border-b border-transparent group-hover:border-amber pb-[1px]">{{ $mfr['label'] }}</span>
                                         </a>
                                     </li>
                                 @endforeach

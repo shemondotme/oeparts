@@ -145,10 +145,13 @@
     @keydown.escape.window="open = false"
     x-show="open"
     x-cloak
-    class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 sm:p-4 motion-reduce:transition-none"
+    {{-- z-70, not z-50: must always render above the cookie-consent corner
+         banner (z-40, see its own comment) and the header (z-50) — a real
+         content modal should never be covered by a transient overlay. --}}
+    class="fixed inset-0 z-70 flex items-end sm:items-center justify-center p-3 sm:p-4 motion-reduce:transition-none"
 >
     {{-- Confetti container --}}
-    <div x-ref="confettiContainer" class="pointer-events-none fixed inset-0 z-[60]"></div>
+    <div x-ref="confettiContainer" class="pointer-events-none fixed inset-0 z-71"></div>
 
     {{-- Backdrop — ink wash with grid texture --}}
     <div class="absolute inset-0 bg-ink/85 bg-grid-navy bg-grid-md motion-reduce:transition-none"
