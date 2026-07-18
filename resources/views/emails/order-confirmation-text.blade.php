@@ -42,11 +42,14 @@
 {{ trans('emails.order_confirmation.vat', [], $locale) }}: {{ number_format($order->vat_amount, 2) }} €
 {{ trans('emails.order_confirmation.grand_total', [], $locale) }}: {{ number_format($order->grand_total, 2) }} €
 
+{{ trans('emails.order_confirmation.oversized_notice_heading', [], $locale) }}
+{{ trans('emails.order_confirmation.oversized_notice_body', [], $locale) }}
+
 {{ trans('emails.order_confirmation.footer', [], $locale) }}
 
 {{ trans('emails.order_confirmation.view_order', [], $locale) }}: {{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $order->id]) }}
 
 ---
-{{ trans('emails.layout.footer_line1', [], $locale) }}
+{{ trans('emails.layout.footer_line1', ['year' => now()->year], $locale) }}
 {{ trans('emails.layout.footer_line2', [], $locale) }}
 {{ config('app.url') }}

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('account_dashboard_title', 'account.dashboard_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -7,23 +7,27 @@
 @php
     $lang = app()->getLocale();
     $totalOrders    = $user->orders()->count();
-    $totalSpent     = (float) ($user->orders()->sum('grand_total') ?? 0);
+    // Excludes Cancelled/Refunded — a cancelled or refunded order isn't money
+    // the customer actually spent, so counting it here overstates the total.
+    $totalSpent     = (string) $user->orders()->whereNotIn('status', [
+        \App\Enums\OrderStatus::Cancelled,
+        \App\Enums\OrderStatus::Refunded,
+    ])->sum('grand_total');
     $pendingOrders  = $user->orders()->whereIn('status', [
         \App\Enums\OrderStatus::Pending,
         \App\Enums\OrderStatus::Paid,
         \App\Enums\OrderStatus::Processing,
     ])->count();
     $savedAddresses = $user->addresses()->count();
-    $memberSince    = $user->created_at->format('M j, Y');
+    $memberSince    = format_date($user->created_at);
 @endphp
 
 @section('content')
 <x-account.shell
     active="dashboard"
     eyebrow="{{ ui_copy('account_dashboard_eyebrow', 'account.dashboard_eyebrow') }}"
-    title="{{ ui_copy('account_welcome_back', 'account.welcome_back', ['name' => e($user->first_name ?: $user->name)]) }}"
+    title="{{ ui_copy('account_welcome_back', 'account.welcome_back', ['name' => $user->first_name ?: $user->name]) }}"
     :subtitle="ui_copy('account_dashboard_subtitle', 'account.dashboard_subtitle')"
-    docId="DOC · CUSTOMER-SHEET · REV. {{ now()->format('Y.m.d') }}"
     :breadcrumb="[['label' => ui_copy('account_nav_dashboard', 'account.nav_dashboard')]]"
 >
     <x-slot name="actions">
@@ -54,8 +58,7 @@
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {{-- Total Orders --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden"
-                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-amber"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_total_orders', 'account.total_orders') }}</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
@@ -68,8 +71,7 @@
             </div>
 
             {{-- Total Spent --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden"
-                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-emerald-600"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_total_spent', 'account.total_spent') }}</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
@@ -77,13 +79,12 @@
                 </p>
                 <div class="mt-3 flex items-center gap-1.5">
                     <x-heroicon-s-currency-euro class="w-3 h-3 text-emerald-700" />
-                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">{{ ui_copy('account_lifetime_currency', 'account.lifetime_currency', ['currency' => settings('store.currency', 'EUR')]) }}</span>
+                    <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">{{ ui_copy('account_lifetime_currency', 'account.lifetime_currency', ['currency' => settings('general.currency', 'EUR')]) }}</span>
                 </div>
             </div>
 
             {{-- In Flight --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden"
-                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-ink"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_in_flight', 'account.in_flight') }}</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
@@ -96,8 +97,7 @@
             </div>
 
             {{-- Saved Addresses --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden"
-                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-blue-600"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_addresses_on_file', 'account.addresses_on_file') }}</p>
                 <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
@@ -112,7 +112,7 @@
     </section>
 
     {{-- ── Account Information ──────────────────────────────────────── --}}
-    <section class="mb-8 border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+    <section class="mb-8 border border-ink bg-paper bp-shadow">
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-identification class="w-3.5 h-3.5" />
@@ -167,10 +167,10 @@
         </header>
 
         @if($recentOrders->isNotEmpty())
-            <div class="border border-ink bg-paper overflow-hidden" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper overflow-hidden bp-shadow">
                 <div class="overflow-x-auto">
                     <table class="w-full">
-                        <thead class="bg-ink-tint border-b border-ink">
+                        <thead class="bg-ivory-alt border-b border-ink">
                             <tr>
                                 <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_hash', 'account.th_hash') }}</th>
                                 <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_order', 'account.th_order') }}</th>
@@ -238,7 +238,7 @@
             </div>
         @else
             {{-- Empty state --}}
-            <div class="border border-ink bg-paper p-10 text-center" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper p-10 text-center bp-shadow">
                 <div class="inline-flex items-center justify-center w-14 h-14 border border-ink bg-ivory-alt mb-5">
                     <x-heroicon-o-shopping-bag class="w-6 h-6 text-ink-muted" />
                 </div>
@@ -266,21 +266,18 @@
             @php
                 $quickActions = [
                     [
-                        'num'   => '01',
                         'label' => ui_copy('account_manage_addresses', 'account.manage_addresses'),
                         'desc'  => ui_copy('account_manage_addresses_desc', 'account.manage_addresses_desc'),
                         'icon'  => 'heroicon-o-map-pin',
                         'href'  => route('frontend.account.addresses', ['lang' => $lang]),
                     ],
                     [
-                        'num'   => '02',
                         'label' => ui_copy('account_track_refunds', 'account.track_refunds'),
                         'desc'  => ui_copy('account_track_refunds_desc', 'account.track_refunds_desc'),
                         'icon'  => 'heroicon-o-arrow-path',
                         'href'  => route('frontend.account.refunds', ['lang' => $lang]),
                     ],
                     [
-                        'num'   => '03',
                         'label' => ui_copy('account_account_settings', 'account.account_settings'),
                         'desc'  => ui_copy('account_account_settings_desc', 'account.account_settings_desc'),
                         'icon'  => 'heroicon-o-cog-6-tooth',
@@ -291,11 +288,7 @@
             @foreach($quickActions as $qa)
                 <a href="{{ $qa['href'] }}"
                    class="group border border-ink bg-paper p-5 flex items-start gap-4 transition-all
-                          hover:bg-ink hover:text-ivory"
-                   style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
-                    <span class="font-mono text-[10px] tabular-nums tracking-[0.22em] uppercase text-ink-muted group-hover:text-amber mt-1">
-                        {{ $qa['num'] }}
-                    </span>
+                          hover:bg-ink hover:text-ivory bp-shadow-sm">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-start justify-between gap-2">
                             <p class="font-display text-base font-bold text-ink group-hover:text-ivory tracking-[-0.01em]">

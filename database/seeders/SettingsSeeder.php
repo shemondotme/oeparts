@@ -60,7 +60,20 @@ class SettingsSeeder extends Seeder
             ['group' => 'contact', 'key' => 'address',      'value' => '',                  'type' => $s],
             ['group' => 'contact', 'key' => 'whatsapp',     'value' => '',                  'type' => $s],
             ['group' => 'contact', 'key' => 'viber',        'value' => '',                  'type' => $s],
-            ['group' => 'contact', 'key' => 'hours', 'value' => $ml('Mon–Fri 9:00–18:00'), 'type' => $j],
+            ['group' => 'contact', 'key' => 'hours', 'value' => json_encode([
+                'en' => 'Mon–Fri 9:00–18:00',
+                'de' => 'Mo–Fr 9:00–18:00 Uhr',
+                'lt' => 'I–V 9:00–18:00',
+                'fr' => 'Lun–Ven 9h00–18h00',
+                'es' => 'Lun–Vie 9:00–18:00',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'contact', 'key' => 'success_message', 'value' => json_encode([
+                'en' => 'Your message has been sent successfully. We will get back to you soon.',
+                'de' => 'Ihre Nachricht wurde erfolgreich gesendet. Wir melden uns in Kürze bei Ihnen.',
+                'lt' => 'Jūsų žinutė sėkmingai išsiųsta. Netrukus su jumis susisieksime.',
+                'fr' => 'Votre message a été envoyé avec succès. Nous reviendrons vers vous sous peu.',
+                'es' => 'Su mensaje se ha enviado correctamente. Nos pondremos en contacto con usted en breve.',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
 
             // ── ANNOUNCEMENT ─────────────────────────────────────────────────────
             ['group' => 'announcement', 'key' => 'enabled',    'value' => '0',          'type' => $b],
@@ -80,12 +93,26 @@ class SettingsSeeder extends Seeder
             ['group' => 'tax', 'key' => 'default_vat_rate',  'value' => '21',            'type' => $i],
             ['group' => 'tax', 'key' => 'price_display',     'value' => 'inc_vat',        'type' => $s],
             ['group' => 'tax', 'key' => 'vat_validation_enabled', 'value' => '1',       'type' => $b],
-            ['group' => 'tax', 'key' => 'b2b_exempt_on_valid_vat', 'value' => '1',      'type' => $b],
 
             // ── SHIPPING ─────────────────────────────────────────────────────────
             ['group' => 'shipping', 'key' => 'nudge_enabled',           'value' => '1',                         'type' => $b],
             ['group' => 'shipping', 'key' => 'nudge_threshold',         'value' => '10.00',                     'type' => $s],
-            ['group' => 'shipping', 'key' => 'nudge_text',              'value' => $ml('Add €{amount} more for free shipping!'), 'type' => $j],
+            ['group' => 'shipping', 'key' => 'nudge_text', 'value' => json_encode([
+                'en' => 'Add €{amount} more for free shipping!',
+                'de' => 'Fügen Sie noch €{amount} hinzu für kostenlosen Versand!',
+                'lt' => 'Pridėkite dar €{amount} nemokamam pristatymui!',
+                'fr' => 'Ajoutez €{amount} de plus pour la livraison gratuite !',
+                'es' => '¡Añade €{amount} más para envío gratis!',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            // step3.blade.php read this key with a hardcoded English default and no
+            // admin field ever existed for it — could never actually be changed.
+            ['group' => 'shipping', 'key' => 'note_text', 'value' => json_encode([
+                'en' => 'All shipments tracked and insured. Delivery times are estimates from dispatch.',
+                'de' => 'Alle Sendungen werden verfolgt und sind versichert. Lieferzeiten sind Schätzungen ab Versand.',
+                'lt' => 'Visos siuntos sekamos ir apdraustos. Pristatymo laikas skaičiuojamas nuo išsiuntimo.',
+                'fr' => 'Tous les envois sont suivis et assurés. Les délais de livraison sont estimés à partir de l\'expédition.',
+                'es' => 'Todos los envíos son rastreados y están asegurados. Los plazos de entrega son estimaciones desde el envío.',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
             ['group' => 'shipping', 'key' => 'cutoff_time',             'value' => '15:00',                     'type' => $s],
             ['group' => 'shipping', 'key' => 'cutoff_timezone',         'value' => 'Europe/Vilnius',            'type' => $s],
             ['group' => 'shipping', 'key' => 'business_days',           'value' => json_encode([1, 2, 3, 4, 5]),    'type' => $j],
@@ -185,29 +212,86 @@ class SettingsSeeder extends Seeder
             ['group' => 'stats_counter', 'key' => 'show_section',    'value' => '1',      'type' => $b],
 
             // ── SEO ──────────────────────────────────────────────────────────────
+            // Per-locale (type=Json) — NOT $ml()'d, these carry real translations
+            // per language, not the same English string duplicated 5x. {oem}/{min}/
+            // {max}/{site}/{brand} placeholder tokens stay literal in every locale.
             // Homepage title: primary keyword first, brand last, ≤60 chars
             ['group' => 'seo', 'key' => 'home_title',
-                'value' => 'Buy Genuine OEM Auto Parts Online | OeParts',
-                'type' => $s],
+                'value' => json_encode([
+                    'en' => 'Genuine OEM Auto Parts by Part Number | OeParts',
+                    'de' => 'Original OEM-Autoteile nach Teilenummer | OeParts',
+                    'lt' => 'Originalios OEM automobilio dalys pagal numerį | OeParts',
+                    'fr' => 'Pièces auto OEM d\'origine par numéro | OeParts',
+                    'es' => 'Piezas de auto OEM originales por número | OeParts',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
 
-            // Homepage meta description: 145-155 chars, primary keyword + USPs + CTA
+            // Homepage meta description: 130-155 chars, primary keyword + USPs + CTA
             ['group' => 'seo', 'key' => 'home_description',
-                'value' => 'Search 500,000+ genuine OEM auto parts by part number. Compare verified prices from EU sellers. Fast delivery to all 27 EU countries. B2B invoicing available.',
-                'type' => $s],
+                'value' => json_encode([
+                    'en' => 'Find genuine OEM auto parts fast — search by part number, get guaranteed fitment, and ship to all 27 EU countries. Trade accounts available for workshops.',
+                    'de' => 'OEM-Autoteile schnell finden — nach Teilenummer suchen, garantierte Passform, Versand in alle 27 EU-Länder. Geschäftskonten für Werkstätten verfügbar.',
+                    'lt' => 'Originalios OEM dalys greitai — ieškokite pagal numerį, garantuotas tikslumas, pristatymas į 27 ES šalis. Verslo paskyros dirbtuvėms.',
+                    'fr' => 'Pièces auto OEM d\'origine rapidement — recherchez par numéro, ajustement garanti, livraison dans les 27 pays UE. Comptes pro pour ateliers.',
+                    'es' => 'Piezas de auto OEM originales rápido — busque por número, ajuste garantizado, envío a los 27 países UE. Cuentas comerciales para talleres.',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
 
             // OEM search results list (/{lang}/parts/{oem}) — keyword intent "buy {oem}"
-            // + price anchor + brand; ≤60/155 chars. This page IS the OEM part page.
+            // + price anchor + brand; ≤100/200 chars. This page IS the OEM part page.
             ['group' => 'seo', 'key' => 'search_results_title_template',
-                'value' => 'Buy OEM Part {oem} — From €{min} | OeParts',
-                'type' => $s],
+                'value' => json_encode([
+                    'en' => 'Buy OEM Part {oem} — From €{min} | OeParts',
+                    'de' => 'OEM-Teil {oem} kaufen — Ab €{min} | OeParts',
+                    'lt' => 'Pirkti OEM dalį {oem} — Nuo €{min} | OeParts',
+                    'fr' => 'Acheter la pièce OEM {oem} — Dès €{min} | OeParts',
+                    'es' => 'Comprar pieza OEM {oem} — Desde €{min} | OeParts',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
             ['group' => 'seo', 'key' => 'search_results_meta_template',
-                'value' => 'Genuine OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured delivery in 1–5 days to all 27 EU countries. VAT invoice included.',
-                'type' => $s],
+                'value' => json_encode([
+                    'en' => 'Genuine OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured EU-wide delivery. VAT invoice included.',
+                    'de' => 'Original OEM-Teil {oem}. Geprüfte EU-Lieferanten. Preise ab €{min}. Versicherte EU-weite Lieferung. Mit USt-Rechnung.',
+                    'lt' => 'Originali OEM dalis {oem}. Patikrinti ES tiekėjai. Kainos nuo €{min}. Draustas pristatymas visoje ES. Su PVM sąskaita.',
+                    'fr' => 'Pièce OEM d\'origine {oem}. Fournisseurs UE vérifiés. Prix dès €{min}. Livraison assurée dans toute l\'UE. Facture TVA incluse.',
+                    'es' => 'Pieza OEM original {oem}. Proveedores UE verificados. Precios desde €{min}. Envío asegurado en toda la UE. Factura IVA incluida.',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
 
-            // Brand page title: brand + OEM keyword + platform
+            // Brand page title: brand + OEM keyword + platform (currently unwired —
+            // no controller reads this yet; kept multilingual-correct for whenever
+            // manufacturer-page SEO titles are built)
             ['group' => 'seo', 'key' => 'brand_title_template',
-                'value' => 'Genuine {brand} OEM Parts — Buy Online | OeParts',
-                'type' => $s],
+                'value' => json_encode([
+                    'en' => 'Genuine {brand} OEM Parts — Buy Online | OeParts',
+                    'de' => 'Original {brand} OEM-Teile — Online kaufen | OeParts',
+                    'lt' => 'Originalios {brand} OEM dalys — Pirkti internetu | OeParts',
+                    'fr' => 'Pièces OEM {brand} d\'origine — Achat en ligne | OeParts',
+                    'es' => 'Piezas OEM {brand} originales — Comprar online | OeParts',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
+
+            // Parts Search Console (/{lang}/parts) title/description — this page IS
+            // indexed (unlike zero-results, which is noindex), but previously had no
+            // admin override at all, unlike the results-page templates above.
+            ['group' => 'seo', 'key' => 'console_title_template',
+                'value' => json_encode([
+                    'en' => 'Parts Search Console | {site}',
+                    'de' => 'Teile-Suchkonsole | {site}',
+                    'lt' => 'Dalių paieškos konsolė | {site}',
+                    'fr' => 'Console de recherche de pièces | {site}',
+                    'es' => 'Consola de búsqueda de piezas | {site}',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
+            ['group' => 'seo', 'key' => 'console_meta_template',
+                'value' => json_encode([
+                    'en' => 'Search genuine OEM car parts by part number — fast cross-reference across verified European manufacturers.',
+                    'de' => 'Original-OEM-Autoteile per Teilenummer suchen — schnelle Kreuzreferenz bei geprüften europäischen Herstellern.',
+                    'lt' => 'Ieškokite originalių OEM dalių pagal numerį — greita kryžminė paieška tarp patvirtintų Europos gamintojų.',
+                    'fr' => 'Recherchez des pièces OEM d\'origine par numéro — recoupement rapide auprès de fabricants européens vérifiés.',
+                    'es' => 'Busque piezas OEM originales por número — referencia cruzada rápida entre fabricantes europeos verificados.',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
 
             ['group' => 'seo', 'key' => 'google_ping_enabled',      'value' => '1',            'type' => $b],
             ['group' => 'seo', 'key' => 'default_robots',           'value' => 'index,follow', 'type' => $s],
@@ -236,27 +320,83 @@ class SettingsSeeder extends Seeder
             ['group' => 'preloader', 'key' => 'aria_label',      'value' => $ml('Loading'), 'type' => $j],
 
             // ── UI (headlines / chrome editable without code — Admin → ui) ───────
+            // hero_index_badge/hero_live_status are unused (no blade reference found)
+            // — left $ml()'d. Everything else below carries real per-locale copy,
+            // not an English string duplicated 5x (that was the bug fixed 2026-07-16).
             ['group' => 'ui', 'key' => 'hero_index_badge',       'value' => $ml('§ INDEX'), 'type' => $j],
             ['group' => 'ui', 'key' => 'hero_live_status',     'value' => $ml('CATALOGUE LIVE'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_eyebrow',           'value' => $ml('Genuine OEM Parts Index · 1,000,000+'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_subtext_default',  'value' => $ml('Enter any OEM number. We return matches, cross-references, and verified suppliers across the European Union — or open a concierge inquiry if the part is rare.'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_spec_title',       'value' => $ml('Specification'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_source_label',     'value' => $ml('Source'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_source_badge',     'value' => $ml('VERIFIED · EU'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_search_strip',      'value' => $ml('§ ENTER OEM NUMBER'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_search_meta_hint',  'value' => $ml('min :min chars · uppercase alphanumeric'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_indexed_label',     'value' => $ml('Indexed:'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_footer_pill_1',     'value' => $ml('Verified Suppliers'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_eyebrow', 'value' => json_encode([
+                'en' => 'Genuine OEM Parts Index', 'de' => 'Original OEM-Teile-Index',
+                'lt' => 'Originalių OEM dalių indeksas', 'fr' => 'Index de pièces OEM d\'origine',
+                'es' => 'Índice de piezas OEM originales',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_subtext_default', 'value' => json_encode([
+                'en' => 'Enter any OEM number. We return matches, cross-references, and verified suppliers across the European Union — or open a concierge inquiry if the part is rare.',
+                'de' => 'Geben Sie eine beliebige OEM-Nummer ein. Wir liefern Treffer, Querverweise und geprüfte Lieferanten aus der gesamten Europäischen Union — oder starten Sie eine persönliche Anfrage, wenn das Teil selten ist.',
+                'lt' => 'Įveskite bet kokį OEM numerį. Rasite atitikmenis, kryžmines nuorodas ir patikrintus tiekėjus visoje Europos Sąjungoje — arba pateikite asmeninę užklausą, jei dalis reta.',
+                'fr' => 'Entrez n\'importe quel numéro OEM. Nous affichons les correspondances, références croisées et fournisseurs vérifiés dans toute l\'Union européenne — ou ouvrez une demande personnalisée si la pièce est rare.',
+                'es' => 'Introduzca cualquier número OEM. Mostramos coincidencias, referencias cruzadas y proveedores verificados en toda la Unión Europea — o abra una consulta personalizada si la pieza es poco común.',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_title', 'value' => json_encode([
+                'en' => 'Specification', 'de' => 'Spezifikation', 'lt' => 'Specifikacija',
+                'fr' => 'Spécification', 'es' => 'Especificación',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_source_label', 'value' => json_encode([
+                'en' => 'Source', 'de' => 'Quelle', 'lt' => 'Šaltinis', 'fr' => 'Source', 'es' => 'Fuente',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_source_badge', 'value' => json_encode([
+                'en' => 'VERIFIED · EU', 'de' => 'GEPRÜFT · EU', 'lt' => 'PATIKRINTA · ES',
+                'fr' => 'VÉRIFIÉ · UE', 'es' => 'VERIFICADO · UE',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_search_strip', 'value' => json_encode([
+                'en' => '§ ENTER OEM NUMBER', 'de' => '§ OEM-NUMMER EINGEBEN', 'lt' => '§ ĮVESKITE OEM NUMERĮ',
+                'fr' => '§ SAISIR LE NUMÉRO OEM', 'es' => '§ INTRODUZCA EL NÚMERO OEM',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_search_meta_hint', 'value' => json_encode([
+                'en' => 'min :min chars · uppercase alphanumeric',
+                'de' => 'min. :min Zeichen · Großbuchstaben, alphanumerisch',
+                'lt' => 'min. :min simb. · didžiosios raidės, raidės ir skaičiai',
+                'fr' => 'min. :min caractères · alphanumérique majuscule',
+                'es' => 'mín. :min caracteres · alfanumérico en mayúsculas',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_indexed_label', 'value' => json_encode([
+                'en' => 'Indexed:', 'de' => 'Indiziert:', 'lt' => 'Indeksuota:',
+                'fr' => 'Indexé :', 'es' => 'Indexado:',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_footer_pill_1', 'value' => json_encode([
+                'en' => 'Verified Suppliers', 'de' => 'Geprüfte Lieferanten', 'lt' => 'Patikrinti tiekėjai',
+                'fr' => 'Fournisseurs vérifiés', 'es' => 'Proveedores verificados',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
             ['group' => 'ui', 'key' => 'hero_footer_pill_2',     'value' => $ml('TLS 1.3 · SSL'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_footer_pill_3',     'value' => $ml('27 EU Countries'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_spec_r1_label',     'value' => $ml('Catalogue'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_spec_r2_label',     'value' => $ml('Manufacturers'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_footer_pill_3', 'value' => json_encode([
+                'en' => '27 EU Countries', 'de' => '27 EU-Länder', 'lt' => '27 ES šalys',
+                'fr' => '27 pays UE', 'es' => '27 países UE',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            // Was "In Stock Now" — mislabeled: the underlying figure is total active
+            // catalog size, not a live in-stock count (fixed 2026-07-16).
+            ['group' => 'ui', 'key' => 'hero_spec_r1_label', 'value' => json_encode([
+                'en' => 'OEM Parts Indexed', 'de' => 'Indizierte OEM-Teile', 'lt' => 'Indeksuotos OEM dalys',
+                'fr' => 'Références OEM indexées', 'es' => 'Piezas OEM indexadas',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r2_label', 'value' => json_encode([
+                'en' => 'Manufacturers', 'de' => 'Hersteller', 'lt' => 'Gamintojai',
+                'fr' => 'Fabricants', 'es' => 'Fabricantes',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
             ['group' => 'ui', 'key' => 'hero_spec_r2_value',     'value' => $ml('214'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_spec_r3_label',     'value' => $ml('Cross-refs'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r3_label', 'value' => json_encode([
+                'en' => 'Cross-refs', 'de' => 'Querverweise', 'lt' => 'Kryžminės nuorodos',
+                'fr' => 'Références croisées', 'es' => 'Referencias cruzadas',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
             ['group' => 'ui', 'key' => 'hero_spec_r3_value',     'value' => $ml('3.2M'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_spec_r4_label',     'value' => $ml('Avg. despatch'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r4_label', 'value' => json_encode([
+                'en' => 'Avg. despatch', 'de' => 'Ø Versand', 'lt' => 'Vid. išsiuntimas',
+                'fr' => 'Exp. moyenne', 'es' => 'Envío medio',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
             ['group' => 'ui', 'key' => 'hero_spec_r4_value',     'value' => $ml('24h'), 'type' => $j],
-            ['group' => 'ui', 'key' => 'hero_spec_r5_label',     'value' => $ml('Languages'), 'type' => $j],
+            ['group' => 'ui', 'key' => 'hero_spec_r5_label', 'value' => json_encode([
+                'en' => 'Languages', 'de' => 'Sprachen', 'lt' => 'Kalbos',
+                'fr' => 'Langues', 'es' => 'Idiomas',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
             ['group' => 'ui', 'key' => 'hero_spec_r5_value',     'value' => $ml('EN·DE·LT·FR·ES'), 'type' => $j],
 
             // ── MAINTENANCE ──────────────────────────────────────────────────────
@@ -269,8 +409,10 @@ class SettingsSeeder extends Seeder
             ['group' => 'maintenance', 'key' => 'retry_after',         'value' => '3600',                     'type' => $i],
 
             // ── STORE ─────────────────────────────────────────────────────────────
-            ['group' => 'store', 'key' => 'currency',           'value' => 'EUR', 'type' => $s],
-            ['group' => 'store', 'key' => 'currency_symbol',    'value' => '€',   'type' => $s],
+            // currency / currency_symbol retired — StoreSettings.php's own
+            // "Store Currency" field is a read-only reference to
+            // general.currency(_symbol); see the retire-dead-store-currency
+            // migration. Every real reader points at general.* now.
             ['group' => 'store', 'key' => 'currency_position',  'value' => 'left', 'type' => $s],
             ['group' => 'store', 'key' => 'decimal_separator',  'value' => '.',    'type' => $s],
             ['group' => 'store', 'key' => 'thousand_separator', 'value' => ',',    'type' => $s],
@@ -303,6 +445,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'company', 'key' => 'name',                 'value' => 'OeParts', 'type' => $s],
             ['group' => 'company', 'key' => 'vat_number',           'value' => '',         'type' => $s],
             ['group' => 'company', 'key' => 'registration_number',  'value' => '',         'type' => $s],
+            ['group' => 'company', 'key' => 'managing_director',    'value' => '',         'type' => $s],
             ['group' => 'company', 'key' => 'email',                'value' => '',         'type' => $s],
             ['group' => 'company', 'key' => 'phone',                'value' => '',         'type' => $s],
             ['group' => 'company', 'key' => 'address',              'value' => '',         'type' => $s],
@@ -343,9 +486,21 @@ class SettingsSeeder extends Seeder
             ['group' => 'checkout', 'key' => 'guest_password_length',  'value' => '12',   'type' => $i],
             ['group' => 'checkout', 'key' => 'urgent_processing_enabled',    'value' => '0',    'type' => $b],
             ['group' => 'checkout', 'key' => 'urgent_processing_fee',        'value' => '9.99', 'type' => $s],
-            ['group' => 'checkout', 'key' => 'urgent_processing_label',       'value' => $ml('Rush processing'), 'type' => $j],
-            ['group' => 'checkout', 'key' => 'urgent_processing_description', 'value' => $ml('Priority same-day dispatch for orders placed before 2pm on a business day.'), 'type' => $j],
-            ['group' => 'contact', 'key' => 'success_message', 'value' => 'Your message has been sent successfully. We will get back to you soon.', 'type' => $s],
+            ['group' => 'checkout', 'key' => 'urgent_processing_label', 'value' => json_encode([
+                'en' => 'Rush processing',
+                'de' => 'Express-Bearbeitung',
+                'lt' => 'Skubus apdorojimas',
+                'fr' => 'Traitement express',
+                'es' => 'Procesamiento urgente',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'checkout', 'key' => 'urgent_processing_description', 'value' => json_encode([
+                'en' => 'Priority same-day dispatch for orders placed before 2pm on a business day.',
+                'de' => 'Bevorzugter Versand am selben Tag für Bestellungen, die vor 14 Uhr an einem Werktag aufgegeben werden.',
+                'lt' => 'Prioritetinis išsiuntimas tą pačią dieną užsakymams, pateiktiems iki 14 val. darbo dieną.',
+                'fr' => 'Expédition prioritaire le jour même pour les commandes passées avant 14h un jour ouvré.',
+                'es' => 'Envío prioritario el mismo día para pedidos realizados antes de las 14:00 en un día laborable.',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'contact', 'key' => 'rate_limit_per_minute', 'value' => '5', 'type' => $i],
 
             // ── DASHBOARD (widget thresholds — defaults mirrored in code) ─────────
             ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],

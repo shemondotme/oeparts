@@ -1,4 +1,4 @@
-﻿{{-- Section: stats_counter (Industrial Blueprint)
+{{-- Section: stats_counter (Industrial Blueprint)
      content: eyebrow(ml), headline(ml), subheadline(ml), items[] — each: key, suffix, label(ml), cta_text(ml), cta_url
 --}}
 @if(settings('stats_counter.show_section', true))
@@ -25,7 +25,7 @@
 <section class="relative bg-ivory text-ink border-b border-rule overflow-hidden">
     <div class="absolute inset-0 bg-grid-ivory-fine bg-grid-md opacity-60 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-16 md:pt-24 pb-12 md:pb-16">
 
         {{-- Section header --}}
         @if($headline || $eyebrow)
@@ -118,7 +118,6 @@
                 {{-- Amber tick accent --}}
                 <div class="mt-5 flex items-center gap-2">
                     <span class="h-px w-8 bg-amber"></span>
-                    <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-amber-ink">{{ __('Live') }}</span>
                 </div>
             </div>
             @endforeach
@@ -126,10 +125,7 @@
 
         {{-- Optional CTA --}}
         @if($ctaText && $ctaUrl)
-        <div class="mt-10 flex items-center justify-between pt-6 border-t border-rule">
-            <span class="hidden sm:inline bp-spec-mono">
-                {{ __('Source · Verified · EU') }}
-            </span>
+        <div class="mt-10 flex items-center justify-end pt-6 border-t border-rule">
             <a href="{{ $ctaUrl }}" class="bp-btn-outline">
                 {{ $ctaText }}
                 <x-heroicon-s-arrow-long-right class="w-5 h-5" />

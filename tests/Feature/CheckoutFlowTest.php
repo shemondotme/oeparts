@@ -174,7 +174,7 @@ class CheckoutFlowTest extends TestCase
         
         // Debug: check what step we're at after step 2
         $checkout = $checkoutService->get($checkoutId);
-        $this->assertEquals(3, $checkout['step'] ?? 0, 'Should be at step 3 after skipping B2B');
+        $this->assertEquals(3, $checkout['step'] ?? 0, 'Should be at step 3 after submitting shipping address');
 
         // Step 3: Shipping method
         $response = $this->post('/en/checkout', [
@@ -360,58 +360,6 @@ class CheckoutFlowTest extends TestCase
             'email' => 'mailfail@example.com',
             'purpose' => OtpPurpose::GuestCheckout,
         ]);
-    }
-
-    #[Test]
-    public function b2b_vat_validation_works(): void
-    {
-        $cart = Cart::create([
-            'guest_token' => 'vat-test',
-            'expires_at' => now()->addDays(7),
-        ]);
-        CartItem::create([
-            'cart_id' => $cart->id,
-            'product_id' => $this->product->id,
-            'quantity' => 1,
-            'price_at_add' => $this->product->price,
-        ]);
-
-        $this->withCookie('guest_token', 'vat-test')
-            ->get('/en/checkout')
-            ->assertOk();
-
-        // Skip OTP step by manually setting checkout data
-        $checkoutId = Session::get('active_checkout_id');
-        $checkoutService = app(CheckoutService::class);
-        $checkoutService->update($checkoutId, [
-            'guest_email' => 'vat@example.com',
-            'otp_verified' => true,
-            'step' => 2,
-        ]);
-
-        // Submit step 2 with B2B VAT data
-        $response = $this->post('/en/checkout', [
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'street' => 'Test St 1',
-            'city' => 'Berlin',
-            'postal_code' => '10115',
-            'country_code' => 'DE',
-            'is_b2b' => 1,
-            'company_name' => 'Test GmbH',
-            'vat_number' => 'DE123456789',
-            'vat_valid' => 1,
-        ]);
-        $response->assertRedirect();
-
-        // Verify B2B data was stored
-        $checkout = $checkoutService->get($checkoutId);
-        $this->assertTrue($checkout['data']['is_b2b']);
-        $this->assertEquals('Test GmbH', $checkout['data']['company_name']);
-        $this->assertEquals('DE123456789', $checkout['data']['vat_number']);
-        $this->assertTrue($checkout['data']['vat_valid']);
-        $this->assertTrue($checkout['data']['vat_exempt']);
-        $this->assertEquals(3, $checkout['step']);
     }
 
     #[Test]

@@ -1,6 +1,31 @@
 <?php
 
 return [
+    // Breadcrumb / page chrome
+    'breadcrumb_home' => 'Inicio',
+    'breadcrumb_contact_us' => 'Contacto',
+    'eyebrow_contact_desk' => 'Contacto · Equipo',
+    'eyebrow_direct_channel' => 'Directo · Canal',
+    'channel_email_label' => 'Correo',
+    'channel_phone_label' => 'Teléfono',
+    'hours_label' => 'Horario',
+    'eyebrow_enquiry_form' => 'Consulta · Formulario',
+    'spam_protected_note' => 'Protegido contra spam · Conforme al RGPD',
+    'eyebrow_info_rail' => 'Info · Columna',
+    'looking_for_part_heading' => '¿Busca una pieza?',
+    'looking_for_part_body' => 'Para buscar piezas, use la consola de búsqueda directamente — obtendrá resultados en segundos.',
+    'open_search_btn' => 'Abrir búsqueda',
+    'network_error' => 'Error de red. Inténtelo de nuevo.',
+
+    // Validation messages (ContactFormRequest)
+    'validation_email_required' => 'Introduzca su dirección de correo electrónico.',
+    'validation_email_invalid' => 'Introduzca una dirección de correo electrónico válida.',
+    'validation_name_required' => 'Introduzca su nombre.',
+    'validation_subject_required' => 'Seleccione un asunto.',
+    'validation_message_required' => 'Introduzca su mensaje.',
+    'validation_message_min' => 'Su mensaje debe tener al menos 10 caracteres.',
+    'validation_message_max' => 'Su mensaje no puede superar los 5000 caracteres.',
+
     // Hero
     'title' => 'Contacte con nuestro equipo',
     'description' => 'Póngase en contacto con el equipo de OeParts para consultas de abastecimiento, pedidos o asociaciones. Cada mensaje se dirige al especialista adecuado y se responde en un día laborable.',
@@ -8,8 +33,8 @@ return [
     // Form fields
     'name' => 'Nombre completo',
     'name_placeholder' => 'Juana Pérez',
-    'email' => 'Correo electrónico profesional',
-    'email_placeholder' => 'nombre@empresa.eu',
+    'email' => 'Correo electrónico',
+    'email_placeholder' => 'nombre@ejemplo.es',
 
     // Email verification
     'verify_email' => 'Enviar código',
@@ -58,7 +83,7 @@ return [
     // Message
     'message' => 'Su mensaje',
     'message_placeholder' => 'Cuéntenos qué necesita — pieza, vehículo, cantidad, plazo…',
-    'message_min_length' => 'Mínimo 20 caracteres.',
+    'message_min_length' => 'Mínimo 10 caracteres.',
 
     // Submit
     'send_message' => 'Enviar mensaje',
@@ -71,11 +96,10 @@ return [
     'response_time' => 'Tiempo de respuesta',
     'response_time_value' => 'En 1 día laborable',
     'secure' => 'Canal seguro',
-    'secure_note' => 'Su mensaje se cifra de extremo a extremo con TLS 1.3 y sus datos se tratan conforme al RGPD.',
+    'secure_note' => 'Su mensaje se envía a través de una conexión cifrada (HTTPS/TLS) y sus datos se tratan conforme al RGPD.',
 
     // Flash / status
     'sent_success' => 'Mensaje enviado — nos pondremos en contacto con usted en breve.',
     'sent_failed' => 'Se produjo un error al enviar su mensaje. Inténtelo de nuevo.',
-    'otp_sent' => 'Código de verificación enviado a su correo.',
     'otp_invalid' => 'Ese código es incorrecto o ha caducado.',
 ];

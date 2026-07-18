@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ($address ? ui_copy('account_edit_address_title', 'account.edit_address_title') : ui_copy('account_add_address_title', 'account.add_address_title')) . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -23,8 +23,7 @@
 >
     {{-- Validation errors --}}
     @if($errors->any())
-        <div class="mb-6 border border-red-600 bg-red-50 p-5"
-             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+        <div class="mb-6 border border-red-600 bg-red-50 p-5 bp-shadow-sm">
             <div class="flex items-start gap-3">
                 <div class="w-9 h-9 border border-red-600 bg-paper flex items-center justify-center shrink-0">
                     <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-red-600" />
@@ -41,7 +40,7 @@
         </div>
     @endif
 
-    <section class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+    <section class="border border-ink bg-paper bp-shadow">
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-map-pin class="w-3.5 h-3.5" />
@@ -232,6 +231,7 @@
 
                 <label class="flex items-start gap-3 p-4 border border-ink bg-ivory-alt cursor-pointer
                               hover:border-ink transition-colors">
+                    <input type="hidden" name="is_default" value="0">
                     <input type="checkbox" name="is_default" value="1"
                            {{ old('is_default', $address?->is_default) ? 'checked' : '' }}
                            class="w-4 h-4 mt-0.5 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0 shrink-0">

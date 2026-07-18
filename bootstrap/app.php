@@ -58,7 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->renderable(function (TooManyRequestsHttpException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => __('search.error_429_message'),
+                    'message' => $e->getMessage() ?: __('search.error_429_message'),
                 ], 429, $e->getHeaders());
             }
 

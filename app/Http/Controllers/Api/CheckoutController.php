@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Services\CheckoutService;
 use App\Services\CartService;
 use App\Services\OtpService;
-use App\Services\ViesService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,7 +21,6 @@ class CheckoutController extends ApiController
         private CheckoutService $checkoutService,
         private CartService $cartService,
         private OtpService $otpService,
-        private ViesService $viesService,
     ) {}
 
     /**
@@ -116,7 +114,7 @@ class CheckoutController extends ApiController
     }
 
     /**
-     * Step 2: Shipping address + optional B2B info.
+     * Step 2: Shipping address.
      * POST /api/v1/checkout/{checkoutId}/step2
      */
     public function step2(Request $request, string $checkoutId): JsonResponse
@@ -128,8 +126,6 @@ class CheckoutController extends ApiController
             'city' => 'required|string|max:100',
             'postal_code' => 'required|string|max:20',
             'country_code' => 'required|string|size:2|in:AT,BE,BG,HR,CY,CZ,DK,EE,FI,FR,DE,GR,HU,IE,IT,LV,LT,LU,MT,NL,PL,PT,RO,SK,SI,ES,SE',
-            'company_name' => 'nullable|string|max:255',
-            'vat_number' => 'nullable|string|max:20',
         ]);
 
         $checkout = $this->checkoutService->get($checkoutId);
@@ -146,23 +142,9 @@ class CheckoutController extends ApiController
             'country_code' => strtoupper($validated['country_code']),
         ];
 
-        $updates = [
+        $this->checkoutService->update($checkoutId, [
             'shipping_address' => $shippingAddress,
-            'company_name' => $validated['company_name'] ?? null,
-            'vat_number' => $validated['vat_number'] ?? null,
-            'is_b2b' => !empty($validated['vat_number']),
-        ];
-
-        // Validate VAT via VIES if B2B
-        if (!empty($validated['vat_number'])) {
-            $countryCode = strtoupper(substr($validated['vat_number'], 0, 2));
-            $vatNumber = substr($validated['vat_number'], 2);
-            $result = $this->viesService->validate($countryCode, $vatNumber);
-            $updates['vat_valid'] = $result->valid === true;
-            $updates['vat_exempt'] = $result->valid === true;
-        }
-
-        $this->checkoutService->update($checkoutId, $updates);
+        ]);
         $this->checkoutService->advance($checkoutId);
 
         return $this->successResponse([

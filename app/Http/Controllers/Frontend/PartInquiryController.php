@@ -6,10 +6,10 @@ use App\Enums\PartInquiryStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\PartInquiryRequest;
 use App\Jobs\SendPartInquiryNotification;
+use App\Models\FailedSearchLog;
 use App\Models\PartInquiry;
 use App\Services\OemNormalizerService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\RateLimiter;
 
 class PartInquiryController extends Controller
 {
@@ -22,18 +22,21 @@ class PartInquiryController extends Controller
             ], 403);
         }
 
-        // Rate limit: 5 inquiries per hour per IP
-        $maxInquiries = (int) settings('security.inquiry_max_per_email', 5);
-        if (!RateLimiter::attempt("inquiry:{$request->ip()}", $maxInquiries, fn() => true, 3600)) {
+        $validated = $request->validated();
+
+        // Lifetime cap per email address — distinct from the per-IP-per-hour
+        // throttle already enforced by the 'throttle:part_inquiry.rate_limit_per_hour'
+        // route middleware (see routes/web.php).
+        $maxPerEmail = (int) settings('security.inquiry_max_per_email', 10);
+        if ($maxPerEmail > 0 && PartInquiry::where('email', $validated['email'])->count() >= $maxPerEmail) {
             return response()->json([
                 'success' => false,
                 'message' => __('part_inquiry.rate_limited'),
             ], 429);
         }
 
-        $validated = $request->validated();
-
         $inquiry = PartInquiry::create([
+            'failed_search_log_id' => $validated['failed_search_log_id'] ?? null,
             'email'        => $validated['email'],
             'phone'        => $validated['phone'] ?? null,
             'oem_number'   => strtoupper(trim($validated['oem_number'])),
@@ -48,7 +51,19 @@ class PartInquiryController extends Controller
             'ip_address'   => $request->ip(),
         ]);
 
-        dispatch(new SendPartInquiryNotification($inquiry));
+        if (! empty($validated['failed_search_log_id'])) {
+            FailedSearchLog::where('id', $validated['failed_search_log_id'])->update(['inquiry_submitted' => true]);
+        }
+
+        // Best-effort — on a 'sync' queue connection (rule #41: many installs
+        // run without a worker) this job's mail send happens inline, so a real
+        // SMTP failure would otherwise throw right here and 500 a submission
+        // whose PartInquiry row is already safely persisted.
+        try {
+            dispatch(new SendPartInquiryNotification($inquiry));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $hours = (int) settings('part_inquiry.response_hours', 24);
 

@@ -36,6 +36,8 @@ return [
         'grand_total'        => 'Total Général',
         'footer'             => 'Vous pouvez consulter les détails de votre commande à tout moment depuis votre compte.',
         'view_order'         => 'Voir la Commande',
+        'oversized_notice_heading' => 'Pièces hors gabarit — avis de livraison',
+        'oversized_notice_body' => 'Les frais de livraison ci-dessus sont un tarif fixe pour les colis de taille standard. Si cette commande comprend une pièce hors gabarit ou lourde, le transporteur peut appliquer un supplément de fret, qui vous sera facturé séparément après expédition.',
     ],
     'order_status' => [
         'subject'         => 'La commande :order_number est maintenant :status',
@@ -136,7 +138,7 @@ return [
         'subject'   => 'Nouvelle demande de pièce : :oem',
         'title'     => 'Demande de Pièce Reçue',
         'greeting'  => 'Cher/Chère :name,',
-        'body_intro'=> 'Notre équipe technique examine votre demande de pièce. Nous répondrons avec les disponibilités, les prix et les options de référence croisée sous 24 heures.',
+        'body_intro'=> 'Notre équipe technique examine votre demande de pièce. Nous répondrons avec les disponibilités, les prix et les options de référence croisée sous :hours heures.',
     ],
     'part_inquiry_status' => [
         'subject_sourced'     => 'Bonne nouvelle — nous avons trouvé votre pièce :oem',

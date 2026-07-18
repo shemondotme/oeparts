@@ -1,4 +1,4 @@
-﻿{{--
+{{--
 Toast Notification — Industrial Blueprint
 Position: Bottom-Right · Stack: vertical
 Types: success · error · warning · info
@@ -24,7 +24,7 @@ Types: success · error · warning · info
         <div class="pointer-events-auto flex justify-end mb-0.5">
             <button @click="dismissAll()"
                     class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted hover:text-ink
-                           bg-paper border border-ink px-3 py-1.5 shadow-[3px_3px_0_0_#0A1228]
+                           bg-paper border border-ink px-3 py-1.5 bp-shadow-sm
                            transition-colors"
                     aria-label="Dismiss all notifications">
                 Clear All · <span x-text="toasts.length"></span>
@@ -46,7 +46,7 @@ Types: success · error · warning · info
             @focusin="pauseToast(toast.id)"
             @focusout="if (!$el.contains($event.relatedTarget)) resumeToast(toast.id)"
             class="pointer-events-auto relative w-[360px] max-w-[calc(100vw-3rem)] bg-paper border border-ink
-                   shadow-[6px_6px_0_0_#0A1228] motion-reduce:transition-none"
+                   bp-shadow motion-reduce:transition-none"
             :role="toast.type === 'error' ? 'alert' : 'status'"
             :aria-live="toast.type === 'error' ? 'assertive' : 'polite'"
         >

@@ -1,8 +1,8 @@
-﻿@if ($paginator->hasPages())
+@if ($paginator->hasPages())
     {{-- ══════════════════════════════════════════════════════════════
          INDUSTRIAL BLUEPRINT — Pagination Ledger
          ══════════════════════════════════════════════════════════════ --}}
-    <nav role="navigation" aria-label="{{ __('Pagination Navigation') }}"
+    <nav role="navigation" aria-label="{{ trans('pagination.navigation') }}"
          class="border border-ink bg-paper">
 
         {{-- ─── Mobile ─── --}}
@@ -49,7 +49,7 @@
 
             {{-- Range readout --}}
             <div class="flex items-center gap-4 px-5 border-r border-rule bg-ivory-alt min-w-[260px]">
-                <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber-ink">Range</span>
+                <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber-ink">{{ trans('pagination.range') }}</span>
                 <p class="font-mono text-[11px] tabular-nums tracking-[0.08em] uppercase text-ink-muted">
                     @if ($paginator->firstItem())
                         <span class="text-ink font-bold">{{ str_pad($paginator->firstItem(), 3, '0', STR_PAD_LEFT) }}</span>
@@ -111,7 +111,7 @@
                                    class="inline-flex items-center justify-center w-12 border-l border-rule
                                           font-mono text-[13px] font-bold tabular-nums text-ink bg-paper
                                           hover:bg-ink hover:text-ivory transition-colors"
-                                   aria-label="{{ __('Go to page :page', ['page' => $page]) }}">
+                                   aria-label="{{ trans('pagination.go_to_page', ['page' => $page]) }}">
                                     {{ $pageLabel }}
                                 </a>
                             @endif

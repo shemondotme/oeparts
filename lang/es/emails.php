@@ -36,6 +36,8 @@ return [
         'grand_total'        => 'Total General',
         'footer'             => 'Puede ver los detalles de su pedido en cualquier momento desde su cuenta.',
         'view_order'         => 'Ver Pedido',
+        'oversized_notice_heading' => 'Piezas de gran tamaño — aviso de envío',
+        'oversized_notice_body' => 'El coste de envío anterior es una tarifa fija para paquetes de tamaño estándar. Si este pedido incluye una pieza de gran tamaño o pesada, el transportista puede aplicar un recargo de flete adicional, que se le facturará por separado tras el envío.',
     ],
     'order_status' => [
         'subject'         => 'El pedido :order_number ahora está :status',
@@ -136,7 +138,7 @@ return [
         'subject'   => 'Nueva consulta de pieza: :oem',
         'title'     => 'Consulta de Pieza Recibida',
         'greeting'  => 'Estimado/a :name,',
-        'body_intro'=> 'Nuestro equipo técnico está revisando su consulta de pieza. Responderemos con disponibilidad, precios y opciones de referencia cruzada dentro de 24 horas.',
+        'body_intro'=> 'Nuestro equipo técnico está revisando su consulta de pieza. Responderemos con disponibilidad, precios y opciones de referencia cruzada dentro de :hours horas.',
     ],
     'part_inquiry_status' => [
         'subject_sourced'     => 'Buenas noticias — encontramos su pieza :oem',

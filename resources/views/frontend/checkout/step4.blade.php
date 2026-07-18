@@ -1,4 +1,4 @@
-﻿@extends('frontend.checkout.layout')
+@extends('frontend.checkout.layout')
 
 @section('checkout_content')
 @php
@@ -45,15 +45,12 @@
             <ul class="divide-y divide-rule">
                 @foreach($cart->items as $item)
                 <li class="grid grid-cols-12 items-center gap-3 px-4 py-3.5">
-                    <span class="col-span-1 font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted">
-                        {{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}
-                    </span>
                     <div class="col-span-1">
                         <div class="w-9 h-9 border border-rule bg-ivory-alt flex items-center justify-center">
                             <x-heroicon-o-cube class="w-4 h-4 text-ink" />
                         </div>
                     </div>
-                    <div class="col-span-6 min-w-0" x-data="clipboard()">
+                    <div class="col-span-7 min-w-0" x-data="clipboard()">
                         <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-sm font-bold tabular-nums text-ink truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                            @click="copy('{{ $item->product->oem_number }}')" title="{{ ui_copy('checkout_copy_oem_title', 'checkout.copy_oem_title') }}">
                             {{ $item->product->oem_number }}
@@ -125,6 +122,24 @@
         </section>
     </div>
 
+    {{-- Oversized parts shipping notice — fixed-rate shipping doesn't cover
+         oversized/heavy freight surcharges the carrier may bill after
+         dispatch; highlighted here (and re-stated in the agreement checkbox
+         below) so the customer sees and accepts this before paying. --}}
+    <section class="border border-amber bg-amber/5">
+        <div class="flex items-start gap-3 px-4 py-3.5">
+            <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-amber-ink shrink-0 mt-0.5" />
+            <div>
+                <p class="font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-amber-ink">
+                    {{ ui_copy('checkout_oversized_notice_heading', 'checkout.oversized_notice_heading') }}
+                </p>
+                <p class="mt-1.5 text-sm text-body leading-relaxed">
+                    {{ ui_copy('checkout_oversized_notice_body', 'checkout.oversized_notice_body') }}
+                </p>
+            </div>
+        </div>
+    </section>
+
     {{-- Rush processing (if selected) --}}
     @if($urgentProcessing)
     <section class="border border-amber bg-amber/5">
@@ -182,7 +197,7 @@
         {{-- Grand total --}}
         <div class="px-4 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
             <div>
-                <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('checkout_grand_total_currency_label', 'checkout.grand_total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</p>
+                <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('checkout_grand_total_currency_label', 'checkout.grand_total_currency_label', ['currency' => settings('general.currency', 'EUR')]) }}</p>
                 <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ ui_copy('checkout_including_all_taxes', 'checkout.including_all_taxes') }}</p>
             </div>
             <p class="font-mono text-3xl sm:text-4xl font-medium text-ink tabular-nums leading-none tracking-tight">
@@ -200,11 +215,14 @@
                class="mt-0.5 w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0 shrink-0">
         <span class="text-sm text-body leading-relaxed">
             {{ ui_copy('checkout_agree_terms_prefix', 'checkout.agree_terms_prefix') }}
-            <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'terms']) }}" target="_blank" rel="noopener noreferrer"
-               class="font-bold text-amber-ink underline underline-offset-2 hover:no-underline transition-colors">{{ ui_copy('checkout_terms_and_conditions', 'checkout.terms_and_conditions') }}</a>
-            {{ ui_copy('checkout_and', 'checkout.and') }}
-            <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'privacy']) }}" target="_blank" rel="noopener noreferrer"
+            <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'terms-of-service']) }}" target="_blank" rel="noopener noreferrer"
+               class="font-bold text-amber-ink underline underline-offset-2 hover:no-underline transition-colors">{{ ui_copy('checkout_terms_and_conditions', 'checkout.terms_and_conditions') }}</a>,
+            <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'privacy-policy']) }}" target="_blank" rel="noopener noreferrer"
                class="font-bold text-amber-ink underline underline-offset-2 hover:no-underline transition-colors">{{ ui_copy('checkout_privacy_policy', 'checkout.privacy_policy') }}</a>
+            {{ ui_copy('checkout_and', 'checkout.and') }}
+            <a href="{{ route('frontend.page', ['lang' => app()->getLocale(), 'slug' => 'returns-policy']) }}" target="_blank" rel="noopener noreferrer"
+               class="font-bold text-amber-ink underline underline-offset-2 hover:no-underline transition-colors">{{ ui_copy('checkout_returns_policy', 'checkout.returns_policy') }}</a>.
+            {{ ui_copy('checkout_oversized_ack_sentence', 'checkout.oversized_ack_sentence') }}
         </span>
     </label>
     @error('agree_terms')

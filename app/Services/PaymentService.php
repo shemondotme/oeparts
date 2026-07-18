@@ -59,7 +59,7 @@ class PaymentService
         $payload = [
             'request_id' => Str::uuid()->toString(),
             'amount' => (string) $amountCents,
-            'currency' => settings('store.currency', 'EUR'),
+            'currency' => settings('general.currency', 'EUR'),
             'merchant_order_id' => $order->order_number,
             'customer' => [
                 'email' => $order->guest_email ?? $order->user->email,
@@ -179,7 +179,7 @@ class PaymentService
             'account_holder' => $accountHolder,
             'reference' => $reference,
             'amount' => $order->grand_total,
-            'currency' => settings('store.currency', 'EUR'),
+            'currency' => settings('general.currency', 'EUR'),
             'payment_id' => $payment->id,
             'expiry_hours' => $this->settings->get('orders.bank_transfer_expiry_hours', 48),
         ];

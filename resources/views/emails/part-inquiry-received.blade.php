@@ -1,4 +1,4 @@
-﻿@extends('emails.layout')
+@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -18,9 +18,9 @@
                     We have received your request<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
-                    {{ trans('emails.part_inquiry.greeting', ['name' => $inquiry->name], $locale) }}
+                    {{ trans('emails.part_inquiry.greeting', ['name' => $inquiry->email], $locale) }}
                     <br>
-                    {{ trans('emails.part_inquiry.body_intro', [], $locale) ?: 'Our technical team is reviewing your part inquiry. We will respond with availability, pricing, and cross-reference options within 24 hours.' }}
+                    {{ trans('emails.part_inquiry.body_intro', ['hours' => (int) settings('part_inquiry.response_hours', 24)], $locale) ?: 'Our technical team is reviewing your part inquiry. We will respond with availability, pricing, and cross-reference options within ' . (int) settings('part_inquiry.response_hours', 24) . ' hours.' }}
                 </p>
             </td>
         </tr>
@@ -60,9 +60,6 @@
                                         <span class="spec-label" style="color: #4E5A74; display: block; margin-bottom: 4px;">REQUESTED PART</span>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #0A1228;">
                                             <strong>{{ $inquiry->oem_number ?? 'N/A' }}</strong>
-                                            @if($inquiry->part_name)
-                                                <br><span style="color: #4E5A74;">{{ $inquiry->part_name }}</span>
-                                            @endif
                                         </p>
                                     </td>
                                 </tr>

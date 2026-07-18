@@ -1,4 +1,4 @@
-﻿@php
+@php
     $lang     = app()->getLocale();
     $cartUrl  = url("/{$lang}/cart");
     $homeUrl  = url("/{$lang}/");
@@ -8,10 +8,26 @@
         || (request()->path() === $lang . '/' || request()->path() === $lang);
 
     $navLinks = [
-        ['href' => route('frontend.search.console', ['lang' => $lang]), 'label' => ui_copy('nav_label_parts', 'navbar.label_parts')],
-        ['href' => url("/{$lang}/brands"),  'label' => ui_copy('nav_label_brands', 'navbar.label_brands')],
-        ['href' => url("/{$lang}/blog/"),   'label' => ui_copy('nav_label_journal', 'navbar.label_journal')],
-        ['href' => url("/{$lang}/about"),   'label' => ui_copy('nav_label_about', 'navbar.label_about')],
+        [
+            'href'  => route('frontend.search.console', ['lang' => $lang]),
+            'label' => ui_copy('nav_label_parts', 'navbar.label_parts'),
+            'active' => request()->routeIs('frontend.search.*'),
+        ],
+        [
+            'href'  => url("/{$lang}/brands"),
+            'label' => ui_copy('nav_label_brands', 'navbar.label_brands'),
+            'active' => request()->routeIs('frontend.manufacturer.*') || request()->routeIs('frontend.car-model.*'),
+        ],
+        [
+            'href'  => url("/{$lang}/blog/"),
+            'label' => ui_copy('nav_label_journal', 'navbar.label_journal'),
+            'active' => request()->routeIs('frontend.blog.*'),
+        ],
+        [
+            'href'  => url("/{$lang}/about"),
+            'label' => ui_copy('nav_label_about', 'navbar.label_about'),
+            'active' => request()->routeIs('frontend.page') && request()->route('slug') === 'about',
+        ],
     ];
 @endphp
 
@@ -21,32 +37,26 @@
      ══════════════════════════════════════════════════════════════════ --}}
 <header
     x-data="{ mobileOpen: false, scrolled: false }"
+    x-init="$nextTick(() => {
+        // Exact fractional height (no round/floor/ceil): rounding either way was
+        // the actual bug — floor()/ceil() intentionally mismatch the real
+        // boundary by a fraction of a px, which either leaks a sliver of
+        // scrolled content through the gap (round up) or lets this header
+        // paint over and hide the next sticky element's own top border
+        // (round down). Elements stacked directly on this variable should
+        // land exactly where this one visually ends — no more, no less.
+        const setNavHeight = () => document.documentElement.style.setProperty('--navbar-h', $el.getBoundingClientRect().height + 'px');
+        setNavHeight();
+        new ResizeObserver(setNavHeight).observe($el);
+    })"
     @scroll.window="scrolled = window.pageYOffset > 8"
     @click.away="mobileOpen = false"
     :class="scrolled ? 'bg-ivory/95 backdrop-blur-md' : 'bg-ivory'"
     class="sticky top-0 z-50 border-b border-rule transition-colors duration-200"
     role="banner"
 >
-    {{-- Spec-sheet strip: site meta rendered as technical document header --}}
-    <div class="border-b border-rule/60 bg-ivory">
-        <div class="max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center justify-between h-8 text-[10px] font-mono uppercase tracking-[0.24em] text-ink-muted">
-            <div class="flex items-center gap-4">
-                <span class="hidden sm:inline">{{ ui_copy('nav_strip_doc', 'navbar.strip_doc') }}</span>
-                <span class="hidden lg:inline text-rule-strong">│</span>
-                <span class="hidden lg:inline">{{ ui_copy('nav_strip_genuine', 'navbar.strip_genuine') }}</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <span class="hidden sm:inline-flex items-center gap-1.5">
-                    <span class="w-1.5 h-1.5 bg-emerald-600"></span>
-                    {{ ui_copy('nav_strip_status', 'navbar.strip_status') }}
-                </span>
-                <span class="uppercase">{{ strtoupper($lang) }} · {{ settings('store.currency', 'EUR') }}</span>
-            </div>
-        </div>
-    </div>
-
     <div class="max-w-[1440px] mx-auto px-4 sm:px-6">
-        <div class="flex items-stretch h-[72px] gap-0">
+        <div class="flex items-stretch h-[69px] gap-0">
 
             {{-- ═══ Logo block ═══ --}}
             <a href="{{ $homeUrl }}"
@@ -69,28 +79,28 @@
                     <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber group-hover:bg-ink transition-colors"></span>
                 </div>
                 <div class="leading-none">
-                    <p class="font-display font-extrabold text-[22px] tracking-[-0.02em] text-ink leading-none">
-                        {{ $siteName }}
-                    </p>
+                    <x-brand-wordmark tone="light" size="sm" />
                     <p class="mt-1.5 font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">
                         {!! str_replace(' ', '&#160;', e(ui_copy('nav_logo_subline', 'navbar.logo_subline'))) !!}
                     </p>
                 </div>
             </a>
 
-            {{-- ═══ Desktop navigation — numbered ═══ --}}
-            <nav class="hidden lg:flex items-stretch flex-1" aria-label="Main navigation">
+            {{-- ═══ Desktop navigation ═══ --}}
+            <nav class="hidden lg:flex items-stretch flex-1 border-r border-rule" aria-label="Main navigation">
                 @foreach($navLinks as $link)
                     <a href="{{ $link['href'] }}"
-                       class="group relative flex items-center gap-2.5 px-5 border-r border-rule/60
+                       @if($link['active']) aria-current="page" @endif
+                       class="group relative flex items-center gap-2.5 px-5
                               text-ink hover:bg-ink/[0.04]
                               transition-colors duration-150
                               focus-visible:outline-none focus-visible:bg-ink/10">
                         <span class="font-sans text-[13px] font-bold uppercase tracking-[0.14em]">
                             {{ $link['label'] }}
                         </span>
-                        {{-- Amber tick on hover --}}
-                        <span class="absolute bottom-0 left-5 h-[3px] w-0 bg-amber transition-all duration-200 group-hover:w-[calc(100%-2.5rem)]"></span>
+                        {{-- Amber tick — persistent when active, grows on hover otherwise --}}
+                        <span class="absolute bottom-0 left-5 h-[3px] bg-amber transition-all duration-200
+                                      {{ $link['active'] ? 'w-[calc(100%-2.5rem)]' : 'w-0 group-hover:w-[calc(100%-2.5rem)]' }}"></span>
                     </a>
                 @endforeach
             </nav>
@@ -184,14 +194,14 @@
                 >
                     <a
                         href="{{ $cartUrl }}"
-                        class="relative flex items-center gap-2.5 px-5 min-w-[72px]
+                        class="group relative flex items-center gap-2.5 px-5 min-w-[72px]
                                text-ink hover:bg-ink hover:text-ivory
                                transition-colors duration-150
                                focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
                         :aria-label="'Shopping cart' + (count > 0 ? ', ' + count + ' items' : '')"
                     >
                         <x-heroicon-o-shopping-cart class="w-5 h-5" aria-hidden="true" />
-                        <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase hidden sm:inline">
+                        <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase hidden sm:inline">
                             {{ settings('navbar.cart_label', 'CART') }}
                         </span>
                         <span
@@ -201,7 +211,6 @@
                             class="absolute top-2 right-2 min-w-[18px] h-[18px] px-1
                                    font-mono text-[10px] font-bold leading-none
                                    flex items-center justify-center
-                                   bg-amber text-ink
                                    ring-1 ring-ink"
                         ></span>
                     </a>
@@ -261,7 +270,7 @@
                                             </div>
                                             <div class="text-right shrink-0 space-y-1">
                                                 <p class="font-mono text-[13px] font-bold text-ink tabular-nums"
-                                                   x-text="'{{ settings('store.currency_symbol', '€') }}' + Number(item.line_total).toFixed(2)"></p>
+                                                   x-text="'{{ settings('general.currency_symbol', '€') }}' + Number(item.line_total).toFixed(2)"></p>
                                                 <button @click.stop="removeItem(item.id)"
                                                         aria-label="Remove"
                                                         class="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted hover:text-red-700 border-b border-transparent hover:border-red-700">
@@ -284,7 +293,7 @@
                                 <span class="bp-spec">{{ settings('navbar.subtotal_label', 'SUBTOTAL') }}</span>
                                 <span class="bp-leader-dots"></span>
                                 <span class="font-mono text-lg font-bold text-ink tabular-nums"
-                                      x-text="'{{ settings('store.currency_symbol', '€') }}' + Number(subtotal).toFixed(2)"></span>
+                                      x-text="'{{ settings('general.currency_symbol', '€') }}' + Number(subtotal).toFixed(2)"></span>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <a href="{{ $cartUrl }}" class="bp-btn-outline text-[11px] py-2.5">
@@ -329,16 +338,68 @@
 
                 {{-- ── Account / sign-in ── --}}
                 @auth
-                <a
-                    href="{{ url('/'.$lang.'/account/dashboard') }}"
-                    class="hidden sm:flex items-center gap-2 px-5 border-l border-rule
-                           text-ink hover:bg-ink hover:text-ivory
-                           transition-colors duration-150
-                           focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
+                <div
+                    class="relative hidden sm:flex items-stretch border-l border-rule"
+                    x-data="{ hovered: false }"
+                    @mouseenter="hovered = true"
+                    @mouseleave="hovered = false"
+                    @focusin="hovered = true"
+                    @focusout="if (!$el.contains($event.relatedTarget)) hovered = false"
                 >
-                    <x-heroicon-o-user-circle class="w-5 h-5" aria-hidden="true" />
-                    <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase">{{ settings('navbar.account_label', 'ACCOUNT') }}</span>
-                </a>
+                    <a
+                        href="{{ url('/'.$lang.'/account/dashboard') }}"
+                        class="flex items-center gap-2 px-5
+                               text-ink hover:bg-ink hover:text-ivory
+                               transition-colors duration-150
+                               focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
+                    >
+                        <x-heroicon-o-user-circle class="w-5 h-5" aria-hidden="true" />
+                        <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase">{{ settings('navbar.account_label', 'ACCOUNT') }}</span>
+                    </a>
+
+                    {{-- Account dropdown --}}
+                    <div
+                        x-show="hovered"
+                        x-transition:enter="transition ease-out duration-150"
+                        x-transition:enter-start="opacity-0 translate-y-1"
+                        x-transition:enter-end="opacity-100 translate-y-0"
+                        x-transition:leave="transition ease-in duration-100"
+                        x-transition:leave-start="opacity-100 translate-y-0"
+                        x-transition:leave-end="opacity-0 translate-y-1"
+                        x-cloak
+                        class="absolute top-full right-0 w-64 bg-paper border border-ink z-50"
+                    >
+                        <div class="px-5 py-3 bg-ink text-ivory">
+                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
+                                {{ settings('navbar.account_title', 'DOC · ACCOUNT') }}
+                            </p>
+                        </div>
+                        <ul class="divide-y divide-rule">
+                            @foreach([
+                                [url('/'.$lang.'/account/dashboard'), ui_copy('account_nav_dashboard', 'account.nav_dashboard')],
+                                [url('/'.$lang.'/account/orders'),    ui_copy('account_nav_orders', 'account.nav_orders')],
+                                [url('/'.$lang.'/account/addresses'), ui_copy('account_nav_addresses', 'account.nav_addresses')],
+                                [url('/'.$lang.'/account/refunds'),   ui_copy('account_nav_refunds', 'account.nav_refunds')],
+                            ] as [$acctHref, $acctLabel])
+                                <li>
+                                    <a href="{{ $acctHref }}"
+                                       class="flex items-center justify-between px-5 py-3 text-sm text-ink hover:bg-ivory transition-colors">
+                                        {{ $acctLabel }}
+                                        <span class="font-mono text-[10px] text-ink-muted">→</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                        <form method="POST" action="{{ route('frontend.auth.logout', ['lang' => $lang]) }}" class="border-t border-ink">
+                            @csrf
+                            <button type="submit"
+                                    class="w-full flex items-center justify-between px-5 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted hover:text-red-700 hover:bg-ivory transition-colors">
+                                {{ settings('navbar.sign_out_label', 'SIGN OUT') }}
+                                <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
+                            </button>
+                        </form>
+                    </div>
+                </div>
                 @else
                 <button
                     @click="$dispatch('open-auth-modal')"
@@ -348,7 +409,7 @@
                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-0"
                 >
                     <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" aria-hidden="true" />
-                    <span class="font-mono text-[11px] font-bold tracking-[0.2em] uppercase">{{ settings('navbar.sign_in_label', 'SIGN IN') }}</span>
+                    <span class="font-sans text-[11px] font-bold tracking-[0.16em] uppercase">{{ settings('navbar.sign_in_label', 'SIGN IN') }}</span>
                 </button>
                 @endauth
 
@@ -382,11 +443,16 @@
         <div class="px-4 sm:px-6 py-3 divide-y divide-rule/70">
             @foreach($navLinks as $link)
                 <a href="{{ $link['href'] }}"
+                   @if($link['active']) aria-current="page" @endif
                    class="flex items-center gap-4 py-4 group">
-                    <span class="font-sans text-sm font-bold uppercase tracking-[0.16em] text-ink">
+                    <span class="font-sans text-sm font-bold uppercase tracking-[0.16em] {{ $link['active'] ? 'text-amber-ink' : 'text-ink' }}">
                         {{ $link['label'] }}
                     </span>
-                    <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted ml-auto group-hover:text-ink transition-colors" />
+                    @if($link['active'])
+                        <span class="ml-auto w-1.5 h-1.5 bg-amber shrink-0"></span>
+                    @else
+                        <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted ml-auto group-hover:text-ink transition-colors" />
+                    @endif
                 </a>
             @endforeach
         </div>
@@ -420,7 +486,7 @@
         <div class="border-t border-rule px-4 sm:px-6 py-4">
             <div class="flex items-center justify-between mb-3">
                 <span class="font-mono text-[10px] font-bold tracking-[0.24em] uppercase text-amber-ink">Locale</span>
-                <span class="bp-spec-mono">5 options</span>
+                <span class="bp-spec-mono">{{ count($mobileLanguages) }} options</span>
             </div>
             <div class="grid grid-cols-5 gap-[2px] border border-ink bg-ink">
                 @foreach($mobileLanguages as $code => $data)

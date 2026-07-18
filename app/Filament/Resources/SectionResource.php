@@ -8,6 +8,7 @@ use App\Filament\Resources\SectionResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Section;
 use Filament\Forms;
+use Filament\Forms\Components\Repeater;
 use Filament\Notifications\Notification;
 use Filament\Notifications\NotificationAction;
 use Filament\Actions;
@@ -16,6 +17,9 @@ use Illuminate\Database\Eloquent\Model;
 use Filament\Schemas\Components\Section as UiSection;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -54,6 +58,67 @@ class SectionResource extends Resource
             return null;
         }
         return AdminUi::localizedName($record->title, 'Section');
+    }
+
+    /**
+     * A single (non-translatable) content field that only shows — and only
+     * saves — for the given section type(s). ->visible() alone does not stop
+     * Filament from dehydrating a hidden field, so ->dehydrated() must mirror
+     * the same condition, or switching `type` in the form (without saving in
+     * between) would silently null out a different type's content on save.
+     */
+    private static function typedField(string $fieldName, string $label, \Closure $visibleWhen, array $opts = [])
+    {
+        $field = match ($opts['type'] ?? 'text') {
+            'textarea' => Forms\Components\Textarea::make($fieldName)->rows($opts['rows'] ?? 3),
+            'tags' => Forms\Components\TagsInput::make($fieldName)->placeholder($opts['placeholder'] ?? 'Add…'),
+            default => Forms\Components\TextInput::make($fieldName)->maxLength($opts['maxLength'] ?? 255),
+        };
+
+        return $field
+            ->label($label)
+            ->helperText($opts['helperText'] ?? null)
+            ->visible($visibleWhen)
+            ->dehydrated($visibleWhen)
+            ->columnSpanFull();
+    }
+
+    /**
+     * A translatable (per-locale) content field group that only shows/saves
+     * for the given section type(s) — same dehydration caveat as typedField()
+     * above, applied to each locale's underlying field individually since
+     * Tabs (a layout component) doesn't dehydrate on behalf of its children.
+     */
+    private static function typedTranslatableField(string $fieldName, string $label, \Closure $visibleWhen, array $opts = []): Tabs
+    {
+        $type = $opts['type'] ?? 'text';
+
+        return Tabs::make($label)
+            ->schema(
+                collect(AdminUi::LOCALES)
+                    ->map(function (string $localeLabel, string $code) use ($fieldName, $label, $type, $opts, $visibleWhen) {
+                        $name = "{$fieldName}.{$code}";
+                        $field = $type === 'textarea'
+                            ? Forms\Components\Textarea::make($name)->rows($opts['rows'] ?? 3)
+                            : Forms\Components\TextInput::make($name)->maxLength($opts['maxLength'] ?? 255);
+
+                        return Tab::make($localeLabel)
+                            ->badge($code === 'en' ? 'Primary' : null)
+                            ->schema([
+                                $field
+                                    ->label($label)
+                                    ->helperText($code === 'en'
+                                        ? ($opts['helperText'] ?? null)
+                                        : 'Leave blank to fall back to the English value.')
+                                    ->visible($visibleWhen)
+                                    ->dehydrated($visibleWhen),
+                            ]);
+                    })
+                    ->values()
+                    ->all()
+            )
+            ->visible($visibleWhen)
+            ->columnSpanFull();
     }
 
     public static function form(Schema $schema): Schema
@@ -99,30 +164,132 @@ class SectionResource extends Resource
                                         ]),
                                     ]),
 
-                                UiSection::make('Content (JSON Config)')
-                                    ->icon('heroicon-o-code-bracket')
-                                    ->description('The configuration block the storefront component reads. Nested structures are supported.')
+                                UiSection::make('Content')
+                                    ->icon('heroicon-o-rectangle-stack')
+                                    ->description('Fields shown here depend on the selected Section Type above — only the fields that section actually reads are displayed.')
                                     ->schema([
-                                        // A KeyValue field JS-fatals on the nested JSON real
-                                        // sections carry — a validated JSON editor handles any shape.
-                                        Forms\Components\Textarea::make('content')
-                                            ->label('Content JSON')
-                                            ->rows(16)
-                                            ->formatStateUsing(fn ($state): string => $state
-                                                ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                                                : '{}')
-                                            ->dehydrateStateUsing(fn (?string $state): array => json_decode($state ?? '{}', true) ?? [])
-                                            ->rules([
-                                                fn (): \Closure => function (string $attribute, $value, \Closure $fail): void {
-                                                    json_decode((string) $value, true);
-                                                    if (json_last_error() !== JSON_ERROR_NONE) {
-                                                        $fail('The content must be valid JSON: ' . json_last_error_msg());
-                                                    }
-                                                },
+                                        self::typedTranslatableField('content.eyebrow', 'Eyebrow', fn (Get $get) => $get('type') !== 'trust_bar'),
+                                        self::typedTranslatableField('content.headline', 'Headline', fn (Get $get) => $get('type') !== 'trust_bar'),
+                                        self::typedTranslatableField('content.subheadline', 'Subheadline', fn (Get $get) => $get('type') !== 'trust_bar', ['type' => 'textarea', 'rows' => 2]),
+
+                                        self::typedTranslatableField('content.button_text', 'Button Text', fn (Get $get) => in_array($get('type'), ['banner', 'contact_cta', 'newsletter', 'part_inquiry', 'hero'])),
+                                        self::typedTranslatableField('content.view_all_text', 'View All Text', fn (Get $get) => in_array($get('type'), ['featured_brands', 'blog_preview'])),
+                                        self::typedTranslatableField('content.search_cta_text', 'Search CTA Text', fn (Get $get) => $get('type') === 'popular_searches'),
+                                        self::typedTranslatableField('content.placeholder', 'Input Placeholder', fn (Get $get) => in_array($get('type'), ['hero', 'newsletter'])),
+                                        self::typedTranslatableField('content.success_text', 'Success Message', fn (Get $get) => $get('type') === 'newsletter'),
+
+                                        self::typedField('content.button_url', 'Button URL', fn (Get $get) => $get('type') === 'banner'),
+                                        self::typedField('content.popular_oem', 'Popular OEM Numbers', fn (Get $get) => $get('type') === 'hero', [
+                                            'type' => 'tags',
+                                            'helperText' => 'Shown as quick-search suggestions on the homepage hero when no live popular-OEM data is available.',
+                                        ]),
+
+                                        Repeater::make('content.items')
+                                            ->label('Trust Bar Items')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('icon')
+                                                    ->label('Icon')
+                                                    ->maxLength(60)
+                                                    ->helperText('Heroicon name, e.g. truck, shield-check, arrow-path, lock-closed.'),
+                                                AdminUi::translatableTabs('Text', [
+                                                    'text' => ['label' => 'Text'],
+                                                ]),
                                             ])
-                                            ->extraInputAttributes(['class' => 'font-mono', 'spellcheck' => 'false'])
-                                            ->helperText('Edit carefully — the structure must match what the selected section component expects. Invalid JSON is rejected on save.')
+                                            ->reorderable()
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => $state['text']['en'] ?? null)
+                                            ->visible(fn (Get $get) => $get('type') === 'trust_bar')
+                                            ->dehydrated(fn (Get $get) => $get('type') === 'trust_bar')
                                             ->columnSpanFull(),
+
+                                        Repeater::make('content.items')
+                                            ->label('Stat Items')
+                                            ->schema([
+                                                Forms\Components\Select::make('key')
+                                                    ->label('Metric Key')
+                                                    ->options([
+                                                        'parts_count' => 'Parts Count',
+                                                        'customers_count' => 'Customers Count',
+                                                        'countries_count' => 'Countries Count',
+                                                        'rating' => 'Rating',
+                                                        'orders_count' => 'Orders Count',
+                                                        'brands_count' => 'Brands Count',
+                                                        'categories_count' => 'Categories Count',
+                                                    ])
+                                                    ->native(false)
+                                                    ->required()
+                                                    ->helperText('Must match a real settings key under Stats Counter Settings.'),
+                                                Forms\Components\TextInput::make('suffix')->label('Suffix')->maxLength(10)->placeholder('+'),
+                                                AdminUi::translatableTabs('Label', [
+                                                    'label' => ['label' => 'Label'],
+                                                ]),
+                                            ])
+                                            ->reorderable()
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => $state['label']['en'] ?? ($state['key'] ?? null))
+                                            ->visible(fn (Get $get) => $get('type') === 'stats_counter')
+                                            ->dehydrated(fn (Get $get) => $get('type') === 'stats_counter')
+                                            ->columnSpanFull(),
+
+                                        Repeater::make('content.features')
+                                            ->label('Shipping Features')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('icon')
+                                                    ->label('Icon')
+                                                    ->maxLength(60)
+                                                    ->helperText('Heroicon name, e.g. truck, globe-europe-africa, clock, gift, arrow-path, map-pin, shield-check.'),
+                                                AdminUi::translatableTabs('Value', [
+                                                    'value' => ['label' => 'Value'],
+                                                ]),
+                                                AdminUi::translatableTabs('Label', [
+                                                    'label' => ['label' => 'Label'],
+                                                ]),
+                                            ])
+                                            ->reorderable()
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => $state['label']['en'] ?? null)
+                                            ->visible(fn (Get $get) => $get('type') === 'shipping_info')
+                                            ->dehydrated(fn (Get $get) => $get('type') === 'shipping_info')
+                                            ->columnSpanFull(),
+
+                                        Forms\Components\TagsInput::make('content.carriers')
+                                            ->label('Carriers')
+                                            ->placeholder('Add a carrier…')
+                                            ->helperText('e.g. DHL, DPD, GLS, FedEx, UPS')
+                                            ->visible(fn (Get $get) => $get('type') === 'shipping_info')
+                                            ->dehydrated(fn (Get $get) => $get('type') === 'shipping_info')
+                                            ->columnSpanFull(),
+
+                                        Repeater::make('content.steps')
+                                            ->label('Steps')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('icon')
+                                                    ->label('Icon')
+                                                    ->maxLength(60)
+                                                    ->helperText('Heroicon name, e.g. magnifying-glass, shopping-cart, truck.'),
+                                                Forms\Components\TextInput::make('step_number')
+                                                    ->label('Step Number')
+                                                    ->numeric(),
+                                                AdminUi::translatableTabs('Title', [
+                                                    'title' => ['label' => 'Title'],
+                                                ]),
+                                                AdminUi::translatableTabs('Description', [
+                                                    'description' => ['label' => 'Description', 'type' => 'textarea', 'rows' => 2],
+                                                ]),
+                                            ])
+                                            ->reorderable()
+                                            ->collapsible()
+                                            ->itemLabel(fn (array $state): ?string => $state['title']['en'] ?? null)
+                                            ->visible(fn (Get $get) => $get('type') === 'how_it_works')
+                                            ->dehydrated(fn (Get $get) => $get('type') === 'how_it_works')
+                                            ->columnSpanFull(),
+
+                                        self::typedField('content.phone', 'Legacy Phone (unused)', fn (Get $get) => $get('type') === 'contact_cta', [
+                                            'helperText' => 'Not read by the storefront — Contact CTA now uses General Settings → Public Contact Phone. Kept here only so no existing data is lost.',
+                                        ]),
+                                        self::typedField('content.bg_style', 'Legacy Background Style (unused)', fn (Get $get) => $get('type') === 'hero', [
+                                            'helperText' => 'Not currently read by the storefront hero component. Kept here only so no existing data is lost.',
+                                        ]),
                                     ]),
                             ]),
 

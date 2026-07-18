@@ -1,4 +1,4 @@
-﻿@extends('emails.layout')
+@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -26,8 +26,11 @@
                 <p style="margin: 0 0 16px 0; font-size: 15px; line-height: 24px; color: #0A1228;">
                     {{ trans('emails.password_reset.body', [], $locale) ?: settings('email.password_reset_body', 'We received a request to reset the password for your OeParts account. Click the button below to set a new password.') }}
                 </p>
+                <p style="margin: 0 0 8px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
+                    {{ trans('emails.password_reset.expiry_note', ['minutes' => config('auth.passwords.users.expire', 60)], $locale) }}
+                </p>
                 <p style="margin: 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    {{ trans('emails.password_reset.expiry_note', [], $locale) ?: settings('email.password_reset_expiry_note', 'This link expires in 60 minutes. If you did not request a password reset, you can safely ignore this email.') }}
+                    {{ trans('emails.password_reset.fallback_note', [], $locale) }}
                 </p>
             </td>
         </tr>
@@ -56,7 +59,7 @@
                                         <span class="spec-label" style="color: #4E5A74;">LINK EXPIRES</span>
                                     </td>
                                     <td align="right" style="padding-bottom: 8px; border-bottom: 1px dashed #D8CFB6;">
-                                        <span class="font-mono" style="font-size: 13px; color: #0A1228; font-weight: bold;">{{ settings('email.password_reset_expiry_display', '60 MIN') }}</span>
+                                        <span class="font-mono" style="font-size: 13px; color: #0A1228; font-weight: bold;">{{ config('auth.passwords.users.expire', 60) }} MIN</span>
                                     </td>
                                 </tr>
                                 <tr>
@@ -78,7 +81,7 @@
         <tr>
             <td style="padding-top: 16px; border-top: 1px solid #D8CFB6;">
                 <p style="margin: 0 0 8px 0; font-size: 13px; line-height: 18px; color: #4E5A74;">
-                    {{ trans('emails.password_reset.fallback_note', [], $locale) ?: "If the button above doesn't work, copy and paste this URL into your browser:" }}
+                    If the button above doesn't work, copy and paste this URL into your browser:
                 </p>
                 <p style="margin: 0; font-family: 'Courier New', Courier, monospace; font-size: 12px; line-height: 18px; color: #0A1228; word-break: break-all;">
                     {{ $resetUrl }}

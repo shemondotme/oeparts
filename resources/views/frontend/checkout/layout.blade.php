@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('checkout_title', 'checkout.title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -33,9 +33,6 @@
                     <span class="text-ivory/30">/</span>
                     <span class="text-ivory">{{ ui_copy('checkout_breadcrumb_checkout', 'checkout.breadcrumb_checkout') }}</span>
                 </nav>
-                <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    DOC · CHECKOUT-SHEET · {{ ui_copy('checkout_step_of_five', 'checkout.step_of_five', ['n' => str_pad($currentStep, 2, '0', STR_PAD_LEFT)]) }}
-                </span>
             </div>
 
             <div class="flex items-end justify-between gap-4 flex-wrap">
@@ -47,10 +44,6 @@
                     <h1 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
                         {{ ui_copy('checkout_heading', 'checkout.heading') }}<span class="text-amber">.</span>
                     </h1>
-                    <p class="mt-4 inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/70">
-                        <x-heroicon-s-lock-closed class="w-3 h-3 text-amber" />
-                        {{ ui_copy('checkout_tls_ssl_badge', 'checkout.tls_ssl_badge') }}
-                    </p>
                 </div>
                 <a href="{{ route('frontend.cart.index', ['lang' => app()->getLocale()]) }}"
                    class="hidden md:inline-flex items-center gap-2 px-4 py-2.5 border border-ivory/20 text-ivory
@@ -231,7 +224,7 @@
                     <div class="border border-ink bg-paper">
                         <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                             <span class="bp-spec text-amber-ink">{{ ui_copy('checkout_order_summary', 'checkout.order_summary') }}</span>
-                            <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
+                            <span class="bp-spec-mono">{{ settings('general.currency', 'EUR') }}</span>
                         </div>
 
                         <div class="relative p-5">
@@ -276,7 +269,7 @@
                                         </dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-amber-ink">
-                                            -{{ settings('store.currency_symbol', '€') }}{{ number_format($summaryData['coupon_discount'] ?? 0, 2) }}
+                                            -{{ settings('general.currency_symbol', '€') }}{{ number_format($summaryData['coupon_discount'] ?? 0, 2) }}
                                         </dd>
                                     </div>
                                     @endif
@@ -316,7 +309,7 @@
                                     @endif
                                     <div class="flex items-baseline justify-between gap-3 py-2">
                                         <dt class="bp-spec-mono">
-                                            {{ ui_copy('checkout_vat_short', 'checkout.vat_short') }} · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? 21) }}%
+                                            {{ ui_copy('checkout_vat_short', 'checkout.vat_short') }} · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? settings('tax.default_vat_rate', 21)) }}%
                                         </dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
@@ -333,7 +326,7 @@
                                 <div class="mt-4 pt-4 border-t-2 border-ink">
                                     <div class="flex items-end justify-between gap-3">
                                         <div>
-                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('checkout_total_currency_label', 'checkout.total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</p>
+                                            <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('checkout_total_currency_label', 'checkout.total_currency_label', ['currency' => settings('general.currency', 'EUR')]) }}</p>
                                             <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ ui_copy('checkout_including_all_taxes', 'checkout.including_all_taxes') }}</p>
                                         </div>
                                         <p class="font-mono text-3xl sm:text-4xl font-medium text-ink tabular-nums leading-none tracking-tight">
@@ -343,11 +336,7 @@
                                 </div>
 
                                 {{-- Trust badges --}}
-                                <div class="mt-5 pt-4 border-t border-rule flex items-center justify-between gap-3">
-                                    <span class="inline-flex items-center gap-1.5 bp-spec-mono">
-                                        <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
-                                        {{ ui_copy('checkout_ssl_tls_badge', 'checkout.ssl_tls_badge') }}
-                                    </span>
+                                <div class="mt-5 pt-4 border-t border-rule flex items-center justify-end gap-3">
                                     <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                                         <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
                                         Airwallex

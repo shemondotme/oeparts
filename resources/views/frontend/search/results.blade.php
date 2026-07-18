@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $price_stats = is_array($price_stats ?? null)
@@ -16,7 +16,7 @@
     $manufacturerForSeo = ($total ?? 0) === 1 && ($firstProduct = ($products->first() ?? null)) && $firstProduct->manufacturer
         ? trans_field($firstProduct->manufacturer->name)
         : '';
-    $titleTpl = trim((string) settings('seo.search_results_title_template', ''));
+    $titleTpl = trim(settings_trans('seo.search_results_title_template', ''));
     if ($titleTpl !== '') {
         $searchResultsPageTitle = str_replace(
             ['{oem}', '{count}', '{site}', '{min}', '{max}', '{manufacturer}', '{brand}'],
@@ -31,7 +31,7 @@
             'site' => $siteName,
         ]);
     }
-    $metaTpl = trim((string) settings('seo.search_results_meta_template', ''));
+    $metaTpl = trim(settings_trans('seo.search_results_meta_template', ''));
     if ($metaTpl !== '') {
         $searchResultsMetaDescription = str_replace(
             ['{oem}', '{count}', '{site}', '{min}', '{max}', '{manufacturer}', '{brand}'],
@@ -85,7 +85,7 @@
                 'offers' => [
                     '@type' => 'Offer',
                     'price' => (string) $product->price,
-                    'priceCurrency' => settings('store.currency', 'EUR'),
+                    'priceCurrency' => settings('general.currency', 'EUR'),
                     'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                 ],
             ],
@@ -128,7 +128,7 @@
                        + ($manufacturer_filter ? 1 : 0)
                        + ($car_model_filter ? 1 : 0);
 
-    $conditionLabels = $conditions->pluck('name', 'slug')->toArray();
+    $conditionLabels = $conditions->mapWithKeys(fn ($c) => [$c->slug => condition_label($c)])->toArray();
 @endphp
 
 <div class="relative min-h-screen bg-ivory text-ink pb-20">
@@ -141,11 +141,11 @@
             {{-- ── Document header ─────────────────────────────────────── --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-rule">
                 <nav class="flex items-center gap-2 bp-spec-mono" aria-label="Breadcrumbs">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber-ink transition-colors">Home</a>
+                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('search_breadcrumb_home', 'search.breadcrumb_home') }}</a>
                     <span class="text-rule-strong">/</span>
-                    <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="hover:text-amber-ink transition-colors">Catalogue</a>
+                    <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('search_catalogue_label', 'search.catalogue_label') }}</a>
                     <span class="text-rule-strong">/</span>
-                    <span class="text-ink">Results</span>
+                    <span class="text-ink">{{ ui_copy('search_breadcrumb_results', 'search.breadcrumb_results') }}</span>
                 </nav>
                 <span class="bp-spec-mono">
                     DOC · SPEC-SHEET · {{ $matchBadge['code'] }}
@@ -158,7 +158,7 @@
                 <div class="col-span-12 md:col-span-7">
                     <div class="flex items-center gap-4 mb-6">
                         <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                        <span class="bp-spec text-amber-ink">01 · {{ ui_copy('search_heading_results_for', 'search.heading_results_for') }}</span>
+                        <span class="bp-spec text-amber-ink">{{ ui_copy('search_heading_results_for', 'search.heading_results_for') }}</span>
                     </div>
 
                     <h1 class="font-display font-extrabold text-ink leading-[0.9] tracking-[-0.03em]
@@ -178,7 +178,7 @@
                 <aside class="col-span-12 md:col-span-5">
                     <div class="bp-card-ivory p-5 h-full flex flex-col">
                         <div class="flex items-center justify-between mb-4">
-                            <span class="bp-spec text-amber-ink">01.a · Query Log</span>
+                            <span class="bp-spec text-amber-ink">{{ ui_copy('search_spec_query_log', 'search.spec_query_log') }}</span>
                             <span class="bp-spec-mono">
                                 {{ now()->format('Y·m·d') }}
                             </span>
@@ -224,7 +224,7 @@
             {{-- ── Re-submit query bar (same style & position as zero-results) ── --}}
             <section class="mb-8 bp-rise bp-rise-delay-2">
                 <div class="flex items-end justify-between pb-3 border-b border-ink">
-                    <span class="bp-spec text-ink">02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</span>
+                    <span class="bp-spec text-ink">{{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</span>
                     <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                         min {{ settings('search.min_chars', 3) }} chars · alphanumeric
                     </span>
@@ -234,19 +234,34 @@
 
             {{-- ── Price Stats Strip ───────────────────────────────────── --}}
             @if($price_stats['min'] !== null && $price_stats['max'] !== null && !$filtered_empty)
-            @php $priceMinMaxSame = (string) $price_stats['min'] === (string) $price_stats['max']; @endphp
+            @php
+                $priceMinMaxSame = (string) $price_stats['min'] === (string) $price_stats['max'];
+                // Same VAT treatment + formatter as every per-row price below —
+                // these excl.-VAT figures from SearchService::getPriceStats() used
+                // to be echoed as raw string concatenation regardless of the
+                // tax.price_display setting, so on an inc_vat store this strip
+                // could show a lower "From" price than the cheapest row actually
+                // listed underneath it, with no VAT caption and no locale-aware
+                // number formatting (no thousands/decimal separators).
+                $statsInVat = [
+                    'min' => bcmul((string) $price_stats['min'], $vatMultiplier, 2),
+                    'max' => bcmul((string) $price_stats['max'], $vatMultiplier, 2),
+                    'avg' => bcmul((string) $price_stats['avg'], $vatMultiplier, 2),
+                ];
+                $displayStats = $showIncVatPrimary ? $statsInVat : $price_stats;
+            @endphp
             <div class="grid grid-cols-1 sm:grid-cols-3 border border-ink bg-paper mb-8">
                 @foreach([
-                    ['label' => ui_copy('search_price_from', 'search.price_from'), 'value' => settings('store.currency_symbol', '€') . $price_stats['min'], 'em' => false],
-                    ['label' => ui_copy('search_price_avg', 'search.price_avg'),  'value' => settings('store.currency_symbol', '€') . ($priceMinMaxSame ? $price_stats['min'] : $price_stats['avg']), 'em' => true],
-                    ['label' => ui_copy('search_price_to', 'search.price_to'),   'value' => settings('store.currency_symbol', '€') . $price_stats['max'], 'em' => false],
+                    ['label' => ui_copy('search_price_from', 'search.price_from'), 'value' => $displayStats['min'], 'em' => false],
+                    ['label' => ui_copy('search_price_avg', 'search.price_avg'),  'value' => $priceMinMaxSame ? $displayStats['min'] : $displayStats['avg'], 'em' => true],
+                    ['label' => ui_copy('search_price_to', 'search.price_to'),   'value' => $displayStats['max'], 'em' => false],
                 ] as $idx => $stat)
                 <div class="p-5 sm:p-6 {{ !$loop->last ? 'border-b sm:border-b-0 sm:border-r border-rule' : '' }}">
                     <p class="bp-spec text-ink-muted mb-3">{{ $stat['label'] }}</p>
                     <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight
                               text-3xl sm:text-4xl lg:text-5xl
                               {{ $stat['em'] ? 'text-amber-ink' : '' }}">
-                        {{ $stat['value'] }}
+                        {{ format_price($stat['value']) }}
                     </p>
                     @if($stat['em'])
                     <div class="mt-3 h-[2px] w-8 bg-amber"></div>
@@ -254,6 +269,9 @@
                 </div>
                 @endforeach
             </div>
+            <p class="bp-spec-mono -mt-6 mb-8">
+                {{ $showIncVatPrimary ? ui_copy('search_incl_vat_short', 'search.incl_vat_short') : ui_copy('search_excl_vat_short', 'search.excl_vat_short') }}
+            </p>
             @endif
 
             {{-- ── Notice banners ──────────────────────────────────────── --}}
@@ -263,7 +281,7 @@
                     <x-heroicon-o-arrow-path class="w-4 h-4 text-ink" />
                 </div>
                 <div>
-                    <p class="bp-spec text-amber-ink mb-1">Notice · Cross-Reference</p>
+                    <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('search_notice_cross_eyebrow', 'search.notice_cross_eyebrow') }}</p>
                     <p class="font-display text-base font-bold text-ink mb-1">{{ ui_copy('search_notice_cross_title', 'search.notice_cross_title') }}</p>
                     <p class="text-sm text-body leading-relaxed">{{ ui_copy('search_notice_cross_body', 'search.notice_cross_body', ['oem' => $normalized_query]) }}</p>
                 </div>
@@ -276,7 +294,7 @@
                     <x-heroicon-o-magnifying-glass class="w-4 h-4 text-amber-ink" />
                 </div>
                 <div>
-                    <p class="bp-spec text-amber-ink mb-1">Notice · Partial Match</p>
+                    <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('search_notice_partial_eyebrow', 'search.notice_partial_eyebrow') }}</p>
                     <p class="font-display text-base font-bold text-ink mb-1">{{ ui_copy('search_notice_partial_title', 'search.notice_partial_title') }}</p>
                     <p class="text-sm text-body leading-relaxed">{{ ui_copy('search_notice_partial_body', 'search.notice_partial_body', ['oem' => $normalized_query]) }}</p>
                 </div>
@@ -286,7 +304,8 @@
             {{-- ════════════════════════════════════════════════════════════ --}}
             {{-- SORT & FILTER BAR                                            --}}
             {{-- ════════════════════════════════════════════════════════════ --}}
-            <div class="sticky top-0 z-40 -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 pt-0 pb-4 bg-ivory/95 backdrop-blur-md"
+            <div class="sticky z-40 -mx-4 sm:-mx-6 lg:-mx-10 px-4 sm:px-6 lg:px-10 pt-0 bg-ivory"
+                 style="top: var(--navbar-h, 70px)"
                  x-data="{
                      sort: '{{ $sort ?? 'default' }}',
                      condition: '{{ $condition_filter ?? '' }}',
@@ -306,8 +325,15 @@
                          url.searchParams.delete('page');
                          window.location.href = url.toString();
                      }
-                 }">
-                <div class="relative border border-ink bg-paper">
+                 }"
+                 x-init="$nextTick(() => {
+                     // Exact fractional height — see navbar.blade.php's x-init for why
+                     // this must not be floor()'d/ceil()'d.
+                     const setOffset = () => document.documentElement.style.setProperty('--search-filterbar-h', $el.getBoundingClientRect().height + 'px');
+                     setOffset();
+                     new ResizeObserver(setOffset).observe($el);
+                 })">
+                <div class="relative border border-ink bg-paper" x-ref="filterBox">
                     {{-- Loading overlay --}}
                     <div x-show="loading" x-cloak class="absolute inset-0 bg-paper/90 backdrop-blur-sm flex items-center justify-center z-50">
                         <div class="flex items-center gap-3 text-ink">
@@ -321,7 +347,7 @@
 
                     {{-- Header row --}}
                     <div class="flex items-center justify-between px-4 py-2 border-b border-rule bg-ivory-alt">
-                        <span class="bp-spec text-ink">03 · Filters & Sort</span>
+                        <span class="bp-spec text-ink">{{ ui_copy('search_filters_and_sort', 'search.filters_and_sort') }}</span>
                         @if($activeFilterCount > 0)
                         <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $normalized_query]) }}"
                            class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted hover:text-red-600 transition-colors">
@@ -334,7 +360,7 @@
                     <div class="p-4 flex flex-wrap items-center gap-x-4 gap-y-3">
                         {{-- Sort --}}
                         <div class="flex items-center gap-2">
-                            <span class="bp-spec text-ink-muted">Sort</span>
+                            <span class="bp-spec text-ink-muted">{{ ui_copy('search_sort_word', 'search.sort_word') }}</span>
                             <div class="flex border border-ink">
                                 <button type="button" @click="sort = 'default'; apply()"
                                         :class="sort === 'default' ? 'bg-ink text-ivory' : 'bg-paper text-ink hover:bg-ivory'"
@@ -347,14 +373,14 @@
                                         class="px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] border-l border-ink transition-colors inline-flex items-center gap-1"
                                         :aria-pressed="sort === 'price_asc'">
                                     <x-heroicon-s-arrow-small-up class="w-3 h-3" />
-                                    {{ settings('store.currency_symbol', '€') }}
+                                    {{ settings('general.currency_symbol', '€') }}
                                 </button>
                                 <button type="button" @click="sort = 'price_desc'; apply()"
                                         :class="sort === 'price_desc' ? 'bg-ink text-ivory' : 'bg-paper text-ink hover:bg-ivory'"
                                         class="px-3 py-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.14em] border-l border-ink transition-colors inline-flex items-center gap-1"
                                         :aria-pressed="sort === 'price_desc'">
                                     <x-heroicon-s-arrow-small-down class="w-3 h-3" />
-                                    {{ settings('store.currency_symbol', '€') }}
+                                    {{ settings('general.currency_symbol', '€') }}
                                 </button>
                             </div>
                         </div>
@@ -526,7 +552,7 @@
             {{-- ════════════════════════════════════════════════════════════ --}}
             @if($filtered_empty)
             <div class="bp-card p-10 my-8 text-center">
-                <span class="bp-spec text-amber-ink block mb-4">Report · Filtered-Empty</span>
+                <span class="bp-spec text-amber-ink block mb-4">{{ ui_copy('search_report_filtered_empty', 'search.report_filtered_empty') }}</span>
                 <div class="inline-flex w-12 h-12 border-2 border-ink items-center justify-center mb-6">
                     <x-heroicon-o-funnel class="w-6 h-6 text-ink" />
                 </div>
@@ -551,23 +577,44 @@
             <div class="mt-6">
 
                 {{-- ═══ TABLE VIEW (Desktop) ══════════════════════════════ --}}
+                {{-- No overflow-x-auto wrapper here on purpose: setting overflow-x forces
+                     overflow-y to 'auto' too (CSS spec), which turns this div into the
+                     nearest scroll container for the sticky thead below — since this div
+                     never actually scrolls internally, that silently breaks position:sticky
+                     (confirmed live via Playwright). At the lg: breakpoint (>=1024px) the
+                     table's min-w-[900px] always fits its container, so the horizontal
+                     scroll safety net was never functionally needed anyway. --}}
                 <div class="hidden lg:block">
-                    <div class="border border-ink bg-paper overflow-hidden">
-                        <div class="overflow-x-auto">
+                    <div class="border border-ink bg-paper">
+                        <div>
                             <table class="w-full min-w-[900px] table-auto border-collapse text-sm" role="table">
                                 <caption class="sr-only">{{ ui_copy('search_table_caption', 'search.table_caption', ['oem' => $normalized_query]) }}</caption>
                                 <thead>
+                                    @php
+                                        // No border-t here, and no padding/gap on the filter bar above
+                                        // it either (see its wrapper div) — this row sticks flush against
+                                        // the filter box's OWN existing bottom border instead of drawing
+                                        // a new one of its own. A border on THIS row's top edge sits
+                                        // exactly at the seam between two independently-sticky elements,
+                                        // where sub-pixel snapping can round differently for each and
+                                        // make the line render inconsistently (missing, or doubled up and
+                                        // darker). The filter box's border is on an element that's simply
+                                        // always the topmost thing painted there, so it never has that
+                                        // problem — reuse it instead of fighting for a second, fragile one.
+                                        $stickyTh = 'sticky z-30 bg-ivory-alt border-b border-ink';
+                                        $stickyThStyle = 'top: calc(var(--navbar-h, 70px) + var(--search-filterbar-h, 96px))';
+                                    @endphp
                                     <tr class="bg-ivory-alt border-b border-ink">
-                                        <th class="text-left px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle" scope="col">
+                                        <th class="{{ $stickyTh }} text-left px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle" scope="col" style="{{ $stickyThStyle }}">
                                             <span class="flex items-center gap-2">
                                                 <span class="font-mono text-[10px] text-ink-muted">№</span>
                                                 {{ ui_copy('search_th_oem_brand', 'search.th_oem_brand') }}
                                             </span>
                                         </th>
-                                        <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_condition', 'search.th_condition') }}</th>
-                                        <th class="text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_stock', 'search.th_stock') }}</th>
-                                        <th class="text-right px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_price', 'search.th_price') }} · {{ settings('store.currency_symbol', '€') }}</th>
-                                        <th class="text-center px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col">{{ ui_copy('search_th_action', 'search.th_action') }}</th>
+                                        <th class="{{ $stickyTh }} text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col" style="{{ $stickyThStyle }}">{{ ui_copy('search_th_condition', 'search.th_condition') }}</th>
+                                        <th class="{{ $stickyTh }} text-center px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col" style="{{ $stickyThStyle }}">{{ ui_copy('search_th_stock', 'search.th_stock') }}</th>
+                                        <th class="{{ $stickyTh }} text-right px-4 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col" style="{{ $stickyThStyle }}">{{ ui_copy('search_th_price', 'search.th_price') }} · {{ settings('general.currency_symbol', '€') }}</th>
+                                        <th class="{{ $stickyTh }} text-center px-5 py-3 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink align-middle whitespace-nowrap" scope="col" style="{{ $stickyThStyle }}">{{ ui_copy('search_th_action', 'search.th_action') }}</th>
                                     </tr>
                                 </thead>
                                 @foreach($products as $index => $product)
@@ -578,7 +625,7 @@
                                         $priceWithVat = bcmul((string) $product->price, $vatMultiplier, 2);
                                         $cCond = $product->condition;
                                         $condKey = $cCond?->slug ?? 'new';
-                                        $condLabel = $cCond?->name ?? 'New';
+                                        $condLabel = condition_label($cCond);
                                         $condBg = $cCond?->bg_color ?? '#DCFCE7';
                                         $condText = $cCond?->text_color ?? '#16A34A';
                                         $rowNum = str_pad($index + 1, 3, '0', STR_PAD_LEFT);
@@ -624,14 +671,14 @@
                                                 <div class="min-w-0" x-data="clipboard()">
                                                     <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                                        @click="copy('{{ $product->oem_number }}')"
-                                                       title="Copy OEM number">
+                                                       title="{{ ui_copy('search_copy_oem_tooltip', 'search.copy_oem_tooltip') }}">
                                                         {{ $product->oem_number }}
                                                     </button>
                                                     <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                                         {{ $manufacturer ? trans_field($manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand') }}
                                                     </p>
                                                     <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
-                                                          class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
+                                                          class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('search_copied_label', 'search.copied_label') }}</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -719,7 +766,7 @@
                                                     </span>
                                                     <span x-show="cartState === 'added'" x-cloak class="inline-flex items-center gap-1.5">
                                                         <x-heroicon-s-check class="w-3 h-3" />
-                                                        OK
+                                                        {{ ui_copy('search_btn_added', 'search.btn_added') }}
                                                     </span>
                                                 </button>
                                             </div>
@@ -829,7 +876,7 @@
                         $priceWithVat = bcmul((string) $product->price, $vatMultiplier, 2);
                         $cCond = $product->condition;
                         $condKey = $cCond?->slug ?? 'new';
-                        $condLabel = $cCond?->name ?? 'New';
+                        $condLabel = condition_label($cCond);
                         $condBg = $cCond?->bg_color ?? '#DCFCE7';
                         $condText = $cCond?->text_color ?? '#16A34A';
                         $crossRefs = $product->crossReferences ?? collect();
@@ -871,14 +918,14 @@
                                     <div class="min-w-0" x-data="clipboard()">
                                         <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-base font-bold text-ink tabular-nums truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                            @click="copy('{{ $product->oem_number }}')"
-                                           title="Copy OEM number">
+                                           title="{{ ui_copy('search_copy_oem_tooltip', 'search.copy_oem_tooltip') }}">
                                             {{ $product->oem_number }}
                                         </button>
                                         <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-ink-muted truncate mt-0.5">
                                             {{ $manufacturer ? trans_field($manufacturer->name) : '—' }}
                                         </p>
                                         <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
-                                              class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
+                                              class="text-[10px] font-mono font-bold text-emerald-600">{{ ui_copy('search_copied_label', 'search.copied_label') }}</span>
                                     </div>
                                 </div>
                                 <span class="inline-flex items-center justify-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm shrink-0"
@@ -1044,7 +1091,7 @@
             {{-- ── Inquiry CTA ─────────────────────────────────────────── --}}
             <div class="mt-12 border border-ink bg-paper">
                 <div class="flex items-center justify-between px-5 py-3 border-b border-rule bg-ivory-alt">
-                    <span class="bp-spec text-amber-ink">99 · {{ ui_copy('search_inquiry_title', 'search.inquiry_title') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ ui_copy('search_inquiry_title', 'search.inquiry_title') }}</span>
                     <span class="bp-spec-mono">
                         SLA · {{ (int) settings('part_inquiry.response_hours', 24) }} h
                     </span>
@@ -1053,7 +1100,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-0">
                     <div class="p-6 md:p-8 md:border-r md:border-rule">
                         <h2 class="font-display text-2xl md:text-3xl font-extrabold text-ink tracking-tight mb-3 text-balance">
-                            Can't find it? Ask our team<span class="text-amber">.</span>
+                            {{ ui_copy('search_inquiry_cta_heading', 'search.inquiry_cta_heading') }}<span class="text-amber">.</span>
                         </h2>
                         <p class="text-base text-body leading-relaxed">
                             {{ ui_copy('search_inquiry_subtitle', 'search.inquiry_subtitle', ['hours' => (int) settings('part_inquiry.response_hours', 24)]) }}
@@ -1077,13 +1124,14 @@
 
                     <div class="p-6 md:p-8 bg-ivory-alt/40 flex flex-col justify-center">
                         <button type="button"
+                                x-data
                                 x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
                                 class="bp-btn-primary w-full justify-center">
                             <x-heroicon-s-paper-airplane class="w-5 h-5" />
                             {{ ui_copy('search_inquiry_submit', 'search.inquiry_submit') }}
                         </button>
                         <p class="mt-4 bp-spec-mono text-center">
-                            Secure · TLS 1.3 · Response within {{ (int) settings('part_inquiry.response_hours', 24) }} h
+                            {{ ui_copy('search_response_within', 'search.response_within', ['hours' => (int) settings('part_inquiry.response_hours', 24)]) }}
                         </p>
                     </div>
                 </div>
@@ -1091,24 +1139,6 @@
 
         </div>
     </div>
-</div>
-
-{{-- ── Scroll to Top ────────────────────────────────────────────────────── --}}
-<div x-data="{ show: false }"
-     x-init="window.addEventListener('scroll', () => { show = window.scrollY > 400 }, { passive: true })"
-     x-show="show"
-     x-transition:enter="transition ease-out duration-300"
-     x-transition:enter-start="opacity-0 translate-y-4"
-     x-transition:enter-end="opacity-100 translate-y-0"
-     x-cloak
-     class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
-    <button @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-            class="w-10 h-10 bg-ink border border-ink text-ivory flex items-center justify-center
-                   hover:bg-amber hover:text-ink transition-colors"
-            title="{{ ui_copy('search_scroll_to_top', 'search.scroll_to_top') }}"
-            aria-label="{{ ui_copy('search_scroll_to_top', 'search.scroll_to_top') }}">
-        <x-heroicon-s-arrow-up class="w-4 h-4" />
-    </button>
 </div>
 
 <x-modals.part-inquiry :normalized-query="$normalized_query ?? ''" />

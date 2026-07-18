@@ -1,4 +1,4 @@
-﻿@extends('frontend.checkout.layout')
+@extends('frontend.checkout.layout')
 
 @section('checkout_content')
 <div x-data="{ paymentMethod: '{{ old('payment_method', $checkoutData['payment_method'] ?? 'card') }}' }" class="space-y-6">
@@ -20,7 +20,6 @@
         <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors"
                :class="paymentMethod === 'card' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
             <div class="flex items-center gap-3 shrink-0 mt-0.5">
-                <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">01</span>
                 <input type="radio" name="payment_method" value="card"
                        x-model="paymentMethod" required
                        class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
@@ -41,7 +40,6 @@
         <label class="flex items-start gap-4 p-5 cursor-pointer transition-colors"
                :class="paymentMethod === 'bank_transfer' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
             <div class="flex items-center gap-3 shrink-0 mt-0.5">
-                <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase text-ink-muted w-6">02</span>
                 <input type="radio" name="payment_method" value="bank_transfer"
                        x-model="paymentMethod" required
                        class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
@@ -105,15 +103,7 @@
     </div>
 
     {{-- Trust strip --}}
-    <div class="border border-rule bg-ivory-alt p-4 grid grid-cols-3 divide-x divide-rule">
-        <div class="flex items-center justify-center gap-2 px-2">
-            <x-heroicon-s-shield-check class="w-4 h-4 text-amber-ink shrink-0" />
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink">256-bit SSL</span>
-        </div>
-        <div class="flex items-center justify-center gap-2 px-2">
-            <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink shrink-0" />
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink">Encrypted</span>
-        </div>
+    <div class="border border-rule bg-ivory-alt p-4">
         <div class="flex items-center justify-center gap-2 px-2">
             <x-heroicon-s-credit-card class="w-4 h-4 text-amber-ink shrink-0" />
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink">Airwallex</span>

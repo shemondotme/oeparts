@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $lang        = app()->getLocale();
@@ -6,12 +6,13 @@
     $brandName   = trans_field($manufacturer->name) ?: $manufacturer->slug;
     $modelName   = $carModel->name;
     $totalParts  = $products->total();
-    $otherCount  = $otherModels->count();
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
-@section('title'){{ $modelName }} · {{ $brandName }} · {{ __('Compatible Parts') }} · {{ $siteName }}@endsection
-@section('meta_description'){{ __('Find compatible parts for :brand :model (:years). Verify fitment, cross-references, and stock with direct shipping in the EU.', ['brand' => $brandName, 'model' => $modelName, 'years' => ($carModel->year_from ?? '—') . '–' . ($carModel->year_to ?? __('now'))]) }}@endsection
+@section('title'){{ $modelName }} · {{ $brandName }} · {{ __('car_model.meta_compatible_parts') }} · {{ $siteName }}@endsection
+@section('meta_description'){{ __('car_model.meta_description_show', ['brand' => $brandName, 'model' => $modelName, 'years' => ($carModel->year_from ?? '—') . '–' . ($carModel->year_to ?? __('car_model.now_word'))]) }}@endsection
+@section('og_title'){{ $modelName }} · {{ $brandName }} · {{ __('car_model.og_title_show_suffix') }}@endsection
+@section('og_description'){{ __('car_model.og_description_show', ['count' => $totalParts, 'brand' => $brandName, 'model' => $modelName]) }}@endsection
 
 @section('canonical')
     <link rel="canonical" href="{{ route('frontend.car-model.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug]) }}">
@@ -30,10 +31,10 @@
     '@@context'        => 'https://schema.org',
     '@type'           => 'BreadcrumbList',
     'itemListElement' => [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'),   'item' => url('/'.$lang.'/')],
-        ['@type' => 'ListItem', 'position' => 2, 'name' => __('Brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('car_model.breadcrumb_home'),   'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => __('car_model.breadcrumb_brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
         ['@type' => 'ListItem', 'position' => 3, 'name' => $brandName,   'item' => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
-        ['@type' => 'ListItem', 'position' => 4, 'name' => __('Models'),  'item' => route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
+        ['@type' => 'ListItem', 'position' => 4, 'name' => __('car_model.breadcrumb_models'),  'item' => route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
         ['@type' => 'ListItem', 'position' => 5, 'name' => $modelName,   'item' => route('frontend.car-model.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug])],
     ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
@@ -53,7 +54,7 @@
                 'offers' => [
                     '@type' => 'Offer',
                     'price' => (string) $product->price,
-                    'priceCurrency' => settings('store.currency', 'EUR'),
+                    'priceCurrency' => settings('general.currency', 'EUR'),
                     'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                 ],
             ],
@@ -87,18 +88,18 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('car_model.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
-                <a href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ __('Brands') }}</a>
+                <a href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ __('car_model.breadcrumb_brands') }}</a>
                 <span class="text-rule-strong">/</span>
                 <a href="{{ route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}" class="hover:text-ink transition-colors">{{ $brandName }}</a>
                 <span class="text-rule-strong">/</span>
-                <a href="{{ route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}" class="hover:text-ink transition-colors">{{ __('Models') }}</a>
+                <a href="{{ route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}" class="hover:text-ink transition-colors">{{ __('car_model.breadcrumb_models') }}</a>
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink truncate max-w-[14rem]">{{ $modelName }}</span>
             </nav>
             <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                DOC · PLATFORM · {{ strtoupper($manufacturer->slug) }} · {{ strtoupper(str_replace('-', '·', $carModel->slug)) }}
+                {{ __('car_model.doc_platform_prefix') }} · {{ strtoupper($manufacturer->slug) }} · {{ strtoupper(str_replace('-', '·', $carModel->slug)) }}
             </div>
         </div>
 
@@ -107,7 +108,7 @@
             <div class="col-span-12 md:col-span-8">
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">{{ __('Chassis Platform · Covered Specification') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('car_model.eyebrow_chassis_platform') }}</span>
                 </div>
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
@@ -120,7 +121,7 @@
                 </div>
 
                 <p class="max-w-2xl text-base text-body leading-relaxed mb-6">
-                    {{ __('Every certified part catalogued specifically for the :brand :model platform. Filter results by part condition or brand name to confirm compatibility.', ['brand' => $brandName, 'model' => $modelName]) }}
+                    {{ __('car_model.body_every_certified_part', ['brand' => $brandName, 'model' => $modelName]) }}
                 </p>
 
                 {{-- CTAs --}}
@@ -130,14 +131,14 @@
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                         <x-heroicon-s-magnifying-glass class="w-4 h-4" />
-                        {{ __('Search OEM Number') }}
+                        {{ __('car_model.search_oem_number_btn') }}
                     </a>
                     <a href="{{ route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}"
                        class="inline-flex items-center gap-2 px-5 py-3 border border-ink text-ink bg-paper
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-ink hover:text-ivory transition-colors">
                         <x-heroicon-s-arrow-long-left class="w-4 h-4" />
-                        {{ __('Other Platforms') }}
+                        {{ __('car_model.other_platforms_btn') }}
                     </a>
                 </div>
             </div>
@@ -145,34 +146,29 @@
             {{-- Spec panel --}}
             <aside class="col-span-12 md:col-span-4">
                 <div class="relative border border-ink bg-paper p-6 bp-register">
-                    <p class="bp-spec text-ink-muted mb-4">{{ __('Platform Details') }}</p>
+                    <p class="bp-spec text-ink-muted mb-4">{{ __('car_model.platform_details') }}</p>
                     <dl class="space-y-3 text-sm">
                         <div class="bp-leader pt-0.5">
-                            <dt class="text-ink-muted">{{ __('Brand') }}</dt>
+                            <dt class="text-ink-muted">{{ __('car_model.brand_word') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink uppercase">{{ $brandName }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">{{ __('Chassis') }}</dt>
+                            <dt class="text-ink-muted">{{ __('car_model.chassis_word') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink truncate">{{ $modelName }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">{{ __('Years') }}</dt>
+                            <dt class="text-ink-muted">{{ __('car_model.years_word') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">
-                                {{ $carModel->year_from ?? '—' }}–{{ $carModel->year_to ?? __('now') }}
+                                {{ $carModel->year_from ?? '—' }}–{{ $carModel->year_to ?? __('car_model.now_word') }}
                             </dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-ink-muted">{{ __('Parts Indexed') }}</dt>
+                            <dt class="text-ink-muted">{{ __('car_model.parts_indexed') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono font-bold text-ink tabular-nums">{{ number_format($totalParts) }}</dd>
-                        </div>
-                        <div class="bp-leader">
-                            <dt class="text-ink-muted">{{ __('Supplier Network') }}</dt>
-                            <span class="bp-leader-dots"></span>
-                            <dd class="font-mono font-bold text-amber-ink">EU VERIFIED</dd>
                         </div>
                     </dl>
                 </div>
@@ -185,11 +181,11 @@
             {{-- Left column: parts list ledger (8 cols) --}}
             <section class="col-span-12 lg:col-span-8 bp-rise bp-rise-delay-2">
                 <div class="flex flex-wrap items-end justify-between gap-3 pb-3 border-b border-ink mb-6">
-                    <span class="bp-spec text-ink">01 · {{ __('Compatible Parts Ledger') }}</span>
+                    <span class="bp-spec text-ink">{{ __('car_model.compatible_parts_ledger') }}</span>
                     <div class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        {{ __('Page') }} {{ $products->currentPage() }}/{{ max(1,$products->lastPage()) }}
+                        {{ __('car_model.stats_page') }} {{ $products->currentPage() }}/{{ max(1,$products->lastPage()) }}
                         <span class="mx-2 text-rule-strong">│</span>
-                        {{ number_format($totalParts) }} {{ __('compatible SKUs') }}
+                        {{ number_format($totalParts) }} {{ __('car_model.compatible_skus') }}
                     </div>
                 </div>
 
@@ -198,32 +194,32 @@
                         <div class="inline-flex items-center justify-center w-16 h-16 border border-ink bg-ivory-alt mb-5">
                             <x-heroicon-o-cube class="w-7 h-7 text-ink-muted" />
                         </div>
-                        <p class="font-display text-xl font-bold text-ink leading-tight">{{ __('No specific parts linked yet') }}</p>
+                        <p class="font-display text-xl font-bold text-ink leading-tight">{{ __('car_model.no_specific_parts_yet') }}</p>
                         <p class="mt-2 text-sm text-ink-muted max-w-md mx-auto">
-                            {{ __("No parts have been explicitly mapped to this platform chassis yet. Sourcing is active. Search by OEM number directly — our indexing engine matches references dynamically.") }}
+                            {{ __('car_model.no_parts_mapped_body') }}
                         </p>
                         <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                            class="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-ink text-ivory
                                   font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                   hover:bg-amber hover:text-ink transition-colors">
                             <x-heroicon-s-magnifying-glass class="w-4 h-4" />
-                            {{ __('Open Search Console') }}
+                            {{ __('car_model.open_search_console_btn') }}
                         </a>
                     </div>
                 @else
                     {{-- Genuinely tabular data — ARIA table roles layered onto the
                          CSS grid/card markup so screen readers get real column/row
                          structure without disturbing the existing responsive layout. --}}
-                    <div class="border border-ink bg-paper overflow-hidden" role="table" aria-label="{{ __('Parts · Ledger') }}">
+                    <div class="border border-ink bg-paper overflow-hidden" role="table" aria-label="{{ __('car_model.compatible_parts_ledger') }}">
                         {{-- Table header --}}
                         <div class="hidden md:grid grid-cols-[5rem_1.2fr_1fr_8rem_6rem_7rem] items-center gap-4 px-5 py-3 bg-ink text-ivory" role="rowgroup">
                             <div class="contents" role="row">
                                 <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">#</span>
-                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('OEM number') }}</span>
-                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('Name') }}</span>
-                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('Condition') }}</span>
-                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('Price') }}</span>
-                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('Action') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('car_model.th_oem_number') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('car_model.th_name') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('car_model.th_condition') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('car_model.th_price') }}</span>
+                                <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('car_model.th_action') }}</span>
                             </div>
                         </div>
 
@@ -238,14 +234,14 @@
                                     <div class="min-w-0" x-data="clipboard()" role="cell">
                                         <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-sm font-bold text-ink truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                            @click="copy('{{ $product->oem_number }}')"
-                                           title="Copy OEM number">
+                                           title="{{ __('search.copy_oem_tooltip') }}">
                                             {{ $product->oem_number }}
                                         </button>
                                         <p class="md:hidden mt-0.5 text-xs text-ink-muted truncate">
                                             {{ trans_field($product->name) }}
                                         </p>
                                         <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
-                                              class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
+                                              class="text-[10px] font-mono font-bold text-emerald-600">{{ __('search.copied_label') }}</span>
                                     </div>
                                     {{-- Name --}}
                                     <p class="hidden md:block text-sm text-body truncate" role="cell">
@@ -269,7 +265,7 @@
                                             </p>
                                         @else
                                             <p class="font-mono text-xs text-ink-muted tabular-nums">
-                                                {{ __('On request') }}
+                                                {{ __('car_model.on_request') }}
                                             </p>
                                         @endif
                                     </div>
@@ -281,7 +277,7 @@
                                                   font-mono text-[10px] font-bold tracking-[0.2em] uppercase text-ink
                                                   group-hover:bg-ink group-hover:text-amber
                                                   transition-colors">
-                                            {{ __('View') }}
+                                            {{ __('car_model.view_btn') }}
                                             <x-heroicon-s-arrow-long-right class="w-3 h-3" />
                                         </a>
                                     </div>
@@ -293,7 +289,7 @@
                     {{-- Pagination --}}
                     @if($products->hasPages())
                         <div class="mt-6">
-                            {{ $products->links() }}
+                            {{ $products->links('components.ui.pagination') }}
                         </div>
                     @endif
                 @endif
@@ -303,13 +299,13 @@
             <aside class="col-span-12 lg:col-span-4 space-y-6 lg:sticky lg:top-10 lg:h-fit bp-rise bp-rise-delay-3">
                 <div class="border border-ink bg-paper">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Brand Models') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('car_model.brand_models', ['brand' => $brandName]) }}</span>
                         <span class="font-mono text-[9px] tracking-[0.16em] uppercase text-ivory/60">LIST</span>
                     </div>
 
                     @if($otherModels->isEmpty())
                         <div class="p-5 text-center text-sm text-ink-muted leading-relaxed">
-                            {{ __('No other platforms catalogued for this brand.') }}
+                            {{ __('car_model.no_other_platforms') }}
                         </div>
                     @else
                         <ul class="divide-y divide-rule">
@@ -323,7 +319,7 @@
                                             </p>
                                             @if($oModel->year_from || $oModel->year_to)
                                                 <p class="font-mono text-[10px] text-ink-muted group-hover:text-ink mt-0.5 tabular-nums">
-                                                    {{ $oModel->year_from ?? '—' }}–{{ $oModel->year_to ?? __('now') }}
+                                                    {{ $oModel->year_from ?? '—' }}–{{ $oModel->year_to ?? __('car_model.now_word') }}
                                                 </p>
                                             @endif
                                         </div>
@@ -335,7 +331,7 @@
                         <div class="p-4 bg-ivory-alt border-t border-rule text-center">
                             <a href="{{ route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}"
                                class="bp-link text-xs tracking-wider">
-                                {{ __('View all models') }}
+                                {{ __('car_model.view_all_models_btn') }}
                             </a>
                         </div>
                     @endif
@@ -343,19 +339,20 @@
 
                 {{-- Technical drawing concierge sidebar widget --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Sourcing desk') }}</p>
+                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('car_model.sourcing_desk') }}</p>
                     <h3 class="font-display text-base font-extrabold tracking-[-0.02em] leading-tight">
-                        {{ __('Can\'t find compatible parts?') }}
+                        {{ __('car_model.cant_find_compatible') }}
                     </h3>
                     <p class="mt-2 text-sm text-ivory/70 leading-relaxed">
-                        {{ __('If your chassis code is rare or you require heavy components, submit a manual specification request to our sourcing desk.') }}
+                        {{ __('car_model.rare_chassis_body') }}
                     </p>
                     <button type="button"
+                            x-data
                             x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
                             class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-amber text-ink
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                                    hover:bg-paper transition-colors w-full justify-center">
-                        {{ __('Request Sourcing') }}
+                        {{ __('car_model.request_sourcing_btn') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                     </button>
                 </div>

@@ -46,7 +46,6 @@ return [
     'validation_fallback' => 'Vérifiez le formulaire ci-dessus.',
     'submit' => 'Envoyer la demande',
     'submitting' => 'Envoi…',
-    'trust_ssl' => 'Chiffré SSL',
     'trust_response' => 'Réponse :hours h',
     'trust_nospam' => 'Pas de spam',
     'keyboard_hint_html' => 'Appuyez sur :kbd pour envoyer',
@@ -56,4 +55,23 @@ return [
     'rate_limited' => 'Trop de demandes. Réessayez plus tard.',
     'guest_not_allowed' => 'Veuillez vous connecter pour envoyer une demande de pièce.',
     'submitted' => 'Votre demande a été envoyée. Nous répondrons sous :hours heures.',
+
+    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    'inline_form_label' => 'Formulaire · Demande rapide',
+    'inline_toggle_show' => 'Ajouter les détails du véhicule (optionnel)',
+    'inline_toggle_hide' => 'Masquer les détails du véhicule',
+    'inline_spec_sla' => 'SLA · Réponse',
+    'inline_spec_channel' => 'Canal',
+    'inline_spec_channel_value' => 'E-mail · Sécurisé',
+    'inline_spec_coverage' => 'Couverture',
+    'inline_spec_coverage_value' => '27 pays UE',
+
+    // Server-side validation messages (PartInquiryRequest)
+    'validation_email_required' => 'Veuillez saisir votre adresse e-mail.',
+    'validation_email_invalid' => 'Veuillez saisir une adresse e-mail valide.',
+    'validation_oem_required' => 'Veuillez saisir le numéro de pièce OEM.',
+    'validation_year_invalid' => 'Veuillez saisir une année valide à 4 chiffres.',
+    'validation_urgency_invalid' => 'Veuillez sélectionner un niveau d\'urgence valide.',
+    'success_expected_label' => 'Réponse estimée',
+    'next_protocol' => 'Étape suivante',
 ];

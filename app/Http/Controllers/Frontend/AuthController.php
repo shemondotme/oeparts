@@ -26,6 +26,7 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string|min:8',
+            'website' => 'max:0',
         ]);
 
         if ($validator->fails()) {
@@ -127,13 +128,16 @@ class AuthController extends Controller
             ], 403);
         }
 
+        $pwMin = (int) settings('auth.customer_password_min', 8);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:200',
             'email' => 'required|email|unique:users,email',
             'phone' => 'nullable|string|max:30',
-            'password' => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
+            'password' => ['required', 'string', 'confirmed', Password::min($pwMin)->mixedCase()->numbers()->symbols()->uncompromised()],
             'password_confirmation' => 'required|string',
             'agree_terms' => 'required|accepted',
+            'website' => 'max:0',
         ]);
 
         if ($validator->fails()) {

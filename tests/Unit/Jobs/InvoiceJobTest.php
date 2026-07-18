@@ -16,10 +16,13 @@ class InvoiceJobTest extends TestCase
 {
     use RefreshDatabase;
 
+    private string $invoiceDir;
+
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake('public');
+        Storage::fake('local');
+        $this->invoiceDir = 'invoices/' . now()->format('Y/m');
     }
 
     #[Test]
@@ -44,7 +47,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('public')->assertExists('invoices/INV-2024-001.pdf');
+        Storage::disk('local')->assertExists("{$this->invoiceDir}/INV-2024-001.pdf");
     }
 
     #[Test]
@@ -57,10 +60,10 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        $path = 'invoices/INV-TEST-001.pdf';
-        Storage::disk('public')->assertExists($path);
+        $path = "{$this->invoiceDir}/INV-TEST-001.pdf";
+        Storage::disk('local')->assertExists($path);
 
-        $content = Storage::disk('public')->get($path);
+        $content = Storage::disk('local')->get($path);
         $this->assertNotEmpty($content);
         $this->assertStringStartsWith('%PDF', $content);
     }
@@ -76,8 +79,8 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('public')->assertExists('invoices/UNIQUE-INV-123.pdf');
-        Storage::disk('public')->assertMissing('invoices/ORD-456.pdf');
+        Storage::disk('local')->assertExists("{$this->invoiceDir}/UNIQUE-INV-123.pdf");
+        Storage::disk('local')->assertMissing("{$this->invoiceDir}/ORD-456.pdf");
     }
 
     #[Test]
@@ -90,7 +93,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('public')->assertExists('invoices/INV-PATH-TEST.pdf');
+        Storage::disk('local')->assertExists("{$this->invoiceDir}/INV-PATH-TEST.pdf");
     }
 
     #[Test]
@@ -124,7 +127,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('public')->assertExists('invoices/INV-ITEMS-001.pdf');
+        Storage::disk('local')->assertExists("{$this->invoiceDir}/INV-ITEMS-001.pdf");
     }
 
     #[Test]
@@ -137,7 +140,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('public')->assertExists('invoices/INV-GUEST-001.pdf');
+        Storage::disk('local')->assertExists("{$this->invoiceDir}/INV-GUEST-001.pdf");
     }
 
     #[Test]
@@ -156,7 +159,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('public')->assertExists('invoices/INV-ADDR-001.pdf');
+        Storage::disk('local')->assertExists("{$this->invoiceDir}/INV-ADDR-001.pdf");
     }
 
     #[Test]
@@ -178,7 +181,7 @@ class InvoiceJobTest extends TestCase
         }
 
         foreach ($orders as $order) {
-            Storage::disk('public')->assertExists("invoices/{$order->invoice_number}.pdf");
+            Storage::disk('local')->assertExists("{$this->invoiceDir}/{$order->invoice_number}.pdf");
         }
     }
 
@@ -195,6 +198,6 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle($invoiceService);
 
-        Storage::disk('public')->assertExists('invoices/INV-SERVICE-001.pdf');
+        Storage::disk('local')->assertExists("{$this->invoiceDir}/INV-SERVICE-001.pdf");
     }
 }

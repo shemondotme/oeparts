@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('account_refunds_title', 'account.refunds_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -12,7 +12,6 @@
     eyebrow="{{ ui_copy('account_refunds_eyebrow', 'account.refunds_eyebrow') }}"
     title="{{ ui_copy('account_refund_requests', 'account.refund_requests') }}"
     :subtitle="ui_copy('account_refunds_subtitle', 'account.refunds_subtitle')"
-    docId="DOC · REFUND-INDEX · {{ now()->format('Y.m.d') }}"
     :breadcrumb="[['label' => ui_copy('account_nav_refunds', 'account.nav_refunds')]]"
 >
     <x-slot name="actions">
@@ -27,7 +26,7 @@
 
     @if($refunds->isEmpty())
         {{-- ── Empty state ─────────────────────────────────────────────── --}}
-        <div class="border border-ink bg-paper p-16 text-center" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+        <div class="border border-ink bg-paper p-16 text-center bp-shadow">
             <div class="inline-flex items-center justify-center w-16 h-16 border border-ink bg-ivory-alt mb-6">
                 <x-heroicon-o-arrow-path class="w-7 h-7 text-ink-muted" />
             </div>
@@ -53,17 +52,10 @@
                 'processed' => ['bar' => 'bg-emerald-600',   'text' => 'text-emerald-700', 'label' => ui_copy('account_refund_status_processed', 'account.refund_status_processed')],
                 'rejected'  => ['bar' => 'bg-red-600',       'text' => 'text-red-700',   'label' => ui_copy('account_refund_status_rejected', 'account.refund_status_rejected')],
             ];
-            $totals = [
-                'all'       => $refunds->total(),
-                'pending'   => $refunds->where('status.value', 'pending')->count(),
-                'processed' => $refunds->where('status.value', 'processed')->count(),
-                'amount'    => (float) $refunds->sum('amount_requested'),
-            ];
         @endphp
 
         {{-- ── Summary strip ──────────────────────────────────────────── --}}
-        <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule"
-             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+        <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule bp-shadow-sm">
             <div class="px-5 py-4">
                 <p class="bp-spec-mono">{{ ui_copy('account_total', 'account.total') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">
@@ -91,15 +83,14 @@
         </div>
 
         {{-- ── Desktop table ──────────────────────────────────────────── --}}
-        <div class="hidden md:block border border-ink bg-paper overflow-hidden"
-             style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+        <div class="hidden md:block border border-ink bg-paper overflow-hidden bp-shadow">
             <div class="px-5 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
                 <span class="bp-spec text-amber-ink">{{ ui_copy('account_refunds_register', 'account.refunds_register') }}</span>
-                <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('account_amount_requested', 'account.amount_requested') }}</span>
+                <span class="bp-spec-mono">{{ settings('general.currency', 'EUR') }} · {{ ui_copy('account_amount_requested', 'account.amount_requested') }}</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full">
-                    <thead class="bg-ink-tint border-b border-ink">
+                    <thead class="bg-ivory-alt border-b border-ink">
                         <tr>
                             <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted w-12">{{ ui_copy('account_th_hash', 'account.th_hash') }}</th>
                             <th class="px-5 py-3 text-left font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink-muted">{{ ui_copy('account_th_order_short', 'account.th_order_short') }}</th>
@@ -150,7 +141,7 @@
 
             @if($refunds->hasPages())
                 <div class="px-5 py-4 border-t border-ink bg-ivory-alt">
-                    {{ $refunds->links() }}
+                    {{ $refunds->links('components.ui.pagination') }}
                 </div>
             @endif
         </div>
@@ -162,8 +153,7 @@
                     $cfg = $statusConfig[$refund->status->value] ?? ['bar' => 'bg-ink-muted', 'text' => 'text-ink', 'label' => ucfirst($refund->status->value)];
                 @endphp
                 <a href="{{ route('frontend.account.order.detail', ['lang' => $lang, 'order' => $refund->order]) }}"
-                   class="block border border-ink bg-paper p-5 hover:bg-ivory-alt transition-colors"
-                   style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                   class="block border border-ink bg-paper p-5 hover:bg-ivory-alt transition-colors bp-shadow-sm">
                     <div class="flex items-start justify-between gap-3 mb-3">
                         <div>
                             <p class="font-mono text-sm font-bold text-ink tabular-nums">#{{ $refund->order->order_number }}</p>
@@ -193,7 +183,7 @@
             @endforeach
 
             @if($refunds->hasPages())
-                <div class="pt-2">{{ $refunds->links() }}</div>
+                <div class="pt-2">{{ $refunds->links('components.ui.pagination') }}</div>
             @endif
         </div>
     @endif

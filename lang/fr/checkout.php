@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'minimum_order_not_met' => 'Votre commande n\'atteint pas le montant minimum de :amount.',
     // Shared layout (layout.blade.php)
     'title' => 'Paiement sécurisé',
     'breadcrumb_home' => 'Accueil',
@@ -9,7 +10,6 @@ return [
     'step_of_five' => 'ÉTAPE :n SUR 05',
     'secure_checkout_eyebrow' => 'Commande sécurisée',
     'heading' => 'Paiement sécurisé',
-    'tls_ssl_badge' => 'TLS 1.3 · SSL 256 bits · Protégé par Airwallex',
     'back_to_cart' => 'Retour au panier',
     'step_contact' => 'Contact',
     'step_address' => 'Adresse',
@@ -42,7 +42,6 @@ return [
     'vat_tbd' => 'À déterminer',
     'total_currency_label' => 'Total · :currency',
     'including_all_taxes' => 'Toutes taxes comprises',
-    'ssl_tls_badge' => 'SSL · TLS 1.3',
     'cart_empty' => 'Votre panier est vide',
     'need_help_heading' => "Besoin d'aide ?",
     'support_hours_note' => 'Lun-Ven 9h-18h CET. Notre équipe est disponible.',
@@ -78,16 +77,6 @@ return [
     'select_country_placeholder' => '— Sélectionner un pays —',
     'pan_european_delivery' => 'Livraison paneuropéenne',
     'pan_european_delivery_note' => 'Livraison Express, Standard et Économique disponible vers tous les pays européens listés.',
-    'company_details_heading' => "Détails de l'entreprise",
-    'optional_b2b' => 'Facultatif · B2B',
-    'ordering_as_business' => 'Je commande en tant qu\'entreprise',
-    'company_name_label' => "Nom de l'entreprise",
-    'eu_vat_number_label' => 'Numéro de TVA intracommunautaire',
-    'required_for_exemption' => "(requis pour l'exonération)",
-    'vat_valid_message' => "Le numéro de TVA est valide. L'exonération de TVA sera appliquée.",
-    'vies_unavailable_message' => 'Le service VIES est temporairement indisponible.',
-    'vat_invalid_message' => 'Le numéro de TVA est invalide. Veuillez le vérifier et réessayer.',
-    'valid_vat_number' => 'Numéro de TVA valide',
 
     // Step 3 — shipping method
     'shipping_method_heading' => 'Mode de livraison',
@@ -119,8 +108,12 @@ return [
     'grand_total_currency_label' => 'Total général · :currency',
     'agree_terms_prefix' => "J'accepte les",
     'terms_and_conditions' => 'Conditions générales',
-    'and' => 'et la',
-    'privacy_policy' => 'Politique de confidentialité',
+    'and' => 'et',
+    'privacy_policy' => 'la Politique de confidentialité',
+    'returns_policy' => 'la Politique de retour et de rétractation',
+    'oversized_notice_heading' => 'Pièces hors gabarit — avis de livraison',
+    'oversized_notice_body' => 'Les frais de livraison affichés sont des tarifs fixes pour les colis de taille standard. Si votre commande comprend une pièce hors gabarit ou lourde, le transporteur peut appliquer un supplément de fret — facturé séparément après expédition.',
+    'oversized_ack_sentence' => 'Je prends également acte de l\'avis relatif aux pièces hors gabarit ci-dessus.',
     // Step 5 — payment method
     'payment_method_heading' => 'Mode de paiement',
     'payment_method_subtitle' => 'Choisir le protocole · Sécurisé · Chiffré',
@@ -134,15 +127,15 @@ return [
     'bank_transfer_instructions_note' => 'Nous créons d\'abord la commande, puis affichons vos coordonnées bancaires et la référence de paiement sur la page suivante.',
     'order_note_label' => 'Note de commande',
     'order_note_placeholder' => 'Remarques sur la livraison ou la commande',
-    'trust_ssl_256' => 'SSL 256 bits',
     'trust_encrypted' => 'Chiffré',
 
     // Payment page (payment.blade.php)
     'payment_title' => 'Paiement',
     'complete_payment_heading' => 'Finaliser le paiement',
-    'tls_encrypted_channel' => 'TLS 1.3 · SSL 256 bits · Canal chiffré',
     'order_label' => 'Commande · :number',
-    'credit_debit_card' => 'Carte bancaire',
+    'doc_payment_sheet' => 'DOC · PAYMENT-SHEET · :number',
+    'card_brands_caption' => 'Airwallex · Visa · Mastercard · Amex',
+    'credit_debit_card' => 'Carte',
     'bank_transfer' => 'Virement bancaire',
     'bank_transfer_sepa_note' => 'SEPA · Commande traitée après paiement confirmé',
     'payment_error_heading' => 'Erreur de paiement',
@@ -161,7 +154,6 @@ return [
     'items_label' => 'Articles',
     'grand_total_label' => 'Total général',
     'incl_vat_short' => 'TVA incluse',
-    'trust_ssl_256_short' => 'SSL 256',
     'payment_failed_js' => 'Le paiement a échoué. Veuillez réessayer.',
 
     // Payment failed (payment-failed.blade.php)

@@ -1,11 +1,14 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $lang       = app()->getLocale();
     $siteName   = settings('general.site_name', 'OeParts');
     $metaTitle  = trans_field($post->meta_title) ?: trans_field($post->title);
     $metaDescr  = trans_field($post->meta_description) ?: Str::limit(strip_tags(trans_field($post->content)), 160);
-    $wordCount  = str_word_count(strip_tags(trans_field($post->content)));
+    // str_word_count() only recognises plain A–Z/a–z, splitting accented words
+    // (ä, é, š, ą…) apart and inflating the count for every non-English post —
+    // a UTF-8-aware whitespace split counts words correctly in all 5 locales.
+    $wordCount  = count(array_filter(preg_split('/\s+/u', trim(strip_tags(trans_field($post->content))))));
     $readTime   = max(1, (int) ceil($wordCount / 200));
     $publishedAt = \Carbon\Carbon::parse($post->published_at);
     $postUrl    = route('frontend.blog.show', ['lang' => $lang, 'slug' => $post->slug]);
@@ -76,8 +79,8 @@
     "@@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "{{ __('Home') }}", "item": "{{ url('/'.$lang.'/') }}"},
-        {"@type": "ListItem", "position": 2, "name": "{{ __('Journal') }}", "item": "{{ route('frontend.blog.index', ['lang' => $lang]) }}"},
+        {"@type": "ListItem", "position": 1, "name": "{{ trans('blog.breadcrumb_home') }}", "item": "{{ url('/'.$lang.'/') }}"},
+        {"@type": "ListItem", "position": 2, "name": "{{ trans('blog.breadcrumb_journal') }}", "item": "{{ route('frontend.blog.index', ['lang' => $lang]) }}"},
         {"@type": "ListItem", "position": 3, "name": @json($metaTitle), "item": "{{ $postUrl }}"}
     ]
 }
@@ -99,9 +102,9 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ trans('blog.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
-                <a href="{{ route('frontend.blog.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ __('Journal') }}</a>
+                <a href="{{ route('frontend.blog.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ trans('blog.breadcrumb_journal') }}</a>
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink truncate max-w-[14rem]">{{ Str::limit(trans_field($post->title), 40) }}</span>
             </nav>
@@ -120,7 +123,7 @@
                         {{ trans_field($post->category->name) }}
                     </a>
                 @else
-                    <span class="bp-spec text-amber-ink">{{ __('Journal · Entry') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ trans('blog.journal_entry_eyebrow') }}</span>
                 @endif
             </div>
 
@@ -136,35 +139,43 @@
             {{-- Spec-sheet metadata ledger --}}
             <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl">
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Author') }}</dt>
+                    <dt class="bp-spec text-ink-muted">{{ trans('blog.author_label') }}</dt>
                     <dd class="mt-1 font-display text-sm font-bold text-ink leading-tight truncate">
                         {{ $post->author->name ?? trans('blog.anonymous') }}
                     </dd>
                 </div>
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Published') }}</dt>
+                    <dt class="bp-spec text-ink-muted">{{ trans('blog.published_label') }}</dt>
                     <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums leading-tight">
-                        {{ $publishedAt->format('d M Y') }}
+                        {{ $publishedAt->clone()->locale($lang)->translatedFormat('d M Y') }}
                     </dd>
                 </div>
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Read time') }}</dt>
+                    <dt class="bp-spec text-ink-muted">{{ trans('blog.read_time_label') }}</dt>
                     <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums leading-tight">
-                        {{ $readTime }} min
+                        {{ trans('blog.min_read', ['count' => $readTime]) }}
                     </dd>
                 </div>
                 <div class="px-4 py-3">
-                    <dt class="bp-spec text-ink-muted">{{ __('Words') }}</dt>
+                    <dt class="bp-spec text-ink-muted">{{ trans('blog.words_label') }}</dt>
                     <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums leading-tight">
                         {{ number_format($wordCount) }}
                     </dd>
                 </div>
             </dl>
 
+            {{-- Content-freshness signal — only when an editor has explicitly
+                 set a review date (last_reviewed_at), not on every incidental save. --}}
+            @if($post->last_reviewed_at && $post->last_reviewed_at->gt($publishedAt))
+                <p class="mt-3 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
+                    {{ trans('blog.updated_on', ['date' => $post->last_reviewed_at->clone()->locale($lang)->translatedFormat('d M Y')]) }}
+                </p>
+            @endif
+
             {{-- Tags --}}
             @if($post->tags->count() > 0)
                 <div class="mt-5 flex flex-wrap items-center gap-2">
-                    <span class="bp-spec text-ink-muted mr-1">{{ __('Tags') }}</span>
+                    <span class="bp-spec text-ink-muted mr-1">{{ trans('blog.tags') }}</span>
                     @foreach($post->tags as $tag)
                         <a href="{{ route('frontend.blog.index', ['lang' => $lang, 'tag' => $tag->slug]) }}"
                            class="inline-flex items-center px-2.5 py-1 border border-rule-strong bg-paper
@@ -180,13 +191,13 @@
         {{-- Featured image --}}
         @if($post->featuredImage)
             <figure class="mb-12 bp-rise bp-rise-delay-2">
-                <div class="border border-ink bg-paper p-2" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                <div class="border border-ink bg-paper p-2 bp-shadow">
                     <img src="{{ $post->featuredImage->file_url }}"
                          alt="{{ trans_field($post->title) }}"
                          class="w-full h-auto block" />
                 </div>
                 <figcaption class="mt-2 font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                    FIG · 01 · {{ __('Featured asset') }}
+                    FIG · {{ trans('blog.featured_asset_label') }}
                 </figcaption>
             </figure>
         @endif
@@ -196,11 +207,8 @@
 
             {{-- ── Article body ── --}}
             <article class="col-span-12 lg:col-span-8">
-                <div class="flex items-end justify-between pb-3 border-b border-ink mb-8">
-                    <span class="bp-spec text-ink">01 · {{ __('Body') }}</span>
-                    <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        {{ __('Content') }}
-                    </span>
+                <div class="flex items-end pb-3 border-b border-ink mb-8">
+                    <span class="bp-spec text-ink">01 · {{ trans('blog.body_label') }}</span>
                 </div>
 
                 <div class="prose prose-lg prose-slate max-w-none
@@ -220,11 +228,8 @@
 
                 {{-- Share row --}}
                 <div class="mt-12 pt-6 border-t border-ink">
-                    <div class="flex items-end justify-between pb-3 border-b border-rule mb-5">
+                    <div class="flex items-end pb-3 border-b border-rule mb-5">
                         <span class="bp-spec text-ink">02 · {{ trans('blog.share') }}</span>
-                        <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                            {{ __('Distribute') }}
-                        </span>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($postUrl) }}"
@@ -270,15 +275,13 @@
             <aside class="col-span-12 lg:col-span-4 space-y-6 lg:sticky lg:top-10 lg:h-fit">
 
                 {{-- Author card --}}
-                <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
-                    <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Author') }}</span>
-                        <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">ID · {{ str_pad($post->author->id ?? 0, 3, '0', STR_PAD_LEFT) }}</span>
+                <div class="border border-ink bg-paper bp-shadow-sm">
+                    <div class="px-5 py-3 bg-ink text-ivory flex items-center">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ trans('blog.author_label') }}</span>
                     </div>
                     <div class="p-5 flex items-start gap-4">
                         <div class="w-12 h-12 border border-ink bg-ink text-amber flex items-center justify-center
-                                    font-display text-xl font-extrabold shrink-0"
-                             style="box-shadow: 3px 3px 0 rgba(241,145,58,1);">
+                                    font-display text-xl font-extrabold shrink-0 bp-shadow-sm" style="--bp-shadow-color: rgba(245,158,11,1);">
                             {{ strtoupper(substr($post->author->name ?? 'A', 0, 1)) }}
                         </div>
                         <div class="min-w-0">
@@ -286,7 +289,7 @@
                                 {{ $post->author->name ?? trans('blog.anonymous') }}
                             </p>
                             <p class="mt-1 font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted">
-                                {{ __('Contributor') }} · OEPARTS/EU
+                                {{ trans('blog.contributor_label') }}
                             </p>
                         </div>
                     </div>
@@ -294,28 +297,28 @@
 
                 {{-- Mini directory: explore more --}}
                 <div class="border border-ink bg-paper">
-                    <div class="px-5 py-3 bg-ink text-ivory">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('Quick · Nav') }}</span>
+                <div class="px-5 py-3 bg-ink text-ivory">
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ trans('blog.quick_nav_eyebrow') }}</span>
                     </div>
                     <ul class="divide-y divide-rule">
                         <li>
                             <a href="{{ route('frontend.blog.index', ['lang' => $lang]) }}"
                                class="group flex items-center justify-between px-5 py-3 text-ink hover:bg-ivory-alt transition-colors">
-                                <span class="font-display text-sm font-bold tracking-[-0.01em]">{{ __('All entries') }}</span>
+                                <span class="font-display text-sm font-bold tracking-[-0.01em]">{{ trans('blog.all_entries') }}</span>
                                 <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted group-hover:text-ink transition-colors" />
                             </a>
                         </li>
                         <li>
                             <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                                class="group flex items-center justify-between px-5 py-3 text-ink hover:bg-ivory-alt transition-colors">
-                                <span class="font-display text-sm font-bold tracking-[-0.01em]">{{ __('Search OEM') }}</span>
+                                <span class="font-display text-sm font-bold tracking-[-0.01em]">{{ trans('blog.search_oem_btn') }}</span>
                                 <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted group-hover:text-ink transition-colors" />
                             </a>
                         </li>
                         <li>
                             <a href="{{ url('/'.$lang.'/brands') }}"
                                class="group flex items-center justify-between px-5 py-3 text-ink hover:bg-ivory-alt transition-colors">
-                                <span class="font-display text-sm font-bold tracking-[-0.01em]">{{ __('Browse brands') }}</span>
+                                <span class="font-display text-sm font-bold tracking-[-0.01em]">{{ trans('blog.browse_brands_btn') }}</span>
                                 <x-heroicon-s-arrow-long-right class="w-4 h-4 text-ink-muted group-hover:text-ink transition-colors" />
                             </a>
                         </li>
@@ -324,18 +327,17 @@
 
                 {{-- CTA --}}
                 <div class="border border-ink bg-ink text-ivory p-5">
-                    <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-amber mb-3">{{ __('Action · Line') }}</p>
                     <p class="font-display text-lg font-extrabold tracking-[-0.02em] leading-tight">
-                        {{ __('Need a specific part?') }}
+                        {{ trans('blog.need_part_heading') }}
                     </p>
                     <p class="mt-2 text-sm text-ivory/70 leading-relaxed">
-                        {{ __('Search by OEM number and we will cross-reference the catalogue instantly.') }}
+                        {{ trans('blog.need_part_body') }}
                     </p>
                     <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                        class="mt-4 inline-flex items-center gap-2 px-4 py-2.5 bg-amber text-ink
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-paper transition-colors">
-                        {{ __('Open search') }}
+                        {{ trans('blog.open_search_btn') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                     </a>
                 </div>
@@ -348,7 +350,7 @@
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
                     <span class="bp-spec text-ink">03 · {{ trans('blog.related_posts') }}</span>
                     <span class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        {{ $relatedPosts->count() }} {{ __('nearby') }}
+                        {{ $relatedPosts->count() }} {{ trans('blog.nearby_label') }}
                     </span>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -367,7 +369,7 @@
                                     <span class="text-amber-ink">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }}</span>
                                     <span class="text-rule-strong">│</span>
                                     <time datetime="{{ $relatedPost->published_at }}" class="tabular-nums">
-                                        {{ \Carbon\Carbon::parse($relatedPost->published_at)->format('d M Y') }}
+                                        {{ \Carbon\Carbon::parse($relatedPost->published_at)->clone()->locale($lang)->translatedFormat('d M Y') }}
                                     </time>
                                 </div>
                                 <h3 class="mt-3 font-display text-lg font-extrabold tracking-[-0.02em] leading-tight text-ink">

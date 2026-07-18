@@ -1,4 +1,4 @@
-﻿{{-- Section: hero (Industrial Blueprint)
+{{-- Section: hero (Industrial Blueprint)
      content: headline(ml), subheadline(ml), placeholder(ml), button_text(ml), popular_oem[]
 --}}
 @php
@@ -35,7 +35,7 @@
     $heroSearchMeta = str_replace(':min', (string) $minChars, settings_trans('ui.hero_search_meta_hint', 'min :min chars · uppercase alphanumeric'));
     $heroIndexedLbl = settings_trans('ui.hero_indexed_label', 'Indexed:');
     $heroFoot1 = settings_trans('ui.hero_footer_pill_1', 'Verified Suppliers');
-    $heroFoot2 = settings_trans('ui.hero_footer_pill_2', 'TLS 1.3 · SSL');
+    $heroFoot2 = settings_trans('ui.hero_footer_pill_2', 'Secure Checkout');
     $heroFoot3 = settings_trans('ui.hero_footer_pill_3', '27 EU Countries');
 @endphp
 
@@ -52,7 +52,7 @@
     <div class="absolute top-6 left-6 w-4 h-4 border-l-2 border-t-2 border-ink/40 pointer-events-none" aria-hidden="true"></div>
     <div class="absolute top-6 right-6 w-4 h-4 border-r-2 border-t-2 border-ink/40 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24 lg:py-32">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 md:pt-10 lg:pt-14 pb-16 md:pb-24 lg:pb-32">
 
         {{-- ═══ 12-column editorial grid ═══ --}}
         <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 gap-y-10 items-end">

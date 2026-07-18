@@ -40,6 +40,7 @@ return [
     'remove_item_aria'        => 'Artikel entfernen',
     'clear_cart'              => 'Warenkorb leeren',
     'clear_cart_title'        => 'Warenkorb leeren',
+    'confirm_destructive_eyebrow' => 'Bestätigung · Unwiderruflich',
     'clear_cart_confirm'      => 'Alle Artikel werden aus dem Warenkorb entfernt. Dies kann nicht rückgängig gemacht werden.',
     'cancel'                  => 'Abbrechen',
     'copied'                  => 'Kopiert',
@@ -58,7 +59,7 @@ return [
     'subtotal_label'          => 'Zwischensumme',
 
     'shipping_carriers_eyebrow' => 'EU-Versand · Spediteure',
-    'countries_count'         => ':count Länder',
+    'countries_count'         => ':count EU-Länder',
 
     'order_summary'           => 'Bestellübersicht',
     'order_summary_eyebrow'   => 'Bestellübersicht',
@@ -95,7 +96,6 @@ return [
     'review_order_eyebrow'    => 'Bestellung prüfen',
     'breadcrumb_home'         => 'Start',
 
-    'trust_ssl'               => 'SSL-verschlüsselt',
     'trust_payment'           => 'Sichere Zahlung',
     'trust_protection'        => 'Käuferschutz',
 
@@ -104,7 +104,7 @@ return [
     'mobile_checkout_btn'     => 'Zur Kasse',
 
     'need_help_heading'      => 'Brauchen Sie Hilfe?',
-    'support_hours_note'     => 'Mo–Fr 09:00–18:00 Uhr. Unser Support-Team hilft Ihnen gerne weiter.',
+    'support_hours_note'     => 'Mo–Fr 09:00–18:00 MEZ. Unser Support-Team hilft Ihnen gerne weiter.',
     'contact_us'             => 'Kontaktieren Sie uns',
 
     'error_update'            => 'Artikel konnte nicht aktualisiert werden. Bitte versuchen Sie es erneut.',
@@ -121,4 +121,5 @@ return [
     'price_change_toast_singular' => '1 Artikel hat sich im Preis geändert: :oems',
     'price_change_toast_plural'   => ':count Artikel haben sich im Preis geändert: :oems',
     'condition_new_fallback'  => 'Neu',
+    'price_change_toast_title' => '§ PREIS · AKTUALISIERT',
 ];

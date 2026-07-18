@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('account_settings_title', 'account.settings_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -12,16 +12,15 @@
     eyebrow="{{ ui_copy('account_settings_eyebrow', 'account.settings_eyebrow') }}"
     title="{{ ui_copy('account_account_settings_heading', 'account.account_settings_heading') }}"
     :subtitle="ui_copy('account_settings_subtitle', 'account.settings_subtitle')"
-    docId="DOC · SETTINGS · REV. {{ now()->format('Y.m.d') }}"
     :breadcrumb="[['label' => ui_copy('account_nav_settings', 'account.nav_settings')]]"
 >
     @php
         $tabs = [
-            ['key' => 'profile',       'num' => '01', 'label' => ui_copy('account_tab_profile', 'account.tab_profile'),             'icon' => 'heroicon-o-user',                 'fields' => ['first_name', 'last_name', 'email', 'phone']],
-            ['key' => 'security',      'num' => '02', 'label' => ui_copy('account_tab_security', 'account.tab_security'),           'icon' => 'heroicon-o-lock-closed',          'fields' => ['current_password', 'new_password', 'new_password_confirmation']],
-            ['key' => 'notifications', 'num' => '03', 'label' => ui_copy('account_tab_notifications', 'account.tab_notifications'), 'icon' => 'heroicon-o-bell',                 'fields' => ['notifications', 'notifications.order_updates', 'notifications.email_notifications', 'notifications.promotional_emails']],
-            ['key' => 'language',      'num' => '04', 'label' => ui_copy('account_tab_language', 'account.tab_language'),           'icon' => 'heroicon-o-globe-alt',            'fields' => ['language', 'timezone']],
-            ['key' => 'danger',        'num' => '05', 'label' => ui_copy('account_tab_danger', 'account.tab_danger'),               'icon' => 'heroicon-o-exclamation-triangle', 'fields' => []],
+            ['key' => 'profile',       'label' => ui_copy('account_tab_profile', 'account.tab_profile'),             'icon' => 'heroicon-o-user',                 'fields' => ['first_name', 'last_name', 'email', 'phone']],
+            ['key' => 'security',      'label' => ui_copy('account_tab_security', 'account.tab_security'),           'icon' => 'heroicon-o-lock-closed',          'fields' => ['current_password', 'new_password', 'new_password_confirmation']],
+            ['key' => 'notifications', 'label' => ui_copy('account_tab_notifications', 'account.tab_notifications'), 'icon' => 'heroicon-o-bell',                 'fields' => ['notifications', 'notifications.order_notifications', 'notifications.email_notifications', 'notifications.promotional_emails']],
+            ['key' => 'language',      'label' => ui_copy('account_tab_language', 'account.tab_language'),           'icon' => 'heroicon-o-globe-alt',            'fields' => ['language', 'timezone']],
+            ['key' => 'danger',        'label' => ui_copy('account_tab_danger', 'account.tab_danger'),               'icon' => 'heroicon-o-exclamation-triangle', 'fields' => []],
         ];
         $activeTab = session('settings_tab', 'profile');
         if ($errors->any()) {
@@ -47,8 +46,7 @@
 
         {{-- Validation errors --}}
         @if($errors->any())
-            <div class="border border-red-600 bg-red-50 p-5" role="alert" aria-live="assertive"
-                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-red-600 bg-red-50 p-5 bp-shadow-sm" role="alert" aria-live="assertive">
                 <div class="flex items-start gap-3">
                     <div class="w-9 h-9 border border-red-600 bg-paper flex items-center justify-center shrink-0">
                         <x-heroicon-s-exclamation-triangle class="w-4 h-4 text-red-600" />
@@ -66,13 +64,12 @@
         @endif
 
         {{-- Tab nav --}}
-        <nav class="border border-ink bg-paper flex overflow-x-auto"
+        <nav class="border border-ink bg-paper flex overflow-x-auto bp-shadow-sm"
              role="tablist" aria-label="{{ ui_copy('account_settings_tabs_aria', 'account.settings_tabs_aria') }}"
              @keydown.arrow-right.prevent="moveTab(1)"
              @keydown.arrow-left.prevent="moveTab(-1)"
              @keydown.home.prevent="gotoTab(tabKeys[0])"
-             @keydown.end.prevent="gotoTab(tabKeys[tabKeys.length - 1])"
-             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+             @keydown.end.prevent="gotoTab(tabKeys[tabKeys.length - 1])">
             @foreach($tabs as $i => $t)
                 <button type="button"
                         x-ref="tabBtn_{{ $t['key'] }}"
@@ -86,10 +83,6 @@
                         class="flex-1 min-w-[150px] flex items-center justify-center gap-2 px-4 py-4 transition-colors
                                {{ $i > 0 ? 'border-l border-ink' : '' }}
                                {{ $t['key'] === 'danger' ? 'text-red-700' : '' }}">
-                    <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase"
-                          :class="tab==='{{ $t['key'] }}' ? 'text-amber' : 'text-ink-muted'">
-                        {{ $t['num'] }}
-                    </span>
                     <x-dynamic-component :component="$t['icon']" class="w-4 h-4" />
                     <span class="font-mono text-[11px] font-bold tracking-[0.22em] uppercase">{{ $t['label'] }}</span>
                 </button>
@@ -99,7 +92,7 @@
         {{-- ── Profile tab ──────────────────────────────────────────── --}}
         <section x-show="tab === 'profile'" x-cloak
                  role="tabpanel" id="settings-panel-profile" aria-labelledby="settings-tab-profile" tabindex="0"
-                 class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                 class="border border-ink bg-paper bp-shadow">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-user class="w-3.5 h-3.5" />
@@ -169,13 +162,12 @@
         {{-- ── Security tab ─────────────────────────────────────────── --}}
         <section x-show="tab === 'security'" x-cloak
                  role="tabpanel" id="settings-panel-security" aria-labelledby="settings-tab-security" tabindex="0"
-                 class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                 class="border border-ink bg-paper bp-shadow">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-lock-closed class="w-3.5 h-3.5" />
                     {{ ui_copy('account_password_credentials_eyebrow', 'account.password_credentials_eyebrow') }}
                 </span>
-                <span class="bp-spec-mono">{{ ui_copy('account_tls_encrypted', 'account.tls_encrypted') }}</span>
             </header>
 
             <form method="POST"
@@ -254,7 +246,7 @@
         {{-- ── Notifications tab ────────────────────────────────────── --}}
         <section x-show="tab === 'notifications'" x-cloak
                  role="tabpanel" id="settings-panel-notifications" aria-labelledby="settings-tab-notifications" tabindex="0"
-                 class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                 class="border border-ink bg-paper bp-shadow">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-bell class="w-3.5 h-3.5" />
@@ -269,7 +261,7 @@
 
                 @php
                     $notifOptions = [
-                        ['key' => 'order_updates',      'icon' => 'heroicon-o-shopping-bag', 'label' => ui_copy('account_order_updates', 'account.order_updates'),           'desc' => ui_copy('account_order_updates_desc', 'account.order_updates_desc'), 'default' => true],
+                        ['key' => 'order_notifications', 'icon' => 'heroicon-o-shopping-bag', 'label' => ui_copy('account_order_updates', 'account.order_updates'),           'desc' => ui_copy('account_order_updates_desc', 'account.order_updates_desc'), 'default' => true],
                         ['key' => 'email_notifications','icon' => 'heroicon-o-envelope',     'label' => ui_copy('account_email_notifications', 'account.email_notifications'), 'desc' => ui_copy('account_email_notifications_desc', 'account.email_notifications_desc'), 'default' => true],
                         ['key' => 'promotional_emails', 'icon' => 'heroicon-o-megaphone',    'label' => ui_copy('account_promotional_emails', 'account.promotional_emails'),   'desc' => ui_copy('account_promotional_emails_desc', 'account.promotional_emails_desc'), 'default' => false],
                     ];
@@ -283,9 +275,6 @@
                     <label class="flex items-center justify-between gap-4 p-4 border border-ink bg-ivory-alt
                                   hover:border-ink transition-colors cursor-pointer">
                         <div class="flex items-start gap-3 flex-1 min-w-0">
-                            <span class="font-mono text-[10px] tabular-nums tracking-[0.22em] uppercase text-ink-muted w-6 pt-0.5">
-                                {{ str_pad((string) ($i + 1), 2, '0', STR_PAD_LEFT) }}
-                            </span>
                             <div class="w-10 h-10 border border-ink bg-paper flex items-center justify-center shrink-0">
                                 <x-dynamic-component :component="$n['icon']" class="w-4 h-4 text-ink" />
                             </div>
@@ -301,7 +290,7 @@
                             <input type="checkbox" name="notifications[{{ $n['key'] }}]" value="1"
                                    {{ $checked ? 'checked' : '' }}
                                    class="sr-only peer">
-                            <span class="w-11 h-6 bg-ink-tint border border-ink peer-checked:bg-amber
+                            <span class="w-11 h-6 bg-paper border border-ink peer-checked:bg-amber
                                          relative transition-colors
                                          after:content-[''] after:absolute after:top-0.5 after:left-0.5
                                          after:w-4 after:h-4 after:bg-paper after:border after:border-ink after:transition-transform
@@ -323,7 +312,7 @@
         {{-- ── Language tab ─────────────────────────────────────────── --}}
         <section x-show="tab === 'language'" x-cloak
                  role="tabpanel" id="settings-panel-language" aria-labelledby="settings-tab-language" tabindex="0"
-                 class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                 class="border border-ink bg-paper bp-shadow">
             <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-globe-alt class="w-3.5 h-3.5" />
@@ -381,7 +370,7 @@
         {{-- ── Danger zone tab ──────────────────────────────────────── --}}
         <section x-show="tab === 'danger'" x-cloak
                  role="tabpanel" id="settings-panel-danger" aria-labelledby="settings-tab-danger" tabindex="0"
-                 class="border border-red-600 bg-paper" style="box-shadow: 6px 6px 0 rgba(185,28,28,1);">
+                 class="border border-red-600 bg-paper bp-shadow" style="--bp-shadow-color: rgba(220,38,38,1);">
             <header class="flex items-center justify-between px-5 py-3 border-b border-red-600 bg-red-600 text-ivory">
                 <span class="font-mono text-[10px] tracking-[0.22em] uppercase font-bold flex items-center gap-2">
                     <x-heroicon-s-exclamation-triangle class="w-3.5 h-3.5" />
@@ -405,8 +394,7 @@
                             x-on:click="if(confirm('{{ addslashes(ui_copy('account_delete_account_confirm', 'account.delete_account_confirm')) }}')) document.getElementById('account-delete-form').submit();"
                             class="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-ivory border border-red-600
                                    font-mono text-[11px] font-bold tracking-[0.22em] uppercase
-                                   hover:bg-red-700 hover:border-red-700 transition-colors"
-                            style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                                   hover:bg-red-700 hover:border-red-700 transition-colors bp-shadow-sm">
                         <x-heroicon-s-trash class="w-4 h-4" />
                         {{ ui_copy('account_permanently_delete_account', 'account.permanently_delete_account') }}
                     </button>

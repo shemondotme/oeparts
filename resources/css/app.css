@@ -253,6 +253,21 @@
         @apply absolute -top-3 left-3 -z-10 h-[6px] w-[6px] bg-amber/20 rounded-full;
     }
 
+    /* Blueprint offset shadow — hard-edge, zero-blur "print register" mark.
+       Color defaults to canonical ink; override per-element via
+       style="--bp-shadow-color: rgba(...)" for amber/red/translucent variants. */
+    .bp-shadow-sm {
+        box-shadow: 2px 2px 0 0 var(--bp-shadow-color, rgba(10, 18, 40, 1));
+    }
+
+    .bp-shadow {
+        box-shadow: 3px 3px 0 0 var(--bp-shadow-color, rgba(10, 18, 40, 1));
+    }
+
+    .bp-shadow-lg {
+        box-shadow: 5px 5px 0 0 var(--bp-shadow-color, rgba(10, 18, 40, 1));
+    }
+
     /* Entrance animation. No `display` here: bp-rise is applied to block/flex/
        grid containers (sections, asides), which are all transformable, so the
        legacy `inline-block` (a leftover from a per-character version that is no
@@ -276,6 +291,10 @@
 
     .bp-rise-delay-4 {
         @apply animate-[bp-rise_0.7s_ease-out_0.4s_forwards];
+    }
+
+    .bp-rise-delay-5 {
+        @apply animate-[bp-rise_0.7s_ease-out_0.5s_forwards];
     }
 
     .bp-rule-draw {

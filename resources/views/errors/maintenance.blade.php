@@ -1,4 +1,4 @@
-﻿@php
+@php
     /**
      * Multilang settings are stored as JSON strings in DB.
      * Normalise to an array so trans_field() can pick the right locale.
@@ -22,6 +22,8 @@
     $helpLabel       = __('maintenance.need_help');
     $checkBackLabel  = __('maintenance.check_back');
     $rightsLabel     = __('maintenance.all_rights_reserved');
+    $statusLabel     = __('maintenance.status_label');
+    $estimatedSpec   = __('maintenance.estimated_return_spec');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -89,9 +91,9 @@
             text-transform: uppercase;
             display: inline-block;
         }
-        .bp-shadow-ink { box-shadow: 8px 8px 0 rgba(10,18,40,1); }
-        .bp-shadow-amber { box-shadow: 8px 8px 0 rgba(245,158,11,1); }
-        .bp-shadow-sm-ink { box-shadow: 4px 4px 0 rgba(10,18,40,1); }
+        .bp-shadow-sm { box-shadow: 2px 2px 0 0 var(--bp-shadow-color, rgba(10,18,40,1)); }
+        .bp-shadow    { box-shadow: 3px 3px 0 0 var(--bp-shadow-color, rgba(10,18,40,1)); }
+        .bp-shadow-lg { box-shadow: 5px 5px 0 0 var(--bp-shadow-color, rgba(10,18,40,1)); }
 
         @keyframes bp-pulse {
             0%, 100% { opacity: 0.55; }
@@ -118,7 +120,7 @@
                     <div class="flex items-center gap-3">
                         <span class="inline-block w-2.5 h-2.5 bg-amber bp-pulse"></span>
                         <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">
-                            System · Offline · 01
+                            System · Offline
                         </span>
                     </div>
                     <div class="flex items-center gap-3 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
@@ -135,7 +137,7 @@
             <div class="w-full max-w-2xl">
 
                 {{-- Primary card --}}
-                <div class="relative border border-ink bg-paper bp-shadow-amber">
+                <div class="relative border border-ink bg-paper bp-shadow-lg" style="--bp-shadow-color: rgba(245,158,11,1);">
                     {{-- Corner ticks --}}
                     <span class="absolute -top-1 -left-1 w-3 h-3 border-l-2 border-t-2 border-amber" aria-hidden="true"></span>
                     <span class="absolute -top-1 -right-1 w-3 h-3 border-r-2 border-t-2 border-amber" aria-hidden="true"></span>
@@ -143,8 +145,7 @@
                     <span class="absolute -bottom-1 -right-1 w-3 h-3 border-r-2 border-b-2 border-amber" aria-hidden="true"></span>
 
                     {{-- Card header strip --}}
-                    <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
-                        <span class="bp-spec text-amber-ink">Incident · Report</span>
+                    <div class="flex items-center justify-end px-5 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec-mono">
                             {{ now()->format('Y-m-d H:i T') }}
                         </span>
@@ -154,14 +155,13 @@
 
                         {{-- Icon + giant glyph --}}
                         <div class="flex items-center gap-5 pb-8 mb-8 border-b border-rule">
-                            <div class="relative w-16 h-16 border border-ink bg-ivory-alt flex items-center justify-center shrink-0 bp-shadow-sm-ink">
+                            <div class="relative w-16 h-16 border border-ink bg-ivory-alt flex items-center justify-center shrink-0 bp-shadow-sm">
                                 <svg class="w-7 h-7 text-amber-ink bp-tick" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.109-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="bp-spec text-amber-ink mb-1">Status · Code</p>
                                 <p class="font-display text-5xl md:text-6xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
                                     5<span class="text-amber-ink">0</span>3
                                 </p>
@@ -181,24 +181,12 @@
                         </p>
 
                         {{-- Spec grid --}}
-                        <dl class="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-0 border border-ink divide-y sm:divide-y-0 sm:divide-x divide-rule">
+                        <dl class="mt-8 grid grid-cols-1 border border-ink">
                             <div class="px-4 py-3 bg-paper">
-                                <dt class="bp-spec text-ink-muted">Status</dt>
+                                <dt class="bp-spec text-ink-muted">{{ $statusLabel }}</dt>
                                 <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums flex items-center gap-1.5">
                                     <span class="w-1.5 h-1.5 bg-amber bp-pulse"></span>
                                     OFFLINE
-                                </dd>
-                            </div>
-                            <div class="px-4 py-3 bg-paper">
-                                <dt class="bp-spec text-ink-muted">Type</dt>
-                                <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums">
-                                    SCHEDULED
-                                </dd>
-                            </div>
-                            <div class="px-4 py-3 bg-paper">
-                                <dt class="bp-spec text-ink-muted">Impact</dt>
-                                <dd class="mt-1 font-mono text-sm font-bold text-amber-ink tabular-nums">
-                                    TEMPORARY
                                 </dd>
                             </div>
                         </dl>
@@ -213,7 +201,7 @@
                                         </svg>
                                     </div>
                                     <div class="min-w-0 flex-1">
-                                        <p class="bp-spec text-amber-ink mb-1">Estimated · Return</p>
+                                        <p class="bp-spec text-amber-ink mb-1">{{ $estimatedSpec }}</p>
                                         <p class="font-display text-xl font-extrabold text-ink tracking-[-0.02em] leading-tight">
                                             {{ \Carbon\Carbon::parse($estimatedBackAt)->format('M d, Y') }}
                                         </p>
@@ -249,9 +237,6 @@
                                 <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" />
                             </svg>
                             {{ $checkBackLabel }}
-                        </span>
-                        <span class="bp-spec-mono">
-                            AUTO · RETRY
                         </span>
                     </div>
                 </div>

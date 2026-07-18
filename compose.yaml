@@ -19,6 +19,14 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            # vendor/ is an isolated named volume, NOT part of the Windows bind
+            # mount above: Docker Desktop's Windows file-sharing layer silently
+            # TRUNCATES large RecursiveDirectoryIterator scans over a bind mount
+            # (confirmed empirically — blade-heroicons' ~1288-file SVG directory
+            # scanned to only 515 entries over the bind mount, but scanned
+            # correctly, in full, from an isolated volume). Run `composer
+            # install` once after first `up` to populate it.
+            - 'vendor-laravel-test:/var/www/html/vendor'
         networks:
             - sail
         depends_on:
@@ -88,6 +96,9 @@ services:
             LARAVEL_SAIL: 1
         volumes:
             - '.:/var/www/html'
+            # Same image/PHP version as laravel.test — shares its vendor volume
+            # (see laravel.test's volumes comment for why this isn't bind-mounted).
+            - 'vendor-laravel-test:/var/www/html/vendor'
         networks:
             - sail
         depends_on:
@@ -165,11 +176,22 @@ services:
         environment:
             WWWUSER: '${WWWUSER:-1000}'
             LARAVEL_SAIL: 1
+            # `php artisan serve` launches its real server via Symfony Process,
+            # which requires proc_open — exactly what this container disables.
+            # Run PHP's built-in server directly instead (what artisan serve
+            # wraps anyway), so the web server itself doesn't need proc_open.
+            SUPERVISOR_PHP_COMMAND: 'php -d variables_order=EGPCS -S 0.0.0.0:80 -t /var/www/html/public /var/www/html/public/index.php'
         env_file:
             - .env.docker.hostingsim
         volumes:
             - '.:/var/www/html'
+            # Same PHP version/image as the php83 matrix service — shares its
+            # vendor volume (see laravel.test's volumes comment: vendor/ must
+            # not be part of the Windows bind mount above).
+            - 'vendor-php83:/var/www/html/vendor'
             - './docker/hostingsim/php.ini-overrides:/etc/php/8.3/cli/conf.d/99-hostingsim.ini:ro'
+        ports:
+            - '${HOSTINGSIM_PORT:-8080}:80'
         networks:
             - sail
         depends_on:
@@ -182,6 +204,8 @@ volumes:
     sail-mysql:
         driver: local
     sail-redis:
+        driver: local
+    vendor-laravel-test:
         driver: local
     vendor-php83:
         driver: local

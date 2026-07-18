@@ -7,4 +7,6 @@ return [
     'need_help' => 'Benötigen Sie Hilfe?',
     'check_back' => 'Bitte schauen Sie in wenigen Minuten erneut vorbei',
     'all_rights_reserved' => 'Alle Rechte vorbehalten',
+    'status_label' => 'Status',
+    'estimated_return_spec' => 'Voraussichtlich · Rückkehr',
 ];

@@ -195,7 +195,7 @@ class CartController extends Controller
                 // update/remove (which re-hydrates items from this endpoint).
                 'is_in_stock' => (bool) $product->is_in_stock,
                 'condition_slug' => $product->condition?->slug ?? 'new',
-                'condition_name' => $product->condition?->name ?? 'New',
+                'condition_name' => condition_label($product->condition),
                 'condition_bg' => $product->condition?->bg_color ?? '#DCFCE7',
                 'condition_text' => $product->condition?->text_color ?? '#16A34A',
             ];

@@ -1,4 +1,4 @@
-﻿@extends('emails.layout')
+@extends('emails.layout')
 
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
@@ -53,7 +53,7 @@
                         </td>
                         <td align="right" style="padding-bottom: 8px;">
                             <span class="font-mono" style="font-size: 14px; color: #0A1228; font-weight: bold;">
-                                {{ trans('emails.otp.expiry', [], $locale) }}
+                                {{ trans('emails.otp.expiry', ['minutes' => settings('auth.otp_expiry_minutes', 10)], $locale) }}
                             </span>
                         </td>
                     </tr>

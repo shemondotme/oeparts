@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
 <head>
     <meta charset="utf-8">
@@ -77,6 +77,9 @@
 
     {{-- hreflang links (server-side, all 5 locales + x-default) --}}
     @yield('hreflang')
+
+    {{-- rel=prev/next for paginated listing pages --}}
+    @yield('pagination_links')
 
     {{-- JSON-LD structured data --}}
     @yield('json_ld')
@@ -382,7 +385,7 @@
     <script>document.documentElement.classList.add('bp-preloading');</script>
     @endif
 </head>
-<body class="font-sans text-body bg-ink antialiased min-h-screen flex flex-col">
+<body class="font-sans text-body bg-ivory antialiased min-h-screen flex flex-col">
 
     {{-- Google Tag Manager (noscript) --}}
     @if(settings('integrations.gtm_id', ''))
@@ -569,6 +572,9 @@
 
     {{-- Toast notifications --}}
     <x-ui.toast />
+
+    {{-- Scroll to top (all pages) --}}
+    <x-ui.scroll-to-top />
 
 </body>
 </html>

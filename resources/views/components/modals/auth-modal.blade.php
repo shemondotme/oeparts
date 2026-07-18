@@ -1,4 +1,4 @@
-﻿{{--
+{{--
   ═══════════════════════════════════════════════════════════════════
   INDUSTRIAL BLUEPRINT — Auth Modal (Login / Register with Inline OTP)
   ═══════════════════════════════════════════════════════════════════
@@ -27,7 +27,7 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
         @click="close()"
-        class="fixed inset-0 z-50 bg-ink/75 backdrop-blur-[3px]"
+        class="fixed inset-0 z-50 bg-ink/85 bg-grid-navy bg-grid-md"
     ></div>
 
     {{-- Modal panel wrapper --}}
@@ -43,7 +43,7 @@
         @click.self="close()"
     >
         <div class="flex min-h-full items-center justify-center p-4" @click.self="close()">
-        <div class="relative bg-paper border border-ink w-full max-w-md shadow-[8px_8px_0_0_rgba(11,26,41,0.12)]"
+        <div class="relative bg-paper border border-ink w-full max-w-md bp-shadow-lg" style="--bp-shadow-color: rgba(245,158,11,1);"
              role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"
              x-trap.noscroll.inert="show">
 
@@ -62,12 +62,10 @@
                 </div>
 
                 <div class="relative px-7 pt-6 pb-5">
-                    <div class="flex items-center justify-between mb-5">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.28em] uppercase text-amber">
-                            AUTH · <span x-text="tab === 'login' ? 'PROTOCOL-IN' : (tab === 'register' ? 'PROTOCOL-REG' : 'PROTOCOL-OTP')"></span>
-                        </span>
+                    <div class="flex items-center justify-end mb-5">
                         <button @click="close()"
-                                class="w-8 h-8 flex items-center justify-center border border-white/20 text-ivory/70 hover:bg-amber hover:text-ink hover:border-amber transition-colors"
+                                class="w-9 h-9 flex items-center justify-center border border-white/20 text-ivory/70 hover:bg-amber hover:text-ink hover:border-amber transition-colors
+                                       focus:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
                                 aria-label="{{ ui_copy('auth_close', 'auth.close') }}">
                             <x-heroicon-o-x-mark class="w-4 h-4" />
                         </button>
@@ -137,7 +135,7 @@
                         {{-- Email --}}
                         <div>
                             <label for="login-email" class="bp-spec block mb-2 text-ink">{{ ui_copy('auth_email_address', 'auth.email_address') }}</label>
-                            <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <div class="relative border border-ink bg-paper focus-within:border-amber-ink transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-envelope class="w-4 h-4" />
                                 </span>
@@ -149,7 +147,7 @@
                                     autocomplete="email"
                                     x-ref="loginEmail"
                                     required
-                                    class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
+                                    class="w-full pl-10 pr-4 py-3 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-2 focus:ring-amber-ink focus:ring-inset"
                                     placeholder="you@example.com"
                                 >
                             </div>
@@ -164,22 +162,36 @@
                                     {{ ui_copy('auth_forgot', 'auth.forgot') }}
                                 </a>
                             </div>
-                            <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <div class="relative border border-ink bg-paper focus-within:border-amber-ink transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-lock-closed class="w-4 h-4" />
                                 </span>
                                 <input
                                     id="login-password"
                                     name="password"
-                                    type="password"
+                                    :type="showPw ? 'text' : 'password'"
                                     autocomplete="current-password"
                                     x-ref="loginPassword"
                                     required
-                                    class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none"
+                                    class="w-full pl-10 pr-11 py-3 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-2 focus:ring-amber-ink focus:ring-inset"
                                     placeholder="••••••••"
                                 >
+                                <button type="button" @click="showPw = !showPw"
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-ivory-alt transition-colors"
+                                        :aria-label="showPw ? '{{ addslashes(ui_copy('auth_hide_password', 'auth.hide_password')) }}' : '{{ addslashes(ui_copy('auth_show_password', 'auth.show_password')) }}'">
+                                    <x-heroicon-o-eye class="w-4 h-4" x-show="!showPw" />
+                                    <x-heroicon-o-eye-slash class="w-4 h-4" x-show="showPw" x-cloak />
+                                </button>
                             </div>
                         </div>
+
+                        <label class="flex items-center gap-2.5 cursor-pointer">
+                            <input type="checkbox" x-model="rememberMe" class="w-4 h-4 border border-ink accent-amber">
+                            <span class="text-sm font-sans text-ink">{{ ui_copy('auth_remember_me', 'auth.remember_me') }}</span>
+                        </label>
+
+                        <input type="text" name="website" x-model="loginWebsite" class="hidden" tabindex="-1" autocomplete="off">
+                        @honeypot
 
                         {{-- Submit --}}
                         <button type="submit" :disabled="loading" class="bp-btn-primary w-full justify-center py-3 text-sm disabled:opacity-50">
@@ -226,52 +238,65 @@
                     >
                         <div>
                             <label for="reg-name" class="bp-spec block mb-2 text-ink">{{ ui_copy('auth_full_name', 'auth.full_name') }}</label>
-                            <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <div class="relative border border-ink bg-paper focus-within:border-amber-ink transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-user class="w-4 h-4" />
                                 </span>
                                 <input type="text" id="reg-name" name="name" x-ref="regName" required placeholder="John Smith"
-                                       class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
+                                       class="w-full pl-10 pr-4 py-3 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-2 focus:ring-amber-ink focus:ring-inset">
                             </div>
                         </div>
 
                         <div>
                             <label for="reg-email" class="bp-spec block mb-2 text-ink">{{ ui_copy('auth_email_address', 'auth.email_address') }}</label>
-                            <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <div class="relative border border-ink bg-paper focus-within:border-amber-ink transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-envelope class="w-4 h-4" />
                                 </span>
                                 <input type="email" id="reg-email" name="email" x-ref="regEmail" required
                                        inputmode="email" autocomplete="email" placeholder="you@example.com"
-                                       class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
+                                       class="w-full pl-10 pr-4 py-3 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-2 focus:ring-amber-ink focus:ring-inset">
                             </div>
                         </div>
 
                         <div>
                             <label for="reg-password" class="bp-spec block mb-2 text-ink">{{ ui_copy('auth_password_min_chars', 'auth.password_min_chars', ['min' => $pwMin]) }}</label>
-                            <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <div class="relative border border-ink bg-paper focus-within:border-amber-ink transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-lock-closed class="w-4 h-4" />
                                 </span>
-                                <input type="password" id="reg-password" name="password" x-ref="regPassword" required
+                                <input :type="showPw ? 'text' : 'password'" id="reg-password" name="password" x-ref="regPassword" required
                                        autocomplete="new-password" :placeholder="'{{ addslashes(ui_copy('auth_min_characters', 'auth.min_characters', ['min' => $pwMin])) }}'"
-                                       class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
+                                       class="w-full pl-10 pr-11 py-3 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-2 focus:ring-amber-ink focus:ring-inset">
+                                <button type="button" @click="showPw = !showPw"
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-ivory-alt transition-colors"
+                                        :aria-label="showPw ? '{{ addslashes(ui_copy('auth_hide_password', 'auth.hide_password')) }}' : '{{ addslashes(ui_copy('auth_show_password', 'auth.show_password')) }}'">
+                                    <x-heroicon-o-eye class="w-4 h-4" x-show="!showPw" />
+                                    <x-heroicon-o-eye-slash class="w-4 h-4" x-show="showPw" x-cloak />
+                                </button>
                             </div>
                         </div>
 
                         <div>
                             <label for="reg-confirm" class="bp-spec block mb-2 text-ink">{{ ui_copy('auth_confirm_password', 'auth.confirm_password') }}</label>
-                            <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors">
+                            <div class="relative border border-ink bg-paper focus-within:border-amber-ink transition-colors">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted pointer-events-none">
                                     <x-heroicon-o-lock-closed class="w-4 h-4" />
                                 </span>
-                                <input type="password" id="reg-confirm" name="password_confirmation" x-ref="regConfirm" required
+                                <input :type="showPw2 ? 'text' : 'password'" id="reg-confirm" name="password_confirmation" x-ref="regConfirm" required
                                        autocomplete="new-password" placeholder="••••••••"
-                                       class="w-full pl-10 pr-4 py-3 bg-transparent font-mono text-sm text-ink placeholder:text-ink-muted/60 placeholder:font-sans placeholder:text-xs focus:outline-none">
+                                       class="w-full pl-10 pr-11 py-3 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 focus:outline-none focus:ring-2 focus:ring-amber-ink focus:ring-inset">
+                                <button type="button" @click="showPw2 = !showPw2"
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center text-ink-muted hover:text-ink hover:bg-ivory-alt transition-colors"
+                                        :aria-label="showPw2 ? '{{ addslashes(ui_copy('auth_hide_password', 'auth.hide_password')) }}' : '{{ addslashes(ui_copy('auth_show_password', 'auth.show_password')) }}'">
+                                    <x-heroicon-o-eye class="w-4 h-4" x-show="!showPw2" />
+                                    <x-heroicon-o-eye-slash class="w-4 h-4" x-show="showPw2" x-cloak />
+                                </button>
                             </div>
                         </div>
 
-                        <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+                        <input type="text" name="website" x-model="registerWebsite" class="hidden" tabindex="-1" autocomplete="off">
+                        @honeypot
 
                         <div class="flex items-start gap-3">
                             <input type="checkbox" id="reg-terms" name="agree_terms" value="1" required
@@ -322,7 +347,7 @@
                             <input id="otp-code" x-ref="otpCode" x-model="otpCode"
                                    inputmode="numeric" autocomplete="one-time-code" :maxlength="otpLength" required
                                    @input="otpCode = otpCode.replace(/[^0-9]/g, '')"
-                                   class="w-full px-4 py-3 border border-ink bg-paper text-center font-mono text-2xl font-bold tracking-[0.5em] text-ink focus:outline-none focus:border-amber"
+                                   class="w-full px-4 py-3 border border-ink bg-paper text-center font-mono text-2xl font-bold tracking-[0.5em] text-ink focus:outline-none focus:border-amber-ink focus:ring-2 focus:ring-amber-ink"
                                    :placeholder="'•'.repeat(otpLength)">
                         </div>
                         <button type="submit" :disabled="loading || otpCode.length < otpLength"
@@ -384,6 +409,14 @@ function authModal() {
         return m ? decodeURIComponent(m[1]) : (document.querySelector('meta[name=csrf-token]')?.content || '');
     }
 
+    function honeypotFields() {
+        const data = {};
+        document.querySelectorAll('[name^=my_name], [name=valid_from]').forEach(el => {
+            data[el.name] = el.value;
+        });
+        return data;
+    }
+
     async function postJson(url, payload) {
         const res = await fetch(url, {
             method: 'POST',
@@ -406,6 +439,9 @@ function authModal() {
         tab: 'login',
         loading: false,
         error: '',
+        loginWebsite: '',
+        registerWebsite: '',
+        rememberMe: false,
         showPw: false,
         showPw2: false,
         // OTP (inline email verification) state
@@ -442,6 +478,9 @@ function authModal() {
             const d = await postJson(loginUrl, {
                 email: this.$refs.loginEmail.value,
                 password: this.$refs.loginPassword.value,
+                remember: this.rememberMe,
+                website: this.loginWebsite,
+                ...honeypotFields(),
             });
             if (d.success && d.data?.requires_otp) {
                 this.startOtp(this.$refs.loginEmail.value, this.$refs.loginPassword.value, 'login');
@@ -464,7 +503,8 @@ function authModal() {
                 // The controller requires an accepted terms flag; the checkbox was
                 // previously omitted from the payload, so registration always 422'd.
                 agree_terms: document.getElementById('reg-terms')?.checked ? '1' : '',
-                website: '',
+                website: this.registerWebsite,
+                ...honeypotFields(),
             });
             if (d.success && d.data?.requires_otp) {
                 this.startOtp(this.$refs.regEmail.value, this.$refs.regPassword.value, 'register');

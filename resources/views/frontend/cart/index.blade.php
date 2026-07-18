@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('cart_title', 'cart.title'))
 
@@ -30,6 +30,7 @@
         'priceChangeSingular' => ui_copy('cart_price_change_toast_singular', 'cart.price_change_toast_singular'),
         'priceChangePlural'   => ui_copy('cart_price_change_toast_plural', 'cart.price_change_toast_plural'),
         'conditionNewFallback'=> ui_copy('cart_condition_new_fallback', 'cart.condition_new_fallback'),
+        'priceChangeToastTitle'=> ui_copy('cart_price_change_toast_title', 'cart.price_change_toast_title'),
     ];
 @endphp
 <div x-data="cartData(@js($cart), @js($summary), '{{ $cartLocale }}', '{{ $cartUpdateRoute }}', '{{ $cartRemoveRoute }}', '{{ $cartPreviewRoute }}', '{{ $cartCouponApplyRoute }}', '{{ $cartCouponRemoveRoute }}', @js($cartJsTranslations))" class="relative min-h-screen bg-ivory text-ink pt-10 pb-28">
@@ -48,7 +49,7 @@
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100">
             <div class="flex items-center justify-between px-6 py-3 border-b border-ink bg-ivory-alt">
-                <span class="bp-spec text-ink">Confirm · Destructive</span>
+                <span class="bp-spec text-ink">{{ ui_copy('cart_confirm_destructive_eyebrow', 'cart.confirm_destructive_eyebrow') }}</span>
                 <button @click="confirmOpen = false" class="text-ink-muted hover:text-ink" aria-label="{{ ui_copy('cart_cancel', 'cart.cancel') }}">
                     <x-heroicon-s-x-mark class="w-4 h-4" />
                 </button>
@@ -82,9 +83,6 @@
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink">{{ ui_copy('cart_title', 'cart.title') }}</span>
             </nav>
-            <span class="bp-spec-mono">
-                DOC · ORDER-WORKSHEET · CART
-            </span>
         </div>
 
         {{-- ── 1. Page Heading + step strip ── --}}
@@ -134,7 +132,6 @@
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
              class="bp-card p-10 md:p-16 text-center">
-            <span class="bp-spec text-amber-ink block mb-4">Report · Cart-Empty</span>
             <div class="inline-flex w-16 h-16 border-2 border-ink items-center justify-center mb-8">
                 <x-heroicon-o-shopping-bag class="w-7 h-7 text-ink" />
             </div>
@@ -204,9 +201,9 @@
                     <div class="hidden sm:grid grid-cols-12 gap-3 px-5 py-3 border-b border-ink bg-ivory-alt
                                 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">
                         <span class="col-span-5">{{ ui_copy('cart_th_item_oem', 'cart.th_item_oem') }}</span>
-                        <span class="col-span-2 text-center">{{ ui_copy('cart_th_unit', 'cart.th_unit') }} {{ settings('store.currency_symbol', '€') }}</span>
+                        <span class="col-span-2 text-center">{{ ui_copy('cart_th_unit', 'cart.th_unit') }} {{ settings('general.currency_symbol', '€') }}</span>
                         <span class="col-span-2 text-center">{{ ui_copy('cart_th_qty', 'cart.th_qty') }}</span>
-                        <span class="col-span-2 text-right">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }} {{ settings('store.currency_symbol', '€') }}</span>
+                        <span class="col-span-2 text-right">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }} {{ settings('general.currency_symbol', '€') }}</span>
                         <span class="col-span-1 text-right">{{ ui_copy('cart_th_action_short', 'cart.th_action_short') }}</span>
                     </div>
 
@@ -239,7 +236,7 @@
                                     <p class="font-mono text-[9px] tracking-[0.18em] uppercase"
                                        :class="item.in_stock ? 'text-amber-ink' : 'text-red-600'"
                                        x-text="item.in_stock ? '{{ addslashes(ui_copy('cart_in_stock_status', 'cart.in_stock_status')) }}' : '{{ addslashes(ui_copy('cart_out_of_stock_status', 'cart.out_of_stock_status')) }}'"></p>
-                                    <span class="font-mono text-sm tabular-nums text-ink-muted">{{ settings('store.currency_symbol', '€') }}<span x-text="item.price.toFixed(2)"></span> <span class="text-[9px] uppercase tracking-[0.18em]">{{ ui_copy('cart_each_short', 'cart.each_short') }}</span></span>
+                                    <span class="font-mono text-sm tabular-nums text-ink-muted">{{ settings('general.currency_symbol', '€') }}<span x-text="item.price.toFixed(2)"></span> <span class="text-[9px] uppercase tracking-[0.18em]">{{ ui_copy('cart_each_short', 'cart.each_short') }}</span></span>
                                 </div>
                                 {{-- Row 4: qty stepper + subtotal --}}
                                 <div class="flex items-center justify-between gap-3 pt-2 border-t border-rule">
@@ -264,7 +261,7 @@
                                     <div class="text-right">
                                         <p class="bp-spec-mono text-[9px] mb-0.5">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }}</p>
                                         <p class="font-mono text-base font-bold text-ink tabular-nums leading-none">
-                                            {{ settings('store.currency_symbol', '€') }}<span x-text="(item.price * item.quantity).toFixed(2)"></span>
+                                            {{ settings('general.currency_symbol', '€') }}<span x-text="(item.price * item.quantity).toFixed(2)"></span>
                                         </p>
                                     </div>
                                 </div>
@@ -306,7 +303,7 @@
 
                                 {{-- Unit price --}}
                                 <div class="col-span-2 text-center">
-                                    <span class="font-mono text-sm tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="item.price.toFixed(2)"></span></span>
+                                    <span class="font-mono text-sm tabular-nums text-ink">{{ settings('general.currency_symbol', '€') }}<span x-text="item.price.toFixed(2)"></span></span>
                                 </div>
 
                                 {{-- Qty stepper --}}
@@ -334,7 +331,7 @@
                                 {{-- Subtotal --}}
                                 <div class="col-span-2 text-right">
                                     <p class="font-mono text-base font-bold text-ink tabular-nums leading-none">
-                                        {{ settings('store.currency_symbol', '€') }}<span x-text="(item.price * item.quantity).toFixed(2)"></span>
+                                        {{ settings('general.currency_symbol', '€') }}<span x-text="(item.price * item.quantity).toFixed(2)"></span>
                                     </p>
                                 </div>
 
@@ -356,7 +353,7 @@
                 <div class="mt-6 border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-rule bg-ivory-alt">
                         <span class="bp-spec text-ink">01.b · {{ ui_copy('cart_shipping_carriers_eyebrow', 'cart.shipping_carriers_eyebrow') }}</span>
-                        <span class="bp-spec-mono">{{ ui_copy('cart_countries_count', 'cart.countries_count', ['count' => 27]) }}</span>
+                        <span class="bp-spec-mono">{{ ui_copy('cart_countries_count', 'cart.countries_count', ['count' => (int) settings('stats_counter.countries_count', 27)]) }}</span>
                     </div>
                     <div class="grid grid-cols-3 divide-x divide-rule">
                         @foreach(['DHL', 'DPD', 'GLS'] as $carrier)
@@ -378,7 +375,7 @@
                     {{-- Header --}}
                     <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink">02 · {{ ui_copy('cart_order_summary_eyebrow', 'cart.order_summary_eyebrow') }}</span>
-                        <span class="bp-spec-mono">{{ settings('store.currency', 'EUR') }}</span>
+                        <span class="bp-spec-mono">{{ settings('general.currency', 'EUR') }}</span>
                     </div>
 
                     {{-- Corner register marks --}}
@@ -396,9 +393,9 @@
                                 <template x-for="change in summary.price_changes" :key="change.item.id">
                                     <p class="text-xs text-amber-800 mt-1">
                                         <span x-text="change.item.product?.oem_number || '{{ addslashes(ui_copy('cart_item_fallback', 'cart.item_fallback')) }}'"></span> {{ ui_copy('cart_price_change_prefix', 'cart.price_change_prefix') }}
-                                        <span class="font-bold line-through" x-text="'{{ settings('store.currency_symbol', '€') }}' + change.old_price.toFixed(2)"></span>
+                                        <span class="font-bold line-through" x-text="'{{ settings('general.currency_symbol', '€') }}' + change.old_price.toFixed(2)"></span>
                                         {{ ui_copy('cart_price_change_to', 'cart.price_change_to') }}
-                                        <span class="font-bold" x-text="'{{ settings('store.currency_symbol', '€') }}' + change.current_price.toFixed(2)"></span>
+                                        <span class="font-bold" x-text="'{{ settings('general.currency_symbol', '€') }}' + change.current_price.toFixed(2)"></span>
                                         (<span x-text="'+' + change.change_percent.toFixed(1) + '%'"></span>)
                                     </p>
                                 </template>
@@ -410,7 +407,7 @@
                             <div class="flex items-baseline justify-between gap-3 py-3 border-b border-rule">
                                 <dt class="bp-spec-mono">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }}</dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="summary.subtotal_excl_vat.toFixed(2)"></span></dd>
+                                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('general.currency_symbol', '€') }}<span x-text="summary.subtotal_excl_vat.toFixed(2)"></span></dd>
                             </div>
                             <template x-if="summary.coupon_code">
                                 <div class="flex items-baseline justify-between gap-3 py-3 border-b border-rule">
@@ -422,7 +419,7 @@
                                         </button>
                                     </dt>
                                     <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                                    <dd class="font-mono text-sm font-bold tabular-nums text-amber-ink">-{{ settings('store.currency_symbol', '€') }}<span x-text="summary.coupon_discount.toFixed(2)"></span></dd>
+                                    <dd class="font-mono text-sm font-bold tabular-nums text-amber-ink">-{{ settings('general.currency_symbol', '€') }}<span x-text="summary.coupon_discount.toFixed(2)"></span></dd>
                                 </div>
                             </template>
                             <div class="flex items-baseline justify-between gap-3 py-3 border-b border-rule">
@@ -430,7 +427,7 @@
                                     {{ ui_copy('cart_vat_short', 'cart.vat_short') }} · <span x-text="summary.vat_rate"></span>%
                                 </dt>
                                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
-                                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="summary.vat_amount.toFixed(2)"></span></dd>
+                                <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('general.currency_symbol', '€') }}<span x-text="summary.vat_amount.toFixed(2)"></span></dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-3">
                                 <dt class="bp-spec-mono">{{ ui_copy('cart_shipping', 'cart.shipping') }}</dt>
@@ -445,7 +442,7 @@
                                 <div class="flex items-center justify-between mb-2">
                                     <span class="bp-spec text-amber-ink">{{ ui_copy('cart_free_shipping_label', 'cart.free_shipping_label') }}</span>
                                     <template x-if="summary.shipping_needed > 0">
-                                        <span class="font-mono text-xs font-bold tabular-nums text-ink">{{ settings('store.currency_symbol', '€') }}<span x-text="summary.shipping_needed.toFixed(2)"></span> {{ ui_copy('cart_left_suffix', 'cart.left_suffix') }}</span>
+                                        <span class="font-mono text-xs font-bold tabular-nums text-ink">{{ settings('general.currency_symbol', '€') }}<span x-text="summary.shipping_needed.toFixed(2)"></span> {{ ui_copy('cart_left_suffix', 'cart.left_suffix') }}</span>
                                     </template>
                                     <template x-if="summary.shipping_needed <= 0">
                                         <span class="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink">
@@ -495,9 +492,9 @@
                         {{-- Grand total --}}
                         <div class="mt-6 pt-5 border-t-2 border-ink">
                             <div class="flex items-baseline justify-between gap-3 mb-2">
-                                <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink">{{ ui_copy('cart_total_currency_label', 'cart.total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</span>
+                                <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink">{{ ui_copy('cart_total_currency_label', 'cart.total_currency_label', ['currency' => settings('general.currency', 'EUR')]) }}</span>
                                 <p class="font-mono text-4xl sm:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
-                                    {{ settings('store.currency_symbol', '€') }}<span x-text="summary.grand_total.toFixed(2)"></span>
+                                    {{ settings('general.currency_symbol', '€') }}<span x-text="summary.grand_total.toFixed(2)"></span>
                                 </p>
                             </div>
                             <p class="text-right font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted">
@@ -514,10 +511,6 @@
 
                         {{-- Trust badges --}}
                         <div class="mt-5 pt-4 border-t border-rule flex flex-wrap items-center justify-between gap-2">
-                            <span class="inline-flex items-center gap-1.5 bp-spec-mono">
-                                <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
-                                SSL · TLS 1.3
-                            </span>
                             <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                                 <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
                                 Airwallex
@@ -558,9 +551,9 @@
          x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0">
         <div class="flex items-center justify-between gap-4 max-w-lg mx-auto">
             <div>
-                <p class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted mb-0.5">{{ ui_copy('cart_total_currency_label', 'cart.total_currency_label', ['currency' => settings('store.currency', 'EUR')]) }}</p>
+                <p class="font-mono text-[9px] tracking-[0.22em] uppercase text-ink-muted mb-0.5">{{ ui_copy('cart_total_currency_label', 'cart.total_currency_label', ['currency' => settings('general.currency', 'EUR')]) }}</p>
                 <p class="font-mono text-2xl font-bold text-ink tabular-nums leading-none">
-                    {{ settings('store.currency_symbol', '€') }}<span x-text="summary.grand_total.toFixed(2)"></span>
+                    {{ settings('general.currency_symbol', '€') }}<span x-text="summary.grand_total.toFixed(2)"></span>
                 </p>
             </div>
             <a href="{{ url('/'.app()->getLocale().'/checkout') }}" class="bp-btn-primary flex-1 justify-center">

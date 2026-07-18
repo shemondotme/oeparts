@@ -1,4 +1,4 @@
-﻿@extends('emails.layout')
+@extends('emails.layout')
 
 @section('content')
     {{-- ══════════════════════════════════════════════════════════════════════
@@ -246,6 +246,24 @@
                                     </td>
                                 </tr>
                             </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+        {{-- ═══ OVERSIZED PARTS NOTICE ═══ --}}
+        <tr>
+            <td style="padding: 0 40px 24px 40px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; background-color: #F7F3E7;">
+                    <tr>
+                        <td style="padding: 16px;">
+                            <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
+                                {{ trans('emails.order_confirmation.oversized_notice_heading', [], $locale) }}
+                            </p>
+                            <p style="margin: 0; font-size: 13px; line-height: 19px; color: #4E5A74;">
+                                {{ trans('emails.order_confirmation.oversized_notice_body', [], $locale) }}
+                            </p>
                         </td>
                     </tr>
                 </table>

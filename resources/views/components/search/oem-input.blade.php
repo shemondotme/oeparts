@@ -58,7 +58,7 @@
                 x-cloak
                 @click="q = ''"
                 class="text-ink-muted hover:text-red-700 shrink-0"
-                aria-label="{{ __('Clear') }}">
+                aria-label="{{ ui_copy('search_oem_input_clear_aria', 'search.oem_input_clear_aria') }}">
             <x-heroicon-o-x-mark class="w-4 h-4" />
         </button>
     </div>

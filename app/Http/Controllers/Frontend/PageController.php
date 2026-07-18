@@ -14,6 +14,8 @@ class PageController extends Controller
         $page = Page::with('featuredImage')
             ->where('slug', $slug)
             ->where('status', 'published')
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
             ->firstOrFail();
 
         return view('frontend.page', compact('page'));

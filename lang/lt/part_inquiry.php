@@ -46,7 +46,6 @@ return [
     'validation_fallback' => 'Patikrinkite formą aukščiau.',
     'submit' => 'Siųsti užklausą',
     'submitting' => 'Siunčiama…',
-    'trust_ssl' => 'SSL šifravimas',
     'trust_response' => ':hours val. atsakymas',
     'trust_nospam' => 'Be šlamšto',
     'keyboard_hint_html' => 'Norėdami išsiųsti, paspauskite :kbd',
@@ -56,4 +55,23 @@ return [
     'rate_limited' => 'Per daug užklausų. Bandykite vėliau.',
     'guest_not_allowed' => 'Norėdami pateikti užklausą dėl dalies, prisijunkite.',
     'submitted' => 'Užklausa išsiųsta. Atsakysime per :hours val.',
+
+    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    'inline_form_label' => 'Forma · Greita užklausa',
+    'inline_toggle_show' => 'Pridėti transporto duomenis (nebūtina)',
+    'inline_toggle_hide' => 'Slėpti transporto duomenis',
+    'inline_spec_sla' => 'SLA · Atsakymas',
+    'inline_spec_channel' => 'Kanalas',
+    'inline_spec_channel_value' => 'El. paštas · Saugu',
+    'inline_spec_coverage' => 'Aprėptis',
+    'inline_spec_coverage_value' => '27 ES šalys',
+
+    // Server-side validation messages (PartInquiryRequest)
+    'validation_email_required' => 'Įveskite savo el. pašto adresą.',
+    'validation_email_invalid' => 'Įveskite galiojantį el. pašto adresą.',
+    'validation_oem_required' => 'Įveskite OEM dalies numerį.',
+    'validation_year_invalid' => 'Įveskite galiojančius 4 skaitmenų metus.',
+    'validation_urgency_invalid' => 'Pasirinkite galiojantį skubumo lygį.',
+    'success_expected_label' => 'Numat. atsakymas',
+    'next_protocol' => 'Kitas žingsnis',
 ];

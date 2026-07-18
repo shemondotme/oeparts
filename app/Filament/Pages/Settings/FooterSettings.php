@@ -38,16 +38,33 @@ class FooterSettings extends SettingsPage
                 Section::make('Footer Stats & Payments')
                     ->description('The stats strip and accepted-payment labels in the footer.')
                     ->schema([
+                        Forms\Components\TextInput::make('stat_parts_label')
+                            ->label('Stat — OEM Numbers Label')
+                            ->placeholder('OEM Numbers')
+                            ->helperText('Leave empty to use the built-in translated default ("OEM Numbers" / "OEM-Nummern" / …).')
+                            ->maxLength(40),
                         Forms\Components\TextInput::make('stat_parts')
-                            ->label('Stat — Parts')
-                            ->placeholder('e.g. 1.2M+ parts')
+                            ->label('Stat — OEM Numbers Value')
+                            ->placeholder('e.g. 1.2M+')
+                            ->helperText('Should match Stats Counter Settings → Parts Count (the same "OEM numbers sourced" figure shown on the homepage stats section).')
                             ->maxLength(60),
+                        Forms\Components\TextInput::make('stat_countries_label')
+                            ->label('Stat — Countries Label')
+                            ->placeholder('Countries')
+                            ->helperText('Leave empty to use the built-in translated default.')
+                            ->maxLength(40),
                         Forms\Components\TextInput::make('stat_countries')
-                            ->label('Stat — Countries')
-                            ->placeholder('e.g. 27 EU countries')
+                            ->label('Stat — Countries Value')
+                            ->placeholder('e.g. 27')
+                            ->helperText('Should match Stats Counter Settings → Countries Count — shown identically on the homepage hero pill and the search console page.')
                             ->maxLength(60),
+                        Forms\Components\TextInput::make('stat_languages_label')
+                            ->label('Stat — Languages Label')
+                            ->placeholder('Languages')
+                            ->helperText('Leave empty to use the built-in translated default.')
+                            ->maxLength(40),
                         Forms\Components\TextInput::make('stat_languages')
-                            ->label('Stat — Languages')
+                            ->label('Stat — Languages Value')
                             ->placeholder('e.g. 5 languages')
                             ->maxLength(60),
                         Forms\Components\TagsInput::make('payment_methods')

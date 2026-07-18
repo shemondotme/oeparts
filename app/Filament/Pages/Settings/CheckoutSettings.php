@@ -54,6 +54,16 @@ class CheckoutSettings extends SettingsPage
                             ->label('Allowed Payment Methods')
                             ->helperText('Enter: card, bank_transfer')
                             ->default(['card', 'bank_transfer']),
+
+                        Forms\Components\Toggle::make('enable_apple_pay')
+                            ->label('Enable Apple Pay')
+                            ->helperText('Shown inside the Card option at checkout when on. Requires Apple Pay to already be enabled and domain-verified on your Airwallex merchant account — this toggle only controls whether the storefront offers it.')
+                            ->default(true),
+
+                        Forms\Components\Toggle::make('enable_google_pay')
+                            ->label('Enable Google Pay')
+                            ->helperText('Shown inside the Card option at checkout when on. Requires Google Pay to already be enabled on your Airwallex merchant account — this toggle only controls whether the storefront offers it.')
+                            ->default(true),
                     ])->columns(2),
 
                 Section::make('Rush Processing Upsell')

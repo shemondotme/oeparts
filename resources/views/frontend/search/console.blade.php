@@ -1,14 +1,27 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $siteName = settings('general.site_name', 'OeParts');
     $inquiryHours = (int) settings('part_inquiry.response_hours', 24);
+
+    // Admin-configurable per-locale override (seo.console_title_template /
+    // console_meta_template), same pattern as the results page — falls back
+    // to the search.php lang strings when nothing's configured.
+    $consoleTitleTpl = trim(settings_trans('seo.console_title_template', ''));
+    $consoleTitle = $consoleTitleTpl !== ''
+        ? str_replace('{site}', $siteName, $consoleTitleTpl)
+        : __('search.console_seo_title') . ' · ' . $siteName;
+
+    $consoleMetaTpl = trim(settings_trans('seo.console_meta_template', ''));
+    $consoleMetaDescription = $consoleMetaTpl !== ''
+        ? str_replace('{site}', $siteName, $consoleMetaTpl)
+        : __('search.console_seo_description');
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
-@section('title'){{ __('search.console_seo_title') }} · {{ $siteName }}@endsection
-@section('meta_description'){{ __('search.console_seo_description') }}@endsection
-@section('og_title'){{ __('search.console_seo_title') }} · {{ $siteName }}@endsection
+@section('title'){{ $consoleTitle }}@endsection
+@section('meta_description'){{ $consoleMetaDescription }}@endsection
+@section('og_title'){{ $consoleTitle }}@endsection
 @section('og_description'){{ __('search.console_og_description') }}@endsection
 @section('canonical')
     <link rel="canonical" href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}">
@@ -27,7 +40,7 @@
     '@@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
     'itemListElement' => [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'), 'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('search.console_breadcrumb_home'), 'item' => url('/'.$lang.'/')],
         ['@type' => 'ListItem', 'position' => 2, 'name' => __('search.console_breadcrumb_current'), 'item' => route('frontend.search.console', ['lang' => $lang])],
     ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
@@ -51,10 +64,7 @@
 
         {{-- ═══ Document header: breadcrumb + doc ID ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
-            <x-ui.breadcrumb :items="[['label' => __('search.console_breadcrumb_current')]]" />
-            <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                {{ __('search.console_doc_id') }}
-            </div>
+            <x-ui.breadcrumb :home-label="__('search.console_breadcrumb_home')" :items="[['label' => __('search.console_breadcrumb_current')]]" />
         </div>
 
         {{-- ═══ 12-column grid: headline + console spec panel ═══ --}}
@@ -100,14 +110,9 @@
                             <dd class="font-mono text-sm font-bold text-ink">{{ number_format($productCount) }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-sm text-ink-muted">{{ __('search.console_status_crossrefs') }}</dt>
-                            <span class="bp-leader-dots"></span>
-                            <dd class="font-mono text-sm font-bold text-ink">{{ __('search.console_status_crossrefs_value') }}</dd>
-                        </div>
-                        <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('search.console_status_coverage') }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono text-sm font-bold text-amber-ink uppercase tracking-wide">{{ __('search.console_status_coverage_value') }}</dd>
+                            <dd class="font-mono text-sm font-bold text-amber-ink uppercase tracking-wide">{{ __('search.console_status_coverage_value', ['count' => (int) settings('stats_counter.countries_count', 27)]) }}</dd>
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ __('search.console_status_response') }}</dt>
@@ -202,6 +207,7 @@
                         {{ __('search.console_concierge_body', ['hours' => $inquiryHours]) }}
                     </p>
                     <button type="button"
+                            x-data
                             x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal'))"
                             class="mt-6 group inline-flex items-center justify-center gap-3
                                    px-6 py-3.5

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('checkout_payment_processing_title', 'checkout.payment_processing_title') . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -9,7 +9,7 @@
     <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-10 py-16">
-        <div class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+        <div class="border border-ink bg-paper bp-shadow">
             <div class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                 <span class="bp-spec text-amber-ink flex items-center gap-2">
                     <x-heroicon-o-arrow-path class="w-3.5 h-3.5 animate-spin" />

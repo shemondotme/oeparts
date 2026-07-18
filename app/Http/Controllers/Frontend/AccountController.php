@@ -10,9 +10,12 @@ use App\Enums\OrderStatus;
 use App\Models\RefundRequest;
 use App\Jobs\SendRefundStatusEmail;
 use App\Services\OrderService;
+use App\Services\UploadedImageSanitizer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
@@ -202,17 +205,9 @@ class AccountController extends Controller
         $validated = $request->validated();
 
         // Update basic info
-        $user->name = $validated['name'];
+        $user->name = trim($validated['first_name'] . ' ' . $validated['last_name']);
         $user->phone = $validated['phone'];
         $user->email = $validated['email'];
-
-        // Change password if provided
-        if (!empty($validated['current_password']) && !empty($validated['new_password'])) {
-            if (!\Hash::check($validated['current_password'], $user->password)) {
-                return back()->withErrors(['current_password' => __('account.current_password_incorrect')]);
-            }
-            $user->password = \Hash::make($validated['new_password']);
-        }
 
         $user->save();
 
@@ -251,7 +246,7 @@ class AccountController extends Controller
             'notifications' => 'nullable|array',
         ]);
 
-        $user->prefers_order_notifications = $request->boolean('notifications.order_updates');
+        $user->prefers_order_notifications = $request->boolean('notifications.order_notifications');
         $user->prefers_email_notifications = $request->boolean('notifications.email_notifications');
         $user->prefers_promotional_emails = $request->boolean('notifications.promotional_emails');
         $user->save();
@@ -357,11 +352,18 @@ class AccountController extends Controller
             'website'       => 'size:0',  // honeypot
         ]);
 
-        // Store uploaded images
+        // Store uploaded images — private disk, EXIF-stripped, with metadata
+        // for the admin panel (original name / size / when it was uploaded).
         $imagePaths = [];
         if ($request->hasFile('return_images')) {
             foreach ($request->file('return_images') as $file) {
-                $imagePaths[] = $file->store('refund-images', 'public');
+                try {
+                    $imagePaths[] = $this->storeRefundImage($file);
+                } catch (\InvalidArgumentException $e) {
+                    return back()
+                        ->withErrors(['return_images' => __('account.refund_image_rejected')])
+                        ->withInput();
+                }
             }
         }
 
@@ -403,18 +405,55 @@ class AccountController extends Controller
     }
 
     /**
+     * Store a customer-submitted refund photo on the private disk, stripped of
+     * EXIF/GPS metadata and any embedded-script payload (phone photos
+     * routinely embed the shooter's location; see UploadedImageSanitizer),
+     * under a date-partitioned path, with enough metadata for the admin panel
+     * to show the original filename and upload date rather than a bare hash.
+     *
+     * @throws \InvalidArgumentException if the file fails the content safety check
+     */
+    private function storeRefundImage(UploadedFile $file): array
+    {
+        $sanitizer = app(UploadedImageSanitizer::class);
+        $sanitizer->assertSafe($file);
+
+        $directory = 'refund-images/' . now()->format('Y/m');
+        $path = $file->store($directory, 'local');
+        $sanitizer->sanitize('local', $path, $file->getMimeType());
+
+        return [
+            'path'          => $path,
+            'original_name' => $file->getClientOriginalName(),
+            'size'          => Storage::disk('local')->size($path),
+            'uploaded_at'   => now()->toIso8601String(),
+        ];
+    }
+
+    /**
      * Show all refund requests for the authenticated user.
      */
     public function refunds(Request $request, string $lang)
     {
         $user = Auth::guard('web')->user();
-        $refunds = RefundRequest::whereHas('order', function ($q) use ($user) {
+        $baseQuery = RefundRequest::whereHas('order', function ($q) use ($user) {
             $q->where('user_id', $user->id);
-        })
-        ->with('order')
-        ->orderByDesc('created_at')
-        ->paginate(settings('general.pagination_per_page', 10));
+        });
 
-        return view('frontend.account.refunds', compact('refunds'));
+        // Aggregates over the FULL result set — the paginated $refunds below only
+        // holds one page, so counting/summing against it would under-report and
+        // shift as the user paginates.
+        $totals = [
+            'all'       => (clone $baseQuery)->count(),
+            'pending'   => (clone $baseQuery)->where('status', \App\Enums\RefundStatus::Pending)->count(),
+            'processed' => (clone $baseQuery)->where('status', \App\Enums\RefundStatus::Processed)->count(),
+            'amount'    => (string) (clone $baseQuery)->sum('amount_requested'),
+        ];
+
+        $refunds = $baseQuery->with('order')
+            ->orderByDesc('created_at')
+            ->paginate(settings('general.pagination_per_page', 10));
+
+        return view('frontend.account.refunds', compact('refunds', 'totals'));
     }
 }

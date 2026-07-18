@@ -1,6 +1,31 @@
 <?php
 
 return [
+    // Breadcrumb / page chrome
+    'breadcrumb_home' => 'Pradžia',
+    'breadcrumb_contact_us' => 'Kontaktai',
+    'eyebrow_contact_desk' => 'Kontaktas · Skyrius',
+    'eyebrow_direct_channel' => 'Tiesioginis · Kanalas',
+    'channel_email_label' => 'El. paštas',
+    'channel_phone_label' => 'Telefonas',
+    'hours_label' => 'Darbo laikas',
+    'eyebrow_enquiry_form' => 'Užklausa · Forma',
+    'spam_protected_note' => 'Apsaugota nuo šlamšto · BDAR atitinka',
+    'eyebrow_info_rail' => 'Info · Skydelis',
+    'looking_for_part_heading' => 'Ieškote dalies?',
+    'looking_for_part_body' => 'Dalių paieškai naudokite paieškos konsolę tiesiogiai — rezultatus gausite per kelias sekundes.',
+    'open_search_btn' => 'Atidaryti paiešką',
+    'network_error' => 'Tinklo klaida. Bandykite dar kartą.',
+
+    // Validation messages (ContactFormRequest)
+    'validation_email_required' => 'Įveskite savo el. pašto adresą.',
+    'validation_email_invalid' => 'Įveskite tinkamą el. pašto adresą.',
+    'validation_name_required' => 'Įveskite savo vardą.',
+    'validation_subject_required' => 'Pasirinkite temą.',
+    'validation_message_required' => 'Įveskite savo žinutę.',
+    'validation_message_min' => 'Jūsų žinutę turi sudaryti bent 10 simbolių.',
+    'validation_message_max' => 'Jūsų žinutė negali viršyti 5000 simbolių.',
+
     // Hero
     'title' => 'Susisiekite su mūsų komanda',
     'description' => 'Susisiekite su OeParts komanda dėl tiekimo, užsakymų ar partnerystės klausimų. Kiekviena žinutė nukreipiama tinkamam specialistui ir gaunate atsakymą per vieną darbo dieną.',
@@ -8,8 +33,8 @@ return [
     // Form fields
     'name' => 'Vardas, pavardė',
     'name_placeholder' => 'Jonas Jonaitis',
-    'email' => 'Verslo el. paštas',
-    'email_placeholder' => 'vardas@imone.eu',
+    'email' => 'El. pašto adresas',
+    'email_placeholder' => 'vardas@pavyzdys.lt',
 
     // Email verification
     'verify_email' => 'Siųsti kodą',
@@ -58,7 +83,7 @@ return [
     // Message
     'message' => 'Jūsų žinutė',
     'message_placeholder' => 'Papasakokite, ko jums reikia — dalis, automobilis, kiekis, terminas…',
-    'message_min_length' => 'Mažiausiai 20 simbolių.',
+    'message_min_length' => 'Mažiausiai 10 simbolių.',
 
     // Submit
     'send_message' => 'Siųsti žinutę',
@@ -71,11 +96,10 @@ return [
     'response_time' => 'Atsakymo laikas',
     'response_time_value' => 'Per 1 darbo dieną',
     'secure' => 'Saugus kanalas',
-    'secure_note' => 'Jūsų žinutė šifruojama ištisai naudojant TLS 1.3, o duomenys tvarkomi laikantis BDAR.',
+    'secure_note' => 'Jūsų žinutė siunčiama šifruotu ryšiu (HTTPS/TLS), o duomenys tvarkomi laikantis BDAR.',
 
     // Flash / status
     'sent_success' => 'Žinutė išsiųsta — netrukus su jumis susisieksime.',
     'sent_failed' => 'Siunčiant jūsų žinutę įvyko klaida. Bandykite dar kartą.',
-    'otp_sent' => 'Patvirtinimo kodas išsiųstas jūsų el. paštu.',
     'otp_invalid' => 'Kodas neteisingas arba nebegalioja.',
 ];

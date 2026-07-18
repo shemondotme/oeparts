@@ -224,12 +224,37 @@ class MediaFileResource extends Resource
                 Forms\Components\FileUpload::make('file')
                     ->label('Image')
                     ->disk('public')
-                    ->directory('media')
+                    ->directory(fn (): string => 'media/' . now()->format('Y/m'))
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
                     ->maxSize(5120)
                     ->required()
                     ->storeFileNamesIn('original_name')
-                    ->helperText('JPEG, PNG, GIF, or WebP. Max 5 MB.'),
+                    ->helperText('JPEG, PNG, GIF, or WebP. Max 5 MB.')
+                    ->rules([
+                        function () {
+                            return function (string $attribute, $value, \Closure $fail) {
+                                try {
+                                    app(\App\Services\UploadedImageSanitizer::class)->assertSafe($value);
+                                } catch (\InvalidArgumentException $e) {
+                                    $fail($e->getMessage());
+                                }
+                            };
+                        },
+                    ])
+                    // Same content-safety check + GD re-encode as every other
+                    // upload endpoint (see UploadedImageSanitizer) — run after
+                    // Filament's own default save so its directory/naming/
+                    // move-vs-copy logic is untouched.
+                    ->saveUploadedFileUsing(function (Forms\Components\FileUpload $component, $file) {
+                        $path = $component->saveUploadedFile($file);
+
+                        if ($path) {
+                            app(\App\Services\UploadedImageSanitizer::class)
+                                ->sanitize('public', $path, $component->getDisk()->mimeType($path) ?: null);
+                        }
+
+                        return $path;
+                    }),
                 Forms\Components\TextInput::make('alt_text')
                     ->label('Alt Text')
                     ->maxLength(255)

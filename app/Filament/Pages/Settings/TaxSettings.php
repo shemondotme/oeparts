@@ -55,12 +55,7 @@ class TaxSettings extends SettingsPage
                     ->schema([
                         Forms\Components\Toggle::make('vat_validation_enabled')
                             ->label('Enable VIES VAT Validation')
-                            ->helperText('Verify customer EU VAT numbers via the VIES SOAP API at checkout')
-                            ->default(true),
-
-                        Forms\Components\Toggle::make('b2b_exempt_on_valid_vat')
-                            ->label('Exempt B2B Orders with Valid VAT')
-                            ->helperText('When a valid EU VAT number is provided, exclude VAT from the order total')
+                            ->helperText('Verify EU VAT numbers via the VIES SOAP API (used by the /api/validate-vat endpoint)')
                             ->default(true),
                     ])->columns(2),
             ]);

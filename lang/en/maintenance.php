@@ -7,4 +7,6 @@ return [
     'need_help' => 'Need help?',
     'check_back' => 'Please check back in a few minutes',
     'all_rights_reserved' => 'All rights reserved',
+    'status_label' => 'Status',
+    'estimated_return_spec' => 'Estimated · Return',
 ];

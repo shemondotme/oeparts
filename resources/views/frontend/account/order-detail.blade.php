@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', ui_copy('account_order_title', 'account.order_title', ['number' => $order->order_number]) . ' — ' . settings('general.site_name', 'OeParts'))
 
@@ -29,7 +29,16 @@
     ];
     $doneKeys = $completedMap[$statusValue] ?? ['pending'];
 
-    $isTerminalNegative = in_array($statusValue, ['cancelled'], true);
+    // 'cancelled' and the two refund states are all terminal — none of them
+    // continue through the normal fulfilment timeline, so the progress bar
+    // (which would otherwise show them "stuck" at Processing) is replaced
+    // with a dedicated terminal panel for each.
+    $terminalState = match ($statusValue) {
+        'cancelled' => 'cancelled',
+        'refund_requested', 'refunded' => 'refunded',
+        default => null,
+    };
+    $isTerminalNegative = $terminalState !== null;
     $progressIndex = count($doneKeys) - 1;
     $progressPct = max(0, min(100, ($progressIndex / (count($timeline) - 1)) * 100));
 
@@ -38,15 +47,15 @@
         && $order->payment_status?->value === 'pending';
 
     // Discount shown if > 0.
-    $hasDiscount = ((float) $order->discount_amount) > 0;
+    $hasDiscount = bccomp((string) $order->discount_amount, '0', 2) > 0;
 @endphp
 
 @section('content')
 <x-account.shell
     active="orders"
     eyebrow="{{ ui_copy('account_order_detail_eyebrow', 'account.order_detail_eyebrow') }}"
-    :title="'Order ' . $order->order_number"
-    :subtitle="ui_copy('account_placed_on', 'account.placed_on', ['date' => $order->created_at->format('F j, Y · H:i')])"
+    title="{{ ui_copy('account_order_title', 'account.order_title', ['number' => $order->order_number]) }}"
+    :subtitle="ui_copy('account_placed_on', 'account.placed_on', ['date' => format_datetime($order->created_at)])"
     :docId="'DOC · ' . $order->order_number"
     :breadcrumb="[
         ['label' => ui_copy('account_nav_orders', 'account.nav_orders'), 'href' => route('frontend.account.orders', ['lang' => $lang])],
@@ -54,7 +63,7 @@
     ]"
 >
     <x-slot name="actions">
-        @if(in_array($statusValue, ['paid', 'processing', 'shipped', 'delivered']))
+        @if(in_array($statusValue, ['paid', 'processing', 'shipped', 'delivered', 'refund_requested', 'refunded']))
             <a href="{{ route('frontend.account.order.invoice', ['lang' => $lang, 'order' => $order]) }}"
                class="inline-flex items-center gap-2 px-4 py-2.5 border border-ivory/20 text-ivory
                       font-mono text-[11px] font-bold tracking-[0.22em] uppercase
@@ -64,7 +73,7 @@
             </a>
         @endif
 
-        @if(in_array($statusValue, ['pending', 'paid']))
+        @if(in_array($statusValue, ['pending', 'paid', 'processing']))
             <form method="POST"
                   action="{{ route('frontend.account.order.cancel', ['lang' => $lang, 'order' => $order]) }}"
                   onsubmit="return confirm('{{ addslashes(ui_copy('account_cancel_order_confirm', 'account.cancel_order_confirm')) }}');">
@@ -92,8 +101,7 @@
 
     {{-- Bank-transfer reminder --}}
     @if($showBankTransferNote)
-        <div class="mb-6 border border-amber bg-amber/10 p-5 flex items-start gap-3"
-             style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+        <div class="mb-6 border border-amber bg-amber/10 p-5 flex items-start gap-3 bp-shadow-sm">
             <div class="w-9 h-9 border border-amber bg-paper flex items-center justify-center shrink-0">
                 <x-heroicon-s-exclamation-circle class="w-4 h-4 text-amber-ink" />
             </div>
@@ -107,27 +115,41 @@
     @endif
 
     {{-- ── Status timeline ──────────────────────────────────────────── --}}
-    <section class="mb-6 border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+    <section class="mb-6 border border-ink bg-paper bp-shadow">
         <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
             <span class="bp-spec text-amber-ink flex items-center gap-2">
                 <x-heroicon-o-signal class="w-3.5 h-3.5" />
                 {{ ui_copy('account_fulfilment_status_eyebrow', 'account.fulfilment_status_eyebrow') }}
             </span>
             <span class="font-mono text-[10px] tracking-[0.22em] uppercase
-                         {{ $isTerminalNegative ? 'text-red-700' : 'text-emerald-700' }} flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 {{ $isTerminalNegative ? 'bg-red-600' : 'bg-emerald-600' }} rounded-full"></span>
+                         {{ $terminalState === 'cancelled' ? 'text-red-700' : ($terminalState === 'refunded' ? 'text-amber-ink' : 'text-emerald-700') }} flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 {{ $terminalState === 'cancelled' ? 'bg-red-600' : ($terminalState === 'refunded' ? 'bg-amber-ink' : 'bg-emerald-600') }} rounded-full"></span>
                 {{ ui_copy('account_order_status_'.$order->status->value, 'account.order_status_'.$order->status->value) }}
             </span>
         </header>
 
         <div class="p-6 sm:p-8">
-            @if($isTerminalNegative)
+            @if($terminalState === 'cancelled')
                 <div class="flex items-center gap-4">
                     <div class="w-11 h-11 border border-red-600 bg-red-50 flex items-center justify-center shrink-0">
                         <x-heroicon-s-x-mark class="w-5 h-5 text-red-600" />
                     </div>
                     <div>
                         <p class="font-display text-lg font-bold text-ink">{{ ui_copy('account_order_cancelled', 'account.order_cancelled') }}</p>
+                        <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-1">
+                            {{ ui_copy('account_last_updated', 'account.last_updated', ['datetime' => $order->updated_at->format('Y-m-d · H:i')]) }}
+                        </p>
+                    </div>
+                </div>
+            @elseif($terminalState === 'refunded')
+                <div class="flex items-center gap-4">
+                    <div class="w-11 h-11 border border-amber bg-amber/10 flex items-center justify-center shrink-0">
+                        <x-heroicon-s-arrow-path class="w-5 h-5 text-amber-ink" />
+                    </div>
+                    <div>
+                        <p class="font-display text-lg font-bold text-ink">
+                            {{ $statusValue === 'refunded' ? ui_copy('account_order_refunded', 'account.order_refunded') : ui_copy('account_order_refund_requested', 'account.order_refund_requested') }}
+                        </p>
                         <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ink-muted mt-1">
                             {{ ui_copy('account_last_updated', 'account.last_updated', ['datetime' => $order->updated_at->format('Y-m-d · H:i')]) }}
                         </p>
@@ -146,9 +168,8 @@
                             <div class="flex flex-col items-center text-center">
                                 <div class="w-10 h-10 flex items-center justify-center border transition-all
                                             {{ $isDone
-                                                ? 'bg-amber border-amber text-ink'
-                                                : 'bg-paper border-rule-strong text-ink-muted' }}"
-                                     style="{{ $isDone ? 'box-shadow: 2px 2px 0 rgba(20,22,29,1);' : '' }}">
+                                                ? 'bg-amber border-amber text-ink bp-shadow-sm'
+                                                : 'bg-paper border-rule-strong text-ink-muted' }}">
                                     @if($isDone)
                                         <x-heroicon-s-check class="w-4 h-4" />
                                     @else
@@ -192,7 +213,7 @@
         <div class="col-span-12 lg:col-span-8 space-y-6">
 
             {{-- Order items --}}
-            <section class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+            <section class="border border-ink bg-paper bp-shadow">
                 <header class="flex items-center justify-between px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-cube class="w-3.5 h-3.5" />
@@ -211,7 +232,14 @@
                                 ? (is_array($item->product->name) ? (trans_field($item->product->name) ?: $partFallback) : $item->product->name)
                                 : ($item->oem_number_snapshot ?: $partFallback);
                             $isNew = $item->condition_snapshot === 'new';
-                            $lineTotal = $item->total_price ?? bcmul((string) $item->unit_price, (string) $item->quantity, 2);
+                            $lineTotal = $item->total_price;
+                            // condition_snapshot is a historical slug (e.g. "used_a"), not a
+                            // live Condition relation — resolve it the same way condition_label()
+                            // does, without a per-row DB lookup.
+                            $conditionKey = 'search.condition_label_' . str_replace('-', '_', (string) $item->condition_snapshot);
+                            $conditionLabel = \Illuminate\Support\Facades\Lang::has($conditionKey)
+                                ? __($conditionKey)
+                                : ucfirst(str_replace('_', ' ', (string) $item->condition_snapshot));
                         @endphp
                         <li class="px-5 py-4 flex items-start gap-4">
                             <span class="font-mono text-[10px] tabular-nums tracking-[0.22em] uppercase text-ink-muted w-8 pt-0.5">
@@ -240,7 +268,7 @@
                                             <span class="w-1.5 h-1.5 {{ $isNew ? 'bg-emerald-600' : 'bg-blue-600' }}"></span>
                                             <span class="font-mono text-[10px] tracking-[0.18em] uppercase
                                                          {{ $isNew ? 'text-emerald-700' : 'text-blue-700' }}">
-                                                {{ ucfirst($item->condition_snapshot) }}
+                                                {{ $conditionLabel }}
                                             </span>
                                         </span>
                                     @endif
@@ -260,7 +288,7 @@
             </section>
 
             {{-- Totals ledger --}}
-            <section class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+            <section class="border border-ink bg-paper bp-shadow">
                 <header class="px-5 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-calculator class="w-3.5 h-3.5" />
@@ -311,7 +339,7 @@
                 <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                     <div>
                         <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('account_grand_total', 'account.grand_total') }}</p>
-                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('store.currency', 'EUR') }} · {{ ui_copy('account_incl_vat_short', 'account.incl_vat_short') }}</p>
+                        <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('general.currency', 'EUR') }} · {{ ui_copy('account_incl_vat_short', 'account.incl_vat_short') }}</p>
                     </div>
                     <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
                         {{ format_price($order->grand_total) }}
@@ -320,7 +348,7 @@
             </section>
 
             @if($order->customer_note)
-                <section class="border border-ink bg-paper" style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                <section class="border border-ink bg-paper bp-shadow">
                     <header class="px-5 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-pencil-square class="w-3.5 h-3.5" />
@@ -338,7 +366,7 @@
         <aside class="col-span-12 lg:col-span-4 space-y-4">
 
             {{-- Shipping address --}}
-            <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper bp-shadow-sm">
                 <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-map-pin class="w-3.5 h-3.5" />
@@ -362,7 +390,7 @@
 
             {{-- Shipping method --}}
             @if($order->shipping_method_name_snapshot)
-                <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                <div class="border border-ink bg-paper bp-shadow-sm">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-truck class="w-3.5 h-3.5" />
@@ -383,7 +411,7 @@
             @endif
 
             {{-- Payment --}}
-            <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+            <div class="border border-ink bg-paper bp-shadow-sm">
                 <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                     <span class="bp-spec text-amber-ink flex items-center gap-2">
                         <x-heroicon-o-credit-card class="w-3.5 h-3.5" />
@@ -434,7 +462,7 @@
             </div>
 
             @if($order->is_b2b && ($order->company_name || $order->vat_number))
-                <div class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                <div class="border border-ink bg-paper bp-shadow-sm">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink flex items-center gap-2">
                             <x-heroicon-o-briefcase class="w-3.5 h-3.5" />

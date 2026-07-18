@@ -38,6 +38,14 @@ class CompanySettings extends SettingsPage
                             ->maxLength(50)
                             ->placeholder('123456789')
                             ->default(null),
+
+                        Forms\Components\TextInput::make('managing_director')
+                            ->label('Managing Director / Authorised Representative')
+                            ->helperText('Name(s) of the person(s) legally authorised to represent the company — required on the Legal Notice page for corporate entities under most EU member states\' commercial disclosure law (e.g. German §5 TMG).')
+                            ->maxLength(255)
+                            ->placeholder('Jane Doe')
+                            ->columnSpanFull()
+                            ->default(null),
                     ])->columns(2),
 
                 Section::make('Contact Details')

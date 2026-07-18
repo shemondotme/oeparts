@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $lang = app()->getLocale();
@@ -73,10 +73,9 @@
 
         {{-- ═══ Document header: breadcrumb + doc ID ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
-            <x-ui.breadcrumb :items="[['label' => __('search.console_breadcrumb_current'), 'url' => route('frontend.search.console', ['lang' => $lang])], ['label' => 'No Match']]" />
-            <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                DOC · FIELD-REPORT · 404-A
-            </div>
+            <x-ui.breadcrumb
+                :home-label="__('search.breadcrumb_home')"
+                :items="[['label' => __('search.console_breadcrumb_current'), 'url' => route('frontend.search.console', ['lang' => $lang])], ['label' => __('search.breadcrumb_no_match')]]" />
         </div>
 
         {{-- ═══ 12-column grid: header + spec panel ═══ --}}
@@ -107,7 +106,7 @@
             <aside class="col-span-12 lg:col-span-4">
                 <div class="relative border border-ink bg-paper bp-register">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">QUERY · LOG</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ ui_copy('search_spec_query_log', 'search.spec_query_log') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ now()->format('Y.m.d · H:i') }}</span>
                     </div>
                     <div class="p-5 space-y-3">
@@ -130,7 +129,15 @@
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ ui_copy('search_console_status_crossrefs', 'search.console_status_crossrefs') }}</dt>
                             <span class="bp-leader-dots"></span>
+                            {{-- "0 hits" only when the cross-reference step actually ran
+                                 (search.cross_ref_enabled) — otherwise it was never
+                                 checked at all, and "0 hits" would misrepresent that
+                                 as a verified negative result. --}}
+                            @if($cross_ref_checked ?? true)
                             <dd class="font-mono text-sm font-bold text-red-700">{{ ui_copy('search_zero_hits', 'search.zero_hits') }}</dd>
+                            @else
+                            <dd class="font-mono text-sm font-bold text-ink-muted">{{ ui_copy('search_cross_ref_not_checked', 'search.cross_ref_not_checked') }}</dd>
+                            @endif
                         </div>
                         <div class="bp-leader">
                             <dt class="text-sm text-ink-muted">{{ ui_copy('search_status_label', 'search.status_label') }}</dt>
@@ -145,7 +152,7 @@
         {{-- ═══ Re-submit bar ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <h2 class="bp-spec text-ink">02 · {{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</h2>
+                <h2 class="bp-spec text-ink">{{ ui_copy('search_mini_search_label', 'search.mini_search_label') }}</h2>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ ui_copy('search_console_submit_meta', 'search.console_submit_meta', ['min' => $minChars]) }}
                 </span>
@@ -156,7 +163,7 @@
         {{-- ═══ Primary: Concierge inquiry card ═══ --}}
         <section class="mb-16 bp-rise bp-rise-delay-3">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <h2 class="bp-spec text-ink">03 · {{ __('search.zero_cta_title') }}</h2>
+                <h2 class="bp-spec text-ink">{{ __('search.zero_cta_title') }}</h2>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
                     {{ __('search.console_concierge_meta', ['hours' => $inquiryHours]) }}
                 </span>
@@ -186,6 +193,7 @@
 
                     {{-- Primary CTA --}}
                     <button type="button"
+                            x-data
                             x-on:click="window.dispatchEvent(new CustomEvent('open-inquiry-modal', { detail: { oem: {{ json_encode($normalized_query) }} } }))"
                             class="mt-8 w-full group inline-flex items-center justify-center gap-3
                                    px-6 py-4
@@ -216,7 +224,7 @@
                             <x-heroicon-s-building-storefront class="w-4 h-4 text-amber-ink mt-1 shrink-0" aria-hidden="true" />
                             <div>
                                 <dt class="font-sans text-[13px] font-bold text-ink">{{ __('search.inquiry_trust_warehouse') }}</dt>
-                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_eu_despatch', 'search.trust_sub_eu_despatch') }}</dd>
+                                <dd class="font-mono text-[11px] text-ink-muted uppercase tracking-[0.14em] mt-0.5">{{ ui_copy('search_trust_sub_eu_despatch', 'search.trust_sub_eu_despatch', ['despatch' => settings_trans('ui.hero_spec_r4_value', '24h')]) }}</dd>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
@@ -245,9 +253,9 @@
         @if($popularOems->isNotEmpty())
         <section class="mb-16 bp-rise">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <h2 class="bp-spec text-ink">04 · {{ __('search.zero_popular_heading') }}</h2>
+                <h2 class="bp-spec text-ink">{{ __('search.zero_popular_heading') }}</h2>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                    frequently indexed
+                    {{ ui_copy('search_zero_popular_meta', 'search.zero_popular_meta') }}
                 </span>
             </div>
 
@@ -277,9 +285,9 @@
         {{-- ═══ Diagnostic tips ═══ --}}
         <section class="mb-16 bp-rise">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <h2 class="bp-spec text-ink">05 · {{ __('search.zero_tips_heading') }}</h2>
+                <h2 class="bp-spec text-ink">{{ __('search.zero_tips_heading') }}</h2>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                    diagnostic
+                    {{ ui_copy('search_zero_tips_meta', 'search.zero_tips_meta') }}
                 </span>
             </div>
 
@@ -298,19 +306,16 @@
         </section>
 
         {{-- ═══ Back to home ═══ --}}
-        <div class="pt-6 border-t border-rule flex items-center justify-between bp-rise">
+        <div class="pt-6 border-t border-rule flex items-center bp-rise">
             <a href="{{ url('/'.$lang.'/') }}"
                class="group inline-flex items-center gap-3 font-mono text-[12px] font-bold tracking-[0.2em] uppercase text-ink border-b border-ink hover:text-amber-ink hover:border-amber-ink pb-0.5 transition-colors">
                 <x-heroicon-s-arrow-long-left class="w-4 h-4 transform transition-transform group-hover:-translate-x-1" />
                 {{ __('search.zero_back') }}
             </a>
-            <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                END · FIELD-REPORT
-            </span>
         </div>
     </div>
 </div>
 
-<x-modals.part-inquiry :normalized-query="$normalized_query ?? ''" />
+<x-modals.part-inquiry :normalized-query="$normalized_query ?? ''" :failed-search-log-id="$failed_search_log_id ?? null" />
 
 @endsection

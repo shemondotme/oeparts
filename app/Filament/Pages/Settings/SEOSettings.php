@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -21,27 +22,29 @@ class SEOSettings extends SettingsPage
         return $schema
             ->components([
                 Section::make('Global Meta Title Templates')
-                    ->description('Placeholders like {oem}, {min}, {max}, {manufacturer}, or {brand} are evaluated dynamically.')
+                    ->description('Placeholders like {oem}, {min}, {max}, {manufacturer}, or {brand} are evaluated dynamically and are NOT translated — keep them as literal tokens in every locale tab.')
                     ->schema([
-                        Forms\Components\TextInput::make('home_title')
-                            ->label('Homepage Meta Title')
-                            ->maxLength(60)
-                            ->helperText('Ideal: 50-60 characters')
-                            ->default('Buy Genuine OEM Auto Parts Online | OeParts'),
-
-                        Forms\Components\Textarea::make('home_description')
-                            ->label('Homepage Meta Description')
-                            ->rows(2)
-                            ->maxLength(160)
-                            ->helperText('Ideal: 150-160 characters')
-                            ->default(null),
-
-                        Forms\Components\TextInput::make('brand_title_template')
-                            ->label('Brand/Manufacturer Page Title Template')
-                            ->maxLength(100)
-                            ->helperText('Available placeholders: {brand}')
-                            ->default('Genuine {brand} OEM Parts — Buy Online'),
-                    ])->columns(2),
+                        AdminUi::translatableTabs('Homepage & Brand Meta Locales', [
+                            'home_title' => [
+                                'label' => 'Homepage Meta Title',
+                                'required' => true,
+                                'maxLength' => 60,
+                                'helperText' => 'Ideal: 50-60 characters',
+                            ],
+                            'home_description' => [
+                                'label' => 'Homepage Meta Description',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'maxLength' => 160,
+                                'helperText' => 'Ideal: 150-160 characters',
+                            ],
+                            'brand_title_template' => [
+                                'label' => 'Brand/Manufacturer Page Title Template',
+                                'maxLength' => 100,
+                                'helperText' => 'Available placeholders: {brand}',
+                            ],
+                        ]),
+                    ]),
 
                 Section::make('SEO Directives & Crawling Defaults')
                     ->description('Configure search crawler policies and sitemap indexes.')
@@ -82,21 +85,42 @@ class SEOSettings extends SettingsPage
                     ])->columns(2),
 
                 Section::make('Search Results Templates')
-                    ->description('Customise the title and meta description shown on internal search result pages — including individual OEM part pages (/parts/{oem}), which are rendered by the search results page.')
+                    ->description('Customise the title and meta description shown on internal search result pages — including individual OEM part pages (/parts/{oem}), which are rendered by the search results page. Placeholders are not translated.')
                     ->schema([
-                        Forms\Components\TextInput::make('search_results_title_template')
-                            ->label('Search Results Title Template')
-                            ->maxLength(100)
-                            ->helperText('Placeholders: {oem}, {count}, {site}, {min}, {max}. e.g. "Buy OEM Part {oem} — From €{min} | {site}"')
-                            ->default('Buy OEM Part {oem} — From €{min} | OeParts'),
+                        AdminUi::translatableTabs('Search Results Meta Locales', [
+                            'search_results_title_template' => [
+                                'label' => 'Search Results Title Template',
+                                'maxLength' => 100,
+                                'helperText' => 'Placeholders: {oem}, {count}, {site}, {min}, {max}, {manufacturer}, {brand}. e.g. "Buy OEM Part {oem} — From €{min} | {site}"',
+                            ],
+                            'search_results_meta_template' => [
+                                'label' => 'Search Results Meta Description Template',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'maxLength' => 200,
+                                'helperText' => 'Placeholders: {oem}, {count}, {site}, {min}, {max}, {manufacturer}, {brand}. e.g. "Genuine OEM part {oem}, from €{min}, on {site}."',
+                            ],
+                        ]),
+                    ]),
 
-                        Forms\Components\Textarea::make('search_results_meta_template')
-                            ->label('Search Results Meta Description Template')
-                            ->rows(2)
-                            ->maxLength(200)
-                            ->helperText('Placeholders: {oem}, {count}, {site}, {min}, {max}. e.g. "Genuine OEM part {oem}, from €{min}, on {site}."')
-                            ->default('Genuine OEM part {oem}. Verified EU suppliers. Prices from €{min}. Insured delivery in 1–5 days to all 27 EU countries. VAT invoice included.'),
-                    ])->columns(2),
+                Section::make('Parts Search Console Templates')
+                    ->description('Title and meta description for the Parts Search Console (/{lang}/parts) — the search landing page, which IS indexed (unlike the noindex zero-results page).')
+                    ->schema([
+                        AdminUi::translatableTabs('Search Console Meta Locales', [
+                            'console_title_template' => [
+                                'label' => 'Console Title Template',
+                                'maxLength' => 100,
+                                'helperText' => 'Placeholders: {site}. e.g. "Parts Search Console | {site}"',
+                            ],
+                            'console_meta_template' => [
+                                'label' => 'Console Meta Description Template',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'maxLength' => 200,
+                                'helperText' => 'Placeholders: {site}.',
+                            ],
+                        ]),
+                    ]),
 
                 Section::make('Webmaster Verification Codes')
                     ->description('Verify website ownership with search console integrations.')

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $lang        = app()->getLocale();
@@ -6,13 +6,19 @@
     $brandName   = trans_field($manufacturer->name) ?: $manufacturer->slug;
     $totalParts  = $products->total();
     $modelCount  = $carModels->count();
+
+    $brandTitleTpl = trim(settings_trans('seo.brand_title_template', ''));
+    $brandPageTitle = $brandTitleTpl !== ''
+        ? str_replace('{brand}', $brandName, $brandTitleTpl)
+        : $brandName . ' · ' . __('manufacturer.meta_genuine_oem_parts') . ' · ' . $siteName;
+    $brandMetaDescription = __('manufacturer.meta_description_show', ['brand' => $brandName]);
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
-@section('title'){{ $brandName }} · {{ __('Genuine OEM Parts') }} · {{ $siteName }}@endsection
-@section('meta_description'){{ __(':brand genuine OEM parts — cross-reference every part number, verify fitment, and ship across the EU.', ['brand' => $brandName]) }}@endsection
-@section('og_title'){{ $brandName }} · {{ __('OEM Parts Catalogue') }}@endsection
-@section('og_description'){{ __(':count verified :brand parts indexed in the OeParts catalogue.', ['count' => $totalParts, 'brand' => $brandName]) }}@endsection
+@section('title'){{ $brandPageTitle }}@endsection
+@section('meta_description'){{ $brandMetaDescription }}@endsection
+@section('og_title'){{ $brandName }} · {{ __('manufacturer.og_title_show_suffix') }}@endsection
+@section('og_description'){{ __('manufacturer.og_description_show', ['count' => $totalParts, 'brand' => $brandName]) }}@endsection
 @section('canonical')
     <link rel="canonical" href="{{ route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}">
 @endsection
@@ -35,8 +41,7 @@
         '@type' => 'Brand',
         'name'  => $brandName,
     ],
-    'numberOfEmployees' => null,
-    'description' => __(':brand genuine OEM parts — cross-reference every part number, verify fitment, and ship across the EU.', ['brand' => $brandName]),
+    'description' => $brandMetaDescription,
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
 </script>
 <script type="application/ld+json">
@@ -44,8 +49,8 @@
     '@@context'        => 'https://schema.org',
     '@type'           => 'BreadcrumbList',
     'itemListElement' => [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'),   'item' => url('/'.$lang.'/')],
-        ['@type' => 'ListItem', 'position' => 2, 'name' => __('Brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('manufacturer.breadcrumb_home'),   'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => __('manufacturer.breadcrumb_brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
         ['@type' => 'ListItem', 'position' => 3, 'name' => $brandName,   'item' => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
     ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
@@ -65,7 +70,7 @@
                 'offers' => [
                     '@type' => 'Offer',
                     'price' => (string) $product->price,
-                    'priceCurrency' => settings('store.currency', 'EUR'),
+                    'priceCurrency' => settings('general.currency', 'EUR'),
                     'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                 ],
             ],
@@ -99,14 +104,14 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('manufacturer.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
-                <a href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ __('Brands') }}</a>
+                <a href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ __('manufacturer.breadcrumb_brands') }}</a>
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink truncate max-w-[14rem]">{{ $brandName }}</span>
             </nav>
             <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                DOC · BRAND · {{ strtoupper($manufacturer->slug) }}
+                {{ __('manufacturer.doc_brand_prefix') }} · {{ strtoupper($manufacturer->slug) }}
             </div>
         </div>
 
@@ -115,10 +120,9 @@
 
             {{-- Large logo/monogram --}}
             <div class="col-span-12 md:col-span-4">
-                <div class="relative border border-ink bg-paper aspect-square flex items-center justify-center overflow-hidden"
-                     style="box-shadow: 6px 6px 0 rgba(20,22,29,1);">
+                <div class="relative border border-ink bg-paper aspect-square flex items-center justify-center overflow-hidden bp-shadow">
                     <span class="absolute top-3 left-3 bp-spec-mono">
-                        00 · {{ __('Mark') }}
+                        {{ __('manufacturer.mark_label') }}
                     </span>
                     @if($manufacturer->logo && $manufacturer->logo->file_url)
                         <img src="{{ $manufacturer->logo->file_url }}"
@@ -130,7 +134,7 @@
                                 {{ strtoupper(mb_substr($brandName, 0, 2)) }}
                             </span>
                             <span class="mt-4 bp-spec-mono">
-                                {{ __('Logo pending') }}
+                                {{ __('manufacturer.logo_pending') }}
                             </span>
                         </div>
                     @endif
@@ -144,7 +148,7 @@
             <div class="col-span-12 md:col-span-8">
                 <div class="flex items-center gap-4 mb-6">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">{{ __('Manufacturer · Identity') }}</span>
+                    <span class="bp-spec text-amber-ink">{{ __('manufacturer.manufacturer_identity') }}</span>
                 </div>
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
@@ -157,30 +161,30 @@
                 </div>
 
                 <p class="max-w-2xl text-base text-body leading-relaxed mb-8">
-                    {{ __('Every :brand part indexed in our catalogue — authenticated by OEM number and cross-referenced against compatible fitments.', ['brand' => $brandName]) }}
+                    {{ __('manufacturer.every_brand_part_indexed', ['brand' => $brandName]) }}
                 </p>
 
                 {{-- Spec ledger --}}
                 <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl">
                     <div class="px-4 py-3">
-                        <dt class="bp-spec text-ink-muted">{{ __('Parts') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('manufacturer.stat_parts') }}</dt>
                         <dd class="mt-1 font-mono text-xl font-bold text-ink tabular-nums leading-none">{{ number_format($totalParts) }}</dd>
                     </div>
                     <div class="px-4 py-3">
-                        <dt class="bp-spec text-ink-muted">{{ __('Models') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('manufacturer.stat_models') }}</dt>
                         <dd class="mt-1 font-mono text-xl font-bold text-ink tabular-nums leading-none">{{ $modelCount }}</dd>
                     </div>
                     <div class="px-4 py-3">
-                        <dt class="bp-spec text-ink-muted">{{ __('Status') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('manufacturer.stat_status') }}</dt>
                         <dd class="mt-1 font-mono text-xs font-bold text-emerald-700 uppercase tracking-[0.18em] leading-none flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 bg-emerald-600"></span>
-                            {{ __('Active') }}
+                            {{ __('manufacturer.stat_active') }}
                         </dd>
                     </div>
                     <div class="px-4 py-3">
-                        <dt class="bp-spec text-ink-muted">{{ __('Source') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('manufacturer.stat_source') }}</dt>
                         <dd class="mt-1 font-mono text-xs font-bold {{ $manufacturer->is_verified_oem ? 'text-amber-ink' : 'text-ink-muted' }} uppercase tracking-[0.18em] leading-none">
-                            {{ $manufacturer->is_verified_oem ? '✓ Verified OEM' : 'Listed' }}
+                            {{ $manufacturer->is_verified_oem ? __('manufacturer.verified_oem_badge') : __('manufacturer.stat_listed') }}
                         </dd>
                     </div>
                 </dl>
@@ -192,14 +196,14 @@
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-amber hover:text-ink hover:border-amber transition-colors">
                         <x-heroicon-s-magnifying-glass class="w-4 h-4" />
-                        {{ __('Search OEM') }}
+                        {{ __('manufacturer.search_oem_btn') }}
                     </a>
                     <a href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}"
                        class="inline-flex items-center gap-2 px-5 py-3 border border-ink text-ink bg-paper
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-ink hover:text-ivory transition-colors">
                         <x-heroicon-s-arrow-long-left class="w-4 h-4" />
-                        {{ __('All brands') }}
+                        {{ __('manufacturer.all_brands_btn') }}
                     </a>
                 </div>
             </div>
@@ -209,9 +213,9 @@
         @if($modelCount > 0)
             <section class="mb-14 bp-rise bp-rise-delay-2">
                 <div class="flex items-end justify-between pb-3 border-b border-ink mb-5">
-                    <span class="bp-spec text-ink">01 · {{ __('Models · Covered') }}</span>
+                    <span class="bp-spec text-ink">{{ __('manufacturer.models_covered') }}</span>
                     <span class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                        {{ $modelCount }} · {{ __('platforms') }}
+                        {{ $modelCount }} · {{ __('manufacturer.platforms_word') }}
                     </span>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
@@ -239,12 +243,12 @@
         <section class="mb-10 bp-rise bp-rise-delay-3">
             <div class="flex flex-wrap items-end justify-between gap-3 pb-3 border-b border-ink mb-6">
                 <div class="flex items-center gap-3">
-                    <span class="bp-spec text-ink">02 · {{ __('Parts · Ledger') }}</span>
+                    <span class="bp-spec text-ink">{{ __('manufacturer.parts_ledger') }}</span>
                 </div>
                 <div class="font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                    {{ __('Page') }} {{ $products->currentPage() }}/{{ max(1,$products->lastPage()) }}
+                    {{ __('manufacturer.stats_page') }} {{ $products->currentPage() }}/{{ max(1,$products->lastPage()) }}
                     <span class="mx-2 text-rule-strong">│</span>
-                    {{ number_format($totalParts) }} {{ __('entries') }}
+                    {{ number_format($totalParts) }} {{ __('manufacturer.entries_word') }}
                 </div>
             </div>
 
@@ -253,9 +257,9 @@
                     <div class="inline-flex items-center justify-center w-16 h-16 border border-ink bg-ivory-alt mb-5">
                         <x-heroicon-o-cube class="w-7 h-7 text-ink-muted" />
                     </div>
-                    <p class="font-display text-xl font-bold text-ink leading-tight">{{ __('No parts indexed yet') }}</p>
+                    <p class="font-display text-xl font-bold text-ink leading-tight">{{ __('manufacturer.no_parts_indexed_yet') }}</p>
                     <p class="mt-2 text-sm text-ink-muted max-w-md mx-auto">
-                        {{ __("We haven't catalogued any parts for this brand yet. Try the OEM search — the catalogue expands daily.") }}
+                        {{ __('manufacturer.havent_catalogued_body') }}
                     </p>
                 </div>
             @else
@@ -264,16 +268,16 @@
                      ARIA table roles layered onto the CSS grid/card markup so
                      screen readers get real column/row structure without
                      disturbing the existing responsive layout. --}}
-                <div class="border border-ink bg-paper overflow-hidden" role="table" aria-label="{{ __('Parts · Ledger') }}">
+                <div class="border border-ink bg-paper overflow-hidden" role="table" aria-label="{{ __('manufacturer.parts_ledger') }}">
                     {{-- Table header --}}
                     <div class="hidden md:grid grid-cols-[5rem_1fr_1fr_8rem_6rem_7rem] items-center gap-4 px-5 py-3 bg-ink text-ivory" role="rowgroup">
                         <div class="contents" role="row">
                             <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">#</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('OEM number') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('Name') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('Condition') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('Price') }}</span>
-                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('Action') }}</span>
+                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('manufacturer.th_oem_number') }}</span>
+                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('manufacturer.th_name') }}</span>
+                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70" role="columnheader">{{ __('manufacturer.th_condition') }}</span>
+                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('manufacturer.th_price') }}</span>
+                            <span class="font-mono text-[9px] font-bold tracking-[0.22em] uppercase text-ivory/70 text-right" role="columnheader">{{ __('manufacturer.th_action') }}</span>
                         </div>
                     </div>
 
@@ -288,14 +292,14 @@
                                 <div class="min-w-0" x-data="clipboard()" role="cell">
                                     <button type="button" class="appearance-none bg-transparent border-0 p-0 m-0 font-mono text-sm font-bold text-ink truncate cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink rounded-sm"
                                        @click="copy('{{ $product->oem_number }}')"
-                                       title="Copy OEM number">
+                                       title="{{ __('search.copy_oem_tooltip') }}">
                                         {{ $product->oem_number }}
                                     </button>
                                     <p class="md:hidden mt-0.5 text-xs text-ink-muted truncate">
                                         {{ trans_field($product->name) }}
                                     </p>
                                     <span x-show="copied" x-cloak x-transition role="status" aria-live="polite"
-                                          class="text-[10px] font-mono font-bold text-emerald-600">Copied</span>
+                                          class="text-[10px] font-mono font-bold text-emerald-600">{{ __('search.copied_label') }}</span>
                                 </div>
                                 {{-- Name (desktop) --}}
                                 <p class="hidden md:block text-sm text-body truncate" role="cell">
@@ -307,7 +311,7 @@
                                         $cCond = $product->condition;
                                         $condBg = $cCond?->bg_color ?? '#DCFCE7';
                                         $condText = $cCond?->text_color ?? '#16A34A';
-                                        $condLabel = $cCond?->name ?? '—';
+                                        $condLabel = condition_label($cCond);
                                     @endphp
                                     <span class="inline-flex items-center px-2 py-0.5 bp-spec-mono font-bold rounded-sm"
                                           style="background-color: {{ $condBg }}; color: {{ $condText }};">
@@ -322,7 +326,7 @@
                                         </p>
                                     @else
                                         <p class="font-mono text-xs text-ink-muted tabular-nums">
-                                            {{ __('On request') }}
+                                            {{ __('manufacturer.on_request') }}
                                         </p>
                                     @endif
                                 </div>
@@ -334,7 +338,7 @@
                                               font-mono text-[10px] font-bold tracking-[0.2em] uppercase text-ink
                                               group-hover:bg-ink group-hover:text-amber
                                               transition-colors">
-                                        {{ __('View') }}
+                                        {{ __('manufacturer.view_btn') }}
                                         <x-heroicon-s-arrow-long-right class="w-3 h-3" />
                                     </a>
                                 </div>
@@ -346,7 +350,7 @@
                 {{-- Pagination --}}
                 @if($products->hasPages())
                     <div class="mt-6">
-                        {{ $products->links() }}
+                        {{ $products->links('components.ui.pagination') }}
                     </div>
                 @endif
             @endif

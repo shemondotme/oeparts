@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ $locale ?? 'en' }}">
 <head>
     <meta charset="utf-8">
@@ -135,9 +135,10 @@
                                             {{ settings('email.header_text', 'OEPARTS · NOTIFICATION') }}
                                         </p>
 
-                                        <!-- Logo / Brand Name -->
+                                        <!-- Logo / Brand Name (text-based wordmark — same split-weight lockup as the storefront navbar) -->
+                                        @php [$wordmarkHeavy, $wordmarkLight] = brand_wordmark_parts(settings('general.site_name', 'OeParts')); @endphp
                                         <h1 class="font-display" style="margin: 0; font-size: 28px; line-height: 32px; color: #F7F3E7;">
-                                            {{ settings('general.site_name', 'OeParts') }}<span class="text-amber">·</span>Parts
+                                            <span style="font-weight: 800;">{{ $wordmarkHeavy }}</span><span style="font-weight: 400; opacity: 0.75;">{{ $wordmarkLight }}</span><span class="text-amber" style="color: #F59E0B;">.</span>
                                         </h1>
 
                                         <!-- Tagline -->
@@ -167,8 +168,8 @@
                                             COLOPHON
                                         </p>
                                         <p style="margin: 0; font-size: 14px; line-height: 20px; color: #F7F3E7;">
-                                            <strong>{{ settings('general.company_name', 'OeParts Europe') }}</strong><br>
-                                            {{ settings('general.company_tagline', 'Genuine Parts Distribution Network') }}
+                                            <strong>{{ settings('company.name', 'OeParts') }}</strong><br>
+                                            {{ settings('general.site_tagline', 'The central hub for genuine OEM auto parts in Europe.') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -178,7 +179,8 @@
                                             <tr>
                                                 <td style="font-size: 12px; line-height: 18px; color: #F7F3E7; opacity: 0.6;">
                                                     <p style="margin: 0 0 8px 0;">
-                                                        {{ trans('emails.layout.footer_line1', [], $locale ?? 'en') ?: 'You are receiving this email because you have an account or placed an order with OeParts.' }}
+                                                        {{ trans('emails.layout.footer_line2', [], $locale ?? 'en') }}<br>
+                                                        {{ trans('emails.layout.footer_line1', ['year' => now()->year], $locale ?? 'en') }}
                                                     </p>
                                                     <p style="margin: 0;">
                                                         <a href="{{ config('app.url') }}" style="color: #F59E0B; text-decoration: underline;">{{ config('app.url') }}</a>

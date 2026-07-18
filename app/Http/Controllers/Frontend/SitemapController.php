@@ -31,7 +31,7 @@ class SitemapController extends Controller
 
         $manufacturers = $rawManufacturers
             ->map(function (Manufacturer $m) use ($lang) {
-                $label = $this->translated($m->name, $lang) ?: $m->slug;
+                $label = trans_field($m->name, $lang) ?: $m->slug;
                 return [
                     'label' => $label,
                     'slug'  => $m->slug,
@@ -44,10 +44,14 @@ class SitemapController extends Controller
         $manufacturersByLetter = $manufacturers->groupBy('bucket')->sortKeys();
 
         // Blog posts — published, most recent first.
-        $blogPosts = BlogPost::query()
+        $blogPostsQuery = BlogPost::query()
             ->where('status', ContentStatus::Published->value)
             ->whereNotNull('published_at')
-            ->where('published_at', '<=', now())
+            ->where('published_at', '<=', now());
+
+        $blogPostCount = (clone $blogPostsQuery)->count();
+
+        $blogPosts = $blogPostsQuery
             ->orderByDesc('published_at')
             ->limit(20)
             ->get(['id', 'title', 'slug', 'published_at']);
@@ -69,38 +73,10 @@ class SitemapController extends Controller
             'manufacturersByLetter' => $manufacturersByLetter,
             'manufacturerCount'     => $manufacturers->count(),
             'blogPosts'             => $blogPosts,
+            'blogPostCount'         => $blogPostCount,
             'legalPages'            => $legalPages,
             'generalPages'          => $generalPages,
             'generatedAt'           => now(),
         ]);
-    }
-
-    /**
-     * Extract a translated string from a translatable JSON field.
-     * Falls back to English, then first non-empty value.
-     */
-    private function translated(mixed $field, string $lang): string
-    {
-        if (is_string($field)) {
-            return $field;
-        }
-
-        if (!is_array($field)) {
-            return '';
-        }
-
-        foreach ([$lang, 'en'] as $locale) {
-            if (!empty($field[$locale])) {
-                return (string) $field[$locale];
-            }
-        }
-
-        foreach ($field as $value) {
-            if (is_string($value) && $value !== '') {
-                return $value;
-            }
-        }
-
-        return '';
     }
 }

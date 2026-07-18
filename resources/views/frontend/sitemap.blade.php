@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $siteName = settings('general.site_name', 'OeParts');
@@ -68,9 +68,9 @@
 
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10">
-            <x-ui.breadcrumb :items="[['label' => __('sitemap.breadcrumb_self')]]" homeLabel="{{ __('sitemap.breadcrumb_home') }}" />
+            <x-ui.breadcrumb :items="[['label' => __('sitemap.breadcrumb_self')]]" :home-label="__('sitemap.breadcrumb_home')" />
             <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                DOC · INDEX · REV. {{ $generatedAt->format('Y.m.d') }}
+                DOC · INDEX
             </div>
         </div>
 
@@ -95,7 +95,7 @@
                 </div>
                 <div class="px-5 py-4 border-b md:border-b-0 md:border-r border-rule bg-paper">
                     <dt class="bp-spec text-ink-muted">{{ __('sitemap.ledger_articles') }}</dt>
-                    <dd class="mt-1 font-mono text-2xl font-bold text-ink tabular-nums leading-none">{{ str_pad((string) $blogPosts->count(), 2, '0', STR_PAD_LEFT) }}</dd>
+                    <dd class="mt-1 font-mono text-2xl font-bold text-ink tabular-nums leading-none">{{ str_pad((string) $blogPostCount, 2, '0', STR_PAD_LEFT) }}</dd>
                 </div>
                 <div class="px-5 py-4 border-b md:border-b-0 md:border-r border-rule bg-paper">
                     <dt class="bp-spec text-ink-muted">{{ __('sitemap.ledger_pages') }}</dt>
@@ -133,7 +133,7 @@
             </header>
             <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border border-rule">
                 @foreach($coreLinks as $item)
-                    <li class="border-b sm:border-b lg:[&:nth-last-child(-n+3)]:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 border-r-0 sm:border-r lg:[&:nth-child(3n)]:border-r-0 sm:[&:nth-child(2n)]:border-r-0 lg:[&:nth-child(2n)]:border-r border-rule last:border-b-0">
+                    <li class="border-b lg:[&:nth-last-child(-n+3)]:border-b-0 sm:[&:nth-last-child(-n+2)]:border-b-0 border-r-0 sm:border-r lg:[&:nth-child(3n)]:border-r-0 sm:[&:nth-child(2n)]:border-r-0 lg:[&:nth-child(2n)]:border-r border-rule last:border-b-0">
                         <a href="{{ $item['href'] }}" class="group flex items-center justify-between gap-4 p-5 hover:bg-paper transition-colors">
                             <span class="flex items-center gap-4 min-w-0">
                                 <span class="font-mono text-[10px] font-bold tracking-[0.18em] text-amber-ink shrink-0">{{ $item['num'] }}</span>
@@ -251,7 +251,7 @@
                     <span class="font-mono text-sm font-bold tracking-[0.22em] text-amber-ink">04</span>
                     <h2 class="font-display text-2xl sm:text-3xl font-extrabold tracking-[-0.02em] text-ink">{{ __('sitemap.section_journal') }}</h2>
                 </div>
-                <span class="bp-spec text-ink-muted">{{ str_pad((string) $blogPosts->count(), 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
+                <span class="bp-spec text-ink-muted">{{ str_pad((string) $blogPostCount, 2, '0', STR_PAD_LEFT) }} {{ __('sitemap.entries_suffix') }}</span>
             </header>
 
             @if($blogPosts->isEmpty())
@@ -268,7 +268,7 @@
                                     <span class="border-b border-transparent group-hover:border-amber pb-[1px]">{{ $postLabel }}</span>
                                 </span>
                                 <time class="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-muted tabular-nums" datetime="{{ $post->published_at?->toIso8601String() }}">
-                                    {{ $post->published_at?->format('d M Y') }}
+                                    {{ $post->published_at?->clone()->locale($lang)->translatedFormat('d M Y') }}
                                 </time>
                             </a>
                         </li>
@@ -354,7 +354,7 @@
 
             <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 border border-rule">
                 @foreach($languageNames as $code => $name)
-                    <li class="border-b sm:border-b lg:border-b-0 lg:[&:not(:last-child)]:border-r sm:[&:nth-child(odd)]:border-r border-rule {{ $loop->last ? 'border-b-0' : '' }}">
+                    <li class="border-b lg:border-b-0 lg:[&:not(:last-child)]:border-r sm:[&:nth-child(odd)]:border-r border-rule {{ $loop->last ? 'border-b-0' : '' }}">
                         <a href="{{ url('/'.$code.'/sitemap') }}"
                            class="group flex items-center justify-between gap-3 p-5 hover:bg-paper transition-colors {{ $code === $lang ? 'bg-ink text-ivory hover:bg-ink' : '' }}">
                             <span class="flex items-center gap-3 min-w-0">
@@ -376,7 +376,7 @@
         <footer class="mt-20 pt-6 border-t border-rule flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.2em] text-ink-muted">
             <span>{{ __('sitemap.doc_end') }}</span>
             <span>
-                {{ __('sitemap.generated') }} · {{ $generatedAt->format('d M Y · H:i') }} ·
+                {{ __('sitemap.generated') }} · {{ $generatedAt->clone()->locale($lang)->translatedFormat('d M Y · H:i') }} ·
                 <a href="{{ url('/sitemap.xml') }}" class="hover:text-amber-ink transition-colors border-b border-transparent hover:border-amber pb-[1px]">{{ __('sitemap.for_crawlers') }}</a>
             </span>
         </footer>

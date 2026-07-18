@@ -1,4 +1,4 @@
-﻿@props([
+@props([
     'active'     => 'dashboard',
     'docId'      => null,
     'eyebrow'    => null,
@@ -15,35 +15,30 @@
         [
             'key'   => 'dashboard',
             'label' => ui_copy('account_nav_dashboard', 'account.nav_dashboard'),
-            'num'   => '01',
             'href'  => route('frontend.account.dashboard', ['lang' => $lang]),
             'icon'  => 'heroicon-o-squares-2x2',
         ],
         [
             'key'   => 'orders',
             'label' => ui_copy('account_nav_orders', 'account.nav_orders'),
-            'num'   => '02',
             'href'  => route('frontend.account.orders', ['lang' => $lang]),
             'icon'  => 'heroicon-o-shopping-bag',
         ],
         [
             'key'   => 'refunds',
             'label' => ui_copy('account_nav_refunds', 'account.nav_refunds'),
-            'num'   => '03',
             'href'  => route('frontend.account.refunds', ['lang' => $lang]),
             'icon'  => 'heroicon-o-arrow-path',
         ],
         [
             'key'   => 'addresses',
             'label' => ui_copy('account_nav_addresses', 'account.nav_addresses'),
-            'num'   => '04',
             'href'  => route('frontend.account.addresses', ['lang' => $lang]),
             'icon'  => 'heroicon-o-map-pin',
         ],
         [
             'key'   => 'settings',
             'label' => ui_copy('account_nav_settings', 'account.nav_settings'),
-            'num'   => '05',
             'href'  => route('frontend.account.settings', ['lang' => $lang]),
             'icon'  => 'heroicon-o-cog-6-tooth',
         ],
@@ -116,8 +111,7 @@
 
         {{-- Flash messages --}}
         @if(session('success'))
-            <div class="mb-6 border border-emerald-600 bg-emerald-50 px-4 py-3 flex items-start gap-3"
-                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);"
+            <div class="mb-6 border border-emerald-600 bg-emerald-50 px-4 py-3 flex items-start gap-3 bp-shadow-sm"
                  role="status" aria-live="polite">
                 <x-heroicon-s-check-circle class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
                 <p class="text-sm text-emerald-800">{{ session('success') }}</p>
@@ -125,8 +119,7 @@
         @endif
 
         @if(session('error'))
-            <div class="mb-6 border border-red-600 bg-red-50 px-4 py-3 flex items-start gap-3"
-                 style="box-shadow: 4px 4px 0 rgba(20,22,29,1);"
+            <div class="mb-6 border border-red-600 bg-red-50 px-4 py-3 flex items-start gap-3 bp-shadow-sm"
                  role="alert" aria-live="assertive">
                 <x-heroicon-s-exclamation-triangle class="w-5 h-5 text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
                 <p class="text-sm text-red-800">{{ session('error') }}</p>
@@ -139,7 +132,7 @@
             <aside class="col-span-12 lg:col-span-3 lg:sticky lg:top-10 lg:h-fit">
 
                 {{-- User identity panel --}}
-                <div class="border border-ink bg-paper mb-4" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                <div class="border border-ink bg-paper mb-4 bp-shadow-sm">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt flex items-center justify-between">
                         <span class="bp-spec text-amber-ink">{{ ui_copy('account_account_id_label', 'account.account_id_label') }}</span>
                         <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-emerald-700 flex items-center gap-1.5">
@@ -149,8 +142,7 @@
                     </div>
                     <div class="p-4 flex items-center gap-3">
                         <div class="w-11 h-11 border border-ink bg-ink text-amber flex items-center justify-center
-                                    font-display text-lg font-extrabold shrink-0"
-                             style="box-shadow: 3px 3px 0 rgba(241,145,58,1);">
+                                    font-display text-lg font-extrabold shrink-0 bp-shadow-sm" style="--bp-shadow-color: rgba(245,158,11,1);">
                             {{ $initial }}
                         </div>
                         <div class="min-w-0 flex-1">
@@ -163,7 +155,7 @@
                 </div>
 
                 {{-- Nav --}}
-                <nav class="border border-ink bg-paper" style="box-shadow: 4px 4px 0 rgba(20,22,29,1);">
+                <nav class="border border-ink bg-paper bp-shadow-sm">
                     <div class="px-4 py-3 border-b border-ink bg-ivory-alt">
                         <span class="bp-spec text-amber-ink">{{ ui_copy('account_nav_index_label', 'account.nav_index_label') }}</span>
                     </div>
@@ -175,10 +167,6 @@
                                    class="flex items-center gap-3 px-4 py-3 transition-colors group
                                           {{ $isActive ? 'bg-ink text-ivory' : 'text-ink hover:bg-ivory-alt' }}"
                                    @if($isActive) aria-current="page" @endif>
-                                    <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] uppercase w-6
-                                                 {{ $isActive ? 'text-amber' : 'text-ink-muted' }}">
-                                        {{ $item['num'] }}
-                                    </span>
                                     <x-dynamic-component :component="$item['icon']"
                                         :class="'w-4 h-4 shrink-0 ' . ($isActive ? 'text-amber' : 'text-ink-muted group-hover:text-ink')" />
                                     <span class="flex-1 font-display text-sm font-bold tracking-[-0.01em]">
@@ -212,7 +200,7 @@
                     <p class="mt-1 text-xs text-ink-muted leading-relaxed">
                         {{ ui_copy('account_support_reply_note', 'account.support_reply_note') }}
                     </p>
-                    <a href="mailto:{{ settings('general.contact_email', 'info@oeparts.lt') }}"
+                    <a href="mailto:{{ settings('contact.email', 'info@oeparts.lt') }}"
                        class="mt-3 inline-flex items-center gap-1.5 font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink
                               border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
                         {{ ui_copy('account_contact_support', 'account.contact_support') }}

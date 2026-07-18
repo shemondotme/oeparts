@@ -1,4 +1,4 @@
-﻿{{-- Section: contact_cta (Industrial Blueprint)
+{{-- Section: contact_cta (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), button_text(ml)
 --}}
 @php
@@ -17,7 +17,7 @@
     {{-- Amber tick strip --}}
     <div class="relative h-[3px] bg-amber"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-16 md:pt-24 pb-12 md:pb-16">
 
         <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 gap-y-10 items-end">
             {{-- Headline block --}}
@@ -76,14 +76,14 @@
                             {{ __('Hours') }}
                         </dt>
                         <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">{{ settings('general.business_hours', 'Mon-Fri · 09:00-18:00 CET') }}</dd>
+                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">{{ settings_trans('contact.hours', 'Mon–Fri 9:00–18:00') }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-4 py-4 border-b border-white/20">
                         <dt class="font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60 shrink-0">
                             {{ __('SLA') }}
                         </dt>
                         <span class="flex-1 border-b border-dotted border-white/25 translate-y-[-4px]"></span>
-                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">{{ settings('general.support_sla', '< 24 h response') }}</dd>
+                        <dd class="font-mono text-sm tabular-nums text-ivory shrink-0">&lt; {{ (int) settings('part_inquiry.response_hours', 24) }} h response</dd>
                     </div>
                 </dl>
 

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'minimum_order_not_met' => 'Ihre Bestellung erreicht nicht den Mindestbetrag von :amount.',
     // Shared layout (layout.blade.php)
     'title' => 'Sicherer Checkout',
     'breadcrumb_home' => 'Start',
@@ -9,7 +10,6 @@ return [
     'step_of_five' => 'SCHRITT :n VON 05',
     'secure_checkout_eyebrow' => 'Sicherer Checkout',
     'heading' => 'Sicherer Checkout',
-    'tls_ssl_badge' => 'TLS 1.3 · 256-Bit-SSL · Geschützt durch Airwallex',
     'back_to_cart' => 'Zurück zum Warenkorb',
     'step_contact' => 'Kontakt',
     'step_address' => 'Adresse',
@@ -42,7 +42,6 @@ return [
     'vat_tbd' => 'Noch offen',
     'total_currency_label' => 'Gesamt · :currency',
     'including_all_taxes' => 'Inkl. aller Steuern',
-    'ssl_tls_badge' => 'SSL · TLS 1.3',
     'cart_empty' => 'Ihr Warenkorb ist leer',
     'need_help_heading' => 'Brauchen Sie Hilfe?',
     'support_hours_note' => 'Mo–Fr 09:00–18:00 MEZ. Unser Team ist für Sie da.',
@@ -78,16 +77,6 @@ return [
     'select_country_placeholder' => '— Land auswählen —',
     'pan_european_delivery' => 'Europaweite Lieferung',
     'pan_european_delivery_note' => 'Express-, Standard- und Economy-Versand in alle gelisteten europäischen Länder verfügbar.',
-    'company_details_heading' => 'Firmendetails',
-    'optional_b2b' => 'Optional · B2B',
-    'ordering_as_business' => 'Ich bestelle als Unternehmen',
-    'company_name_label' => 'Firmenname',
-    'eu_vat_number_label' => 'EU-USt-IdNr.',
-    'required_for_exemption' => '(für Steuerbefreiung erforderlich)',
-    'vat_valid_message' => 'USt-IdNr. ist gültig. Die MwSt.-Befreiung wird angewendet.',
-    'vies_unavailable_message' => 'Der VIES-Dienst ist vorübergehend nicht verfügbar.',
-    'vat_invalid_message' => 'USt-IdNr. ist ungültig. Bitte überprüfen und erneut versuchen.',
-    'valid_vat_number' => 'Gültige USt-IdNr.',
 
     // Step 3 — shipping method
     'shipping_method_heading' => 'Versandart',
@@ -119,8 +108,12 @@ return [
     'grand_total_currency_label' => 'Gesamtsumme · :currency',
     'agree_terms_prefix' => 'Ich stimme den',
     'terms_and_conditions' => 'Allgemeinen Geschäftsbedingungen',
-    'and' => 'und der',
-    'privacy_policy' => 'Datenschutzerklärung zu',
+    'and' => 'und',
+    'privacy_policy' => 'der Datenschutzerklärung',
+    'returns_policy' => 'der Widerrufsbelehrung zu',
+    'oversized_notice_heading' => 'Übergroße Teile — Versandhinweis',
+    'oversized_notice_body' => 'Die angezeigten Versandkosten sind Festpreise für Standardpakete. Enthält Ihre Bestellung ein übergroßes oder schweres Teil, kann der Transporteur einen zusätzlichen Frachtzuschlag berechnen — dieser wird Ihnen nach dem Versand separat in Rechnung gestellt.',
+    'oversized_ack_sentence' => 'Außerdem nehme ich den obigen Hinweis zu übergroßen Teilen zur Kenntnis.',
     // Step 5 — payment method
     'payment_method_heading' => 'Zahlungsmethode',
     'payment_method_subtitle' => 'Protokoll wählen · Sicher · Verschlüsselt',
@@ -134,15 +127,15 @@ return [
     'bank_transfer_instructions_note' => 'Wir erstellen zuerst die Bestellung und zeigen dann Ihre Bankdaten und den Zahlungsverwendungszweck auf der nächsten Seite an.',
     'order_note_label' => 'Bestellnotiz',
     'order_note_placeholder' => 'Hinweise zur Lieferung oder Bestellung',
-    'trust_ssl_256' => '256-Bit-SSL',
     'trust_encrypted' => 'Verschlüsselt',
 
     // Payment page (payment.blade.php)
     'payment_title' => 'Zahlung',
     'complete_payment_heading' => 'Zahlung abschließen',
-    'tls_encrypted_channel' => 'TLS 1.3 · 256-Bit-SSL · Verschlüsselter Kanal',
     'order_label' => 'Bestellung · :number',
-    'credit_debit_card' => 'Kredit-/Debitkarte',
+    'doc_payment_sheet' => 'DOC · PAYMENT-SHEET · :number',
+    'card_brands_caption' => 'Airwallex · Visa · Mastercard · Amex',
+    'credit_debit_card' => 'Karte',
     'bank_transfer' => 'Banküberweisung',
     'bank_transfer_sepa_note' => 'SEPA · Bestellung wird nach bestätigter Zahlung bearbeitet',
     'payment_error_heading' => 'Zahlungsfehler',
@@ -161,7 +154,6 @@ return [
     'items_label' => 'Artikel',
     'grand_total_label' => 'Gesamtsumme',
     'incl_vat_short' => 'inkl. MwSt.',
-    'trust_ssl_256_short' => 'SSL 256',
     'payment_failed_js' => 'Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.',
 
     // Payment failed (payment-failed.blade.php)

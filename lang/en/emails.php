@@ -47,6 +47,8 @@ return [
         'grand_total'       => 'Grand Total',
         'footer'            => 'You can view your order details anytime from your account.',
         'view_order'        => 'View Order',
+        'oversized_notice_heading' => 'Oversized Parts — Shipping Notice',
+        'oversized_notice_body' => 'The shipping cost above is a fixed rate for standard-size parcels. If this order includes an oversized or heavy part, the carrier may apply an additional freight surcharge, invoiced to you separately after dispatch.',
     ],
 
     // ─── Order Status Update ─────────────────────────────────────────────
@@ -173,7 +175,7 @@ return [
         'subject'   => 'New part inquiry: :oem',
         'title'     => 'Part Inquiry Received',
         'greeting'  => 'Dear :name,',
-        'body_intro'=> 'Our technical team is reviewing your part inquiry. We will respond with availability, pricing, and cross-reference options within 24 hours.',
+        'body_intro'=> 'Our technical team is reviewing your part inquiry. We will respond with availability, pricing, and cross-reference options within :hours hours.',
     ],
 
     // ─── Part Inquiry Status Update ──────────────────────────────────────

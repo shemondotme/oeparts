@@ -1,7 +1,9 @@
 <?php
 
+use App\Models\Condition;
 use App\Services\SettingsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Lang;
 
 /**
  * Get a setting value by dot-notation key.
@@ -274,4 +276,44 @@ function format_datetime($datetime, int $dateStyle = IntlDateFormatter::MEDIUM, 
     );
 
     return $formatter->format($datetime);
+}
+
+/**
+ * Translated display label for a Condition (New / Used / Remanufactured / ...).
+ *
+ * search.php has a full per-locale `condition_label_{slug}` set (New Old Stock,
+ * Aftermarket, Used Grade A/B/C, etc.) that search results pages never actually
+ * used — they printed Condition::name (a single plain-string DB column) verbatim,
+ * so every locale saw whatever language the admin typed the condition name in.
+ * Falls back to the raw DB name for any slug without a matching translation key,
+ * so an admin can add a brand-new condition type without a code change breaking it.
+ */
+function condition_label(?Condition $condition): string
+{
+    if (! $condition) {
+        return __('search.condition_label_new');
+    }
+
+    $key = 'condition_label_' . str_replace('-', '_', $condition->slug);
+
+    return Lang::has("search.{$key}") ? __("search.{$key}") : $condition->name;
+}
+
+/**
+ * Split a brand/company name into the [heavy, light] pair used by the
+ * text-based wordmark (e.g. "OeParts" -> "Oe" + "Parts"), so the storefront
+ * navbar, transactional emails, and the invoice PDF all render the exact
+ * same split-weight lockup instead of drifting into inconsistent, hand-typed
+ * variants. Splits at the first lowercase→uppercase boundary; falls back to
+ * a single (heavy) weight with no light part when no such boundary exists.
+ *
+ * @return array{0: string, 1: string}
+ */
+function brand_wordmark_parts(string $name): array
+{
+    if (preg_match('/^([A-Z][a-z]+?)([A-Z].*)$/', $name, $m)) {
+        return [$m[1], $m[2]];
+    }
+
+    return [$name, ''];
 }

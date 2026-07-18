@@ -1,4 +1,4 @@
-﻿@extends('frontend.checkout.layout')
+@extends('frontend.checkout.layout')
 
 @php
     $otpPendingEmail = $checkoutData['otp_pending_email'] ?? null;

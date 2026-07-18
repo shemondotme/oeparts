@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @php
     $lang     = app()->getLocale();
@@ -6,10 +6,10 @@
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
-@section('title'){{ __('Browse Brands') }} · {{ $siteName }}@endsection
-@section('meta_description'){{ __('Browse all verified OEM manufacturers in the OeParts catalogue — from Alfa Romeo to Volvo, sourced directly from genuine European parts suppliers.') }}@endsection
-@section('og_title'){{ __('Browse Brands') }} · {{ $siteName }}@endsection
-@section('og_description'){{ __('Every verified OEM manufacturer we carry, indexed and ready for cross-reference search.') }}@endsection
+@section('title'){{ __('manufacturer.meta_title_index') }} · {{ $siteName }}@endsection
+@section('meta_description'){{ __('manufacturer.meta_description_index') }}@endsection
+@section('og_title'){{ __('manufacturer.meta_title_index') }} · {{ $siteName }}@endsection
+@section('og_description'){{ __('manufacturer.og_description_index') }}@endsection
 @section('canonical')
     <link rel="canonical" href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}">
 @endsection
@@ -26,8 +26,8 @@
     '@@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
     'itemListElement' => [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('Home'),   'item' => url('/'.$lang.'/')],
-        ['@type' => 'ListItem', 'position' => 2, 'name' => __('Brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('manufacturer.breadcrumb_home'),   'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 2, 'name' => __('manufacturer.breadcrumb_brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
     ],
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
@@ -81,12 +81,12 @@
         {{-- ═══ Document header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('Home') }}</a>
+                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('manufacturer.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
-                <span class="text-ink">{{ __('Brands') }}</span>
+                <span class="text-ink">{{ __('manufacturer.breadcrumb_brands') }}</span>
             </nav>
             <div class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
-                DOC · BRANDS · INDEX-01
+                {{ __('manufacturer.doc_brands_index') }}
             </div>
         </div>
 
@@ -95,12 +95,12 @@
             <header class="col-span-12 lg:col-span-8">
                 <div class="flex items-center gap-4 mb-8">
                     <span class="w-10 h-[3px] bg-amber inline-block"></span>
-                    <span class="bp-spec text-amber-ink">Directory · Manufacturers</span>
+                    <span class="bp-spec text-amber-ink">{{ __('manufacturer.eyebrow_directory') }}</span>
                 </div>
 
                 <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl max-w-[22ch]">
-                    {{ __('Every verified brand') }}<span class="text-amber">.</span>
+                    {{ __('manufacturer.headline_index') }}<span class="text-amber">.</span>
                 </h1>
 
                 <div class="mt-6 mb-8">
@@ -108,7 +108,7 @@
                 </div>
 
                 <p class="max-w-xl text-lg text-body leading-relaxed">
-                    {{ __('Alphabetical index of every manufacturer we catalogue. Click a brand to open its cross-referenced parts catalogue.') }}
+                    {{ __('manufacturer.subhead_index') }}
                 </p>
             </header>
 
@@ -116,27 +116,27 @@
             <aside class="col-span-12 lg:col-span-4">
                 <div class="relative border border-ink bg-paper bp-register">
                     <div class="px-5 py-3 bg-ink text-ivory flex items-center justify-between">
-                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('DIRECTORY · STATS') }}</span>
+                        <span class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">{{ __('manufacturer.stats_directory_stats') }}</span>
                         <span class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/60">{{ now()->format('Y.m.d') }}</span>
                     </div>
                     <div class="p-5 space-y-3">
                         <div class="bp-leader pt-0.5">
-                            <dt class="text-sm text-ink-muted">{{ __('Listed') }}</dt>
+                            <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_listed') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ number_format($manufacturers->total()) }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-sm text-ink-muted">{{ __('Verified OEM') }}</dt>
+                            <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_verified_oem') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-amber-ink tabular-nums">{{ $verifiedCount }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-sm text-ink-muted">{{ __('Coverage') }}</dt>
+                            <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_coverage') }}</dt>
                             <span class="bp-leader-dots"></span>
-                            <dd class="font-mono text-sm font-bold text-ink uppercase tracking-wide">EU · 27</dd>
+                            <dd class="font-mono text-sm font-bold text-ink uppercase tracking-wide">EU · {{ settings('stats_counter.countries_count', 27) }}</dd>
                         </div>
                         <div class="bp-leader">
-                            <dt class="text-sm text-ink-muted">{{ __('Page') }}</dt>
+                            <dt class="text-sm text-ink-muted">{{ __('manufacturer.stats_page') }}</dt>
                             <span class="bp-leader-dots"></span>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $manufacturers->currentPage() }}/{{ $manufacturers->lastPage() }}</dd>
                         </div>
@@ -148,9 +148,9 @@
         {{-- ═══ 01 · Alphabet jump ═══ --}}
         <section class="mb-12 bp-rise bp-rise-delay-2">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-5">
-                <span class="bp-spec text-ink">01 · Jump · By letter</span>
+                <span class="bp-spec text-ink">{{ __('manufacturer.jump_by_letter') }}</span>
                 <span class="hidden sm:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                    A–Z · this page
+                    {{ __('manufacturer.az_this_page') }}
                 </span>
             </div>
             <div class="grid grid-cols-7 sm:grid-cols-[repeat(13,minmax(0,1fr))] lg:grid-cols-[repeat(26,minmax(0,1fr))] gap-[2px]">
@@ -176,9 +176,9 @@
         {{-- ═══ 02 · A-Z ledger ═══ --}}
         <section class="mb-10 bp-rise bp-rise-delay-3">
             <div class="flex items-end justify-between pb-3 border-b border-ink mb-6">
-                <span class="bp-spec text-ink">02 · Ledger · Alphabetical</span>
+                <span class="bp-spec text-ink">{{ __('manufacturer.ledger_alphabetical') }}</span>
                 <span class="hidden md:inline font-mono text-[10px] text-ink-muted tracking-[0.18em] uppercase">
-                    {{ $manufacturers->count() }} {{ __('on page') }}
+                    {{ $manufacturers->count() }} {{ __('manufacturer.on_page') }}
                 </span>
             </div>
 
@@ -188,16 +188,16 @@
                     <div class="inline-flex items-center justify-center w-16 h-16 border border-ink bg-ivory-alt mb-5">
                         <x-heroicon-o-archive-box-x-mark class="w-7 h-7 text-ink-muted" />
                     </div>
-                    <p class="font-display text-xl font-bold text-ink leading-tight">{{ __('No brands yet') }}</p>
+                    <p class="font-display text-xl font-bold text-ink leading-tight">{{ __('manufacturer.no_brands_yet') }}</p>
                     <p class="mt-2 text-sm text-ink-muted max-w-sm mx-auto">
-                        {{ __('The manufacturer directory is still being populated. Check back soon or use the OEM search directly.') }}
+                        {{ __('manufacturer.directory_populating') }}
                     </p>
                     <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                        class="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-ink text-ivory
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-amber hover:text-ink transition-colors">
                         <x-heroicon-s-magnifying-glass class="w-4 h-4" />
-                        {{ __('Search by OEM') }}
+                        {{ __('manufacturer.search_by_oem') }}
                     </a>
                 </div>
             @else
@@ -210,7 +210,7 @@
                                     {{ $letter }}
                                 </span>
                                 <span class="bp-spec-mono pb-2">
-                                    {{ str_pad(array_search($letter, array_keys($grouped->toArray())) + 1, 2, '0', STR_PAD_LEFT) }} · {{ $brands->count() }} {{ Str::plural(__('brand'), $brands->count()) }}
+                                    {{ str_pad(array_search($letter, array_keys($grouped->toArray())) + 1, 2, '0', STR_PAD_LEFT) }} · {{ $brands->count() }} {{ __('manufacturer.brand_word') }}
                                 </span>
                             </div>
 
@@ -239,7 +239,7 @@
                                                     </p>
                                                     @if($brand->is_verified_oem)
                                                         <p class="font-mono text-[9px] tracking-[0.22em] uppercase text-amber-ink group-hover:text-amber mt-1">
-                                                            ✓ Verified OEM
+                                                            {{ __('manufacturer.verified_oem_badge') }}
                                                         </p>
                                                     @endif
                                                 </div>
@@ -258,22 +258,22 @@
         {{-- ═══ Pagination ═══ --}}
         @if($manufacturers->hasPages())
             <div class="pt-6 border-t border-ink bp-rise bp-rise-delay-4">
-                {{ $manufacturers->links() }}
+                {{ $manufacturers->links('components.ui.pagination') }}
             </div>
         @endif
 
         {{-- ═══ 03 · Can't find brand CTA ═══ --}}
         <section class="mt-16 bp-rise bp-rise-delay-5">
             <div class="flex items-end justify-between pb-3 border-b border-ink">
-                <span class="bp-spec text-ink">03 · Fallback · Search</span>
+                <span class="bp-spec text-ink">{{ __('manufacturer.fallback_search_eyebrow') }}</span>
             </div>
             <div class="grid grid-cols-12 border-x border-b border-ink bg-paper">
                 <div class="col-span-12 md:col-span-8 p-6 sm:p-10 md:border-r md:border-rule">
                     <p class="font-display text-2xl font-extrabold text-ink tracking-[-0.02em] leading-tight">
-                        {{ __("Don't know the brand?") }}<span class="text-amber">.</span>
+                        {{ __('manufacturer.dont_know_brand') }}<span class="text-amber">.</span>
                     </p>
                     <p class="mt-3 text-base text-body leading-relaxed max-w-xl">
-                        {{ __('Skip the directory and query by OEM number directly — our cross-reference engine will identify the manufacturer and compatible alternatives automatically.') }}
+                        {{ __('manufacturer.skip_directory_body') }}
                     </p>
                     <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}"
                        class="mt-6 group inline-flex items-center justify-center gap-3
@@ -283,24 +283,24 @@
                               hover:bg-amber hover:text-ink
                               transition-colors duration-150">
                         <x-heroicon-o-magnifying-glass class="w-4 h-4" aria-hidden="true" />
-                        {{ __('Open search console') }}
+                        {{ __('manufacturer.open_search_console') }}
                         <x-heroicon-s-arrow-long-right class="w-4 h-4 transform transition-transform group-hover:translate-x-1" aria-hidden="true" />
                     </a>
                 </div>
                 <div class="col-span-12 md:col-span-4 p-6 sm:p-8 bg-ivory-alt">
-                    <p class="bp-spec text-amber-ink mb-4">{{ __('Quick tips') }}</p>
+                    <p class="bp-spec text-amber-ink mb-4">{{ __('manufacturer.quick_tips') }}</p>
                     <ul class="space-y-3 text-sm text-body">
                         <li class="flex items-start gap-2.5">
                             <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] text-ink-muted mt-1">01</span>
-                            <span>{{ __('Enter any OEM number, case-insensitive.') }}</span>
+                            <span>{{ __('manufacturer.tip_case_insensitive') }}</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] text-ink-muted mt-1">02</span>
-                            <span>{{ __('We auto-detect the manufacturer.') }}</span>
+                            <span>{{ __('manufacturer.tip_auto_detect') }}</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <span class="font-mono text-[10px] tabular-nums tracking-[0.18em] text-ink-muted mt-1">03</span>
-                            <span>{{ __('Cross-references shown inline.') }}</span>
+                            <span>{{ __('manufacturer.tip_cross_refs_inline') }}</span>
                         </li>
                     </ul>
                 </div>

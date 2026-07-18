@@ -7,4 +7,6 @@ return [
     'need_help' => 'Reikia pagalbos?',
     'check_back' => 'Užsukite dar kartą po kelių minučių',
     'all_rights_reserved' => 'Visos teisės saugomos',
+    'status_label' => 'Būsena',
+    'estimated_return_spec' => 'Numatoma · Grąžinimas',
 ];

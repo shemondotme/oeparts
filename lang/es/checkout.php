@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'minimum_order_not_met' => 'Su pedido no alcanza el importe mínimo de :amount.',
     // Shared layout (layout.blade.php)
     'title' => 'Pago seguro',
     'breadcrumb_home' => 'Inicio',
@@ -9,7 +10,6 @@ return [
     'step_of_five' => 'PASO :n DE 05',
     'secure_checkout_eyebrow' => 'Compra segura',
     'heading' => 'Pago seguro',
-    'tls_ssl_badge' => 'TLS 1.3 · SSL de 256 bits · Protegido por Airwallex',
     'back_to_cart' => 'Volver al carrito',
     'step_contact' => 'Contacto',
     'step_address' => 'Dirección',
@@ -42,7 +42,6 @@ return [
     'vat_tbd' => 'Por determinar',
     'total_currency_label' => 'Total · :currency',
     'including_all_taxes' => 'Impuestos incluidos',
-    'ssl_tls_badge' => 'SSL · TLS 1.3',
     'cart_empty' => 'Su carrito está vacío',
     'need_help_heading' => '¿Necesita ayuda?',
     'support_hours_note' => 'Lun-Vie 09:00-18:00 CET. Nuestro equipo está listo.',
@@ -78,16 +77,6 @@ return [
     'select_country_placeholder' => '— Seleccionar país —',
     'pan_european_delivery' => 'Entrega paneuropea',
     'pan_european_delivery_note' => 'Envío Express, Estándar y Económico disponible a todos los países europeos indicados.',
-    'company_details_heading' => 'Datos de la empresa',
-    'optional_b2b' => 'Opcional · B2B',
-    'ordering_as_business' => 'Realizo el pedido como empresa',
-    'company_name_label' => 'Nombre de la empresa',
-    'eu_vat_number_label' => 'Número de IVA intracomunitario',
-    'required_for_exemption' => '(necesario para la exención)',
-    'vat_valid_message' => 'El número de IVA es válido. Se aplicará la exención de IVA.',
-    'vies_unavailable_message' => 'El servicio VIES no está disponible temporalmente.',
-    'vat_invalid_message' => 'El número de IVA no es válido. Compruébelo e inténtelo de nuevo.',
-    'valid_vat_number' => 'Número de IVA válido',
 
     // Step 3 — shipping method
     'shipping_method_heading' => 'Método de envío',
@@ -119,8 +108,12 @@ return [
     'grand_total_currency_label' => 'Total general · :currency',
     'agree_terms_prefix' => 'Acepto los',
     'terms_and_conditions' => 'Términos y condiciones',
-    'and' => 'y la',
-    'privacy_policy' => 'Política de privacidad',
+    'and' => 'y',
+    'privacy_policy' => 'la Política de privacidad',
+    'returns_policy' => 'la Política de devoluciones y desistimiento',
+    'oversized_notice_heading' => 'Piezas de gran tamaño — aviso de envío',
+    'oversized_notice_body' => 'Los costes de envío mostrados son tarifas fijas para paquetes de tamaño estándar. Si su pedido incluye una pieza de gran tamaño o pesada, el transportista puede aplicar un recargo de flete adicional — facturado por separado tras el envío.',
+    'oversized_ack_sentence' => 'Asimismo, reconozco el aviso sobre piezas de gran tamaño indicado arriba.',
     // Step 5 — payment method
     'payment_method_heading' => 'Método de pago',
     'payment_method_subtitle' => 'Elija el protocolo · Seguro · Cifrado',
@@ -134,15 +127,15 @@ return [
     'bank_transfer_instructions_note' => 'Primero creamos el pedido y luego mostramos sus datos bancarios y la referencia de pago en la página siguiente.',
     'order_note_label' => 'Nota del pedido',
     'order_note_placeholder' => 'Cualquier nota de entrega o del pedido',
-    'trust_ssl_256' => 'SSL de 256 bits',
     'trust_encrypted' => 'Cifrado',
 
     // Payment page (payment.blade.php)
     'payment_title' => 'Pago',
     'complete_payment_heading' => 'Completar el pago',
-    'tls_encrypted_channel' => 'TLS 1.3 · SSL de 256 bits · Canal cifrado',
     'order_label' => 'Pedido · :number',
-    'credit_debit_card' => 'Tarjeta de crédito/débito',
+    'doc_payment_sheet' => 'DOC · PAYMENT-SHEET · :number',
+    'card_brands_caption' => 'Airwallex · Visa · Mastercard · Amex',
+    'credit_debit_card' => 'Tarjeta',
     'bank_transfer' => 'Transferencia bancaria',
     'bank_transfer_sepa_note' => 'SEPA · El pedido se procesa tras confirmar el pago',
     'payment_error_heading' => 'Error de pago',
@@ -161,7 +154,6 @@ return [
     'items_label' => 'Artículos',
     'grand_total_label' => 'Total general',
     'incl_vat_short' => 'IVA incluido',
-    'trust_ssl_256_short' => 'SSL 256',
     'payment_failed_js' => 'El pago ha fallado. Inténtelo de nuevo.',
 
     // Payment failed (payment-failed.blade.php)

@@ -33,6 +33,7 @@ use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
@@ -78,6 +79,14 @@ class AppServiceProvider extends ServiceProvider
         // Set global bcmath scale to 2 decimal places.
         // NEVER call bcscale() again anywhere else in the codebase.
         bcscale(2);
+
+        // Private-disk temporary URLs — currently only used by the refund-images
+        // ImageEntry (RefundRequestResource\Pages\ViewRefundRequest). The signed
+        // route it targets (admin.refund-images.show) only serves paths under
+        // refund-images/, so this is safe even though the callback is disk-wide.
+        Storage::disk('local')->buildTemporaryUrlsUsing(function (string $path, \DateTimeInterface $expiration) {
+            return URL::temporarySignedRoute('admin.refund-images.show', $expiration, ['path' => $path]);
+        });
 
         // Register custom macro for TextColumn to support legacy fontMono calls in Filament v3
         if (class_exists(\Filament\Tables\Columns\TextColumn::class)) {
@@ -191,7 +200,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('contact', function (Request $request) {
-            return Limit::perMinute(5)->by($request->ip());
+            return Limit::perMinute((int) settings('contact.rate_limit_per_minute', 5))->by($request->ip());
+        });
+
+        RateLimiter::for('refund-request', function (Request $request) {
+            return Limit::perMinutes(60, (int) settings('orders.refund_request_rate_limit', 5))
+                ->by($request->user()?->id ?: $request->ip());
         });
 
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));

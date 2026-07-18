@@ -24,6 +24,7 @@ class PartInquiryRequest extends FormRequest
             'quantity'     => ['nullable', 'integer', 'min:1', 'max:99'],
             'urgency'      => ['nullable', 'string', 'in:normal,soon,urgent'],
             'notes'        => ['nullable', 'string', 'max:500'],
+            'failed_search_log_id' => ['nullable', 'integer', 'exists:failed_search_logs,id'],
             'website'      => ['max:0'], // honeypot
         ];
     }
@@ -31,11 +32,11 @@ class PartInquiryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.required'      => 'Please enter your email address.',
-            'email.email'         => 'Please enter a valid email address.',
-            'oem_number.required' => 'Please enter the OEM part number.',
-            'year.regex'          => 'Please enter a valid 4-digit year.',
-            'urgency.in'          => 'Please select a valid urgency level.',
+            'email.required'      => trans('part_inquiry.validation_email_required'),
+            'email.email'         => trans('part_inquiry.validation_email_invalid'),
+            'oem_number.required' => trans('part_inquiry.validation_oem_required'),
+            'year.regex'          => trans('part_inquiry.validation_year_invalid'),
+            'urgency.in'          => trans('part_inquiry.validation_urgency_invalid'),
         ];
     }
 }

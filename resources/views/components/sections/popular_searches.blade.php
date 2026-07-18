@@ -1,4 +1,4 @@
-﻿{{-- Section: popular_searches (Industrial Blueprint)
+{{-- Section: popular_searches (Industrial Blueprint)
      content: eyebrow, headline, subheadline, search_cta_text(ml)
      Displays top 5 searched OEM numbers from search_logs (last 30 days)
 --}}
@@ -17,9 +17,13 @@
                 ->get();
         });
         $maxHits = $popular->max('hits') ?? 1;
+        $daysWindow = (int) settings('search.popular_days_window', 30);
+        $cacheTtlHours = (int) settings('search.cache_ttl_hours', 6);
     } catch (\Exception $e) {
         $popular = collect();
         $maxHits = 1;
+        $daysWindow = (int) settings('search.popular_days_window', 30);
+        $cacheTtlHours = (int) settings('search.cache_ttl_hours', 6);
     }
 
     $eyebrow = trans_field($section->content['eyebrow'] ?? null);
@@ -31,7 +35,7 @@
 
 @if($popular->isNotEmpty())
 <section class="relative bg-paper text-ink border-b border-rule">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-20 md:py-28">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-16 md:pt-24 pb-12 md:pb-16">
 
         {{-- Header --}}
         <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-8 items-end pb-8 mb-12 border-b border-ink">
@@ -55,7 +59,7 @@
                     {{ $subheadline }}
                 </p>
                 <p class="mt-4 bp-spec-mono">
-                    Log window · 30 days · {{ $popular->sum('hits') }} hits
+                    Log window · {{ $daysWindow }} days · {{ $popular->sum('hits') }} hits
                 </p>
             </div>
             @endif
@@ -135,7 +139,7 @@
         {{-- Footer / CTA --}}
         <div class="mt-8 flex flex-wrap items-center justify-between gap-4">
             <span class="bp-spec-mono">
-                Ledger updated · {{ now()->format('Y·m·d') }} · cached 6h
+                Ledger updated · {{ now()->format('Y·m·d') }} · cached {{ $cacheTtlHours }}h
             </span>
             <a href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}" class="bp-btn-primary">
                 {{ $searchCtaText }}

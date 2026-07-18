@@ -294,7 +294,7 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(302) // Redirect back
-            ->assertSessionHas('status', 'Password reset link sent');
+            ->assertSessionHas('status', trans('passwords.sent'));
     }
 
     #[Test]

@@ -1,4 +1,4 @@
-﻿{{-- Section: featured_brands (Industrial Blueprint)
+{{-- Section: featured_brands (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), view_all_text(ml)
      $sectionData['manufacturers'] injected by SectionRendererService
 --}}
@@ -30,14 +30,14 @@
 <section class="relative bg-ivory text-ink border-b border-rule overflow-hidden">
     <div class="absolute inset-0 bg-grid-ivory bg-grid-lg opacity-50 pointer-events-none" aria-hidden="true"></div>
 
-    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
+    <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-14 md:pt-20 pb-10 md:pb-14">
 
         {{-- Header --}}
         <x-section-header
             :eyebrow="$eyebrow"
             :headline="$headline"
             :subheadline="$subheadline"
-            :meta="'Index · ' . $manufacturers->count() . ' manufacturers · verified'" />
+            :meta="'Index · ' . $manufacturers->count() . ' manufacturers'" />
 
         {{-- Brand grid: 2/3/4 column ledger --}}
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border border-ink bg-paper">
@@ -140,10 +140,7 @@
                 </a>
             </div>
 
-            <div class="mt-10 flex flex-wrap items-center justify-between gap-4">
-                <span class="bp-spec-mono">
-                    {{ __('Source · OEM manufacturer catalogues · EU') }}
-                </span>
+            <div class="mt-10 flex flex-wrap items-center justify-end gap-4">
                 <a href="{{ url('/'.$lang.'/brands') }}" class="bp-btn-primary">
                     {{ $viewAllText }}
                     <x-heroicon-s-arrow-long-right class="w-5 h-5" />

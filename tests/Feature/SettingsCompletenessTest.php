@@ -38,7 +38,6 @@ class SettingsCompletenessTest extends TestCase
             'search.cache_ttl_hours'      => ['search.cache_ttl_hours', 6],
             'checkout.proof_max_size_kb'      => ['checkout.proof_max_size_kb', 5120],
             'checkout.guest_password_length'  => ['checkout.guest_password_length', 12],
-            'contact.success_message'     => ['contact.success_message', 'Your message has been sent successfully. We will get back to you soon.'],
             'dashboard.orders_threshold'        => ['dashboard.orders_threshold', 50],
             'dashboard.pending_delayed_minutes' => ['dashboard.pending_delayed_minutes', 120],
         ];
@@ -54,6 +53,21 @@ class SettingsCompletenessTest extends TestCase
 
         $this->assertNotSame('SENTINEL', settings($key, 'SENTINEL'), "{$key} fell back to the sentinel default — no seed row exists.");
         $this->assertSame($expected, $resolved);
+    }
+
+    #[Test]
+    public function contact_success_message_is_seeded_as_multilingual_json(): void
+    {
+        $raw = settings('contact.success_message', 'SENTINEL');
+        $this->assertNotSame('SENTINEL', $raw);
+
+        $decoded = json_decode($raw, true);
+        $this->assertSame(['en', 'de', 'lt', 'fr', 'es'], array_keys($decoded));
+        $this->assertSame('Your message has been sent successfully. We will get back to you soon.', $decoded['en']);
+
+        app()->setLocale('de');
+        $this->assertSame($decoded['de'], settings_trans('contact.success_message'));
+        app()->setLocale('en');
     }
 
     #[Test]

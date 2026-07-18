@@ -1,18 +1,22 @@
-﻿{{-- Section: newsletter (Industrial Blueprint)
+{{-- Section: newsletter (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml), button_text(ml), placeholder(ml), success_text(ml)
      Submits via fetch() to POST /{lang}/newsletter/subscribe. Honeypot included.
 --}}
 @php
     $eyebrow = trans_field($section->content['eyebrow'] ?? null);
     $headline = trans_field($section->content['headline'] ?? null);
-    $subheadline = trans_field($section->content['subheadline'] ?? null);
-    $buttonText = trans_field($section->content['button_text'] ?? null) ?: 'Subscribe';
-    $placeholder = trans_field($section->content['placeholder'] ?? null) ?: 'Your email address';
+    // Subheadline may carry a ":count" token so the audience-size claim always
+    // matches the same admin-configured figure stats_counter displays, instead
+    // of drifting out of sync as a separate hardcoded number.
+    $customerCount = number_format((int) settings('stats_counter.customers_count', 0));
+    $subheadline = strtr(trans_field($section->content['subheadline'] ?? null), [':count' => $customerCount]);
+    $buttonText = trans_field($section->content['button_text'] ?? null) ?: __('newsletter.subscribe');
+    $placeholder = trans_field($section->content['placeholder'] ?? null) ?: __('newsletter.email_placeholder');
     $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
 @endphp
 
 <section class="relative bg-paper text-ink border-b border-rule">
-    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 py-16 md:py-24">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-14 md:pt-20 pb-10 md:pb-14">
 
         <div class="grid grid-cols-12 gap-x-4 sm:gap-x-6 lg:gap-x-10 gap-y-10 items-center">
 
@@ -39,9 +43,10 @@
             <div class="col-span-12 lg:col-span-7 lg:pl-10 lg:border-l lg:border-rule"
                  x-data="{
                     email: '',
+                    website: '',
                     state: 'idle',
                     error: '',
-                    successText: {{ json_encode(trans_field($section->content['success_text'] ?? null) ?: 'Subscription confirmed.') }},
+                    successText: {{ json_encode(trans_field($section->content['success_text'] ?? null) ?: __('newsletter.subscription_confirmed')) }},
                     async submit() {
                         if (!this.email || this.state === 'loading') return;
                         this.state = 'loading';
@@ -58,29 +63,30 @@
                                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                                     'Accept': 'application/json',
                                 },
-                                body: JSON.stringify({ email: this.email, lang: '{{ app()->getLocale() }}', ...honeypotData }),
+                                body: JSON.stringify({ email: this.email, website: this.website, lang: '{{ app()->getLocale() }}', ...honeypotData }),
                             });
                             const json = await res.json();
                             if (json.success) {
+                                this.successText = json.message || this.successText;
                                 this.state = 'success';
                             } else {
                                 this.state = 'error';
-                                this.error = json.message || 'Something went wrong.';
+                                this.error = json.message || @js(__('newsletter.error_generic'));
                             }
                         } catch (e) {
                             this.state = 'error';
-                            this.error = 'Network error. Please try again.';
+                            this.error = @js(__('newsletter.error_network'));
                         }
                     }
                  }">
 
                 <template x-if="state !== 'success'">
                     <form @submit.prevent="submit" novalidate>
-                        <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
+                        <input type="text" name="website" x-model="website" class="hidden" tabindex="-1" autocomplete="off">
                         @honeypot
 
                         <label for="newsletter-email" class="bp-spec mb-3 inline-block">
-                            {{ __('Enter email address') }}
+                            {{ __('newsletter.enter_email_address') }}
                         </label>
 
                         {{-- Input + button row --}}
@@ -112,7 +118,7 @@
                                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    {{ __('Transmitting') }}
+                                    {{ __('newsletter.transmitting') }}
                                 </span>
                             </button>
                         </div>
@@ -122,7 +128,7 @@
 
                         <p class="mt-4 flex items-center gap-2 bp-spec-mono">
                             <x-heroicon-s-lock-closed class="w-3 h-3 text-amber-ink" />
-                            {{ __('GDPR · Privacy respected · Unsubscribe any time') }}
+                            {{ __('newsletter.gdpr_notice') }}
                         </p>
                     </form>
                 </template>
@@ -135,15 +141,12 @@
                             </div>
                             <div>
                                 <p class="font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink mb-2">
-                                    {{ __('Status · Confirmed') }}
+                                    {{ __('newsletter.status_confirmed') }}
                                 </p>
                                 <h3 class="font-display text-2xl font-extrabold text-ink mb-2 tracking-tight">
-                                    {{ __('Subscription logged') }}<span class="text-amber">.</span>
+                                    {{ __('newsletter.subscription_logged') }}<span class="text-amber">.</span>
                                 </h3>
                                 <p class="text-body" x-text="successText"></p>
-                                <p class="mt-3 bp-spec-mono">
-                                    {{ __('Check inbox · confirmation email sent') }}
-                                </p>
                             </div>
                         </div>
                     </div>
