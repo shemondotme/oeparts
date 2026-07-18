@@ -1,0 +1,9 @@
+; Shared-hosting simulation (compose.yaml's `hostingsim` service, --profile hostingsim).
+; Disables everything the in-app Update/Backup/Recovery system (CLAUDE.md rules #41-52)
+; must NEVER call, so any accidental exec()/proc_open() etc. hard-fails loudly here
+; instead of silently working on a dev machine and breaking on real cheap hosting.
+disable_functions = exec,shell_exec,proc_open,proc_close,popen,pcntl_exec,system,passthru,proc_get_status
+
+; Conservative caps matching typical cheap shared-hosting plans.
+max_execution_time = 30
+memory_limit = 256M

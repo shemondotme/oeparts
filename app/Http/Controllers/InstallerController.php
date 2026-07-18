@@ -23,7 +23,7 @@ class InstallerController extends Controller
         $recommended = $this->checkRecommended();
         $permissions = $this->checkPermissions();
         $phpVersion = phpversion();
-        $phpRequired = '8.2';
+        $phpRequired = '8.3';
         $currentStep = 1;
 
         return view('installer.step1-requirements', compact(
@@ -329,7 +329,7 @@ class InstallerController extends Controller
     private function checkRequirements()
     {
         $requirements = [
-            'PHP >= 8.2' => version_compare(phpversion(), '8.2', '>='),
+            'PHP >= 8.3' => version_compare(phpversion(), '8.3', '>='),
             'BCMath PHP Extension' => extension_loaded('bcmath'),
             'Ctype PHP Extension' => extension_loaded('ctype'),
             'Fileinfo PHP Extension' => extension_loaded('fileinfo'),
