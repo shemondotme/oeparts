@@ -23,7 +23,7 @@ class Reports extends Cluster
 
     public static function canAccess(): bool
     {
-        return auth('admin')->user()->hasAnyRole(['super_admin', 'admin']);
+        return auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
     }
 
     public static function getNavigationIcon(): string|\BackedEnum|null

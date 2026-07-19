@@ -45,7 +45,7 @@ class ContentRevisionPage extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return auth('admin')->user()->hasAnyRole(['super_admin', 'admin']);
+        return auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
     }
 
     public function table(Table $table): Table

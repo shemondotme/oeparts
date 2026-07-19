@@ -30,6 +30,6 @@ class Content extends Cluster
 
     public static function canAccess(): bool
     {
-        return auth('admin')->user()->hasAnyRole(['super_admin', 'admin', 'catalog_admin']);
+        return auth('admin')->user()?->hasAnyRole(['super_admin', 'admin', 'catalog_admin']) ?? false;
     }
 }

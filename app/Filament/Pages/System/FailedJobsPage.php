@@ -50,7 +50,7 @@ class FailedJobsPage extends Page implements HasTable
 
     public static function canAccess(): bool
     {
-        return auth('admin')->user()->hasRole('super_admin');
+        return auth('admin')->user()?->hasRole('super_admin') ?? false;
     }
 
     public function table(Table $table): Table
