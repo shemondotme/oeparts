@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.1 — 2026-07-19
+
+### Fixed
+- **Backup Management — "Run backup now" no longer hangs on "Running"** — the button dispatched `RunBackupJob`, which runs the entire backup (full profile, including `vendor/` by design) synchronously via `Artisan::call('oeparts:backup')`. Under `QUEUE_CONNECTION=sync` (the documented shared-hosting setup with no supervisor — README, CLAUDE.md rule #41) this ran the whole backup inline within the web request, blocking well past the web server's/PHP's timeout and leaving the run stuck at `running` with no progress, exactly as the Backup Engine's own chunked design (rule #48) was built to avoid. `BackupDashboard::runNow` now only calls `BackupManager::start()` (fast) and hands off to a new `pollBackup()` method, AJAX-polled one chunk per tick — the same pattern already used by the Update Engine's apply flow (`SystemUpdates::pollApply`). Also resumes polling automatically if the admin reloads the page mid-backup. `RunBackupJob`/`oeparts:backup` are unchanged and still correct for the scheduled cron backup, which has no web-request timeout to respect.
+
 ## 1.0.0 — 2026-07-19
 
 Initial public release.
