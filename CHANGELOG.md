@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.6 — 2026-07-19
+
+### Fixed
+- **Reports → Sales/Search pages 500'd on every real MySQL install ("clicking Reports shows an error")** — confirmed live: `SalesTopProducts`, `SearchFailedQueries`, and `SearchTopSearches` (the "Top Selling Products" / "Failed Queries" / "Top Searches" report tables) all `GROUP BY` a set of columns while only `SELECT`ing an aggregated `MIN(id)`/`COALESCE(...)` alias — but Filament's `TableWidget` appends `ORDER BY {table}.id` for pagination-stable sorting unless told not to (`Table::hasDefaultKeySort()`, default enabled), and that appended clause references the *raw*, non-aggregated `id` column, which isn't functionally dependent on the `GROUP BY`. Under MySQL's default `sql_mode=only_full_group_by` this is a hard SQL syntax error (`SQLSTATE[42000]`), producing a 500 on every visit to the Sales Report page and the Search Intelligence report's two widgets — 100% reproducible on any standard MySQL/MariaDB install, every time. The test suite runs on SQLite (`.env.testing`), which does not enforce `ONLY_FULL_GROUP_BY`, so this shipped completely undetected by `php artisan test`; it only surfaced live, in a real browser against real MySQL. Added `->defaultKeySort(false)` to all three widgets (each already has its own explicit, correct `orderByDesc()`) and a new regression test that checks the actual mechanism (`hasDefaultKeySort()`) rather than relying on a specific database engine's strictness to catch it. `CustomersTop`, the fourth "Top" widget with the same shape, was verified safe as-is — its `GROUP BY` already includes the real `users.id`, so Filament's appended order-by was never invalid there.
+
 ## 1.0.5 — 2026-07-19
 
 ### Fixed

@@ -40,6 +40,15 @@ class SalesTopProducts extends TableWidget
                     ->orderByDesc('total_revenue')
                     ->limit(10)
             )
+            // Filament appends "ORDER BY {table}.id" for pagination-stable sorting
+            // unless told not to — but order_items.id isn't in the GROUP BY above
+            // (only MIN(id) is selected), so under MySQL's default
+            // sql_mode=only_full_group_by that appended clause is a syntax error:
+            // "Expression ... contains nonaggregated column 'order_items.id'".
+            // Confirmed live (500 on every visit to the Sales Report page); SQLite,
+            // used by the test suite, doesn't enforce this, which is why it shipped
+            // undetected. total_revenue DESC above is a perfectly good explicit sort.
+            ->defaultKeySort(false)
             ->columns([
                 TextColumn::make('name')
                     ->label('Product')
