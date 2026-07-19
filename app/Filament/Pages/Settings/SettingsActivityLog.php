@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Filament\Clusters\Settings as SettingsCluster;
 use App\Models\ActivityLog;
+use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -43,6 +45,18 @@ class SettingsActivityLog extends Page implements HasTable
     public static function canAccess(): bool
     {
         return auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('backToSettings')
+                ->label('Back to Settings')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->outlined()
+                ->url(SettingsCluster::getUrl()),
+        ];
     }
 
     public function table(Table $table): Table

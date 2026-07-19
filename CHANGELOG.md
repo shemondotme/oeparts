@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.2 — 2026-07-19
+
+### Fixed
+- **Settings pages had no way back except a small breadcrumb link** — every one of the 34 pages under the Settings cluster (34 concrete `SettingsPage` subclasses + the Activity Log table page) had only Save/Discard/Reset-to-Defaults actions in the form footer; the only path back to the Settings overview was a single-word cluster breadcrumb above the header, easy to miss. `SettingsPage::getHeaderActions()` now adds an explicit "Back to Settings" header action (linking to the cluster index) inherited by every subclass; the 3 pages that already had their own header actions for page-specific tools (`EmailSettings`' Send Test Email, `PaymentSettings`' Test Connection, `PerformanceSettings`' Test Cache) now merge it in via `...parent::getHeaderActions()` instead of overriding it away. `SettingsActivityLog` (which extends `Filament\Pages\Page` directly, not `SettingsPage`, since it's a table page) gets its own copy of the same action for consistency.
+
 ## 1.0.1 — 2026-07-19
 
 ### Fixed

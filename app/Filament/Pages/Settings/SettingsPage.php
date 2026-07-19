@@ -82,6 +82,26 @@ abstract class SettingsPage extends Page
             ]);
     }
 
+    /**
+     * Every settings page previously had only Save/Discard/Reset in the form
+     * footer — no way back to the Settings overview except the small,
+     * easy-to-miss cluster breadcrumb link above the header. Subclasses that
+     * override this for their own header actions (EmailSettings,
+     * PaymentSettings, PerformanceSettings) merge this in via
+     * `...parent::getHeaderActions()` rather than replacing it.
+     */
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('backToSettings')
+                ->label('Back to Settings')
+                ->icon('heroicon-o-arrow-left')
+                ->color('gray')
+                ->outlined()
+                ->url(SettingsCluster::getUrl()),
+        ];
+    }
+
     public function getFormContentComponent(): Component
     {
         return Form::make([EmbeddedSchema::make('form')])
