@@ -34,6 +34,11 @@ class SearchTopSearches extends TableWidget
                     ->orderByDesc('count')
                     ->limit(15)
             )
+            // See SalesTopProducts::table() — Filament's default pagination-stable
+            // "ORDER BY {table}.id" is invalid here too (id isn't in the GROUP BY,
+            // only MIN(id) is selected), and hits the same live 500 under MySQL's
+            // only_full_group_by. count DESC above is already the intended sort.
+            ->defaultKeySort(false)
             ->columns([
                 TextColumn::make('search_query')
                     ->label('Query')
