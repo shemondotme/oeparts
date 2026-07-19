@@ -32,11 +32,12 @@ rm -rf "$EXPORT" "$ZIP"
 mkdir -p "$EXPORT"
 git -C "$ROOT" archive HEAD | tar -x -C "$EXPORT"
 
-# A transient .env so composer's post-autoload-dump `artisan package:discover` can boot
-# (without one, APP_ENV/CACHE_STORE fall back to Laravel's defaults of 'production'/
-# 'database', tripping the production-must-use-Redis guard in AppServiceProvider).
+# A transient .env so composer's post-autoload-dump `artisan package:discover` can boot.
+# Use .env.testing (array/sqlite drivers, APP_ENV=testing), same as tests.yml — NOT
+# .env.example, which sets APP_ENV=production + CACHE_STORE=redis and would need a
+# live Redis/MySQL connection just to let the app boot for discovery/build commands.
 # Stripped from the shipped zip by oeparts:build in step 4 (config('updates.build.exclude')).
-cp "$ROOT/.env.example" "$EXPORT/.env"
+cp "$ROOT/.env.testing" "$EXPORT/.env"
 
 # 2. Production dependencies (no dev, optimised autoloader).
 composer install --no-dev --optimize-autoloader --no-interaction --working-dir="$EXPORT"
