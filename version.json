@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.0",
   "codename": "Atlas",
-  "release_date": "2026-05-23",
+  "release_date": "2026-07-19",
   "channel": "stable",
   "security": false,
   "min_php": "8.2",
@@ -9,7 +9,7 @@
   "required_extensions": ["pdo_mysql", "zip", "openssl", "mbstring", "curl", "fileinfo", "json"],
   "min_mysql": "8.0.16",
   "min_mariadb": "10.11",
-  "min_version_to_update_from": "1.0.0",
+  "min_version_to_update_from": "0.0.0",
   "migration_count": 0,
   "new_env_keys": [],
   "breaking_changes": [],
