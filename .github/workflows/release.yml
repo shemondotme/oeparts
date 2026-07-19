@@ -38,14 +38,19 @@ jobs:
         with:
           node-version: "20"
 
+      # .env must exist before composer install: its post-autoload-dump hook runs
+      # `artisan package:discover`, which boots the app — with no .env, APP_ENV/
+      # CACHE_STORE fall back to Laravel's own defaults ('production' / 'database'),
+      # tripping the production-must-use-Redis guard in AppServiceProvider.
+      - name: Prepare environment file
+        run: cp .env.example .env
+
       # Root dev deps so `php artisan` (oeparts:build / oeparts:release:manifest) can boot.
       - name: Install dependencies
         run: composer install --no-interaction --no-progress
 
-      - name: Prepare environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
+      - name: Generate app key
+        run: php artisan key:generate
 
       # git archive -> composer --no-dev -> npm build -> strip -> sha256 manifest -> zip.
       - name: Build release zip
