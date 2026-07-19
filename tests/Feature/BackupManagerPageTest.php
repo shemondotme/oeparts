@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\System\BackupDashboard;
 use App\Jobs\RestoreBackupJob;
-use App\Jobs\RunBackupJob;
 use App\Models\Admin;
 use App\Models\BackupRun;
 use Filament\Facades\Filament;
@@ -12,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -24,6 +24,10 @@ class BackupManagerPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    private string $filesRoot;
+
+    private string $statePath;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -35,6 +39,31 @@ class BackupManagerPageTest extends TestCase
 
         Storage::fake('local');
         Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        // runNow/pollBackup now drive a real BackupManager FSM (not a dispatched
+        // job) — scope the file stage to a tiny fixture dir, never the real repo
+        // (CLAUDE.md rule #49). The lock file also needs its own path per test:
+        // a run left non-terminal by one test (e.g. only checking the initial
+        // "started" state) must not hold the shared lock into the next test.
+        config(['backup.disk' => 'local', 'backup.staging_disk' => 'local']);
+        config(['backup.db.chunk_rows' => 100]);
+        $this->filesRoot = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-backuppage-files-'.getmypid();
+        @mkdir($this->filesRoot, 0775, true);
+        file_put_contents($this->filesRoot.'/a.txt', 'content');
+        config(['backup.files.root' => $this->filesRoot]);
+
+        $this->statePath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-backuppage-state-'.getmypid().'-'.Str::random(8);
+        @mkdir($this->statePath, 0775, true);
+        config(['updates.state_path' => $this->statePath]);
+    }
+
+    protected function tearDown(): void
+    {
+        @array_map('unlink', glob($this->filesRoot.DIRECTORY_SEPARATOR.'*') ?: []);
+        @rmdir($this->filesRoot);
+        @array_map('unlink', glob($this->statePath.DIRECTORY_SEPARATOR.'*') ?: []);
+        @rmdir($this->statePath);
+        parent::tearDown();
     }
 
     private function adminWithRole(string $role, array $attributes = []): Admin
@@ -89,14 +118,56 @@ class BackupManagerPageTest extends TestCase
     }
 
     #[Test]
-    public function run_now_dispatches_a_backup_job(): void
+    public function run_now_starts_the_fsm_without_blocking_on_a_dispatched_job(): void
     {
+        // Regression guard: dispatching RunBackupJob here would run the WHOLE
+        // backup inline under QUEUE_CONNECTION=sync (shared hosting, rule #41),
+        // blocking the request past the web server's timeout. runNow must only
+        // call BackupManager::start() — fast — and hand off to pollBackup().
         Queue::fake();
         $this->actingAs($this->adminWithRole('super_admin'), 'admin');
 
-        Livewire::test(BackupDashboard::class)->callTableAction('runNow');
+        $component = Livewire::test(BackupDashboard::class)->callTableAction('runNow');
 
-        Queue::assertPushed(RunBackupJob::class);
+        Queue::assertNothingPushed();
+        $run = BackupRun::sole();
+        $this->assertSame(BackupRun::STATUS_RUNNING, $run->status);
+        $component->assertSet('runningBackupId', $run->id);
+    }
+
+    #[Test]
+    public function poll_backup_advances_one_chunk_per_tick_and_completes(): void
+    {
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+
+        $component = Livewire::test(BackupDashboard::class)->callTableAction('runNow');
+        $run = BackupRun::sole();
+
+        // One poll tick performs exactly one stage step — the fixture is tiny
+        // but the FSM still needs several ticks (db stage, file stage, encrypt).
+        $ticks = 0;
+        while ($run->fresh()->status === BackupRun::STATUS_RUNNING && $ticks++ < 500) {
+            $component->call('pollBackup');
+        }
+
+        $run->refresh();
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status);
+        $this->assertGreaterThan(1, $ticks, 'expected multiple poll ticks, not one big synchronous run');
+        $component->assertSet('runningBackupId', null);
+    }
+
+    #[Test]
+    public function mount_resumes_polling_a_backup_left_running_after_a_reload(): void
+    {
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        $run = BackupRun::create([
+            'profile' => BackupRun::PROFILE_FULL,
+            'status'  => BackupRun::STATUS_RUNNING,
+            'trigger' => BackupRun::TRIGGER_MANUAL,
+            'disk'    => 'local',
+        ]);
+
+        Livewire::test(BackupDashboard::class)->assertSet('runningBackupId', $run->id);
     }
 
     #[Test]

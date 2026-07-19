@@ -4,10 +4,10 @@ namespace App\Filament\Pages\System;
 
 use App\Filament\Clusters\System;
 use App\Jobs\RestoreBackupJob;
-use App\Jobs\RunBackupJob;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupJanitor;
 use App\Services\Backup\BackupLock;
+use App\Services\Backup\BackupManager;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -42,6 +42,23 @@ class BackupDashboard extends Page implements HasTable
     protected string $view = 'filament.pages.system.backup-dashboard';
 
     protected ?string $subheading = 'Encrypted, chunked backups (database + files). Download and restore are audited PII exports.';
+
+    /** Non-null while an admin-triggered backup is actively being polled to completion. */
+    public ?int $runningBackupId = null;
+
+    public function mount(): void
+    {
+        // Resume polling a run the operator started before reloading the page —
+        // same pattern as SystemUpdates::mount() for the update-apply FSM.
+        $running = BackupRun::query()
+            ->whereNotIn('status', [BackupRun::STATUS_SUCCESS, BackupRun::STATUS_FAILED])
+            ->latest('id')
+            ->first();
+
+        if ($running) {
+            $this->runningBackupId = $running->id;
+        }
+    }
 
     public static function getNavigationGroup(): ?string
     {
@@ -128,16 +145,59 @@ class BackupDashboard extends Page implements HasTable
                     ->authorize('manage backups')
                     ->requiresConfirmation()
                     ->modalDescription('Start a full encrypted backup now. It runs in the background.')
-                    ->disabled(fn (): bool => app(BackupLock::class)->isLocked())
-                    ->action(function (): void {
-                        RunBackupJob::dispatch('full', 'manual');
-                        $this->audit('run', null);
+                    ->disabled(fn (): bool => app(BackupLock::class)->isLocked() || $this->runningBackupId !== null)
+                    ->action(function (BackupManager $manager): void {
+                        // Start only — advance via pollBackup() below (AJAX-polled, one
+                        // chunk per tick). Dispatching RunBackupJob here would run the
+                        // WHOLE backup (full profile includes vendor/, rule #49) inline
+                        // under QUEUE_CONNECTION=sync, blocking this request well past
+                        // the web server's timeout — exactly the "stuck on Running" bug
+                        // this fixes. See BackupManager::run()'s own doc comment.
+                        try {
+                            $run = $manager->start('full', 'manual');
+                        } catch (\Throwable $e) {
+                            Notification::make()->title('Backup could not start')->body($e->getMessage())->danger()->send();
+
+                            return;
+                        }
+                        $this->runningBackupId = $run->id;
+                        $this->audit('run', $run);
                         Notification::make()->title('Backup started')->success()->send();
                     }),
             ])
             ->emptyStateHeading('No backups yet')
             ->emptyStateDescription('Run a backup to protect your database and files.')
             ->emptyStateIcon('heroicon-o-archive-box');
+    }
+
+    /** Advance the running backup by one chunk per poll tick — never blocks the request. */
+    public function pollBackup(BackupManager $manager): void
+    {
+        if (! $this->runningBackupId) {
+            return;
+        }
+
+        $run = BackupRun::find($this->runningBackupId);
+        if (! $run) {
+            $this->runningBackupId = null;
+
+            return;
+        }
+
+        if (! $run->isTerminal()) {
+            $manager->advance($run);
+            $run->refresh();
+        }
+
+        if ($run->isTerminal()) {
+            $this->runningBackupId = null;
+
+            if ($run->status === BackupRun::STATUS_SUCCESS) {
+                Notification::make()->title('Backup complete')->success()->send();
+            } else {
+                Notification::make()->title('Backup failed')->body($run->error)->danger()->send();
+            }
+        }
     }
 
     private function restoreAction(): Tables\Actions\Action
