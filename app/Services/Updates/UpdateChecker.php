@@ -121,8 +121,22 @@ class UpdateChecker
         $latest        = end($releases);
         $latestVersion = (string) $latest['version'];
 
-        $available = $current !== 'unknown'
+        $available   = $current !== 'unknown'
             && version_compare($latestVersion, $current, '>');
+        $upgradePath = $available ? $this->resolveUpgradePath($current, $releases) : [];
+
+        // The release an apply should actually target — upgradePath[0], NOT
+        // $latest. On a single-hop path these are the same release; on a
+        // multi-hop path (e.g. 1.0.5 -> 1.0.6 -> 1.0.7) applying $latest's
+        // manifest directly would skip the intermediate hop's migrations and,
+        // since $latest's own min_version_to_update_from wouldn't match the
+        // installed version, silently defeat PreflightService's version-
+        // compatibility gate (it only receives whatever manifest it's given).
+        $nextRelease = null;
+        if ($upgradePath !== []) {
+            $matches     = array_filter($releases, fn ($r) => (string) $r['version'] === $upgradePath[0]);
+            $nextRelease = $matches !== [] ? (array) reset($matches) : null;
+        }
 
         return new UpdateStatus(
             currentVersion: $current,
@@ -137,7 +151,8 @@ class UpdateChecker
             sizeBytes: isset($latest['size_bytes']) ? (int) $latest['size_bytes'] : null,
             migrationCount: (int) ($latest['migration_count'] ?? 0),
             minPhp: $latest['min_php'] ?? null,
-            upgradePath: $available ? $this->resolveUpgradePath($current, $releases) : [],
+            upgradePath: $upgradePath,
+            nextRelease: $nextRelease,
             reachable: true,
             checkedAt: $now,
         );

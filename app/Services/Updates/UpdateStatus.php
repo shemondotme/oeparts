@@ -23,6 +23,16 @@ class UpdateStatus
         public readonly ?string $minPhp = null,
         /** @var string[] ordered list of versions to step through (empty if none / up to date) */
         public readonly array $upgradePath = [],
+        /**
+         * The full release record for upgradePath[0] — the version an apply
+         * should actually target. On a multi-hop path this is an INTERMEDIATE
+         * release, not $latestVersion; its own sha256/download_url/
+         * migration_count/min_version_to_update_from must be used to build the
+         * apply manifest, never the top-level (latest-release) fields above.
+         *
+         * @var array<string,mixed>|null
+         */
+        public readonly ?array $nextRelease = null,
         public readonly bool $reachable = true,
         public readonly ?string $error = null,
         public readonly ?string $checkedAt = null,
@@ -50,6 +60,7 @@ class UpdateStatus
             'migration_count'  => $this->migrationCount,
             'min_php'          => $this->minPhp,
             'upgrade_path'     => $this->upgradePath,
+            'next_release'     => $this->nextRelease,
             'reachable'        => $this->reachable,
             'error'            => $this->error,
             'checked_at'       => $this->checkedAt,

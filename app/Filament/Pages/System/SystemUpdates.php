@@ -174,24 +174,27 @@ class SystemUpdates extends Page
         }
     }
 
-    /** Build the target release manifest from the cached check result. */
+    /**
+     * Build the target release manifest from the cached check result.
+     *
+     * MUST target upgrade_path[0] (next_release) — NOT latest_version — when
+     * the path has more than one hop. Applying $s['latest_version']'s manifest
+     * directly on a multi-step path would skip every intermediate hop's
+     * migrations, and since that manifest's own min_version_to_update_from
+     * wouldn't match the currently-installed version, it would also silently
+     * defeat PreflightService's version-compatibility gate (which only ever
+     * sees whatever manifest it's handed). Confirmed live: a 1.0.5 install
+     * with upgrade_path ["1.0.6","1.0.7"] applied 1.0.7 directly on the first
+     * click, past pre-flight, with nothing surfaced to the admin.
+     */
     private function applyManifest(): ?array
     {
         $s = $this->status ?? [];
-        if (empty($s['update_available']) || empty($s['latest_version'])) {
+        if (empty($s['update_available']) || empty($s['next_release'])) {
             return null;
         }
 
-        return [
-            'version'         => $s['latest_version'],
-            'channel'         => $s['channel'] ?? 'stable',
-            'security'        => (bool) ($s['security'] ?? false),
-            'download_url'    => $s['download_url'] ?? null,
-            'sha256'          => $s['sha256'] ?? null,
-            'size_bytes'      => $s['size_bytes'] ?? null,
-            'migration_count' => (int) ($s['migration_count'] ?? 0),
-            'min_php'         => $s['min_php'] ?? null,
-        ];
+        return (array) $s['next_release'];
     }
 
     public function checkNow(): void
