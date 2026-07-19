@@ -76,8 +76,17 @@ class UpdateDownloader
     {
         $from = is_file($path) ? (int) filesize($path) : 0;
 
-        // A partial larger than the expected size is corrupt — start over.
-        if ($size > 0 && $from > $size) {
+        // A file already AT (not just past) the expected size got here only because
+        // isComplete()'s sha256 check rejected it — its content is corrupt despite
+        // the right length (e.g. a byte-shifted resume, or a race with another
+        // concurrent attempt writing the same path). Requesting "bytes={size}-" on
+        // an exactly-$size-byte file asks for a range past EOF, which every server
+        // correctly rejects with 416 — and since this file is never modified by that
+        // rejection, every subsequent attempt (and every future apply attempt, since
+        // the file persists across FSM runs) hits the identical 416 forever. Confirmed
+        // live: two failed apply attempts in a row, identical "HTTP 416" error, until
+        // the file was manually inspected. >= (not >) catches this case too.
+        if ($size > 0 && $from >= $size) {
             @unlink($path);
             $from = 0;
         }
