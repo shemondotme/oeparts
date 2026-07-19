@@ -126,7 +126,7 @@
                     {{-- PHP Version --}}
                     <div class="p-4 rounded-xl" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                         <dt class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">PHP Version</dt>
-                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ version_compare($this->getPhpVersion(), '8.2', '>=') ? 'var(--success-500)' : 'var(--danger-500)' }};">
+                        <dd class="mt-2 text-sm font-bold font-mono" style="color: {{ version_compare($this->getPhpVersion(), '8.3', '>=') ? 'var(--success-500)' : 'var(--danger-500)' }};">
                             {{ $this->getPhpVersion() }}
                         </dd>
                     </div>

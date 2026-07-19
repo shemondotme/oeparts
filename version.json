@@ -4,7 +4,7 @@
   "release_date": "2026-07-19",
   "channel": "stable",
   "security": false,
-  "min_php": "8.2",
+  "min_php": "8.3",
   "max_php": null,
   "required_extensions": ["pdo_mysql", "zip", "openssl", "mbstring", "curl", "fileinfo", "json"],
   "min_mysql": "8.0.16",
