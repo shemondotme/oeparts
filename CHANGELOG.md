@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.9 — 2026-07-19
+
+### Fixed
+- **A real 500 ("Call to a member function hasRole() on null") could hit any admin page** — 13 `canAccess()` checks across 3 navigation clusters (Settings, Reports, Content) and 10 pages (Cache Dashboard, Health Check, Failed Jobs, Log Viewer, Server Monitor's Scheduled Tasks page, Permission Matrix, Setup Assistant, Content Revisions, Inventory Log, Bulk Update Log) called `auth('admin')->user()->hasRole(...)`/`->hasAnyRole(...)` without a null-safe operator, unlike the rest of the codebase's established `auth('admin')->user()?->hasRole(...) ?? false` pattern. Whenever `auth('admin')->user()` is null while Filament resolves navigation (confirmed live: immediately after applying an in-app update, likely while the session hadn't fully rehydrated post framework-cache-rebuild), this crashed instead of just hiding the nav item. All 13 now use the null-safe pattern, and a new sweep test (`AdminCanAccessNullSafetyTest`) calls every one of them as a guest to make sure this can't quietly regress.
+
 ## 1.0.8 — 2026-07-19
 
 ### Fixed
