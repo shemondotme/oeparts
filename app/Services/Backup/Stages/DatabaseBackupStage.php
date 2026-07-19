@@ -81,7 +81,9 @@ class DatabaseBackupStage implements BackupStage
             return StageStepResult::complete($part, $note);
         }
 
-        return StageStepResult::progress($state, $part, $note);
+        $fraction = count($tables) > 0 ? ((int) $state['ti']) / count($tables) : 1.0;
+
+        return StageStepResult::progress($state, $part, $note, $fraction);
     }
 
     /** @return array{tables:array<int,string>,ti:int,phase:string,cursor:mixed,chunk:int} */

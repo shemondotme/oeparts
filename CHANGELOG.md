@@ -2,6 +2,22 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.7 — 2026-07-19
+
+### Fixed
+- **Full Backup could error out with no progress shown** — the file-backup stage backed up (and encrypted) the entire `vendor/` tree by design, which could crash/time out on large installs and gave zero percentage feedback while running. `vendor/` is now excluded from file backups by default (`composer install --no-dev` reproduces it on restore; set `OE_BACKUP_INCLUDE_VENDOR=true` to opt back into the old fully self-contained behaviour), `BackupManager::finalize()` is now wrapped so a late failure surfaces a real error instead of a bare crash, and every backup stage now reports a completion fraction so the dashboard shows a real progress bar and percentage instead of a bare spinner.
+- **"Clear Cache" on the Health Check and Cache dashboards did a full `cache:clear` flush** — a full flush can take out sessions sharing the same Redis store, contrary to this project's own "never broad-flush the cache" rule. Both actions now do a targeted, key-scoped purge instead.
+
+### Added
+- **Backup type selection** — "Run backup now" now lets an admin choose Database Only, Files Only, or Full (database + files), instead of always running a full backup.
+- **Update apply preview** — the "Apply update now" confirm step now shows the actual version jump, download size, migration count, breaking changes, ETA, and every pre-flight check (with any warnings requiring explicit acknowledgement) before an update starts, instead of a generic browser confirm dialog. The in-progress apply view also now shows a step counter and progress bar.
+- **SEO: Sitemap regenerate button** — SEO & Meta settings now has a "Regenerate sitemap now" action and shows when the sitemap was last built, instead of only ever running via the daily scheduled job.
+- **SEO: 404 monitor** — frontend 404s are now logged (deduplicated by path, with hit counts) and browsable from the admin, with a one-click "Create redirect" action that resolves the log entry.
+
+### Changed
+- **Settings pages save immediately** — replaced the "Save Actions" dropdown → "Preview Changes" → "Confirm Save" three-click flow with a single, direct Save button across every settings page. The change is still recorded in the settings activity log entries written to the main Activity Log; "Reset to Defaults" (a bulk overwrite) still asks for confirmation first.
+- Removed the standalone "Settings Activity Log" page from the Settings grid (redundant with the main Activity Log).
+
 ## 1.0.6 — 2026-07-19
 
 ### Fixed

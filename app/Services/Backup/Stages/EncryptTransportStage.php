@@ -60,8 +60,12 @@ class EncryptTransportStage implements BackupStage
         $this->securePart($run, $part);
 
         $state['cursor_id'] = (int) $part->getKey();
+        $state['processed'] = (int) $state['processed'] + 1;
 
-        return StageStepResult::progress($state, null, 'encrypt: '.$part->name);
+        $total    = max(1, (int) $state['total_parts']);
+        $fraction = min($state['processed'], $total) / $total;
+
+        return StageStepResult::progress($state, null, 'encrypt: '.$part->name, $fraction);
     }
 
     private function initialise(BackupRun $run): array
@@ -77,7 +81,7 @@ class EncryptTransportStage implements BackupStage
 
         $this->warnIfNonEuOffsite($run->disk);
 
-        return ['init' => true, 'cursor_id' => 0];
+        return ['init' => true, 'cursor_id' => 0, 'processed' => 0, 'total_parts' => $run->parts()->count()];
     }
 
     private function securePart(BackupRun $run, BackupPart $part): void

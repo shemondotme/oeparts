@@ -22,8 +22,10 @@ class BackupRun extends Model
     use HasFactory;
 
     /** Profiles. */
-    public const PROFILE_UPDATE_SAFETY = 'update_safety'; // slim, taken just before an update
-    public const PROFILE_FULL          = 'full';          // full disaster-recovery backup
+    public const PROFILE_UPDATE_SAFETY  = 'update_safety';  // slim, taken just before an update
+    public const PROFILE_FULL           = 'full';           // full disaster-recovery backup (db + files)
+    public const PROFILE_DATABASE_ONLY  = 'database_only';  // db only, admin-triggered
+    public const PROFILE_FILES_ONLY     = 'files_only';     // files only, admin-triggered
 
     /** Statuses. */
     public const STATUS_PENDING = 'pending';

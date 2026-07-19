@@ -39,6 +39,11 @@ class SystemUpdates extends Page
     public ?array $applyStatus = null;
     public ?string $applyPassword = null;
 
+    /** @var array<string,mixed> UpdatePreview::toArray() once loaded — drives the confirm panel. */
+    public array $applyPreview = [];
+    /** Operator has explicitly acknowledged the preflight WARNs shown in the preview. */
+    public bool $previewAcknowledged = false;
+
     public function mount(): void
     {
         // Lazy tier — served from cache unless the TTL has expired.
@@ -60,6 +65,30 @@ class SystemUpdates extends Page
         return (bool) auth('admin')->user()?->can('apply updates');
     }
 
+    /** Load the "what will happen" preview (version jump, size, migrations, preflight) into the confirm panel. */
+    public function loadPreview(): void
+    {
+        abort_unless($this->canApply(), 403);
+
+        $manifest = $this->applyManifest();
+        if (! $manifest) {
+            Notification::make()->title('No update to apply')->warning()->send();
+
+            return;
+        }
+
+        $this->applyPreview = app(UpdateApplier::class)->preview($manifest)->toArray();
+        $this->previewAcknowledged = false;
+    }
+
+    /** Back out of the preview panel without starting anything. */
+    public function cancelPreview(): void
+    {
+        $this->applyPreview = [];
+        $this->previewAcknowledged = false;
+        $this->applyPassword = null;
+    }
+
     /** Re-auth (password) then start the resumable apply FSM. */
     public function startApply(): void
     {
@@ -78,6 +107,24 @@ class SystemUpdates extends Page
             return;
         }
 
+        // Server-side re-check — the UI already disables the button on FAIL/unacked
+        // WARN, but preflight state (disk space, locks, …) can shift between the
+        // preview load and this click, so re-verify rather than trust client state.
+        $preview = app(UpdateApplier::class)->preview($manifest);
+        $this->applyPreview = $preview->toArray();
+
+        if (! $preview->canProceed()) {
+            Notification::make()->title('Update cannot start')->body('Pre-flight checks are failing — see the details below.')->danger()->send();
+
+            return;
+        }
+
+        if ($preview->preflight->hasWarnings() && ! $this->previewAcknowledged) {
+            Notification::make()->title('Please acknowledge the warnings below before applying')->warning()->send();
+
+            return;
+        }
+
         try {
             $history = app(UpdateApplier::class)->start($manifest, $admin->id);
         } catch (\Throwable $e) {
@@ -88,6 +135,7 @@ class SystemUpdates extends Page
 
         $this->applyHistoryId = $history->id;
         $this->applying = true;
+        $this->applyPreview = [];
         $this->applyStatus = ['status' => $history->status, 'step' => $history->step];
         Notification::make()->title('Update started')->body('Do not close this window.')->success()->send();
     }

@@ -57,10 +57,18 @@ return [
         // at a fixture tree instead of the real project.
         'root' => base_path(),
         // Never back up caches, logs, our own backup/update dirs, or build tooling.
-        // NOTE: vendor/ is intentionally NOT excluded — full-profile restores must be
-        // self-contained on shared hosting (no composer available). `.env*` is skipped
-        // here and handled as a dedicated encrypted 'env' part (Chunk 2.4).
-        'exclude' => [
+        // `.env*` is skipped here and handled as a dedicated encrypted 'env' part
+        // (Chunk 2.4).
+        //
+        // vendor/ is EXCLUDED BY DEFAULT. It was originally included so a full-profile
+        // restore is self-contained on shared hosting with no composer available, but
+        // backing up + encrypting the entire vendor/ tree (tens of thousands of files)
+        // is exactly what segfaulted PHP on Windows during a real full backup (see
+        // CLAUDE.md rule #49) — a backup that crashes protects nothing. composer.json/
+        // composer.lock ARE still backed up, so `composer install --no-dev` reproduces
+        // vendor/ on restore. Set OE_BACKUP_INCLUDE_VENDOR=true to opt back into the
+        // fully self-contained (but crash-prone on large trees) behaviour.
+        'exclude' => array_values(array_filter([
             'storage/framework/cache',
             'storage/framework/sessions',
             'storage/framework/views',
@@ -70,7 +78,8 @@ return [
             'node_modules',
             '.git',
             '.env',
-        ],
+            env('OE_BACKUP_INCLUDE_VENDOR', false) ? null : 'vendor',
+        ])),
         'throttle_ms' => (int) env('OE_BACKUP_THROTTLE_MS', 0), // pause between files on shared hosting
         // Soft wall-clock budget per FSM step: keep archiving files until this many
         // raw bytes have been processed this step, then yield (the volume stays open
@@ -107,6 +116,14 @@ return [
         ],
         'full' => [
             \App\Services\Backup\Stages\DatabaseBackupStage::class,
+            \App\Services\Backup\Stages\FileBackupStage::class,
+            \App\Services\Backup\Stages\EncryptTransportStage::class,
+        ],
+        'database_only' => [
+            \App\Services\Backup\Stages\DatabaseBackupStage::class,
+            \App\Services\Backup\Stages\EncryptTransportStage::class,
+        ],
+        'files_only' => [
             \App\Services\Backup\Stages\FileBackupStage::class,
             \App\Services\Backup\Stages\EncryptTransportStage::class,
         ],

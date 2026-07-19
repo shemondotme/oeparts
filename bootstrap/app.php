@@ -8,11 +8,13 @@ use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackUtm;
+use App\Models\NotFoundLog;
 use App\Providers\EventServiceProvider;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -55,6 +57,29 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withEvents(false)
     ->withExceptions(function (Exceptions $exceptions) {
+        // SEO 404 monitor (Module 9) — record every genuine frontend 404 so gaps
+        // (dead inbound links, stale sitemaps) show up in the admin instead of
+        // only in raw web-server logs. Returning null lets Laravel's default
+        // 404 rendering proceed unchanged; this is a side effect only.
+        $exceptions->renderable(function (NotFoundHttpException $e, Request $request) {
+            if (! $request->is('admin/*') && ! $request->is('api/*') && ! $request->is('livewire/*')) {
+                try {
+                    $segments = $request->segments();
+                    $lang = (in_array($segments[0] ?? null, ['en', 'de', 'lt', 'fr', 'es'], true))
+                        ? $segments[0] : null;
+
+                    NotFoundLog::recordHit(
+                        $request->path(),
+                        $lang,
+                        $request->headers->get('referer'),
+                        $request->ip()
+                    );
+                } catch (\Throwable) {
+                    // Logging must never break the 404 response itself.
+                }
+            }
+        });
+
         $exceptions->renderable(function (TooManyRequestsHttpException $e, Request $request) {
             if ($request->expectsJson()) {
                 return response()->json([

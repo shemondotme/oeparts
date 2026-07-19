@@ -78,18 +78,14 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        $component = Livewire::test(GeneralSettings::class)
+        Livewire::test(GeneralSettings::class)
             ->set('data.site_name', 'OeParts Renamed')
             ->call('save');
-
-        $component->assertSet('pendingChanges.changed', fn ($changed) => array_key_exists('site_name', $changed) && ! array_key_exists('logo_id', $changed) && ! array_key_exists('favicon_id', $changed));
-
-        $component->call('confirmSave');
 
         $this->assertSame('OeParts Renamed', Setting::where('group', 'general')->where('key', 'site_name')->value('value'));
         // The untouched array field must be saved back as "" — never the
         // literal string "[]" that would previously have been written by
-        // confirmSave()'s unconditional per-key json_encode(array).
+        // persistChanges()'s unconditional per-key json_encode(array).
         $this->assertSame('', Setting::where('group', 'general')->where('key', 'logo_id')->value('value'));
         $this->assertSame('', Setting::where('group', 'general')->where('key', 'favicon_id')->value('value'));
     }
@@ -101,13 +97,9 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        $component = Livewire::test(SEOSettings::class)
+        Livewire::test(SEOSettings::class)
             ->set('data.google_ping_enabled', false)
             ->call('save');
-
-        $component->assertSet('pendingChanges.changed', fn ($changed) => array_key_exists('google_ping_enabled', $changed));
-
-        $component->call('confirmSave');
 
         $this->assertSame('false', Setting::where('group', 'seo')->where('key', 'google_ping_enabled')->value('value'));
     }
@@ -123,13 +115,9 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
         $this->actingAs($this->superAdmin(), 'admin');
 
         $newHours = ['en' => 'Mon–Fri 8:00–17:00', 'de' => '', 'lt' => '', 'fr' => '', 'es' => ''];
-        $component = Livewire::test(\App\Filament\Pages\Settings\ContactSettings::class)
+        Livewire::test(\App\Filament\Pages\Settings\ContactSettings::class)
             ->set('data.hours', $newHours)
             ->call('save');
-
-        $component->assertSet('pendingChanges.changed', fn ($changed) => array_key_exists('hours', $changed));
-
-        $component->call('confirmSave');
 
         $this->assertSame(
             $newHours,

@@ -5,12 +5,12 @@ namespace App\Filament\Pages\System;
 use App\Filament\Clusters\System;
 use App\Filament\Widgets\System\HealthCheckStats;
 use App\Models\ActivityLog;
+use App\Services\CacheService;
 use App\Services\HealthCheckService;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 
 class HealthCheckDashboard extends Page
@@ -64,7 +64,7 @@ class HealthCheckDashboard extends Page
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->modalDescription('This will flush all cached data. Continue?')
+                    ->modalDescription('This clears all application cache keys (not sessions). Continue?')
                     ->action(fn () => $this->clearCacheRemediation()),
 
                 Action::make('resetScheduler')
@@ -102,9 +102,19 @@ class HealthCheckDashboard extends Page
     public function clearCacheRemediation(): void
     {
         try {
-            Artisan::call('cache:clear');
-            $this->logAction('remediation_action', 'Cache cleared via health check remediation');
-            Notification::make()->title('Cache cleared')->success()->send();
+            // Targeted key-scoped purge, NOT Artisan cache:clear — a full flush
+            // nukes the whole cache store, sessions included if they share the
+            // same Redis connection (CLAUDE.md rule #5: never Cache::flush()).
+            $count = app(CacheService::class)->purgeAllApplicationCacheKeys();
+
+            if ($count === -1) {
+                Notification::make()->title('Redis not available')->body('Cannot clear cache: Redis driver is not active.')->danger()->send();
+
+                return;
+            }
+
+            $this->logAction('remediation_action', "Cache cleared via health check remediation ({$count} keys)");
+            Notification::make()->title("Cache cleared ({$count} keys)")->success()->send();
         } catch (\Exception $e) {
             Notification::make()->title('Failed to clear cache')->body($e->getMessage())->danger()->send();
         }
