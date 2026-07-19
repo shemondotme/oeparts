@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.5 — 2026-07-19
+
+### Fixed
+- **A stalled/corrupt download could permanently block every future update attempt with "HTTP 416"** — `UpdateDownloader::fetch()`'s resume logic only reset the on-disk file when it was *larger* than the expected size (`$from > $size`); a file that ended up sitting at *exactly* the expected size but with the wrong content (`isComplete()`'s sha256 check rejects it — e.g. from a byte-shifted resume, or a race between two concurrent apply attempts) fell through untouched, so every retry — and every future apply attempt, since the file persists on disk across FSM runs — requested `Range: bytes={size}-`, a range past end-of-file that any server correctly rejects with 416. Confirmed live: two separate real update attempts against GitHub's release CDN failed with the identical "Download failed after 4 attempt(s): Download server returned HTTP 416," with no way to recover short of manually finding and deleting the file. Changed the guard to `$from >= $size` so a full-size-but-invalid file is deleted and retried with a clean, no-Range request instead of looping the same invalid range forever.
+
 ## 1.0.4 — 2026-07-19
 
 ### Fixed

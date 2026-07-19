@@ -137,6 +137,40 @@ class UpdateDownloadExtractTest extends TestCase
         $this->assertSame($body, file_get_contents($result));
     }
 
+    #[Test]
+    public function a_full_size_but_corrupt_existing_file_restarts_instead_of_looping_416_forever(): void
+    {
+        // Reproduces a live incident: a file already sitting at exactly the
+        // expected size but with the wrong content (e.g. left by a byte-shifted
+        // resume, or a race with a concurrent apply attempt) — isComplete()'s
+        // sha256 check rejects it, but $from ends up == $size, not > $size.
+        // The old `$from > $size` guard never caught this, so fetch() sent
+        // "Range: bytes={size}-" — past EOF — which every real server (confirmed
+        // live against GitHub's release CDN) rejects with 416, forever, since
+        // that rejection never modifies the file. Two real apply attempts in a
+        // row hit the identical "HTTP 416" error until the file was found and
+        // deleted by hand. A real server responding 416 to that exact
+        // past-EOF range is simulated here; the fix (`>=`) must delete the
+        // corrupt file and retry with no Range header, avoiding the 416 entirely.
+        $body = random_bytes(4000);
+        $downloader = app(UpdateDownloader::class);
+        $path = $downloader->downloadPath('1.1.0');
+        @mkdir(dirname($path), 0775, true);
+        file_put_contents($path, str_repeat('x', 4000)); // right size, wrong content
+
+        Http::fake(function ($request) use ($body) {
+            if ($request->hasHeader('Range')) {
+                return Http::response('', 416);
+            }
+
+            return Http::response($body, 200);
+        });
+
+        $result = $downloader->download($this->manifest($body));
+
+        $this->assertSame($body, file_get_contents($result));
+    }
+
     /* ---- Extract -------------------------------------------------------- */
 
     #[Test]
