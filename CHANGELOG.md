@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.8 — 2026-07-19
+
+### Fixed
+- **A multi-step upgrade applied the latest release directly instead of the required intermediate hop** — when an install was more than one release behind and an intermediate release required stepping through in order (e.g. installed 1.0.5, latest 1.0.7, with 1.0.7 only installable from 1.0.6), clicking "Apply update now" always built its manifest from the *latest* release's own fields, ignoring the resolved upgrade path entirely. This applied the final release's zip directly, would have skipped any intermediate hop's migrations, and — since that manifest never carried the intermediate hop's own `min_version_to_update_from` — silently defeated the pre-flight version-compatibility check meant to block exactly this. Confirmed live on a real two-versions-behind install: pre-flight passed and the jump proceeded with no warning shown. `UpdateChecker` now resolves and exposes the correct next release to apply (the first hop in the upgrade path, not the latest), and the apply flow uses it.
+
 ## 1.0.7 — 2026-07-19
 
 ### Fixed
