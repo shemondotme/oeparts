@@ -30,7 +30,6 @@ use App\Filament\Pages\Settings\SearchSettings;
 use App\Filament\Pages\Settings\SectionsSettings;
 use App\Filament\Pages\Settings\SecuritySettings;
 use App\Filament\Pages\Settings\SEOSettings;
-use App\Filament\Pages\Settings\SettingsActivityLog;
 use App\Filament\Pages\Settings\ShippingSettings;
 use App\Filament\Pages\Settings\SocialLinkSettings;
 use App\Filament\Pages\Settings\StatsCounterSettings;
@@ -351,15 +350,6 @@ final class SettingsRegistry
             'description' => 'Maintenance display, backup triggers',
             'icon' => 'heroicon-o-wrench-screwdriver',
             'sort' => 60,
-        ],
-        'settings-activity-log' => [
-            'class' => SettingsActivityLog::class,
-            'section' => 'System & Security',
-            'title' => 'Settings Activity Log',
-            'url' => '/admin/settings/settings-activity-log',
-            'description' => 'Track who changed settings and when',
-            'icon' => 'heroicon-o-clock',
-            'sort' => 70,
         ],
         'menu-settings' => [
             'class' => MenuSettings::class,

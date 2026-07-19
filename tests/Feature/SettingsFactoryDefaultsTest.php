@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\Settings\SettingsActivityLog;
 use App\Filament\Pages\Settings\SettingsPage;
 use App\Filament\Pages\Settings\UISettings;
 use App\Models\Admin;
@@ -41,7 +40,7 @@ class SettingsFactoryDefaultsTest extends TestCase
 
             $reflection = new ReflectionClass($class);
 
-            if ($reflection->isAbstract() || $class === SettingsActivityLog::class) {
+            if ($reflection->isAbstract()) {
                 continue;
             }
 

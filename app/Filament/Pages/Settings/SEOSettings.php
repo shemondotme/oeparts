@@ -3,7 +3,10 @@
 namespace App\Filament\Pages\Settings;
 
 use App\Filament\Support\AdminUi;
+use App\Services\SitemapService;
+use Filament\Actions\Action;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 
@@ -16,6 +19,50 @@ class SEOSettings extends SettingsPage
     protected static string $settingsGroup = 'seo';
 
     protected static ?int $navigationSort = 20;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            ...parent::getHeaderActions(),
+
+            Action::make('regenerateSitemap')
+                ->label('Regenerate sitemap now')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                // Mirrors SettingsPage::canAccess() (super_admin/admin) — there is no
+                // dedicated "manage settings" permission, and custom actions get zero
+                // automatic authorization (CLAUDE.md rule #31).
+                ->authorize(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false)
+                ->requiresConfirmation()
+                ->modalDescription('Rebuilds sitemap.xml and every sub-sitemap (parts, brands, models, pages, blog) from current data. This can take a moment on a large catalog.')
+                ->action(function (SitemapService $sitemaps): void {
+                    try {
+                        $files = $sitemaps->generateAll();
+                    } catch (\Throwable $e) {
+                        Notification::make()->title('Sitemap regeneration failed')->body($e->getMessage())->danger()->send();
+
+                        return;
+                    }
+
+                    Notification::make()
+                        ->title('Sitemap regenerated')
+                        ->body(count($files).' file(s) written, last updated just now.')
+                        ->success()
+                        ->send();
+                }),
+        ];
+    }
+
+    public function getSubheading(): ?string
+    {
+        $path = public_path('sitemap.xml');
+
+        if (! is_file($path)) {
+            return 'Sitemap has not been generated yet.';
+        }
+
+        return 'Sitemap last generated '.\Illuminate\Support\Carbon::createFromTimestamp(filemtime($path))->diffForHumans().'.';
+    }
 
     public function form(Schema $schema): Schema
     {

@@ -122,6 +122,7 @@ class RolesSeeder extends Seeder
             'view cron logs',
             'view search logs',
             'view failed search logs',
+            'view not found logs',
             'view failed jobs',
             'retry failed jobs',
             'view ip blocklist',

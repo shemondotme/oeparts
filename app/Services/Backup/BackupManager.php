@@ -52,7 +52,12 @@ class BackupManager
         array $meta = [],
         bool $acquireLock = true,
     ): BackupRun {
-        if (! in_array($profile, [BackupRun::PROFILE_UPDATE_SAFETY, BackupRun::PROFILE_FULL], true)) {
+        if (! in_array($profile, [
+            BackupRun::PROFILE_UPDATE_SAFETY,
+            BackupRun::PROFILE_FULL,
+            BackupRun::PROFILE_DATABASE_ONLY,
+            BackupRun::PROFILE_FILES_ONLY,
+        ], true)) {
             throw new BackupException('Unknown backup profile: '.$profile);
         }
 
@@ -107,7 +112,14 @@ class BackupManager
 
         // All stages consumed → finalise.
         if ($index >= count($stages)) {
-            return $this->finalize($run);
+            try {
+                return $this->finalize($run);
+            } catch (\Throwable $e) {
+                Log::channel(config('updates.log_channel', 'stack'))
+                    ->error('Backup run '.$run->getKey().' failed during finalize: '.$e->getMessage(), ['exception' => $e]);
+
+                return $this->fail($run, '[finalize] '.$e->getMessage());
+            }
         }
 
         /** @var BackupStage $stage */
@@ -123,9 +135,12 @@ class BackupManager
             $this->registerPart($run, $stage->key(), $result->part);
         }
 
+        $fraction = $result->fraction;
+
         if ($result->done) {
             $checkpoint['stage_index'] = $index + 1;
             $checkpoint['stage_state'] = [];
+            $fraction = 1.0;
         } else {
             $checkpoint['stage_state'] = $result->state;
         }
@@ -133,7 +148,10 @@ class BackupManager
         $run->setCheckpoint($checkpoint);
         $run->save();
 
-        return BackupProgress::running($run, $stage->key(), $result->message);
+        $totalStages = max(1, count($stages));
+        $percent     = (int) round((($index + $fraction) / $totalStages) * 100);
+
+        return BackupProgress::running($run, $stage->key(), $result->message, $percent);
     }
 
     /**

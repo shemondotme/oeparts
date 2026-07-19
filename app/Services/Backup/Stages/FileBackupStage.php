@@ -57,7 +57,7 @@ class FileBackupStage implements BackupStage
             $state['vol']               = (int) $state['vol'] + 1;
             $state['vol_has_content']   = false;
 
-            return StageStepResult::progress($state, $part, 'files: volume '.$part['name']);
+            return StageStepResult::progress($state, $part, 'files: volume '.$part['name'], 0.97);
         }
 
         // Phase 3 — write the file manifest (hash baseline) and clean up.
@@ -200,7 +200,11 @@ class FileBackupStage implements BackupStage
 
         $note = 'files: '.$state['counts']['archived'].'/'.$state['total'].' archived';
 
-        return StageStepResult::progress($state, $part, $note);
+        // Reserve the top ~5% of this stage's range for the volume-flush/manifest
+        // phases that follow the archiving loop.
+        $fraction = (int) $state['total'] > 0 ? (min($cursor, (int) $state['total']) / (int) $state['total']) * 0.95 : 0.95;
+
+        return StageStepResult::progress($state, $part, $note, $fraction);
     }
 
     /**

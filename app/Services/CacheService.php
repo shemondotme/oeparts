@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * CacheService — key-based cache helpers for OeParts.
@@ -234,6 +235,39 @@ class CacheService
     public function forget(string $key): void
     {
         Cache::forget($key);
+    }
+
+    // ── Bulk key-scoped purge (NEVER Cache::flush() — rule #5) ───────────────
+
+    /**
+     * Delete every application cache key by scanning the store's own key
+     * prefix (Redis) and forgetting each one individually — the targeted
+     * alternative to Artisan's `cache:clear`, which flushes the WHOLE cache
+     * store (sessions included, if they share the same Redis connection).
+     * Used by both the Cache Dashboard's manual purge and the Health Check
+     * "Clear Cache" remediation action.
+     *
+     * @return int number of keys cleared, or -1 if the driver isn't Redis
+     */
+    public function purgeAllApplicationCacheKeys(): int
+    {
+        try {
+            $redis = Cache::getStore()->getRedis();
+            // The redis CLIENT-level prefix (config/database.php redis.options.prefix,
+            // applied to every physical key by phpredis/predis) — NOT cache.prefix,
+            // which is a separate layer the Cache facade adds on top.
+            $prefix = (string) config('database.redis.options.prefix', 'laravel_database_');
+        } catch (\Exception $e) {
+            return -1; // driver isn't Redis — no safe bulk-scan equivalent exists
+        }
+
+        $keys = $redis->keys($prefix.'*');
+
+        foreach ($keys as $key) {
+            Cache::forget(Str::after($key, $prefix));
+        }
+
+        return count($keys);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

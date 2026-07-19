@@ -33,8 +33,12 @@ class UpdateSystemConfigTest extends TestCase
         $this->assertTrue(config('backup.encryption.enabled'));
         $this->assertSame('aes-256-gcm', config('backup.encryption.cipher'));
         $this->assertSame(7, config('backup.retention.daily'));
-        // vendor/ must NOT be excluded (self-contained restore on shared hosting).
-        $this->assertNotContains('vendor', config('backup.files.exclude'));
+        // vendor/ is excluded by default — backing up + encrypting the entire vendor/
+        // tree previously segfaulted PHP on Windows for a real full backup (rule #49).
+        // composer.json/composer.lock ARE still backed up, so `composer install
+        // --no-dev` reproduces vendor/ on restore. OE_BACKUP_INCLUDE_VENDOR=true opts
+        // back into the old fully self-contained (but crash-prone) behaviour.
+        $this->assertContains('vendor', config('backup.files.exclude'));
     }
 
     #[Test]

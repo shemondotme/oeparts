@@ -10,7 +10,6 @@ use App\Models\Setting;
 use App\Services\SettingsService;
 use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Pages\Concerns\HasUnsavedDataChangesAlert;
 use Filament\Pages\Page;
@@ -146,6 +145,13 @@ abstract class SettingsPage extends Page
         $this->form->fill($settings);
     }
 
+    /**
+     * Saves immediately on click — a single, direct "Save" button, not a
+     * preview-then-confirm flow. The diff is still computed (buildChangesDiff)
+     * and written to the activity log below; only the extra "review before
+     * you commit" click was removed, per explicit product decision — settings
+     * pages should behave like a normal edit form, not a two-step wizard.
+     */
     public function save(): void
     {
         $this->validate();
@@ -157,7 +163,6 @@ abstract class SettingsPage extends Page
         $changed = $this->buildChangesDiff($oldValues);
 
         if (empty($changed)) {
-            $this->pendingChanges = null;
             Notification::make()
                 ->title('No changes detected')
                 ->info()
@@ -166,20 +171,19 @@ abstract class SettingsPage extends Page
             return;
         }
 
-        $this->pendingChanges = [
-            'oldValues' => $oldValues,
-            'changed' => $changed,
-        ];
+        $this->persistChanges($oldValues);
+
+        Notification::make()
+            ->title('Settings saved')
+            ->body('Cache cleared for group: '.static::$settingsGroup)
+            ->success()
+            ->send();
     }
 
-    public function confirmSave(): void
+    /** Writes $this->data to the settings table and records the before/after in the activity log. */
+    private function persistChanges(array $oldValues): void
     {
-        if ($this->pendingChanges === null) {
-            return;
-        }
-
         $service = app(SettingsService::class);
-        $oldValues = $this->pendingChanges['oldValues'];
         $admin = auth('admin')->user();
 
         foreach ($this->data as $key => $value) {
@@ -193,7 +197,7 @@ abstract class SettingsPage extends Page
                 // selected" state is []; without this, saving ANY real
                 // change elsewhere on the same page would also silently
                 // overwrite this field's stored "" with the literal string
-                // "[]" (confirmSave() writes every key in $this->data, not
+                // "[]" (persistChanges() writes every key in $this->data, not
                 // just the ones that changed).
                 $value = empty($value) ? '' : json_encode($value);
             }
@@ -234,12 +238,6 @@ abstract class SettingsPage extends Page
         $this->rememberData();
 
         $this->afterSave();
-
-        Notification::make()
-            ->title('Settings saved')
-            ->body('Cache cleared for group: ' . static::$settingsGroup)
-            ->success()
-            ->send();
     }
 
     protected function afterSave(): void
@@ -445,47 +443,23 @@ abstract class SettingsPage extends Page
             ];
         }
 
-        if ($this->pendingChanges !== null) {
-            return [
-                Action::make('confirm_save')
-                    ->label('Confirm Save (' . count($this->pendingChanges['changed']) . ' changes)')
-                    ->color('success')
-                    ->icon('heroicon-o-check')
-                    ->action('confirmSave')
-                    ->requiresConfirmation()
-                    ->modalHeading('Save Settings Changes')
-                    ->modalContent(fn (): string => view('components.settings-diff-table', [
-                        'changes' => $this->pendingChanges['changed'],
-                        'heading' => 'The following settings changes will be applied:',
-                    ])->render())
-                    ->modalIcon('heroicon-o-eye')
-                    ->modalSubmitActionLabel('Yes, Apply Changes'),
-
-                Action::make('discard_changes')
-                    ->label('Discard Changes')
-                    ->color('danger')
-                    ->icon('heroicon-o-x-mark')
-                    ->outlined()
-                    ->action('cancelSave'),
-            ];
-        }
-
+        // A single, direct Save button — saves immediately on click, no
+        // preview/confirm step. (Reset to Defaults above stays two-step: it's
+        // a bulk overwrite of the whole group, materially more destructive
+        // than a normal field edit.)
         return [
-            ActionGroup::make([
-                Action::make('save')
-                    ->label('Preview Changes')
-                    ->submit('save')
-                    ->color('success'),
+            Action::make('save')
+                ->label('Save')
+                ->icon('heroicon-o-check')
+                ->submit('save')
+                ->color('success'),
 
-                Action::make('resetToDefaults')
-                    ->label('Reset to Defaults')
-                    ->icon('heroicon-o-arrow-uturn-left')
-                    ->color('gray')
-                    ->outlined()
-                    ->action('resetToDefaults'),
-            ])
-                ->label('Save Actions')
-                ->button(),
+            Action::make('resetToDefaults')
+                ->label('Reset to Defaults')
+                ->icon('heroicon-o-arrow-uturn-left')
+                ->color('gray')
+                ->outlined()
+                ->action('resetToDefaults'),
         ];
     }
 

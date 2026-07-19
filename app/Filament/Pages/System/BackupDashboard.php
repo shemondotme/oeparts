@@ -46,6 +46,17 @@ class BackupDashboard extends Page implements HasTable
     /** Non-null while an admin-triggered backup is actively being polled to completion. */
     public ?int $runningBackupId = null;
 
+    /** Latest {@see \App\Services\Backup\BackupProgress} snapshot for the running backup, for the progress bar. */
+    public array $backupProgress = [];
+
+    /** Human labels for every selectable/stored backup profile. */
+    private const PROFILE_LABELS = [
+        BackupRun::PROFILE_FULL          => 'Full (database + files)',
+        BackupRun::PROFILE_DATABASE_ONLY => 'Database only',
+        BackupRun::PROFILE_FILES_ONLY    => 'Files only',
+        BackupRun::PROFILE_UPDATE_SAFETY => 'Update safety',
+    ];
+
     public function mount(): void
     {
         // Resume polling a run the operator started before reloading the page —
@@ -93,7 +104,12 @@ class BackupDashboard extends Page implements HasTable
 
                 Tables\Columns\TextColumn::make('profile')
                     ->badge()->size('sm')
-                    ->color(fn (string $state): string => $state === BackupRun::PROFILE_FULL ? 'primary' : 'gray'),
+                    ->formatStateUsing(fn (string $state): string => self::PROFILE_LABELS[$state] ?? $state)
+                    ->color(fn (string $state): string => match ($state) {
+                        BackupRun::PROFILE_FULL => 'primary',
+                        BackupRun::PROFILE_DATABASE_ONLY, BackupRun::PROFILE_FILES_ONLY => 'info',
+                        default => 'gray',
+                    }),
 
                 Tables\Columns\TextColumn::make('status')
                     ->badge()->size('sm')
@@ -125,10 +141,7 @@ class BackupDashboard extends Page implements HasTable
                     BackupRun::STATUS_FAILED  => 'Failed',
                     BackupRun::STATUS_RUNNING => 'Running',
                 ]),
-                Tables\Filters\SelectFilter::make('profile')->options([
-                    BackupRun::PROFILE_FULL          => 'Full',
-                    BackupRun::PROFILE_UPDATE_SAFETY => 'Update safety',
-                ]),
+                Tables\Filters\SelectFilter::make('profile')->options(self::PROFILE_LABELS),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -143,24 +156,43 @@ class BackupDashboard extends Page implements HasTable
                     ->icon('heroicon-o-play')
                     ->color('primary')
                     ->authorize('manage backups')
+                    ->form([
+                        Forms\Components\Radio::make('profile')
+                            ->label('What should this backup include?')
+                            ->options([
+                                BackupRun::PROFILE_FULL          => 'Full — database + files (recommended before an update)',
+                                BackupRun::PROFILE_DATABASE_ONLY => 'Database only — fastest, smallest',
+                                BackupRun::PROFILE_FILES_ONLY    => 'Files only — uploads/config, no database',
+                            ])
+                            ->descriptions([
+                                BackupRun::PROFILE_FULL          => 'Everything needed for full disaster recovery.',
+                                BackupRun::PROFILE_DATABASE_ONLY => 'Just the database. Runs in seconds on most sites.',
+                                BackupRun::PROFILE_FILES_ONLY    => 'Application files only (vendor/ is excluded — reinstall via composer on restore).',
+                            ])
+                            ->default(BackupRun::PROFILE_FULL)
+                            ->required(),
+                    ])
                     ->requiresConfirmation()
-                    ->modalDescription('Start a full encrypted backup now. It runs in the background.')
+                    ->modalDescription('The backup runs in the background, one chunk per poll — you can leave this page open to watch progress.')
                     ->disabled(fn (): bool => app(BackupLock::class)->isLocked() || $this->runningBackupId !== null)
-                    ->action(function (BackupManager $manager): void {
+                    ->action(function (array $data, BackupManager $manager): void {
                         // Start only — advance via pollBackup() below (AJAX-polled, one
                         // chunk per tick). Dispatching RunBackupJob here would run the
-                        // WHOLE backup (full profile includes vendor/, rule #49) inline
-                        // under QUEUE_CONNECTION=sync, blocking this request well past
-                        // the web server's timeout — exactly the "stuck on Running" bug
-                        // this fixes. See BackupManager::run()'s own doc comment.
+                        // WHOLE backup inline under QUEUE_CONNECTION=sync, blocking this
+                        // request well past the web server's timeout — exactly the
+                        // "stuck on Running" bug this fixes. See BackupManager::run()'s
+                        // own doc comment.
+                        $profile = (string) ($data['profile'] ?? BackupRun::PROFILE_FULL);
+
                         try {
-                            $run = $manager->start('full', 'manual');
+                            $run = $manager->start($profile, 'manual');
                         } catch (\Throwable $e) {
                             Notification::make()->title('Backup could not start')->body($e->getMessage())->danger()->send();
 
                             return;
                         }
                         $this->runningBackupId = $run->id;
+                        $this->backupProgress  = [];
                         $this->audit('run', $run);
                         Notification::make()->title('Backup started')->success()->send();
                     }),
@@ -185,12 +217,14 @@ class BackupDashboard extends Page implements HasTable
         }
 
         if (! $run->isTerminal()) {
-            $manager->advance($run);
+            $progress = $manager->advance($run);
+            $this->backupProgress = $progress->toArray();
             $run->refresh();
         }
 
         if ($run->isTerminal()) {
             $this->runningBackupId = null;
+            $this->backupProgress  = [];
 
             if ($run->status === BackupRun::STATUS_SUCCESS) {
                 Notification::make()->title('Backup complete')->success()->send();

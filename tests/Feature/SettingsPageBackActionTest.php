@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Filament\Clusters\Settings as SettingsCluster;
-use App\Filament\Pages\Settings\SettingsActivityLog;
 use App\Filament\Pages\Settings\SettingsPage;
 use App\Models\Admin;
 use Database\Seeders\RolesSeeder;
@@ -92,15 +91,5 @@ class SettingsPageBackActionTest extends TestCase
         }
 
         $this->assertSame([], $failures, "These settings pages are missing a working backToSettings action:\n" . implode("\n", $failures));
-    }
-
-    #[Test]
-    public function the_activity_log_page_also_has_a_back_to_settings_action(): void
-    {
-        Livewire::test(SettingsActivityLog::class)
-            ->assertActionExists(
-                'backToSettings',
-                fn (Action $action): bool => $action->getUrl() === SettingsCluster::getUrl()
-            );
     }
 }

@@ -1,5 +1,5 @@
 {
-    "version": "1.0.6",
+    "version": "1.0.7",
     "codename": "Atlas",
     "release_date": "2026-07-19",
     "channel": "stable",
@@ -17,8 +17,8 @@
     ],
     "min_mysql": "8.0.16",
     "min_mariadb": "10.11",
-    "min_version_to_update_from": "1.0.5",
-    "migration_count": 0,
+    "min_version_to_update_from": "1.0.6",
+    "migration_count": 1,
     "new_env_keys": [],
     "breaking_changes": [],
     "pre_update_notes": "",

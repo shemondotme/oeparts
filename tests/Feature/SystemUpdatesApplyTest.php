@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Filament\Pages\System\SystemUpdates;
 use App\Models\Admin;
 use App\Models\UpdateHistory;
+use App\Services\Updates\PreflightReport;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
+use App\Services\Updates\UpdatePreview;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -45,11 +47,30 @@ class SystemUpdatesApplyTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('admin'));
     }
 
-    /** A fake applier so the page test never runs the real update pipeline. */
+    /**
+     * A fake applier so the page test never runs the real update pipeline —
+     * including preview(), which otherwise hits real PreflightService checks
+     * (disk/lock/filesystem state) that can be polluted by other test classes
+     * sharing the same on-disk update/backup lock path in a full-suite run.
+     */
     private function fakeApplier(): void
     {
         app()->instance(UpdateApplier::class, new class extends UpdateApplier
         {
+            public function preview(array $manifest): UpdatePreview
+            {
+                return new UpdatePreview(
+                    fromVersion: '1.0.1',
+                    toVersion: (string) ($manifest['version'] ?? '9.9.9'),
+                    security: (bool) ($manifest['security'] ?? false),
+                    sizeBytes: $manifest['size_bytes'] ?? null,
+                    migrationCount: (int) ($manifest['migration_count'] ?? 0),
+                    breakingChanges: [],
+                    etaSeconds: 60,
+                    preflight: new PreflightReport([]),
+                );
+            }
+
             public function start(array $manifest, ?int $initiatedBy = null): UpdateHistory
             {
                 return UpdateHistory::create([
@@ -102,6 +123,8 @@ class SystemUpdatesApplyTest extends TestCase
         $this->actingAs($admin, 'admin');
 
         Livewire::test(SystemUpdates::class)
+            ->call('loadPreview')
+            ->set('previewAcknowledged', true) // ack any pre-flight WARNs, harmless if there are none
             ->set('applyPassword', 'correct-horse')
             ->call('startApply')
             ->assertSet('applying', true)

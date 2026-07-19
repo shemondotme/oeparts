@@ -29,6 +29,7 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\NewsletterCampaign;
 use App\Models\NewsletterSubscriber;
+use App\Models\NotFoundLog;
 use App\Models\Order;
 use App\Models\Page;
 use App\Models\PartInquiry;
@@ -67,6 +68,7 @@ use App\Policies\MenuItemPolicy;
 use App\Policies\MenuPolicy;
 use App\Policies\NewsletterCampaignPolicy;
 use App\Policies\NewsletterSubscriberPolicy;
+use App\Policies\NotFoundLogPolicy;
 use App\Policies\OrderPolicy;
 use App\Policies\PagePolicy;
 use App\Policies\PartInquiryPolicy;
@@ -114,6 +116,7 @@ class AuthServiceProvider extends ServiceProvider
         MenuItem::class => MenuItemPolicy::class,
         NewsletterCampaign::class => NewsletterCampaignPolicy::class,
         NewsletterSubscriber::class => NewsletterSubscriberPolicy::class,
+        NotFoundLog::class => NotFoundLogPolicy::class,
         Order::class => OrderPolicy::class,
         Page::class => PagePolicy::class,
         PartInquiry::class => PartInquiryPolicy::class,

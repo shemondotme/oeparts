@@ -4,10 +4,10 @@ namespace App\Filament\Pages\System;
 
 use App\Filament\Clusters\System;
 use App\Filament\Widgets\System\CacheStats;
+use App\Services\CacheService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Facades\Cache;
 
 class CacheDashboard extends Page
 {
@@ -61,9 +61,9 @@ class CacheDashboard extends Page
 
     public function clearApplicationCache(): void
     {
-        try {
-            $keys = Cache::getStore()->getRedis()->keys('laravel_database_*');
-        } catch (\Exception $e) {
+        $count = app(CacheService::class)->purgeAllApplicationCacheKeys();
+
+        if ($count === -1) {
             Notification::make()
                 ->title('Redis not available')
                 ->body('Cannot clear cache: Redis driver is not active.')
@@ -73,16 +73,10 @@ class CacheDashboard extends Page
             return;
         }
 
-        if (empty($keys)) {
+        if ($count === 0) {
             Notification::make()->title('No application cache keys found')->info()->send();
 
             return;
-        }
-
-        $count = 0;
-        foreach ($keys as $key) {
-            Cache::forget(str_replace('laravel_database_', '', $key));
-            $count++;
         }
 
         Notification::make()->title("Cleared {$count} cache keys")->success()->send();

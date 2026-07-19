@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\Settings\SettingsActivityLog;
 use App\Filament\Pages\Settings\SettingsPage;
 use App\Filament\Support\SettingsRegistry;
 use ReflectionClass;
@@ -38,7 +37,7 @@ class SettingsRegistryTest extends TestCase
                 continue;
             }
 
-            if ($class === SettingsActivityLog::class || $reflection->isSubclassOf(SettingsPage::class)) {
+            if ($reflection->isSubclassOf(SettingsPage::class)) {
                 $classes[] = $class;
             }
         }
