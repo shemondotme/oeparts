@@ -63,6 +63,7 @@ class UpdateCheckerTest extends TestCase
         $this->assertSame(['1.2.0'], $status->upgradePath);
         $this->assertFalse($status->isMultiStep());
         $this->assertTrue($status->reachable);
+        $this->assertSame('1.2.0', $status->nextRelease['version'] ?? null);
     }
 
     #[Test]
@@ -85,8 +86,8 @@ class UpdateCheckerTest extends TestCase
     {
         $this->fakeCatalog([
             ['version' => '1.0.0', 'min_version_to_update_from' => '1.0.0'],
-            ['version' => '1.1.0', 'min_version_to_update_from' => '1.0.0'],
-            ['version' => '2.0.0', 'min_version_to_update_from' => '1.1.0'], // breaking: needs 1.1.0 first
+            ['version' => '1.1.0', 'min_version_to_update_from' => '1.0.0', 'migration_count' => 3, 'sha256' => 'hop-sha'],
+            ['version' => '2.0.0', 'min_version_to_update_from' => '1.1.0', 'migration_count' => 9, 'sha256' => 'latest-sha'], // breaking: needs 1.1.0 first
         ]);
 
         $status = $this->checkerWithCurrent('1.0.0')->check(true);
@@ -95,6 +96,17 @@ class UpdateCheckerTest extends TestCase
         $this->assertSame('2.0.0', $status->latestVersion);
         $this->assertSame(['1.1.0', '2.0.0'], $status->upgradePath);
         $this->assertTrue($status->isMultiStep());
+
+        // Regression: an apply must target the intermediate hop (1.1.0), not
+        // jump straight to $latestVersion — confirmed live, this previously
+        // wasn't the case (SystemUpdates::applyManifest() always built its
+        // manifest from the top-level latest_version fields), which silently
+        // skipped intermediate hops AND defeated PreflightService's
+        // min_version_to_update_from gate (that manifest never carried it).
+        $this->assertNotNull($status->nextRelease);
+        $this->assertSame('1.1.0', $status->nextRelease['version']);
+        $this->assertSame(3, $status->nextRelease['migration_count']);
+        $this->assertSame('hop-sha', $status->nextRelease['sha256']);
     }
 
     #[Test]
