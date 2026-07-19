@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.3 — 2026-07-19
+
+### Fixed
+- **System Updates page looked download-only — the one-click "Apply update now" button was easy to miss** — the page header still read "One-click updates are coming soon — for now, follow the release notes," stale copy left over from before the one-click apply FSM (Chunk 3.5) shipped, even though `startApply()`/`pollApply()` have worked since. The prominent "Download release" button also rendered above the "Apply update now" section, reinforcing the impression that downloading was the only option. Fixed the header copy to describe the actual one-click flow, moved "Apply update now" to render first (the primary action, matching a familiar one-click update UX), and demoted "Download release" to an outlined secondary link labelled "Download release (manual install)" for admins without `apply updates` permission or who prefer a manual install.
+
 ## 1.0.2 — 2026-07-19
 
 ### Fixed
