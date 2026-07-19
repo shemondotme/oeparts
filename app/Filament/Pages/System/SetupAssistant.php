@@ -49,9 +49,9 @@ class SetupAssistant extends Page
             ],
             [
                 'key' => 'php',
-                'label' => 'PHP 8.2+',
+                'label' => 'PHP 8.3+',
                 'description' => 'Required PHP version',
-                'done' => version_compare(phpversion(), '8.2', '>='),
+                'done' => version_compare(phpversion(), '8.3', '>='),
             ],
             [
                 'key' => 'database',
