@@ -27,8 +27,9 @@
                         System Updates
                     </h2>
                     <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
-                        Check for new OeParts releases. Review the changelog before updating.
-                        One-click updates are coming soon — for now, follow the release notes.
+                        Check for new OeParts releases and review the changelog. When an update is
+                        available, apply it with one click below — a full backup runs first, and it's
+                        verified automatically.
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -74,58 +75,13 @@
             @endif
         </div>
 
-        {{-- Update details --}}
-        @if($available)
-            <div class="op-card relative overflow-hidden p-6"
-                style="background: var(--color-bg-surface, #ffffff); border: 1px solid {{ $security ? 'var(--danger-500, #dc2626)' : 'var(--color-border-subtle, #e5e7eb)' }};">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
-                    <div>
-                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">New Version</div>
-                        <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['latest_version'] }}</div>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">Released</div>
-                        <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['release_date'] ?? '—' }}</div>
-                    </div>
-                    <div>
-                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">DB Migrations</div>
-                        <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['migration_count'] ?? 0 }}</div>
-                    </div>
-                </div>
-
-                @if(!empty($s['upgrade_path']) && count($s['upgrade_path']) > 1)
-                    <div class="mb-4 p-3 rounded-xl text-sm"
-                        style="background: var(--color-bg-inset, #f3f4f6); color: var(--color-text-muted, #6b7280);">
-                        This is a multi-step upgrade — apply in order:
-                        <span class="font-mono" style="color: var(--color-text-primary, #111827);">{{ implode(' → ', $s['upgrade_path']) }}</span>
-                    </div>
-                @endif
-
-                <div class="flex flex-wrap items-center gap-3">
-                    @if(!empty($s['changelog_url']))
-                        <a href="{{ $s['changelog_url'] }}" target="_blank" rel="noopener"
-                           class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
-                           style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
-                            <x-heroicon-o-document-text class="w-3.5 h-3.5" />
-                            View changelog
-                        </a>
-                    @endif
-                    @if(!empty($s['download_url']))
-                        <a href="{{ $s['download_url'] }}" target="_blank" rel="noopener"
-                           class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
-                           style="background: {{ $security ? 'var(--danger-500, #dc2626)' : 'var(--primary-600, #2563eb)' }}; color: white;">
-                            <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
-                            Download release
-                        </a>
-                    @endif
-                </div>
-            </div>
-        @endif
-
-        {{-- One-click apply (Chunk 3.5) --}}
+        {{-- One-click apply (Chunk 3.5) — the primary action, shown first so it's not
+             mistaken for a "download only" page. Falls back gracefully: an admin
+             without the "apply updates" permission still sees the changelog/download
+             card below. --}}
         @if($this->canApply() && ($available || $applying))
             <div class="op-card relative overflow-hidden p-6"
-                style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);"
+                style="background: var(--color-bg-surface, #ffffff); border: 1px solid {{ $security ? 'var(--danger-500, #dc2626)' : 'var(--color-border-subtle, #e5e7eb)' }};"
                 x-data
                 x-on:update-complete.window="setTimeout(() => window.location.reload(), 1500)">
 
@@ -134,8 +90,9 @@
                         Apply this update
                     </div>
                     <p class="text-sm mb-4" style="color: var(--color-text-muted, #6b7280);">
-                        A full backup is taken first, the site enters maintenance mode, and the update is applied and verified.
-                        Confirm your password to begin.
+                        One click updates to {{ $s['latest_version'] ?? 'the latest version' }} — a full backup is
+                        taken first, the site enters maintenance mode, and the update is applied and verified
+                        automatically. Confirm your password to begin.
                     </p>
                     <div class="flex flex-wrap items-end gap-3">
                         <div>
@@ -170,6 +127,55 @@
                         </p>
                     </div>
                 @endif
+            </div>
+        @endif
+
+        {{-- Update details / manual fallback (changelog + direct download, e.g. for an
+             admin without "apply updates", or anyone who prefers a manual install) --}}
+        @if($available)
+            <div class="op-card relative overflow-hidden p-6"
+                style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">New Version</div>
+                        <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['latest_version'] }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">Released</div>
+                        <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['release_date'] ?? '—' }}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">DB Migrations</div>
+                        <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['migration_count'] ?? 0 }}</div>
+                    </div>
+                </div>
+
+                @if(!empty($s['upgrade_path']) && count($s['upgrade_path']) > 1)
+                    <div class="mb-4 p-3 rounded-xl text-sm"
+                        style="background: var(--color-bg-inset, #f3f4f6); color: var(--color-text-muted, #6b7280);">
+                        This is a multi-step upgrade — apply in order:
+                        <span class="font-mono" style="color: var(--color-text-primary, #111827);">{{ implode(' → ', $s['upgrade_path']) }}</span>
+                    </div>
+                @endif
+
+                <div class="flex flex-wrap items-center gap-3">
+                    @if(!empty($s['changelog_url']))
+                        <a href="{{ $s['changelog_url'] }}" target="_blank" rel="noopener"
+                           class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+                           style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
+                            <x-heroicon-o-document-text class="w-3.5 h-3.5" />
+                            View changelog
+                        </a>
+                    @endif
+                    @if(!empty($s['download_url']))
+                        <a href="{{ $s['download_url'] }}" target="_blank" rel="noopener"
+                           class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+                           style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
+                            <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
+                            Download release (manual install)
+                        </a>
+                    @endif
+                </div>
             </div>
         @endif
 

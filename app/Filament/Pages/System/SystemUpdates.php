@@ -12,12 +12,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Update & Recovery System (Module 21, Chunk 1.3) — the "System Updates" page.
+ * Update & Recovery System (Module 21) — the "System Updates" page.
  *
- * Level 1 (notification): shows the installed vs latest version, the changelog,
- * and highlights security releases. Applying updates (Level 2) arrives in Phase 3;
- * for now the page links to the release notes. Lazy-tier check runs on mount()
- * (cache-backed); "Check now" forces a fresh check.
+ * Shows the installed vs latest version, the changelog, and highlights security
+ * releases (Chunk 1.3). One-click apply (Chunk 3.5, startApply()/pollApply())
+ * runs the full backup → download → swap → migrate → verify FSM; the changelog/
+ * download links remain as a manual fallback for an admin without the
+ * "apply updates" permission. Lazy-tier check runs on mount() (cache-backed);
+ * "Check now" forces a fresh check.
  */
 class SystemUpdates extends Page
 {
