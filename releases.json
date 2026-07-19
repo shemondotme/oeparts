@@ -13,8 +13,8 @@
             "min_mysql": "8.0.16",
             "min_version_to_update_from": "1.0.0",
             "migration_count": 0,
-            "sha256": null,
-            "size_bytes": null,
+            "sha256": "6b1629f8ba8f6e0dd024af89b0a4b0024e6d898ca3a4187ba126cae1946d6442",
+            "size_bytes": 35980172,
             "signature": null,
             "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
             "download_url": "https://github.com/shemondotme/oeparts/releases/download/v1.0.1/oeparts-1.0.1.zip"
