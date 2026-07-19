@@ -39,11 +39,12 @@ jobs:
           node-version: "20"
 
       # .env must exist before composer install: its post-autoload-dump hook runs
-      # `artisan package:discover`, which boots the app — with no .env, APP_ENV/
-      # CACHE_STORE fall back to Laravel's own defaults ('production' / 'database'),
-      # tripping the production-must-use-Redis guard in AppServiceProvider.
+      # `artisan package:discover`, which boots the app. Use .env.testing (array/
+      # sqlite drivers, APP_ENV=testing), same as tests.yml — .env.example sets
+      # APP_ENV=production + CACHE_STORE=redis, which needs a live Redis service
+      # this job doesn't run just to let the app boot for discovery/build commands.
       - name: Prepare environment file
-        run: cp .env.example .env
+        run: cp .env.testing .env
 
       # Root dev deps so `php artisan` (oeparts:build / oeparts:release:manifest) can boot.
       - name: Install dependencies
