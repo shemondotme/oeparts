@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.4 — 2026-07-19
+
+### Fixed
+- **A backup abandoned mid-progress could block every future backup AND update indefinitely** — `BackupJanitor::cleanupPartials()` exists precisely to reclaim a run left `running` forever (e.g. an admin navigates away while "Run backup now" is still AJAX-polling, see v1.0.1) and release the shared lock it holds, but nothing ever called it: `BackupRetentionService` explicitly does not ("Failed/partial runs are the BackupJanitor's job, not retention's"), and `BackupDashboard`'s only use of `BackupJanitor` is the unrelated delete action's `purgeFiles()`. A stuck lock made `PreflightService`'s lock check fail for every subsequent update attempt too, surfacing as "Pre-flight failed: A backup or update is already in progress" with no way to resolve it from the UI. Added `oeparts:backup:cleanup-stale` (wraps `cleanupPartials()`) and scheduled it hourly, matching `config('backup.stale_after_seconds')`'s default 1-hour staleness threshold — a stuck lock now self-heals within the hour instead of requiring manual database/filesystem intervention.
+
 ## 1.0.3 — 2026-07-19
 
 ### Fixed
