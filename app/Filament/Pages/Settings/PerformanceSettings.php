@@ -20,6 +20,7 @@ class PerformanceSettings extends SettingsPage
     protected function getHeaderActions(): array
     {
         return [
+            ...parent::getHeaderActions(),
             Action::make('testCache')
                 ->label('Test Cache')
                 ->icon('heroicon-o-bolt')

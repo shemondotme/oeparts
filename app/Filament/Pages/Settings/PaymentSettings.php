@@ -20,6 +20,7 @@ class PaymentSettings extends SettingsPage
     protected function getHeaderActions(): array
     {
         return [
+            ...parent::getHeaderActions(),
             Action::make('testAirwallex')
                 ->label('Test Connection')
                 ->icon('heroicon-o-signal')

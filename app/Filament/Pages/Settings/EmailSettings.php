@@ -20,6 +20,7 @@ class EmailSettings extends SettingsPage
     protected function getHeaderActions(): array
     {
         return [
+            ...parent::getHeaderActions(),
             Action::make('testEmail')
                 ->label('Send Test Email')
                 ->icon('heroicon-o-paper-airplane')
