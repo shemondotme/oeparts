@@ -6,6 +6,7 @@ return [
     'estimated_return' => 'Numatomas atnaujinimo laikas',
     'need_help' => 'Reikia pagalbos?',
     'check_back' => 'Užsukite dar kartą po kelių minučių',
+    'refresh' => 'Atnaujinti puslapį',
     'all_rights_reserved' => 'Visos teisės saugomos',
     'status_label' => 'Būsena',
     'estimated_return_spec' => 'Numatoma · Grąžinimas',
