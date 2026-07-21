@@ -20,6 +20,13 @@ return [
         'enabled' => true,
         'key'     => env('OE_BACKUP_KEY'),
         'cipher'  => 'aes-256-gcm',
+        // Soft wall-clock budget per EncryptTransportStage step: keep securing
+        // whole parts (never a partial part) until this many seconds have
+        // elapsed this step, then yield. Most parts (table schema, small data
+        // chunks) are a few KB-MB, so encrypting several per poll instead of
+        // exactly one cuts the fixed per-poll overhead for the common case,
+        // while a single genuinely large volume still gets its own step.
+        'batch_seconds' => (float) env('OE_BACKUP_ENCRYPT_BATCH_SECONDS', 5),
     ],
 
     // Final destination disk. Off-site (S3 EU region / SFTP) strongly recommended;
@@ -39,6 +46,13 @@ return [
 
     'db' => [
         'chunk_rows' => (int) env('OE_BACKUP_DB_CHUNK', 5000), // keyset-cursor page size
+        // Soft wall-clock budget per FSM step: keep dumping table schema/data
+        // units (never partial — always whole schema-writes or whole keyset
+        // pages) until this many seconds have elapsed this step, then yield.
+        // Lets a site with many small tables clear several per poll instead of
+        // one table-unit per 2s tick, without ever risking a shared-hosting
+        // execution-time limit (bounded by TIME, never by a fixed count).
+        'batch_seconds' => (float) env('OE_BACKUP_DB_BATCH_SECONDS', 5),
         // Consistent-snapshot intent (LOCKED DECISION #5). A true held-transaction
         // snapshot is impossible across the resumable, cross-request FSM, so this is
         // realised via the maintenance gate (writes blocked) and recorded in each

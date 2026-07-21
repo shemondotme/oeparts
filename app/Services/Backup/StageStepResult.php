@@ -16,6 +16,12 @@ namespace App\Services\Backup;
  * - $fraction: this stage's own completion fraction (0.0-1.0), used by the engine
  *              to compute an overall run percentage for the poll UI. Optional —
  *              stages that can't cheaply estimate it may omit it (treated as 0).
+ * - $parts   : additional backup_parts rows produced this step, alongside $part.
+ *              Lets a stage batch several small units of work (e.g. more than
+ *              one table's schema, or more than one already-tiny data chunk)
+ *              into a single poll — bounded by the stage's OWN wall-clock
+ *              budget, never by count — to cut the fixed per-poll overhead
+ *              (rule #48 still applies: a step must never run unboundedly).
  */
 class StageStepResult
 {
@@ -25,12 +31,13 @@ class StageStepResult
         public readonly ?array $part = null,
         public readonly ?string $message = null,
         public readonly float $fraction = 0.0,
+        public readonly array $parts = [],
     ) {}
 
     /** More work remains; persist $state and poll again. */
-    public static function progress(array $state, ?array $part = null, ?string $message = null, float $fraction = 0.0): self
+    public static function progress(array $state, ?array $part = null, ?string $message = null, float $fraction = 0.0, array $parts = []): self
     {
-        return new self(done: false, state: $state, part: $part, message: $message, fraction: max(0.0, min(1.0, $fraction)));
+        return new self(done: false, state: $state, part: $part, message: $message, fraction: max(0.0, min(1.0, $fraction)), parts: $parts);
     }
 
     /** This stage is finished (optionally emitting one final part). */

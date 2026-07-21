@@ -16,11 +16,15 @@ use Illuminate\Support\Str;
  * {@see BackupStage}: a pure-PHP, shared-hosting-safe DB dump that replaces the
  * old `mysqldump`/`exec` command (rule #41).
  *
- * Resumable one-chunk-per-step (rule #48): each step() writes exactly ONE part
- * file — a table's schema, or ONE keyset page of its rows — then hands back a
- * checkpoint so a killed/closed run resumes at the exact table + cursor. Rows
- * are paged by the table's single-column primary key (keyset cursor: memory
- * stays flat on huge tables); tables without a usable PK fall back to a
+ * Resumable, time-budgeted per step (rule #48): each step() writes one or more
+ * WHOLE part files — a table's schema, or a keyset page of its rows, never a
+ * partial one — until backup.db.batch_seconds elapses, then hands back a
+ * checkpoint so a killed/closed run resumes at the exact table + cursor. This
+ * lets a site with many small tables clear several per poll instead of being
+ * stuck at exactly one table-unit per 2s tick, while staying bounded by TIME
+ * (never a fixed unit count) so a step still can't run unboundedly. Rows are
+ * paged by the table's single-column primary key (keyset cursor: memory stays
+ * flat on huge tables); tables without a usable PK fall back to a
  * deterministic OFFSET walk. Tables in config('backup.db.exclude_table_data')
  * are dumped structure-only (logs / sessions / cache / jobs).
  *
@@ -35,6 +39,13 @@ class DatabaseBackupStage implements BackupStage
         return BackupPart::TYPE_DB;
     }
 
+    /**
+     * Batches whole table-units (one full schema write, or one full keyset
+     * data page — never a partial one) within a soft wall-clock budget
+     * (backup.db.batch_seconds), so a site with many small tables clears
+     * several per poll instead of exactly one per 2s tick. Bounded by TIME,
+     * never by unit count, so a step still can't run unboundedly (rule #48).
+     */
     public function step(BackupRun $run, array $state): StageStepResult
     {
         if (! isset($state['tables'])) {
@@ -42,48 +53,63 @@ class DatabaseBackupStage implements BackupStage
         }
 
         $tables = $state['tables'];
-        $index  = (int) $state['ti'];
 
         // No tables at all, or we've walked past the last one.
-        if ($index >= count($tables)) {
+        if ((int) $state['ti'] >= count($tables)) {
             return StageStepResult::complete(null, 'Database backup complete.');
         }
 
-        $table = (string) $tables[$index];
-        $part  = null;
-        $note  = null;
+        $deadline = microtime(true) + max(0.0, (float) config('backup.db.batch_seconds', 5));
+        $parts    = [];
+        $notes    = [];
 
-        if ($state['phase'] === 'schema') {
-            $part = $this->writeSchemaPart($run, $table);
-            $note = "schema: {$table}";
+        do {
+            $index = (int) $state['ti'];
+            $table = (string) $tables[$index];
+            $part  = null;
 
-            if ($this->isDataExcluded($table)) {
-                $state = $this->advanceTable($state); // structure-only table
-            } else {
-                $state['phase']  = 'data';
-                $state['cursor'] = null;
-                $state['chunk']  = 0;
-                $state['key']    = $this->keyColumn($table); // null → OFFSET fallback
+            if ($state['phase'] === 'schema') {
+                $part = $this->writeSchemaPart($run, $table);
+                $notes[] = "schema: {$table}";
+
+                if ($this->isDataExcluded($table)) {
+                    $state = $this->advanceTable($state); // structure-only table
+                } else {
+                    $state['phase']  = 'data';
+                    $state['cursor'] = null;
+                    $state['chunk']  = 0;
+                    $state['key']    = $this->keyColumn($table); // null → OFFSET fallback
+                }
+            } else { // data
+                [$part, $advance, $cursor, $chunk, $rows] = $this->writeDataChunk($run, $table, $state);
+                $notes[] = $rows === 0 ? "data: {$table} (done)" : "data: {$table} +{$rows} rows";
+
+                if ($advance) {
+                    $state = $this->advanceTable($state);
+                } else {
+                    $state['cursor'] = $cursor;
+                    $state['chunk']  = $chunk;
+                }
             }
-        } else { // data
-            [$part, $advance, $cursor, $chunk, $rows] = $this->writeDataChunk($run, $table, $state);
-            $note = $rows === 0 ? "data: {$table} (done)" : "data: {$table} +{$rows} rows";
 
-            if ($advance) {
-                $state = $this->advanceTable($state);
-            } else {
-                $state['cursor'] = $cursor;
-                $state['chunk']  = $chunk;
+            if ($part !== null) {
+                $parts[] = $part;
             }
-        }
+        } while ((int) $state['ti'] < count($tables) && microtime(true) < $deadline);
+
+        $note = count($notes) > 1
+            ? count($notes).' units ('.$notes[0].' … '.end($notes).')'
+            : ($notes[0] ?? null);
 
         if ((int) $state['ti'] >= count($tables)) {
-            return StageStepResult::complete($part, $note);
+            // array_pop keeps the single-$part slot populated too, for any
+            // caller still reading only ->part; the rest ride in ->parts.
+            return new StageStepResult(done: true, state: [], part: array_pop($parts), message: $note, fraction: 1.0, parts: $parts);
         }
 
         $fraction = count($tables) > 0 ? ((int) $state['ti']) / count($tables) : 1.0;
 
-        return StageStepResult::progress($state, $part, $note, $fraction);
+        return StageStepResult::progress($state, array_pop($parts), $note, $fraction, $parts);
     }
 
     /** @return array{tables:array<int,string>,ti:int,phase:string,cursor:mixed,chunk:int} */
