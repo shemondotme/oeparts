@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.10 — 2026-07-19
+
+### Fixed
+- **The update-preview "I've reviewed the warnings" checkbox never enabled "Confirm & apply"** — the checkbox used a plain `wire:model` (no `.live`), which only syncs to the server on the next Livewire round-trip, while the Confirm button's disabled state is computed server-side from that same value. Checking the box updated the visible checkbox but never triggered a re-render, so on any release with a pre-flight WARNING (e.g. no release signature key configured, or the Recovery Console disarmed — both common on a fresh install with no extra setup) the button stayed permanently disabled with no way to proceed. Confirmed live via a real apply attempt. Changed to `wire:model.live` so checking the box immediately re-evaluates the button.
+
 ## 1.0.9 — 2026-07-19
 
 ### Fixed
