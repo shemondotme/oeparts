@@ -177,7 +177,7 @@
 
                             @if($preflight['has_warnings'] ?? false)
                                 <label class="flex items-center gap-2 text-xs mb-2" style="color: var(--color-text-primary, #111827);">
-                                    <input type="checkbox" wire:model="previewAcknowledged" class="rounded" />
+                                    <input type="checkbox" wire:model.live="previewAcknowledged" class="rounded" />
                                     I've reviewed the warnings above and want to proceed anyway
                                 </label>
                             @endif
