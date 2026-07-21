@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.11 — 2026-07-21
+
+### Fixed
+- **Admin panel topbar logo didn't match the storefront navbar / login page brand mark** — the topbar version was a bare hexagon with a hardcoded, non-hoverable amber dot and a plain single-weight "OeParts" wordmark, missing the hover-rotate, hover color-invert, corner badge, and split-weight wordmark treatment used everywhere else the brand mark appears. Brought it in line with both reference implementations, verified in both light and dark sidebar themes.
+- **5 more `canAccess()` calls could crash a real admin page with "Call to a member function hasRole() on null"** — confirmed live again, this time at the last step of an update (`ErrorMonitor::canAccess()`). The v1.0.9 sweep only grepped for the one-liner `auth('admin')->user()->hasRole(...)` shape and missed the equally common two-line variant used by `Filament\Clusters\System`, `ErrorMonitor`, `ServerMonitor`, `QueueMonitor`, and `HelpPage`. All 5 fixed the same way; the regression test no longer hand-lists classes to check — it now scans `app/Filament/` and calls every declared `canAccess()` as a guest automatically, so this class of bug can't quietly reappear via a hand-maintained list again.
+- **"Update available" banner text was illegible in dark mode** — it paired a fixed, pale Filament shade variable as background with a semantic text-color token that flips to near-white in dark mode, so light mode looked fine while dark mode rendered the banner (and its "View details" button) essentially invisible. Replaced with explicit Tailwind `dark:` variants matching the pattern already used elsewhere in the codebase.
+- **Storefront maintenance page depended on an external CDN Tailwind script with an incomplete local color config** — missing a class used in three places (timestamp, footer strip, copyright line), so those rendered with none of the intended styling; and depending on a CDN load is a poor fit for the one page guaranteed to render during infrastructure trouble anyway. Rewritten to use the same self-hosted `@vite` build as every other page, with a manual "Refresh page" button added alongside the existing passive copy.
+
+### Performance
+- **Full/Database backups felt slow on even a small site** — the resumable backup FSM advances one chunk per poll tick by design (shared-hosting safety), but "one chunk" meant exactly one database table-unit and one encrypted part per step regardless of how little work that actually was — tens of poll cycles (each with a floor delay) for a site with 60+ small tables. The database and encryption stages now batch as many whole units as fit within a wall-clock budget (5 seconds each, configurable) before yielding, bounded by time rather than a fixed count so slower hosts and larger tables/parts are still safe.
+
 ## 1.0.10 — 2026-07-19
 
 ### Fixed
