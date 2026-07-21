@@ -16,8 +16,12 @@ use Illuminate\Support\Facades\Storage;
  * encrypts every staged part and streams it to its destination.
  *
  * The DB (2.2) and file (2.3) stages write plaintext parts to the LOCAL staging
- * disk (config('backup.staging_disk')). This stage, one part per step (rule #48),
- * AES-256-GCM-encrypts each staged part (BackupCipher), then:
+ * disk (config('backup.staging_disk')). This stage AES-256-GCM-encrypts each
+ * staged part (BackupCipher) — batching as many WHOLE parts as fit within
+ * backup.encryption.batch_seconds per step (never a partial part; bounded by
+ * TIME, not count, so a step still can't run unboundedly — rule #48; most
+ * parts are a few KB-MB, so a single large volume can still fill an entire
+ * step on its own), then:
  *   - destination == staging (local): drops the plaintext, keeps the `.enc`;
  *   - destination off-site (S3-EU / SFTP): STREAMS the `.enc` up, verifies it,
  *     then deletes BOTH local files (never stage the whole backup off-site in
@@ -48,24 +52,40 @@ class EncryptTransportStage implements BackupStage
             $state = $this->initialise($run);
         }
 
-        $part = $run->parts()
-            ->where('id', '>', (int) $state['cursor_id'])
-            ->orderBy('id')
-            ->first();
+        $deadline = microtime(true) + max(0.0, (float) config('backup.encryption.batch_seconds', 5));
+        $secured  = 0;
+        $lastName = null;
 
-        if (! $part) {
-            return StageStepResult::complete(null, 'encrypt: all parts secured');
-        }
+        do {
+            $part = $run->parts()
+                ->where('id', '>', (int) $state['cursor_id'])
+                ->orderBy('id')
+                ->first();
 
-        $this->securePart($run, $part);
+            if (! $part) {
+                break;
+            }
 
-        $state['cursor_id'] = (int) $part->getKey();
-        $state['processed'] = (int) $state['processed'] + 1;
+            $this->securePart($run, $part);
+
+            $state['cursor_id'] = (int) $part->getKey();
+            $state['processed'] = (int) $state['processed'] + 1;
+            $secured++;
+            $lastName = $part->name;
+        } while (microtime(true) < $deadline);
 
         $total    = max(1, (int) $state['total_parts']);
         $fraction = min($state['processed'], $total) / $total;
 
-        return StageStepResult::progress($state, null, 'encrypt: '.$part->name, $fraction);
+        $remaining = $run->parts()->where('id', '>', (int) $state['cursor_id'])->exists();
+
+        if (! $remaining) {
+            return StageStepResult::complete(null, 'encrypt: all parts secured');
+        }
+
+        $note = $secured > 1 ? "encrypt: {$secured} parts (through {$lastName})" : "encrypt: {$lastName}";
+
+        return StageStepResult::progress($state, null, $note, $fraction);
     }
 
     private function initialise(BackupRun $run): array

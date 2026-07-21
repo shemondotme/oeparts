@@ -77,6 +77,12 @@ class DatabaseBackupStageTest extends TestCase
 
         do {
             $result = $stage->step($run, $state);
+            // ->parts holds the earlier units from this (possibly batched) step,
+            // in chronological order; ->part holds the last one — append in that
+            // order so a batched step's parts stay chronological here too.
+            foreach ($result->parts as $partAttrs) {
+                $parts[] = $partAttrs;
+            }
             if ($result->part !== null) {
                 $parts[] = $result->part;
             }

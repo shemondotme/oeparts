@@ -131,6 +131,12 @@ class BackupManager
             return $this->fail($run, '['.$stage->key().'] '.$e->getMessage());
         }
 
+        // ->parts holds any earlier units from this (possibly batched) step, in
+        // chronological order; ->part holds the last one. Register in that
+        // order so auto-assigned `sequence` numbers stay chronological.
+        foreach ($result->parts as $partAttrs) {
+            $this->registerPart($run, $stage->key(), $partAttrs);
+        }
         if ($result->part !== null) {
             $this->registerPart($run, $stage->key(), $result->part);
         }
