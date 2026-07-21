@@ -15,15 +15,16 @@
     $maintenanceMessage = $normalizeMultilang($message ?? null)
         ?: ['en' => "We're currently performing scheduled maintenance. We'll be back shortly."];
 
-    $brandName       = config('app.name');
-    $maintenanceTitle = __('maintenance.title');
-    $maintenanceSubtitle = __('maintenance.subtitle');
-    $estimatedLabel  = __('maintenance.estimated_return');
-    $helpLabel       = __('maintenance.need_help');
-    $checkBackLabel  = __('maintenance.check_back');
-    $rightsLabel     = __('maintenance.all_rights_reserved');
-    $statusLabel     = __('maintenance.status_label');
-    $estimatedSpec   = __('maintenance.estimated_return_spec');
+    $brandName            = config('app.name');
+    $maintenanceTitle     = __('maintenance.title');
+    $maintenanceSubtitle  = __('maintenance.subtitle');
+    $estimatedLabel       = __('maintenance.estimated_return');
+    $helpLabel            = __('maintenance.need_help');
+    $checkBackLabel       = __('maintenance.check_back');
+    $refreshLabel         = __('maintenance.refresh');
+    $rightsLabel          = __('maintenance.all_rights_reserved');
+    $statusLabel          = __('maintenance.status_label');
+    $estimatedSpec        = __('maintenance.estimated_return_spec');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -34,91 +35,23 @@
 
     <title>{{ $maintenanceTitle }} — {{ $brandName }}</title>
 
-    {{-- Fonts --}}
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700|plus-jakarta-sans:600,700,800|jetbrains-mono:400,500,600,700" rel="stylesheet" />
-
-    {{-- Tailwind CDN (maintenance-only, extended with blueprint tokens) --}}
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        ink:            '#0A1228',
-                        'ink-muted':    '#4E5A74',
-                        ivory:          '#F7F3E7',
-                        'ivory-alt':    '#EFE9D6',
-                        paper:          '#FFFFFF',
-                        rule:           '#D8CFB6',
-                        'rule-strong':  '#B8AE90',
-                        'rule-dark':    '#1D2A44',
-                        amber:          '#F59E0B',
-                        'amber-ink':    '#9A5A00',
-                    },
-                    fontFamily: {
-                        sans:    ['Inter', 'sans-serif'],
-                        display: ['Plus Jakarta Sans', 'sans-serif'],
-                        mono:    ['JetBrains Mono', 'ui-monospace', 'monospace'],
-                    },
-                },
-            },
-        }
-    </script>
-
-    <style>
-        [x-cloak] { display: none !important; }
-
-        /* Blueprint grid backgrounds */
-        .bp-grid-ivory {
-            background-color: #F7F3E7;
-            background-image:
-                linear-gradient(to right, rgba(10,18,40,0.05) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(10,18,40,0.05) 1px, transparent 1px);
-            background-size: 32px 32px;
-        }
-        .bp-grid-navy {
-            background-image:
-                linear-gradient(to right, rgba(255,255,255,0.06) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255,255,255,0.06) 1px, transparent 1px);
-            background-size: 56px 56px;
-        }
-        .bp-spec {
-            font-family: 'JetBrains Mono', ui-monospace, monospace;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.22em;
-            text-transform: uppercase;
-            display: inline-block;
-        }
-        .bp-shadow-sm { box-shadow: 2px 2px 0 0 var(--bp-shadow-color, rgba(10,18,40,1)); }
-        .bp-shadow    { box-shadow: 3px 3px 0 0 var(--bp-shadow-color, rgba(10,18,40,1)); }
-        .bp-shadow-lg { box-shadow: 5px 5px 0 0 var(--bp-shadow-color, rgba(10,18,40,1)); }
-
-        @keyframes bp-pulse {
-            0%, 100% { opacity: 0.55; }
-            50%      { opacity: 1; }
-        }
-        .bp-pulse { animation: bp-pulse 2.4s ease-in-out infinite; }
-
-        @keyframes bp-tick {
-            0%   { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .bp-tick { animation: bp-tick 6s linear infinite; transform-origin: center; }
-    </style>
+    {{-- Same compiled build every other page ships — self-hosted fonts, real
+         design tokens, zero external CDN calls. A maintenance page is exactly
+         the wrong place to depend on a third-party script loading correctly. --}}
+    @vite(['resources/css/app.css'])
 </head>
-<body class="font-sans antialiased bp-grid-ivory text-ink min-h-screen">
+<body class="font-sans antialiased bg-ivory text-ink min-h-screen">
 
-    <div class="min-h-screen flex flex-col">
+    <div class="relative min-h-screen flex flex-col overflow-hidden">
+        <div class="fixed inset-0 bg-grid-ivory-fine bg-grid-md opacity-40 pointer-events-none" aria-hidden="true"></div>
 
         {{-- ── Dark document header ─────────────────────────────────── --}}
         <header class="relative bg-ink text-ivory border-b border-rule-dark overflow-hidden">
-            <div class="absolute inset-0 bp-grid-navy opacity-60 pointer-events-none" aria-hidden="true"></div>
+            <div class="absolute inset-0 bg-grid-navy bg-grid-lg opacity-60 pointer-events-none" aria-hidden="true"></div>
             <div class="relative max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-10 py-6">
-                    <div class="flex items-center justify-between gap-4">
+                <div class="flex items-center justify-between gap-4">
                     <div class="flex items-center gap-3">
-                        <span class="inline-block w-2.5 h-2.5 bg-amber bp-pulse"></span>
+                        <span class="inline-block w-2.5 h-2.5 bg-amber animate-pulse"></span>
                         <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber">
                             System · Offline
                         </span>
@@ -133,7 +66,7 @@
         </header>
 
         {{-- ── Main content ─────────────────────────────────────────── --}}
-        <main class="flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
+        <main class="relative flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
             <div class="w-full max-w-2xl">
 
                 {{-- Primary card --}}
@@ -155,11 +88,8 @@
 
                         {{-- Icon + giant glyph --}}
                         <div class="flex items-center gap-5 pb-8 mb-8 border-b border-rule">
-                            <div class="relative w-16 h-16 border border-ink bg-ivory-alt flex items-center justify-center shrink-0 bp-shadow-sm">
-                                <svg class="w-7 h-7 text-amber-ink bp-tick" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.109-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                </svg>
+                            <div class="w-16 h-16 border border-ink bg-ivory-alt flex items-center justify-center shrink-0 bp-shadow-sm">
+                                <x-heroicon-o-wrench-screwdriver class="w-7 h-7 text-amber-ink animate-[spin_6s_linear_infinite]" />
                             </div>
                             <div class="min-w-0 flex-1">
                                 <p class="font-display text-5xl md:text-6xl font-extrabold text-ink tabular-nums leading-none tracking-[-0.04em]">
@@ -185,7 +115,7 @@
                             <div class="px-4 py-3 bg-paper">
                                 <dt class="bp-spec text-ink-muted">{{ $statusLabel }}</dt>
                                 <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums flex items-center gap-1.5">
-                                    <span class="w-1.5 h-1.5 bg-amber bp-pulse"></span>
+                                    <span class="w-1.5 h-1.5 bg-amber animate-pulse"></span>
                                     OFFLINE
                                 </dd>
                             </div>
@@ -196,9 +126,7 @@
                             <div class="mt-6 border border-ink bg-ivory-alt p-5">
                                 <div class="flex items-start gap-4">
                                     <div class="w-10 h-10 border border-ink bg-paper flex items-center justify-center shrink-0">
-                                        <svg class="w-4 h-4 text-amber-ink" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                                        </svg>
+                                        <x-heroicon-o-clock class="w-4 h-4 text-amber-ink" />
                                     </div>
                                     <div class="min-w-0 flex-1">
                                         <p class="bp-spec text-amber-ink mb-1">{{ $estimatedSpec }}</p>
@@ -214,28 +142,34 @@
                             </div>
                         @endif
 
-                        {{-- Contact --}}
-                        @if(!empty($contactEmail))
-                            <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-6 border-t border-rule">
-                                <p class="bp-spec text-ink-muted">{{ $helpLabel }}</p>
-                                <a href="mailto:{{ $contactEmail }}"
-                                   class="inline-flex items-center gap-2 font-mono text-xs font-bold text-ink
-                                          border-b border-amber hover:text-amber-ink transition-colors pb-0.5 self-start sm:self-auto">
-                                    <svg class="w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-                                    </svg>
-                                    {{ $contactEmail }}
-                                </a>
-                            </div>
-                        @endif
+                        {{-- Actions: manual refresh + contact --}}
+                        <div class="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-6 border-t border-rule">
+                            <button type="button" onclick="window.location.reload()"
+                               class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-ink border border-ink text-ivory
+                                      font-mono text-[11px] font-bold tracking-[0.22em] uppercase
+                                      hover:bg-amber hover:text-ink hover:border-amber transition-colors">
+                                <x-heroicon-s-arrow-path class="w-4 h-4" />
+                                {{ $refreshLabel }}
+                            </button>
+
+                            @if(!empty($contactEmail))
+                                <div class="flex flex-col sm:items-end gap-1">
+                                    <span class="bp-spec text-ink-muted">{{ $helpLabel }}</span>
+                                    <a href="mailto:{{ $contactEmail }}"
+                                       class="inline-flex items-center gap-2 font-mono text-xs font-bold text-ink
+                                              border-b border-amber hover:text-amber-ink transition-colors pb-0.5">
+                                        <x-heroicon-s-envelope class="w-3.5 h-3.5" />
+                                        {{ $contactEmail }}
+                                    </a>
+                                </div>
+                            @endif
+                        </div>
                     </div>
 
                     {{-- Footer trust strip --}}
                     <div class="border-t border-rule bg-ivory-alt px-5 py-3 flex items-center justify-between gap-3">
                         <span class="inline-flex items-center gap-1.5 bp-spec-mono">
-                            <svg class="w-3 h-3 text-amber-ink" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                                <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" />
-                            </svg>
+                            <x-heroicon-s-shield-check class="w-3 h-3 text-amber-ink" />
                             {{ $checkBackLabel }}
                         </span>
                     </div>
