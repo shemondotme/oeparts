@@ -20,7 +20,7 @@ class ServerMonitor extends Page
     {
         $admin = auth('admin')->user();
 
-        return $admin->hasRole('super_admin') || $admin->hasPermissionTo('view system information');
+        return $admin && ($admin->hasRole('super_admin') || $admin->hasPermissionTo('view system information'));
     }
 
     public static function getNavigationIcon(): string|\BackedEnum|null

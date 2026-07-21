@@ -32,6 +32,6 @@ class System extends Cluster
     {
         $user = auth('admin')->user();
 
-        return $user->hasRole('super_admin') || $user->hasPermissionTo('view system information');
+        return $user && ($user->hasRole('super_admin') || $user->hasPermissionTo('view system information'));
     }
 }
