@@ -69,8 +69,12 @@
             <div class="text-left">
                 <h3 class="font-semibold text-amber-800 mb-1">Security Reminder</h3>
                 <p class="text-sm text-amber-700">
-                    For security reasons, the installer has been disabled. If you need to re‑run it, delete the file
-                    <code class="bg-amber-100 px-1 rounded">storage/installed.lock</code>.
+                    For security reasons, the installer is now disabled — this is deliberate and permanent for
+                    this install. It cannot be re-enabled by deleting
+                    <code class="bg-amber-100 px-1 rounded">storage/installed.lock</code>: the installer also
+                    checks for real data in the database and will refuse to run again rather than risk erasing
+                    it. To start over on a genuinely fresh database, restore a clean database first, then delete
+                    the lock file.
                 </p>
             </div>
         </div>

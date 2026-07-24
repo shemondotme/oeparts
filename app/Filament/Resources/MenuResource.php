@@ -60,19 +60,19 @@ class MenuResource extends Resource
                                     ->description('Define the menu name, location, and language for navigation.')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Menu Name')
+                                            ->label(__('admin.menu_name'))
                                             ->placeholder('e.g. Main Navigation, Footer Links')
                                             ->required()
                                             ->maxLength(100)
                                             ->helperText('Internal name for this menu. Not shown to customers.'),
                                         Forms\Components\Select::make('location')
-                                            ->label('Menu Location')
+                                            ->label(__('admin.menu_location'))
                                             ->options(MenuLocation::class)
                                             ->native(false)
                                             ->required()
                                             ->helperText('Where this menu appears on the storefront (header or footer).'),
                                         Forms\Components\Select::make('lang')
-                                            ->label('Language')
+                                            ->label(__('admin.language'))
                                             ->options(AdminUi::LOCALES)
                                             ->native(false)
                                             ->required()
@@ -89,7 +89,7 @@ class MenuResource extends Resource
                                     ->description('Menu visibility settings.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Menu Active')
+                                            ->label(__('admin.menu_active'))
                                             ->helperText('Inactive menus are hidden from the storefront navigation.')
                                             ->default(true),
                                     ]),
@@ -104,47 +104,47 @@ class MenuResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('items'))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Menu')
+                    ->label(__('admin.menu'))
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('location')
-                ->label('Location')
+                ->label(__('admin.location'))
                 ->badge()
                 ->color(fn (MenuLocation $state): string => match ($state) {
                     MenuLocation::Header => 'info',
                     MenuLocation::Footer => 'gray',
                 }),
                 Tables\Columns\TextColumn::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => AdminUi::LOCALES[$state] ?? strtoupper($state))
                     ->color('gray')
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('items_count')
-                    ->label('Menu Items')
+                    ->label(__('admin.menu_items'))
                     ->counts('items')
                     ->fontMono()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->boolean()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('location')
-                    ->label('Menu Location')
+                    ->label(__('admin.menu_location'))
                     ->options(MenuLocation::class)
                     ->helperText('Filter by header or footer menus.'),
                 Tables\Filters\SelectFilter::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->options(AdminUi::LOCALES)
                     ->helperText('Filter menus by language.'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Menu Status')
+                    ->label(__('admin.menu_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
@@ -168,7 +168,7 @@ class MenuResource extends Resource
             ->emptyStateDescription('Create navigation menus for the header or footer, then add menu items to build the navigation structure.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create Menu')
+                    ->label(__('admin.create_menu'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

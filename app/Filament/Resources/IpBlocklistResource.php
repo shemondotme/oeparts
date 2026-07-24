@@ -57,13 +57,13 @@ class IpBlocklistResource extends Resource
                                     ->description('IP address to block and the reason for the block.')
                                     ->schema([
                                         Forms\Components\TextInput::make('ip_address')
-                                            ->label('IP Address')
+                                            ->label(__('admin.ip_address'))
                                             ->placeholder('e.g. 192.168.1.1 or 2001:db8::1')
                                             ->required()
                                             ->maxLength(45)
                                             ->helperText('IPv4 or IPv6 address to block. Supports full addresses.'),
                                         Forms\Components\Textarea::make('reason')
-                                            ->label('Reason / Notes')
+                                            ->label(__('admin.reason_notes'))
                                             ->placeholder('e.g. Repeated failed login attempts, spam bot, DDoS source...')
                                             ->rows(4)
                                             ->required()
@@ -81,11 +81,11 @@ class IpBlocklistResource extends Resource
                                     ->description('Block status and optional expiration date.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Block Active')
+                                            ->label(__('admin.block_active'))
                                             ->helperText('Inactive blocks are not enforced.')
                                             ->default(true),
                                         Forms\Components\DateTimePicker::make('expires_at')
-                                            ->label('Expiration Date')
+                                            ->label(__('admin.expiration_date'))
                                             ->nullable()
                                             ->helperText('Leave empty for a permanent block. Set a date to auto-expire the block.'),
                                     ]),
@@ -100,7 +100,7 @@ class IpBlocklistResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('blocker'))
             ->columns([
             Tables\Columns\TextColumn::make('ip_address')
-                ->label('IP Address')
+                ->label(__('admin.ip_address'))
                 ->searchable()
                 ->copyable()
                 ->copyMessage('IP address copied')
@@ -108,31 +108,31 @@ class IpBlocklistResource extends Resource
                 ->fontMono()
                 ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('reason')
-                ->label('Reason')
+                ->label(__('admin.reason'))
                 ->limit(40)
                 ->toggleable(),
                 Tables\Columns\TextColumn::make('blocker.name')
-                    ->label('Blocked By')
+                    ->label(__('admin.blocked_by'))
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('expires_at')
-                    ->label('Expires')
+                    ->label(__('admin.expires'))
                     ->dateTime('M j, Y H:i')
                     ->placeholder('Permanent block')
                     ->toggleable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Block Status')
+                    ->label(__('admin.block_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
                     ->native(false),
                 Tables\Filters\Filter::make('expired')
-                    ->label('Expired Blocks')
+                    ->label(__('admin.expired_blocks'))
                     ->query(fn (Builder $query): Builder => $query->where('expires_at', '<', now())->whereNotNull('expires_at'))
                     ->helperText('Show only IP blocks that have expired.'),
             ])

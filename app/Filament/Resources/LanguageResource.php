@@ -56,19 +56,19 @@ class LanguageResource extends Resource
                                     ->description('Core language information and display settings.')
                                     ->schema([
                                         Forms\Components\TextInput::make('code')
-                                            ->label('Language Code')
+                                            ->label(__('admin.language_code'))
                                             ->placeholder('e.g. en, de, lt')
                                             ->required()
                                             ->maxLength(2)
                                             ->helperText('ISO 639-1 two-letter code (e.g. "en" for English).'),
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Display Name')
+                                            ->label(__('admin.display_name'))
                                             ->placeholder('e.g. English, German, Lithuanian')
                                             ->required()
                                             ->maxLength(100)
                                             ->helperText('Language name shown in admin and storefront language selectors.'),
                                         Forms\Components\TextInput::make('native_name')
-                                            ->label('Native Name')
+                                            ->label(__('admin.native_name'))
                                             ->placeholder('e.g. English, Deutsch, Lietuvių')
                                             ->maxLength(100)
                                             ->helperText('Language name in its own script (e.g. "Deutsch" for German).')
@@ -79,7 +79,7 @@ class LanguageResource extends Resource
                                             // 2026_03_26_100003) — confirmed live.
                                             ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                                         Forms\Components\TextInput::make('locale')
-                                            ->label('Locale Code')
+                                            ->label(__('admin.locale_code'))
                                             ->placeholder('e.g. en_US, de_DE, lt_LT')
                                             ->maxLength(10)
                                             ->helperText('Full locale code including country (e.g. "en_US" for US English).')
@@ -90,7 +90,7 @@ class LanguageResource extends Resource
                                             // 2026_03_26_100003) — confirmed live.
                                             ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                                         Forms\Components\TextInput::make('flag_emoji')
-                                            ->label('Flag Emoji')
+                                            ->label(__('admin.flag_emoji'))
                                             ->placeholder('e.g. 🇬🇧, 🇩🇪, 🇱🇹')
                                             ->maxLength(10)
                                             ->helperText('Country flag emoji displayed next to the language name.')
@@ -117,14 +117,14 @@ class LanguageResource extends Resource
                                     ->description('Language priority, visibility, and display ordering.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_default')
-                                            ->label('Default Language')
+                                            ->label(__('admin.default_language'))
                                             ->helperText('The fallback language when a translation is missing.'),
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Language Active')
+                                            ->label(__('admin.language_active'))
                                             ->helperText('Inactive languages are hidden from the storefront language selector.')
                                             ->default(true),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -140,36 +140,36 @@ class LanguageResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('flag_emoji')
-                    ->label('Flag')
+                    ->label(__('admin.flag'))
                     ->size('lg')
                     ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('code')
-                ->label('Code')
+                ->label(__('admin.code'))
                 ->badge()
                 ->color('gray')
                 ->searchable()
                 ->sortable(),
             Tables\Columns\TextColumn::make('name')
-                ->label('Name')
+                ->label(__('admin.name'))
                 ->searchable()
                 ->sortable()
                 ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('native_name')
-                    ->label('Native Name')
+                    ->label(__('admin.native_name'))
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_default')
-                    ->label('Default')
+                    ->label(__('admin.default'))
                     ->boolean()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->boolean()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
@@ -177,12 +177,12 @@ class LanguageResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Language Status')
+                    ->label(__('admin.language_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
                 Tables\Filters\TernaryFilter::make('is_default')
-                    ->label('Default Language')
+                    ->label(__('admin.default_language'))
                     ->placeholder('All')
                     ->trueLabel('Default Only')
                     ->falseLabel('Non-Default'),
@@ -219,7 +219,7 @@ class LanguageResource extends Resource
             ->emptyStateDescription('Add languages to enable multilingual content and storefront language switching.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Language')
+                    ->label(__('admin.add_language'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

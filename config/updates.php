@@ -4,7 +4,7 @@
 |--------------------------------------------------------------------------
 | In-App Update System (Module 21)
 |--------------------------------------------------------------------------
-| Source of truth for behaviour/decisions: UPDATE_SYSTEM_MASTER_WORKFLOW.md.
+| Source of truth for behaviour/decisions: docs/UPDATE_SYSTEM_MASTER_WORKFLOW.md.
 | Pure-PHP, shared-hosting-safe one-click updater. Values here are the safe
 | defaults; per-install overrides come from .env.
 */
@@ -26,6 +26,10 @@ return [
     ],
 
     // Opt-in auto-apply of security-flagged patch releases (OFF by default).
+    // Driven by the scheduled `oeparts:update:auto-apply` command (routes/
+    // console.php, daily) via App\Console\Commands\AutoApplySecurityUpdate,
+    // which reuses UpdateApplier's normal pre-flight-gated, backup-first,
+    // auto-rollback FSM — never a separate/less-safe path.
     'auto_apply_security' => env('OE_UPDATE_AUTO_SECURITY', false),
 
     'download' => [
@@ -41,7 +45,7 @@ return [
     // Pre-flight environment gate.
     'required_extensions' => ['pdo_mysql', 'zip', 'openssl', 'mbstring', 'curl', 'fileinfo', 'json'],
 
-    // Core vs user-data boundary (rule: never touch preserve_paths). See ARCHITECTURE.md.
+    // Core vs user-data boundary (rule: never touch preserve_paths). See docs/ARCHITECTURE.md.
     'core_paths' => [
         'app', 'bootstrap/app.php', 'config', 'database', 'lang',
         'public/build', 'resources', 'routes', 'vendor', 'artisan',
@@ -157,9 +161,11 @@ return [
             'storage/app/backups', 'storage/app/updates', 'storage/logs',
             // Local Docker dev environment (Sail) — never relevant to an installed release.
             'compose.yaml', 'docker',
-            // Internal dev docs (CHANGELOG.md + README.md still ship).
-            'UPDATE_SYSTEM_MASTER_WORKFLOW.md', 'ADMIN_PANEL_MASTER_WORKFLOW.md',
-            'PRD.md', 'ARCHITECTURE.md', 'CLAUDE.md',
+            // Internal dev docs (CHANGELOG.md + README.md still ship). Moved under
+            // docs/ during the root cleanup — CLAUDE.md stays at root (the project's
+            // own coding-standards file, read by contributors) so its entry doesn't.
+            'docs/UPDATE_SYSTEM_MASTER_WORKFLOW.md', 'docs/ADMIN_PANEL_MASTER_WORKFLOW.md',
+            'docs/PRD.md', 'docs/ARCHITECTURE.md', 'CLAUDE.md',
         ],
         // Per-file sha256 manifest — enables modified-core detection (#44) + future delta.
         'manifest_file' => 'file-manifest.json',

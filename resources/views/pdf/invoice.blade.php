@@ -305,7 +305,7 @@
         @if($order->urgent_processing && bccomp((string) $order->urgent_processing_fee, '0', 2) > 0)
         <div class="totals-row">
             {{-- Invoice document is intentionally English-only throughout
-                 (see PREMIUM_GRADE_MASTER_WORKFLOW.md email/invoice chunk) —
+                 (see docs/PREMIUM_GRADE_MASTER_WORKFLOW.md email/invoice chunk) —
                  a fixed label here, not the customer-facing localized one,
                  keeps this line consistent with the rest of the document. --}}
             <span>Rush Processing:</span>

@@ -31,17 +31,17 @@ class ActivityLogResource extends Resource
                     ->columns(2)
                     ->schema([
                         TextEntry::make('action')
-                            ->label('Action')
+                            ->label(__('admin.action'))
                             ->badge()
                             ->formatStateUsing(fn ($state) => $actionLabels[$state] ?? $state)
                             ->weight(FontWeight::Bold),
                         TextEntry::make('admin.name')
-                            ->label('Performed By'),
+                            ->label(__('admin.performed_by')),
                         TextEntry::make('created_at')
-                            ->label('Date & Time')
+                            ->label(__('admin.date_time'))
                             ->dateTime('M j, Y H:i:s'),
                         TextEntry::make('ip_address')
-                            ->label('IP Address')
+                            ->label(__('admin.ip_address'))
                             ->fontMono()
                             ->copyable()
                             ->copyMessage('IP copied'),
@@ -50,7 +50,7 @@ class ActivityLogResource extends Resource
                     ->columns(2)
                     ->schema([
                         TextEntry::make('model_type')
-                            ->label('Source')
+                            ->label(__('admin.source'))
                             ->formatStateUsing(function ($state) {
                                 return match ($state) {
                                     'App\Filament\Pages\System\SetupAssistant' => 'Setup Assistant',
@@ -61,7 +61,7 @@ class ActivityLogResource extends Resource
                             ->html()
                             ->weight(FontWeight::Medium),
                         TextEntry::make('model_id')
-                            ->label('Record ID')
+                            ->label(__('admin.record_id'))
                             ->fontMono(),
                     ]),
                 Section::make('Changes')
@@ -70,11 +70,11 @@ class ActivityLogResource extends Resource
                         // states as item lists and formats PER ELEMENT, so the
                         // foreach received ints/strings and fataled.
                         TextEntry::make('new_values')
-                            ->label('Details')
+                            ->label(__('admin.details'))
                             ->state(fn ($record): string => self::renderValueList($record->new_values))
                             ->html(),
                         TextEntry::make('old_values')
-                            ->label('Previous Values')
+                            ->label(__('admin.previous_values'))
                             ->state(fn ($record): string => self::renderValueList($record->old_values))
                             ->html()
                             ->visible(fn ($record) => ! empty($record->old_values)),
@@ -154,48 +154,48 @@ class ActivityLogResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('admin'))
             ->columns([
                 Tables\Columns\TextColumn::make('admin.name')
-                    ->label('Admin')
+                    ->label(__('admin.admin'))
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('action')
-                    ->label('Action')
+                    ->label(__('admin.action'))
                     ->searchable()
                     ->sortable()
                     ->badge(),
                 Tables\Columns\TextColumn::make('model_type')
-                    ->label('Model')
+                    ->label(__('admin.model'))
                     ->searchable()
                     ->sortable()
                     ->limit(30),
                 Tables\Columns\TextColumn::make('model_id')
-                    ->label('Record ID')
+                    ->label(__('admin.record_id'))
                     ->numeric()
                     ->fontMono()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
+                    ->label(__('admin.ip_address'))
                     ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->label(__('admin.date'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('action')
-                    ->label('Activity Type')
+                    ->label(__('admin.activity_type'))
                     ->options(static::getActionLabels())
                     ->searchable()
                     ->helperText('Filter by the type of admin activity.'),
                 Tables\Filters\SelectFilter::make('admin_id')
-                    ->label('Admin User')
+                    ->label(__('admin.admin_user'))
                     ->relationship('admin', 'name')
                     ->helperText('Filter activities by the admin who performed them.'),
             ])
             ->actions([
                 Tables\Actions\Action::make('viewSource')
-                    ->label('Source')
+                    ->label(__('admin.source'))
                     ->icon('heroicon-o-arrow-top-right-on-square')
                     ->color('gray')
                     ->url(fn (ActivityLog $record): ?string => static::getSourceUrl($record), shouldOpenInNewTab: true)

@@ -68,7 +68,7 @@ class FaqResource extends Resource
                                     ->description('Categorize this FAQ entry for organized display on the help center.')
                                     ->schema([
                                         Forms\Components\Select::make('category')
-                                            ->label('FAQ Category')
+                                            ->label(__('admin.faq_category'))
                                             ->options([
                                                 'shipping'  => 'Shipping',
                                                 'ordering'  => 'Ordering',
@@ -108,11 +108,11 @@ class FaqResource extends Resource
                                     ->description('FAQ visibility and display ordering.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('FAQ Active')
+                                            ->label(__('admin.faq_active'))
                                             ->helperText('Inactive FAQs are hidden from the storefront help center.')
                                             ->default(true),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -128,7 +128,7 @@ class FaqResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('question')
-                ->label('Question')
+                ->label(__('admin.question'))
                 ->getStateUsing(fn (Faq $record): string => AdminUi::localizedName($record->question))
                 ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->where(function ($q) use ($search) {
@@ -141,18 +141,18 @@ class FaqResource extends Resource
                 ->weight(FontWeight::Medium)
                 ->limit(50),
                 Tables\Columns\TextColumn::make('category')
-                    ->label('Category')
+                    ->label(__('admin.category'))
                     ->badge()
                     ->color('gray')
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->boolean()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
@@ -160,7 +160,7 @@ class FaqResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('category')
-                    ->label('FAQ Category')
+                    ->label(__('admin.faq_category'))
                     ->options([
                         'shipping' => 'Shipping',
                         'ordering' => 'Ordering',
@@ -172,7 +172,7 @@ class FaqResource extends Resource
                     ->native(false)
                     ->helperText('Filter FAQs by topic category.'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('FAQ Status')
+                    ->label(__('admin.faq_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
@@ -231,7 +231,7 @@ class FaqResource extends Resource
             ->emptyStateDescription('Create FAQ entries to help customers find answers to common questions about shipping, orders, and products.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create FAQ')
+                    ->label(__('admin.create_faq'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

@@ -39,14 +39,14 @@ class RoleResource extends Resource
                     ->description('Define the role name and assign permissions for this access level.')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Role Name')
+                            ->label(__('admin.role_name'))
                             ->placeholder('e.g. Content Manager, Order Processor')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true)
                             ->helperText('A descriptive name for this role (e.g. "Order Manager" or "Content Editor").'),
                         Forms\Components\Select::make('guard_name')
-                            ->label('Authentication Guard')
+                            ->label(__('admin.authentication_guard'))
                             ->options([
                                 'admin' => 'Admin Panel',
                             ])
@@ -57,7 +57,7 @@ class RoleResource extends Resource
                             ->dehydrated()
                             ->helperText('The authentication guard this role applies to.'),
                         Forms\Components\CheckboxList::make('permissions')
-                            ->label('Assigned Permissions')
+                            ->label(__('admin.assigned_permissions'))
                             ->relationship('permissions', 'name')
                             ->columns(3)
                             ->searchable()
@@ -73,25 +73,25 @@ class RoleResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('name')
-                ->label('Role')
+                ->label(__('admin.role'))
                 ->searchable()
                 ->sortable()
                 ->badge()
                 ->color('warning')
                 ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('guard_name')
-                    ->label('Guard')
+                    ->label(__('admin.guard'))
                     ->badge()
                     ->color('gray'),
                 Tables\Columns\TextColumn::make('permissions_count')
-                    ->label('Permissions')
+                    ->label(__('admin.permissions'))
                     ->counts('permissions')
                     ->badge()
                     ->color('info')
                     ->fontMono()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('users_count')
-                    ->label('Admins')
+                    ->label(__('admin.admins'))
                     ->counts('users')
                     ->badge()
                     ->color(fn (int $state): string => $state > 0 ? 'success' : 'gray')
@@ -99,14 +99,14 @@ class RoleResource extends Resource
                     ->alignCenter()
                     ->tooltip('Administrators currently holding this role — roles in use cannot be deleted.'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('admin.created'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('guard_name')
-                    ->label('Authentication Guard')
+                    ->label(__('admin.authentication_guard'))
                     ->options(['admin' => 'Admin Panel'])
                     ->default('admin')
                     ->native(false)
@@ -144,7 +144,7 @@ class RoleResource extends Resource
             ->emptyStateDescription('Create roles to define permission groups for administrators. Each role can have multiple permissions.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create Role')
+                    ->label(__('admin.create_role'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

@@ -65,14 +65,14 @@ class BlogPostResource extends Resource
                                     ->description('Post metadata including URL, categorization, and featured image.')
                                     ->schema([
                                         Forms\Components\TextInput::make('slug')
-                                            ->label('URL Slug')
+                                            ->label(__('admin.url_slug'))
                                             ->placeholder('e.g. how-to-choose-brake-pads')
                                             ->helperText('Used in blog post URLs (e.g. /blog/how-to-choose-brake-pads). Auto-generated from English title.')
                                             ->required()
                                             ->unique(ignoreRecord: true)
                                             ->maxLength(200),
                                         Forms\Components\Select::make('category_id')
-                                            ->label('Blog Category')
+                                            ->label(__('admin.blog_category'))
                                             ->relationship('category', 'name')
                                             ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                                             ->searchable()
@@ -80,14 +80,14 @@ class BlogPostResource extends Resource
                                             ->nullable()
                                             ->helperText('Organize posts into categories for better navigation.'),
                                         Forms\Components\Select::make('tags')
-                                            ->label('Tags')
+                                            ->label(__('admin.tags'))
                                             ->relationship('tags', 'name')
                                             ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                                             ->multiple()
                                             ->preload()
                                             ->createOptionForm([
                                                 Forms\Components\TextInput::make('name')
-                                                    ->label('Tag Name')
+                                                    ->label(__('admin.tag_name'))
                                                     ->required()
                                                     ->maxLength(100)
                                                     ->live(onBlur: true)
@@ -104,7 +104,7 @@ class BlogPostResource extends Resource
                                             ])->id)
                                             ->helperText('Add tags for content discovery and SEO — create new ones inline with the + button.'),
                                         Forms\Components\Select::make('featured_image_id')
-                                            ->label('Featured Image')
+                                            ->label(__('admin.featured_image'))
                                             ->relationship('featuredImage', 'file_name')
                                             ->searchable()
                                             ->nullable()
@@ -148,13 +148,13 @@ class BlogPostResource extends Resource
                                                     ->map(fn (string $label, string $code) => Tab::make($label)
                                                         ->schema([
                                                             Forms\Components\TextInput::make("meta_title.$code")
-                                                                ->label('Meta Title')
+                                                                ->label(__('admin.meta_title'))
                                                                 ->placeholder('e.g. How to Choose Brake Pads | OeParts')
                                                                 ->maxLength(255)
                                                                 ->nullable()
                                                                 ->helperText('Optimal: 50–60 characters. Currently shown in search results as the clickable headline.'),
                                                             Forms\Components\Textarea::make("meta_description.$code")
-                                                                ->label('Meta Description')
+                                                                ->label(__('admin.meta_description'))
                                                                 ->placeholder('e.g. Learn how to select the right brake pads for your vehicle...')
                                                                 ->rows(2)
                                                                 ->maxLength(500)
@@ -177,21 +177,21 @@ class BlogPostResource extends Resource
                                     ->description('Control when and how this post is published.')
                                     ->schema([
                                         Forms\Components\Select::make('status')
-                                            ->label('Publish Status')
+                                            ->label(__('admin.publish_status'))
                                             ->options(ContentStatus::class)
                                             ->required()
                                             ->default(ContentStatus::Draft)
                                             ->helperText('Draft posts are not visible on the storefront.'),
                                         Forms\Components\DateTimePicker::make('published_at')
-                                            ->label('Published At')
+                                            ->label(__('admin.published_at'))
                                             ->nullable()
                                             ->helperText('Schedule a future publication date. Leave empty to publish immediately.'),
                                         Forms\Components\DatePicker::make('last_reviewed_at')
-                                            ->label('Last Reviewed')
+                                            ->label(__('admin.last_reviewed'))
                                             ->nullable()
                                             ->helperText('Track when this post was last fact-checked or updated.'),
                                         Forms\Components\Select::make('author_id')
-                                            ->label('Author')
+                                            ->label(__('admin.author'))
                                             ->relationship('author', 'name')
                                             ->required()
                                             ->default(fn () => auth('admin')->id())
@@ -208,7 +208,7 @@ class BlogPostResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with(['category', 'author']))
             ->columns([
             Tables\Columns\TextColumn::make('title')
-                ->label('Title')
+                ->label(__('admin.title'))
                 ->getStateUsing(fn (BlogPost $record): string => AdminUi::localizedName($record->title))
                 ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->where(function ($q) use ($search) {
@@ -221,16 +221,16 @@ class BlogPostResource extends Resource
                 ->weight(FontWeight::Medium)
                 ->limit(40),
             Tables\Columns\TextColumn::make('category.name')
-                ->label('Category')
+                ->label(__('admin.category'))
                 ->getStateUsing(fn (BlogPost $record): string => $record->category ? AdminUi::localizedName($record->category->name) : '—')
                 ->badge()
                 ->color('gray')
                 ->limit(20),
             Tables\Columns\TextColumn::make('author.name')
-                ->label('Author')
+                ->label(__('admin.author'))
                 ->toggleable(),
             Tables\Columns\TextColumn::make('status')
-                ->label('Status')
+                ->label(__('admin.status'))
                 ->badge()
                 ->color(fn (ContentStatus $state): string => match ($state) {
                     ContentStatus::Published => 'success',
@@ -248,24 +248,24 @@ class BlogPostResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Publish Status')
+                    ->label(__('admin.publish_status'))
                     ->options(ContentStatus::class)
                     ->native(false)
                     ->helperText('Filter by draft, published, or archived posts.'),
                 Tables\Filters\SelectFilter::make('category_id')
-                    ->label('Blog Category')
+                    ->label(__('admin.blog_category'))
                     ->relationship('category', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                     ->native(false)
                     ->helperText('Filter posts by their assigned category.'),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Created Date')
+                    ->label(__('admin.created_date'))
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created After')
+                            ->label(__('admin.created_after'))
                             ->placeholder('Select start date'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Before')
+                            ->label(__('admin.created_before'))
                             ->placeholder('Select end date'),
                     ])
                     ->query(function ($query, array $data) {
@@ -369,7 +369,7 @@ class BlogPostResource extends Resource
             ->emptyStateDescription('Write and publish your first blog post to share technical guides, news, and updates with your customers.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create Post')
+                    ->label(__('admin.create_post'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

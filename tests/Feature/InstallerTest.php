@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +21,7 @@ class InstallerTest extends TestCase
     {
         parent::setUp();
 
-        // The installer writes to base_path('.env') (InstallerController::
+        // The installer writes to base_path('.env') (InstallManager::
         // updateEnvFile). Snapshot it so these tests can never clobber the
         // developer's real environment — this is exactly how a test run once
         // overwrote DB_DATABASE with the mock 'test_database' and broke login.
@@ -32,6 +33,9 @@ class InstallerTest extends TestCase
         if (File::exists($lockFile)) {
             File::delete($lockFile);
         }
+
+        // Never let a stray install/state.json from a previous run leak in.
+        @unlink(storage_path('app/install/state.json'));
 
         // Ensure we're in testing environment
         config(['app.env' => 'testing']);
@@ -52,6 +56,7 @@ class InstallerTest extends TestCase
         if (File::exists($lockFile)) {
             File::delete($lockFile);
         }
+        @unlink(storage_path('app/install/state.json'));
 
         parent::tearDown();
     }
@@ -67,6 +72,22 @@ class InstallerTest extends TestCase
 
         // Should redirect to homepage
         $response->assertRedirect('/');
+    }
+
+    #[Test]
+    public function installer_middleware_self_heals_lock_file_when_admins_table_already_has_data()
+    {
+        // No lock file, but a real admin exists — e.g. the lock file was
+        // deleted by mistake on a host that's already installed. The
+        // installer must never let migrate:fresh run over this database.
+        Admin::factory()->create();
+
+        $this->assertFileDoesNotExist(storage_path('installed.lock'));
+
+        $response = $this->get('/install');
+
+        $response->assertRedirect('/');
+        $this->assertFileExists(storage_path('installed.lock'));
     }
 
     #[Test]
@@ -121,12 +142,13 @@ class InstallerTest extends TestCase
     #[Test]
     public function installer_processes_site_settings()
     {
-        $response = $this->post('/install/site-settings', [
-            'site_name' => 'Test Site',
-            'site_url' => 'https://example.com',
-            'default_locale' => 'en',
-            'timezone' => 'UTC',
-        ]);
+        $response = $this->withSession(['installer.db_configured' => true])
+            ->post('/install/site-settings', [
+                'site_name' => 'Test Site',
+                'site_url' => 'https://example.com',
+                'default_locale' => 'en',
+                'timezone' => 'UTC',
+            ]);
 
         $response->assertRedirect('/install/admin-account');
         $response->assertSessionHasNoErrors();
@@ -135,15 +157,65 @@ class InstallerTest extends TestCase
     #[Test]
     public function installer_validates_admin_account()
     {
-        $response = $this->post('/install/admin-account', [
-            'name' => 'Test Admin',
-            'email' => 'invalid-email',
-            'password' => 'short',
-            'password_confirmation' => 'different',
-        ]);
+        $response = $this->withSession(['installer.site_settings_done' => true])
+            ->post('/install/admin-account', [
+                'name' => 'Test Admin',
+                'email' => 'invalid-email',
+                'password' => 'short',
+                'password_confirmation' => 'different',
+            ]);
 
         $response->assertRedirect();
         $response->assertSessionHasErrors(['email', 'password']);
+    }
+
+    #[Test]
+    public function installer_process_steps_reject_skipped_prerequisites()
+    {
+        // POSTing straight to a later step without having completed the one
+        // before it must bounce back to step 1, not silently accept
+        // whatever's in the request (previously this created settings rows
+        // with values from steps that were never actually filled in).
+        $response = $this->post('/install/admin-account', [
+            'name' => 'Test Admin',
+            'email' => 'admin@example.com',
+            'password' => 'Qz7#mV2!xP',
+            'password_confirmation' => 'Qz7#mV2!xP',
+        ]);
+
+        $response->assertRedirect('/install');
+        $response->assertSessionHas('error');
+    }
+
+    #[Test]
+    public function installer_run_requires_email_setup_step_to_be_completed()
+    {
+        $response = $this->get('/install/run');
+
+        $response->assertRedirect('/install');
+    }
+
+    #[Test]
+    public function installer_run_shows_progress_page_once_email_setup_is_done()
+    {
+        $response = $this->withSession([
+            'installer.email_setup_done' => true,
+            'installer.admin_name' => 'Test Admin',
+            'installer.admin_email' => 'admin@example.com',
+            'installer.admin_password' => bcrypt('Qz7#mV2!xP'),
+            'installer.site_name' => 'Test Site',
+            'installer.site_url' => 'https://example.com',
+            'installer.default_locale' => 'en',
+            'installer.timezone' => 'UTC',
+        ])->get('/install/run');
+
+        $response->assertStatus(200);
+        $response->assertSee('Installing OeParts');
+
+        // start() only writes the checkpoint file — it must never itself run
+        // migrate:fresh or any other real work; that happens one chunk at a
+        // time behind the AJAX /install/run/advance endpoint.
+        $this->assertFileExists(storage_path('app/install/state.json'));
     }
 
     #[Test]
@@ -156,25 +228,28 @@ class InstallerTest extends TestCase
         $response = $this->get('/install');
         $response->assertStatus(200);
 
-        // Step 2: Database (mock successful connection)
-        $response = $this->post('/install/database', [
-            'db_host' => '127.0.0.1',
-            'db_port' => '3306',
-            'db_name' => 'test_database',
-            'db_username' => 'root',
-            'db_password' => '',
-        ]);
+        // Step 2: Database (mock successful connection) — the session flag
+        // this sets is what step 3's process method now requires.
+        $response = $this->withSession(['installer.db_configured' => true])
+            ->post('/install/database', [
+                'db_host' => '127.0.0.1',
+                'db_port' => '3306',
+                'db_name' => 'test_database',
+                'db_username' => 'root',
+                'db_password' => '',
+            ]);
 
         // In real scenario this would test connection, but we'll assume it passes
         // and moves to next step
 
         // Step 3: Site settings
-        $response = $this->post('/install/site-settings', [
-            'site_name' => 'Test Site',
-            'site_url' => 'https://example.com',
-            'default_locale' => 'en',
-            'timezone' => 'UTC',
-        ]);
+        $response = $this->withSession(['installer.db_configured' => true])
+            ->post('/install/site-settings', [
+                'site_name' => 'Test Site',
+                'site_url' => 'https://example.com',
+                'default_locale' => 'en',
+                'timezone' => 'UTC',
+            ]);
 
         $response->assertRedirect('/install/admin-account');
 
@@ -202,12 +277,27 @@ class InstallerTest extends TestCase
 
         $response->assertRedirect('/install/run');
 
-        // Step 6: Installation process
-        // This would run migrations and seeders in a real test
-        // For now, just verify the route exists
-        $response = $this->get('/install/complete');
+        // Step 6: the progress page loads and starts a checkpointed run.
+        // Deliberately NOT calling /install/run/advance here — that would
+        // run a real migrate:fresh against the shared sqlite :memory:
+        // connection this whole suite's RefreshDatabase trait relies on.
+        // See tests/Unit/InstallManagerTest.php for the state-machine
+        // itself, exercised with fake steps.
+        $response = $this->get('/install/run');
         $response->assertStatus(200);
-        $response->assertSee('Installation Complete');
+        $response->assertSee('Installing OeParts');
+    }
+
+    #[Test]
+    public function installer_test_mail_endpoint_validates_input()
+    {
+        $response = $this->postJson('/install/email-setup/test-mail', [
+            'mail_driver' => 'smtp',
+            // missing mail_host/mail_port/mail_from_address/mail_from_name/test_to
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson(['success' => false]);
     }
 
     #[Test]
@@ -229,20 +319,36 @@ class InstallerTest extends TestCase
         // Create installed.lock
         File::put(storage_path('installed.lock'), 'installed');
 
-        // Try to access installer routes
+        // Try to access installer routes gated by the installer middleware.
+        // installer.complete is deliberately NOT in this list — it lives
+        // outside that middleware group on purpose (see routes/installer.php).
         $routes = [
             '/install',
             '/install/database',
             '/install/site-settings',
             '/install/admin-account',
             '/install/email-setup',
-            '/install/complete',
+            '/install/run',
         ];
 
         foreach ($routes as $route) {
             $response = $this->get($route);
             $response->assertRedirect('/');
         }
+    }
+
+    #[Test]
+    public function installer_complete_page_is_reachable_even_after_the_lock_file_exists()
+    {
+        // installer.complete must stay reachable right after a real install
+        // writes the lock file — InstallManager's last step does exactly
+        // that immediately before redirecting the browser here.
+        File::put(storage_path('installed.lock'), 'installed');
+
+        $response = $this->get('/install/complete');
+
+        $response->assertStatus(200);
+        $response->assertSee('Installation Complete');
     }
 
     #[Test]

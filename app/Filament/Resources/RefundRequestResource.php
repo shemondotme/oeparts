@@ -72,28 +72,28 @@ class RefundRequestResource extends Resource
                                     ->description('Core refund context and customer-provided reason.')
                                     ->schema([
                                         Forms\Components\Select::make('order_id')
-                                            ->label('Original Order')
+                                            ->label(__('admin.original_order'))
                                             ->relationship('order', 'order_number')
                                             ->searchable()
                                             ->preload()
                                             ->required()
                                             ->helperText('The order this refund request is associated with.'),
                                         Forms\Components\Select::make('user_id')
-                                            ->label('Customer')
+                                            ->label(__('admin.customer'))
                                             ->relationship('user', 'name')
                                             ->searchable()
                                             ->preload()
                                             ->nullable()
                                             ->helperText('The customer who submitted this refund request. May be empty for guest orders.'),
                                         Forms\Components\Textarea::make('reason')
-                                            ->label('Refund Reason')
+                                            ->label(__('admin.refund_reason'))
                                             ->placeholder('e.g. Wrong part received, part damaged in transit...')
                                             ->helperText('Customer-provided explanation for why they are requesting a refund.')
                                             ->required()
                                             ->rows(4)
                                             ->columnSpanFull(),
                                         Forms\Components\Textarea::make('admin_note')
-                                            ->label('Internal Admin Note')
+                                            ->label(__('admin.internal_admin_note'))
                                             ->placeholder('e.g. Verified with carrier, item was damaged...')
                                             ->helperText('Private note for internal reference. Not visible to the customer.')
                                             ->nullable()
@@ -110,13 +110,13 @@ class RefundRequestResource extends Resource
                                     ->description('Track the current state and processing timeline of this refund.')
                                     ->schema([
                                         Forms\Components\Select::make('status')
-                                            ->label('Refund Status')
+                                            ->label(__('admin.refund_status'))
                                             ->options(RefundStatus::class)
                                             ->required()
                                             ->default(RefundStatus::Pending)
                                             ->helperText('Current processing state of this refund request.'),
                                         Forms\Components\DateTimePicker::make('processed_at')
-                                            ->label('Processed At')
+                                            ->label(__('admin.processed_at'))
                                             ->nullable()
                                             ->helperText('Date and time the refund was finalized. Set automatically when approved.'),
                                     ]),
@@ -126,7 +126,7 @@ class RefundRequestResource extends Resource
                                     ->extraAttributes(['class' => 'op-financials-form'])
                                     ->schema([
                                         Forms\Components\TextInput::make('amount_requested')
-                                            ->label('Refund Amount Requested')
+                                            ->label(__('admin.refund_amount_requested'))
                                             ->numeric()
                                             ->prefix('€')
                                             ->required()
@@ -145,7 +145,7 @@ class RefundRequestResource extends Resource
                                     ->collapsed()
                                     ->schema([
                                         Forms\Components\Placeholder::make('return_images_display')
-                                            ->label('Submitted Images')
+                                            ->label(__('admin.submitted_images'))
                                             ->content(function ($record) {
                                                 $images = $record->return_images ?? [];
                                                 if (empty($images)) {
@@ -178,7 +178,7 @@ class RefundRequestResource extends Resource
                 ->searchable()
                 ->sortable(),
             Tables\Columns\TextColumn::make('customer_name')
-                ->label('Customer')
+                ->label(__('admin.customer'))
                 ->getStateUsing(fn (RefundRequest $record): string => $record->user?->name ?? $record->order?->shipping_name ?? $record->order?->guest_email ?? '—')
                 ->description(fn (RefundRequest $record): ?string =>
                     $record->user?->email ?? $record->order?->guest_email ?? null
@@ -193,24 +193,24 @@ class RefundRequestResource extends Resource
                 ->limit(30)
                 ->toggleable(),
                 Tables\Columns\TextColumn::make('amount_requested')
-                    ->label('Amount')
+                    ->label(__('admin.amount'))
                     ->getStateUsing(fn (RefundRequest $record): string => format_money($record->amount_requested))
                     ->alignEnd()
                     ->fontMono()
                     ->weight(FontWeight::Bold)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order.grand_total')
-                    ->label('Order Total')
+                    ->label(__('admin.order_total'))
                     ->getStateUsing(fn (RefundRequest $record): string => $record->order ? format_money($record->order->grand_total) : '—')
                     ->alignEnd()
                     ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('reason')
-                    ->label('Reason')
+                    ->label(__('admin.reason'))
                     ->limit(40)
                     ->tooltip(fn (RefundRequest $record): string => $record->reason),
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('admin.status'))
                     ->badge()
                     ->icon(fn (RefundStatus $state): string => match ($state) {
                         RefundStatus::Pending => 'heroicon-o-clock',
@@ -221,26 +221,26 @@ class RefundRequestResource extends Resource
                     ->color(fn (RefundStatus $state): string => AdminUi::refundStatusColor($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->label(__('admin.date'))
                     ->dateTime('d M Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Refund Status')
+                    ->label(__('admin.refund_status'))
                     ->options(RefundStatus::class)
                     ->multiple()
                     ->native(false)
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('amount_range')
-                    ->label('Amount Range')
+                    ->label(__('admin.amount_range'))
                     ->form([
                         Forms\Components\TextInput::make('min_amount')
-                            ->label('Min (€)')
+                            ->label(__('admin.min_eur'))
                             ->numeric()
                             ->placeholder('0.00'),
                         Forms\Components\TextInput::make('max_amount')
-                            ->label('Max (€)')
+                            ->label(__('admin.max_eur'))
                             ->numeric()
                             ->placeholder('999.99'),
                     ])
@@ -251,12 +251,12 @@ class RefundRequestResource extends Resource
                     })
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Date Range')
+                    ->label(__('admin.date_range'))
                     ->form([
                         Forms\Components\DatePicker::make('from')
-                            ->label('From'),
+                            ->label(__('admin.from')),
                         Forms\Components\DatePicker::make('until')
-                            ->label('Until'),
+                            ->label(__('admin.until')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -270,7 +270,7 @@ class RefundRequestResource extends Resource
                 static::rejectAction(),
                 static::markProcessedAction(),
                 Actions\Action::make('approveAndRefund')
-                    ->label('Approve & Refund')
+                    ->label(__('admin.approve_refund'))
                     ->icon('heroicon-o-banknotes')
                     ->color('success')
                     ->authorize('update')
@@ -279,7 +279,7 @@ class RefundRequestResource extends Resource
                     ->modalDescription('This will approve the refund request and mark it as processed in one step.')
                     ->schema([
                         Forms\Components\Textarea::make('admin_note')
-                            ->label('Refund Note')
+                            ->label(__('admin.refund_note'))
                             ->rows(3)
                             ->placeholder('Reason for refund...'),
                     ])
@@ -352,7 +352,7 @@ class RefundRequestResource extends Resource
     public static function approveAction(): Actions\Action
     {
         return Actions\Action::make('approve')
-            ->label('Approve')
+            ->label(__('admin.approve'))
             ->icon('heroicon-o-check-circle')
             ->color('success')
             ->authorize('update')
@@ -377,7 +377,7 @@ class RefundRequestResource extends Resource
     public static function rejectAction(): Actions\Action
     {
         return Actions\Action::make('reject')
-            ->label('Reject')
+            ->label(__('admin.reject'))
             ->icon('heroicon-o-x-circle')
             ->color('danger')
             ->authorize('update')
@@ -385,7 +385,7 @@ class RefundRequestResource extends Resource
             ->modalDescription('Reject this refund request. The customer will be notified with your reason for rejection.')
             ->schema([
                 Forms\Components\Textarea::make('admin_note')
-                    ->label('Rejection Reason')
+                    ->label(__('admin.rejection_reason'))
                     ->placeholder('e.g. Part was installed, return window expired, damage caused by customer...')
                     ->required()
                     ->rows(3)
@@ -410,7 +410,7 @@ class RefundRequestResource extends Resource
     public static function markProcessedAction(): Actions\Action
     {
         return Actions\Action::make('markProcessed')
-            ->label('Mark Processed')
+            ->label(__('admin.mark_processed'))
             ->icon('heroicon-o-banknotes')
             ->color('primary')
             ->authorize('update')

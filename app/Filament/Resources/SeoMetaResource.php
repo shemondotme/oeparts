@@ -60,13 +60,13 @@ class SeoMetaResource extends Resource
                                         AdminUi::readOnlyField('metable_type', 'Resource Type', 'The model type this SEO metadata belongs to.'),
                                         AdminUi::readOnlyField('metable_id', 'Resource ID'),
                                         Forms\Components\TextInput::make('meta_title')
-                                            ->label('Meta Title')
+                                            ->label(__('admin.meta_title'))
                                             ->placeholder('e.g. Brake Pads for VW Golf | OeParts')
                                             ->maxLength(255)
                                             ->nullable()
                                             ->helperText('Optimal: 50–60 characters. Currently shown in search results as the clickable headline.'),
                                         Forms\Components\Textarea::make('meta_description')
-                                            ->label('Meta Description')
+                                            ->label(__('admin.meta_description'))
                                             ->placeholder('e.g. Find genuine OEM brake pads for your VW Golf...')
                                             ->rows(3)
                                             ->nullable()
@@ -79,7 +79,7 @@ class SeoMetaResource extends Resource
                                     ->description('Set the canonical URL to prevent duplicate content issues.')
                                     ->schema([
                                         Forms\Components\TextInput::make('canonical_url')
-                                            ->label('Canonical URL')
+                                            ->label(__('admin.canonical_url'))
                                             ->placeholder('e.g. https://oeparts.com/products/brake-pads')
                                             ->url()
                                             ->maxLength(500)
@@ -98,19 +98,19 @@ class SeoMetaResource extends Resource
                                     ->description('Open Graph tags and search engine indexing directives.')
                                     ->schema([
                                         Forms\Components\TextInput::make('og_title')
-                                            ->label('Open Graph Title')
+                                            ->label(__('admin.open_graph_title'))
                                             ->placeholder('e.g. Brake Pads for VW Golf | OeParts')
                                             ->maxLength(255)
                                             ->nullable()
                                             ->helperText('Title shown when shared on social media. Falls back to meta title if empty.'),
                                         Forms\Components\Textarea::make('og_description')
-                                            ->label('Open Graph Description')
+                                            ->label(__('admin.open_graph_description'))
                                             ->placeholder('e.g. Find genuine OEM brake pads...')
                                             ->rows(2)
                                             ->nullable()
                                             ->helperText('Description shown when shared on social media. Falls back to meta description if empty.'),
                                         Forms\Components\Select::make('robots')
-                                            ->label('Robots Directive')
+                                            ->label(__('admin.robots_directive'))
                                             ->options([
                                                 'index,follow' => 'Index, Follow',
                                                 'noindex,follow' => 'No Index, Follow',
@@ -131,39 +131,39 @@ class SeoMetaResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('metable_type')
-                ->label('Type')
+                ->label(__('admin.type'))
                 ->badge()
                 ->color('gray')
                 ->searchable()
                 ->sortable()
                 ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('metable_id')
-                ->label('ID')
+                ->label(__('admin.id'))
                 ->alignCenter()
                 ->fontMono(),
             Tables\Columns\TextColumn::make('meta_title')
-                ->label('Meta Title')
+                ->label(__('admin.meta_title'))
                 ->limit(40)
                 ->searchable(),
             Tables\Columns\TextColumn::make('robots')
-                ->label('Robots')
+                ->label(__('admin.robots'))
                 ->badge()
                 ->color('primary')
                 ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('admin.created'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('metable_type')
-                    ->label('Resource Type')
+                    ->label(__('admin.resource_type'))
                     ->options(fn (): array => SeoMeta::distinct()->pluck('metable_type', 'metable_type')->toArray())
                     ->native(false)
                     ->helperText('Filter SEO metadata by the linked model type.'),
                 Tables\Filters\SelectFilter::make('robots')
-                    ->label('Robots Directive')
+                    ->label(__('admin.robots_directive'))
                     ->options([
                         'index,follow' => 'Index, Follow',
                         'noindex,follow' => 'No Index, Follow',

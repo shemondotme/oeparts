@@ -47,41 +47,41 @@ class EmailLogResource extends Resource
                     ->description('Detailed information about this sent email including recipient, template, and status.')
                     ->schema([
                         Forms\Components\TextInput::make('to_email')
-                            ->label('Recipient Email')
+                            ->label(__('admin.recipient_email'))
                             ->email()
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('subject')
-                            ->label('Email Subject')
+                            ->label(__('admin.email_subject'))
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\Select::make('template_type')
-                            ->label('Email Template')
+                            ->label(__('admin.email_template'))
                             ->options(EmailTemplate::class)
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\Select::make('status')
-                            ->label('Delivery Status')
+                            ->label(__('admin.delivery_status'))
                             ->options(LogStatus::class)
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\Textarea::make('error_message')
-                            ->label('Error Details')
+                            ->label(__('admin.error_details'))
                             ->rows(3)
                             ->disabled()
                             ->dehydrated(false)
                             ->helperText('Error message if the email failed to send.'),
                         Forms\Components\TextInput::make('related_type')
-                            ->label('Related Model')
+                            ->label(__('admin.related_model'))
                             ->disabled()
                             ->dehydrated(false)
                             ->helperText('The model type this email is associated with (e.g. Order, Customer).'),
                         Forms\Components\TextInput::make('related_id')
-                            ->label('Related Record ID')
+                            ->label(__('admin.related_record_id'))
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\DateTimePicker::make('sent_at')
-                            ->label('Sent At')
+                            ->label(__('admin.sent_at'))
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(2),
@@ -93,16 +93,16 @@ class EmailLogResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('to_email')
-                ->label('To')
+                ->label(__('admin.to'))
                 ->searchable()
                 ->sortable()
                 ->limit(30),
             Tables\Columns\TextColumn::make('subject')
-                ->label('Subject')
+                ->label(__('admin.subject'))
                 ->searchable()
                 ->limit(40),
             Tables\Columns\TextColumn::make('template_type')
-                ->label('Template')
+                ->label(__('admin.template'))
                 ->badge()
                 ->color(fn (EmailTemplate $state): string => match ($state) {
                     EmailTemplate::OrderConfirmation => 'success',
@@ -120,7 +120,7 @@ class EmailLogResource extends Resource
                 })
                 ->toggleable(),
             Tables\Columns\TextColumn::make('status')
-                ->label('Status')
+                ->label(__('admin.status'))
                 ->badge()
                 ->color(fn (LogStatus $state): string => match ($state) {
                     LogStatus::Success => 'success',
@@ -131,19 +131,19 @@ class EmailLogResource extends Resource
                     LogStatus::Failed  => 'heroicon-o-x-circle',
                 }),
                 Tables\Columns\TextColumn::make('sent_at')
-                    ->label('Sent')
+                    ->label(__('admin.sent'))
                     ->dateTime('M j, Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Delivery Status')
+                    ->label(__('admin.delivery_status'))
                     ->options(LogStatus::class)
                     ->native(false)
                     ->helperText('Filter by successful or failed deliveries.')
                     ->columnSpan(1),
                 Tables\Filters\SelectFilter::make('template_type')
-                    ->label('Email Template')
+                    ->label(__('admin.email_template'))
                     ->options(EmailTemplate::class)
                     ->native(false)
                     ->helperText('Filter by the type of email sent.')

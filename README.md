@@ -131,12 +131,32 @@ See [Configuration](#configuration) below for the full picture, including which 
 http://your-domain.com/install
 ```
 
-The installer will:
-- Test your database connection
-- Run all migrations (125+ and counting — schema changes are append-only, see [Architecture](#architecture))
-- Seed settings, languages, roles, carriers, and sequences
-- Create your admin account
-- Optionally load demo data
+> **Shared hosting, no SSH/CLI access?** Skip steps 1–2 entirely. Download the packaged
+> release asset (`oeparts-<version>.zip` on the [Releases page](https://github.com/shemondotme/oeparts/releases) —
+> **not** GitHub's "Code > Download ZIP", which is source-only and has no `vendor/`),
+> extract it, point your document root at `public/`, and visit `/install` directly.
+> The `vendor/` dependencies are already bundled in that asset, and the entrypoint
+> auto-creates `.env` with a fresh random `APP_KEY` on first request if one doesn't
+> exist yet — so the installer's first screen renders with zero manual setup.
+
+A 6-step wizard: requirements check → database (test the connection, optionally create the
+database itself if your user has that privilege) → site settings (timezone/language
+pre-filled from your server/browser) → admin account → email (with a "send test email"
+button, so a typo'd SMTP password shows up now, not on your first real order) → install.
+
+The install step itself runs as a chunked, AJAX-polled progress bar, not one long request —
+each migration/seeder/setup step is a separate small HTTP call, so it can't be killed by a
+host's `max_execution_time` partway through. It:
+- Runs all migrations (125+ and counting — schema changes are append-only, see [Architecture](#architecture))
+- Seeds settings, languages, roles, carriers, and sections
+- Creates your admin account and assigns the `super_admin` role
+- Persists your site settings and writes mail settings to `.env`
+- Optionally loads demo catalog data
+- Writes `storage/installed.lock` and logs the whole run to `storage/logs/install-<date>.log`
+
+The installer refuses to run `migrate:fresh` a second time if the database already has a
+completed install (an `admins` table with rows) — even if `storage/installed.lock` is
+deleted — so it can't be used to accidentally wipe a live site.
 
 ### 4. Start queue workers
 
@@ -177,7 +197,7 @@ docker compose exec laravel.test composer install
 docker compose exec laravel.test php artisan migrate --seed
 ```
 
-Full guide, including the PHP 8.3/8.4/8.5 compatibility matrix and the shared-hosting simulation used before every release: see [`docs/DOCKER_DEV_ENVIRONMENT.md`](docs/DOCKER_DEV_ENVIRONMENT.md). Opening this repo in VS Code and choosing "Reopen in Container" sets everything up automatically — no manual steps at all.
+Opening this repo in VS Code and choosing "Reopen in Container" sets everything up automatically via `.devcontainer/devcontainer.json` — no manual steps at all. The dev container matches the PHP 8.3/8.4/8.5 support matrix and simulates shared-hosting constraints (no Redis, no long-running processes) so what passes locally matches what a real self-hoster gets.
 
 ### XAMPP / local PHP (alternative)
 
@@ -210,7 +230,7 @@ Most runtime behavior (VAT rates, OTP length, rate limits, search thresholds) li
 | Variable | Required for | Notes |
 |---|---|---|
 | `DB_*` | Everything | Standard Laravel database connection |
-| `CACHE_STORE` / `SESSION_DRIVER` / `QUEUE_CONNECTION` | Everything | `redis` in production; `array`/`file`/`sync` for local dev without Redis |
+| `CACHE_STORE` / `SESSION_DRIVER` / `QUEUE_CONNECTION` | Everything | Default to `file`/`file`/`sync` — zero setup, works on any host. `redis` is a recommended performance upgrade once you have Redis available, not a requirement (see table below) |
 | `MAIL_*` | Order/account emails | SMTP; all emails are queued, never sent inline |
 | `AIRWALLEX_*` | Checkout | Card + bank transfer payments; HMAC-verified webhooks |
 | `OE_BACKUP_KEY` | **Any backup** | AES-256-GCM key for encrypting backups (customer PII/GDPR) — backups **refuse to run** without it. Generate with `openssl rand -base64 32` and store it somewhere durable and separate from the database — losing it makes every existing backup unrecoverable |
@@ -221,6 +241,20 @@ Most runtime behavior (VAT rates, OTP length, rate limits, search thresholds) li
 See [`.env.example`](.env.example) for the complete, annotated list, and [`SECURITY.md`](SECURITY.md#hardening-notes-for-self-hosters) for the reasoning behind the security-sensitive keys.
 
 Notable `settings` groups (editable in-app, no redeploy): `tax`, `shipping`, `search`, `performance`, `seo`, `payment`, `stats_counter`, `social`, `contact`.
+
+### Cache / session / queue driver options
+
+No caching backend is required to install or run OeParts — the shipped defaults (`file`/`file`/`sync`) work on any PHP host with zero extra setup. Redis or Memcached are opt-in performance upgrades, not prerequisites; the admin dashboard's health strip tells you whether the one you picked is actually reachable, it never blocks the app from booting either way.
+
+| Backend | `CACHE_STORE` | `SESSION_DRIVER` | `QUEUE_CONNECTION` | Needs |
+|---|---|---|---|---|
+| File (default) | ✅ | ✅ | — | Nothing — always available |
+| Database | ✅ | ✅ | ✅ | Nothing — uses your existing DB connection |
+| Sync (no queue worker) | — | — | ✅ | Nothing — jobs run inline in the request |
+| Redis | ✅ | ✅ | ✅ | `redis` PHP extension, **or** set `REDIS_CLIENT=predis` to use the bundled pure-PHP client with no extension at all |
+| Memcached | ✅ | ❌ | ❌ | `memcached` PHP extension — Laravel has no Memcached session or queue driver, so those two stay on another option regardless |
+
+Host has Memcached but not Redis? Set `CACHE_STORE=memcached` and leave `SESSION_DRIVER`/`QUEUE_CONNECTION` on `file`/`sync` (or `database` if you'd rather not touch the filesystem) — Memcached can only ever cover the cache role.
 
 ---
 
@@ -234,8 +268,24 @@ Most self-hosted platforms leave "how do I update this in production" as an exer
 - **Signed releases (optional)** — RSA-SHA256 signature verification in addition to SHA-256 checksums, so a compromised mirror can't serve a tampered build
 - **App-independent Recovery Console** (`public/oe-recovery.php`) — pure PDO + filesystem, no framework bootstrap — for the rare case where an update leaves the app unable to boot at all. Opt-in-armed only during an active update window, key-gated, rate-limited, and audit-logged
 - **Mandatory encrypted backups** — AES-256-GCM, keyed separately from `APP_KEY`, because backups contain customer PII
+- **Opt-in unattended security updates** — set `OE_UPDATE_AUTO_SECURITY=true` and a daily scheduled command auto-applies (and auto-rolls-back on failure) any release flagged `security`, using the exact same pre-flight-gated, backup-first FSM as the "Apply Update" button in the dashboard. Off by default; routine feature releases always still require a manual click. You're emailed the outcome either way — success or failure — never silent.
+- **HTTP fallback for a missing cron** — if the real system cron (below) was never set up, `App\Http\Middleware\TriggerDueScheduledTasks` fires overdue scheduled tasks (backups, sitemap, update checks, …) from a normal page load instead, WordPress-`wp-cron.php`-style. Only kicks in once the scheduler heartbeat goes stale; a host with real cron configured never triggers it. Disable with `CRON_FALLBACK_ENABLED=false` if you'd rather it never run.
 
-See `UPDATE_SYSTEM_MASTER_WORKFLOW.md` for the full design, or [`SECURITY.md`](SECURITY.md) for the security properties this gives you as a self-hoster.
+See [`SECURITY.md`](SECURITY.md) for the security properties this gives you as a self-hoster.
+
+### Moving to a new server
+
+The Backup Engine's restore path was built for this from the start — a backup's `manifest.json` (unencrypted, self-describing) lets a completely fresh install reconstruct which parts exist and restore them, with no database rows and no shared history with the old server required:
+
+1. On the **old** server, take a full backup (scheduled, or `php artisan oeparts:backup`) and locate its files on the configured backup disk — you need the whole run's folder, including the unencrypted `manifest.json`.
+2. Copy that folder to the **new** server (same relative path on whatever disk you'll restore from — `local` is simplest).
+3. Deploy OeParts on the new server as usual (Quick Start above) up through creating `.env` — but **stop before running the web installer**, since restore recreates the schema itself.
+4. Run: `php artisan oeparts:backup:restore --import-manifest=path/to/manifest.json --disk=local`. This recreates the `backup_runs`/`backup_parts` rows from the TOC, then restores the database and files. Add `--force` to skip the confirmation prompt for a scripted move.
+5. Update `.env` on the new server: `APP_URL`, `DB_*` (if different from the old server), and `OE_BACKUP_KEY` must be the **same** key used to take the backup — restore refuses to decrypt with the wrong one.
+6. Log into the admin panel and update the `site_url` / domain-related settings — like WordPress, a database restore brings the **old** domain with it; nothing rewrites URLs automatically.
+7. Run `php artisan optimize:clear` and verify `/up` and `/health` report OK.
+
+`--run=<id>` restores from a run already recorded in the *current* database (same-server disaster recovery, not migration); `--import-manifest` is specifically the cross-server path. Both share one command — see `php artisan oeparts:backup:restore --help`.
 
 ---
 
@@ -267,7 +317,7 @@ Roles:     spatie/laravel-permission (Admin model only)
 - **OEM normalization**: always search/store via `OemNormalizerService::normalize()`
 - **Append-only migrations**: schema changes are additive; destructive changes follow expand → migrate → contract across separate releases
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for full patterns and folder structure, and [CLAUDE.md](CLAUDE.md) for the complete list of non-negotiable coding rules this codebase enforces.
+See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) for the full list of non-negotiable coding rules this codebase enforces.
 
 ---
 
@@ -299,7 +349,6 @@ Contributions are welcome — see [CONTRIBUTING.md](.github/CONTRIBUTING.md) for
 
 Good places to start:
 - Check [open issues](https://github.com/shemondotme/oeparts/issues), especially any labeled `good first issue`
-- [`docs/github-issues.md`](docs/github-issues.md) tracks known gaps and planned work
 - Bug reports and feature requests use the templates under [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/)
 
 ---

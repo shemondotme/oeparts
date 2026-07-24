@@ -125,6 +125,22 @@
             </div>
         </div>
 
+        <div class="mb-6 p-4 border border-slate-200 rounded-lg">
+            <label for="test_to" class="block text-sm font-medium text-slate-700 mb-1">
+                Send a test email
+            </label>
+            <p class="text-xs text-muted mb-3">Verify these settings actually work before finishing — a typo'd SMTP password would otherwise only surface later, when a real order confirmation fails to send.</p>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="email" id="test_to" name="test_to" value="{{ old('mail_from_address', 'noreply@example.com') }}"
+                    class="form-input w-full sm:flex-1" placeholder="you@example.com">
+                <button type="button" id="send-test-email"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200 whitespace-nowrap">
+                    Send Test Email
+                </button>
+            </div>
+            <p id="test-email-result" class="mt-2 text-sm"></p>
+        </div>
+
         <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-start gap-2">
                 <x-heroicon-o-information-circle class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
@@ -184,6 +200,50 @@
         
         driverSelect.addEventListener('change', toggleSmtpFields);
         toggleSmtpFields(); // Initial call
+
+        const sendButton = document.getElementById('send-test-email');
+        const resultEl = document.getElementById('test-email-result');
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        sendButton.addEventListener('click', function () {
+            const testTo = document.getElementById('test_to').value;
+            if (!testTo) {
+                resultEl.textContent = 'Enter an email address to send the test to.';
+                resultEl.className = 'mt-2 text-sm text-red-600';
+                return;
+            }
+
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending…';
+            resultEl.textContent = '';
+
+            const payload = new FormData();
+            ['mail_driver', 'mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_encryption', 'mail_from_address', 'mail_from_name']
+                .forEach(function (field) {
+                    const el = document.getElementById(field);
+                    if (el) payload.append(field, el.value);
+                });
+            payload.append('test_to', testTo);
+
+            fetch('{{ route('installer.test-mail') }}', {
+                method: 'POST',
+                headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                body: payload,
+            })
+            .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+            .then(function (result) {
+                resultEl.textContent = result.data.message;
+                resultEl.className = 'mt-2 text-sm ' + (result.data.success ? 'text-green-600' : 'text-red-600');
+            })
+            .catch(function () {
+                resultEl.textContent = 'Could not reach the server — try again.';
+                resultEl.className = 'mt-2 text-sm text-red-600';
+            })
+            .finally(function () {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Send Test Email';
+            });
+        });
     });
 </script>
 @endpush

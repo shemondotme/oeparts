@@ -59,19 +59,19 @@ class RedirectResource extends Resource
                                     ->description('Define the source and destination URLs for this redirect.')
                                     ->schema([
                                         Forms\Components\TextInput::make('from_url')
-                                            ->label('Source URL (From)')
+                                            ->label(__('admin.source_url_from'))
                                             ->placeholder('e.g. /old-page or /en/old-path')
                                             ->required()
                                             ->maxLength(500)
                                             ->helperText('The old URL path that should redirect. Use relative paths for internal redirects.'),
                                         Forms\Components\TextInput::make('to_url')
-                                            ->label('Destination URL (To)')
+                                            ->label(__('admin.destination_url_to'))
                                             ->placeholder('e.g. /new-page or https://example.com')
                                             ->required()
                                             ->maxLength(500)
                                             ->helperText('The new URL where visitors should be redirected to.'),
                                         Forms\Components\Select::make('type')
-                                            ->label('Redirect Type')
+                                            ->label(__('admin.redirect_type'))
                                             ->options(RedirectType::class)
                                             ->native(false)
                                             ->required()
@@ -88,7 +88,7 @@ class RedirectResource extends Resource
                                     ->description('Redirect status and usage tracking.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Redirect Active')
+                                            ->label(__('admin.redirect_active'))
                                             ->helperText('Inactive redirects are not enforced.')
                                             ->default(true),
                                         AdminUi::readOnlyField('hit_count', 'Hit Count', 'Number of times this redirect has been triggered.'),
@@ -103,7 +103,7 @@ class RedirectResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('from_url')
-                ->label('From URL')
+                ->label(__('admin.from_url'))
                 ->searchable()
                 ->sortable()
                 ->copyable()
@@ -112,14 +112,14 @@ class RedirectResource extends Resource
                 ->limit(40)
                 ->fontMono(),
             Tables\Columns\TextColumn::make('to_url')
-                ->label('To URL')
+                ->label(__('admin.to_url'))
                 ->searchable()
                 ->copyable()
                 ->copyMessage('URL copied')
                 ->limit(40)
                 ->fontMono(),
             Tables\Columns\TextColumn::make('type')
-                ->label('Type')
+                ->label(__('admin.type'))
                 ->badge()
                 ->color(fn (RedirectType $state): string => match ($state) {
                     RedirectType::Permanent => 'success',
@@ -127,24 +127,24 @@ class RedirectResource extends Resource
                 })
                 ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('hit_count')
-                    ->label('Hits')
+                    ->label(__('admin.hits'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->boolean()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
-                    ->label('Redirect Type')
+                    ->label(__('admin.redirect_type'))
                     ->options(RedirectType::class)
                     ->helperText('Filter by permanent (301) or temporary (302) redirects.'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Redirect Status')
+                    ->label(__('admin.redirect_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
@@ -168,7 +168,7 @@ class RedirectResource extends Resource
             ->emptyStateDescription('Create URL redirects for broken links, page migrations, or URL structure changes.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create Redirect')
+                    ->label(__('admin.create_redirect'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

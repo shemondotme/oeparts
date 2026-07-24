@@ -42,34 +42,34 @@ class CronLogResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('job_name')
-                    ->label('Job Name')
+                    ->label(__('admin.job_name'))
                     ->searchable()
                     ->sortable()
                     ->badge(),
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Result')
+                    ->label(__('admin.result'))
                     ->badge()
                     ->color(fn (LogStatus $state): string => $state === LogStatus::Success ? 'success' : 'danger')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('duration_ms')
-                    ->label('Duration')
+                    ->label(__('admin.duration'))
                     ->suffix(' ms')
                     ->sortable()
                     ->alignCenter()
                     ->fontMono(),
                 Tables\Columns\TextColumn::make('output')
-                    ->label('Output')
+                    ->label(__('admin.output'))
                     ->limit(50)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('ran_at')
-                    ->label('Ran At')
+                    ->label(__('admin.ran_at'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->defaultSort('ran_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Result')
+                    ->label(__('admin.result'))
                     ->options([
                         'success' => 'Success',
                         'failed' => 'Failed',

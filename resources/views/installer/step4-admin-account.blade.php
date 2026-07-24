@@ -42,11 +42,11 @@
                 </label>
                 <input type="password" id="password" name="password"
                     class="form-input w-full @error('password') border-red-300 @enderror"
-                    placeholder="Minimum 8 characters" required>
+                    placeholder="At least 8 characters, mixed case, a number and a symbol" required>
                 @error('password')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
-                <p class="mt-1 text-xs text-muted">At least 8 characters</p>
+                <p class="mt-1 text-xs text-muted">At least 8 characters, with upper &amp; lower case, a number, and a symbol — and not a password known to be compromised elsewhere</p>
             </div>
 
             <div>

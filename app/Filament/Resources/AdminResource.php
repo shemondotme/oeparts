@@ -62,19 +62,19 @@ class AdminResource extends Resource
                                     ->description('Account information and role assignment for this administrator.')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Full Name')
+                                            ->label(__('admin.full_name'))
                                             ->placeholder('e.g. Jan de Vries')
                                             ->required()
                                             ->maxLength(200),
                                         Forms\Components\TextInput::make('email')
-                                            ->label('Email Address')
+                                            ->label(__('admin.email_address'))
                                             ->email()
                                             ->required()
                                             ->unique(ignoreRecord: true)
                                             ->maxLength(255)
                                             ->helperText('Used for login and notifications.'),
                                         Forms\Components\TextInput::make('password')
-                                            ->label('Password')
+                                            ->label(__('admin.password'))
                                             ->password()
                                             ->revealable()
                                             ->dehydrateStateUsing(fn (string $state): string => Hash::make($state))
@@ -85,7 +85,7 @@ class AdminResource extends Resource
                                             ->placeholder(fn (string $operation): string => $operation === 'create' ? 'Enter a strong password' : 'Leave empty to keep current password')
                                             ->helperText(fn (): string => 'Minimum '.settings('auth.admin_password_min', 12).' characters with at least one uppercase letter and one number.'),
                                         Forms\Components\Select::make('roles')
-                                            ->label('Assigned Roles')
+                                            ->label(__('admin.assigned_roles'))
                                             ->relationship('roles', 'name')
                                             ->multiple()
                                             ->preload()
@@ -104,7 +104,7 @@ class AdminResource extends Resource
                                     ->description('Account status and active toggle.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Account Active')
+                                            ->label(__('admin.account_active'))
                                             ->helperText('Deactivated admins cannot log in to the panel.')
                                             ->default(true),
                                     ]),
@@ -119,35 +119,35 @@ class AdminResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('roles'))
             ->columns([
             Tables\Columns\TextColumn::make('name')
-                ->label('Name')
+                ->label(__('admin.name'))
                 ->searchable()
                 ->sortable()
                 ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('email')
-                ->label('Email Address')
+                ->label(__('admin.email_address'))
                 ->searchable()
                 ->sortable()
                 ->copyable()
                 ->copyMessage('Email copied')
                 ->limit(30),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('last_login_at')
-                    ->label('Last Login')
+                    ->label(__('admin.last_login'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->placeholder('Never logged in'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('admin.created'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Account Status')
+                    ->label(__('admin.account_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
@@ -187,7 +187,7 @@ class AdminResource extends Resource
             ->emptyStateDescription('Create admin accounts with appropriate roles to manage the panel and its features.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Admin')
+                    ->label(__('admin.add_admin'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

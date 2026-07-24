@@ -59,14 +59,14 @@ class NewsletterSubscriberResource extends Resource
                                     ->description('Core subscriber information and language preference.')
                                     ->schema([
                                         Forms\Components\TextInput::make('email')
-                                            ->label('Email Address')
+                                            ->label(__('admin.email_address'))
                                             ->email()
                                             ->required()
                                             ->disabled(fn (string $operation): bool => $operation === 'edit')
                                             ->maxLength(255)
                                             ->helperText('Email cannot be changed after subscription.'),
                                         Forms\Components\Select::make('lang')
-                                            ->label('Preferred Language')
+                                            ->label(__('admin.preferred_language'))
                                             ->options(AdminUi::LOCALES)
                                             ->native(false)
                                             ->required()
@@ -91,16 +91,16 @@ class NewsletterSubscriberResource extends Resource
                                     ->description('Subscription status and important dates.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Subscriber Active')
+                                            ->label(__('admin.subscriber_active'))
                                             ->helperText('Inactive subscribers will not receive newsletter campaigns.')
                                             ->default(true),
                                         Forms\Components\DateTimePicker::make('subscribed_at')
-                                            ->label('Subscribed At')
+                                            ->label(__('admin.subscribed_at'))
                                             ->disabled()
                                             ->dehydrated(false)
                                             ->helperText('When this subscriber signed up.'),
                                         Forms\Components\DateTimePicker::make('unsubscribed_at')
-                                            ->label('Unsubscribed At')
+                                            ->label(__('admin.unsubscribed_at'))
                                             ->nullable()
                                             ->helperText('When this subscriber opted out. Set automatically on unsubscription.'),
                                     ]),
@@ -115,44 +115,44 @@ class NewsletterSubscriberResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->withCount('campaignRecipients'))
             ->columns([
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Email')
+                    ->label(__('admin.email'))
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('lang')
-                ->label('Language')
+                ->label(__('admin.language'))
                 ->badge()
                 ->formatStateUsing(fn (string $state): string => AdminUi::LOCALES[$state] ?? strtoupper($state))
                 ->color('gray')
                 ->searchable()
                 ->alignCenter(),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->color(fn (bool $state): string => $state ? 'success' : 'gray')
                     ->icon(fn (bool $state): string => $state ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('subscribed_at')
-                    ->label('Subscribed')
+                    ->label(__('admin.subscribed'))
                     ->dateTime('M j, Y H:i')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('unsubscribed_at')
-                    ->label('Unsubscribed')
+                    ->label(__('admin.unsubscribed'))
                     ->dateTime('M j, Y H:i')
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Subscription Status')
+                    ->label(__('admin.subscription_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
                     ->native(false)
                     ->columnSpan(1),
                 Tables\Filters\SelectFilter::make('lang')
-                    ->label('Preferred Language')
+                    ->label(__('admin.preferred_language'))
                     ->options(AdminUi::LOCALES)
                     ->native(false)
                     ->helperText('Filter subscribers by their preferred language.')
@@ -201,7 +201,7 @@ class NewsletterSubscriberResource extends Resource
             ->emptyStateDescription('Subscribers who sign up through the storefront newsletter form will appear here.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Subscriber')
+                    ->label(__('admin.add_subscriber'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

@@ -30,7 +30,7 @@ class SettingsService
 
         $cacheKey = "settings.{$group}";
 
-        $groupSettings = Cache::remember($cacheKey, now()->addMinutes(5), function () use ($group) {
+        $fetchFromDb = function () use ($group) {
             try {
                 return \App\Models\Setting::where('group', $group)
                     ->get()
@@ -51,10 +51,29 @@ class SettingsService
                         return $value;
                     })
                     ->toArray();
-            } catch (\Exception) {
+            } catch (\Throwable) {
+                // Settings table may not exist yet (pre-install) or the query failed.
                 return [];
             }
-        });
+        };
+
+        // Cache::remember() itself can throw (e.g. the configured cache store is
+        // unreachable — Redis extension missing/server down). That failure must
+        // degrade to a direct DB read rather than bubble up: settings() is called
+        // eagerly at route-registration time in routes/web.php (rate-limit config),
+        // so an uncaught cache-driver exception here takes down every single page,
+        // including the web installer itself, before any request-level code runs.
+        try {
+            $groupSettings = Cache::remember($cacheKey, now()->addMinutes(5), $fetchFromDb);
+        } catch (\Throwable $e) {
+            // \Throwable, not \Exception: a missing Redis extension surfaces as
+            // \Error ("Class \"Redis\" not found"), which \Exception does not catch.
+            Log::warning('Settings cache store unreachable, falling back to direct DB read', [
+                'group' => $group,
+                'error' => $e->getMessage(),
+            ]);
+            $groupSettings = $fetchFromDb();
+        }
 
         return $groupSettings[$settingKey] ?? $default;
     }

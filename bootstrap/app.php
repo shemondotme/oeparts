@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\AdminFatalErrorNotifier;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
 use App\Http\Middleware\InstallerMiddleware;
@@ -8,6 +9,7 @@ use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackUtm;
+use App\Http\Middleware\TriggerDueScheduledTasks;
 use App\Models\NotFoundLog;
 use App\Providers\EventServiceProvider;
 use Illuminate\Foundation\Application;
@@ -50,6 +52,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             \App\Http\Middleware\ContentSecurityPolicy::class,
+            TriggerDueScheduledTasks::class,
         ]);
     })
     ->withProviders([
@@ -90,6 +93,15 @@ return Application::configure(basePath: dirname(__DIR__))
             return response()->view('errors.429', [
                 'message' => $e->getMessage() ?: __('search.error_429_message'),
             ], 429, $e->getHeaders());
+        });
+
+        // WordPress-5.2-style fatal-error notice: email super_admins the moment an
+        // uncaught exception reaches here from inside the admin panel. Laravel's
+        // own $internalDontReport list already keeps validation/404/403/419/auth
+        // exceptions out of reportable(), so this only fires for genuinely
+        // unexpected errors.
+        $exceptions->reportable(function (\Throwable $e) {
+            app(AdminFatalErrorNotifier::class)->handle($e, app()->bound('request') ? request() : null);
         });
 
     })->create();

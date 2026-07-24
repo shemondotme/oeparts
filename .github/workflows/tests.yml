@@ -30,9 +30,8 @@ jobs:
           coverage: none
 
       # Must run before `composer install` — its post-autoload-dump hook boots
-      # the framework (artisan package:discover), and without a .env present
-      # APP_ENV falls back to 'production', which trips AppServiceProvider's
-      # Redis-driver guard (CLAUDE.md rule #7) since CI has no Redis service.
+      # the framework (artisan package:discover), which needs an APP_ENV/APP_KEY
+      # to resolve cleanly.
       - name: Copy test environment
         run: cp .env.testing .env
 

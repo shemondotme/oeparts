@@ -52,18 +52,18 @@ class NewsletterCampaignResource extends Resource
                     ->description('Email content and subject line for this newsletter campaign.')
                     ->schema([
                         Forms\Components\TextInput::make('subject')
-                            ->label('Subject Line')
+                            ->label(__('admin.subject_line'))
                             ->required()
                             ->maxLength(200)
                             ->placeholder('e.g. Summer Parts Sale — Up to 30% Off')
                             ->helperText('The subject line subscribers will see in their inbox.'),
                         Forms\Components\Textarea::make('html_content')
-                            ->label('Email Content (HTML)')
+                            ->label(__('admin.email_content_html'))
                             ->rows(15)
                             ->placeholder('<h1>Hello!</h1><p>We have great deals...</p>')
                             ->helperText('HTML email body. You can use inline styles for email compatibility.'),
                         Forms\Components\Textarea::make('plain_content')
-                            ->label('Plain Text Version')
+                            ->label(__('admin.plain_text_version'))
                             ->rows(8)
                             ->placeholder('Hello! We have great deals...')
                             ->helperText('Fallback plain text version for email clients that do not support HTML.'),
@@ -72,7 +72,7 @@ class NewsletterCampaignResource extends Resource
                     ->description('Control when this campaign is sent to subscribers.')
                     ->schema([
                         Forms\Components\DateTimePicker::make('scheduled_at')
-                            ->label('Scheduled Send Date')
+                            ->label(__('admin.scheduled_send_date'))
                             ->nullable()
                             ->helperText('Leave empty to save as a draft. Set a future date/time and the campaign is sent automatically at that time.'),
                     ]),
@@ -85,13 +85,13 @@ class NewsletterCampaignResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('admin'))
             ->columns([
             Tables\Columns\TextColumn::make('subject')
-                ->label('Subject')
+                ->label(__('admin.subject'))
                 ->searchable()
                 ->sortable()
                 ->limit(50)
                 ->weight(FontWeight::Bold),
             Tables\Columns\TextColumn::make('status')
-                ->label('Status')
+                ->label(__('admin.status'))
                 ->badge()
                 ->color(fn (string $state): string => match ($state) {
                     'draft'    => 'gray',
@@ -110,32 +110,32 @@ class NewsletterCampaignResource extends Resource
                     default    => '',
                 }),
             Tables\Columns\TextColumn::make('sent_count')
-                ->label('Sent')
+                ->label(__('admin.sent'))
                 ->numeric()
                 ->fontMono()
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('failed_count')
-                ->label('Failed')
+                ->label(__('admin.failed'))
                 ->numeric()
                 ->fontMono()
                 ->color(fn (int $state): string => $state > 0 ? 'danger' : 'gray')
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('admin.name')
-                ->label('Created By')
+                ->label(__('admin.created_by'))
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('scheduled_at')
-                ->label('Scheduled')
+                ->label(__('admin.scheduled'))
                 ->dateTime('M j, Y H:i')
                 ->sortable()
                 ->placeholder('Draft')
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('sent_at')
-                ->label('Sent At')
+                ->label(__('admin.sent_at'))
                 ->dateTime('M j, Y H:i')
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('created_at')
-                ->label('Created')
+                ->label(__('admin.created'))
                 ->dateTime('M j, Y H:i')
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
@@ -143,7 +143,7 @@ class NewsletterCampaignResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Campaign Status')
+                    ->label(__('admin.campaign_status'))
                     ->options([
                         'draft'     => 'Draft',
                         'scheduled' => 'Scheduled',
@@ -156,7 +156,7 @@ class NewsletterCampaignResource extends Resource
             ->actions([
                 ...AdminUi::recordActions([
                     Tables\Actions\Action::make('send')
-                        ->label('Send Now')
+                        ->label(__('admin.send_now'))
                         ->icon('heroicon-o-paper-airplane')
                         ->color('success')
                         ->authorize('update')
@@ -176,7 +176,7 @@ class NewsletterCampaignResource extends Resource
                         })
                         ->visible(fn (NewsletterCampaign $record): bool => $record->isDraft()),
                     Tables\Actions\Action::make('duplicateCampaign')
-                        ->label('Duplicate')
+                        ->label(__('admin.duplicate'))
                         ->icon('heroicon-o-document-duplicate')
                         ->color('gray')
                         ->authorize('update')
@@ -215,7 +215,7 @@ class NewsletterCampaignResource extends Resource
             ->emptyStateDescription('Create your first newsletter campaign to start reaching your subscribers with updates and promotions.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create Campaign')
+                    ->label(__('admin.create_campaign'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

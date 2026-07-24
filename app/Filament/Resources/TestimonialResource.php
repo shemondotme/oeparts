@@ -66,18 +66,18 @@ class TestimonialResource extends Resource
                                     ->description('Information about the client giving the feedback.')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Customer Name')
+                                            ->label(__('admin.customer_name'))
                                             ->placeholder('e.g. Jan de Vries')
                                             ->required()
                                             ->maxLength(100),
                                         Forms\Components\TextInput::make('company')
-                                            ->label('Company Name')
+                                            ->label(__('admin.company_name'))
                                             ->placeholder('e.g. AutoParts B.V.')
                                             ->maxLength(100)
                                             ->nullable()
                                             ->helperText('Optional company or business name.'),
                                         Forms\Components\TextInput::make('location')
-                                            ->label('Location')
+                                            ->label(__('admin.location'))
                                             ->placeholder('e.g. Amsterdam, Netherlands')
                                             ->maxLength(100)
                                             ->nullable()
@@ -111,17 +111,17 @@ class TestimonialResource extends Resource
                                     ->description('Visibility, display order, and star rating for this testimonial.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Testimonial Active')
+                                            ->label(__('admin.testimonial_active'))
                                             ->helperText('Inactive testimonials are hidden from the storefront.')
                                             ->default(true),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
                                             ->helperText('Lower numbers appear first in testimonial listings.'),
                                         Forms\Components\Select::make('rating')
-                                            ->label('Star Rating')
+                                            ->label(__('admin.star_rating'))
                                             ->options([
                                                 5 => '5 Stars ★★★★★',
                                                 4 => '4 Stars ★★★★☆',
@@ -144,57 +144,57 @@ class TestimonialResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('name')
-                ->label('Client')
+                ->label(__('admin.client'))
                 ->searchable()
                 ->sortable()
                 ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('company')
-                    ->label('Company')
+                    ->label(__('admin.company'))
                     ->searchable()
                     ->placeholder('—')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('location')
-                    ->label('Location')
+                    ->label(__('admin.location'))
                     ->placeholder('—')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('quote')
-                    ->label('Quote')
+                    ->label(__('admin.quote'))
                     ->getStateUsing(fn (Testimonial $record): string => AdminUi::localizedName($record->quote))
                     ->limit(60),
                 Tables\Columns\TextColumn::make('rating')
-                    ->label('Rating')
+                    ->label(__('admin.rating'))
                     ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
                     ->color('warning')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->color(fn (bool $state): string => $state ? 'success' : 'gray')
                     ->icon(fn (bool $state): string => $state ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Testimonial Status')
+                    ->label(__('admin.testimonial_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
                     ->native(false)
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Date Added')
+                    ->label(__('admin.date_added'))
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Added After')
+                            ->label(__('admin.added_after'))
                             ->placeholder('Select start date'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Added Before')
+                            ->label(__('admin.added_before'))
                             ->placeholder('Select end date'),
                     ])
                     ->query(function ($query, array $data) {
@@ -261,7 +261,7 @@ class TestimonialResource extends Resource
             ->emptyStateDescription('Add customer testimonials and reviews to build trust and social proof on the storefront.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Testimonial')
+                    ->label(__('admin.add_testimonial'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

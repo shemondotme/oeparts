@@ -55,13 +55,13 @@ class PaymentResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('order'))
             ->columns([
             Tables\Columns\TextColumn::make('id')
-                ->label('ID')
+                ->label(__('admin.id'))
                 ->sortable()
                 ->fontMono()
                 ->toggleable(isToggledHiddenByDefault: true),
 
             Tables\Columns\TextColumn::make('order.order_number')
-                ->label('Order Number')
+                ->label(__('admin.order_number'))
                 ->searchable()
                 ->sortable()
                 ->url(fn ($record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id]))
@@ -69,7 +69,7 @@ class PaymentResource extends Resource
                 ->fontMono(),
 
             Tables\Columns\TextColumn::make('gateway')
-                ->label('Payment Gateway')
+                ->label(__('admin.payment_gateway'))
                 ->badge()
                 ->formatStateUsing(fn (PaymentGateway $state): string => match ($state) {
                     PaymentGateway::Airwallex => 'Airwallex',
@@ -91,7 +91,7 @@ class PaymentResource extends Resource
                 ->toggleable(isToggledHiddenByDefault: true),
 
             Tables\Columns\TextColumn::make('status')
-                ->label('Payment Status')
+                ->label(__('admin.payment_status'))
                 ->badge()
                 ->formatStateUsing(fn (PaymentTransactionStatus $state): string => match ($state) {
                     PaymentTransactionStatus::Pending => 'Pending',
@@ -111,7 +111,7 @@ class PaymentResource extends Resource
                 ->sortable(),
 
             Tables\Columns\TextColumn::make('amount')
-                ->label('Amount')
+                ->label(__('admin.amount'))
                 ->formatStateUsing(fn ($state): string => format_money($state))
                 ->sortable()
                 ->fontMono()
@@ -120,7 +120,7 @@ class PaymentResource extends Resource
                 ->extraAttributes(['class' => 'op-payment-amount']),
 
             Tables\Columns\TextColumn::make('created_at')
-                ->label('Date')
+                ->label(__('admin.date'))
                 ->dateTime('d M Y H:i')
                 ->sortable()
                 ->fontMono(),
@@ -131,19 +131,19 @@ class PaymentResource extends Resource
             ->emptyStateDescription('Payment records will appear here once customers complete checkout. Failed payments will be flagged for review.')
             ->filters([
                 Tables\Filters\SelectFilter::make('gateway')
-                    ->label('Payment Gateway')
+                    ->label(__('admin.payment_gateway'))
                     ->options(PaymentGateway::class)
                     ->multiple()
                     ->native(false)
                     ->helperText('Filter by payment provider (Airwallex or Bank Transfer).'),
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Payment Status')
+                    ->label(__('admin.payment_status'))
                     ->options(PaymentTransactionStatus::class)
                     ->multiple()
                     ->native(false)
                     ->helperText('Filter by one or more payment statuses.'),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Payment Date')
+                    ->label(__('admin.payment_date'))
                     ->form([
                         \Filament\Forms\Components\Select::make('created_at')
                             ->options([
@@ -222,11 +222,11 @@ class PaymentResource extends Resource
                                     ->description('Transaction information from the payment gateway.')
                                     ->schema([
                                         TextEntry::make('order.order_number')
-                                            ->label('Order Number')
+                                            ->label(__('admin.order_number'))
                                             ->url(fn ($record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id]))
                                             ->color('primary'),
                                         TextEntry::make('gateway')
-                                            ->label('Payment Gateway')
+                                            ->label(__('admin.payment_gateway'))
                                             ->badge()
                                             ->formatStateUsing(fn (PaymentGateway $state): string => match ($state) {
                                                 PaymentGateway::Airwallex => 'Airwallex',
@@ -241,13 +241,13 @@ class PaymentResource extends Resource
                                                 PaymentGateway::BankTransfer => 'heroicon-o-building-library',
                                             }),
                                         TextEntry::make('transaction_id')
-                                            ->label('Transaction ID')
+                                            ->label(__('admin.transaction_id'))
                                             ->copyable()
                                             ->copyMessage('Transaction ID copied')
                                             ->fontMono()
                                             ->default('—'),
                                         TextEntry::make('status')
-                                            ->label('Payment Status')
+                                            ->label(__('admin.payment_status'))
                                             ->badge()
                                             ->formatStateUsing(fn (PaymentTransactionStatus $state): string => match ($state) {
                                                 PaymentTransactionStatus::Pending => 'Pending',
@@ -265,7 +265,7 @@ class PaymentResource extends Resource
                                                 PaymentTransactionStatus::Refunded => 'heroicon-o-banknotes',
                                             }),
                                         TextEntry::make('amount')
-                                            ->label('Payment Amount')
+                                            ->label(__('admin.payment_amount'))
                                             ->formatStateUsing(fn ($state): string => format_money($state))
                                             ->weight('bold')
                                             ->extraAttributes(['class' => 'op-payment-amount']),
@@ -280,19 +280,19 @@ class PaymentResource extends Resource
                                     ->description('Related order details for this payment.')
                                     ->schema([
                                         TextEntry::make('order.status')
-                                            ->label('Order Status')
+                                            ->label(__('admin.order_status'))
                                             ->badge()
                                             ->color(fn ($state): string => AdminUi::orderStatusColor($state)),
                                         TextEntry::make('order.payment_status')
-                                            ->label('Payment Status')
+                                            ->label(__('admin.payment_status'))
                                             ->badge()
                                             ->color(fn ($state): string => AdminUi::paymentStatusColor($state)),
                                         TextEntry::make('order.grand_total')
-                                            ->label('Order Total')
+                                            ->label(__('admin.order_total'))
                                             ->formatStateUsing(fn ($state): string => format_money($state))
                                             ->weight('bold'),
                                         TextEntry::make('order.created_at')
-                                            ->label('Order Placed')
+                                            ->label(__('admin.order_placed'))
                                             ->dateTime('M j, Y H:i'),
                                     ]),
                                 Section::make('Timestamps')
@@ -300,10 +300,10 @@ class PaymentResource extends Resource
                                     ->description('Payment processing timeline.')
                                     ->schema([
                                         TextEntry::make('created_at')
-                                            ->label('Payment Received')
+                                            ->label(__('admin.payment_received'))
                                             ->dateTime('M j, Y H:i:s'),
                                         TextEntry::make('updated_at')
-                                            ->label('Last Updated')
+                                            ->label(__('admin.last_updated'))
                                             ->dateTime('M j, Y H:i:s'),
                                     ]),
                             ]),
@@ -314,7 +314,7 @@ class PaymentResource extends Resource
                     ->columnSpanFull()
                     ->schema([
                         TextEntry::make('gateway_response')
-                            ->label('Response Data')
+                            ->label(__('admin.response_data'))
                             ->formatStateUsing(function ($state): string {
                                 if (empty($state)) {
                                     return 'No response data recorded from the payment gateway.';

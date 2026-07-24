@@ -73,11 +73,11 @@ class NotFoundLogResource extends Resource
                     ->description('Read-only details of a dead link hit on the storefront.')
                     ->schema([
                         Forms\Components\TextInput::make('path')->disabled()->dehydrated(false)->columnSpanFull(),
-                        Forms\Components\TextInput::make('referer')->label('Referer')->disabled()->dehydrated(false)->columnSpanFull(),
-                        Forms\Components\TextInput::make('lang')->label('Language')->disabled()->dehydrated(false),
-                        Forms\Components\TextInput::make('ip_address')->label('IP Address')->disabled()->dehydrated(false),
-                        Forms\Components\TextInput::make('hit_count')->label('Hit Count')->disabled()->dehydrated(false),
-                        Forms\Components\Toggle::make('resolved')->label('Resolved')->disabled()->dehydrated(false),
+                        Forms\Components\TextInput::make('referer')->label(__('admin.referer'))->disabled()->dehydrated(false)->columnSpanFull(),
+                        Forms\Components\TextInput::make('lang')->label(__('admin.language'))->disabled()->dehydrated(false),
+                        Forms\Components\TextInput::make('ip_address')->label(__('admin.ip_address'))->disabled()->dehydrated(false),
+                        Forms\Components\TextInput::make('hit_count')->label(__('admin.hit_count'))->disabled()->dehydrated(false),
+                        Forms\Components\Toggle::make('resolved')->label(__('admin.resolved'))->disabled()->dehydrated(false),
                         Forms\Components\DateTimePicker::make('first_seen_at')->disabled()->dehydrated(false),
                         Forms\Components\DateTimePicker::make('last_seen_at')->disabled()->dehydrated(false),
                     ])->columns(2),
@@ -89,7 +89,7 @@ class NotFoundLogResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('path')
-                    ->label('Path')
+                    ->label(__('admin.path'))
                     ->searchable()
                     ->sortable()
                     ->copyable()
@@ -97,16 +97,16 @@ class NotFoundLogResource extends Resource
                     ->limit(50)
                     ->fontMono(),
                 Tables\Columns\TextColumn::make('referer')
-                    ->label('Referer')
+                    ->label(__('admin.referer'))
                     ->limit(40)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->badge()
                     ->alignCenter()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('hit_count')
-                    ->label('Hits')
+                    ->label(__('admin.hits'))
                     ->sortable()
                     ->alignCenter()
                     ->badge()
@@ -115,26 +115,26 @@ class NotFoundLogResource extends Resource
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
+                    ->label(__('admin.ip_address'))
                     ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('first_seen_at')
-                    ->label('First Seen')
+                    ->label(__('admin.first_seen'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('last_seen_at')
-                    ->label('Last Seen')
+                    ->label(__('admin.last_seen'))
                     ->dateTime()
                     ->since()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('resolved')
-                    ->label('Resolved')
+                    ->label(__('admin.resolved'))
                     ->helperText('Show resolved or unresolved 404s.'),
                 Tables\Filters\SelectFilter::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->options([
                         'en' => 'English', 'de' => 'German', 'lt' => 'Lithuanian',
                         'fr' => 'French', 'es' => 'Spanish',
@@ -168,7 +168,7 @@ class NotFoundLogResource extends Resource
                         'last_seen_at' => 'Last Seen',
                     ]),
                     Actions\BulkAction::make('markResolved')
-                        ->label('Mark resolved')
+                        ->label(__('admin.mark_resolved'))
                         ->icon('heroicon-o-check-circle')
                         ->authorize('update')
                         ->action(fn ($records) => $records->each->update(['resolved' => true])),
@@ -185,22 +185,22 @@ class NotFoundLogResource extends Resource
     private static function createRedirectAction(): Actions\Action
     {
         return Actions\Action::make('createRedirect')
-            ->label('Create redirect')
+            ->label(__('admin.create_redirect'))
             ->icon('heroicon-o-arrow-turn-right-up')
             ->color('primary')
             ->authorize('update')
             ->visible(fn (NotFoundLog $record): bool => ! $record->resolved)
             ->form([
                 Forms\Components\TextInput::make('from_url')
-                    ->label('From URL')
+                    ->label(__('admin.from_url'))
                     ->disabled()
                     ->dehydrated(true),
                 Forms\Components\TextInput::make('to_url')
-                    ->label('To URL')
+                    ->label(__('admin.to_url'))
                     ->required()
                     ->helperText('Relative path or full URL the visitor should land on instead.'),
                 Forms\Components\Select::make('type')
-                    ->label('Redirect Type')
+                    ->label(__('admin.redirect_type'))
                     ->options([
                         RedirectType::Permanent->value => '301 — Permanent',
                         RedirectType::Temporary->value => '302 — Temporary',

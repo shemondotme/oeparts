@@ -58,19 +58,19 @@ class MediaFileResource extends Resource
                                     ->description('Metadata for this media file used across the platform.')
                                     ->schema([
                                         Forms\Components\TextInput::make('file_name')
-                                            ->label('File Name')
+                                            ->label(__('admin.file_name'))
                                             ->placeholder('e.g. brake-pad-diagram.jpg')
                                             ->required()
                                             ->maxLength(255)
                                             ->helperText('Descriptive name for this file. Used for identification.'),
                                         Forms\Components\TextInput::make('alt_text')
-                                            ->label('Alt Text')
+                                            ->label(__('admin.alt_text'))
                                             ->placeholder('e.g. Diagram showing brake pad thickness measurement')
                                             ->maxLength(255)
                                             ->nullable()
                                             ->helperText('Describe the image for screen readers and search engines. Important for accessibility and SEO.'),
                                         Forms\Components\TextInput::make('caption')
-                                            ->label('Caption')
+                                            ->label(__('admin.caption'))
                                             ->placeholder('e.g. Brake pad thickness measurement guide')
                                             ->maxLength(255)
                                             ->nullable()
@@ -87,7 +87,7 @@ class MediaFileResource extends Resource
                                     ->description('Technical information about this uploaded file.')
                                     ->schema([
                                         Forms\Components\TextInput::make('file_url')
-                                            ->label('File URL')
+                                            ->label(__('admin.file_url'))
                                             ->disabled()
                                             ->dehydrated(false)
                                             // copyMessage() doesn't exist on form inputs — it 500'd
@@ -95,12 +95,12 @@ class MediaFileResource extends Resource
                                             ->copyable()
                                             ->helperText('Full URL to access this file.'),
                                         Forms\Components\TextInput::make('mime_type')
-                                            ->label('MIME Type')
+                                            ->label(__('admin.mime_type'))
                                             ->disabled()
                                             ->dehydrated(false)
                                             ->helperText('The file format type (e.g. image/jpeg, application/pdf).'),
                                         Forms\Components\TextInput::make('size')
-                                            ->label('File Size')
+                                            ->label(__('admin.file_size'))
                                             ->disabled()
                                             ->dehydrated(false)
                                             ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1) . ' KB' : '—')
@@ -117,43 +117,43 @@ class MediaFileResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('uploader'))
             ->columns([
                 Tables\Columns\ImageColumn::make('file_url')
-                    ->label('Preview')
+                    ->label(__('admin.preview'))
                     ->height(50)
                     ->width(50)
                     ->square(),
                 Tables\Columns\TextColumn::make('file_name')
-                    ->label('File Name')
+                    ->label(__('admin.file_name'))
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium)
                     ->limit(40),
                 Tables\Columns\TextColumn::make('mime_type')
-                    ->label('Type')
+                    ->label(__('admin.type'))
                     ->badge()
                     ->color('gray')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('size')
-                    ->label('Size')
+                    ->label(__('admin.size'))
                     ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1) . ' KB' : '—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('alt_text')
-                    ->label('Alt Text')
+                    ->label(__('admin.alt_text'))
                     ->placeholder('—')
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('uploader.name')
-                    ->label('Uploaded By')
+                    ->label(__('admin.uploaded_by'))
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Uploaded')
+                    ->label(__('admin.uploaded'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('mime_type')
-                    ->label('File Type')
+                    ->label(__('admin.file_type'))
                     ->options([
                         'image'  => 'Images',
                         'application' => 'Documents',
@@ -215,14 +215,14 @@ class MediaFileResource extends Resource
     public static function makeUploadAction(): Actions\Action
     {
         return Actions\Action::make('upload')
-            ->label('Upload File')
+            ->label(__('admin.upload_file'))
             ->icon('heroicon-o-arrow-up-tray')
             ->authorize(fn (): bool => auth('admin')->user()?->can('create', MediaFile::class) ?? false)
             ->modalHeading('Upload Media File')
             ->modalDescription('Add an image to the media library. It becomes selectable everywhere media is used (logos, featured images, social share images).')
             ->schema([
                 Forms\Components\FileUpload::make('file')
-                    ->label('Image')
+                    ->label(__('admin.image'))
                     ->disk('public')
                     ->directory(fn (): string => 'media/' . now()->format('Y/m'))
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
@@ -256,7 +256,7 @@ class MediaFileResource extends Resource
                         return $path;
                     }),
                 Forms\Components\TextInput::make('alt_text')
-                    ->label('Alt Text')
+                    ->label(__('admin.alt_text'))
                     ->maxLength(255)
                     ->nullable()
                     ->helperText('Describe the image for screen readers and SEO.'),

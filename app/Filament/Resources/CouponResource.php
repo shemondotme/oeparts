@@ -51,7 +51,7 @@ class CouponResource extends Resource
                                     ->icon('heroicon-o-tag')
                                     ->schema([
                                         Forms\Components\TextInput::make('code')
-                                            ->label('Coupon Code')
+                                            ->label(__('admin.coupon_code'))
                                             ->placeholder('e.g. SUMMER2024, BRAKE10')
                                             ->required()
                                             ->unique(ignoreRecord: true)
@@ -60,26 +60,26 @@ class CouponResource extends Resource
                                             ->extraInputAttributes(['style' => 'text-transform: uppercase'])
                                             ->helperText('Customers enter this code at checkout. Automatically converted to uppercase.'),
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Internal Name')
+                                            ->label(__('admin.internal_name'))
                                             ->placeholder('e.g. Summer Sale 2024')
                                             ->required()
                                             ->maxLength(100)
                                             ->helperText('Descriptive name for internal reference. Not shown to customers.'),
                                         Forms\Components\Select::make('discount_type')
-                                            ->label('Discount Type')
+                                            ->label(__('admin.discount_type'))
                                             ->options(DiscountType::class)
                                             ->native(false)
                                             ->required()
                                             ->helperText('Percentage discount or fixed amount off the order total.'),
                                         Forms\Components\TextInput::make('discount_value')
-                                            ->label('Discount Value')
+                                            ->label(__('admin.discount_value'))
                                             ->numeric()
                                             ->required()
                                             ->minValue(0)
                                             ->placeholder('e.g. 10 or 25.00')
                                             ->helperText('The discount amount. For percentage: enter 10 for 10%. For fixed: enter the euro amount.'),
                                         Forms\Components\TextInput::make('min_order_amount')
-                                            ->label('Minimum Order Amount (ex. VAT)')
+                                            ->label(__('admin.minimum_order_amount_ex_vat'))
                                             ->numeric()
                                             ->prefix('€')
                                             ->minValue(0)
@@ -97,27 +97,27 @@ class CouponResource extends Resource
                                     ->description('Usage limits, expiration, and active status for this coupon.')
                                     ->schema([
                                         Forms\Components\TextInput::make('usage_limit')
-                                            ->label('Total Usage Limit')
+                                            ->label(__('admin.total_usage_limit'))
                                             ->numeric()
                                             ->minValue(0)
                                             ->placeholder('0')
                                             ->helperText('Maximum total times this coupon can be used. 0 = unlimited.'),
                                         Forms\Components\TextInput::make('usage_limit_per_user')
-                                            ->label('Usage Limit Per Customer')
+                                            ->label(__('admin.usage_limit_per_customer'))
                                             ->numeric()
                                             ->minValue(0)
                                             ->placeholder('0')
                                             ->helperText('Maximum times each customer can use this coupon. 0 = unlimited.'),
                                         Forms\Components\DateTimePicker::make('expires_at')
-                                            ->label('Expiration Date')
+                                            ->label(__('admin.expiration_date'))
                                             ->nullable()
                                             ->helperText('Coupon expires at midnight on this date. Leave empty for no expiration.'),
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Coupon Active')
+                                            ->label(__('admin.coupon_active'))
                                             ->helperText('Inactive coupons cannot be applied at checkout.')
                                             ->default(true),
                                         Forms\Components\Select::make('user_id')
-                                            ->label('Restrict to Customer (optional)')
+                                            ->label(__('admin.restrict_to_customer_optional'))
                                             ->relationship('user', 'name')
                                             ->searchable()
                                             ->preload()
@@ -135,7 +135,7 @@ class CouponResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->withCount('usages')->with('user'))
             ->columns([
             Tables\Columns\TextColumn::make('code')
-                ->label('Coupon Code')
+                ->label(__('admin.coupon_code'))
                 ->searchable()
                 ->copyable()
                 ->copyMessage('Coupon code copied')
@@ -145,12 +145,12 @@ class CouponResource extends Resource
                 ->sortable()
                 ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('name')
-                ->label('Name')
+                ->label(__('admin.name'))
                 ->searchable()
                 ->limit(30)
                 ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('discount_type')
-                ->label('Type')
+                ->label(__('admin.type'))
                 ->badge()
                 ->color(fn (DiscountType $state): string => match ($state) {
                     DiscountType::Percentage => 'warning',
@@ -161,7 +161,7 @@ class CouponResource extends Resource
                     DiscountType::Fixed => 'heroicon-o-currency-euro',
                 }),
             Tables\Columns\TextColumn::make('discount_value')
-                ->label('Value')
+                ->label(__('admin.value'))
                 // A 10% coupon rendered as "€10.00" with unconditional money().
                 ->getStateUsing(fn (Coupon $record): string => $record->discount_type === DiscountType::Percentage
                     ? rtrim(rtrim((string) $record->discount_value, '0'), '.') . '%'
@@ -170,13 +170,13 @@ class CouponResource extends Resource
                 ->fontMono()
                 ->weight('bold'),
                 Tables\Columns\TextColumn::make('usage_limit')
-                    ->label('Max Uses')
+                    ->label(__('admin.max_uses'))
                     ->numeric()
                     ->fontMono()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('is_active')
-                ->label('Status')
+                ->label(__('admin.status'))
                 ->badge()
                 // Derived status: an expired coupon must not read "Active"
                 // (expires_at is a hidden-by-default column).
@@ -197,34 +197,34 @@ class CouponResource extends Resource
                 })
                 ->alignCenter(),
             Tables\Columns\TextColumn::make('user.name')
-                ->label('Restricted To')
+                ->label(__('admin.restricted_to'))
                 ->placeholder('Anyone')
                 ->toggleable(),
             Tables\Columns\TextColumn::make('expires_at')
-                ->label('Expires')
+                ->label(__('admin.expires'))
                 ->dateTime()
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('created_at')
-                ->label('Created')
+                ->label(__('admin.created'))
                 ->dateTime()
                 ->sortable()
                 ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('discount_type')
-                    ->label('Discount Type')
+                    ->label(__('admin.discount_type'))
                     ->options(DiscountType::class)
                     ->helperText('Filter by percentage or fixed amount coupons.')
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Coupon Status')
+                    ->label(__('admin.coupon_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('user_id')
-                    ->label('Personal Coupons')
+                    ->label(__('admin.personal_coupons'))
                     ->placeholder('All')
                     ->trueLabel('Personal Only')
                     ->falseLabel('Generic Only')
@@ -242,7 +242,7 @@ class CouponResource extends Resource
             ->emptyStateDescription('Create discount codes for promotions, campaigns, and customer retention.')
             ->emptyStateActions([
                 Actions\Action::make('create')
-                    ->label('Create Coupon')
+                    ->label(__('admin.create_coupon'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),
