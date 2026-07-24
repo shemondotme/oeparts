@@ -22,7 +22,7 @@
         "laravel/socialite": "^5.27",
         "laravel/tinker": "^2.9",
         "mews/purifier": "*",
-        "predis/predis": "^2.3",
+        "predis/predis": "^3.5",
         "spatie/laravel-honeypot": "*",
         "spatie/laravel-permission": "^6.0"
     },
