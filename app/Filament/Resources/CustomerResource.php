@@ -75,13 +75,13 @@ class CustomerResource extends Resource
                                     ->icon('heroicon-o-user')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Full Name')
+                                            ->label(__('admin.full_name'))
                                             ->placeholder('e.g. Jan de Vries')
                                             ->helperText('Customer\'s display name as shown across the platform.')
                                             ->required()
                                             ->maxLength(200),
                                         Forms\Components\TextInput::make('email')
-                                            ->label('Email Address')
+                                            ->label(__('admin.email_address'))
                                             ->email()
                                             ->placeholder('e.g. jan@bedrijf.nl')
                                             ->helperText('Used for order notifications, password resets, and login. Must be unique.')
@@ -89,7 +89,7 @@ class CustomerResource extends Resource
                                             ->maxLength(255)
                                             ->unique(ignoreRecord: true),
                                         Forms\Components\TextInput::make('phone')
-                                            ->label('Phone Number')
+                                            ->label(__('admin.phone_number'))
                                             ->tel()
                                             ->placeholder('e.g. +31 6 1234 5678')
                                             ->helperText('Optional contact number for delivery or order issues.')
@@ -107,31 +107,31 @@ class CustomerResource extends Resource
                                     ->description('Communication preferences and account settings for this customer.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Account Active')
+                                            ->label(__('admin.account_active'))
                                             ->helperText('Deactivated customers cannot sign in or place orders.')
                                             ->default(true),
                                         Forms\Components\Select::make('preferred_locale')
-                                            ->label('Preferred Language')
+                                            ->label(__('admin.preferred_language'))
                                             ->options(AdminUi::LOCALES)
                                             ->native(false)
                                             ->helperText('Determines the default storefront language when this customer logs in.')
                                             ->nullable(),
                                         Forms\Components\TextInput::make('timezone')
-                                            ->label('Timezone')
+                                            ->label(__('admin.timezone'))
                                             ->placeholder('e.g. Europe/Berlin')
                                             ->helperText('Used for order timestamps and email scheduling. Defaults to UTC if not set.')
                                             ->nullable()
                                             ->maxLength(50),
                                         Forms\Components\Toggle::make('prefers_order_notifications')
-                                            ->label('Order Notifications')
+                                            ->label(__('admin.order_notifications'))
                                             ->helperText('Receive emails for order status changes (paid, shipped, delivered).')
                                             ->default(true),
                                         Forms\Components\Toggle::make('prefers_email_notifications')
-                                            ->label('Email Notifications')
+                                            ->label(__('admin.email_notifications'))
                                             ->helperText('Receive general account and order-related email notifications.')
                                             ->default(true),
                                         Forms\Components\Toggle::make('prefers_promotional_emails')
-                                            ->label('Promotional Emails')
+                                            ->label(__('admin.promotional_emails'))
                                             ->helperText('Receive marketing emails, newsletters, and promotional offers.')
                                             ->default(true),
                                     ]),
@@ -159,7 +159,7 @@ class CustomerResource extends Resource
             })
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Customer')
+                    ->label(__('admin.customer'))
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium)
@@ -171,16 +171,16 @@ class CustomerResource extends Resource
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('phone')
-                    ->label('Phone')
+                    ->label(__('admin.phone'))
                     ->searchable()
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('orders_count')
-                    ->label('Orders')
+                    ->label(__('admin.orders'))
                     ->counts('orders')
                     ->fontMono()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('total_spent')
-                    ->label('Total Spent')
+                    ->label(__('admin.total_spent'))
                     ->alignEnd()
                     ->fontMono()
                     ->getStateUsing(fn (User $record): string => format_money($record->orders_sum_grand_total ?? 0))
@@ -189,14 +189,14 @@ class CustomerResource extends Resource
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy('orders_sum_grand_total', $direction))
                     ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('avg_order_value')
-                    ->label('Avg Order')
+                    ->label(__('admin.avg_order'))
                     ->alignEnd()
                     ->fontMono()
                     ->getStateUsing(fn (User $record): string => ($record->orders_avg_grand_total ?? 0) > 0 ? format_money($record->orders_avg_grand_total) : '—')
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy('orders_avg_grand_total', $direction))
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('last_order_date')
-                    ->label('Last Order')
+                    ->label(__('admin.last_order'))
                     ->getStateUsing(fn (User $record): ?string => $record->orders->first()?->created_at?->diffForHumans())
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy(
                         \App\Models\Order::select('created_at')
@@ -207,7 +207,7 @@ class CustomerResource extends Resource
                     ))
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('segment')
-                    ->label('Segment')
+                    ->label(__('admin.segment'))
                     ->badge()
                     ->getStateUsing(function (User $record): string {
                         $orderCount = $record->orders_count ?? 0;
@@ -235,11 +235,11 @@ class CustomerResource extends Resource
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Registered')
+                    ->label(__('admin.registered'))
                     ->dateTime('M j, Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->alignCenter()
                     ->getStateUsing(fn (User $record): string => $record->is_active ? 'Active' : 'Inactive')
@@ -248,19 +248,19 @@ class CustomerResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Account Status')
+                    ->label(__('admin.account_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Registration Date')
+                    ->label(__('admin.registration_date'))
                     ->form([
                         Forms\Components\DatePicker::make('from')
-                            ->label('Registered After')
+                            ->label(__('admin.registered_after'))
                             ->placeholder('Select start date'),
                         Forms\Components\DatePicker::make('until')
-                            ->label('Registered Before')
+                            ->label(__('admin.registered_before'))
                             ->placeholder('Select end date'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -274,7 +274,7 @@ class CustomerResource extends Resource
             ->filtersFormColumns(2)
             ->actions(AdminUi::recordActions(after: [
                 Actions\Action::make('sendPasswordReset')
-                    ->label('Send Password Reset')
+                    ->label(__('admin.send_password_reset'))
                     ->icon('heroicon-o-key')
                     ->authorize('update')
                     ->requiresConfirmation()
@@ -298,14 +298,14 @@ class CustomerResource extends Resource
                         }
                     }),
                 Actions\Action::make('sendEmail')
-                    ->label('Send Email')
+                    ->label(__('admin.send_email'))
                     ->icon('heroicon-o-envelope')
                     ->color('info')
                     ->authorize('update')
                     ->url(fn (User $record): string => "mailto:{$record->email}")
                     ->openUrlInNewTab(),
                 Actions\Action::make('exportGdprData')
-                    ->label('Export Data (GDPR)')
+                    ->label(__('admin.export_data_gdpr'))
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('gray')
                     ->authorize('update')
@@ -371,7 +371,7 @@ class CustomerResource extends Resource
             ->emptyStateDescription('Customers will appear here after they register on the storefront. You can also import customers via CSV.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Customer')
+                    ->label(__('admin.add_customer'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

@@ -85,14 +85,14 @@ class CategoryResource extends Resource
                                     ->description('Category hierarchy, URL structure, and display ordering.')
                                     ->schema([
                                         Forms\Components\TextInput::make('slug')
-                                            ->label('URL Slug')
+                                            ->label(__('admin.url_slug'))
                                             ->placeholder('e.g. brake-parts')
                                             ->helperText('Used in category page URLs (e.g. /blog/category/brake-parts).')
                                             ->required()
                                             ->unique(ignoreRecord: true)
                                             ->maxLength(200),
                                         Forms\Components\Select::make('parent_id')
-                                            ->label('Parent Category')
+                                            ->label(__('admin.parent_category'))
                                             ->relationship('parent', 'name')
                                             ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                                             ->searchable()
@@ -100,7 +100,7 @@ class CategoryResource extends Resource
                                             ->nullable()
                                             ->helperText('Leave empty for top-level categories. Select a parent to create a subcategory.'),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -117,7 +117,7 @@ class CategoryResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('parent'))
             ->columns([
                 Tables\Columns\TextColumn::make('name.en')
-                    ->label('Name')
+                    ->label(__('admin.name'))
                     ->formatStateUsing(fn ($state, Category $record): string => AdminUi::localizedName($record->name))
                     ->searchable()
                     ->sortable()
@@ -128,16 +128,16 @@ class CategoryResource extends Resource
                     ->copyMessage('Slug copied')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('parent.name')
-                    ->label('Parent')
+                    ->label(__('admin.parent'))
                     ->getStateUsing(fn (Category $record): string => $record->parent ? AdminUi::localizedName($record->parent->name) : '—')
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('blog_posts_count')
-                    ->label('Posts')
+                    ->label(__('admin.posts'))
                     ->counts('blogPosts')
                     ->fontMono()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->numeric()
                     ->sortable()
                     ->fontMono()
@@ -145,7 +145,7 @@ class CategoryResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('parent_id')
-                    ->label('Parent Category')
+                    ->label(__('admin.parent_category'))
                     ->relationship('parent', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                     ->searchable()
@@ -172,7 +172,7 @@ class CategoryResource extends Resource
             ->emptyStateDescription('Create categories to organize blog content and improve navigation.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create Category')
+                    ->label(__('admin.create_category'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

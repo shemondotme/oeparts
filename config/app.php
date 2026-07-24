@@ -141,4 +141,22 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | HTTP Cron Fallback
+    |--------------------------------------------------------------------------
+    |
+    | HTTP-triggered fallback: if the real system cron (README's `* * * * *
+    | php artisan schedule:run`) was never configured or has stopped running,
+    | App\Http\Middleware\TriggerDueScheduledTasks fires `schedule:run` from
+    | a normal HTTP request instead — backups, sitemap refresh, abandoned-
+    | cart emails, and update checks would otherwise just silently never run.
+    | Only triggers when the scheduler heartbeat is missing/stale, throttled
+    | to at most once a minute. Set to false if you have real cron configured
+    | and want to skip the (small, once-a-minute-at-most) overhead entirely.
+    |
+    */
+
+    'cron_fallback_enabled' => env('CRON_FALLBACK_ENABLED', true),
+
 ];

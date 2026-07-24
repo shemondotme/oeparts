@@ -56,7 +56,7 @@ class ShippingZoneResource extends Resource
                                     ->description('Define the shipping region shown at checkout.')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Zone Name')
+                                            ->label(__('admin.zone_name'))
                                             ->placeholder('e.g. Europe, Baltics, International')
                                             ->required()
                                             ->maxLength(100)
@@ -71,11 +71,11 @@ class ShippingZoneResource extends Resource
                                     ->description('Zone visibility and display ordering.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Zone Active')
+                                            ->label(__('admin.zone_active'))
                                             ->helperText('Inactive zones are hidden from the checkout page.')
                                             ->default(true),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -92,51 +92,51 @@ class ShippingZoneResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->withCount(['countries', 'methods']))
             ->columns([
             Tables\Columns\TextColumn::make('name')
-                ->label('Zone')
+                ->label(__('admin.zone'))
                 ->searchable()
                 ->sortable()
                 ->weight(FontWeight::Medium)
                 ->description(fn (ShippingZone $record): string => "{$record->countries_count} countries · {$record->methods_count} methods"),
             Tables\Columns\TextColumn::make('countries_count')
-                ->label('Countries')
+                ->label(__('admin.countries'))
                 ->badge()
                 ->color('info')
                 ->icon('heroicon-o-globe-alt')
                 ->alignCenter(),
             Tables\Columns\TextColumn::make('methods_count')
-                ->label('Methods')
+                ->label(__('admin.methods'))
                 ->badge()
                 ->color('success')
                 ->icon('heroicon-o-truck')
                 ->alignCenter(),
             Tables\Columns\TextColumn::make('is_active')
-                ->label('Active')
+                ->label(__('admin.active'))
                 ->badge()
                 ->alignCenter()
                 ->getStateUsing(fn (ShippingZone $record): string => $record->is_active ? 'Active' : 'Inactive')
                 ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
                 ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Zone Status')
+                    ->label(__('admin.zone_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
                 Tables\Filters\Filter::make('countries')
-                    ->label('Countries Range')
+                    ->label(__('admin.countries_range'))
                     ->form([
                         Forms\Components\TextInput::make('countries_from')
-                            ->label('Min')
+                            ->label(__('admin.min'))
                             ->numeric()
                             ->minValue(0),
                         Forms\Components\TextInput::make('countries_to')
-                            ->label('Max')
+                            ->label(__('admin.max'))
                             ->numeric()
                             ->minValue(0),
                     ])
@@ -148,14 +148,14 @@ class ShippingZoneResource extends Resource
                     ->columns(2)
                     ->columnSpan(2),
                 Tables\Filters\Filter::make('methods')
-                    ->label('Methods Range')
+                    ->label(__('admin.methods_range'))
                     ->form([
                         Forms\Components\TextInput::make('methods_from')
-                            ->label('Min')
+                            ->label(__('admin.min'))
                             ->numeric()
                             ->minValue(0),
                         Forms\Components\TextInput::make('methods_to')
-                            ->label('Max')
+                            ->label(__('admin.max'))
                             ->numeric()
                             ->minValue(0),
                     ])
@@ -187,7 +187,7 @@ class ShippingZoneResource extends Resource
             ->emptyStateDescription('Create your first shipping zone, then assign countries and delivery methods to it.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Create Zone')
+                    ->label(__('admin.create_zone'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

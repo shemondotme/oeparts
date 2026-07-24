@@ -39,13 +39,13 @@ class CarrierResource extends Resource
                     ->icon('heroicon-o-truck')
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label('Carrier Name')
+                            ->label(__('admin.carrier_name'))
                             ->placeholder('e.g. DHL, DPD, GLS, UPS')
                             ->required()
                             ->maxLength(100)
                             ->helperText('Display name shown to admins and customers.'),
                         Forms\Components\TextInput::make('tracking_url')
-                            ->label('Tracking URL Template')
+                            ->label(__('admin.tracking_url_template'))
                             ->placeholder('e.g. https://www.dhl.com/track?trackingNo={tracking_no}')
                             ->helperText('Use {tracking_no} as a placeholder for the actual tracking number. The customer\'s tracking link is built from this template.')
                             ->url()
@@ -61,11 +61,11 @@ class CarrierResource extends Resource
                             // forcing every carrier to have a tracking URL.
                             ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Carrier Active')
+                            ->label(__('admin.carrier_active'))
                             ->helperText('Inactive carriers cannot be assigned to new orders.')
                             ->default(true),
                         Forms\Components\TextInput::make('sort_order')
-                            ->label('Display Order')
+                            ->label(__('admin.display_order'))
                             ->numeric()
                             ->default(0)
                             ->minValue(0)
@@ -79,19 +79,19 @@ class CarrierResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('name')
-                ->label('Carrier')
+                ->label(__('admin.carrier'))
                 ->searchable()
                 ->sortable()
                 ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('tracking_url')
-                ->label('Tracking URL')
+                ->label(__('admin.tracking_url'))
                 ->limit(40)
                 ->copyable()
                 ->copyMessage('URL copied')
                 ->tooltip(fn (Carrier $record): ?string => $record->tracking_url)
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('is_active')
-                ->label('Active')
+                ->label(__('admin.active'))
                 ->badge()
                 ->alignCenter()
                 ->sortable()
@@ -99,7 +99,7 @@ class CarrierResource extends Resource
                 ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
                 ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
             Tables\Columns\TextColumn::make('sort_order')
-                ->label('Order')
+                ->label(__('admin.order'))
                 ->numeric()
                 ->sortable()
                 ->fontMono()
@@ -107,7 +107,7 @@ class CarrierResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Carrier Status')
+                    ->label(__('admin.carrier_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
@@ -120,7 +120,7 @@ class CarrierResource extends Resource
             ->emptyStateDescription('Add shipping carriers to enable tracking URLs and order fulfillment.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Carrier')
+                    ->label(__('admin.add_carrier'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

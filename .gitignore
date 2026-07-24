@@ -130,6 +130,18 @@ public/phpinfo.php
 *.kate-swp
 
 # ============================================================
+# Internal / not for the public repo
+# ============================================================
+# AI coding-assistant config and internal dev-process docs — used locally,
+# never published. Keep these out of git entirely (not just untracked-by-
+# convention) so a stray `git add -A` can't resurface them.
+/CLAUDE.md
+/.claude/
+/AGENTS.md
+/PRD.md
+/docs/
+
+# ============================================================
 # OS / system files
 # ============================================================
 .DS_Store

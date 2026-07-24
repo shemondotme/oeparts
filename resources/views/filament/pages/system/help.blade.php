@@ -11,7 +11,6 @@
             <h2 class="text-lg font-bold mb-4" style="color: var(--color-text-primary);">Keyboard Shortcuts</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 @foreach([
-                    ['keys' => ['⌘', 'K'], 'description' => 'Open Spotlight search'],
                     ['keys' => ['⌘', 'S'], 'description' => 'Save current form'],
                     ['keys' => ['⌘', '⌫'], 'description' => 'Go back'],
                     ['keys' => ['⌘', '⇧', 'P'], 'description' => 'Toggle dark mode'],
@@ -37,7 +36,6 @@
             <h2 class="text-lg font-bold mb-4" style="color: var(--color-text-primary);">Quick Reference</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 @foreach([
-                    ['title' => 'Spotlight Search', 'description' => 'Press ⌘K to search across all resources — orders, products, customers, manufacturers. Results are instant and keyboard-navigable.', 'icon' => 'heroicon-o-magnifying-glass'],
                     ['title' => 'Widget Management', 'description' => 'Click the gear icon on the dashboard to show/hide widgets and reorder them. Changes are saved per-admin.', 'icon' => 'heroicon-o-cog-6-tooth'],
                     ['title' => 'Bulk Actions', 'description' => 'Select multiple rows with checkboxes, then use the bulk actions dropdown for operations like export, status change, or delete.', 'icon' => 'heroicon-o-check-circle'],
                     ['title' => 'CSV Exports', 'description' => 'Most list pages offer CSV export via bulk actions. Select rows, click Export CSV, and download from the notification.', 'icon' => 'heroicon-o-arrow-down-tray'],

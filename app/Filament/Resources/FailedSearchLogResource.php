@@ -60,32 +60,32 @@ class FailedSearchLogResource extends Resource
                     ->description('Read-only details of a search query that returned no results.')
                     ->schema([
                         Forms\Components\TextInput::make('search_query')
-                            ->label('Search Query')
+                            ->label(__('admin.search_query'))
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('normalized_query')
-                            ->label('Normalized Query')
+                            ->label(__('admin.normalized_query'))
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('lang')
-                            ->label('Language')
+                            ->label(__('admin.language'))
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('user.name')
-                            ->label('Searched By')
+                            ->label(__('admin.searched_by'))
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\TextInput::make('ip_address')
-                            ->label('IP Address')
+                            ->label(__('admin.ip_address'))
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\Toggle::make('inquiry_submitted')
-                            ->label('Inquiry Submitted')
+                            ->label(__('admin.inquiry_submitted'))
                             ->helperText('Whether the user submitted a part inquiry after the failed search.')
                             ->disabled()
                             ->dehydrated(false),
                         Forms\Components\DateTimePicker::make('created_at')
-                            ->label('Searched At')
+                            ->label(__('admin.searched_at'))
                             ->disabled()
                             ->dehydrated(false),
                     ])->columns(2),
@@ -97,7 +97,7 @@ class FailedSearchLogResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('search_query')
-                    ->label('Search Query')
+                    ->label(__('admin.search_query'))
                     ->searchable()
                     ->sortable()
                     ->copyable()
@@ -105,29 +105,29 @@ class FailedSearchLogResource extends Resource
                     ->limit(30)
                     ->fontMono(),
                 Tables\Columns\TextColumn::make('normalized_query')
-                    ->label('Normalized Query')
+                    ->label(__('admin.normalized_query'))
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->badge()
                     ->alignCenter()
                     ->toggleable(),
                 Tables\Columns\IconColumn::make('inquiry_submitted')
-                    ->label('Inquiry?')
+                    ->label(__('admin.inquiry'))
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
+                    ->label(__('admin.ip_address'))
                     ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Searched At')
+                    ->label(__('admin.searched_at'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->options([
                         'en' => 'English',
                         'de' => 'German',
@@ -138,7 +138,7 @@ class FailedSearchLogResource extends Resource
                     ->native(false)
                     ->helperText('Filter failed searches by language.'),
                 Tables\Filters\TernaryFilter::make('inquiry_submitted')
-                    ->label('Inquiry Submitted')
+                    ->label(__('admin.inquiry_submitted'))
                     ->helperText('Show searches that did or did not result in a part inquiry.'),
             ])
             ->actions([

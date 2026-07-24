@@ -32,37 +32,37 @@ class SearchLogResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with(['manufacturer', 'user']))
             ->columns([
                 Tables\Columns\TextColumn::make('search_query')
-                    ->label('Query')
+                    ->label(__('admin.query'))
                     ->searchable()
                     ->sortable()
                     ->limit(40),
                 Tables\Columns\TextColumn::make('result_count')
-                    ->label('Results')
+                    ->label(__('admin.results'))
                     ->numeric()
                     ->sortable()
                     ->fontMono()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('manufacturer.name')
-                    ->label('Manufacturer'),
+                    ->label(__('admin.manufacturer')),
                 Tables\Columns\TextColumn::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->badge()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User'),
+                    ->label(__('admin.user')),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
+                    ->label(__('admin.ip_address'))
                     ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->label(__('admin.date'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('lang')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->options([
                         'en' => 'English',
                         'de' => 'German',

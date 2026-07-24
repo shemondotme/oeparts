@@ -59,6 +59,13 @@ Schedule::command('oeparts:backup:cleanup-stale')->hourly();
 // Check for available updates — daily at 6 AM (warms the update-check cache)
 Schedule::command('oeparts:update:check')->dailyAt('06:00');
 
+// Unattended SECURITY-update auto-apply — opt-in only (OE_UPDATE_AUTO_SECURITY),
+// off by default. Runs after the check above so its own admin-notification
+// email lands separately, not racing the "update available" one.
+Schedule::command('oeparts:update:auto-apply')
+    ->dailyAt('06:15')
+    ->when(fn () => (bool) config('updates.auto_apply_security', false));
+
 // Scheduler heartbeat — every minute (for health monitoring)
 Schedule::command('scheduler:heartbeat')->everyMinute();
 

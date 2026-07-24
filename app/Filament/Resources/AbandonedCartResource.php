@@ -67,7 +67,7 @@ class AbandonedCartResource extends Resource
                                     ->description('Raw cart data captured at the time of abandonment including items and totals.')
                                     ->schema([
                                         Forms\Components\Textarea::make('cart_snapshot')
-                                            ->label('Cart Data (JSON)')
+                                            ->label(__('admin.cart_data_json'))
                                             ->hiddenLabel()
                                             ->json()
                                             ->readOnly()
@@ -86,13 +86,13 @@ class AbandonedCartResource extends Resource
                                     ->description('Customer information associated with this abandoned cart.')
                                     ->schema([
                                         Forms\Components\Select::make('user_id')
-                                            ->label('Registered Customer')
+                                            ->label(__('admin.registered_customer'))
                                             ->relationship('user', 'name')
                                             ->disabled()
                                             ->placeholder('Guest Customer')
                                             ->helperText('Linked customer account if they were logged in.'),
                                         Forms\Components\TextInput::make('guest_email')
-                                            ->label('Guest Email')
+                                            ->label(__('admin.guest_email'))
                                             ->email()
                                             ->readOnly()
                                             ->placeholder('Not provided')
@@ -104,11 +104,11 @@ class AbandonedCartResource extends Resource
                                     ->description('Track customer activity and recovery email status.')
                                     ->schema([
                                         Forms\Components\DateTimePicker::make('last_active_at')
-                                            ->label('Last Active')
+                                            ->label(__('admin.last_active'))
                                             ->disabled()
                                             ->helperText('When the customer was last active on the site.'),
                                         Forms\Components\Toggle::make('recovery_email_sent')
-                                            ->label('Recovery Email Sent')
+                                            ->label(__('admin.recovery_email_sent'))
                                             ->disabled()
                                             ->helperText('Whether a recovery email has been sent for this cart.'),
                                     ]),
@@ -123,31 +123,31 @@ class AbandonedCartResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('user'))
             ->columns([
             Tables\Columns\TextColumn::make('user.name')
-                ->label('Customer')
+                ->label(__('admin.customer'))
                 ->searchable()
                 ->sortable()
                 ->placeholder('Guest Customer')
                 ->weight(FontWeight::Medium),
             Tables\Columns\TextColumn::make('guest_email')
-                ->label('Email')
+                ->label(__('admin.email'))
                 ->searchable()
                 ->copyable()
                 ->copyMessage('Email copied')
                 ->placeholder('—')
                 ->limit(30),
                 Tables\Columns\TextColumn::make('last_active_at')
-                    ->label('Last Active')
+                    ->label(__('admin.last_active'))
                     ->dateTime('M j, Y H:i')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('recovery_email_sent')
-                    ->label('Recovery Sent')
+                    ->label(__('admin.recovery_sent'))
                     ->badge()
                     ->color(fn (bool $state): string => $state ? 'success' : 'gray')
                     ->icon(fn (bool $state): string => $state ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
                     ->formatStateUsing(fn (bool $state): string => $state ? 'Sent' : 'No Recovery')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('admin.created'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -155,7 +155,7 @@ class AbandonedCartResource extends Resource
             ->defaultSort('last_active_at', 'desc')
             ->filters([
                 Tables\Filters\TernaryFilter::make('recovery_email_sent')
-                    ->label('Recovery Email Status')
+                    ->label(__('admin.recovery_email_status'))
                     ->placeholder('All')
                     ->trueLabel('Recovery Sent')
                     ->falseLabel('No Recovery Sent')

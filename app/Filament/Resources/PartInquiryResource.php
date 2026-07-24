@@ -51,16 +51,16 @@ class PartInquiryResource extends Resource
                                     ->description('Core information for this part inquiry.')
                                     ->schema([
                                         Forms\Components\TextInput::make('oem_number')
-                                            ->label('OEM Part Number')
+                                            ->label(__('admin.oem_part_number'))
                                             ->readOnly()
                                             ->extraAttributes(['class' => 'font-mono uppercase']),
                                         Forms\Components\TextInput::make('quantity')
-                                            ->label('Requested Quantity')
+                                            ->label(__('admin.requested_quantity'))
                                             ->numeric()
                                             ->readOnly()
                                             ->helperText('Number of units the customer needs.'),
                                         Forms\Components\Select::make('urgency')
-                                            ->label('Urgency Level')
+                                            ->label(__('admin.urgency_level'))
                                             ->options([
                                                 'normal' => 'Normal',
                                                 'soon' => 'Soon (within a week)',
@@ -76,16 +76,16 @@ class PartInquiryResource extends Resource
                                     ->description('Vehicle details provided by the customer for part compatibility.')
                                     ->schema([
                                         Forms\Components\TextInput::make('manufacturer')
-                                            ->label('Vehicle Manufacturer')
+                                            ->label(__('admin.vehicle_manufacturer'))
                                             ->readOnly(),
                                         Forms\Components\TextInput::make('car_model')
-                                            ->label('Car Model')
+                                            ->label(__('admin.car_model'))
                                             ->readOnly(),
                                         Forms\Components\TextInput::make('year')
-                                            ->label('Model Year')
+                                            ->label(__('admin.model_year'))
                                             ->readOnly(),
                                         Forms\Components\TextInput::make('vin_number')
-                                            ->label('VIN Number')
+                                            ->label(__('admin.vin_number'))
                                             ->readOnly()
                                             ->extraAttributes(['class' => 'font-mono uppercase']),
                                     ])
@@ -113,13 +113,13 @@ class PartInquiryResource extends Resource
                                     ->description('Track and manage this inquiry through the sourcing workflow.')
                                     ->schema([
                                         Forms\Components\Select::make('status')
-                                            ->label('Inquiry Status')
+                                            ->label(__('admin.inquiry_status'))
                                             ->options(PartInquiryStatus::class)
                                             ->native(false)
                                             ->required()
                                             ->helperText('Current processing state of this part inquiry.'),
                                         Forms\Components\Textarea::make('admin_note')
-                                            ->label('Internal Admin Note')
+                                            ->label(__('admin.internal_admin_note'))
                                             ->rows(4)
                                             ->placeholder('e.g. Part sourced from Supplier X, ETA 3 days...')
                                             ->helperText('Private notes for tracking. Not visible to the customer.')
@@ -131,11 +131,11 @@ class PartInquiryResource extends Resource
                                     ->description('Contact details for the customer who submitted this inquiry.')
                                     ->schema([
                                         Forms\Components\TextInput::make('email')
-                                            ->label('Email Address')
+                                            ->label(__('admin.email_address'))
                                             ->email()
                                             ->readOnly(),
                                         Forms\Components\TextInput::make('phone')
-                                            ->label('Phone Number')
+                                            ->label(__('admin.phone_number'))
                                             ->tel()
                                             ->readOnly()
                                             ->placeholder('Not provided'),
@@ -153,12 +153,12 @@ class PartInquiryResource extends Resource
                     ->searchable(),
                 AdminUi::oemColumn('oem_number', 'OEM number copied'),
                 Tables\Columns\TextColumn::make('manufacturer')
-                    ->label('Manufacturer')
+                    ->label(__('admin.manufacturer'))
                     ->searchable()
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('admin.status'))
                     ->badge()
                     ->color(fn (PartInquiryStatus $state): string => match ($state) {
                         PartInquiryStatus::New        => 'gray',
@@ -174,7 +174,7 @@ class PartInquiryResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('urgency')
-                    ->label('Urgency')
+                    ->label(__('admin.urgency'))
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'urgent' => 'danger',
@@ -191,19 +191,19 @@ class PartInquiryResource extends Resource
                     ->formatStateUsing(fn (string $state): string => ucfirst($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date')
+                    ->label(__('admin.date'))
                     ->dateTime('M j, Y H:i')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Inquiry Status')
+                    ->label(__('admin.inquiry_status'))
                     ->options(PartInquiryStatus::class)
                     ->native(false)
                     ->helperText('Filter by processing status.')
                     ->columnSpan(1),
                 Tables\Filters\SelectFilter::make('urgency')
-                    ->label('Urgency Level')
+                    ->label(__('admin.urgency_level'))
                     ->options([
                         'normal' => 'Normal',
                         'soon' => 'Soon',
@@ -213,13 +213,13 @@ class PartInquiryResource extends Resource
                     ->helperText('Filter by customer-specified urgency.')
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Inquiry Date')
+                    ->label(__('admin.inquiry_date'))
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Submitted After')
+                            ->label(__('admin.submitted_after'))
                             ->placeholder('Select start date'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Submitted Before')
+                            ->label(__('admin.submitted_before'))
                             ->placeholder('Select end date'),
                     ])
                     ->query(function ($query, array $data) {
@@ -362,7 +362,7 @@ class PartInquiryResource extends Resource
     public static function makeMarkSourcedAction(): Actions\Action
     {
         return Actions\Action::make('mark_sourced')
-            ->label('Mark Sourced')
+            ->label(__('admin.mark_sourced'))
             ->icon('heroicon-o-check-circle')
             ->color('success')
             ->authorize('update')
@@ -384,7 +384,7 @@ class PartInquiryResource extends Resource
     public static function makeMarkUnavailableAction(): Actions\Action
     {
         return Actions\Action::make('markUnavailable')
-            ->label('Mark Unavailable')
+            ->label(__('admin.mark_unavailable'))
             ->icon('heroicon-o-x-circle')
             ->color('danger')
             ->authorize('update')

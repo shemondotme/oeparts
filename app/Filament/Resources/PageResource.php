@@ -70,14 +70,14 @@ class PageResource extends Resource
                                     ->description('Basic page metadata and featured image.')
                                     ->schema([
                                         Forms\Components\TextInput::make('slug')
-                                            ->label('URL Slug')
+                                            ->label(__('admin.url_slug'))
                                             ->placeholder('e.g. about-us, shipping-policy')
                                             ->helperText('Used in page URLs (e.g. /pages/about-us). Auto-generated from English title.')
                                             ->required()
                                             ->maxLength(200)
                                             ->unique(ignoreRecord: true),
                                         Forms\Components\Select::make('featured_image_id')
-                                            ->label('Featured Image')
+                                            ->label(__('admin.featured_image'))
                                             ->relationship('featuredImage', 'file_name')
                                             ->searchable()
                                             ->nullable()
@@ -112,12 +112,12 @@ class PageResource extends Resource
                                                     ->map(fn (string $label, string $code) => Tab::make($label)
                                                         ->schema([
                                                             Forms\Components\TextInput::make("meta_title.$code")
-                                                                ->label('Meta Title')
+                                                                ->label(__('admin.meta_title'))
                                                                 ->maxLength(255)
                                                                 ->nullable()
                                                                 ->helperText('Optimal: 50–60 characters. Currently shown in search results as the clickable headline.'),
                                                             Forms\Components\Textarea::make("meta_description.$code")
-                                                                ->label('Meta Description')
+                                                                ->label(__('admin.meta_description'))
                                                                 ->rows(3)
                                                                 ->nullable()
                                                                 ->helperText('Optimal: 150–160 characters. Shanked beneath the title in search results.'),
@@ -138,25 +138,25 @@ class PageResource extends Resource
                                     ->description('Control page status, scheduling, and navigation placement.')
                                     ->schema([
                                         Forms\Components\Select::make('status')
-                                            ->label('Publish Status')
+                                            ->label(__('admin.publish_status'))
                                             ->options(ContentStatus::class)
                                             ->required()
                                             ->default(ContentStatus::Draft)
                                             ->helperText('Draft pages are not visible on the storefront.'),
                                         Forms\Components\DateTimePicker::make('published_at')
-                                            ->label('Published At')
+                                            ->label(__('admin.published_at'))
                                             ->nullable()
                                             ->helperText('Schedule a future publication date. Leave empty to publish immediately.'),
                                         Forms\Components\Toggle::make('is_homepage')
-                                            ->label('Set as Homepage')
+                                            ->label(__('admin.set_as_homepage'))
                                             ->default(false)
                                             ->helperText('Only one page can be set as the homepage. This will override the current homepage.'),
                                         Forms\Components\Toggle::make('is_header')
-                                            ->label('Show in Header Navigation')
+                                            ->label(__('admin.show_in_header_navigation'))
                                             ->default(false)
                                             ->helperText('Add this page link to the main header navigation menu.'),
                                         Forms\Components\Toggle::make('is_footer')
-                                            ->label('Show in Footer Navigation')
+                                            ->label(__('admin.show_in_footer_navigation'))
                                             ->default(false)
                                             ->helperText('Add this page link to the footer navigation menu.'),
                                     ]),
@@ -170,7 +170,7 @@ class PageResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('title')
-                ->label('Title')
+                ->label(__('admin.title'))
                 ->getStateUsing(fn (Page $record): string => AdminUi::localizedName($record->title))
                 ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->where(function ($q) use ($search) {
@@ -183,12 +183,12 @@ class PageResource extends Resource
                 ->weight(FontWeight::Medium)
                 ->limit(30),
             Tables\Columns\TextColumn::make('slug')
-                ->label('Slug')
+                ->label(__('admin.slug'))
                 ->badge()
                 ->color('gray')
                 ->searchable(),
             Tables\Columns\TextColumn::make('status')
-                ->label('Status')
+                ->label(__('admin.status'))
                 ->badge()
                 ->color(fn (ContentStatus $state): string => match ($state) {
                     ContentStatus::Published => 'success',
@@ -197,41 +197,41 @@ class PageResource extends Resource
                     default => 'gray',
                 }),
                 Tables\Columns\IconColumn::make('is_homepage')
-                    ->label('Home')
+                    ->label(__('admin.home'))
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\IconColumn::make('is_header')
-                    ->label('Header')
+                    ->label(__('admin.header'))
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\IconColumn::make('is_footer')
-                    ->label('Footer')
+                    ->label(__('admin.footer'))
                     ->boolean()
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('published_at')
-                    ->label('Published')
+                    ->label(__('admin.published'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Publish Status')
+                    ->label(__('admin.publish_status'))
                     ->options(ContentStatus::class)
                     ->native(false)
                     ->helperText('Filter by draft, published, or archived pages.'),
                 Tables\Filters\TernaryFilter::make('is_homepage')
-                    ->label('Homepage')
+                    ->label(__('admin.homepage'))
                     ->placeholder('All')
                     ->trueLabel('Homepage Only')
                     ->falseLabel('Non-Homepage'),
                 Tables\Filters\TernaryFilter::make('is_header')
-                    ->label('Header Nav')
+                    ->label(__('admin.header_nav'))
                     ->placeholder('All')
                     ->trueLabel('In Header')
                     ->falseLabel('Not in Header'),
                 Tables\Filters\TernaryFilter::make('is_footer')
-                    ->label('Footer Nav')
+                    ->label(__('admin.footer_nav'))
                     ->placeholder('All')
                     ->trueLabel('In Footer')
                     ->falseLabel('Not in Footer'),

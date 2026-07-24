@@ -57,7 +57,7 @@ class ConditionResource extends Resource
                                     ->description('Basic information and display settings for this part condition.')
                                     ->schema([
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Condition Name')
+                                            ->label(__('admin.condition_name'))
                                             ->placeholder('e.g. New, Used, Remanufactured')
                                             ->required()
                                             ->maxLength(100)
@@ -78,7 +78,7 @@ class ConditionResource extends Resource
                                                 }
                                             }),
                                         Forms\Components\TextInput::make('slug')
-                                            ->label('URL Slug')
+                                            ->label(__('admin.url_slug'))
                                             ->placeholder('e.g. new, used, remanufactured')
                                             ->required()
                                             ->maxLength(100)
@@ -86,13 +86,13 @@ class ConditionResource extends Resource
                                             ->rules(['regex:/^[a-z0-9\-]+$/'])
                                             ->helperText('Unique URL-safe identifier. Lowercase letters, numbers, and hyphens only.'),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Sort Order')
+                                            ->label(__('admin.sort_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
                                             ->helperText('Lower numbers appear first in condition lists and filters.'),
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Active')
+                                            ->label(__('admin.active'))
                                             ->helperText('Inactive conditions are hidden from the storefront and product forms.')
                                             ->default(true),
                                     ])->columns(2),
@@ -106,19 +106,19 @@ class ConditionResource extends Resource
                                     ->description('Colors used for the condition badge throughout the storefront and admin.')
                                     ->schema([
                                         Forms\Components\ColorPicker::make('bg_color')
-                                            ->label('Background Color')
+                                            ->label(__('admin.background_color'))
                                             ->required()
                                             ->default('#DCFCE7')
                                             ->live()
                                             ->helperText('Badge background color (hex).'),
                                         Forms\Components\ColorPicker::make('text_color')
-                                            ->label('Text Color')
+                                            ->label(__('admin.text_color'))
                                             ->required()
                                             ->default('#16A34A')
                                             ->live()
                                             ->helperText('Badge text color (hex).'),
                                         Forms\Components\Placeholder::make('preview')
-                                            ->label('Preview')
+                                            ->label(__('admin.preview'))
                                             ->content(fn (\Filament\Schemas\Components\Utilities\Get $get) => sprintf(
                                                 '<span class="inline-flex items-center rounded px-2 py-0.5 bp-spec-mono font-bold" style="background-color: %s; color: %s;">%s</span>',
                                                 $get('bg_color') ?? '#DCFCE7',
@@ -138,7 +138,7 @@ class ConditionResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
@@ -148,7 +148,7 @@ class ConditionResource extends Resource
                 // the list lost its Name/Slug columns entirely. The badge IS
                 // the name presentation — rendered in the condition's colors.
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
+                    ->label(__('admin.name'))
                     ->searchable()
                     ->sortable()
                     ->badge()
@@ -157,19 +157,19 @@ class ConditionResource extends Resource
                         ? \Filament\Support\Colors\Color::hex($record->bg_color)
                         : 'gray'),
                 Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug')
+                    ->label(__('admin.slug'))
                     ->fontMono()
                     ->copyable()
                     ->copyMessage('Slug copied'),
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label(__('admin.products'))
                     ->counts('products')
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->alignCenter()
                     ->getStateUsing(fn (Condition $record): string => $record->is_active ? 'Active' : 'Inactive')
@@ -178,7 +178,7 @@ class ConditionResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Status')
+                    ->label(__('admin.status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
@@ -222,7 +222,7 @@ class ConditionResource extends Resource
             ->emptyStateDescription('Add part conditions like New, Used, or Remanufactured to classify products.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Condition')
+                    ->label(__('admin.add_condition'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

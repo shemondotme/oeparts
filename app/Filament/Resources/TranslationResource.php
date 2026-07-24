@@ -41,25 +41,25 @@ class TranslationResource extends Resource
                     ->description('Define the language, group, and key-value pair for this translation string.')
                     ->schema([
                         Forms\Components\Select::make('lang_code')
-                            ->label('Target Language')
+                            ->label(__('admin.target_language'))
                             ->options(AdminUi::LOCALES)
                             ->native(false)
                             ->required()
                             ->helperText('The language this translation is for.'),
                         Forms\Components\TextInput::make('group')
-                            ->label('Translation Group')
+                            ->label(__('admin.translation_group'))
                             ->required()
                             ->maxLength(100)
                             ->placeholder('e.g. general, validation, errors')
                             ->helperText('Group related translations together (e.g. "validation" for form error messages).'),
                         Forms\Components\TextInput::make('key')
-                            ->label('Translation Key')
+                            ->label(__('admin.translation_key'))
                             ->required()
                             ->maxLength(200)
                             ->placeholder('e.g. welcome_message, email_required')
                             ->helperText('The unique identifier for this string. Used in code to reference the translation.'),
                         Forms\Components\Textarea::make('value')
-                            ->label('Translated Value')
+                            ->label(__('admin.translated_value'))
                             ->rows(4)
                             ->required()
                             ->columnSpanFull()
@@ -74,41 +74,41 @@ class TranslationResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('lang_code')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => AdminUi::LOCALES[$state] ?? strtoupper($state))
                     ->color('gray')
                     ->sortable(),
             Tables\Columns\TextColumn::make('group')
-                ->label('Group')
+                ->label(__('admin.group'))
                 ->badge()
                 ->color('info')
                 ->searchable()
                 ->sortable(),
             Tables\Columns\TextColumn::make('key')
-                ->label('Key Name')
+                ->label(__('admin.key_name'))
                 ->weight(FontWeight::Medium)
                 ->searchable()
                 ->sortable()
                 ->limit(40),
                 Tables\Columns\TextColumn::make('value')
-                    ->label('Translation Value')
+                    ->label(__('admin.translation_value'))
                     ->limit(60)
                     ->searchable(),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Updated')
+                    ->label(__('admin.updated'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('lang_code')
-                    ->label('Language')
+                    ->label(__('admin.language'))
                     ->options(AdminUi::LOCALES)
                     ->native(false)
                     ->helperText('Filter translations by target language.'),
                 Tables\Filters\SelectFilter::make('group')
-                    ->label('Translation Group')
+                    ->label(__('admin.translation_group'))
                     ->options(fn () => LanguageString::distinct()->pluck('group', 'group')->toArray())
                     ->native(false)
                     ->helperText('Filter by translation group (e.g. validation, errors).'),

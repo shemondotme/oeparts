@@ -61,7 +61,7 @@ class CarModelResource extends Resource
                                     ->icon('heroicon-o-truck')
                                     ->schema([
                                         Forms\Components\Select::make('manufacturer_id')
-                                            ->label('Manufacturer')
+                                            ->label(__('admin.manufacturer'))
                                             ->relationship('manufacturer', 'name')
                                             ->searchable()
                                             ->preload()
@@ -69,7 +69,7 @@ class CarModelResource extends Resource
                                             ->required()
                                             ->helperText('The brand or OEM that produces this vehicle model.'),
                                         Forms\Components\TextInput::make('name')
-                                            ->label('Model Name')
+                                            ->label(__('admin.model_name'))
                                             ->placeholder('e.g. Golf, 3 Series, C-Class')
                                             ->required()
                                             ->maxLength(200)
@@ -81,7 +81,7 @@ class CarModelResource extends Resource
                                             })
                                             ->helperText('The commercial name of this vehicle model.'),
                                         Forms\Components\TextInput::make('slug')
-                                            ->label('URL Slug')
+                                            ->label(__('admin.url_slug'))
                                             ->placeholder('e.g. volkswagen-golf')
                                             ->helperText('Used in vehicle model page URLs. Auto-filled from the model name when empty.')
                                             ->required()
@@ -100,14 +100,14 @@ class CarModelResource extends Resource
                                     ->description('Production year range and display settings for this model.')
                                     ->schema([
                                         Forms\Components\Select::make('year_from')
-                                            ->label('Production Start Year')
+                                            ->label(__('admin.production_start_year'))
                                             ->options($yearOptions)
                                             ->nullable()
                                             ->searchable()
                                             ->native(false)
                                             ->helperText('The first model year (e.g. 2015).'),
                                         Forms\Components\Select::make('year_to')
-                                            ->label('Production End Year')
+                                            ->label(__('admin.production_end_year'))
                                             ->options($yearOptions)
                                             ->nullable()
                                             ->searchable()
@@ -122,11 +122,11 @@ class CarModelResource extends Resource
                                             })
                                             ->helperText('The last model year. Leave empty if still in production.'),
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Model Active')
+                                            ->label(__('admin.model_active'))
                                             ->helperText('Inactive models are hidden from the storefront and part compatibility search.')
                                             ->default(true),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -143,7 +143,7 @@ class CarModelResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('manufacturer'))
             ->columns([
                 Tables\Columns\TextColumn::make('manufacturer.name')
-                    ->label('Manufacturer')
+                    ->label(__('admin.manufacturer'))
                     ->getStateUsing(fn (CarModel $record): string => $record->manufacturer ? AdminUi::localizedName($record->manufacturer->name) : '—')
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('manufacturer', function ($q) use ($search) {
@@ -156,13 +156,13 @@ class CarModelResource extends Resource
                     ->limit(22)
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Model')
+                    ->label(__('admin.model'))
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium)
                     ->description(fn (CarModel $record): ?string => $record->slug ?: null),
                 Tables\Columns\TextColumn::make('year_range')
-                    ->label('Years')
+                    ->label(__('admin.years'))
                     ->getStateUsing(function (CarModel $record): string {
                         if ($record->year_from && $record->year_to) {
                             return "{$record->year_from}–{$record->year_to}";
@@ -172,20 +172,20 @@ class CarModelResource extends Resource
                     })
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label(__('admin.products'))
                     ->counts('products')
                     ->fontMono()
                     ->alignCenter()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->alignCenter()
                     ->getStateUsing(fn (CarModel $record): string => $record->is_active ? 'Active' : 'Inactive')
                     ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
                     ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
@@ -194,7 +194,7 @@ class CarModelResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('manufacturer_id')
                     ->relationship('manufacturer', 'name')
-                    ->label('Manufacturer')
+                    ->label(__('admin.manufacturer'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                     ->searchable()
                     ->preload()
@@ -202,7 +202,7 @@ class CarModelResource extends Resource
                     ->helperText('Filter models by brand or OEM.')
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Model Status')
+                    ->label(__('admin.model_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
@@ -278,7 +278,7 @@ class CarModelResource extends Resource
             ->emptyStateDescription('Add vehicle models to link parts to compatible cars and enable vehicle-based search.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Model')
+                    ->label(__('admin.add_model'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),

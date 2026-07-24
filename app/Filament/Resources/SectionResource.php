@@ -137,7 +137,7 @@ class SectionResource extends Resource
                                     ->description('Define the section type and where it appears on the page.')
                                     ->schema([
                                         Forms\Components\Select::make('type')
-                                            ->label('Section Type')
+                                            ->label(__('admin.section_type'))
                                             // Section::TYPES mirrors the real storefront components —
                                             // the previous hand-typed list matched NONE of them.
                                             ->options(Section::TYPES)
@@ -146,7 +146,7 @@ class SectionResource extends Resource
                                             ->live()
                                             ->helperText('Must match a storefront section component — the homepage silently skips unknown types.'),
                                         Forms\Components\Select::make('location')
-                                            ->label('Page Location')
+                                            ->label(__('admin.page_location'))
                                             ->options(SectionLocation::class)
                                             ->native(false)
                                             ->required()
@@ -185,10 +185,10 @@ class SectionResource extends Resource
                                         ]),
 
                                         Repeater::make('content.items')
-                                            ->label('Trust Bar Items')
+                                            ->label(__('admin.trust_bar_items'))
                                             ->schema([
                                                 Forms\Components\TextInput::make('icon')
-                                                    ->label('Icon')
+                                                    ->label(__('admin.icon'))
                                                     ->maxLength(60)
                                                     ->helperText('Heroicon name, e.g. truck, shield-check, arrow-path, lock-closed.'),
                                                 AdminUi::translatableTabs('Text', [
@@ -203,10 +203,10 @@ class SectionResource extends Resource
                                             ->columnSpanFull(),
 
                                         Repeater::make('content.items')
-                                            ->label('Stat Items')
+                                            ->label(__('admin.stat_items'))
                                             ->schema([
                                                 Forms\Components\Select::make('key')
-                                                    ->label('Metric Key')
+                                                    ->label(__('admin.metric_key'))
                                                     ->options([
                                                         'parts_count' => 'Parts Count',
                                                         'customers_count' => 'Customers Count',
@@ -219,7 +219,7 @@ class SectionResource extends Resource
                                                     ->native(false)
                                                     ->required()
                                                     ->helperText('Must match a real settings key under Stats Counter Settings.'),
-                                                Forms\Components\TextInput::make('suffix')->label('Suffix')->maxLength(10)->placeholder('+'),
+                                                Forms\Components\TextInput::make('suffix')->label(__('admin.suffix'))->maxLength(10)->placeholder('+'),
                                                 AdminUi::translatableTabs('Label', [
                                                     'label' => ['label' => 'Label'],
                                                 ]),
@@ -232,10 +232,10 @@ class SectionResource extends Resource
                                             ->columnSpanFull(),
 
                                         Repeater::make('content.features')
-                                            ->label('Shipping Features')
+                                            ->label(__('admin.shipping_features'))
                                             ->schema([
                                                 Forms\Components\TextInput::make('icon')
-                                                    ->label('Icon')
+                                                    ->label(__('admin.icon'))
                                                     ->maxLength(60)
                                                     ->helperText('Heroicon name, e.g. truck, globe-europe-africa, clock, gift, arrow-path, map-pin, shield-check.'),
                                                 AdminUi::translatableTabs('Value', [
@@ -253,7 +253,7 @@ class SectionResource extends Resource
                                             ->columnSpanFull(),
 
                                         Forms\Components\TagsInput::make('content.carriers')
-                                            ->label('Carriers')
+                                            ->label(__('admin.carriers'))
                                             ->placeholder('Add a carrier…')
                                             ->helperText('e.g. DHL, DPD, GLS, FedEx, UPS')
                                             ->visible(fn (Get $get) => $get('type') === 'shipping_info')
@@ -261,14 +261,14 @@ class SectionResource extends Resource
                                             ->columnSpanFull(),
 
                                         Repeater::make('content.steps')
-                                            ->label('Steps')
+                                            ->label(__('admin.steps'))
                                             ->schema([
                                                 Forms\Components\TextInput::make('icon')
-                                                    ->label('Icon')
+                                                    ->label(__('admin.icon'))
                                                     ->maxLength(60)
                                                     ->helperText('Heroicon name, e.g. magnifying-glass, shopping-cart, truck.'),
                                                 Forms\Components\TextInput::make('step_number')
-                                                    ->label('Step Number')
+                                                    ->label(__('admin.step_number'))
                                                     ->numeric(),
                                                 AdminUi::translatableTabs('Title', [
                                                     'title' => ['label' => 'Title'],
@@ -302,24 +302,24 @@ class SectionResource extends Resource
                                     ->description('Control when and how this section is displayed.')
                                     ->schema([
                                         Forms\Components\Select::make('status')
-                                            ->label('Publish Status')
+                                            ->label(__('admin.publish_status'))
                                             ->options(SectionStatus::class)
                                             ->native(false)
                                             ->required()
                                             ->default(SectionStatus::Draft)
                                             ->helperText('Draft sections are not rendered on the storefront.'),
                                         Forms\Components\DateTimePicker::make('publish_at')
-                                            ->label('Scheduled Publish')
+                                            ->label(__('admin.scheduled_publish'))
                                             ->nullable()
                                             ->helperText('Schedule a future publication date. Leave empty to publish immediately.'),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
                                             ->helperText('Lower numbers appear first within the same page location.'),
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Section Active')
+                                            ->label(__('admin.section_active'))
                                             ->helperText('Inactive sections are hidden from the storefront.')
                                             ->default(true),
                                     ]),
@@ -333,24 +333,24 @@ class SectionResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
             Tables\Columns\TextColumn::make('title')
-                ->label('Title')
+                ->label(__('admin.title'))
                 ->getStateUsing(fn (Section $record): string => AdminUi::localizedName($record->title, 'Section'))
                 ->searchable()
                 ->weight(FontWeight::Medium)
                 ->limit(30),
                 Tables\Columns\TextColumn::make('type')
-                    ->label('Type')
+                    ->label(__('admin.type'))
                     ->badge()
                     ->color('gray')
                     ->getStateUsing(fn (Model $record): string => Section::TYPES[$record->type] ?? ucwords(str_replace('_', ' ', $record->type)))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('location')
-                    ->label('Location')
+                    ->label(__('admin.location'))
                     ->badge()
                     ->color(fn (SectionLocation $state): string => $state === SectionLocation::Homepage ? 'primary' : 'info')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('admin.status'))
                     ->badge()
                     ->color(fn (SectionStatus $state): string => match ($state) {
                         SectionStatus::Published => 'success',
@@ -361,40 +361,40 @@ class SectionResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->boolean()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('publish_at')
-                    ->label('Publish At')
+                    ->label(__('admin.publish_at'))
                     ->dateTime('M j, Y H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
-                    ->label('Section Type')
+                    ->label(__('admin.section_type'))
                     ->options(Section::TYPES)
                     ->native(false)
                     ->helperText('Filter by the type of content section.'),
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Publish Status')
+                    ->label(__('admin.publish_status'))
                     ->options(SectionStatus::class)
                     ->native(false)
                     ->helperText('Filter by draft, published, scheduled, or archived.'),
                 Tables\Filters\SelectFilter::make('location')
-                    ->label('Page Location')
+                    ->label(__('admin.page_location'))
                     ->options(SectionLocation::class)
                     ->native(false)
                     ->helperText('Filter by where the section appears.'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Section Status')
+                    ->label(__('admin.section_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
@@ -403,7 +403,7 @@ class SectionResource extends Resource
             ->actions([
                 ...AdminUi::recordActions([
                     Actions\Action::make('publish')
-                        ->label('Publish')
+                        ->label(__('admin.publish'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->authorize('update')
@@ -418,7 +418,7 @@ class SectionResource extends Resource
                                 ->send();
                         }),
                     Actions\Action::make('archive')
-                        ->label('Archive')
+                        ->label(__('admin.archive'))
                         ->icon('heroicon-o-archive-box')
                         ->color('gray')
                         ->authorize('update')

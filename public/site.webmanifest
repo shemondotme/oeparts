@@ -1,7 +1,7 @@
 {
-    "name": "OEMHub",
-    "short_name": "OEMHub",
-    "description": "The central hub for genuine OEM auto parts in Europe.",
+    "name": "OeParts",
+    "short_name": "OeParts",
+    "description": "Genuine OEM auto parts in Europe.",
     "icons": [
         { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
         { "src": "/apple-touch-icon.svg", "sizes": "180x180", "type": "image/svg+xml", "purpose": "maskable" }

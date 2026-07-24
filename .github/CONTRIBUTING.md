@@ -4,8 +4,8 @@ Thank you for taking the time to contribute. By participating in this project yo
 
 ## Before You Start
 
-- Read [ARCHITECTURE.md](../ARCHITECTURE.md) for patterns and folder structure
-- Read [CLAUDE.md](../CLAUDE.md) for absolute rules (bcmath, guards, cache, mail, settings)
+- Read the [Architecture](../README.md#architecture) section of the README for patterns and folder structure
+- Read the non-negotiable rules below before touching money, auth, cache, mail, or settings code
 - Check open issues and pull requests before starting work on something new
 
 ## Development Setup
@@ -43,7 +43,11 @@ These rules exist to prevent production incidents. PRs that violate them will no
 - PHP: follow PSR-12, Laravel conventions
 - Controllers are thin: validate → service → respond
 - Business logic belongs in `app/Services/`
-- JSON API responses always use the standard format from CLAUDE.md
+- JSON API responses always use the standard format:
+  ```json
+  { "success": true, "message": "...", "data": {} }
+  ```
+  Error responses: `{ "success": false, "message": "...", "errors": {} }`
 - Use `#[Test]` attribute (PHP 8), not `/** @test */` doc-comments
 - All tests use `RefreshDatabase` where they touch the DB
 

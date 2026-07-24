@@ -6,7 +6,7 @@
 |--------------------------------------------------------------------------
 | Chunked, resumable, encrypted backups — shared by the updater (update-safety
 | profile) and standalone disaster recovery (full profile). Source of truth:
-| UPDATE_SYSTEM_MASTER_WORKFLOW.md.
+| docs/UPDATE_SYSTEM_MASTER_WORKFLOW.md.
 */
 
 return [

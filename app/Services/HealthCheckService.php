@@ -118,8 +118,12 @@ class HealthCheckService
             if (!$heartbeat) {
                 return 'unknown';
             }
-            // Heartbeat should be < 3 minutes old
-            $diff = now()->diffInMinutes($heartbeat);
+            // Heartbeat should be < 3 minutes old. abs(): Carbon 3's diffInMinutes()
+            // returns a SIGNED value (negative for a past date) unlike Carbon 2's
+            // always-absolute default — without abs() this was always negative
+            // here (the heartbeat is always in the past), so `<= 3` was always
+            // true and this check could never actually report 'stale'.
+            $diff = abs(now()->diffInMinutes($heartbeat));
             return $diff <= 3 ? 'ok' : 'stale';
         } catch (\Throwable) {
             return 'unknown';

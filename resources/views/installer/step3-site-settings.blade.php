@@ -41,34 +41,36 @@
                 <label for="default_locale" class="block text-sm font-medium text-slate-700 mb-1">
                     Default Language
                 </label>
+                @php $locale = old('default_locale', $suggestedLocale ?? 'en'); @endphp
                 <select id="default_locale" name="default_locale"
                     class="form-select w-full @error('default_locale') border-red-300 @enderror" required>
-                    <option value="en" {{ old('default_locale', 'en') == 'en' ? 'selected' : '' }}>English</option>
-                    <option value="de" {{ old('default_locale') == 'de' ? 'selected' : '' }}>German</option>
-                    <option value="lt" {{ old('default_locale') == 'lt' ? 'selected' : '' }}>Lithuanian</option>
-                    <option value="fr" {{ old('default_locale') == 'fr' ? 'selected' : '' }}>French</option>
-                    <option value="es" {{ old('default_locale') == 'es' ? 'selected' : '' }}>Spanish</option>
+                    <option value="en" {{ $locale == 'en' ? 'selected' : '' }}>English</option>
+                    <option value="de" {{ $locale == 'de' ? 'selected' : '' }}>German</option>
+                    <option value="lt" {{ $locale == 'lt' ? 'selected' : '' }}>Lithuanian</option>
+                    <option value="fr" {{ $locale == 'fr' ? 'selected' : '' }}>French</option>
+                    <option value="es" {{ $locale == 'es' ? 'selected' : '' }}>Spanish</option>
                 </select>
                 @error('default_locale')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
-                <p class="mt-1 text-xs text-muted">Primary language for the site</p>
+                <p class="mt-1 text-xs text-muted">Primary language for the site — suggested from your browser</p>
             </div>
 
             <div>
                 <label for="timezone" class="block text-sm font-medium text-slate-700 mb-1">
                     Timezone
                 </label>
+                @php $tzDefault = old('timezone', $suggestedTimezone ?? 'UTC'); @endphp
                 <select id="timezone" name="timezone"
                     class="form-select w-full @error('timezone') border-red-300 @enderror" required>
                     @foreach(timezone_identifiers_list() as $tz)
-                    <option value="{{ $tz }}" {{ old('timezone', 'UTC') == $tz ? 'selected' : '' }}>{{ $tz }}</option>
+                    <option value="{{ $tz }}" {{ $tzDefault == $tz ? 'selected' : '' }}>{{ $tz }}</option>
                     @endforeach
                 </select>
                 @error('timezone')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
-                <p class="mt-1 text-xs text-muted">Server timezone for date/time display</p>
+                <p class="mt-1 text-xs text-muted">Suggested from your server's own configured timezone</p>
             </div>
         </div>
 
@@ -132,8 +134,8 @@
             });
             
             // Restore selected value if still in filtered list
-            if (filtered.some(tz => tz.value === '{{ old('timezone', 'UTC') }}')) {
-                timezoneSelect.value = '{{ old('timezone', 'UTC') }}';
+            if (filtered.some(tz => tz.value === '{{ $tzDefault }}')) {
+                timezoneSelect.value = '{{ $tzDefault }}';
             }
         });
     });

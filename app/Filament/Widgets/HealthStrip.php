@@ -28,14 +28,26 @@ class HealthStrip extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $checks = $this->cachedHealthData('checks', fn (): array => [
-            $this->checkDatabase(),
-            $this->checkRedis(),
-            $this->checkQueue(),
-            $this->checkStorage(),
-            $this->checkScheduler(),
-            $this->checkCache(),
-        ]);
+        $checks = $this->cachedHealthData('checks', function (): array {
+            $checks = [
+                $this->checkDatabase(),
+                $this->checkRedis(),
+                $this->checkQueue(),
+                $this->checkStorage(),
+                $this->checkScheduler(),
+                $this->checkCache(),
+            ];
+
+            // Only shown when the operator has actually opted into Memcached —
+            // unlike Redis (also used for session/queue, so always worth
+            // watching), Memcached here is cache-only, so a permanent tile
+            // would just be dead weight on every dashboard that isn't using it.
+            if (config('cache.default') === 'memcached') {
+                $checks[] = $this->checkMemcached();
+            }
+
+            return $checks;
+        });
 
         return array_map(function (array $check): Stat {
             // Live pulse dot for healthy checks + a status-colored accent on
@@ -55,7 +67,7 @@ class HealthStrip extends StatsOverviewWidget
             }
 
             $url = match ($check['label']) {
-                'Database', 'Redis', 'Storage' => ServerMonitor::getUrl(),
+                'Database', 'Redis', 'Memcached', 'Storage' => ServerMonitor::getUrl(),
                 'Queue' => QueueMonitor::getUrl(),
                 'Scheduler' => ScheduledTasksPage::getUrl(),
                 'Cache' => CacheDashboard::getUrl(),
@@ -113,14 +125,41 @@ class HealthStrip extends StatsOverviewWidget
                 'description' => 'Connected', 'icon' => 'heroicon-m-bolt', 'color' => 'success',
             ];
         } catch (\Throwable) {
-            $isRequired = config('cache.default') === 'redis';
+            $isSelected = config('cache.default') === 'redis';
 
             return [
                 'label' => 'Redis',
-                'value' => $isRequired ? 'Unavailable' : 'Not configured',
-                'description' => $isRequired ? 'Required in production' : 'Using fallback driver',
-                'icon' => $isRequired ? 'heroicon-m-x-circle' : 'heroicon-m-minus-circle',
-                'color' => $isRequired ? 'danger' : 'gray',
+                'value' => $isSelected ? 'Unavailable' : 'Not configured',
+                'description' => $isSelected ? 'Selected driver is down' : 'Using fallback driver',
+                'icon' => $isSelected ? 'heroicon-m-x-circle' : 'heroicon-m-minus-circle',
+                'color' => $isSelected ? 'danger' : 'gray',
+            ];
+        }
+    }
+
+    private function checkMemcached(): array
+    {
+        if (! extension_loaded('memcached')) {
+            return [
+                'label' => 'Memcached', 'value' => 'Not installed',
+                'description' => 'ext-memcached missing', 'icon' => 'heroicon-m-x-circle', 'color' => 'danger',
+            ];
+        }
+
+        try {
+            $start = microtime(true);
+            Cache::store('memcached')->put('_health_check', '1', 10);
+            Cache::store('memcached')->get('_health_check');
+            $ms = round((microtime(true) - $start) * 1000);
+
+            return [
+                'label' => 'Memcached', 'value' => "{$ms}ms",
+                'description' => 'Connected', 'icon' => 'heroicon-m-bolt', 'color' => 'success',
+            ];
+        } catch (\Throwable) {
+            return [
+                'label' => 'Memcached', 'value' => 'Unavailable',
+                'description' => 'Selected driver is down', 'icon' => 'heroicon-m-x-circle', 'color' => 'danger',
             ];
         }
     }
@@ -131,7 +170,10 @@ class HealthStrip extends StatsOverviewWidget
             $lastJob = DB::table('jobs')->orderByDesc('reserved_at')->value('reserved_at');
 
             if ($lastJob) {
-                $s = now()->diffInSeconds($lastJob);
+                // abs(): Carbon 3's diffInSeconds() is signed (negative for a past
+                // date) unlike Carbon 2's always-absolute default — $lastJob is
+                // always in the past here.
+                $s = abs(now()->diffInSeconds($lastJob));
 
                 return [
                     'label' => 'Queue', 'value' => 'Active',
@@ -189,7 +231,11 @@ class HealthStrip extends StatsOverviewWidget
             $heartbeat = Cache::get('scheduler_heartbeat');
 
             if ($heartbeat) {
-                $s = now()->diffInSeconds($heartbeat);
+                // abs(): same Carbon 3 signed-diff issue as checkQueue() above —
+                // without it, `$s < 120` was always true (a negative number is
+                // always less than 120), so this could never actually report
+                // 'Stale' no matter how long cron had been dead.
+                $s = abs(now()->diffInSeconds($heartbeat));
 
                 return $s < 120
                     ? ['label' => 'Scheduler', 'value' => 'Running', 'description' => "Beat {$s}s ago", 'icon' => 'heroicon-m-check-circle', 'color' => 'success']
@@ -214,13 +260,14 @@ class HealthStrip extends StatsOverviewWidget
             $driver = config('cache.default');
             $ok = in_array($driver, ['redis', 'file', 'database'], true);
 
-            // Production requires Redis (file/database drivers are a
-            // dev-only convenience) — surface that instead of a green tile.
+            // Redis is recommended (not required) in production for better
+            // performance under load — file/database drivers work fine, just
+            // slower — surface that instead of a plain green tile.
             if ($ok && $driver !== 'redis' && app()->isProduction()) {
                 return [
                     'label' => 'Cache',
                     'value' => ucfirst($driver),
-                    'description' => 'Redis required in production',
+                    'description' => 'Redis recommended in production',
                     'icon' => 'heroicon-m-exclamation-triangle',
                     'color' => 'warning',
                 ];

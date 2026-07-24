@@ -43,41 +43,41 @@ class LoginLogResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Email Address')
+                    ->label(__('admin.email_address'))
                     ->searchable()
                     ->sortable()
                     ->limit(30),
                 Tables\Columns\TextColumn::make('user_type')
-                    ->label('Account Type')
+                    ->label(__('admin.account_type'))
                     ->badge()
                     ->color(fn (LoginUserType $state): string => match ($state) {
                         LoginUserType::Admin => 'warning',
                         LoginUserType::Customer => 'info',
                     }),
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Result')
+                    ->label(__('admin.result'))
                     ->badge()
                     ->color(fn (LogStatus $state): string => match ($state) {
                         LogStatus::Success => 'success',
                         LogStatus::Failed => 'danger',
                     }),
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
+                    ->label(__('admin.ip_address'))
                     ->fontMono()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Attempted At')
+                    ->label(__('admin.attempted_at'))
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('user_type')
-                    ->label('Account Type')
+                    ->label(__('admin.account_type'))
                     ->options(LoginUserType::class)
                     ->native(false)
                     ->helperText('Filter by admin or customer login attempts.'),
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Result')
+                    ->label(__('admin.result'))
                     ->options(LogStatus::class)
                     ->native(false)
                     ->helperText('Show successful or failed login attempts.'),

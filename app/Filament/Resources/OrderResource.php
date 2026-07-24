@@ -67,7 +67,7 @@ class OrderResource extends Resource
                                 ->description('Customer identity and order number details.')
                                 ->schema([
                                     Forms\Components\TextInput::make('order_number')
-                                        ->label('Order Number')
+                                        ->label(__('admin.order_number'))
                                         ->required()
                                         ->maxLength(30)
                                         ->unique(ignoreRecord: true)
@@ -76,7 +76,7 @@ class OrderResource extends Resource
                                         ->helperText('Generated automatically when creating the order.'),
                                     Forms\Components\Select::make('user_id')
                                         ->relationship('user', 'name')
-                                        ->label('Customer')
+                                        ->label(__('admin.customer'))
                                         ->searchable()
                                         ->preload()
                                         ->nullable()
@@ -84,7 +84,7 @@ class OrderResource extends Resource
                                         ->helperText('Registered customer placing this order. Leave empty for guest orders.'),
                                     Forms\Components\TextInput::make('guest_email')
                                         ->email()
-                                        ->label('Guest Email')
+                                        ->label(__('admin.guest_email'))
                                         ->nullable()
                                         ->placeholder('e.g. customer@example.com')
                                         ->helperText('Fill this for guest checkout orders where no account exists.'),
@@ -95,29 +95,29 @@ class OrderResource extends Resource
                                 ->description('Delivery recipient and destination details.')
                                 ->schema([
                                     Forms\Components\TextInput::make('shipping_name')
-                                        ->label('Recipient Name')
+                                        ->label(__('admin.recipient_name'))
                                         ->required()
                                         ->maxLength(200)
                                         ->placeholder('e.g. John Doe')
                                         ->helperText('Full name of the person receiving the shipment.'),
                                     Forms\Components\TextInput::make('shipping_address_line1')
-                                        ->label('Street Address')
+                                        ->label(__('admin.street_address'))
                                         ->required()
                                         ->maxLength(255)
                                         ->placeholder('e.g. Musterstraße 42')
                                         ->helperText('Primary street address including house number.'),
                                     Forms\Components\TextInput::make('shipping_city')
-                                        ->label('City')
+                                        ->label(__('admin.city'))
                                         ->required()
                                         ->maxLength(100)
                                         ->placeholder('e.g. Berlin'),
                                     Forms\Components\TextInput::make('shipping_postal_code')
-                                        ->label('Postal Code')
+                                        ->label(__('admin.postal_code'))
                                         ->required()
                                         ->maxLength(20)
                                         ->placeholder('e.g. 10115'),
                                     Forms\Components\Select::make('shipping_country_code')
-                                        ->label('Country')
+                                        ->label(__('admin.country'))
                                         ->required()
                                         ->options(config('countries'))
                                         ->searchable()
@@ -130,18 +130,18 @@ class OrderResource extends Resource
                                 ->description('Notes, tracking information, and follow-up details.')
                                 ->schema([
                                     Forms\Components\Textarea::make('customer_note')
-                                        ->label('Customer Note')
+                                        ->label(__('admin.customer_note'))
                                         ->placeholder('Any special requests or instructions from the customer...')
                                         ->helperText('Optional message or special instructions provided by the customer at checkout.')
                                         ->columnSpanFull(),
                                     Forms\Components\TextInput::make('tracking_number')
-                                        ->label('Tracking Number')
+                                        ->label(__('admin.tracking_number'))
                                         ->nullable()
                                         ->maxLength(100)
                                         ->placeholder('e.g. DHL-1234567890')
                                         ->helperText('Carrier tracking reference for the shipment.'),
                                     Forms\Components\Select::make('carrier_id')
-                                        ->label('Shipping Carrier')
+                                        ->label(__('admin.shipping_carrier'))
                                         ->options(fn (): array => \App\Models\Carrier::query()
                                             ->where('is_active', true)
                                             ->orderBy('sort_order')
@@ -153,11 +153,11 @@ class OrderResource extends Resource
                                         ->placeholder('Select carrier...')
                                         ->helperText('Carriers are managed under Commerce → Carriers; the tracking link in customer emails is built from the carrier\'s URL template.'),
                                     Forms\Components\Toggle::make('urgent_processing')
-                                        ->label('Urgent Processing')
+                                        ->label(__('admin.urgent_processing'))
                                         ->helperText('When enabled, this order is prioritized for same-day dispatch.')
                                         ->extraAttributes(['class' => 'op-urgent-toggle']),
                                     Forms\Components\TextInput::make('invoice_number')
-                                        ->label('Invoice Number')
+                                        ->label(__('admin.invoice_number'))
                                         ->nullable()
                                         ->maxLength(30)
                                         ->placeholder('e.g. INV-2024-001')
@@ -169,14 +169,14 @@ class OrderResource extends Resource
                                 ->description('Applied coupon code and selected shipping method.')
                                 ->schema([
                                     Forms\Components\Select::make('coupon_id')
-                                        ->label('Coupon')
+                                        ->label(__('admin.coupon'))
                                         ->relationship('coupon', 'code')
                                         ->searchable()
                                         ->preload()
                                         ->nullable()
                                         ->helperText('Select the coupon applied to this order, if any.'),
                                     Forms\Components\Select::make('shipping_method_id')
-                                        ->label('Shipping Method')
+                                        ->label(__('admin.shipping_method'))
                                         ->relationship('shippingMethod', 'name')
                                         ->searchable()
                                         ->preload()
@@ -202,7 +202,7 @@ class OrderResource extends Resource
                                 ->description('Current processing stage of this order.')
                                 ->schema([
                                     Forms\Components\Select::make('status')
-                                        ->label('Order Status')
+                                        ->label(__('admin.order_status'))
                                         ->options(OrderStatus::class)
                                         ->required()
                                         ->default(OrderStatus::Pending)
@@ -217,12 +217,12 @@ class OrderResource extends Resource
                                 ->description('Payment method and transaction status.')
                                 ->schema([
                                     Forms\Components\Select::make('payment_method')
-                                        ->label('Payment Method')
+                                        ->label(__('admin.payment_method'))
                                         ->options(PaymentMethod::class)
                                         ->required()
                                         ->helperText('How the customer paid for this order.'),
                                     Forms\Components\Select::make('payment_status')
-                                        ->label('Payment Status')
+                                        ->label(__('admin.payment_status'))
                                         ->options(PaymentStatus::class)
                                         ->required()
                                         ->default(PaymentStatus::Pending)
@@ -232,7 +232,7 @@ class OrderResource extends Resource
                                             ? 'Payment status is managed by the payment flow ("Confirm Payment" for bank transfers, webhooks for card).'
                                             : 'Current state of the payment transaction.'),
                                     Forms\Components\TextInput::make('payment_reference')
-                                        ->label('Payment Reference')
+                                        ->label(__('admin.payment_reference'))
                                         ->nullable()
                                         ->maxLength(100)
                                         ->placeholder('e.g. TXN-ABC123')
@@ -244,7 +244,7 @@ class OrderResource extends Resource
                                 ->extraAttributes(['class' => 'op-financials-form'])
                                 ->schema([
                                     Forms\Components\TextInput::make('subtotal')
-                                        ->label('Subtotal')
+                                        ->label(__('admin.subtotal'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -252,7 +252,7 @@ class OrderResource extends Resource
                                         ->step(0.01)
                                         ->extraAttributes(['class' => 'op-fin-input']),
                                     Forms\Components\TextInput::make('discount_amount')
-                                        ->label('Discount (−)')
+                                        ->label(__('admin.discount'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->default(0)
@@ -260,7 +260,7 @@ class OrderResource extends Resource
                                         ->step(0.01)
                                         ->extraAttributes(['class' => 'op-fin-input']),
                                     Forms\Components\TextInput::make('shipping_cost')
-                                        ->label('Shipping (+)')
+                                        ->label(__('admin.shipping'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -268,7 +268,7 @@ class OrderResource extends Resource
                                         ->step(0.01)
                                         ->extraAttributes(['class' => 'op-fin-input']),
                                     Forms\Components\TextInput::make('vat_amount')
-                                        ->label('VAT (+)')
+                                        ->label(__('admin.vat'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -279,7 +279,7 @@ class OrderResource extends Resource
                                         ->hiddenLabel()
                                         ->extraAttributes(['class' => 'op-fin-form-divider']),
                                     Forms\Components\TextInput::make('grand_total')
-                                        ->label('Grand Total')
+                                        ->label(__('admin.grand_total'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -293,22 +293,22 @@ class OrderResource extends Resource
                                 ->description('Business-to-business invoice and tax exemption details.')
                                 ->schema([
                                     Forms\Components\Toggle::make('is_b2b')
-                                        ->label('B2B Order')
+                                        ->label(__('admin.b2b_order'))
                                         ->helperText('Enable if this is a business-to-business transaction.'),
                                     Forms\Components\TextInput::make('company_name')
-                                        ->label('Company Name')
+                                        ->label(__('admin.company_name'))
                                         ->nullable()
                                         ->maxLength(200)
                                         ->placeholder('e.g. AutoParts GmbH')
                                         ->helperText('Legal company name for B2B invoicing.'),
                                     Forms\Components\TextInput::make('vat_number')
-                                        ->label('VAT Number')
+                                        ->label(__('admin.vat_number'))
                                         ->nullable()
                                         ->maxLength(50)
                                         ->placeholder('e.g. DE123456789')
                                         ->helperText('EU VAT registration number for reverse-charge transactions.'),
                                     Forms\Components\Toggle::make('vat_exempt')
-                                        ->label('VAT Exempt')
+                                        ->label(__('admin.vat_exempt'))
                                         ->helperText('Enable if the B2B customer is exempt from VAT (reverse-charge).'),
                                 ])
                                 ->columns(1),
@@ -318,11 +318,11 @@ class OrderResource extends Resource
                                 ->description('System-recorded metadata captured at time of order.')
                                 ->schema([
                                     Forms\Components\TextInput::make('ip_address')
-                                        ->label('IP Address')
+                                        ->label(__('admin.ip_address'))
                                         ->readOnly()
                                         ->helperText('Customer IP address captured at time of order placement.'),
                                     Forms\Components\TextInput::make('urgent_processing_fee')
-                                        ->label('Urgent Processing Fee')
+                                        ->label(__('admin.urgent_processing_fee'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->minValue(0)
@@ -358,7 +358,7 @@ class OrderResource extends Resource
                 ->searchable()
                 ->sortable(),
             Tables\Columns\TextColumn::make('customer_name')
-                ->label('Customer')
+                ->label(__('admin.customer'))
                 ->getStateUsing(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—')
                 ->description(fn (Order $record): ?string =>
                     $record->user?->email ?? ($record->guest_email ?: null)
@@ -373,7 +373,7 @@ class OrderResource extends Resource
                 ->limit(30)
                 ->toggleable(),
             Tables\Columns\TextColumn::make('status')
-                ->label('Status')
+                ->label(__('admin.status'))
                 ->badge()
                 ->icon(fn (OrderStatus $state): string => match ($state) {
                     OrderStatus::Pending => 'heroicon-o-clock',
@@ -388,7 +388,7 @@ class OrderResource extends Resource
                 ->color(fn (OrderStatus $state): string => AdminUi::orderStatusColor($state))
                 ->sortable(),
             Tables\Columns\TextColumn::make('payment_status')
-                ->label('Payment')
+                ->label(__('admin.payment'))
                 ->badge()
                 ->icon(fn (PaymentStatus $state): string => match ($state) {
                     PaymentStatus::Pending => 'heroicon-o-clock',
@@ -399,12 +399,12 @@ class OrderResource extends Resource
                 ->color(fn (PaymentStatus $state): string => AdminUi::paymentStatusColor($state))
                 ->sortable(),
             Tables\Columns\TextColumn::make('items_count')
-                ->label('Items')
+                ->label(__('admin.items'))
                 ->counts('items')
                 ->fontMono()
                 ->alignCenter(),
             Tables\Columns\TextColumn::make('grand_total')
-                ->label('Total')
+                ->label(__('admin.total'))
                 ->getStateUsing(fn (Order $record): string => format_money($record->grand_total))
                 ->description(fn (Order $record): string => $record->vat_amount > 0 ? 'incl. VAT' : 'excl. VAT')
                 ->alignEnd()
@@ -412,11 +412,11 @@ class OrderResource extends Resource
                 ->fontMono()
                 ->sortable(),
             Tables\Columns\TextColumn::make('created_at')
-                ->label('Date')
+                ->label(__('admin.date'))
                 ->dateTime('d M Y H:i')
                 ->sortable(),
             Tables\Columns\IconColumn::make('urgent_processing')
-                ->label('Urgent')
+                ->label(__('admin.urgent'))
                 // Icon only when urgent — a column of red X's for "normal" reads as alarm.
                 ->icon(fn (bool $state): ?string => $state ? 'heroicon-o-exclamation-triangle' : null)
                 ->color('danger')
@@ -425,27 +425,27 @@ class OrderResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Order Status')
+                    ->label(__('admin.order_status'))
                     ->options(OrderStatus::class)
                     ->multiple()
                     ->native(false)
                     ->columnSpan(1),
                 Tables\Filters\SelectFilter::make('payment_status')
-                    ->label('Payment Status')
+                    ->label(__('admin.payment_status'))
                     ->options(PaymentStatus::class)
                     ->multiple()
                     ->native(false)
                     ->columnSpan(1),
                 Tables\Filters\SelectFilter::make('payment_method')
-                    ->label('Payment Method')
+                    ->label(__('admin.payment_method'))
                     ->options(PaymentMethod::class)
                     ->native(false)
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Order Date Range')
+                    ->label(__('admin.order_date_range'))
                     ->form([
-                        Forms\Components\DatePicker::make('from')->label('From Date'),
-                        Forms\Components\DatePicker::make('until')->label('Until Date'),
+                        Forms\Components\DatePicker::make('from')->label(__('admin.from_date')),
+                        Forms\Components\DatePicker::make('until')->label(__('admin.until_date')),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -454,10 +454,10 @@ class OrderResource extends Resource
                     })
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('country')
-                    ->label('Shipping Country')
+                    ->label(__('admin.shipping_country'))
                     ->form([
                         Forms\Components\TextInput::make('country_code')
-                            ->label('Country Code')
+                            ->label(__('admin.country_code'))
                             ->maxLength(2)
                             ->placeholder('e.g. DE')
                             ->helperText('ISO 3166-1 alpha-2 code.'),
@@ -470,11 +470,11 @@ class OrderResource extends Resource
                     })
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('is_b2b')
-                    ->label('B2B Only')
+                    ->label(__('admin.b2b_only'))
                     ->nullable()
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('urgent_processing')
-                    ->label('Urgent Only')
+                    ->label(__('admin.urgent_only'))
                     ->nullable()
                     ->columnSpan(1),
             ])
@@ -482,7 +482,7 @@ class OrderResource extends Resource
                 ...AdminUi::recordActions([
                     static::makeChangeStatusAction(),
                     Actions\Action::make('printInvoice')
-                        ->label('Print Invoice')
+                        ->label(__('admin.print_invoice'))
                         ->icon('heroicon-o-document-text')
                         ->color('gray')
                         ->authorize('update')
@@ -500,7 +500,7 @@ class OrderResource extends Resource
                         })
                         ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped, OrderStatus::Delivered])),
                     Actions\Action::make('sendTracking')
-                        ->label('Send Tracking')
+                        ->label(__('admin.send_tracking'))
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
                         ->authorize('update')
@@ -509,14 +509,14 @@ class OrderResource extends Resource
                         ->modalDescription('Send the tracking number and carrier information to the customer via email.')
                         ->schema([
                             Forms\Components\TextInput::make('tracking_number')
-                                ->label('Tracking Number')
+                                ->label(__('admin.tracking_number'))
                                 ->required()
                                 ->maxLength(100)
                                 ->placeholder('e.g. DHL-1234567890')
                                 ->default(fn (Order $record): ?string => $record->tracking_number)
                                 ->helperText('The carrier tracking reference for this shipment.'),
                             Forms\Components\Select::make('carrier_id')
-                                ->label('Shipping Carrier')
+                                ->label(__('admin.shipping_carrier'))
                                 ->options(fn (): array => \App\Models\Carrier::query()
                                     ->where('is_active', true)
                                     ->orderBy('sort_order')
@@ -542,7 +542,7 @@ class OrderResource extends Resource
                         })
                         ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Processing, OrderStatus::Shipped])),
                     Actions\Action::make('confirmPayment')
-                        ->label('Confirm Payment')
+                        ->label(__('admin.confirm_payment'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->authorize('update')
@@ -551,7 +551,7 @@ class OrderResource extends Resource
                         ->modalDescription('Mark this order as paid after verifying the bank transfer has been received in your account.')
                         ->schema([
                             Forms\Components\TextInput::make('transaction_id')
-                                ->label('Transaction Reference')
+                                ->label(__('admin.transaction_reference'))
                                 ->maxLength(200)
                                 ->placeholder('e.g. Bank reference, SWIFT code, or transaction ID')
                                 ->helperText('Enter the payment reference from your bank statement for reconciliation.'),
@@ -665,7 +665,7 @@ class OrderResource extends Resource
             ->emptyStateDescription('Orders from the storefront will appear here once customers start purchasing.')
             ->emptyStateActions([
                 Actions\Action::make('create')
-                    ->label('Create Order')
+                    ->label(__('admin.create_order'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),
@@ -739,7 +739,7 @@ class OrderResource extends Resource
     public static function makeChangeStatusAction(): Actions\Action
     {
         return Actions\Action::make('changeStatus')
-            ->label('Change Status')
+            ->label(__('admin.change_status'))
             ->icon('heroicon-o-arrow-path')
             ->color('warning')
             ->authorize('update')
@@ -747,12 +747,12 @@ class OrderResource extends Resource
             ->modalDescription('Change the current status of this order. A status history record will be created automatically.')
             ->schema([
                 Forms\Components\Select::make('new_status')
-                    ->label('New Status')
+                    ->label(__('admin.new_status'))
                     ->options(OrderStatus::class)
                     ->required()
                     ->helperText('Select the next stage in the order lifecycle.'),
                 Forms\Components\Textarea::make('note')
-                    ->label('Status Note')
+                    ->label(__('admin.status_note'))
                     ->required()
                     ->rows(3)
                     ->placeholder('e.g. Payment verified, moving to processing...')

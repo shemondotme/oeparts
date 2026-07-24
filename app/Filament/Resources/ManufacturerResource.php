@@ -79,7 +79,7 @@ class ManufacturerResource extends Resource
                                             ],
                                         ], slugSyncTarget: 'slug'),
                                         Forms\Components\TextInput::make('slug')
-                                            ->label('URL Slug')
+                                            ->label(__('admin.url_slug'))
                                             ->placeholder('e.g. bosch, continental')
                                             ->helperText('Used in manufacturer page URLs (e.g. /manufacturers/bosch). Auto-filled from the English name.')
                                             ->required()
@@ -97,14 +97,14 @@ class ManufacturerResource extends Resource
                                     ->description('Logo, country, OEM verification, and display settings.')
                                     ->schema([
                                         Forms\Components\Select::make('logo_id')
-                                            ->label('Brand Logo')
+                                            ->label(__('admin.brand_logo'))
                                             ->relationship('logo', 'file_name')
                                             ->searchable()
                                             ->preload()
                                             ->nullable()
                                             ->helperText('Select a media file to use as the manufacturer logo.'),
                                         Forms\Components\Select::make('country_code')
-                                            ->label('Country of Origin')
+                                            ->label(__('admin.country_of_origin'))
                                             ->options(config('countries', []))
                                             ->searchable()
                                             ->native(false)
@@ -119,15 +119,15 @@ class ManufacturerResource extends Resource
                                             ->required()
                                             ->helperText('Primary country associated with this manufacturer.'),
                                         Forms\Components\Toggle::make('is_verified_oem')
-                                            ->label('Verified OEM Manufacturer')
+                                            ->label(__('admin.verified_oem_manufacturer'))
                                             ->helperText('Shows a verified trust badge on the storefront. Indicates genuine OEM parts supplier.')
                                             ->default(false),
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Manufacturer Active')
+                                            ->label(__('admin.manufacturer_active'))
                                             ->helperText('Inactive manufacturers are hidden from the storefront and product search.')
                                             ->default(true),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -144,11 +144,11 @@ class ManufacturerResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('logo')->withCount('products'))
             ->columns([
                 Tables\Columns\ImageColumn::make('logo.file_url')
-                    ->label('Logo')
+                    ->label(__('admin.logo'))
                     ->circular()
                     ->size(40),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Manufacturer')
+                    ->label(__('admin.manufacturer'))
                     ->getStateUsing(fn (Manufacturer $record): string => AdminUi::localizedName($record->name))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->where(function ($q) use ($search) {
@@ -162,18 +162,18 @@ class ManufacturerResource extends Resource
                     ->description(fn (Manufacturer $record): ?string => $record->slug ?: null)
                     ->limit(28),
                 Tables\Columns\TextColumn::make('country_code')
-                    ->label('Country')
+                    ->label(__('admin.country'))
                     ->badge()
                     ->placeholder('—')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label(__('admin.products'))
                     ->counts('products')
                     ->fontMono()
                     ->alignCenter()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('is_verified_oem')
-                    ->label('OEM')
+                    ->label(__('admin.oem'))
                     ->badge()
                     ->alignCenter()
                     ->toggleable()
@@ -181,14 +181,14 @@ class ManufacturerResource extends Resource
                     ->color(fn (string $state): string => $state === 'Verified' ? 'success' : 'gray')
                     ->icon(fn (string $state): string => $state === 'Verified' ? 'heroicon-o-check-badge' : 'heroicon-o-minus'),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->alignCenter()
                     ->getStateUsing(fn (Manufacturer $record): string => $record->is_active ? 'Active' : 'Inactive')
                     ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
                     ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable()
@@ -196,25 +196,25 @@ class ManufacturerResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Manufacturer Status')
+                    ->label(__('admin.manufacturer_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only')
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('is_verified_oem')
-                    ->label('OEM Verification')
+                    ->label(__('admin.oem_verification'))
                     ->placeholder('All')
                     ->trueLabel('Verified OEM')
                     ->falseLabel('Not Verified')
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Date Added')
+                    ->label(__('admin.date_added'))
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Added After')
+                            ->label(__('admin.added_after'))
                             ->placeholder('Select start date'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Added Before')
+                            ->label(__('admin.added_before'))
                             ->placeholder('Select end date'),
                     ])
                     ->query(function ($query, array $data) {

@@ -43,7 +43,7 @@ class ContactMessageResource extends Resource
         return AdminUi::configureTable($table)
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
+                    ->label(__('admin.name'))
                     ->searchable()
                     ->sortable()
                     // Unread messages read bolder — the empty-state copy
@@ -57,12 +57,12 @@ class ContactMessageResource extends Resource
                     ->iconColor('warning')
                     ->limit(25),
                 Tables\Columns\TextColumn::make('email')
-                    ->label('Email')
+                    ->label(__('admin.email'))
                     ->searchable()
                     ->copyable()
                     ->copyMessage('Email copied'),
                 Tables\Columns\TextColumn::make('subject_type')
-                    ->label('Subject')
+                    ->label(__('admin.subject'))
                     ->badge()
                     ->color(fn (ContactSubjectType $state): string => match ($state) {
                         ContactSubjectType::GeneralInquiry => 'gray',
@@ -82,12 +82,12 @@ class ContactMessageResource extends Resource
                     })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('message')
-                    ->label('Preview')
+                    ->label(__('admin.preview'))
                     ->limit(50)
                     ->tooltip(fn (ContactMessage $record): string => $record->message)
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('status')
-                    ->label('Status')
+                    ->label(__('admin.status'))
                     ->badge()
                     ->color(fn (ContactStatus $state): string => match ($state) {
                         ContactStatus::Unread => 'warning',
@@ -102,7 +102,7 @@ class ContactMessageResource extends Resource
                     ->formatStateUsing(fn (ContactStatus $state): string => ucfirst($state->value))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Received')
+                    ->label(__('admin.received'))
                     ->dateTime('M j, Y H:i')
                     ->since()
                     ->sortable(),
@@ -113,19 +113,19 @@ class ContactMessageResource extends Resource
             ->emptyStateDescription('Contact form submissions from customers will appear here. Unread messages will be highlighted.')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->label('Message Status')
+                    ->label(__('admin.message_status'))
                     ->options(ContactStatus::class)
                     ->native(false)
                     ->helperText('Filter by message handling status.')
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('created_at')
-                    ->label('Received Date')
+                    ->label(__('admin.received_date'))
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Received After')
+                            ->label(__('admin.received_after'))
                             ->placeholder('Select start date'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Received Before')
+                            ->label(__('admin.received_before'))
                             ->placeholder('Select end date'),
                     ])
                     ->query(function ($query, array $data) {
@@ -138,7 +138,7 @@ class ContactMessageResource extends Resource
             ->filtersFormColumns(2)
             ->actions(AdminUi::recordActions(after: [
                 Actions\Action::make('reply')
-                    ->label('Reply')
+                    ->label(__('admin.reply'))
                     // 'reply' was removed in Heroicons v2 — the missing SVG
                     // 500'd the entire deferred table render.
                     ->icon('heroicon-o-arrow-uturn-left')
@@ -149,13 +149,13 @@ class ContactMessageResource extends Resource
                     ->modalDescription(fn (ContactMessage $record): string => "Send a reply to {$record->email}. The reply is saved on the message for future reference.")
                     ->schema([
                         Forms\Components\Textarea::make('reply_body')
-                            ->label('Reply Message')
+                            ->label(__('admin.reply_message'))
                             ->required()
                             ->rows(6)
                             ->placeholder('Type your reply to the customer...')
                             ->helperText('Sent via email (queued) and stored on this message.'),
                         Forms\Components\Toggle::make('mark_resolved')
-                            ->label('Mark as resolved')
+                            ->label(__('admin.mark_as_resolved'))
                             ->default(true)
                             ->helperText('Disable if you expect further back-and-forth on this message.'),
                     ])
@@ -176,7 +176,7 @@ class ContactMessageResource extends Resource
                             ->send();
                     }),
                 Actions\Action::make('markRead')
-                    ->label('Mark Read')
+                    ->label(__('admin.mark_read'))
                     ->icon('heroicon-o-eye')
                     ->color('warning')
                     ->authorize('update')
@@ -190,7 +190,7 @@ class ContactMessageResource extends Resource
                     })
                     ->visible(fn (ContactMessage $record): bool => $record->status === ContactStatus::Unread),
                 Actions\Action::make('markResolved')
-                    ->label('Resolve')
+                    ->label(__('admin.resolve'))
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->authorize('update')

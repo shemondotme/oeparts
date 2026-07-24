@@ -48,7 +48,7 @@
             @error('db_name')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
-            <p class="mt-1 text-xs text-muted">The database must already exist</p>
+            <p class="mt-1 text-xs text-muted">Must already exist, unless you check "Create this database" below</p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6 mb-8">
@@ -75,6 +75,17 @@
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
             </div>
+        </div>
+
+        <div class="mb-6 p-4 border border-slate-200 rounded-lg">
+            <label class="flex items-start gap-3 cursor-pointer">
+                <input type="checkbox" name="create_database" value="1" {{ old('create_database') ? 'checked' : '' }}
+                    class="mt-1 rounded border-slate-300">
+                <span>
+                    <span class="block text-sm font-medium text-slate-700">Create this database if it doesn't exist yet</span>
+                    <span class="block text-xs text-muted mt-0.5">Requires your database user to have CREATE DATABASE privilege — common on a VPS, usually not available on shared hosting where the database must already be created via the control panel. Leave unchecked if you already created it.</span>
+                </span>
+            </label>
         </div>
 
         <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">

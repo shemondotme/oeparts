@@ -96,7 +96,7 @@ class ShippingMethodResource extends Resource
                                     ->description('Set the shipping zone, cost, and estimated delivery window for this method.')
                                     ->schema([
                                         Forms\Components\Select::make('zone_id')
-                                            ->label('Shipping Zone')
+                                            ->label(__('admin.shipping_zone'))
                                             ->relationship('zone', 'name')
                                             ->required()
                                             ->searchable()
@@ -104,7 +104,7 @@ class ShippingMethodResource extends Resource
                                             ->getOptionLabelFromRecordUsing(fn (ShippingZone $record): string => (string) $record->name)
                                             ->helperText('The geographic zone this shipping method applies to.'),
                                         Forms\Components\TextInput::make('flat_rate')
-                                            ->label('Flat Rate (ex. VAT)')
+                                            ->label(__('admin.flat_rate_ex_vat'))
                                             ->numeric()
                                             ->required()
                                             ->minValue(0)
@@ -113,7 +113,7 @@ class ShippingMethodResource extends Resource
                                             ->placeholder('0.00')
                                             ->helperText('Fixed shipping cost charged per order. VAT is calculated at checkout.'),
                                         Forms\Components\TextInput::make('free_shipping_threshold')
-                                            ->label('Free Shipping Threshold (ex. VAT)')
+                                            ->label(__('admin.free_shipping_threshold_ex_vat'))
                                             ->numeric()
                                             ->nullable()
                                             ->minValue(0)
@@ -123,14 +123,14 @@ class ShippingMethodResource extends Resource
                                             ->helperText('Orders above this amount ship for free. Leave empty to disable free shipping.'),
                                         Grid::make(2)->schema([
                                             Forms\Components\TextInput::make('estimated_days_min')
-                                                ->label('Minimum Delivery Days')
+                                                ->label(__('admin.minimum_delivery_days'))
                                                 ->numeric()
                                                 ->required()
                                                 ->minValue(1)
                                                 ->placeholder('e.g. 3')
                                                 ->helperText('Fewest business days for delivery.'),
                                             Forms\Components\TextInput::make('estimated_days_max')
-                                                ->label('Maximum Delivery Days')
+                                                ->label(__('admin.maximum_delivery_days'))
                                                 ->numeric()
                                                 ->required()
                                                 ->minValue(1)
@@ -151,11 +151,11 @@ class ShippingMethodResource extends Resource
                                     ->description('Control whether this method appears at checkout and its display position.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Method Active')
+                                            ->label(__('admin.method_active'))
                                             ->helperText('Inactive methods are hidden from the checkout page.')
                                             ->default(true),
                                         Forms\Components\TextInput::make('sort_order')
-                                            ->label('Display Order')
+                                            ->label(__('admin.display_order'))
                                             ->numeric()
                                             ->default(0)
                                             ->minValue(0)
@@ -174,7 +174,7 @@ class ShippingMethodResource extends Resource
             ->modifyQueryUsing(fn ($query) => $query->with('zone'))
             ->columns([
             Tables\Columns\TextColumn::make('name')
-                ->label('Method')
+                ->label(__('admin.method'))
                 ->getStateUsing(fn (ShippingMethod $record): string => static::localizedName($record->name))
                 ->searchable(query: function (Builder $query, string $search) use ($locales): Builder {
                     return $query->where(function (Builder $q) use ($search, $locales): void {
@@ -187,26 +187,26 @@ class ShippingMethodResource extends Resource
                 ->weight(FontWeight::Medium)
                 ->limit(28),
             Tables\Columns\TextColumn::make('zone.name')
-                ->label('Zone')
+                ->label(__('admin.zone'))
                 ->getStateUsing(fn (ShippingMethod $record): string => $record->zone?->name ?? '—')
                 ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->whereHas('zone', fn ($q) => $q->where('name', 'like', "%{$search}%"));
                 })
                 ->toggleable(),
             Tables\Columns\TextColumn::make('flat_rate')
-                ->label('Rate')
+                ->label(__('admin.rate'))
                 ->getStateUsing(fn (ShippingMethod $record): string => format_money($record->flat_rate))
                 ->alignEnd()
                 ->fontMono()
                 ->sortable(),
             Tables\Columns\TextColumn::make('free_shipping_threshold')
-                ->label('Free Threshold')
+                ->label(__('admin.free_threshold'))
                 ->getStateUsing(fn (ShippingMethod $record): string => filled($record->free_shipping_threshold) ? format_money($record->free_shipping_threshold) : '—')
                 ->alignEnd()
                 ->fontMono()
                 ->toggleable(isToggledHiddenByDefault: true),
             Tables\Columns\TextColumn::make('estimated_days_min')
-                ->label('Delivery')
+                ->label(__('admin.delivery'))
                 ->getStateUsing(fn (ShippingMethod $record): string => $record->estimated_days_min && $record->estimated_days_max
                     ? "{$record->estimated_days_min}–{$record->estimated_days_max} days"
                     : '—')
@@ -214,7 +214,7 @@ class ShippingMethodResource extends Resource
                 ->color('gray')
                 ->alignCenter(),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->alignCenter()
                     ->sortable()
@@ -222,19 +222,19 @@ class ShippingMethodResource extends Resource
                     ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
                     ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
                 Tables\Columns\TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.sort'))
                     ->fontMono()
                     ->alignCenter()
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Method Status')
+                    ->label(__('admin.method_status'))
                     ->placeholder('All')
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
                 Tables\Filters\SelectFilter::make('zone_id')
-                    ->label('Shipping Zone')
+                    ->label(__('admin.shipping_zone'))
                     ->relationship('zone', 'name')
                     ->searchable()
                     ->preload()
@@ -263,7 +263,7 @@ class ShippingMethodResource extends Resource
             ->emptyStateDescription('Add shipping methods to control available delivery options at checkout. Each method must be assigned to a zone.')
             ->emptyStateActions([
                 Tables\Actions\Action::make('create')
-                    ->label('Add Method')
+                    ->label(__('admin.add_method'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),
