@@ -29,13 +29,13 @@ use App\Filament\Pages\Settings\PreloaderSettings;
 use App\Filament\Pages\Settings\SearchSettings;
 use App\Filament\Pages\Settings\SectionsSettings;
 use App\Filament\Pages\Settings\SecuritySettings;
-use App\Filament\Pages\Settings\SEOSettings;
+use App\Filament\Pages\Settings\SeoSettings;
 use App\Filament\Pages\Settings\ShippingSettings;
 use App\Filament\Pages\Settings\SocialLinkSettings;
 use App\Filament\Pages\Settings\StatsCounterSettings;
 use App\Filament\Pages\Settings\StoreSettings;
 use App\Filament\Pages\Settings\TaxSettings;
-use App\Filament\Pages\Settings\UISettings;
+use App\Filament\Pages\Settings\UiSettings;
 
 /**
  * Declarative source of truth for which settings pages are reachable from
@@ -46,7 +46,7 @@ use App\Filament\Pages\Settings\UISettings;
  * vestigial. Before this registry existed, the cluster Blade view hardcoded
  * a $sections array directly — a page absent from that array existed and
  * saved data correctly but was completely unreachable from the UI, with no
- * error anywhere (this happened to UISettings; see ARCHITECTURE.md). This
+ * error anywhere (this happened to what's now UiSettings; see docs/ARCHITECTURE.md). This
  * registry plus tests/Feature/SettingsRegistryTest.php closes that gap by
  * making every SettingsPage subclass require an entry here, checked by a
  * test rather than relying on someone remembering to edit the Blade array.
@@ -235,7 +235,7 @@ final class SettingsRegistry
             'sort' => 10,
         ],
         'seo-settings' => [
-            'class' => SEOSettings::class,
+            'class' => SeoSettings::class,
             'section' => 'SEO & Marketing',
             'title' => 'SEO & Meta',
             'url' => '/admin/settings/seo-settings',
@@ -289,7 +289,7 @@ final class SettingsRegistry
             'sort' => 70,
         ],
         'ui-settings' => [
-            'class' => UISettings::class,
+            'class' => UiSettings::class,
             'section' => 'SEO & Marketing',
             'title' => 'Homepage Hero & UI Text',
             'url' => '/admin/settings/ui-settings',

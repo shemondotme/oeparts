@@ -45,7 +45,6 @@ class SearchController extends Controller
             throw new TooManyRequestsHttpException(60);
         }
 
-        // Optional manufacturer/model filters from query string
         $manufacturerId = $request->query('manufacturer');
         $carModelId     = $request->query('model');
 

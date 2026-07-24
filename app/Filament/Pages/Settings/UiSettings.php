@@ -6,15 +6,16 @@ use App\Filament\Support\AdminUi;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 
-class UISettings extends SettingsPage
+class UiSettings extends SettingsPage
 {
     protected static ?string $title = 'UI Settings';
 
     /**
-     * Without this, Filament auto-derives the slug from the class name by
-     * kebab-casing each capital letter run, producing "u-i-settings" instead
-     * of "ui-settings" — confirmed via `php artisan route:list` before this
-     * fix. SEOSettings has the same kind of override for the same reason.
+     * Kept even though the class is now PascalCase, not all-caps: this is
+     * what previously fixed Filament's auto-derived slug turning "UISettings"
+     * into "u-i-settings" instead of "ui-settings" (confirmed via
+     * `php artisan route:list`). Left as an explicit, stable slug rather
+     * than relying on auto-derivation from the (now-renamed) class name.
      */
     protected static ?string $slug = 'ui-settings';
 

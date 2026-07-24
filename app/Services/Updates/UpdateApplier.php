@@ -294,7 +294,7 @@ class UpdateApplier
 
     protected function armRecovery(UpdateHistory $history): void
     {
-        app(RecoveryArm::class)->arm([
+        app(RecoveryWindowFlag::class)->arm([
             'history_id'   => $history->getKey(),
             'from_version' => $history->from_version,
             'to_version'   => $history->to_version,
@@ -303,7 +303,7 @@ class UpdateApplier
 
     protected function disarmRecovery(): void
     {
-        app(RecoveryArm::class)->disarm();
+        app(RecoveryWindowFlag::class)->disarm();
     }
 
     /* ---- Helpers ------------------------------------------------------- */

@@ -8,50 +8,33 @@ use Illuminate\Support\Facades\DB;
 
 class DatabaseBackup extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'db:backup {--output= : Backup file output path}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Create a database backup using mysqldump';
 
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
         $this->info('Starting database backup...');
 
         $startTime = microtime(true);
 
-        // Get database configuration
         $dbHost = config('database.connections.mysql.host');
         $dbPort = config('database.connections.mysql.port', '3306');
         $dbName = config('database.connections.mysql.database');
         $dbUser = config('database.connections.mysql.username');
         $dbPass = config('database.connections.mysql.password');
 
-        // Determine output path
         $outputPath = $this->option('output');
         if (!$outputPath) {
             $timestamp = now()->format('Y-m-d-His');
             $outputPath = storage_path("app/backups/{$dbName}-{$timestamp}.sql");
         }
 
-        // Ensure backup directory exists
         $backupDir = dirname($outputPath);
         if (!file_exists($backupDir)) {
             mkdir($backupDir, 0755, true);
         }
 
-        // Build mysqldump command
         $command = sprintf(
             'mysqldump --host=%s --port=%s --user=%s --password=%s %s > %s',
             escapeshellarg($dbHost),
@@ -62,7 +45,6 @@ class DatabaseBackup extends Command
             escapeshellarg($outputPath)
         );
 
-        // Execute backup
         $this->info("Backing up database to: {$outputPath}");
 
         $returnCode = 0;
@@ -73,23 +55,19 @@ class DatabaseBackup extends Command
             $errorMessage = implode("\n", $output);
             $this->error("Database backup failed: {$errorMessage}");
 
-            // Log failure
             $this->logCronResult('database_backup', 'failed', 0, $errorMessage);
 
             return Command::FAILURE;
         }
 
-        // Calculate duration
         $duration = (int) ((microtime(true) - $startTime) * 1000);
 
-        // Get file size
         $fileSize = filesize($outputPath);
         $fileSizeFormatted = $this->formatFileSize($fileSize);
 
         $this->info("Backup completed successfully: {$fileSizeFormatted}");
         $this->info("Duration: {$duration}ms");
 
-        // Log success
         $this->logCronResult('database_backup', 'success', $duration, "Backup created: {$outputPath} ({$fileSizeFormatted})");
 
         // Clean up old backups (keep last 7 days)
@@ -123,7 +101,7 @@ class DatabaseBackup extends Command
         }
 
         $files = glob($backupDir . '/*.sql');
-        $cutoffTime = time() - (7 * 24 * 60 * 60); // 7 days ago
+        $cutoffTime = time() - (7 * 24 * 60 * 60);
         $deletedCount = 0;
 
         foreach ($files as $file) {

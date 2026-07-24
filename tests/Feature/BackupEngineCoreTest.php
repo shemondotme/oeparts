@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupJanitor;
 use App\Services\Backup\BackupLock;
@@ -130,7 +130,7 @@ class BackupEngineCoreTest extends TestCase
 
         $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status);
         $this->assertSame(3, $run->part_count);
-        $this->assertSame(3, BackupPart::where('backup_run_id', $run->id)->count());
+        $this->assertSame(3, BackupChunk::where('backup_run_id', $run->id)->count());
         $this->assertSame((int) $run->parts->sum('bytes'), (int) $run->total_bytes);
         $this->assertFalse(app(BackupLock::class)->isLocked());
 
@@ -238,7 +238,7 @@ class FakeDbStage implements BackupStage
 
     public function key(): string
     {
-        return BackupPart::TYPE_DB;
+        return BackupChunk::TYPE_DB;
     }
 
     public function step(BackupRun $run, array $state): StageStepResult
@@ -250,7 +250,7 @@ class FakeDbStage implements BackupStage
         Storage::disk($run->disk)->put($path, $data);
 
         $part = [
-            'type'   => BackupPart::TYPE_DB,
+            'type'   => BackupChunk::TYPE_DB,
             'name'   => "table_{$i}",
             'path'   => $path,
             'bytes'  => strlen($data),
@@ -270,7 +270,7 @@ class FakeThrowingStage implements BackupStage
 {
     public function key(): string
     {
-        return BackupPart::TYPE_FILES;
+        return BackupChunk::TYPE_FILES;
     }
 
     public function step(BackupRun $run, array $state): StageStepResult

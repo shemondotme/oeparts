@@ -96,7 +96,8 @@
     @foreach($sections as $index => $section)
         @if($index === 0)
             {{-- Hero section loads immediately (above the fold) --}}
-            @includeIf('components.sections.' . $section->type, [
+            {{-- Section files are kebab-case; stored $section->type stays snake_case (DB values, unchanged). --}}
+            @includeIf('components.sections.' . str_replace('_', '-', $section->type), [
                 'section'    => $section,
                 'sectionData' => $sectionData,
             ])
@@ -169,7 +170,8 @@
                     x-transition:enter-end="opacity-100 translate-y-0"
                     x-cloak
                 >
-                    @includeIf('components.sections.' . $section->type, [
+                    {{-- Section files are kebab-case; stored $section->type stays snake_case (DB values, unchanged). --}}
+                    @includeIf('components.sections.' . str_replace('_', '-', $section->type), [
                         'section'    => $section,
                         'sectionData' => $sectionData,
                     ])

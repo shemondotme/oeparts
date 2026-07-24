@@ -14,11 +14,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class OrderFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -62,9 +57,6 @@ class OrderFactory extends Factory
         ];
     }
 
-    /**
-     * Set the order as B2B.
-     */
     public function b2b(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -74,9 +66,6 @@ class OrderFactory extends Factory
         ]);
     }
 
-    /**
-     * Set the order as paid.
-     */
     public function paid(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -85,9 +74,6 @@ class OrderFactory extends Factory
         ]);
     }
 
-    /**
-     * Set the order as shipped.
-     */
     public function shipped(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -97,9 +83,6 @@ class OrderFactory extends Factory
         ]);
     }
 
-    /**
-     * Set the order as a guest purchase.
-     */
     public function guest(): static
     {
         return $this->state(fn (array $attributes) => [

@@ -32,12 +32,10 @@ class MaintenanceMode
             $clientIp = $request->ip();
 
             if (in_array($clientIp, $allowedIpArray)) {
-                // Set noindex header during maintenance for non-whitelisted pages
                 return $next($request);
             }
         }
 
-        // Return 503 maintenance page
         return response()->view('errors.maintenance', [
             'message' => settings('maintenance.message', ["en" => "We'll be back soon."]),
             'estimatedBackAt' => settings('maintenance.estimated_back_at', ''),

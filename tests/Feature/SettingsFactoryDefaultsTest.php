@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Settings\SettingsPage;
-use App\Filament\Pages\Settings\UISettings;
+use App\Filament\Pages\Settings\UiSettings;
 use App\Models\Admin;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -91,7 +91,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function ui_settings_factory_defaults_includes_all_22_hero_keys(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\UISettings::class);
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\UiSettings::class);
 
         $this->assertCount(22, $defaults);
         $this->assertArrayHasKey('hero_spec_r5_value', $defaults);

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupManager;
 use App\Services\Backup\Stages\FileBackupStage;
@@ -102,7 +102,7 @@ class FileBackupStageTest extends TestCase
             $result = $stage->step($run, $state);
             if ($result->part !== null) {
                 $p    = $result->part;
-                $type = $p['type'] ?? BackupPart::TYPE_FILES;
+                $type = $p['type'] ?? BackupChunk::TYPE_FILES;
                 $run->parts()->create([
                     'type'     => $type,
                     'sequence' => $run->parts()->where('type', $type)->count(),
@@ -232,8 +232,8 @@ class FileBackupStageTest extends TestCase
         $this->assertSame(1, $run->parts()->where('name', 'files-manifest')->count());
         $this->assertGreaterThanOrEqual(1, $run->parts()->where('meta->kind', 'volume')->count());
         // Both stages contributed.
-        $this->assertGreaterThan(0, $run->parts()->where('type', BackupPart::TYPE_DB)->count());
-        $this->assertGreaterThan(0, $run->parts()->where('type', BackupPart::TYPE_FILES)->count());
+        $this->assertGreaterThan(0, $run->parts()->where('type', BackupChunk::TYPE_DB)->count());
+        $this->assertGreaterThan(0, $run->parts()->where('type', BackupChunk::TYPE_FILES)->count());
     }
 
     #[Test]
@@ -244,6 +244,6 @@ class FileBackupStageTest extends TestCase
         $run = app(BackupManager::class)->run($run);
 
         $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status);
-        $this->assertSame(0, $run->parts()->where('type', BackupPart::TYPE_FILES)->count());
+        $this->assertSame(0, $run->parts()->where('type', BackupChunk::TYPE_FILES)->count());
     }
 }

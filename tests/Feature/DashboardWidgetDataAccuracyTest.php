@@ -25,7 +25,7 @@ use Tests\TestCase;
  * grand_total-as-exposure, blank "prefill" links, and the abandoned-cart
  * pipeline command that fataled on every scheduled run.
  */
-class DashboardWidgetTruthTest extends TestCase
+class DashboardWidgetDataAccuracyTest extends TestCase
 {
     use RefreshDatabase;
 

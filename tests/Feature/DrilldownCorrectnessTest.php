@@ -147,7 +147,7 @@ class DrilldownCorrectnessTest extends TestCase
         $this->assertStringContainsString('/admin/newsletter-subscribers', $url);
     }
 
-    // ── ManufacturingStatsWidget ───────────────────────────────────────────
+    // ── CatalogStatsWidget ─────────────────────────────────────────────────
 
     #[Test]
     public function manufacturing_stats_drilldown_links_to_manufacturers(): void

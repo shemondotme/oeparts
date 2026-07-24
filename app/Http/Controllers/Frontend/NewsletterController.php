@@ -36,7 +36,6 @@ class NewsletterController extends Controller
         $unsubscribeToken = hash_hmac('sha256', $email, config('app.key'));
         $doubleOptIn = filter_var(settings('newsletter.double_opt_in', true), FILTER_VALIDATE_BOOLEAN);
 
-        // Check if already subscribed
         $existing = NewsletterSubscriber::where('email', $email)->first();
 
         if ($existing && $existing->is_active) {

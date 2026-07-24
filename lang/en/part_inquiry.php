@@ -56,7 +56,7 @@ return [
     'guest_not_allowed' => 'Please sign in to submit a part inquiry.',
     'submitted' => 'Your inquiry has been submitted. We will respond within :hours hours.',
 
-    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    // Homepage inline part_inquiry section (resources/views/components/sections/part-inquiry.blade.php)
     'inline_form_label' => 'Form · Quick Inquiry',
     'inline_toggle_show' => 'Add Vehicle Details (optional)',
     'inline_toggle_hide' => 'Hide Vehicle Details',

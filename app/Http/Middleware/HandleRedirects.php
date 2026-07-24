@@ -12,14 +12,12 @@ class HandleRedirects
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Skip for admin routes and API
         if ($request->is('admin/*') || $request->is('api/*')) {
             return $next($request);
         }
 
         $path = ltrim($request->path(), '/');
 
-        // Check cache first
         $redirect = Cache::remember("redirect.{$path}", now()->addSeconds(60), function () use ($path) {
             return RedirectModel::where('from_url', $path)
                 ->where('is_active', true)

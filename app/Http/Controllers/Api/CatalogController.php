@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Resources\CarModelResource;
-use App\Http\Resources\CategoryResource;
-use App\Http\Resources\ManufacturerResource;
+use App\Http\Resources\CarModelApiResource;
+use App\Http\Resources\CategoryApiResource;
+use App\Http\Resources\ManufacturerApiResource;
+use App\Http\Resources\ProductApiResource;
 use App\Http\Resources\ProductCrossReferenceResource;
-use App\Http\Resources\ProductResource;
 use App\Models\CarModel;
 use App\Models\Category;
 use App\Models\Manufacturer;
@@ -15,7 +15,7 @@ use App\Services\SearchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class CatalogController extends ApiController
+class CatalogController extends BaseApiController
 {
     public function __construct(
         private SearchService $searchService
@@ -32,7 +32,7 @@ class CatalogController extends ApiController
             ->get();
 
         return $this->successResponse(
-            CategoryResource::collection($categories)
+            CategoryApiResource::collection($categories)
         );
     }
 
@@ -49,7 +49,7 @@ class CatalogController extends ApiController
             return $this->errorResponse('Category not found.', null, 404);
         }
 
-        return $this->successResponse(new CategoryResource($category));
+        return $this->successResponse(new CategoryApiResource($category));
     }
 
     /**
@@ -64,7 +64,7 @@ class CatalogController extends ApiController
         }
 
         return $this->successResponse(
-            ManufacturerResource::collection($query->get())
+            ManufacturerApiResource::collection($query->get())
         );
     }
 
@@ -81,7 +81,7 @@ class CatalogController extends ApiController
             return $this->errorResponse('Manufacturer not found.', null, 404);
         }
 
-        return $this->successResponse(new ManufacturerResource($manufacturer));
+        return $this->successResponse(new ManufacturerApiResource($manufacturer));
     }
 
     /**
@@ -107,7 +107,7 @@ class CatalogController extends ApiController
         }
 
         return $this->successResponse(
-            CarModelResource::collection($query->paginate(50))
+            CarModelApiResource::collection($query->paginate(50))
         );
     }
 
@@ -125,7 +125,7 @@ class CatalogController extends ApiController
             return $this->errorResponse('Car model not found.', null, 404);
         }
 
-        return $this->successResponse(new CarModelResource($carModel));
+        return $this->successResponse(new CarModelApiResource($carModel));
     }
 
     /**
@@ -148,13 +148,11 @@ class CatalogController extends ApiController
         $query = Product::where('is_active', true)
             ->with(['manufacturer', 'condition']);
 
-        // OEM number search
         if (!empty($validated['oem'])) {
             $normalized = preg_replace('/[^A-Z0-9]/i', '', strtoupper($validated['oem']));
             $query->where('normalized_oem', 'LIKE', "%{$normalized}%");
         }
 
-        // Free text search (uses SearchService)
         if (!empty($validated['q']) && empty($validated['oem'])) {
             $query->where(function ($q) use ($validated) {
                 $term = $validated['q'];
@@ -164,24 +162,20 @@ class CatalogController extends ApiController
             });
         }
 
-        // Filter by manufacturer
         if (!empty($validated['manufacturer_id'])) {
             $query->where('manufacturer_id', $validated['manufacturer_id']);
         }
 
-        // Filter by car model
         if (!empty($validated['car_model_id'])) {
             $query->whereHas('carModels', function ($q) use ($validated) {
                 $q->where('car_models.id', $validated['car_model_id']);
             });
         }
 
-        // Filter by stock
         if (isset($validated['in_stock'])) {
             $query->where('is_in_stock', (bool) $validated['in_stock']);
         }
 
-        // Price range
         if (!empty($validated['min_price'])) {
             $query->where('price', '>=', $validated['min_price']);
         }
@@ -189,7 +183,6 @@ class CatalogController extends ApiController
             $query->where('price', '<=', $validated['max_price']);
         }
 
-        // Sorting
         $query = match ($validated['sort'] ?? null) {
             'price_asc' => $query->orderBy('price', 'asc'),
             'price_desc' => $query->orderBy('price', 'desc'),
@@ -201,7 +194,7 @@ class CatalogController extends ApiController
 
         return $this->paginatedResponse(
             $query->paginate($perPage),
-            ProductResource::class
+            ProductApiResource::class
         );
     }
 
@@ -221,7 +214,7 @@ class CatalogController extends ApiController
             return $this->errorResponse('Part not found.', null, 404);
         }
 
-        return $this->successResponse(new ProductResource($product));
+        return $this->successResponse(new ProductApiResource($product));
     }
 
     /**
@@ -246,7 +239,7 @@ class CatalogController extends ApiController
             if (!$next || in_array($next->id, $visited)) {
                 break; // prevent infinite loops
             }
-            $chain[] = new ProductResource($next);
+            $chain[] = new ProductApiResource($next);
             $visited[] = $next->id;
             $current = $next;
         }
@@ -293,6 +286,6 @@ class CatalogController extends ApiController
             return $this->errorResponse('Product not found.', null, 404);
         }
 
-        return $this->successResponse(new ProductResource($product));
+        return $this->successResponse(new ProductApiResource($product));
     }
 }

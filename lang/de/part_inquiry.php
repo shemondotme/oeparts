@@ -56,7 +56,7 @@ return [
     'guest_not_allowed' => 'Bitte melden Sie sich an, um eine Ersatzteilanfrage zu senden.',
     'submitted' => 'Ihre Anfrage wurde gesendet. Wir antworten innerhalb von :hours Stunden.',
 
-    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    // Homepage inline part_inquiry section (resources/views/components/sections/part-inquiry.blade.php)
     'inline_form_label' => 'Formular · Schnellanfrage',
     'inline_toggle_show' => 'Fahrzeugdaten hinzufügen (optional)',
     'inline_toggle_hide' => 'Fahrzeugdaten ausblenden',

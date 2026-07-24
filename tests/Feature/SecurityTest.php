@@ -16,7 +16,6 @@ class SecurityTest extends TestCase
     #[Test]
     public function csrf_token_is_required_for_form_submissions(): void
     {
-        // POST without CSRF token should be rejected
         $response = $this->post('/en/contact/submit', [
             'name' => 'Test User',
             'email' => 'test@example.com',
@@ -44,7 +43,6 @@ class SecurityTest extends TestCase
         // For this test, we use Laravel's built-in CSRF token generation
         $token = csrf_token();
 
-        // POST with valid CSRF token should succeed
         $response = $this->post('/en/contact/submit', [
             '_token' => $token,
             'name' => 'Test User',
@@ -52,18 +50,15 @@ class SecurityTest extends TestCase
             'message' => 'Test message with valid CSRF token',
         ]);
 
-        // Should not be 419 (CSRF error)
         $this->assertNotEquals(419, $response->getStatusCode());
     }
 
     #[Test]
     public function csrf_token_is_regenerated_on_login(): void
     {
-        // Get token before login
         $response1 = $this->get('/en');
         $token1 = csrf_token();
 
-        // Create a user and log in
         $user = User::factory()->create(['password' => bcrypt('password123')]);
         $this->post('/en/login', [
             '_token' => $token1,
@@ -99,12 +94,9 @@ class SecurityTest extends TestCase
     {
         $xssPayload = '<script>alert("XSS")</script>';
 
-        // Attempt to search with XSS payload as the OEM parameter
         $response = $this->get('/en/parts/'.urlencode($xssPayload));
 
-        // Response should escape the payload, not execute script
         $this->assertStringNotContainsString($xssPayload, $response->getContent());
-        // Should be HTML-encoded or at minimum not contain executable script
         $this->assertTrue(true); // Just verify the page loads without executing script
     }
 
@@ -131,10 +123,8 @@ class SecurityTest extends TestCase
     {
         $xssPayload = '<script>alert(1)</script>';
 
-        // JSON APIs should return safe content
         $response = $this->getJson("/api/search/autocomplete?q={$xssPayload}");
 
-        // Response content should not contain unescaped script tags
         $content = $response->getContent();
         $this->assertStringNotContainsString('<script>', $content);
     }
@@ -144,10 +134,8 @@ class SecurityTest extends TestCase
     {
         $user = User::factory()->create(['name' => '<script>alert("XSS")</script>']);
 
-        // Act as the user to access their dashboard
         $response = $this->actingAs($user)->get('/en/account/dashboard');
 
-        // Verify the page loads successfully
         $this->assertEquals(200, $response->getStatusCode());
 
         // Most importantly: no unescaped script tag should be executed
@@ -166,10 +154,8 @@ class SecurityTest extends TestCase
     {
         $sqlInjection = "'; DROP TABLE products; --";
 
-        // Attempt SQL injection via search endpoint
         $response = $this->get('/en/parts/'.urlencode($sqlInjection));
 
-        // Request should handle gracefully without executing SQL
         $this->assertNotEquals(500, $response->getStatusCode());
         // Should return 404 or show zero results, not crash
         $statusCode = $response->getStatusCode();
@@ -189,7 +175,6 @@ class SecurityTest extends TestCase
             'message' => 'Test',
         ]);
 
-        // Should handle as regular form data, not execute SQL
         $this->assertNotEquals(500, $response->getStatusCode());
     }
 
@@ -200,7 +185,6 @@ class SecurityTest extends TestCase
         // Even without existing products, the query should handle the malicious input safely
         $response = $this->get('/en/parts/'.urlencode("06L906036L' OR '1'='1"));
 
-        // Should not crash with 500 error - parameterized queries prevent SQL injection
         $this->assertNotEquals(500, $response->getStatusCode(),
             'SQL injection attempt caused server error');
         // Should return 200 (no results) or 404 (not found), never 500
@@ -219,7 +203,6 @@ class SecurityTest extends TestCase
         // Check for honeypot field (typically a hidden field with name like "website" or "phone")
         $content = $response->getContent();
 
-        // Look for hidden input fields that might be honeypot
         $this->assertStringContainsString('hidden', $content);
         // Many honeypot implementations use type="text" with display:none
         $this->assertStringContainsString('tabindex="-1"', $content);
@@ -239,9 +222,7 @@ class SecurityTest extends TestCase
         ]);
 
         // Should be rejected (403, 422) or redirect on honeypot trigger
-        // At minimum, should not return 200 (success)
         $this->assertNotEquals(200, $response->getStatusCode(), 'Honeypot field should reject submissions');
-        // Verify we get either validation error or redirect
         $statusCode = $response->getStatusCode();
         $this->assertTrue(in_array($statusCode, [302, 422, 403]),
             "Expected 302, 422, or 403, got {$statusCode}");
@@ -298,10 +279,8 @@ class SecurityTest extends TestCase
             'password' => bcrypt($plainPassword),
         ]);
 
-        // Retrieve from database and verify password is hashed
         $dbUser = User::find($user->id);
 
-        // Password should not be plaintext
         $this->assertNotEquals($plainPassword, $dbUser->password);
 
         // Password should be a bcrypt hash (starts with $2y$)
@@ -320,7 +299,6 @@ class SecurityTest extends TestCase
         ]);
 
         // IP should be available for security logging
-        // Check that request IP is accessible
         $ip = $this->app['request']->ip();
         $this->assertNotEmpty($ip);
         $this->assertNotNull($ip);

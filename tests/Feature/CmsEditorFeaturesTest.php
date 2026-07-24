@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-class CmsFeatures2To5Test extends TestCase
+class CmsEditorFeaturesTest extends TestCase
 {
     use RefreshDatabase;
 

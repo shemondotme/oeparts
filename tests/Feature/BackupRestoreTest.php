@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupManager;
 use App\Services\Backup\Exceptions\RestoreException;
@@ -140,7 +140,7 @@ class BackupRestoreTest extends TestCase
     {
         $run = $this->backup();
 
-        $part = $run->parts()->where('type', BackupPart::TYPE_DB)->firstOrFail();
+        $part = $run->parts()->where('type', BackupChunk::TYPE_DB)->firstOrFail();
         Storage::disk($part->disk)->put($part->path, 'corrupted-bytes');
 
         $this->expectException(RestoreException::class);
@@ -154,7 +154,7 @@ class BackupRestoreTest extends TestCase
         $manifestPath = $run->manifest_path;
 
         // Simulate a fresh server: drop the DB rows but keep the backup files on disk.
-        BackupPart::query()->delete();
+        BackupChunk::query()->delete();
         BackupRun::query()->delete();
         $this->assertSame(0, BackupRun::count());
 

@@ -258,7 +258,6 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // If purpose is email_verify, mark user as verified
         if ($purpose === OtpPurpose::EmailVerify) {
             $user = User::where('email', $request->input('email'))->first();
             if ($user && ! $user->hasVerifiedEmail()) {

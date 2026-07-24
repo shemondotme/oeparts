@@ -18,7 +18,7 @@ use Tests\TestCase;
  * live click-through of every settings page (2026-07-15): clicking Save
  * with zero edits should ALWAYS report "no changes" — never a phantom diff.
  *
- * Bug 1 (2 pages: GeneralSettings, SEOSettings): an untouched FileUpload/
+ * Bug 1 (2 pages: GeneralSettings, SeoSettings): an untouched FileUpload/
  * CheckboxList/KeyValue field's Livewire state is [] — json_encode([]) is
  * the string "[]", compared against the stored "" default. Fixed by
  * treating an empty array as "" in both buildDiffBetween() and

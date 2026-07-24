@@ -2,7 +2,7 @@
 
 namespace App\Services\Backup;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\Contracts\BackupStage;
 use App\Services\Backup\Exceptions\BackupException;
@@ -225,7 +225,7 @@ class BackupManager
     }
 
     /** Persist a backup_parts row emitted by a stage step. */
-    private function registerPart(BackupRun $run, string $stageKey, array $attrs): BackupPart
+    private function registerPart(BackupRun $run, string $stageKey, array $attrs): BackupChunk
     {
         $type = (string) ($attrs['type'] ?? $stageKey);
 

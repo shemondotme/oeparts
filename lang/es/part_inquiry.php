@@ -56,7 +56,7 @@ return [
     'guest_not_allowed' => 'Inicie sesión para enviar una consulta de pieza.',
     'submitted' => 'Su consulta se ha enviado. Responderemos en :hours horas.',
 
-    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    // Homepage inline part_inquiry section (resources/views/components/sections/part-inquiry.blade.php)
     'inline_form_label' => 'Formulario · Consulta rápida',
     'inline_toggle_show' => 'Añadir datos del vehículo (opcional)',
     'inline_toggle_hide' => 'Ocultar datos del vehículo',

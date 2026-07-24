@@ -7,7 +7,7 @@ use App\Models\Order;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
-class ManufacturingStatsWidget extends StatsOverviewWidget
+class CatalogStatsWidget extends StatsOverviewWidget
 {
     public function getDescription(): ?string
     {

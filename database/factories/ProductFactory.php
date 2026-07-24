@@ -12,11 +12,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ProductFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         $oem = $this->faker->unique()->regexify('[A-Z0-9]{8,12}');
@@ -45,9 +40,6 @@ class ProductFactory extends Factory
         ];
     }
 
-    /**
-     * Set the product as out of stock.
-     */
     public function outOfStock(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -55,9 +47,6 @@ class ProductFactory extends Factory
         ]);
     }
 
-    /**
-     * Set the product as inactive.
-     */
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -65,9 +54,6 @@ class ProductFactory extends Factory
         ]);
     }
 
-    /**
-     * Set specific condition.
-     */
     public function condition(int $conditionId): static
     {
         return $this->state(fn (array $attributes) => [

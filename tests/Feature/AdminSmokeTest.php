@@ -277,7 +277,7 @@ class AdminSmokeTest extends TestCase
     {
         // Zero prior HTTP coverage existed for any of these 12 pages — every
         // previous "completely broken since written" bug in this program
-        // (UISettings, StoreSettings, MenuSettings, DatabaseSettings,
+        // (UiSettings, StoreSettings, MenuSettings, DatabaseSettings,
         // AboutLicenseSettings, the 3 custom table pages) was hiding behind
         // exactly this gap. URLs confirmed via `php artisan route:list`, not
         // guessed from class names (Option U's lesson).

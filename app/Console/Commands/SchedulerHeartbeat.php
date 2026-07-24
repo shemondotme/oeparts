@@ -7,23 +7,10 @@ use Illuminate\Support\Facades\Cache;
 
 class SchedulerHeartbeat extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'scheduler:heartbeat';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Update scheduler heartbeat for health monitoring';
 
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
         $this->info('Updating scheduler heartbeat...');

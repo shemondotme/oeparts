@@ -20,8 +20,10 @@ use Illuminate\Support\Facades\View;
 /**
  * SectionRendererService — loads and renders homepage sections.
  *
- * Sections are cached via CacheService. Each section type maps to a
- * Blade component in resources/views/components/sections/{type}.blade.php.
+ * Sections are cached via CacheService. Each section type maps to a Blade
+ * component in resources/views/components/sections/{kebab-case-type}.blade.php
+ * — the stored `type` column is snake_case (e.g. "blog_preview"), converted
+ * to kebab-case at include time in home.blade.php.
  *
  * Relation data (testimonials, faqs, blog posts, manufacturers) is loaded
  * once per request and passed to the relevant section components.

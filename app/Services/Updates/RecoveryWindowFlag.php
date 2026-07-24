@@ -3,8 +3,11 @@
 namespace App\Services\Updates;
 
 /**
- * RecoveryArm (Module 21, Chunk 4.1) — the arm-flag lifecycle for the app-independent
- * Recovery Console (public/oe-recovery.php).
+ * RecoveryWindowFlag (Module 21, Chunk 4.1) — the arm-flag lifecycle for the
+ * app-independent Recovery Console (public/oe-recovery.php). Renamed from
+ * RecoveryArm — the console itself never references this class (it reads
+ * arm.flag directly via raw filesystem calls, per the note below), so this
+ * rename only touched UpdateApplier and its tests.
  *
  * The Recovery Console is OPT-IN-ARMED (LOCKED DECISION #6, rule #47): it only ever
  * operates during an update window, signalled by the presence of an `arm.flag` file
@@ -19,7 +22,7 @@ namespace App\Services\Updates;
  * harmless without OE_RECOVERY_KEY; the console independently refuses to act unless the
  * key is configured, so this class does not gate on it (keeps the window observable).
  */
-class RecoveryArm
+class RecoveryWindowFlag
 {
     public function flagFile(): string
     {

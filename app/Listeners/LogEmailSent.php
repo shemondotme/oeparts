@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Log;
 
 class LogEmailSent
 {
-    /**
-     * Handle the event.
-     */
     public function handle(MessageSent $event): void
     {
         $message = $event->message;
@@ -20,7 +17,7 @@ class LogEmailSent
         // __laravel_mailable holds the fully-qualified class name of the Mailable
         $mailableClass = $event->data['__laravel_mailable'] ?? null;
 
-        // Extract recipient email (getTo() returns Symfony\Component\Mime\Address[])
+        // getTo() returns Symfony\Component\Mime\Address[]
         $to = $message->getTo();
         $toEmail = $to ? collect($to)->first()?->getAddress() : null;
 
@@ -28,13 +25,10 @@ class LogEmailSent
             return;
         }
 
-        // Determine template type from mailable class name
         $templateType = $this->determineTemplateType($mailableClass);
-
-        // Extract subject
         $subject = $message->getSubject() ?? '';
 
-        // Extract related model info from view data (public properties of the Mailable)
+        // $event->data exposes the Mailable's public properties directly
         $relatedId = null;
         $relatedType = null;
 
@@ -63,9 +57,6 @@ class LogEmailSent
         }
     }
 
-    /**
-     * Determine the template type from the mailable instance.
-     */
     private function determineTemplateType(?string $mailableClass): EmailTemplate
     {
         if (!$mailableClass) {

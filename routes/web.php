@@ -12,7 +12,7 @@ use App\Http\Controllers\Frontend\AuthController;
 | Installer routes in routes/installer.php (Sprint 18).
 |
 | IMPORTANT: The CMS catch-all slug route MUST be defined LAST within
-| each language prefix group. See ARCHITECTURE.md for the exact ordering.
+| each language prefix group. See docs/ARCHITECTURE.md for the exact ordering.
 |
 */
 
@@ -46,7 +46,6 @@ Route::get('/', function (Request $request) {
 
 // Login route for auth middleware redirect (outside language prefix)
 Route::get('/login', function (Request $request) {
-    // Get the current language from session or default to 'en'
     $lang = $request->session()->get('locale', 'en');
 
     return redirect("/{$lang}/")->with('show_auth_modal', true);

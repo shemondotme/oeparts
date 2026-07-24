@@ -2,7 +2,7 @@
 
 namespace App\Services\Backup\Stages;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\Contracts\BackupStage;
 use App\Services\Backup\StageStepResult;
@@ -36,7 +36,7 @@ class DatabaseBackupStage implements BackupStage
 {
     public function key(): string
     {
-        return BackupPart::TYPE_DB;
+        return BackupChunk::TYPE_DB;
     }
 
     /**
@@ -143,7 +143,7 @@ class DatabaseBackupStage implements BackupStage
         $path = $this->partPath($run, $table, 'schema');
 
         return $this->writePart($run, $path, $sql, [
-            'type' => BackupPart::TYPE_DB,
+            'type' => BackupChunk::TYPE_DB,
             'name' => $table,
             'rows' => null,
             'meta' => ['kind' => 'schema'],
@@ -213,7 +213,7 @@ class DatabaseBackupStage implements BackupStage
         $path    = $this->partPath($run, $table, 'data.'.$chunk);
 
         $part = $this->writePart($run, $path, $sql, [
-            'type' => BackupPart::TYPE_DB,
+            'type' => BackupChunk::TYPE_DB,
             'name' => $table,
             'rows' => $rows->count(),
             'meta' => [

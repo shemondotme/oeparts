@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Console\Commands\DemoSetupCommand;
+use App\Console\Commands\DemoSetup;
 use App\Filament\Clusters\System as SystemCluster;
 use App\Models\ActivityLog;
 use Filament\Actions\Action;

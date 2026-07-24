@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Services\Updates\RecoveryArm;
+use App\Services\Updates\RecoveryWindowFlag;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -11,7 +11,7 @@ use Tests\TestCase;
  * app-independent Recovery Console's operating window; it lives in the framework-
  * independent state dir beside last-swap.json and lock.
  */
-class RecoveryArmTest extends TestCase
+class RecoveryWindowFlagTest extends TestCase
 {
     private string $state;
 
@@ -34,7 +34,7 @@ class RecoveryArmTest extends TestCase
     #[Test]
     public function arm_writes_a_flag_with_context_in_the_state_dir(): void
     {
-        $arm = app(RecoveryArm::class);
+        $arm = app(RecoveryWindowFlag::class);
 
         $this->assertFalse($arm->isArmed());
 
@@ -55,7 +55,7 @@ class RecoveryArmTest extends TestCase
     #[Test]
     public function disarm_removes_the_flag_and_is_safe_when_already_absent(): void
     {
-        $arm = app(RecoveryArm::class);
+        $arm = app(RecoveryWindowFlag::class);
         $arm->arm();
         $this->assertTrue($arm->isArmed());
 

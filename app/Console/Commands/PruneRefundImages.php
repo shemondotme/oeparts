@@ -9,18 +9,8 @@ use Illuminate\Support\Facades\Storage;
 
 class PruneRefundImages extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'oeparts:refunds:clean-images {--days= : Days after processing before images are purged (defaults to orders.refund_image_retention_days setting)}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Delete customer-submitted refund evidence photos for long-resolved refund requests (GDPR data minimization)';
 
     public function handle(): int

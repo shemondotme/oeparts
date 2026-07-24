@@ -47,7 +47,6 @@ class ReorderHomepageSections extends Command
             }
         }
 
-        // Clear section cache
         $cacheService = app(\App\Services\CacheService::class);
         $cacheService->forgetSections('homepage');
 

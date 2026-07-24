@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
-use App\Services\AdminCacheService;
+use App\Services\AdminWidgetCacheService;
 use App\Services\WidgetPreferenceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -11,7 +11,7 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Verifies the AdminCacheService bypass flag that lets tests exercise
+ * Verifies the AdminWidgetCacheService bypass flag that lets tests exercise
  * cache remember/forget paths on the array driver.
  *
  * IMPORTANT: every test that sets $bypassArrayDriverCheck = true MUST reset
@@ -37,7 +37,7 @@ class DashboardCacheTest extends TestCase
 
     protected function tearDown(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = false;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = false;
         parent::tearDown();
     }
 
@@ -47,16 +47,16 @@ class DashboardCacheTest extends TestCase
     public function cache_is_skipped_on_array_driver_by_default(): void
     {
         $this->assertSame('array', config('cache.default'));
-        $this->assertFalse(AdminCacheService::$bypassArrayDriverCheck);
+        $this->assertFalse(AdminWidgetCacheService::$bypassArrayDriverCheck);
 
         $calls = 0;
-        AdminCacheService::dashboard('test:skip', function () use (&$calls) {
+        AdminWidgetCacheService::dashboard('test:skip', function () use (&$calls) {
             $calls++;
 
             return ['hit' => false];
         });
 
-        AdminCacheService::dashboard('test:skip', function () use (&$calls) {
+        AdminWidgetCacheService::dashboard('test:skip', function () use (&$calls) {
             $calls++;
 
             return ['hit' => false];
@@ -72,9 +72,9 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function bypass_flag_allows_cache_to_store_and_return_data(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
-        AdminCacheService::dashboard('test:store', fn () => ['value' => 42]);
+        AdminWidgetCacheService::dashboard('test:store', fn () => ['value' => 42]);
 
         $this->assertTrue(
             Cache::has('admin:dashboard:test:store'),
@@ -85,17 +85,17 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function second_call_hits_cache_and_does_not_invoke_callback(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
         $calls = 0;
 
-        AdminCacheService::dashboard('test:hit', function () use (&$calls) {
+        AdminWidgetCacheService::dashboard('test:hit', function () use (&$calls) {
             $calls++;
 
             return ['result' => 'first'];
         }, 60);
 
-        AdminCacheService::dashboard('test:hit', function () use (&$calls) {
+        AdminWidgetCacheService::dashboard('test:hit', function () use (&$calls) {
             $calls++;
 
             return ['result' => 'second'];
@@ -110,10 +110,10 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function different_periods_produce_different_cache_keys(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
-        AdminCacheService::dashboard('kpi_stats:p30', fn () => ['period' => '30']);
-        AdminCacheService::dashboard('kpi_stats:p7', fn () => ['period' => '7']);
+        AdminWidgetCacheService::dashboard('kpi_stats:p30', fn () => ['period' => '30']);
+        AdminWidgetCacheService::dashboard('kpi_stats:p7', fn () => ['period' => '7']);
 
         $this->assertTrue(Cache::has('admin:dashboard:kpi_stats:p30'));
         $this->assertTrue(Cache::has('admin:dashboard:kpi_stats:p7'));
@@ -127,19 +127,19 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function forget_removes_the_cache_entry(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
-        AdminCacheService::dashboard('test:forget', fn () => ['stored' => true]);
+        AdminWidgetCacheService::dashboard('test:forget', fn () => ['stored' => true]);
         $this->assertTrue(Cache::has('admin:dashboard:test:forget'));
 
-        AdminCacheService::forget('test:forget');
+        AdminWidgetCacheService::forget('test:forget');
         $this->assertFalse(Cache::has('admin:dashboard:test:forget'));
     }
 
     #[Test]
     public function after_forget_the_callback_runs_again(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
         $calls = 0;
         $closure = function () use (&$calls) {
@@ -148,9 +148,9 @@ class DashboardCacheTest extends TestCase
             return ['calls' => $calls];
         };
 
-        AdminCacheService::dashboard('test:refill', $closure, 60);
-        AdminCacheService::forget('test:refill');
-        AdminCacheService::dashboard('test:refill', $closure, 60);
+        AdminWidgetCacheService::dashboard('test:refill', $closure, 60);
+        AdminWidgetCacheService::forget('test:refill');
+        AdminWidgetCacheService::dashboard('test:refill', $closure, 60);
 
         $this->assertSame(2, $calls, 'Callback must run again after the key is forgotten');
     }
@@ -158,10 +158,10 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function health_cache_uses_separate_namespace(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
-        AdminCacheService::dashboard('health_strip:p-', fn () => ['type' => 'dashboard']);
-        AdminCacheService::health('health_strip:checks', fn () => ['type' => 'health']);
+        AdminWidgetCacheService::dashboard('health_strip:p-', fn () => ['type' => 'dashboard']);
+        AdminWidgetCacheService::health('health_strip:checks', fn () => ['type' => 'health']);
 
         $this->assertTrue(Cache::has('admin:dashboard:health_strip:p-'));
         $this->assertTrue(Cache::has('admin:health:health_strip:checks'));
@@ -175,13 +175,13 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function forget_clears_both_dashboard_and_health_namespaces(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
-        AdminCacheService::dashboard('disk_space:p-', fn () => ['disk' => 'dashboard']);
-        AdminCacheService::health('disk_space:disk', fn () => ['disk' => 'health']);
+        AdminWidgetCacheService::dashboard('disk_space:p-', fn () => ['disk' => 'dashboard']);
+        AdminWidgetCacheService::health('disk_space:disk', fn () => ['disk' => 'health']);
 
-        AdminCacheService::forget('disk_space:p-');
-        AdminCacheService::forget('disk_space:disk');
+        AdminWidgetCacheService::forget('disk_space:p-');
+        AdminWidgetCacheService::forget('disk_space:disk');
 
         $this->assertFalse(Cache::has('admin:dashboard:disk_space:p-'));
         $this->assertFalse(Cache::has('admin:health:disk_space:disk'));
@@ -216,10 +216,10 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function forget_cache_clears_every_period_key_for_a_period_capable_widget(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
         foreach (['1', '7', '30', '90', '365'] as $period) {
-            AdminCacheService::dashboard("order_stats_overview:p{$period}", fn () => ['p' => $period]);
+            AdminWidgetCacheService::dashboard("order_stats_overview:p{$period}", fn () => ['p' => $period]);
         }
 
         WidgetPreferenceService::forgetCache('order_stats_overview');
@@ -235,9 +235,9 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function forget_cache_clears_the_single_key_for_a_non_period_widget(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
-        AdminCacheService::dashboard('recent_orders:p-', fn () => ['orders' => []]);
+        AdminWidgetCacheService::dashboard('recent_orders:p-', fn () => ['orders' => []]);
         $this->assertTrue(Cache::has('admin:dashboard:recent_orders:p-'));
 
         WidgetPreferenceService::forgetCache('recent_orders');
@@ -256,11 +256,11 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function product_observer_invalidates_stock_alert_and_catalog_widget_caches(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
-        AdminCacheService::dashboard('stock_alert:p-', fn () => ['stale' => true]);
-        AdminCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
-        AdminCacheService::dashboard('new_products_added:p30', fn () => ['stale' => true]);
+        AdminWidgetCacheService::dashboard('stock_alert:p-', fn () => ['stale' => true]);
+        AdminWidgetCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
+        AdminWidgetCacheService::dashboard('new_products_added:p30', fn () => ['stale' => true]);
 
         \App\Models\Product::factory()->create();
 
@@ -272,11 +272,11 @@ class DashboardCacheTest extends TestCase
     #[Test]
     public function manufacturer_observer_invalidates_manufacturer_list_and_dashboard_caches(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
         Cache::put('manufacturers.active', ['stale' => true], 3600);
-        AdminCacheService::dashboard('manufacturer_revenue:p30', fn () => ['stale' => true]);
-        AdminCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
+        AdminWidgetCacheService::dashboard('manufacturer_revenue:p30', fn () => ['stale' => true]);
+        AdminWidgetCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
 
         $manufacturer = \App\Models\Manufacturer::factory()->create();
         $manufacturer->update(['is_active' => false]);

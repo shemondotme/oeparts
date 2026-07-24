@@ -22,7 +22,7 @@ use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-class PhasePerformanceAuditTest extends TestCase
+class PerformanceAuditRegressionTest extends TestCase
 {
     use RefreshDatabase;
 

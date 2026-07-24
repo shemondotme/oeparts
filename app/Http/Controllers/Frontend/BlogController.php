@@ -20,21 +20,18 @@ class BlogController extends Controller
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
 
-        // Filter by category
         if ($request->filled('category')) {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
 
-        // Filter by tag
         if ($request->filled('tag')) {
             $query->whereHas('tags', function ($q) use ($request) {
                 $q->where('slug', $request->tag);
             });
         }
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {

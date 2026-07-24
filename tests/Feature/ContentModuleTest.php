@@ -140,7 +140,14 @@ class ContentModuleTest extends TestCase
             ->values()
             ->all();
 
-        $adminTypes = collect(array_keys(Section::TYPES))->sort()->values()->all();
+        // Blade filenames are kebab-case; Section::TYPES keys are the stored
+        // snake_case DB values — home.blade.php converts one to the other at
+        // include time, so the comparison must apply the same conversion.
+        $adminTypes = collect(array_keys(Section::TYPES))
+            ->map(fn (string $type): string => str_replace('_', '-', $type))
+            ->sort()
+            ->values()
+            ->all();
 
         $this->assertSame($bladeTypes, $adminTypes,
             'Section::TYPES must mirror resources/views/components/sections/ one-to-one — the homepage silently skips unknown types');

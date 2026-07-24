@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class CarModelResource extends JsonResource
+class CategoryApiResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -15,9 +15,9 @@ class CarModelResource extends JsonResource
             'id' => $this->id,
             'name' => trans_field($this->name, $locale),
             'slug' => $this->slug,
-            'year_from' => $this->year_from,
-            'year_to' => $this->year_to,
-            'manufacturer_id' => $this->manufacturer_id,
+            'parent_id' => $this->parent_id,
+            'sort_order' => $this->sort_order,
+            'children' => CategoryApiResource::collection($this->whenLoaded('children')),
         ];
     }
 }

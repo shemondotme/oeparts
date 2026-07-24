@@ -12,9 +12,6 @@ use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {
-    /**
-     * Display contact form page.
-     */
     public function show(string $lang)
     {
         return view('frontend.contact.show');

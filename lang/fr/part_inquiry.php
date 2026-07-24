@@ -56,7 +56,7 @@ return [
     'guest_not_allowed' => 'Veuillez vous connecter pour envoyer une demande de pièce.',
     'submitted' => 'Votre demande a été envoyée. Nous répondrons sous :hours heures.',
 
-    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    // Homepage inline part_inquiry section (resources/views/components/sections/part-inquiry.blade.php)
     'inline_form_label' => 'Formulaire · Demande rapide',
     'inline_toggle_show' => 'Ajouter les détails du véhicule (optionnel)',
     'inline_toggle_hide' => 'Masquer les détails du véhicule',

@@ -55,13 +55,11 @@ class CartService
         $expiresAt = Carbon::now()->addDays($expiryDays);
 
         if ($user) {
-            // Authenticated user: find or create cart for user
             $cart = Cart::firstOrCreate(
                 ['user_id' => $user->id],
                 ['expires_at' => $expiresAt]
             );
         } else {
-            // Guest: require guest token
             if (!$guestToken) {
                 $guestToken = Str::random(32);
             }
@@ -99,16 +97,13 @@ class CartService
 
             $product = Product::lockForUpdate()->findOrFail($productId);
 
-            // Check if product is in stock
             if (!$product->is_in_stock) {
                 throw new \Exception("Product is out of stock.");
             }
 
-            // Check if item already exists in cart
             $existingItem = $cart->items()->where('product_id', $productId)->first();
 
             if ($existingItem) {
-                // Update quantity
                 $newQuantity = $existingItem->quantity + $quantity;
                 $existingItem->update([
                     'quantity' => $newQuantity,
@@ -118,7 +113,6 @@ class CartService
                 return $existingItem;
             }
 
-            // Create new cart item
             $newItem = CartItem::create([
                 'cart_id' => $cart->id,
                 'product_id' => $productId,
@@ -171,7 +165,6 @@ class CartService
             return null;
         }
 
-        // Check if product is still in stock
         $product = $item->product;
         if (!$product->is_in_stock) {
             throw new \Exception("Product is out of stock.");
@@ -213,7 +206,6 @@ class CartService
                 }
             }
 
-            // Delete guest cart after merge
             $guestCart->delete();
         });
 

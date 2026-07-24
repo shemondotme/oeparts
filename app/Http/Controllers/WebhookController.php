@@ -45,7 +45,6 @@ class WebhookController extends Controller
             'signature_present' => !empty($signature),
         ]);
 
-        // 1. Verify signature
         if (!$this->paymentService->verifyWebhookSignature($payload, $signature, $timestamp)) {
             Log::warning('Airwallex webhook signature verification failed', [
                 'timestamp' => $timestamp,
@@ -54,7 +53,6 @@ class WebhookController extends Controller
             return response('Invalid signature', 401);
         }
 
-        // 2. Parse JSON payload
         $data = json_decode($payload, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             Log::warning('Airwallex webhook invalid JSON', [
@@ -71,16 +69,15 @@ class WebhookController extends Controller
             return response('Missing required fields', 400);
         }
 
-        // 3. Check idempotency
         if ($this->paymentService->isDuplicateEvent($eventId)) {
             Log::info('Airwallex webhook duplicate event ignored', ['event_id' => $eventId]);
             return response('Event already processed', 200);
         }
 
-        // 4. Mark event as processed (to prevent concurrent processing)
+        // Mark processed now (not after the queue job runs) to prevent a concurrent
+        // duplicate delivery from also passing the idempotency check above.
         $this->paymentService->markEventProcessed($eventId);
 
-        // 5. Dispatch to queue for processing
         ProcessAirwallexWebhook::dispatch($data)->onQueue('critical');
 
         Log::info('Airwallex webhook accepted and queued', [

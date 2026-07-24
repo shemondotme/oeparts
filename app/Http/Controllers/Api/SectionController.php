@@ -6,7 +6,7 @@ use App\Services\SectionRendererService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class SectionController extends ApiController
+class SectionController extends BaseApiController
 {
     public function __construct(
         private SectionRendererService $sectionRenderer
