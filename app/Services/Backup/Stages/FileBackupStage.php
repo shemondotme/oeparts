@@ -2,7 +2,7 @@
 
 namespace App\Services\Backup\Stages;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\Contracts\BackupStage;
 use App\Services\Backup\StageStepResult;
@@ -36,7 +36,7 @@ class FileBackupStage implements BackupStage
 
     public function key(): string
     {
-        return BackupPart::TYPE_FILES;
+        return BackupChunk::TYPE_FILES;
     }
 
     public function step(BackupRun $run, array $state): StageStepResult
@@ -254,7 +254,7 @@ class FileBackupStage implements BackupStage
         $abs = $this->absolute($run, $rel);
 
         return [
-            'type'   => BackupPart::TYPE_FILES,
+            'type'   => BackupChunk::TYPE_FILES,
             'name'   => 'vol-'.$vol,
             'disk'   => $this->stagingDisk(),
             'path'   => $rel,
@@ -295,7 +295,7 @@ class FileBackupStage implements BackupStage
         Storage::disk($this->stagingDisk())->put($rel, $gz);
 
         return [
-            'type'   => BackupPart::TYPE_FILES,
+            'type'   => BackupChunk::TYPE_FILES,
             'name'   => 'files-manifest',
             'disk'   => $this->stagingDisk(),
             'path'   => $rel,
@@ -321,7 +321,7 @@ class FileBackupStage implements BackupStage
         }
 
         $part = $prev->parts()
-            ->where('type', BackupPart::TYPE_FILES)
+            ->where('type', BackupChunk::TYPE_FILES)
             ->where('name', 'files-manifest')
             ->first();
 

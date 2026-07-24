@@ -253,7 +253,6 @@ class CheckoutService
             $data = $checkout['data'];
             $cart->loadMissing('items.product.manufacturer', 'items.product.condition');
 
-            // Calculate totals using CartService
             $cartSummary = $this->cartService->getSummary($cart);
             $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
             $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id']);
@@ -282,14 +281,12 @@ class CheckoutService
                 }
             }
 
-            // Recalculate grand total with discount
             $grandTotal = bcsub(bcadd($taxableBase, $vatAmount, 2), $discountAmount, 2);
             // Floor at 0.00 (can't be negative)
             if (bccomp($grandTotal, '0.00', 2) === -1) {
                 $grandTotal = '0.00';
             }
 
-            // Determine payment method from session
             $paymentMethod = PaymentMethod::BankTransfer; // default
             if (isset($data['payment_method'])) {
                 $paymentMethod = match($data['payment_method']) {
@@ -374,19 +371,15 @@ class CheckoutService
                 ]);
             }
 
-            // Apply coupon usage if a coupon was used
             if ($coupon) {
                 app(\App\Services\CouponService::class)->apply($coupon, $order);
             }
 
-            // Clear cart
             $cart->items()->delete();
             $cart->delete();
 
-            // Clear checkout session
             $this->clear($checkoutId);
 
-            // Auto‑create guest account if guest_email is set and no user logged in
             if ($data['guest_email'] && !$resolvedUserId) {
                 $this->createGuestAccount($data['guest_email'], $order);
             }

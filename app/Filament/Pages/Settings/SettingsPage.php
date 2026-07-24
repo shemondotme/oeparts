@@ -35,8 +35,8 @@ abstract class SettingsPage extends Page
      * tests/Feature/SettingsRegistryTest.php asserts every concrete
      * SettingsPage subclass has exactly one registry entry, so a forgotten
      * page now fails a test instead of silently going unreachable (this
-     * happened to UISettings before the registry existed — see
-     * ARCHITECTURE.md's Settings Architecture section). Keep each subclass's
+     * happened to UiSettings before the registry existed — see
+     * docs/ARCHITECTURE.md's Settings Architecture section). Keep each subclass's
      * $navigationSort unique anyway for documentation accuracy.
      */
     protected static string $settingsGroup;
@@ -349,7 +349,7 @@ abstract class SettingsPage extends Page
             // single boolean setting in SettingsSeeder is seeded as "1"/"0"
             // — a plain string comparison ("1" !== "true") therefore flagged
             // EVERY Toggle-backed setting as changed on EVERY page load,
-            // confirmed live (SEOSettings' google_ping_enabled, seeded "1",
+            // confirmed live (SeoSettings' google_ping_enabled, seeded "1",
             // always diffed against the untouched form's "true"). The rest
             // of the app already treats both spellings as equivalent via
             // filter_var(settings(...), FILTER_VALIDATE_BOOLEAN) — the diff
@@ -468,7 +468,7 @@ abstract class SettingsPage extends Page
      * source of truth that populates the database — rather than a
      * separately hand-maintained list. A hardcoded duplicate here is
      * exactly how 18 of 30 groups drifted (some down to zero protection;
-     * see ADMIN_PANEL_MASTER_WORKFLOW.md Option TT) before this refactor.
+     * see docs/ADMIN_PANEL_MASTER_WORKFLOW.md Option TT) before this refactor.
      */
     protected function getFactoryDefaults(): array
     {

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Auth;
  * The mobile app stores the checkout_id locally and submits each step.
  * No server-side session is used for checkout state.
  */
-class CheckoutController extends ApiController
+class CheckoutController extends BaseApiController
 {
     public function __construct(
         private CheckoutService $checkoutService,

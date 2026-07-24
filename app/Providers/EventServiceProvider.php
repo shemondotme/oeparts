@@ -117,9 +117,6 @@ class EventServiceProvider extends ServiceProvider
         ]);
     }
 
-    /**
-     * Register any events for your application.
-     */
     public function boot(): void
     {
         parent::boot();
@@ -128,9 +125,6 @@ class EventServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Event::listen(Failed::class, [$this, 'onLoginFailed']);
     }
 
-    /**
-     * Determine if events and listeners should be automatically discovered.
-     */
     public function shouldDiscoverEvents(): bool
     {
         return false;

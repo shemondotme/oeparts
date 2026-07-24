@@ -144,7 +144,7 @@ class UpdateApplierTest extends TestCase
     #[Test]
     public function it_arms_the_recovery_console_on_start_and_disarms_on_success(): void
     {
-        $arm = app(\App\Services\Updates\RecoveryArm::class);
+        $arm = app(\App\Services\Updates\RecoveryWindowFlag::class);
 
         $applier = new FakeUpdateApplier;
         $history = $applier->start($this->manifest());
@@ -160,7 +160,7 @@ class UpdateApplierTest extends TestCase
     #[Test]
     public function a_hard_failure_leaves_the_console_armed_but_a_rollback_disarms_it(): void
     {
-        $arm = app(\App\Services\Updates\RecoveryArm::class);
+        $arm = app(\App\Services\Updates\RecoveryWindowFlag::class);
 
         // Pre-swap failure → status failed, no rollback → stay armed (operator territory).
         $failed = new FakeUpdateApplier;

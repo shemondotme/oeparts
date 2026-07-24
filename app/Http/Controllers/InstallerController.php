@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Admin;
-use App\Models\Setting;
+use App\Services\Install\InstallManager;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 
 class InstallerController extends Controller
 {
+    public function __construct(private readonly InstallManager $installer) {}
+
     /**
      * Show the installer welcome/requirements step.
      */
@@ -52,8 +53,10 @@ class InstallerController extends Controller
     public function siteSettings()
     {
         $currentStep = 3;
+        $suggestedTimezone = $this->detectTimezone();
+        $suggestedLocale = $this->detectLocale();
 
-        return view('installer.step3-site-settings', compact('currentStep'));
+        return view('installer.step3-site-settings', compact('currentStep', 'suggestedTimezone', 'suggestedLocale'));
     }
 
     /**
@@ -77,9 +80,55 @@ class InstallerController extends Controller
     }
 
     /**
-     * Step 6: Installation complete.
-     * Lock file is written by install() — this view only renders after a
-     * successful installation run, so it just checks the lock exists.
+     * Step 6: show the AJAX-polled installation-progress screen and (if this
+     * is a fresh visit, not a resumed/retried one) kick off the run.
+     *
+     * GET, not POST — a POST-only route here was a pre-existing bug: step 5's
+     * form redirects here after a successful submission, and browsers always
+     * follow a redirect with a GET, so the old `Route::post('/install/run', …)`
+     * could never actually be reached by a real user clicking "Save & Install".
+     */
+    public function run()
+    {
+        if ($redirect = $this->requireStep('installer.email_setup_done')) {
+            return $redirect;
+        }
+
+        $currentStep = 6;
+
+        if (! $this->installer->isRunning() && ! $this->installer->hasFailedRun()) {
+            $this->installer->start($this->collectInstallInput());
+        }
+
+        return view('installer.step6-progress', compact('currentStep'));
+    }
+
+    /**
+     * AJAX endpoint: perform exactly one chunk of the install and report
+     * progress. Polled repeatedly by step6-progress.blade.php's JS — this is
+     * what keeps a single HTTP request from ever running the full
+     * migrate+seed+admin-creation pipeline (a real timeout risk on shared
+     * hosting, see InstallManager's docblock).
+     */
+    public function advance()
+    {
+        return response()->json($this->installer->advance());
+    }
+
+    /** Discard a failed run's state so the user can retry from the top. */
+    public function retry(): RedirectResponse
+    {
+        $this->installer->reset();
+
+        return redirect()->route('installer.install');
+    }
+
+    /**
+     * Step 6: Installation complete. Deliberately NOT gated by the
+     * `installer` middleware (see routes/installer.php) — that middleware
+     * blocks as soon as storage/installed.lock exists, which InstallManager's
+     * last step just wrote a moment ago, so gating this route the same way
+     * would bounce the user straight to '/' and they'd never see this page.
      */
     public function complete()
     {
@@ -99,12 +148,29 @@ class InstallerController extends Controller
             'db_name' => 'required|string',
             'db_username' => 'required|string',
             'db_password' => 'nullable|string',
+            'create_database' => 'nullable|boolean',
         ]);
 
         if ($validator->fails()) {
             return redirect()->route('installer.database')
                 ->withErrors($validator)
                 ->withInput();
+        }
+
+        if ($request->boolean('create_database')) {
+            try {
+                $this->createDatabaseIfMissing(
+                    $request->db_host,
+                    $request->db_port,
+                    $request->db_username,
+                    $request->db_password,
+                    $request->db_name
+                );
+            } catch (\Throwable $e) {
+                return redirect()->route('installer.database')
+                    ->withErrors(['db_connection' => 'Could not create the database: '.$e->getMessage()])
+                    ->withInput();
+            }
         }
 
         // Test database connection
@@ -121,14 +187,15 @@ class InstallerController extends Controller
             DB::reconnect('mysql');
             DB::connection('mysql')->getPdo();
 
-            // Save to .env file
-            $this->updateEnvFile([
+            $this->installer->updateEnvFile([
                 'DB_HOST' => $request->db_host,
                 'DB_PORT' => $request->db_port,
                 'DB_DATABASE' => $request->db_name,
                 'DB_USERNAME' => $request->db_username,
                 'DB_PASSWORD' => $request->db_password ?: '',
             ]);
+
+            session(['installer.db_configured' => true]);
 
             return redirect()->route('installer.site-settings')
                 ->with('success', 'Database connection successful!');
@@ -140,10 +207,35 @@ class InstallerController extends Controller
     }
 
     /**
+     * Attempt to create the target database on the given MySQL server, if it
+     * doesn't already exist. Connects WITHOUT selecting a database first
+     * (Laravel's config-based connections always select one) — raw PDO is
+     * the simplest way to do that mid-request. Requires the DB user to have
+     * CREATE DATABASE privilege; if it doesn't, the resulting exception
+     * message is surfaced to the user as-is (it already explains why).
+     */
+    private function createDatabaseIfMissing(string $host, string|int $port, string $username, ?string $password, string $name): void
+    {
+        $pdo = new \PDO(
+            "mysql:host={$host};port={$port}",
+            $username,
+            $password ?: '',
+            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]
+        );
+
+        $escapedName = str_replace('`', '``', $name);
+        $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$escapedName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    }
+
+    /**
      * Process site settings.
      */
     public function processSiteSettings(Request $request)
     {
+        if ($redirect = $this->requireStep('installer.db_configured')) {
+            return $redirect;
+        }
+
         $validator = Validator::make($request->all(), [
             'site_name' => 'required|string|max:255',
             'site_url' => 'required|url',
@@ -163,6 +255,7 @@ class InstallerController extends Controller
             'installer.site_url' => $request->site_url,
             'installer.default_locale' => $request->default_locale,
             'installer.timezone' => $request->timezone,
+            'installer.site_settings_done' => true,
         ]);
 
         return redirect()->route('installer.admin-account');
@@ -173,6 +266,10 @@ class InstallerController extends Controller
      */
     public function processAdminAccount(Request $request)
     {
+        if ($redirect = $this->requireStep('installer.site_settings_done')) {
+            return $redirect;
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email',
@@ -189,6 +286,7 @@ class InstallerController extends Controller
             'installer.admin_name' => $request->name,
             'installer.admin_email' => $request->email,
             'installer.admin_password' => Hash::make($request->password),
+            'installer.admin_account_done' => true,
         ]);
 
         return redirect()->route('installer.email-setup');
@@ -199,6 +297,10 @@ class InstallerController extends Controller
      */
     public function processEmailSetup(Request $request)
     {
+        if ($redirect = $this->requireStep('installer.admin_account_done')) {
+            return $redirect;
+        }
+
         $validator = Validator::make($request->all(), [
             'mail_driver' => 'required|string|in:smtp,sendmail,log,array',
             'mail_host' => 'required_if:mail_driver,smtp|string',
@@ -227,98 +329,58 @@ class InstallerController extends Controller
             'installer.mail_from_address' => $request->mail_from_address,
             'installer.mail_from_name' => $request->mail_from_name,
             'installer.import_demo_data' => $request->boolean('import_demo_data'),
+            'installer.email_setup_done' => true,
         ]);
 
         return redirect()->route('installer.install');
     }
 
     /**
-     * Run the installation.
+     * Send a one-off test email using whatever SMTP settings are currently
+     * in the step 5 form (not yet saved to .env). Deliberately synchronous
+     * (not queued, unlike rule #14's transactional emails) — the whole point
+     * is immediate pass/fail feedback for a form the user is looking at
+     * right now, before there's a queue worker, a database, or even an app
+     * key to trust for job serialization.
      */
-    public function install()
+    public function testMail(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'mail_driver' => 'required|string|in:smtp,sendmail,log,array',
+            'mail_host' => 'required_if:mail_driver,smtp|string',
+            'mail_port' => 'required_if:mail_driver,smtp|numeric',
+            'mail_username' => 'nullable|string',
+            'mail_password' => 'nullable|string',
+            'mail_encryption' => 'nullable|string|in:tls,ssl',
+            'mail_from_address' => 'required|email',
+            'mail_from_name' => 'required|string',
+            'test_to' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        config([
+            'mail.default' => $request->mail_driver,
+            'mail.mailers.smtp.host' => $request->mail_host,
+            'mail.mailers.smtp.port' => $request->mail_port,
+            'mail.mailers.smtp.username' => $request->mail_username,
+            'mail.mailers.smtp.password' => $request->mail_password,
+            'mail.mailers.smtp.encryption' => $request->mail_encryption ?: null,
+            'mail.from.address' => $request->mail_from_address,
+            'mail.from.name' => $request->mail_from_name,
+        ]);
+
         try {
-            // 1. Run migrations from clean state
-            Artisan::call('migrate:fresh', ['--force' => true, '--seed' => false]);
+            Mail::raw(
+                'This is a test email from the OeParts installer. If you received it, your mail settings are correct.',
+                fn ($message) => $message->to($request->test_to)->subject('OeParts installer — test email')
+            );
 
-            // 2. Run core seeders (roles must run before admin creation for Spatie).
-            // SectionsSeeder is not demo-specific — it's the default homepage
-            // builder content (hero, trust bar, etc.); without it the storefront
-            // homepage renders with zero sections configured.
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SettingsSeeder',   '--force' => true]);
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\LanguagesSeeder',  '--force' => true]);
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\RolesSeeder',      '--force' => true]);
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SequencesSeeder',  '--force' => true]);
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\CarriersSeeder',   '--force' => true]);
-            Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\SectionsSeeder',   '--force' => true]);
-
-            // 3. Create super admin (password already hashed from processAdminAccount)
-            $admin = Admin::create([
-                'name' => session('installer.admin_name'),
-                'email' => session('installer.admin_email'),
-                'password' => session('installer.admin_password'),
-                'is_active' => true,
-                'email_verified_at' => now(),
-            ]);
-
-            // Assign Spatie role (requires roles to be seeded first)
-            $admin->assignRole('super_admin');
-
-            // 4. Persist site settings. Every one of these keys already exists
-            // (seeded by SettingsSeeder above) under the 'general' group — the
-            // match must include 'group', not just 'key': the settings table's
-            // unique constraint is (group, key), and several groups reuse the
-            // same key names (e.g. 'timezone'), so a key-only match risks
-            // silently updating an unrelated row instead of this one.
-            $settingsMap = [
-                'site_name' => session('installer.site_name'),
-                'site_url' => session('installer.site_url'),
-                'default_locale' => session('installer.default_locale'),
-                'timezone' => session('installer.timezone'),
-            ];
-
-            foreach ($settingsMap as $key => $value) {
-                Setting::updateOrCreate(
-                    ['group' => 'general', 'key' => $key],
-                    ['value' => $value, 'type' => 'string']
-                );
-            }
-
-            // 5. Persist email settings to .env
-            $this->updateEnvFile([
-                'MAIL_MAILER' => session('installer.mail_driver', 'smtp'),
-                'MAIL_HOST' => session('installer.mail_host', ''),
-                'MAIL_PORT' => session('installer.mail_port', '587'),
-                'MAIL_USERNAME' => session('installer.mail_username', ''),
-                'MAIL_PASSWORD' => session('installer.mail_password', ''),
-                'MAIL_ENCRYPTION' => session('installer.mail_encryption', 'tls'),
-                'MAIL_FROM_ADDRESS' => session('installer.mail_from_address', ''),
-                'MAIL_FROM_NAME' => session('installer.mail_from_name', ''),
-            ]);
-
-            // 6. Optional demo catalog data (manufacturers/parts/blog posts —
-            // never touches admin/customer accounts). Best-effort: a failure
-            // here shouldn't fail an otherwise-successful installation, since
-            // the site is fully usable without it.
-            if (session('installer.import_demo_data')) {
-                try {
-                    Artisan::call('db:seed', ['--class' => 'Database\\Seeders\\DemoDataSeeder', '--force' => true]);
-                } catch (\Throwable $e) {
-                    // swallow — demo data is a nice-to-have, not install-critical
-                }
-            }
-
-            // 7. Write lock file — installer is now disabled
-            File::put(storage_path('installed.lock'), 'Installed at '.now()->toDateTimeString());
-
-            // 8. Clear installer session and compiled views
-            session()->forget('installer');
-            Artisan::call('view:clear');
-
-            return redirect()->route('installer.complete');
-        } catch (\Exception $e) {
-            return redirect()->route('installer.site-settings')
-                ->with('error', 'Installation failed: '.$e->getMessage());
+            return response()->json(['success' => true, 'message' => 'Test email sent to '.$request->test_to.'.']);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'message' => 'Could not send: '.$e->getMessage()], 422);
         }
     }
 
@@ -346,17 +408,18 @@ class InstallerController extends Controller
 
     /**
      * Check recommended-but-optional extensions — informational only, never
-     * blocks installation. The app runs on array/file/sync cache+queue
-     * drivers (local dev, and many shared-hosting production installs);
-     * Redis is only required when the operator has configured it. The PHP
-     * `redis` C extension specifically isn't even the only way to use Redis
-     * from Laravel — `predis/predis` (pure PHP, bundled) works with zero
-     * extension at all.
+     * blocks installation. The app ships defaulting to file/sync cache+queue
+     * drivers (zero setup, works on any host); Redis or Memcached are only
+     * needed when the operator opts into them for performance. Missing the
+     * `redis` PHP extension specifically isn't a dead end either —
+     * `predis/predis` (pure PHP, bundled via composer) talks to the same
+     * Redis server with no native extension at all — set REDIS_CLIENT=predis.
      */
     private function checkRecommended()
     {
         return [
             'Redis PHP Extension' => extension_loaded('redis'),
+            'Memcached PHP Extension' => extension_loaded('memcached'),
         ];
     }
 
@@ -374,47 +437,67 @@ class InstallerController extends Controller
         return $permissions;
     }
 
-    /**
-     * Update .env file with new values.
-     */
-    private function updateEnvFile(array $values)
+    /** Server's own configured timezone — no guessing needed if it's a real one. */
+    private function detectTimezone(): string
     {
-        $envPath = base_path('.env');
+        $tz = date_default_timezone_get();
 
-        if (! file_exists($envPath)) {
-            File::copy(base_path('.env.example'), $envPath);
-        }
+        return in_array($tz, timezone_identifiers_list(), true) ? $tz : 'UTC';
+    }
 
-        $envContent = File::get($envPath);
+    /** Best-effort locale suggestion from the browser's Accept-Language header. */
+    private function detectLocale(): string
+    {
+        $supported = ['en', 'de', 'lt', 'fr', 'es'];
+        $header = (string) request()->server('HTTP_ACCEPT_LANGUAGE', '');
 
-        foreach ($values as $key => $value) {
-            $escapedKey = preg_quote($key, '/');
-            $pattern = "/^{$escapedKey}=.*/m";
-            $replacement = "{$key}=\"{$value}\"";
+        foreach (explode(',', $header) as $part) {
+            $lang = strtolower(substr(trim(explode(';', $part)[0]), 0, 2));
 
-            if (preg_match($pattern, $envContent)) {
-                $envContent = preg_replace($pattern, $replacement, $envContent);
-            } else {
-                $envContent .= "\n{$replacement}";
+            if (in_array($lang, $supported, true)) {
+                return $lang;
             }
         }
 
-        // Write atomically: a plain File::put() truncates .env in place, so a
-        // concurrent web request whose bootstrap reads .env mid-write sees an
-        // empty file. Dotenv::safeLoad() then silently loads nothing and every
-        // value falls back to Laravel's defaults (DB_DATABASE => "laravel",
-        // CACHE_STORE => "database", ...), producing intermittent 500s. Writing
-        // to a temp file and renaming makes the swap atomic — readers always see
-        // either the old or the new file, never a partial one.
-        $tmpPath = $envPath.'.tmp';
-        File::put($tmpPath, $envContent);
-        if (file_exists($envPath)) {
-            @chmod($tmpPath, @fileperms($envPath) & 0777);
+        return 'en';
+    }
+
+    /**
+     * Require that an earlier wizard step actually completed before letting
+     * a later one process — without this, POSTing straight to (say)
+     * /install/admin-account would happily create settings rows with null
+     * values for the site-settings step that was skipped entirely.
+     */
+    private function requireStep(string $flag): ?RedirectResponse
+    {
+        if (session($flag)) {
+            return null;
         }
-        if (! @rename($tmpPath, $envPath)) {
-            // Fallback for filesystems where rename() cannot replace: best effort.
-            File::put($envPath, $envContent);
-            @unlink($tmpPath);
-        }
+
+        return redirect()->route('installer.index')
+            ->with('error', 'Please complete the installer steps in order.');
+    }
+
+    /** Snapshot everything InstallManager needs, captured once at run start. */
+    private function collectInstallInput(): array
+    {
+        return [
+            'admin_name' => session('installer.admin_name'),
+            'admin_email' => session('installer.admin_email'),
+            'admin_password_hash' => session('installer.admin_password'),
+            'site_name' => session('installer.site_name'),
+            'site_url' => session('installer.site_url'),
+            'default_locale' => session('installer.default_locale'),
+            'timezone' => session('installer.timezone'),
+            'mail_driver' => session('installer.mail_driver', 'smtp'),
+            'mail_host' => session('installer.mail_host', ''),
+            'mail_port' => session('installer.mail_port', '587'),
+            'mail_username' => session('installer.mail_username', ''),
+            'mail_password' => session('installer.mail_password', ''),
+            'mail_encryption' => session('installer.mail_encryption', 'tls'),
+            'mail_from_address' => session('installer.mail_from_address', ''),
+            'mail_from_name' => session('installer.mail_from_name', ''),
+            'import_demo_data' => (bool) session('installer.import_demo_data'),
+        ];
     }
 }

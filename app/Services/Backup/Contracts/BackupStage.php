@@ -19,7 +19,7 @@ use App\Services\Backup\StageStepResult;
  */
 interface BackupStage
 {
-    /** Stable identifier — one of BackupPart::TYPE_* ('db' | 'files' | 'env'). */
+    /** Stable identifier — one of BackupChunk::TYPE_* ('db' | 'files' | 'env'). */
     public function key(): string;
 
     /**

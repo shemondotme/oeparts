@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
-class SearchController extends ApiController
+class SearchController extends BaseApiController
 {
     public function __construct(
         private SearchService $searchService
@@ -31,7 +31,6 @@ class SearchController extends ApiController
         $minChars = (int) settings('search.min_chars', 3);
         $maxResults = (int) settings('search.autocomplete_count', 5);
 
-        // Require minimum characters
         if (strlen($query) < $minChars) {
             return response()->json([
                 'success' => true,

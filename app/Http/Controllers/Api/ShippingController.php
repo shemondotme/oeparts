@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Models\ShippingMethod;
 use Illuminate\Http\JsonResponse;
 
-class ShippingController extends ApiController
+class ShippingController extends BaseApiController
 {
     /**
      * GET /api/v1/shipping-methods

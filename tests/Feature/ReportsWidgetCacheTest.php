@@ -9,7 +9,7 @@ use App\Filament\Pages\Reports\SearchIntelligenceReport;
 use App\Filament\Widgets\Reports\SalesStats;
 use App\Models\Admin;
 use App\Models\Order;
-use App\Services\AdminCacheService;
+use App\Services\AdminWidgetCacheService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -47,7 +47,7 @@ class ReportsWidgetCacheTest extends TestCase
     #[Test]
     public function sales_stats_widget_hits_cache_on_second_render_within_the_same_period(): void
     {
-        AdminCacheService::$bypassArrayDriverCheck = true;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = true;
 
         Order::factory()->count(2)->create(['created_at' => now()]);
 
@@ -62,7 +62,7 @@ class ReportsWidgetCacheTest extends TestCase
         ));
         DB::disableQueryLog();
 
-        AdminCacheService::$bypassArrayDriverCheck = false;
+        AdminWidgetCacheService::$bypassArrayDriverCheck = false;
 
         $this->assertSame(0, $queryCount, 'Second call within the same period must be served entirely from cache');
     }

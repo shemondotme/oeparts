@@ -9,7 +9,7 @@
     $countForSeo = number_format($total ?? 0);
     // {manufacturer}/{brand} only resolve to something meaningful for the
     // common single-exact-match case (the de facto product page) — the admin
-    // help text on SEOSettings promises these placeholders, but the template
+    // help text on SeoSettings promises these placeholders, but the template
     // previously had no substitution for them at all, so a configured
     // template using them rendered the literal "{manufacturer}" string on
     // every product page.

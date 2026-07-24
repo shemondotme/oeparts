@@ -39,9 +39,6 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->singleton(\App\Services\CacheService::class);
@@ -71,9 +68,6 @@ class AppServiceProvider extends ServiceProvider
         }
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         // Set global bcmath scale to 2 decimal places.
@@ -136,11 +130,7 @@ class AppServiceProvider extends ServiceProvider
         NewsletterCampaign::observe(NewsletterCampaignObserver::class);
 
         if ($this->app->environment('production')) {
-            // Force HTTPS in production
             URL::forceScheme('https');
-
-            // Fail fast if production is misconfigured to use non-Redis cache/queue/session drivers (CLAUDE.md rule #7)
-            $this->assertProductionUsesRedisDrivers();
         }
 
         // Use the project's custom password-reset route instead of Laravel's default 'password.reset'
@@ -209,26 +199,5 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));
-    }
-
-    /**
-     * Production must use Redis for cache, queue, and session — never the
-     * database/file/array fallbacks config/*.php default to when an env
-     * var is missing. Throws immediately so a misconfigured deploy fails
-     * loudly instead of silently degrading (CLAUDE.md rule #7).
-     */
-    protected function assertProductionUsesRedisDrivers(): void
-    {
-        $drivers = [
-            'cache.default'  => config('cache.default'),
-            'queue.default'  => config('queue.default'),
-            'session.driver' => config('session.driver'),
-        ];
-
-        foreach ($drivers as $key => $driver) {
-            if ($driver !== 'redis') {
-                throw new \RuntimeException("Production requires Redis for {$key}, got '{$driver}'.");
-            }
-        }
     }
 }

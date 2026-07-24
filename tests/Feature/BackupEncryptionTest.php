@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupCipher;
 use App\Services\Backup\BackupManager;
@@ -184,7 +184,7 @@ class BackupEncryptionTest extends TestCase
 
         $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status, (string) $run->error);
 
-        $dbPart = $run->parts()->where('type', BackupPart::TYPE_DB)->firstOrFail();
+        $dbPart = $run->parts()->where('type', BackupChunk::TYPE_DB)->firstOrFail();
         $this->assertSame('offsite', $dbPart->disk);
         Storage::disk('offsite')->assertExists($dbPart->path);
 

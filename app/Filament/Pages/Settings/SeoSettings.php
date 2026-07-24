@@ -10,7 +10,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 
-class SEOSettings extends SettingsPage
+class SeoSettings extends SettingsPage
 {
     protected static ?string $title = 'SEO & Meta';
 

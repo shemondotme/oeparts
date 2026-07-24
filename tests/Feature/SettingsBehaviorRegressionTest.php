@@ -14,7 +14,7 @@ use Tests\TestCase;
  * Every settings knob must actually change behavior — these lock the
  * connections the Settings audit found broken or missing.
  */
-class SettingsTruthTest extends TestCase
+class SettingsBehaviorRegressionTest extends TestCase
 {
     use RefreshDatabase;
 

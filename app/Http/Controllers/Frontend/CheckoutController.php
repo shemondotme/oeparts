@@ -218,7 +218,6 @@ class CheckoutController extends Controller
                 return back()->with('success', __('checkout.verification_code_sent'))->withInput();
             }
 
-            // Verify OTP
             $result = $otpService->verify($email, $otpCode, \App\Enums\OtpPurpose::GuestCheckout);
             if ($result !== \App\Services\OtpService::RESULT_OK) {
                 $this->checkoutService->update($checkoutId, [
@@ -559,18 +558,15 @@ class CheckoutController extends Controller
     {
         $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
         
-        // Ensure order belongs to current user or guest
         $this->authorizePaymentAccess($order);
-        
-        // Check if payment is already completed
+
         if ($order->payment_status === 'paid') {
             return redirect()->route('frontend.checkout.payment.success', [
                 'lang' => $lang,
                 'order' => $order->order_number,
             ]);
         }
-        
-        // Get bank transfer details if applicable
+
         $bankTransferDetails = null;
         if ($order->payment_method === PaymentMethod::BankTransfer) {
             $bankTransferDetails = $this->paymentService->getBankTransferDetails($order);
@@ -637,7 +633,6 @@ class CheckoutController extends Controller
             'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:' . (settings('checkout.proof_max_size_kb', 5120)),
         ]);
         
-        // Update order payment method if different
         if ($validated['payment_method'] !== $order->payment_method->value) {
             $order->update([
                 'payment_method' => $validated['payment_method'],
@@ -710,7 +705,6 @@ class CheckoutController extends Controller
             ]);
         }
 
-        // If still pending, show waiting page
         return view('frontend.checkout.payment-return', [
             'order' => $order,
             'lang' => $lang,
@@ -726,7 +720,6 @@ class CheckoutController extends Controller
         $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
 
-        // Ensure payment is at least pending or paid
         $payment = $order->payment;
         if (!$payment || ($payment->status !== 'paid' && $payment->status !== 'pending')) {
             return redirect()->route('frontend.checkout.payment', [
@@ -770,7 +763,6 @@ class CheckoutController extends Controller
             return;
         }
 
-        // Logged-in user must own the order.
         if ($user && $order->user_id === $user->id) {
             return;
         }

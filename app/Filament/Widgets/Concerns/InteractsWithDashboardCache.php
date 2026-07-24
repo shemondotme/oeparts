@@ -2,11 +2,11 @@
 
 namespace App\Filament\Widgets\Concerns;
 
-use App\Services\AdminCacheService;
+use App\Services\AdminWidgetCacheService;
 use App\Services\WidgetPreferenceService;
 
 /**
- * Widget data caching through AdminCacheService.
+ * Widget data caching through AdminWidgetCacheService.
  *
  * Contract: the closure must return a PLAIN ARRAY (scalars/arrays only) —
  * never Filament Stat objects, models, or closures, which are not safely
@@ -25,7 +25,7 @@ trait InteractsWithDashboardCache
         $id = $service->getWidgetId(static::class) ?? class_basename(static::class);
         $period = property_exists($this, 'period') ? $this->period : '-';
 
-        return AdminCacheService::dashboard(
+        return AdminWidgetCacheService::dashboard(
             "{$id}:p{$period}",
             $callback,
             WidgetPreferenceService::ttlFor(static::class),
@@ -38,7 +38,7 @@ trait InteractsWithDashboardCache
 
         $id = $service->getWidgetId(static::class) ?? class_basename(static::class);
 
-        return AdminCacheService::health(
+        return AdminWidgetCacheService::health(
             "{$id}:{$suffix}",
             $callback,
             WidgetPreferenceService::ttlFor(static::class),

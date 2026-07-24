@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProductResource extends JsonResource
+class ProductApiResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -26,9 +26,9 @@ class ProductResource extends JsonResource
                 'id' => $this->condition->id,
                 'name' => trans_field($this->condition->name, $locale),
             ]),
-            'manufacturer' => $this->whenLoaded('manufacturer', fn () => new ManufacturerResource($this->manufacturer)),
+            'manufacturer' => $this->whenLoaded('manufacturer', fn () => new ManufacturerApiResource($this->manufacturer)),
             'cross_references' => ProductCrossReferenceResource::collection($this->whenLoaded('crossReferences')),
-            'car_models' => CarModelResource::collection($this->whenLoaded('carModels')),
+            'car_models' => CarModelApiResource::collection($this->whenLoaded('carModels')),
         ];
     }
 }

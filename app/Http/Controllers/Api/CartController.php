@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
-class CartController extends ApiController
+class CartController extends BaseApiController
 {
     public function __construct(
         private CartService $cartService,

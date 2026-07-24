@@ -234,7 +234,6 @@ class TestimonialsAndFaqsSeeder extends Seeder
 
         echo "\nSeeding FAQs — Google 2026 (People Also Ask · AI Overviews · JSON-LD FAQPage)...\n";
 
-        // Delete all existing FAQs first to avoid duplicates
         Faq::truncate();
 
         foreach (self::FAQS as $data) {

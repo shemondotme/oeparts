@@ -14,9 +14,6 @@ class InvoiceService
     /**
      * Generate PDF invoice for an order.
      *
-    /**
-     * Generate PDF invoice for an order.
-     *
      * @param  bool  $download  Whether to return download response or PDF content
      * @param  bool  $skipAuthorization Whether to bypass user authorization check (useful for system jobs)
      * @return \Barryvdh\DomPDF\PDF|Response

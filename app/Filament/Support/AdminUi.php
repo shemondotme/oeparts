@@ -415,7 +415,7 @@ final class AdminUi
                     return null;
                 }
 
-                return view('components.impact-summary', [
+                return view('components.bulk-change-preview', [
                     'changes' => $changes,
                     'heading' => count($changes) . ' ' . lcfirst($label),
                 ]);

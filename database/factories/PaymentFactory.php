@@ -13,11 +13,6 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class PaymentFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
@@ -33,9 +28,6 @@ class PaymentFactory extends Factory
         ];
     }
 
-    /**
-     * Set the payment as succeeded.
-     */
     public function succeeded(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -44,9 +36,6 @@ class PaymentFactory extends Factory
         ]);
     }
 
-    /**
-     * Set the payment as failed.
-     */
     public function failed(): static
     {
         return $this->state(fn (array $attributes) => [

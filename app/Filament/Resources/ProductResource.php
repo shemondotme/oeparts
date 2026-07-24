@@ -26,12 +26,6 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    /**
-     * Locales supported for translatable content. Reused by the
-     * multilingual form tabs and the view page.
-     *
-     * @var array<string, string>
-     */
     // LOCALES constant is defined in AdminUi::LOCALES
 
     public static function getNavigationIcon(): string|\BackedEnum|null
@@ -83,14 +77,14 @@ class ProductResource extends Resource
                                     ->icon('heroicon-o-identification')
                                     ->schema([
                                         Forms\Components\TextInput::make('oem_number')
-                                            ->label('OEM Number')
+                                            ->label(__('admin.oem_number'))
                                             ->required()
                                             ->maxLength(100)
                                             ->placeholder('e.g. 04L115399F')
                                             ->helperText('Original Equipment Manufacturer part number. Automatically normalized on save.')
                                             ->extraAttributes(['inputmode' => 'text', 'autocapitalize' => 'characters']),
                                         Forms\Components\Select::make('manufacturer_id')
-                                            ->label('Manufacturer')
+                                            ->label(__('admin.manufacturer'))
                                             ->relationship('manufacturer', 'name')
                                             ->searchable()
                                             ->preload()
@@ -126,7 +120,7 @@ class ProductResource extends Resource
                                     ->icon('heroicon-o-wrench-screwdriver')
                                     ->schema([
                                         Forms\Components\Select::make('carModels')
-                                            ->label('Compatible Car Models')
+                                            ->label(__('admin.compatible_car_models'))
                                             ->relationship('carModels', 'name')
                                             ->multiple()
                                             ->searchable()
@@ -134,11 +128,11 @@ class ProductResource extends Resource
                                             ->columnSpanFull()
                                             ->helperText('Select all vehicle models this part is compatible with.'),
                                         Forms\Components\Repeater::make('crossReferences')
-                                            ->label('Cross-References')
+                                            ->label(__('admin.cross_references'))
                                             ->relationship('crossReferences')
                                             ->schema([
                                                 Forms\Components\TextInput::make('cross_oem_number')
-                                                    ->label('Cross OEM Number')
+                                                    ->label(__('admin.cross_oem_number'))
                                                     ->required()
                                                     ->maxLength(100)
                                                     ->placeholder('e.g. 53039706AB')
@@ -158,26 +152,26 @@ class ProductResource extends Resource
                                     ->collapsible()
                                     ->schema([
                                         Forms\Components\TextInput::make('meta_title')
-                                            ->label('Meta Title')
+                                            ->label(__('admin.meta_title'))
                                             ->helperText('Page title shown in search results. Aim for 50–60 characters for optimal display.')
                                             ->maxLength(255)
                                             ->placeholder('e.g. Turbocharger 04L115399F | OE Quality')
                                             ->columnSpanFull(),
                                         Forms\Components\Textarea::make('meta_description')
-                                            ->label('Meta Description')
+                                            ->label(__('admin.meta_description'))
                                             ->helperText('Snippet text below the title in search results. Aim for 150–160 characters.')
                                             ->maxLength(500)
                                             ->rows(3)
                                             ->placeholder('Genuine OEM turbocharger assembly for Volkswagen Passat 2.0 TDI...')
                                             ->columnSpanFull(),
                                         Forms\Components\TextInput::make('canonical_url')
-                                            ->label('Canonical URL')
+                                            ->label(__('admin.canonical_url'))
                                             ->helperText('Optional. Set only if this product page should point to a different preferred URL for SEO purposes.')
                                             ->url()
                                             ->maxLength(500)
                                             ->columnSpanFull(),
                                         Forms\Components\Select::make('robots')
-                                            ->label('Search Engine Indexing')
+                                            ->label(__('admin.search_engine_indexing'))
                                             ->options([
                                                 'index,follow'     => 'Index & Follow (default)',
                                                 'noindex,follow'   => 'No Index, Follow Links',
@@ -189,18 +183,18 @@ class ProductResource extends Resource
                                             ->columnSpanFull()
                                             ->helperText('Control how search engines treat this product page.'),
                                         Forms\Components\TextInput::make('og_title')
-                                            ->label('Social Share Title')
+                                            ->label(__('admin.social_share_title'))
                                             ->helperText('Title shown when the product link is shared on social media. Leave blank to use the meta title.')
                                             ->maxLength(255)
                                             ->columnSpanFull(),
                                         Forms\Components\Textarea::make('og_description')
-                                            ->label('Social Share Description')
+                                            ->label(__('admin.social_share_description'))
                                             ->helperText('Preview text on Facebook, LinkedIn, etc. Leave blank to use the meta description.')
                                             ->maxLength(500)
                                             ->rows(3)
                                             ->columnSpanFull(),
                                         Forms\Components\Select::make('og_image_id')
-                                            ->label('Social Share Image')
+                                            ->label(__('admin.social_share_image'))
                                             ->helperText('Recommended size: 1200×630 px. This image appears when the product is shared on social platforms.')
                                             ->relationship('ogImage', 'file_name')
                                             ->searchable()
@@ -219,7 +213,7 @@ class ProductResource extends Resource
                                     ->description('Product pricing and condition classification.')
                                     ->schema([
                                         Forms\Components\TextInput::make('price')
-                                            ->label('Price (ex. VAT)')
+                                            ->label(__('admin.price_ex_vat'))
                                             ->numeric()
                                             ->prefix('€')
                                             ->required()
@@ -228,7 +222,7 @@ class ProductResource extends Resource
                                             ->placeholder('0.00')
                                             ->helperText('Net selling price excluding VAT. VAT is calculated at checkout.'),
                                         Forms\Components\Select::make('condition_id')
-                                            ->label('Condition')
+                                            ->label(__('admin.condition'))
                                             ->relationship('condition', 'name')
                                             ->options(static::conditionFormOptions())
                                             ->native(false)
@@ -242,20 +236,20 @@ class ProductResource extends Resource
                                     ->description('Stock status, visibility, and fulfillment details.')
                                     ->schema([
                                         Forms\Components\Toggle::make('is_active')
-                                            ->label('Active')
+                                            ->label(__('admin.active'))
                                             ->helperText('Inactive products are hidden from the storefront and search results.'),
                                         Forms\Components\Toggle::make('is_in_stock')
-                                            ->label('In Stock')
+                                            ->label(__('admin.in_stock'))
                                             ->helperText('Binary stock indicator. Enabled = available for immediate dispatch.'),
                                         Forms\Components\TextInput::make('moq')
-                                            ->label('Minimum Order Quantity')
+                                            ->label(__('admin.minimum_order_quantity'))
                                             ->numeric()
                                             ->minValue(1)
                                             ->default(1)
                                             ->required()
                                             ->helperText('Smallest quantity a customer can order for this part.'),
                                         Forms\Components\TextInput::make('delivery_time')
-                                            ->label('Estimated Delivery Time')
+                                            ->label(__('admin.estimated_delivery_time'))
                                             ->maxLength(50)
                                             ->placeholder('e.g. 3-5 business days')
                                             ->helperText('Estimated days from order placement to delivery. Shown on the product page.'),
@@ -283,7 +277,7 @@ class ProductResource extends Resource
                             : $query->where('normalized_oem', 'like', "%{$normalized}%");
                     }),
                 Tables\Columns\TextColumn::make('manufacturer.name')
-                    ->label('Manufacturer')
+                    ->label(__('admin.manufacturer'))
                     ->getStateUsing(fn (Product $record): string => $record->manufacturer ? static::localizedName($record->manufacturer->name) : '—')
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('manufacturer', function ($q) use ($search) {
@@ -295,7 +289,7 @@ class ProductResource extends Resource
                     ->toggleable()
                     ->limit(24),
                 Tables\Columns\TextColumn::make('condition.name')
-                    ->label('Condition')
+                    ->label(__('admin.condition'))
                     ->badge()
                     ->formatStateUsing(fn ($state): string => static::localizedName($state))
                     ->color(fn (Product $record) => $record->condition?->bg_color
@@ -303,7 +297,7 @@ class ProductResource extends Resource
                         : 'gray')
                     ->sortable(),
                 Tables\Columns\TextInputColumn::make('price')
-                    ->label('Price')
+                    ->label(__('admin.price'))
                     ->type('number')
                     ->step(0.01)
                     ->prefix('€')
@@ -320,12 +314,12 @@ class ProductResource extends Resource
                     ->sortable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('delivery_time')
-                    ->label('Delivery')
+                    ->label(__('admin.delivery'))
                     ->placeholder('—')
                     ->toggleable()
                     ->limit(15),
                 Tables\Columns\ToggleColumn::make('is_in_stock')
-                    ->label('Stock')
+                    ->label(__('admin.stock'))
                     ->onColor('success')
                     ->offColor('danger')
                     ->tooltip(fn (Product $record): string => $record->is_in_stock ? 'In stock' : 'Out of stock')
@@ -340,7 +334,7 @@ class ProductResource extends Resource
                             ->send();
                     }),
                 Tables\Columns\TextColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.active'))
                     ->badge()
                     ->alignCenter()
                     ->toggleable()
@@ -348,7 +342,7 @@ class ProductResource extends Resource
                     ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
                     ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Created')
+                    ->label(__('admin.created'))
                     ->dateTime('M j, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -356,7 +350,7 @@ class ProductResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('manufacturer_id')
                     ->relationship('manufacturer', 'name')
-                    ->label('Manufacturer')
+                    ->label(__('admin.manufacturer'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => static::localizedName($record->name))
                     ->searchable()
                     ->preload()
@@ -364,7 +358,7 @@ class ProductResource extends Resource
                     ->helperText('Filter products by brand or OEM.')
                     ->columnSpan(1),
                 Tables\Filters\SelectFilter::make('condition_id')
-                    ->label('Part Condition')
+                    ->label(__('admin.part_condition'))
                     ->relationship('condition', 'name')
                     ->multiple()
                     ->preload()
@@ -372,26 +366,26 @@ class ProductResource extends Resource
                     ->helperText('Filter by one or more condition types.')
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('is_in_stock')
-                    ->label('Stock Status')
+                    ->label(__('admin.stock_status'))
                     ->placeholder('All')
                     ->trueLabel('In Stock')
                     ->falseLabel('Out of Stock')
                     ->columnSpan(1),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Visibility')
+                    ->label(__('admin.visibility'))
                     ->placeholder('All')
                     ->trueLabel('Active (Visible)')
                     ->falseLabel('Inactive (Hidden)')
                     ->columnSpan(1),
                 Tables\Filters\Filter::make('price_range')
-                    ->label('Price Range')
+                    ->label(__('admin.price_range'))
                     ->form([
                         Forms\Components\TextInput::make('min_price')
-                            ->label('Minimum Price (€)')
+                            ->label(__('admin.minimum_price'))
                             ->numeric()
                             ->placeholder('0.00'),
                         Forms\Components\TextInput::make('max_price')
-                            ->label('Maximum Price (€)')
+                            ->label(__('admin.maximum_price'))
                             ->numeric()
                             ->placeholder('999.99'),
                     ])
@@ -416,7 +410,7 @@ class ProductResource extends Resource
                         icon: 'heroicon-o-arrow-trending-up',
                         form: [
                             Forms\Components\TextInput::make('percentage')
-                                ->label('Percentage Increase')
+                                ->label(__('admin.percentage_increase'))
                                 ->numeric()
                                 ->required()
                                 ->minValue(1)
@@ -451,7 +445,7 @@ class ProductResource extends Resource
                         icon: 'heroicon-o-arrow-trending-down',
                         form: [
                             Forms\Components\TextInput::make('percentage')
-                                ->label('Percentage Decrease')
+                                ->label(__('admin.percentage_decrease'))
                                 ->numeric()
                                 ->required()
                                 ->minValue(1)
@@ -549,7 +543,7 @@ class ProductResource extends Resource
             ])
             ->headerActions([
                 Actions\Action::make('importCsv')
-                    ->label('Import CSV')
+                    ->label(__('admin.import_csv'))
                     ->icon('heroicon-o-arrow-up-tray')
                     ->color('gray')
                     ->url(fn (): string => ProductImport::getUrl())
@@ -561,12 +555,12 @@ class ProductResource extends Resource
             ->emptyStateDescription('Create your first product or import a CSV to populate the catalog.')
             ->emptyStateActions([
                 Actions\Action::make('create')
-                    ->label('Add Product')
+                    ->label(__('admin.add_product'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
                     ->button(),
                 Actions\Action::make('importCsvEmpty')
-                    ->label('Import CSV')
+                    ->label(__('admin.import_csv'))
                     ->icon('heroicon-o-arrow-up-tray')
                     ->url(fn (): string => ProductImport::getUrl())
                     ->outlined()

@@ -13,7 +13,7 @@ use PHPUnit\Framework\Attributes\Test;
  * Regression coverage for the bug class this registry exists to prevent:
  * a settings page that exists on disk but has no SettingsRegistry::PAGES
  * entry is unreachable from the Settings cluster grid with zero error
- * anywhere (this happened to UISettings before the registry existed).
+ * anywhere (this happened to UiSettings before the registry existed).
  */
 class SettingsRegistryTest extends TestCase
 {
@@ -75,7 +75,7 @@ class SettingsRegistryTest extends TestCase
                 $page['url'],
                 '/admin/settings/' . $page['class']::getSlug(),
                 "SettingsRegistry::PAGES['{$key}']['url'] does not match {$page['class']}::getSlug() — "
-                . 'this is the exact missing-slug-override mismatch that previously made UISettings unreachable.'
+                . 'this is the exact missing-slug-override mismatch that previously made UiSettings unreachable.'
             );
         }
     }

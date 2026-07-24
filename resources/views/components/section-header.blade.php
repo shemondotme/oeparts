@@ -24,7 +24,6 @@
     $isStacked = $variant === 'stacked';
 @endphp
 
-{{-- Reusable pieces --}}
 @php
     $eyebrowBlock = $eyebrow;
     $headlineMax  = $isCenter ? 'max-w-[22ch] mx-auto' : 'max-w-[20ch]';

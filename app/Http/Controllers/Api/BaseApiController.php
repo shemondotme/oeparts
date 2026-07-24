@@ -7,7 +7,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Pagination\LengthAwarePaginator;
 
-class ApiController extends Controller
+class BaseApiController extends Controller
 {
     protected function successResponse(mixed $data = null, string $message = 'OK', int $code = 200): JsonResponse
     {

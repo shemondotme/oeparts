@@ -2,7 +2,7 @@
 
 namespace App\Services\Backup\Stages;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupCipher;
 use App\Services\Backup\Contracts\BackupStage;
@@ -104,7 +104,7 @@ class EncryptTransportStage implements BackupStage
         return ['init' => true, 'cursor_id' => 0, 'processed' => 0, 'total_parts' => $run->parts()->count()];
     }
 
-    private function securePart(BackupRun $run, BackupPart $part): void
+    private function securePart(BackupRun $run, BackupChunk $part): void
     {
         // Idempotent: a resumed run must never re-encrypt an already-secured part.
         if (($part->meta['encrypted'] ?? false) === true) {

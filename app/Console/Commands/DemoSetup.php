@@ -8,35 +8,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
-class DemoSetupCommand extends Command
+class DemoSetup extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'demo:setup
                             {--fresh : Drop all tables and re-run migrations}
                             {--seed : Seed demo data after setup}
                             {--yes : Skip confirmation prompts}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Set up a demo instance of OeParts with sample data';
 
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
         $this->info('╔══════════════════════════════════════════════════════════╗');
         $this->info('║                OeParts Demo Setup                         ║');
         $this->info('╚══════════════════════════════════════════════════════════╝');
 
-        // Check if already installed
         if (file_exists(storage_path('installed.lock')) && ! $this->option('fresh')) {
             $this->warn('The application appears to be already installed.');
             if (! $this->option('yes') && ! $this->confirm('Do you want to reset everything? This will delete all existing data.', false)) {
@@ -48,13 +34,11 @@ class DemoSetupCommand extends Command
 
         $fresh = $this->option('fresh') || $this->option('yes');
 
-        // 1. Run migrations
         $this->step('Running migrations...');
         $migrateCommand = $fresh ? 'migrate:fresh' : 'migrate';
         $this->call($migrateCommand, ['--force' => true]);
         $this->line('  <info>✓</info> Database migrated.');
 
-        // 2. Run core seeders
         $this->step('Seeding core data...');
         $coreSeeders = [
             'Database\\Seeders\\SettingsSeeder',
@@ -70,7 +54,6 @@ class DemoSetupCommand extends Command
             $this->line("  <info>✓</info> {$seeder}");
         }
 
-        // 3. Create admin user
         $this->step('Creating admin user...');
         if (Schema::hasTable('admins')) {
             $admin = Admin::updateOrCreate(
@@ -86,7 +69,6 @@ class DemoSetupCommand extends Command
             $this->line('  <info>✓</info> Admin user created (admin@example.com / password).');
         }
 
-        // 4. Seed demo data if requested
         $seedDemo = $this->option('seed') || $this->option('yes');
         if ($seedDemo) {
             $this->step('Seeding demo data...');
@@ -94,13 +76,11 @@ class DemoSetupCommand extends Command
             $this->line('  <info>✓</info> Demo products, manufacturers, blog posts, etc.');
         }
 
-        // 5. Create installed.lock and clear compiled views
         $this->step('Finalizing setup...');
         file_put_contents(storage_path('installed.lock'), 'Demo instance created at '.now()->toDateTimeString());
         $this->call('view:clear');
         $this->line('  <info>✓</info> Setup finalized.');
 
-        // 6. Output credentials
         $this->newLine();
         $this->info('╔══════════════════════════════════════════════════════════╗');
         $this->info('║                    SETUP COMPLETE                        ║');

@@ -12,10 +12,6 @@ class CouponAjaxController extends Controller
 {
     /**
      * Apply a coupon code.
-     *
-     * @param Request $request
-     * @param string $lang
-     * @return \Illuminate\Http\JsonResponse
      */
     public function apply(Request $request, string $lang)
     {
@@ -82,10 +78,6 @@ class CouponAjaxController extends Controller
 
     /**
      * Remove applied coupon.
-     *
-     * @param Request $request
-     * @param string $lang
-     * @return \Illuminate\Http\JsonResponse
      */
     public function remove(Request $request, string $lang)
     {

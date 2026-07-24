@@ -8,23 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class CleanExpiredOtps extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'otp:clean';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Clean expired OTP codes from the database';
 
-    /**
-     * Execute the console command.
-     */
     public function handle(): int
     {
         $this->info('Cleaning expired OTP codes...');

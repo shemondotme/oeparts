@@ -87,7 +87,6 @@ class OrderService
                 $grandTotal = '0.00';
             }
 
-            // Resolve payment method enum
             $paymentMethod = match($data['payment_method'] ?? 'bank_transfer') {
                 'card'          => \App\Enums\PaymentMethod::Card,
                 'bank_transfer' => \App\Enums\PaymentMethod::BankTransfer,
@@ -165,7 +164,6 @@ class OrderService
                 ]);
             }
 
-            // Log initial status
             $this->logStatusChange($order, null, OrderStatus::Pending);
 
             return $order;

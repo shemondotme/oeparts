@@ -56,7 +56,7 @@ return [
     'guest_not_allowed' => 'Norėdami pateikti užklausą dėl dalies, prisijunkite.',
     'submitted' => 'Užklausa išsiųsta. Atsakysime per :hours val.',
 
-    // Homepage inline part_inquiry section (resources/views/components/sections/part_inquiry.blade.php)
+    // Homepage inline part_inquiry section (resources/views/components/sections/part-inquiry.blade.php)
     'inline_form_label' => 'Forma · Greita užklausa',
     'inline_toggle_show' => 'Pridėti transporto duomenis (nebūtina)',
     'inline_toggle_hide' => 'Slėpti transporto duomenis',

@@ -14,9 +14,6 @@ use Illuminate\Support\Str;
 
 class DemoManufacturersAndPartsSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $logoPath = base_path('media/Manufacturers Logo');
@@ -35,7 +32,6 @@ class DemoManufacturersAndPartsSeeder extends Seeder
         ];
 
         DB::transaction(function () use ($manufacturersData, $logoPath) {
-            // 1. Clear existing manufacturers and their products
             Product::onlyTrashed()->forceDelete();
             Product::query()->forceDelete();
             Manufacturer::query()->delete();
@@ -55,12 +51,10 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                 $logoId = null;
                 $logoFilePath = $logoPath . '/' . $data['logo_file'];
 
-                // 3. Upload Logo if exists
                 if (file_exists($logoFilePath)) {
                     $fileName = $data['logo_file'];
                     $relativePath = 'logos/' . $fileName;
-                    
-                    // Ensure directory exists
+
                     if (!file_exists(public_path('storage/logos'))) {
                         mkdir(public_path('storage/logos'), 0755, true);
                     }
@@ -80,7 +74,6 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                     $logoId = $mediaFile->id;
                 }
 
-                // 4. Create Manufacturer
                 $manufacturer = Manufacturer::create([
                     'name' => [
                         'en' => $data['name'],
@@ -97,7 +90,6 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                     'sort_order' => $data['sort_order'],
                 ]);
 
-                // 5. Create Demo Products for this Manufacturer
                 $this->createDemoProducts($manufacturer);
             }
         });
@@ -115,8 +107,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
             );
             $isInStock = $i % 2 === 0; // Alternate stock status
             $oemNumber = $oemPrefix . '-' . str_pad($i, 6, '0', STR_PAD_LEFT);
-            
-            // Normalize OEM
+
             $normalizedOem = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $oemNumber));
 
             Product::create([
@@ -138,7 +129,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                     'es' => "Pieza OEM de alta calidad de {$manufacturer->name['es']}. Condición: {$condition->name}.",
                 ],
                 'condition_id' => $condition->id,
-                'price' => bcmul((string)rand(20, 500), '1.00', 2), // Random price between 20 and 500
+                'price' => bcmul((string)rand(20, 500), '1.00', 2),
                 'delivery_time' => '2-4 days',
                 'moq' => 1,
                 'is_in_stock' => $isInStock,

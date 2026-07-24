@@ -2,7 +2,7 @@
 
 namespace App\Services\Backup;
 
-use App\Models\BackupPart;
+use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\Exceptions\RestoreException;
 use App\Services\Updates\UpdateChecker;
@@ -129,7 +129,7 @@ class RestoreManager
     private function restoreDatabase(BackupRun $run, RestoreOptions $options, RestoreReport $report): void
     {
         $parts = $run->parts()
-            ->where('type', BackupPart::TYPE_DB)
+            ->where('type', BackupChunk::TYPE_DB)
             ->when($options->table !== null, fn ($q) => $q->where('name', $options->table))
             ->orderBy('id') // creation order = schema before data, per table
             ->get();
@@ -175,7 +175,7 @@ class RestoreManager
     private function restoreFiles(BackupRun $run, string $targetRoot, RestoreReport $report): void
     {
         $manifestPart = $run->parts()
-            ->where('type', BackupPart::TYPE_FILES)
+            ->where('type', BackupChunk::TYPE_FILES)
             ->where('name', 'files-manifest')
             ->first();
 
@@ -242,7 +242,7 @@ class RestoreManager
             return $this->volumeCache[$key];
         }
 
-        $part = BackupPart::query()
+        $part = BackupChunk::query()
             ->where('backup_run_id', $runId)
             ->where('name', 'vol-'.$vol)
             ->first();
@@ -261,7 +261,7 @@ class RestoreManager
     /* ---- Decrypt + verify helpers -------------------------------------- */
 
     /** Load a small part (db/manifest) into memory, verified + decrypted (still gz). */
-    private function plaintextOf(BackupPart $part): string
+    private function plaintextOf(BackupChunk $part): string
     {
         $enc = (string) Storage::disk($part->disk)->get($part->path);
         $this->verifyCiphertext($part, $enc);
@@ -276,7 +276,7 @@ class RestoreManager
     }
 
     /** Stream a (possibly large, possibly remote) part to a decrypted local file. */
-    private function decryptPartToFile(BackupPart $part, string $destAbs): void
+    private function decryptPartToFile(BackupChunk $part, string $destAbs): void
     {
         $tmpEnc = $destAbs.'.enc';
         $this->streamToLocal($part, $tmpEnc);
@@ -295,7 +295,7 @@ class RestoreManager
     }
 
     /** Copy a part off its disk to a local file, verifying the ciphertext sha256. */
-    private function streamToLocal(BackupPart $part, string $destAbs): void
+    private function streamToLocal(BackupChunk $part, string $destAbs): void
     {
         $dir = dirname($destAbs);
         if (! is_dir($dir)) {
@@ -316,14 +316,14 @@ class RestoreManager
         }
     }
 
-    private function verifyCiphertext(BackupPart $part, string $enc): void
+    private function verifyCiphertext(BackupChunk $part, string $enc): void
     {
         if ($part->sha256 && hash('sha256', $enc) !== $part->sha256) {
             throw new RestoreException('Backup part '.$part->name.' failed integrity check (ciphertext sha256).');
         }
     }
 
-    private function verifyPlaintext(BackupPart $part, string $plain): void
+    private function verifyPlaintext(BackupChunk $part, string $plain): void
     {
         if (! empty($part->meta['plain_sha256']) && hash('sha256', $plain) !== $part->meta['plain_sha256']) {
             throw new RestoreException('Backup part '.$part->name.' failed plaintext verification.');

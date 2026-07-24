@@ -20,9 +20,6 @@ use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
-    /**
-     * Show the account dashboard.
-     */
     public function cancelOrder(Request $request, string $lang, Order $order)
     {
         $user = Auth::guard('web')->user();

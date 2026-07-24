@@ -57,7 +57,7 @@ class BackupRun extends Model
 
     public function parts(): HasMany
     {
-        return $this->hasMany(BackupPart::class);
+        return $this->hasMany(BackupChunk::class);
     }
 
     /* ---- Lifecycle helpers ---------------------------------------------- */

@@ -8,7 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 
-class B2bController extends ApiController
+class B2bController extends BaseApiController
 {
     /**
      * POST /api/v1/b2b-request

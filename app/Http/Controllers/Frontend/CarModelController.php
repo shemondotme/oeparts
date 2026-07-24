@@ -26,8 +26,8 @@ class CarModelController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        // Get products for this car model. Eager-load only the condition badge the
-        // ledger renders per row (manufacturer/carModels were loaded but unused).
+        // Eager-load only the condition badge the ledger renders per row
+        // (manufacturer/carModels were loaded here previously but unused).
         $products = Product::query()
             ->whereHas('carModels', function ($query) use ($carModel) {
                 $query->where('car_model_id', $carModel->id);
@@ -37,7 +37,6 @@ class CarModelController extends Controller
             ->orderBy('oem_number')
             ->paginate(settings('general.pagination_per_page', 20));
 
-        // Get other car models from same manufacturer
         $otherModels = CarModel::query()
             ->where('manufacturer_id', $manufacturer->id)
             ->where('is_active', true)

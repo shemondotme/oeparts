@@ -7,18 +7,8 @@ use Illuminate\Support\Facades\Storage;
 
 class PruneInvoiceCache extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'oeparts:invoices:clean-cache {--days= : Days to keep cached invoice PDFs (defaults to orders.invoice_cache_retention_days setting)}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Delete old cached invoice PDFs from the private disk — invoices are regenerated on demand for every real download, so this cache is disposable';
 
     public function handle(): int

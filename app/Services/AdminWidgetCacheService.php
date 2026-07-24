@@ -6,9 +6,10 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Admin caching helper — used by widgets that need to read live data
- * without hammering the database. Each cache key is namespaced and
- * tagged so it can be selectively invalidated.
+ * Admin dashboard/health widget caching helper — used by widgets that need
+ * to read live data without hammering the database. Distinct from the
+ * storefront-facing CacheService (sections, hero stats, etc.). Each cache
+ * key is namespaced and tagged so it can be selectively invalidated.
  *
  * NOTE: never Cache::flush() — only forget() specific keys.
  *
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  * widget caching across page reloads. Array driver is used in tests and skips cache.
  * Production should use Redis or a persistent cache driver.
  */
-final class AdminCacheService
+final class AdminWidgetCacheService
 {
     public const TAG_DASHBOARD = 'admin.dashboard';
     public const TAG_HEALTH = 'admin.health';

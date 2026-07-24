@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
  * 
  * Provides real-time VAT number validation via EU VIES service.
  */
-class VatValidationController extends ApiController
+class VatValidationController extends BaseApiController
 {
     public function __construct(
         private ViesService $viesService
@@ -21,11 +21,8 @@ class VatValidationController extends ApiController
 
     /**
      * Validate a VAT number via AJAX.
-     * 
+     *
      * POST /api/validate-vat
-     * 
-     * @param Request $request
-     * @return JsonResponse
      */
     public function validate(Request $request): JsonResponse
     {
@@ -35,11 +32,9 @@ class VatValidationController extends ApiController
         ]);
 
         $vatNumber = strtoupper(trim($validated['vat_number']));
-        
-        // Extract country code from VAT number if not provided
+
         $countryCode = strtoupper(trim($validated['country_code'] ?? substr($vatNumber, 0, 2)));
-        
-        // Remove country prefix from VAT number
+
         if (str_starts_with($vatNumber, $countryCode)) {
             $vatNumber = substr($vatNumber, strlen($countryCode));
         }

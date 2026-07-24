@@ -62,7 +62,7 @@ class WidgetPreferenceService
             'roles' => ['super_admin', 'admin', 'manager', 'catalog_admin', 'support'],
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'health_strip' => [
             'class' => \App\Filament\Widgets\HealthStrip::class,
@@ -74,7 +74,7 @@ class WidgetPreferenceService
             'roles' => self::SYSTEM,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
 
         // ── Business Overview ───────────────────────────────────────────
@@ -89,7 +89,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => true,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'revenue_chart' => [
             'class' => \App\Filament\Widgets\RevenueChart::class,
@@ -101,7 +101,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => true,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'order_volume_chart' => [
             'class' => \App\Filament\Widgets\OrderVolumeChart::class,
@@ -113,7 +113,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => true,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'order_status_distribution' => [
             'class' => \App\Filament\Widgets\OrderStatusDistributionWidget::class,
@@ -125,7 +125,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => true,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'customer_growth' => [
             'class' => \App\Filament\Widgets\CustomerGrowthChart::class,
@@ -137,7 +137,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => false,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'manufacturer_revenue' => [
             'class' => \App\Filament\Widgets\TopManufacturersRevenue::class,
@@ -149,7 +149,7 @@ class WidgetPreferenceService
             'roles' => self::CATALOG,
             'financial' => true,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
 
         // ── Needs Attention ─────────────────────────────────────────────
@@ -164,7 +164,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'awaiting_confirmation' => [
             'class' => \App\Filament\Widgets\AwaitingConfirmationList::class,
@@ -176,7 +176,7 @@ class WidgetPreferenceService
             'roles' => self::OPS,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'refunds_pending' => [
             'class' => \App\Filament\Widgets\RefundsPendingList::class,
@@ -188,7 +188,7 @@ class WidgetPreferenceService
             'roles' => self::OPS,
             'financial' => true,
             'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'new_messages' => [
             'class' => \App\Filament\Widgets\NewMessagesInbox::class,
@@ -200,7 +200,7 @@ class WidgetPreferenceService
             'roles' => self::OPS,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'stock_alert' => [
             'class' => \App\Filament\Widgets\StockAlertWidget::class,
@@ -212,7 +212,7 @@ class WidgetPreferenceService
             'roles' => self::CATALOG,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'failed_searches' => [
             'class' => \App\Filament\Widgets\FailedSearchesWidget::class,
@@ -224,7 +224,7 @@ class WidgetPreferenceService
             'roles' => self::CATALOG,
             'financial' => false,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'failed_queue_jobs' => [
             'class' => \App\Filament\Widgets\FailedQueueJobsMonitor::class,
@@ -236,7 +236,7 @@ class WidgetPreferenceService
             'roles' => self::SYSTEM,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
 
         // ── Live Activity ───────────────────────────────────────────────
@@ -251,7 +251,7 @@ class WidgetPreferenceService
             'roles' => self::OPS,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'parts_inquiry' => [
             'class' => \App\Filament\Widgets\PartsInquiryWidget::class,
@@ -263,7 +263,7 @@ class WidgetPreferenceService
             'roles' => ['super_admin', 'admin', 'manager', 'support'],
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'recent_activity' => [
             'class' => \App\Filament\Widgets\RecentActivityLog::class,
@@ -275,7 +275,7 @@ class WidgetPreferenceService
             'roles' => self::SYSTEM,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'latest_customers' => [
             'class' => \App\Filament\Widgets\LatestCustomersWidget::class,
@@ -287,7 +287,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
 
         // ── Catalog & Search ────────────────────────────────────────────
@@ -302,7 +302,7 @@ class WidgetPreferenceService
             'roles' => self::CATALOG,
             'financial' => false,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'top_searches' => [
             'class' => \App\Filament\Widgets\TopSearchedOems::class,
@@ -314,10 +314,10 @@ class WidgetPreferenceService
             'roles' => self::CATALOG,
             'financial' => false,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'manufacturing_stats' => [
-            'class' => \App\Filament\Widgets\ManufacturingStatsWidget::class,
+            'class' => \App\Filament\Widgets\CatalogStatsWidget::class,
             'label' => 'Catalog Stats',
             'description' => 'Manufacturers, products, and stock coverage',
             'group' => 'catalog-search',
@@ -326,7 +326,7 @@ class WidgetPreferenceService
             'roles' => self::CATALOG,
             'financial' => false,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'newsletter_growth' => [
             'class' => \App\Filament\Widgets\NewsletterGrowthWidget::class,
@@ -338,7 +338,7 @@ class WidgetPreferenceService
             'roles' => self::MGMT,
             'financial' => false,
             'period' => true,
-            'ttl' => AdminCacheService::DEFAULT_TTL,
+            'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
 
         // ── System Health ───────────────────────────────────────────────
@@ -353,7 +353,7 @@ class WidgetPreferenceService
             'roles' => self::SYSTEM,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::LONG_TTL,
+            'ttl' => AdminWidgetCacheService::LONG_TTL,
         ],
         'cache_status' => [
             'class' => \App\Filament\Widgets\CacheStatusWidget::class,
@@ -365,7 +365,7 @@ class WidgetPreferenceService
             'roles' => self::SYSTEM,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'request_metrics' => [
             'class' => \App\Filament\Widgets\RequestMetricsWidget::class,
@@ -377,7 +377,7 @@ class WidgetPreferenceService
             'roles' => self::SYSTEM,
             'financial' => false,
             'period' => false,
-            'ttl' => AdminCacheService::SHORT_TTL,
+            'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
     ];
 
@@ -567,7 +567,7 @@ class WidgetPreferenceService
             }
         }
 
-        return AdminCacheService::DEFAULT_TTL;
+        return AdminWidgetCacheService::DEFAULT_TTL;
     }
 
     /**
@@ -614,7 +614,7 @@ class WidgetPreferenceService
     /**
      * Invalidate every cached-data entry for a widget, across all periods it
      * can be viewed at — cache keys are period-suffixed (see
-     * InteractsWithDashboardCache), so a bare `AdminCacheService::forget($id)`
+     * InteractsWithDashboardCache), so a bare `AdminWidgetCacheService::forget($id)`
      * never matches the real key and silently does nothing. Unknown widget
      * ids are a no-op (never throw from an observer's cache-invalidation path).
      */
@@ -629,7 +629,7 @@ class WidgetPreferenceService
         $periods = ($config['period'] ?? false) ? ['1', '7', '30', '90', '365'] : ['-'];
 
         foreach ($periods as $period) {
-            AdminCacheService::forget("{$widgetId}:p{$period}");
+            AdminWidgetCacheService::forget("{$widgetId}:p{$period}");
         }
     }
 

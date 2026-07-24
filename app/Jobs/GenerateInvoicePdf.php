@@ -19,29 +19,19 @@ class GenerateInvoicePdf implements ShouldQueue
 
     public array $backoff = [60, 180, 600];
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         public Order $order
     ) {
         $this->onQueue('critical');
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(InvoiceService $invoiceService): void
     {
-        // Generate invoice PDF
         $pdf = $invoiceService->generate($this->order, false, true);
 
-        // Store PDF in storage — invoices contain customer PII, so this must
-        // never sit on the public disk (rule: private data stays off storage/app/public).
+        // Invoices contain customer PII, so this must never sit on the public
+        // disk (rule: private data stays off storage/app/public).
         $filename = 'invoices/' . now()->format('Y/m') . "/{$this->order->invoice_number}.pdf";
         Storage::disk('local')->put($filename, $pdf->output());
-
-        // Optionally attach to order or send email
-        // $this->order->update(['invoice_path' => $filename]);
     }
 }
