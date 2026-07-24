@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.12 — 2026-07-24
+
+### Changed
+- **Redis is now a recommended production upgrade, not a hard requirement** — removed the boot-time assertion that crashed `/install` on any host without the redis extension. Cache/session/queue now degrade cleanly to file/database/sync drivers when Redis isn't available, and `.env.example` defaults to `file`/`file`/`sync` so a fresh install always boots regardless of what the host offers. Redis is still recommended for production performance — just no longer required to get started.
+- **The installer now runs as a chunked, resumable process** (`InstallManager`) instead of one long synchronous request, fixing a bug where a POST-only route made the final "install complete" step unreachable from a real browser session on some hosts.
+
+### Added
+- **HTTP-triggered cron fallback** — if a host's real system cron was never configured (or stopped running), scheduled tasks (backups, sitemap refresh, abandoned-cart emails, update checks) now still fire from a normal page load once the scheduler heartbeat goes stale, instead of silently never running. On by default; disable with `CRON_FALLBACK_ENABLED=false` if you have real cron configured and want to skip the (small, throttled) overhead entirely.
+- **Fatal-error email notifications** — an uncaught exception inside the admin panel now emails every `super_admin` the moment it happens, instead of leaving a silent white screen with no signal anything broke.
+- **Opt-in unattended security updates** — set `OE_UPDATE_AUTO_SECURITY=true` to have a daily scheduled command auto-apply (and auto-roll-back on failure) any release flagged security-only, using the same backup-first, pre-flight-gated update FSM as a manual "Apply Update" click. Off by default; routine feature releases always still require a manual click, and you're emailed the outcome either way.
+- **Cross-server restore is now reachable via a dedicated CLI command** (`php artisan oeparts:backup:restore --import-manifest=...`) — see the README's "Moving to a new server" section for the full walkthrough.
+- **Admin panel UI strings are now translatable** — labels across all Filament admin resources are wired through `lang/{locale}/admin.php` for the existing 5 languages, instead of being hardcoded English.
+
 ## 1.0.11 — 2026-07-21
 
 ### Fixed
