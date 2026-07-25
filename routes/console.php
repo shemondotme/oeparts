@@ -46,7 +46,7 @@ Schedule::command('oeparts:orders:auto-complete')->dailyAt('02:30');
 // Backup Engine (Module 21) — daily full encrypted backup + GFS prune.
 // Supersedes the old db:backup / mysqldump command (kept for now, no longer scheduled).
 Schedule::command('oeparts:backup --trigger=scheduled')
-    ->dailyAt(config('backup.schedule.time', '01:00'))
+    ->dailyAt(settings('backup.schedule_time', config('backup.schedule.time', '01:00')))
     ->when(fn () => (bool) config('backup.schedule.enabled', true) && (bool) config('backup.enabled', true));
 
 // Reclaim backup runs abandoned mid-progress (e.g. an admin navigates away
@@ -64,10 +64,21 @@ Schedule::command('oeparts:update:check')->dailyAt('06:00');
 // email lands separately, not racing the "update available" one.
 Schedule::command('oeparts:update:auto-apply')
     ->dailyAt('06:15')
-    ->when(fn () => (bool) config('updates.auto_apply_security', false));
+    ->when(fn () => (bool) settings('updates.auto_apply_security', config('updates.auto_apply_security', false)));
 
 // Scheduler heartbeat — every minute (for health monitoring)
 Schedule::command('scheduler:heartbeat')->everyMinute();
+
+// Health check history — every 5 minutes, independent of admin viewing. The
+// Health Check page's widget also triggers HealthCheckService::snapshot() on
+// a shorter throttle while being watched; both share its internal lock, so
+// this is a floor, not a duplicate.
+Schedule::command('health:snapshot')->everyFiveMinutes();
+
+// Cache metrics history — same floor-not-duplicate reasoning as health:snapshot
+// above; the Cache Dashboard's own polling also triggers CacheMetricsService::
+// snapshot() on a shorter throttle while being watched.
+Schedule::command('cache:snapshot')->everyFiveMinutes();
 
 // Purge customer refund evidence photos long after the refund was resolved —
 // GDPR data minimization (default 180 days after processed_at).

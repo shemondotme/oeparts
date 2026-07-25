@@ -276,6 +276,251 @@ tr.op-row-warn {
 .op-health-down { box-shadow: inset 3px 0 0 0 #ef4444; }
 .op-health-muted { box-shadow: inset 3px 0 0 0 rgba(120, 120, 130, 0.45); }
 
+/* Health Check page — dense ops row-list ("Option C"). Each row reuses the
+ * .op-health-ok/warn/down/muted left-edge accent above; these add the row
+ * grid, status pill, and inline sparkline bars on top of that. */
+.op-health-row {
+    display: grid;
+    grid-template-columns: 1.7fr 1fr 1.7fr 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+}
+.op-health-row:last-child { border-bottom: none; }
+.op-health-row-head {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-disabled);
+}
+a.op-health-row {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+.op-health-name {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.875rem;
+}
+@media (max-width: 900px) {
+    .op-health-row { grid-template-columns: 1.7fr 1fr; row-gap: 0.35rem; }
+    .op-health-row-head { display: none; }
+}
+
+.op-status-pill {
+    display: inline-block;
+    width: fit-content;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.1rem 0.5rem;
+    border-radius: 9999px;
+}
+.op-status-pill-ok { background: rgba(34, 197, 94, 0.16); color: #22c55e; }
+.op-status-pill-warn { background: rgba(245, 158, 11, 0.16); color: #f59e0b; }
+.op-status-pill-down { background: rgba(239, 68, 68, 0.16); color: #ef4444; }
+.op-status-pill-muted { background: rgba(120, 120, 130, 0.16); color: var(--color-text-muted); }
+
+.op-spark-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+}
+.op-spark-bar { width: 3px; border-radius: 1px; background: rgba(120, 120, 130, 0.45); height: 30%; }
+.op-spark-bar-ok { background: #22c55e; opacity: 0.85; height: 100%; }
+.op-spark-bar-warn { background: #f59e0b; height: 65%; }
+.op-spark-bar-down { background: #ef4444; height: 40%; }
+.op-spark-bar-muted { background: rgba(120, 120, 130, 0.45); height: 30%; }
+
+/* Cache Dashboard — Category Breakdown row. Same visual language as
+ * .op-health-row (border-bottom rows inside an .op-card), with an extra
+ * trailing column for the Warm/Clear button pair, which need more
+ * horizontal room than Health Check's single-action rows.
+ *
+ * The trailing column is a FIXED width, not `auto` — each `.op-cat-row` is
+ * its own independent grid (a separate <div> per row, not one shared grid
+ * across the whole table), so an `auto` column's pixel width is computed
+ * from THAT row's own content. Categories without a Warm button render one
+ * button instead of two, and the header row renders plain text instead of
+ * buttons — three different content widths for the same column, each
+ * producing a different actual pixel width. Because a grid's `fr` tracks
+ * split whatever space is LEFT after `auto` tracks are sized, that
+ * per-row difference cascaded left through Keys/TTL/Last Cleared/Last
+ * Warmed too, so no column lined up between rows (confirmed live via
+ * getBoundingClientRect() — e.g. the Keys column's right edge landed at a
+ * different x per row). A fixed width removes the content-dependency
+ * entirely, so every row's fr-columns resolve to identical pixel widths. */
+.op-cat-row {
+    display: grid;
+    grid-template-columns: 1.8fr 0.7fr 0.6fr 1fr 1fr 172px;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem 1.1rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+    font-variant-numeric: tabular-nums;
+}
+.op-cat-row:last-child { border-bottom: none; }
+.op-cat-row-head {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-disabled);
+}
+@media (max-width: 900px) {
+    .op-cat-row { grid-template-columns: 1.8fr auto; row-gap: 0.35rem; }
+    .op-cat-row-head { display: none; }
+}
+
+/* Cache Dashboard — Key Browser row: raw key, TTL, size, delete. Fixed
+ * trailing column width for the same reason as .op-cat-row above (the
+ * header's "Actions" text is narrower than the real "Delete" button, which
+ * would otherwise throw off TTL/Size alignment row to row). */
+.op-kb-row {
+    display: grid;
+    grid-template-columns: 2fr 0.6fr 0.7fr 100px;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1.1rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+    font-variant-numeric: tabular-nums;
+}
+.op-kb-row:last-child { border-bottom: none; }
+.op-kb-row-head {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-disabled);
+}
+@media (max-width: 900px) {
+    .op-kb-row { grid-template-columns: 2fr auto; row-gap: 0.35rem; }
+    .op-kb-row-head { display: none; }
+}
+
+/* System Updates — FSM stepper (backup→download→extract→swap→finalize→
+ * verify). Flex row of step chips + connector lines; flex (not grid), and
+ * only one instance per render, so it doesn't hit the independent-per-row-
+ * grid alignment bug documented above .op-cat-row. */
+.op-fsm-stepper {
+    display: flex;
+    align-items: center;
+}
+.op-fsm-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    flex: 0 0 auto;
+}
+.op-fsm-dot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: 2px solid rgba(120, 120, 130, 0.35);
+    color: white;
+}
+.op-fsm-label {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-disabled);
+    white-space: nowrap;
+}
+.op-fsm-step-done .op-fsm-dot { background: #22c55e; border-color: #22c55e; }
+.op-fsm-step-done .op-fsm-label { color: #22c55e; }
+.op-fsm-step-current .op-fsm-dot { background: var(--primary-600); border-color: var(--primary-600); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); }
+.op-fsm-step-current .op-fsm-label { color: var(--color-text-primary); }
+.op-fsm-connector {
+    flex: 1 1 auto;
+    height: 2px;
+    background: rgba(120, 120, 130, 0.25);
+    margin: 0 0.4rem 1.1rem;
+}
+.op-fsm-connector-done { background: #22c55e; }
+@media (max-width: 640px) {
+    .op-fsm-label { display: none; }
+}
+
+/* System Updates — Recent Updates strip. Same dense-row language as
+ * .op-health-row/.op-cat-row/.op-kb-row. FIXED trailing columns (not auto)
+ * from the start — see the .op-cat-row comment above for why. */
+.op-upd-row {
+    display: grid;
+    grid-template-columns: 1fr 130px 110px;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 1.25rem;
+    border-bottom: 1px solid var(--color-border-subtle);
+    font-variant-numeric: tabular-nums;
+}
+.op-upd-row:last-child { border-bottom: none; }
+.op-upd-row-head {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-disabled);
+}
+@media (max-width: 640px) {
+    .op-upd-row { grid-template-columns: 1fr 130px; }
+    .op-upd-row-head { display: none; }
+}
+
+/* Backup Management — Overview strip. 4 equal tiles. First tile-grid pattern
+ * in the codebase — explicit equal-fr columns (never auto-sized to content).
+ * Unlike .op-cat-row/.op-kb-row/.op-upd-row these are cards, not independent
+ * per-row grids with row-to-row varying content, so there's no cross-row
+ * misalignment risk here — kept fr-based (not auto) anyway for consistency. */
+.op-tile-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+@media (max-width: 900px) {
+    .op-tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+    .op-tile-grid { grid-template-columns: 1fr; }
+}
+.op-tile {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-1);
+    padding: 1.1rem 1.25rem;
+}
+.op-tile-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+    color: var(--color-text-muted);
+    margin-bottom: 0.35rem;
+}
+.op-tile-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-primary);
+}
+.op-tile-meta {
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+}
+.op-tile-meta-pill {
+    margin-top: 0.35rem;
+}
+
 /* Topbar: a wider, centered global-search box (multi-search), while the
  * "+ New" button, notifications bell and user menu stay pinned to the right.
  * Desktop only — the stock right-aligned layout is kept on smaller screens. */

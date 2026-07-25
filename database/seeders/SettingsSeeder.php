@@ -192,6 +192,12 @@ class SettingsSeeder extends Seeder
             ['group' => 'performance', 'key' => 'cache_ttl_manufacturers', 'value' => '60',    'type' => $i],
 
             // ── SECURITY ─────────────────────────────────────────────────────────
+            // otp_enabled seeded OFF: a fresh install has no SMTP configured yet
+            // (mail setup is optional, see installer step 5) — starting with every
+            // storefront OTP step live would lock the installing admin out of their
+            // own test signup/checkout with no way to receive the code. The admin
+            // flips this on from Security Settings once real mail delivery works.
+            ['group' => 'security', 'key' => 'otp_enabled',           'value' => '0',  'type' => $b],
             ['group' => 'security', 'key' => 'login_max_attempts',    'value' => '5',  'type' => $i],
             ['group' => 'security', 'key' => 'login_window_minutes',  'value' => '15', 'type' => $i],
             ['group' => 'security', 'key' => 'inquiry_max_per_email', 'value' => '10', 'type' => $i],
@@ -506,6 +512,24 @@ class SettingsSeeder extends Seeder
             ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],
             ['group' => 'dashboard', 'key' => 'orders_threshold',         'value' => '50', 'type' => $i],
             ['group' => 'dashboard', 'key' => 'pending_delayed_minutes',  'value' => '120', 'type' => $i],
+            ['group' => 'dashboard', 'key' => 'backup_stale_hours',       'value' => '26', 'type' => $i],
+            ['group' => 'dashboard', 'key' => 'scheduler_stale_minutes',  'value' => '3',  'type' => $i],
+            ['group' => 'dashboard', 'key' => 'cache_hit_rate_alert_threshold', 'value' => '50', 'type' => $i],
+
+            // ── BACKUP (Module 21/14 — retention/schedule/stale-lock, DB-editable
+            // from System → Backup Management → Backup Settings; config/backup.php
+            // stays the fallback default for installs that predate this seeder row) ──
+            ['group' => 'backup', 'key' => 'retention_daily',     'value' => '7',     'type' => $i],
+            ['group' => 'backup', 'key' => 'retention_weekly',    'value' => '4',     'type' => $i],
+            ['group' => 'backup', 'key' => 'retention_monthly',   'value' => '6',     'type' => $i],
+            ['group' => 'backup', 'key' => 'schedule_time',       'value' => '01:00', 'type' => $s],
+            ['group' => 'backup', 'key' => 'stale_after_seconds', 'value' => '3600',  'type' => $i],
+
+            // ── UPDATES (Module 21 — release channel / auto-apply, DB-editable
+            // from System Updates → Update Settings; config/updates.php stays
+            // the fallback default for installs that predate this seeder row) ──
+            ['group' => 'updates', 'key' => 'channel',             'value' => 'stable', 'type' => $s],
+            ['group' => 'updates', 'key' => 'auto_apply_security', 'value' => '0',      'type' => $b],
         ];
     }
 }

@@ -39,6 +39,29 @@
 }
 
 @layer components {
+    /* Brand form fields — @tailwindcss/forms ships gray-border/indigo-focus
+       defaults; these overrides bring every .form-input/.form-select/
+       .form-checkbox (installer wizard, admin-adjacent forms) onto the
+       ink/rule/amber token set instead of the plugin's stock indigo. */
+    .form-input,
+    .form-select,
+    .form-textarea {
+        border-color: var(--color-rule);
+        color: var(--color-ink);
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        border-color: var(--color-amber);
+        --tw-ring-color: var(--color-amber);
+        box-shadow: 0 0 0 1px var(--color-amber);
+    }
+
+    .form-checkbox {
+        color: var(--color-navy);
+    }
+
     /* NProgress bar color — amber accent */
     #nprogress .bar {
         @apply bg-amber;
