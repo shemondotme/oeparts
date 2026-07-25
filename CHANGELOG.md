@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.13 — 2026-07-25
+
+### Added
+- **Health Check, Failed Jobs, Cache Dashboard, System Updates, and Backup Management dashboards reworked** — all five now share a consistent dense-row/status-pill visual language instead of ad-hoc layouts. Health Check and Cache Dashboard gained history snapshots (`health:snapshot`, `cache:snapshot`, scheduled every 5 minutes) backing sparkline trends; Failed Jobs gained job-class grouping, exception classification, search, and bulk retry/flush; System Updates gained a pre-flight readiness strip, a visual step-by-step apply progress indicator, and a recent-updates strip; Backup Management gained a storage/last-backup/retention/encryption overview strip.
+- **Release channel, auto-apply-security, and backup retention/schedule/stale-lock-threshold are now editable from the admin panel** instead of `.env`-only (System Updates → Update Settings, Backup Management → Backup Settings). Existing `.env` values seed as the initial database defaults.
+- **A stuck shared backup/update lock is now visible and recoverable from the admin panel** — previously a crashed or abandoned run could hold the lock indefinitely with zero visibility anywhere in the UI, silently blocking every future backup and update until the hourly cleanup cron happened to catch it. Backup Management now shows the lock's owner and age live, with a "Release stale lock" action that only ever appears for a lock re-confirmed stale at click time — a genuinely in-progress run can never be interrupted this way.
+- **System and Content admin navigation flattened from clusters into sidebar nav groups** — every sub-page kept its URL, but dashboard-style pages (tables, multi-column stat rows) are no longer cramped by a secondary cluster navigation panel eating horizontal space.
+
+### Fixed
+- **Login could silently fail on any install still served over plain HTTP** — `SESSION_SECURE_COOKIE` defaulted to `true` and the admin panel forced `https://` URL generation on any `APP_ENV=production` regardless of the site's actual scheme, so the browser refused to persist the session cookie on a host without SSL provisioned yet. Login now appeared to succeed but silently never logged you in. Both now follow the app's actual configured scheme.
+- **The web installer's progress bar could stall right after creating the admin account** — the "already installed" guard could fire on the very next progress poll (that step legitimately populates the admins table three steps before the run finishes), redirecting the in-progress install away from itself.
+- **`ActivityLog::create()` never actually persisted `created_at`** — not mass-assignable, and the model has no automatic timestamps, so every "last cleared" / "last warmed" / "last action" style display reading it (including the pre-existing Health Check page) always showed nothing. Fixed at the model level; can't silently regress per-call-site again.
+- **The "Clear Application Cache" action was scanning the wrong Redis connection and prefix**, silently purging nothing on some installs.
+
 ## 1.0.12 — 2026-07-24
 
 ### Changed
