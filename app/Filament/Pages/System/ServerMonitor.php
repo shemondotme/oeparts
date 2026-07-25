@@ -2,13 +2,17 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use App\Filament\Widgets\System\ServerStats;
 use Filament\Pages\Page;
 
 class ServerMonitor extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/server-monitor';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Server Monitor';
 

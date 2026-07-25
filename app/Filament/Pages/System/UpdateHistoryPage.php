@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use App\Models\UpdateHistory;
 use Filament\Pages\Page;
 use Filament\Tables;
@@ -20,7 +19,12 @@ class UpdateHistoryPage extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/update-history-page';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Update History';
 
@@ -28,12 +32,7 @@ class UpdateHistoryPage extends Page implements HasTable
 
     protected ?string $subheading = 'Every in-app update attempt, its outcome, and the post-update verification report.';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return System::getNavigationGroup();
-    }
-
-    public static function getNavigationSort(): ?int
+public static function getNavigationSort(): ?int
     {
         return 26;
     }

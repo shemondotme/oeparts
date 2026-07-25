@@ -28,11 +28,11 @@ class TestimonialResource extends Resource
         return 'heroicon-o-chat-bubble-left-right';
     }
 
-    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+    protected static ?string $slug = 'content/testimonials';
 
     public static function getNavigationGroup(): ?string
     {
-        return null;
+        return 'Content';
     }
 
     public static function getNavigationSort(): ?int

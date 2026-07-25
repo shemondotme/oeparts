@@ -27,11 +27,11 @@ class MenuResource extends Resource
         return 'heroicon-o-bars-3';
     }
 
-    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+    protected static ?string $slug = 'content/menus';
 
     public static function getNavigationGroup(): ?string
     {
-        return null;
+        return 'Content';
     }
 
     public static function getNavigationSort(): ?int

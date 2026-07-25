@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +10,7 @@ use Spatie\Permission\Models\Role;
 
 class PermissionMatrix extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/permission-matrix';
 
     protected static ?string $title = 'Permission Matrix';
 
@@ -19,7 +18,7 @@ class PermissionMatrix extends Page
 
     public static function getNavigationGroup(): ?string
     {
-        return System::getNavigationGroup();
+        return 'System';
     }
 
     public $matrix = [];

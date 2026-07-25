@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use App\Models\CronLog;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -11,7 +10,12 @@ use Illuminate\Support\Facades\Schedule;
 
 class ScheduledTasksPage extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/scheduled-tasks-page';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Scheduled Tasks';
 
@@ -19,12 +23,7 @@ class ScheduledTasksPage extends Page
 
     protected static ?string $pollingInterval = '60s';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return System::getNavigationGroup();
-    }
-
-    public static function getNavigationSort(): ?int
+public static function getNavigationSort(): ?int
     {
         return 40;
     }

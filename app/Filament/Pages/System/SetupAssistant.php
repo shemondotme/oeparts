@@ -3,7 +3,6 @@
 namespace App\Filament\Pages\System;
 
 use App\Console\Commands\DemoSetup;
-use App\Filament\Clusters\System as SystemCluster;
 use App\Models\ActivityLog;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
@@ -19,13 +18,18 @@ use Illuminate\Support\Facades\Schema;
 
 class SetupAssistant extends Page
 {
-    protected static ?string $cluster = SystemCluster::class;
+    protected static ?string $slug = 'system/setup-assistant';
 
     protected static ?string $title = 'Setup Assistant';
 
     protected string $view = 'filament.pages.system.setup-assistant';
 
-    // Listed in the System cluster nav — this is the operator's onboarding
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
+
+    // Listed in the System nav group — this is the operator's onboarding
     // surface (setup checklist, demo data, maintenance) and used to be
     // reachable only through a single Health Check link.
     public static function getNavigationSort(): ?int
@@ -88,6 +92,12 @@ class SetupAssistant extends Page
                 'label' => 'Migrations Current',
                 'description' => 'All migrations have run',
                 'done' => str_contains($this->getMigrationStatus(), 'migrations run'),
+            ],
+            [
+                'key' => 'backup_key',
+                'label' => 'Backup Encryption Key Set',
+                'description' => 'OE_BACKUP_KEY in .env — required before any backup (manual or pre-update) can run',
+                'done' => trim((string) config('backup.encryption.key', '')) !== '',
             ],
         ];
     }

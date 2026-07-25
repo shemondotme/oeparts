@@ -32,11 +32,11 @@ class PageResource extends Resource
         return 'heroicon-o-document';
     }
 
-    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+    protected static ?string $slug = 'content/pages';
 
     public static function getNavigationGroup(): ?string
     {
-        return null;
+        return 'Content';
     }
 
     public static function getNavigationSort(): ?int

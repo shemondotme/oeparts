@@ -2,14 +2,18 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use App\Filament\Widgets\System\QueueStats;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 
 class QueueMonitor extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/queue-monitor';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Queue Monitor';
 

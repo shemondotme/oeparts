@@ -2,12 +2,16 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use Filament\Pages\Page;
 
 class HelpPage extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/help-page';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Help & Documentation';
 
@@ -35,8 +39,4 @@ class HelpPage extends Page
         return 99;
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return System::getNavigationGroup();
-    }
 }

@@ -2,14 +2,18 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 class ErrorMonitor extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/error-monitor';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Error Monitor';
 
@@ -41,12 +45,7 @@ class ErrorMonitor extends Page
         return 50;
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return System::getNavigationGroup();
-    }
-
-    public function getErrorStats(): array
+public function getErrorStats(): array
     {
         return Cache::remember('error_monitor_stats', 30, function () {
             $exceptions = $this->getExceptionLog();

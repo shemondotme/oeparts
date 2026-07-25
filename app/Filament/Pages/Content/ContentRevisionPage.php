@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages\Content;
 
-use App\Filament\Clusters\Content as ContentCluster;
 use App\Models\ContentRevision;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
@@ -15,16 +14,21 @@ class ContentRevisionPage extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $cluster = ContentCluster::class;
+    protected static ?string $slug = 'content/content-revision-page';
 
     protected static ?string $title = 'Content Revision History';
 
     protected string $view = 'filament.pages.content.content-revision';
 
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Content';
+    }
+
     public static function getNavigationSort(): ?int
     {
-        // Last in the Content cluster — it's a read-only audit trail, not a
-        // content type, so it sits after all the editable items.
+        // Last in the Content nav group — it's a read-only audit trail, not
+        // a content type, so it sits after all the editable items.
         return 100;
     }
 

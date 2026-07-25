@@ -40,11 +40,11 @@ class BlogPostResource extends Resource
         return 'heroicon-o-newspaper';
     }
 
-    protected static ?string $cluster = \App\Filament\Clusters\Content::class;
+    protected static ?string $slug = 'content/blog-posts';
 
     public static function getNavigationGroup(): ?string
     {
-        return null;
+        return 'Content';
     }
 
     protected static ?int $navigationSort = 50;

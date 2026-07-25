@@ -2,25 +2,24 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\File;
 
 class LogViewerPage extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/log-viewer-page';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Log Viewer';
 
     protected string $view = 'filament.pages.system.log-viewer';
 
-    public static function getNavigationGroup(): ?string
-    {
-        return System::getNavigationGroup();
-    }
-
-    public string $selectedFile = '';
+public string $selectedFile = '';
 
     public string $levelFilter = '';
 

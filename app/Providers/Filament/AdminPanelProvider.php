@@ -107,10 +107,19 @@ class AdminPanelProvider extends PanelProvider
                 NavigationGroup::make('Catalog'),
                 NavigationGroup::make('Customers'),
                 NavigationGroup::make('Marketing'),
+                // Content and System were previously separate Filament Clusters
+                // (their own dedicated sub-navigation sidebar) — folded into
+                // plain nav groups here to reclaim horizontal space, matching
+                // every other section of this panel.
+                NavigationGroup::make('Content'),
                 // Administration (config/logs/SEO) starts collapsed to declutter
                 // the dense sidebar; the daily-work groups above stay expanded.
                 // (The old 'CMS' group was folded into the Content cluster.)
                 NavigationGroup::make('Administration')->collapsed(),
+                // System (14 items) starts collapsed too — the least
+                // frequently touched day-to-day group, and the largest, so
+                // collapsing it is what actually reclaims the sidebar space.
+                NavigationGroup::make('System')->collapsed(),
             ])
             // Widget Preferences moved from here to a "Customize" button in the
             // Dashboard page header (App\Filament\Pages\Dashboard) for
