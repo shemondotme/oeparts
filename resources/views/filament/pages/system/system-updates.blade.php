@@ -75,6 +75,35 @@
             @endif
         </div>
 
+        {{-- Readiness strip — 4 representative pre-flight checks (disk, extensions,
+             lock, signature), visible without clicking "Review & apply" first. --}}
+        @if(!empty($preflightSummary))
+            @php
+                $pillTone = fn (string $status) => match ($status) {
+                    'fail' => 'op-status-pill-down',
+                    'warn' => 'op-status-pill-warn',
+                    default => 'op-status-pill-ok',
+                };
+            @endphp
+            <div class="op-card p-5" style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
+                <div class="text-xs font-bold uppercase tracking-widest font-mono mb-3" style="color: var(--color-text-muted, #6b7280);">
+                    Readiness
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    @foreach($preflightSummary as $check)
+                        <span class="op-status-pill {{ $pillTone($check['status']) }}" title="{{ $check['message'] }}">
+                            {{ $check['label'] }}
+                        </span>
+                    @endforeach
+                </div>
+                <div class="mt-3 flex items-center gap-2 text-xs" style="color: var(--color-text-muted, #6b7280);">
+                    <span class="op-dot {{ $this->recoveryArmed() ? 'op-dot-live' : '' }}" style="{{ $this->recoveryArmed() ? '' : 'background: rgba(120,120,130,0.45);' }}"></span>
+                    Recovery console:
+                    <strong style="color: var(--color-text-primary, #111827);">{{ $this->recoveryArmed() ? 'Armed (update window open)' : 'Not armed' }}</strong>
+                </div>
+            </div>
+        @endif
+
         {{-- One-click apply (Chunk 3.5) — the primary action, shown first so it's not
              mistaken for a "download only" page. Falls back gracefully: an admin
              without the "apply updates" permission still sees the changelog/download
@@ -223,6 +252,21 @@
                         $stepIndex = $stepIndex === false ? count($steps) : $stepIndex;
                     @endphp
                     <div wire:poll.2s="pollApply">
+                        <div class="op-fsm-stepper mb-4">
+                            @foreach($steps as $i => $step)
+                                <div class="op-fsm-step {{ $i < $stepIndex ? 'op-fsm-step-done' : ($i === $stepIndex ? 'op-fsm-step-current' : 'op-fsm-step-pending') }}">
+                                    <span class="op-fsm-dot">
+                                        @if($i < $stepIndex)
+                                            <x-heroicon-o-check class="w-3 h-3" />
+                                        @endif
+                                    </span>
+                                    <span class="op-fsm-label">{{ $stepLabels[$step] ?? ucfirst($step) }}</span>
+                                </div>
+                                @if(!$loop->last)
+                                    <div class="op-fsm-connector {{ $i < $stepIndex ? 'op-fsm-connector-done' : '' }}"></div>
+                                @endif
+                            @endforeach
+                        </div>
                         <div class="flex items-center gap-3 mb-2">
                             <svg class="animate-spin h-4 w-4" style="color: var(--primary-600, #2563eb);" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -293,6 +337,83 @@
                         </a>
                     @endif
                 </div>
+            </div>
+        @endif
+
+        {{-- Recent Updates — last 3 UpdateHistory rows, links to the full audit trail. --}}
+        @php $recent = $this->recentUpdates(); @endphp
+        @if($recent->isNotEmpty())
+            <div class="op-card overflow-hidden" style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
+                <div class="flex items-center justify-between px-5 pt-5 pb-2">
+                    <div class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted, #6b7280);">
+                        Recent Updates
+                    </div>
+                    <a href="{{ \App\Filament\Pages\System\UpdateHistoryPage::getUrl() }}"
+                       class="op-focus-ring text-xs font-bold uppercase tracking-wider" style="color: var(--primary-600, #2563eb);">
+                        View full history &rarr;
+                    </a>
+                </div>
+                <div class="op-upd-row op-upd-row-head">
+                    <span>Version</span><span>Status</span><span style="text-align:right;">When</span>
+                </div>
+                @foreach($recent as $h)
+                    @php
+                        $tone = match(true) {
+                            $h->isSuccessful() => 'op-status-pill-ok',
+                            $h->status === \App\Models\UpdateHistory::STATUS_FAILED => 'op-status-pill-down',
+                            $h->status === \App\Models\UpdateHistory::STATUS_ROLLED_BACK => 'op-status-pill-warn',
+                            default => 'op-status-pill-muted',
+                        };
+                    @endphp
+                    <div class="op-upd-row" wire:key="upd-row-{{ $h->id }}">
+                        <span class="font-mono text-sm" style="color: var(--color-text-primary, #111827);">
+                            {{ $h->from_version }} &rarr; {{ $h->to_version }}
+                        </span>
+                        <span class="op-status-pill {{ $tone }}">{{ str_replace('_', ' ', $h->status) }}</span>
+                        <span class="text-xs font-mono" style="text-align:right; color: var(--color-text-muted, #6b7280);">
+                            {{ $h->created_at?->diffForHumans() }}
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- Update Settings — release channel + auto-apply-security, DB-editable via
+             the settings() system (config/updates.php is the fallback default). --}}
+        @if($this->canApply())
+            @php
+                $toggleOn = \Illuminate\Support\Arr::toCssClasses(['fi-toggle fi-toggle-on', ...\Filament\Support\get_component_color_classes(\Filament\Support\View\Components\ToggleComponent::class, 'primary')]);
+                $toggleOff = \Illuminate\Support\Arr::toCssClasses(['fi-toggle fi-toggle-off', ...\Filament\Support\get_component_color_classes(\Filament\Support\View\Components\ToggleComponent::class, 'gray')]);
+            @endphp
+            <div class="op-card p-6" style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
+                <div class="text-xs font-bold uppercase tracking-widest font-mono mb-4" style="color: var(--color-text-muted, #6b7280);">
+                    Update Settings
+                </div>
+                <div class="flex flex-wrap items-end gap-6">
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-widest font-mono mb-2 block" style="color: var(--color-text-muted, #6b7280);">Release channel</label>
+                        <select wire:model="settingsChannel"
+                            class="px-4 py-2.5 text-sm rounded-xl"
+                            style="background: var(--color-bg-inset, #f3f4f6); border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
+                            <option value="stable">Stable</option>
+                            <option value="beta">Beta</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" role="switch" aria-checked="{{ $settingsAutoApplySecurity ? 'true' : 'false' }}"
+                            wire:click="toggleAutoApplySecurity" wire:loading.attr="disabled"
+                            class="{{ $settingsAutoApplySecurity ? $toggleOn : $toggleOff }}">
+                            <div><div aria-hidden="true"></div><div aria-hidden="true"></div></div>
+                        </button>
+                        <span class="text-sm" style="color: var(--color-text-primary, #111827);">Auto-apply security updates</span>
+                    </div>
+                    <button wire:click="saveUpdateSettings" wire:loading.attr="disabled"
+                        class="op-focus-ring op-press px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
+                        style="background: var(--primary-600, #2563eb); color: white;">
+                        Save
+                    </button>
+                </div>
+                @error('settingsChannel')<div class="mt-2 text-xs" style="color: var(--danger-500, #dc2626);">{{ $message }}</div>@enderror
             </div>
         @endif
 

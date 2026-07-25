@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\System\SystemUpdates;
 use App\Models\Admin;
+use App\Models\UpdateHistory;
+use App\Services\Updates\RecoveryWindowFlag;
 use App\Services\Updates\UpdateChecker;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -106,5 +108,97 @@ class SystemUpdatesPageTest extends TestCase
 
         $this->assertNull(SystemUpdates::getNavigationBadge());
         $this->assertNull(SystemUpdates::getNavigationBadgeColor());
+    }
+
+    #[Test]
+    public function the_readiness_strip_shows_the_four_expected_pills(): void
+    {
+        $this->fakeUpdateAvailable();
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        $summary = Livewire::test(SystemUpdates::class)->get('preflightSummary');
+
+        $keys = collect($summary)->pluck('key')->sort()->values()->all();
+        $this->assertSame(['disk', 'extensions', 'lock', 'signature'], $keys);
+
+        foreach ($summary as $check) {
+            $this->assertContains($check['status'], ['pass', 'warn', 'fail']);
+        }
+    }
+
+    #[Test]
+    public function the_readiness_strip_still_renders_when_up_to_date(): void
+    {
+        Http::fake([
+            'updates.test/*' => Http::response(['channel' => 'stable', 'releases' => [
+                ['version' => '0.0.1'],
+            ]], 200),
+            '*' => Http::response('', 500),
+        ]);
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        $summary = Livewire::test(SystemUpdates::class)->get('preflightSummary');
+
+        $this->assertNotEmpty($summary);
+    }
+
+    #[Test]
+    public function check_now_refreshes_the_preflight_summary_too(): void
+    {
+        $this->fakeUpdateAvailable();
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        $summary = Livewire::test(SystemUpdates::class)->call('checkNow')->get('preflightSummary');
+
+        $this->assertNotEmpty($summary);
+    }
+
+    #[Test]
+    public function recovery_armed_status_reflects_the_arm_flag(): void
+    {
+        $state = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-updates-page-'.getmypid();
+        @mkdir($state, 0775, true);
+        config(['updates.state_path' => $state]);
+
+        $this->fakeUpdateAvailable();
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        Livewire::test(SystemUpdates::class)->assertSee('Not armed');
+
+        app(RecoveryWindowFlag::class)->arm(['history_id' => 1]);
+        Livewire::test(SystemUpdates::class)->assertSee('Armed');
+
+        app(RecoveryWindowFlag::class)->disarm();
+        @array_map('unlink', glob($state.DIRECTORY_SEPARATOR.'*') ?: []);
+        @rmdir($state);
+    }
+
+    #[Test]
+    public function recent_updates_strip_shows_the_last_three_rows_and_links_to_full_history(): void
+    {
+        $this->fakeUpdateAvailable();
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        foreach (range(1, 4) as $i) {
+            UpdateHistory::create([
+                'from_version' => "1.0.{$i}",
+                'to_version' => '1.0.'.($i + 1),
+                'channel' => 'stable',
+                'status' => UpdateHistory::STATUS_SUCCESS,
+                'step' => 'verify',
+                'started_at' => now(),
+                'finished_at' => now(),
+            ]);
+        }
+
+        $component = Livewire::test(SystemUpdates::class);
+
+        $this->assertCount(3, $component->instance()->recentUpdates());
+        $component->assertSeeHtml(\App\Filament\Pages\System\UpdateHistoryPage::getUrl());
     }
 }

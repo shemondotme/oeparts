@@ -74,7 +74,7 @@ class UpdateChecker
     private function performCheck(): UpdateStatus
     {
         $current = $this->currentVersion();
-        $channel = (string) config('updates.channel', 'stable');
+        $channel = (string) settings('updates.channel', config('updates.channel', 'stable'));
         $now     = now()->toIso8601String();
 
         // Prefer the catalog (enables sequential-path resolution); fall back to

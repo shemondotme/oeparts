@@ -12,7 +12,10 @@ use Illuminate\Support\Facades\Log;
 /**
  * Update & Recovery System — unattended SECURITY-update auto-apply.
  *
- * Opt-in via OE_UPDATE_AUTO_SECURITY (config('updates.auto_apply_security')) —
+ * Opt-in via the "Auto-apply security updates" toggle on the System Updates
+ * page (DB-backed via settings('updates.auto_apply_security'), which takes
+ * precedence when set) or OE_UPDATE_AUTO_SECURITY (config('updates.auto_apply_security'),
+ * the fallback default) —
  * automatic background updates, deliberately scoped to security-only (never
  * routine feature releases, which may carry breaking changes an operator
  * should review). Reuses UpdateApplier::start()/run() — the EXACT same
@@ -34,8 +37,8 @@ class AutoApplySecurityUpdate extends Command
 
     public function handle(UpdateChecker $checker, UpdateApplier $applier): int
     {
-        if (! (bool) config('updates.auto_apply_security', false)) {
-            $this->line('Auto-apply is disabled (OE_UPDATE_AUTO_SECURITY is not set). Nothing to do.');
+        if (! (bool) settings('updates.auto_apply_security', config('updates.auto_apply_security', false))) {
+            $this->line('Auto-apply is disabled. Enable it from System Updates → Update Settings, or set OE_UPDATE_AUTO_SECURITY.');
 
             return self::SUCCESS;
         }

@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use App\Models\UpdateHistory;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
@@ -23,7 +22,12 @@ use Illuminate\Validation\ValidationException;
  */
 class SystemUpdates extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/system-updates';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'System Updates';
 
@@ -44,6 +48,12 @@ class SystemUpdates extends Page
     /** Operator has explicitly acknowledged the preflight WARNs shown in the preview. */
     public bool $previewAcknowledged = false;
 
+    /* ---- Readiness strip + Update Settings panel (this redesign) ---- */
+    /** @var array<int,array{key:string,label:string,status:string,message:string}> */
+    public array $preflightSummary = [];
+    public string $settingsChannel = 'stable';
+    public bool $settingsAutoApplySecurity = false;
+
     public function mount(): void
     {
         // Lazy tier — served from cache unless the TTL has expired.
@@ -58,6 +68,69 @@ class SystemUpdates extends Page
             $this->applyHistoryId = $running->id;
             $this->applyStatus = ['status' => $running->status, 'step' => $running->step];
         }
+
+        $this->loadPreflightSummary();
+
+        $this->settingsChannel = (string) settings('updates.channel', config('updates.channel', 'stable'));
+        $this->settingsAutoApplySecurity = (bool) settings('updates.auto_apply_security', config('updates.auto_apply_security', false));
+    }
+
+    /**
+     * Compact readiness strip shown next to the status hero — 4 representative
+     * checks (disk/extensions/lock/signature) pulled from the SAME PreflightService
+     * the full preview panel already uses, run eagerly here so the admin doesn't
+     * have to click "Review & apply" just to see basic readiness. Tolerates an
+     * empty manifest (no update available) — every PreflightService check reads
+     * $manifest['x'] ?? <default>, so this never errors when up to date.
+     */
+    private function loadPreflightSummary(): void
+    {
+        $manifest = $this->applyManifest() ?? [];
+        $report = app(\App\Services\Updates\PreflightService::class)->run($manifest);
+
+        $this->preflightSummary = array_values(array_filter(array_map(
+            fn (string $key) => $report->get($key)?->toArray(),
+            ['disk', 'extensions', 'lock', 'signature'],
+        )));
+    }
+
+    /** Cheap is_file() check — no caching needed. */
+    public function recoveryArmed(): bool
+    {
+        return app(\App\Services\Updates\RecoveryWindowFlag::class)->isArmed();
+    }
+
+    /** @return \Illuminate\Support\Collection<int,UpdateHistory> */
+    public function recentUpdates(): \Illuminate\Support\Collection
+    {
+        return UpdateHistory::query()->recent()->limit(3)->get();
+    }
+
+    public function toggleAutoApplySecurity(): void
+    {
+        abort_unless($this->canApply(), 403);
+
+        $this->settingsAutoApplySecurity = ! $this->settingsAutoApplySecurity;
+    }
+
+    public function saveUpdateSettings(): void
+    {
+        abort_unless($this->canApply(), 403);
+
+        $data = $this->validate([
+            'settingsChannel' => ['required', 'in:stable,beta'],
+            'settingsAutoApplySecurity' => ['boolean'],
+        ]);
+
+        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService->set('updates.channel', $data['settingsChannel']);
+        $settingsService->set('updates.auto_apply_security', $data['settingsAutoApplySecurity'] ? '1' : '0');
+
+        // Re-check so the hero/readiness strip reflect the new channel immediately.
+        $this->status = app(UpdateChecker::class)->check(force: true)->toArray();
+        $this->loadPreflightSummary();
+
+        Notification::make()->title('Update settings saved')->success()->send();
     }
 
     public function canApply(): bool
@@ -201,6 +274,7 @@ class SystemUpdates extends Page
     {
         $status = app(UpdateChecker::class)->check(force: true);
         $this->status = $status->toArray();
+        $this->loadPreflightSummary();
 
         if (! $status->reachable) {
             Notification::make()
@@ -229,12 +303,7 @@ class SystemUpdates extends Page
             ->send();
     }
 
-    public static function getNavigationGroup(): ?string
-    {
-        return System::getNavigationGroup();
-    }
-
-    public static function getNavigationSort(): ?int
+public static function getNavigationSort(): ?int
     {
         return 24;
     }
