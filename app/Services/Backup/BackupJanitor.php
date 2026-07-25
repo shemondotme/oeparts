@@ -27,7 +27,7 @@ class BackupJanitor
      */
     public function cleanupPartials(): int
     {
-        $staleAfter = (int) config('backup.stale_after_seconds', 3600);
+        $staleAfter = (int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600));
         $cleaned    = 0;
 
         $runs = BackupRun::query()

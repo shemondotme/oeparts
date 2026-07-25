@@ -82,12 +82,12 @@ class RunBackupCommandTest extends TestCase
     {
         $health = app(HealthCheckService::class);
 
-        $this->assertSame('none', $health->checkLastBackup());
+        $this->assertSame('none', $health->checkLastBackup()['status']);
         $this->assertNull($health->lastBackupAt());
 
         $this->artisan('oeparts:backup')->assertSuccessful();
 
-        $this->assertSame('ok', $health->checkLastBackup());
+        $this->assertSame('ok', $health->checkLastBackup()['status']);
         $this->assertNotNull($health->lastBackupAt());
     }
 
@@ -103,6 +103,6 @@ class RunBackupCommandTest extends TestCase
         ]);
 
         config(['settings' => []]); // fall back to default 26h threshold
-        $this->assertSame('stale', app(HealthCheckService::class)->checkLastBackup());
+        $this->assertSame('stale', app(HealthCheckService::class)->checkLastBackup()['status']);
     }
 }

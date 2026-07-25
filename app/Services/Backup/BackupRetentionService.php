@@ -23,9 +23,9 @@ class BackupRetentionService
      */
     public function prune(): array
     {
-        $daily   = max(0, (int) config('backup.retention.daily', 7));
-        $weekly  = max(0, (int) config('backup.retention.weekly', 4));
-        $monthly = max(0, (int) config('backup.retention.monthly', 6));
+        $daily   = max(0, (int) settings('backup.retention_daily', config('backup.retention.daily', 7)));
+        $weekly  = max(0, (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4)));
+        $monthly = max(0, (int) settings('backup.retention_monthly', config('backup.retention.monthly', 6)));
 
         // Newest first — the first run seen in each bucket is the one we keep.
         $runs = BackupRun::query()

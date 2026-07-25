@@ -2,12 +2,14 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use App\Jobs\RestoreBackupJob;
 use App\Models\BackupRun;
+use App\Services\Backup\BackupCipher;
 use App\Services\Backup\BackupJanitor;
 use App\Services\Backup\BackupLock;
 use App\Services\Backup\BackupManager;
+use App\Services\HealthCheckService;
+use App\Services\SettingsService;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -35,7 +37,12 @@ class BackupDashboard extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/backup-dashboard';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Backup Management';
 
@@ -48,6 +55,14 @@ class BackupDashboard extends Page implements HasTable
 
     /** Latest {@see \App\Services\Backup\BackupProgress} snapshot for the running backup, for the progress bar. */
     public array $backupProgress = [];
+
+    /* ---- Backup Settings panel (this redesign) ---- */
+    public int $settingsRetentionDaily = 7;
+    public int $settingsRetentionWeekly = 4;
+    public int $settingsRetentionMonthly = 6;
+    public string $settingsScheduleTime = '01:00';
+    /** Stored as backup.stale_after_seconds; shown/edited here in MINUTES. */
+    public int $settingsStaleAfterMinutes = 60;
 
     /** Human labels for every selectable/stored backup profile. */
     private const PROFILE_LABELS = [
@@ -69,14 +84,129 @@ class BackupDashboard extends Page implements HasTable
         if ($running) {
             $this->runningBackupId = $running->id;
         }
+
+        $this->settingsRetentionDaily = (int) settings('backup.retention_daily', config('backup.retention.daily', 7));
+        $this->settingsRetentionWeekly = (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4));
+        $this->settingsRetentionMonthly = (int) settings('backup.retention_monthly', config('backup.retention.monthly', 6));
+        $this->settingsScheduleTime = (string) settings('backup.schedule_time', config('backup.schedule.time', '01:00'));
+        $this->settingsStaleAfterMinutes = (int) round(
+            ((int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600))) / 60
+        );
     }
 
-    public static function getNavigationGroup(): ?string
+    public function canManageBackups(): bool
     {
-        return System::getNavigationGroup();
+        return (bool) auth('admin')->user()?->can('manage backups');
     }
 
-    public static function getNavigationSort(): ?int
+    /**
+     * Fresh-on-every-render lock status for the Lock Status card. Cheap
+     * filesystem check (BackupLock is pure-fs, no cache) — computed on demand
+     * rather than snapshotted at mount() so it stays correct across
+     * pollBackup()'s 2s re-renders and the table's 15s poll.
+     *
+     * @return array{locked:bool,owner?:string,acquired_at?:string,age_human?:string,is_stale?:bool}
+     */
+    public function lockStatus(): array
+    {
+        $lock = app(BackupLock::class);
+
+        if (! $lock->isLocked()) {
+            return ['locked' => false];
+        }
+
+        $owner = $lock->owner();
+        $staleAfter = (int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600));
+        $acquiredAt = $owner['acquired_at'] ?? null;
+
+        return [
+            'locked'      => true,
+            'owner'       => $owner['owner'] ?? 'unknown',
+            'acquired_at' => $acquiredAt,
+            'age_human'   => $acquiredAt ? \Illuminate\Support\Carbon::parse($acquiredAt)->diffForHumans(null, true) : 'unknown',
+            'is_stale'    => $lock->isStale($staleAfter),
+        ];
+    }
+
+    /**
+     * Manual "release stale lock" safety valve — the on-demand counterpart to
+     * BackupJanitor::cleanupPartials()'s hourly-cron releaseStaleLock().
+     * Re-verifies staleness server-side right before releasing — the client
+     * only ever saw a render-time snapshot, and a lock legitimately held by a
+     * running backup/update must never be releasable, confirmed or not.
+     */
+    public function releaseLock(): void
+    {
+        abort_unless($this->canManageBackups(), 403);
+
+        $lock = app(BackupLock::class);
+        $staleAfter = (int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600));
+
+        if (! $lock->isLocked() || ! $lock->isStale($staleAfter)) {
+            Notification::make()
+                ->title('Lock is not stale')
+                ->body('Only a confirmed-stale lock can be released here — it may now be held by an active run.')
+                ->warning()->send();
+
+            return;
+        }
+
+        $owner = $lock->owner();
+        $lock->release();
+        $this->audit('release_lock', null, ['owner' => $owner['owner'] ?? null, 'acquired_at' => $owner['acquired_at'] ?? null]);
+        Notification::make()->title('Lock released')->success()->send();
+    }
+
+    /** Sum of total_bytes for successful, un-pruned runs (Overview: Storage Used). */
+    public function overviewStorageUsedBytes(): int
+    {
+        return (int) BackupRun::query()->successful()->whereNull('meta->pruned_at')->sum('total_bytes');
+    }
+
+    /** Reuses HealthCheckService wholesale — same threshold/notion of "stale" as Health Check. */
+    public function overviewLastBackup(): array
+    {
+        return app(HealthCheckService::class)->checkLastBackup();
+    }
+
+    /** @return array{daily:int,weekly:int,monthly:int} */
+    public function overviewRetentionPolicy(): array
+    {
+        return [
+            'daily'   => (int) settings('backup.retention_daily', config('backup.retention.daily', 7)),
+            'weekly'  => (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4)),
+            'monthly' => (int) settings('backup.retention_monthly', config('backup.retention.monthly', 6)),
+        ];
+    }
+
+    public function overviewEncryptionReady(): bool
+    {
+        return app(BackupCipher::class)->hasKey();
+    }
+
+    public function saveBackupSettings(): void
+    {
+        abort_unless($this->canManageBackups(), 403);
+
+        $data = $this->validate([
+            'settingsRetentionDaily'    => ['required', 'integer', 'min:0', 'max:365'],
+            'settingsRetentionWeekly'   => ['required', 'integer', 'min:0', 'max:104'],
+            'settingsRetentionMonthly'  => ['required', 'integer', 'min:0', 'max:120'],
+            'settingsScheduleTime'      => ['required', 'date_format:H:i'],
+            'settingsStaleAfterMinutes' => ['required', 'integer', 'min:1', 'max:1440'],
+        ]);
+
+        $s = app(SettingsService::class);
+        $s->set('backup.retention_daily', (string) $data['settingsRetentionDaily']);
+        $s->set('backup.retention_weekly', (string) $data['settingsRetentionWeekly']);
+        $s->set('backup.retention_monthly', (string) $data['settingsRetentionMonthly']);
+        $s->set('backup.schedule_time', $data['settingsScheduleTime']);
+        $s->set('backup.stale_after_seconds', (string) ($data['settingsStaleAfterMinutes'] * 60));
+
+        Notification::make()->title('Backup settings saved')->success()->send();
+    }
+
+public static function getNavigationSort(): ?int
     {
         return 25;
     }
@@ -320,13 +450,13 @@ class BackupDashboard extends Page implements HasTable
         }
     }
 
-    private function audit(string $action, ?BackupRun $record): void
+    private function audit(string $action, ?BackupRun $record, array $context = []): void
     {
-        Log::channel(config('updates.log_channel', 'stack'))->notice('backup.'.$action, [
+        Log::channel(config('updates.log_channel', 'stack'))->notice('backup.'.$action, array_merge([
             'admin'   => auth('admin')->id(),
             'run'     => $record?->getKey(),
             'profile' => $record?->profile,
-        ]);
+        ], $context));
     }
 
     private function streamZip(BackupRun $record): \Symfony\Component\HttpFoundation\BinaryFileResponse
@@ -352,7 +482,7 @@ class BackupDashboard extends Page implements HasTable
             ->deleteFileAfterSend(true);
     }
 
-    private function formatBytes(int $bytes, int $precision = 2): string
+    public function formatBytes(int $bytes, int $precision = 2): string
     {
         if ($bytes <= 0) {
             return '0 B';
