@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
 
 /**
@@ -247,24 +248,46 @@ class CacheService
      * Used by both the Cache Dashboard's manual purge and the Health Check
      * "Clear Cache" remediation action.
      *
+     * Two bugs fixed here (found while building the Cache Dashboard rework,
+     * both confirmed live against the real dev Redis):
+     * 1. `Cache::getStore()->getRedis()` returns the Redis *factory*, and
+     *    calling ->keys() on it resolves the DEFAULT connection (DB 0, used
+     *    for queue/session) via magic __call — not the 'cache' connection
+     *    (DB 1) where the app's actual cache lives. Now explicit.
+     * 2. The old code stripped only the client-level prefix
+     *    (database.redis.options.prefix) before calling Cache::forget(),
+     *    leaving the cache-layer prefix (cache.prefix) still attached —
+     *    Cache::forget() then re-applies cache.prefix on top of that,
+     *    double-prefixing the lookup and silently failing to actually clear
+     *    the real key. Now strips the FULL raw prefix (both layers) so
+     *    Cache::forget() receives the true logical key.
+     *
+     * Confirmed live against the real dev Redis: KEYS and SCAN handle
+     * client-level prefixing differently. KEYS auto-applies phpredis's
+     * OPT_PREFIX to its pattern (so `KEYS 'oeparts_*'` and `KEYS '*'` return
+     * identical results here) — the pattern must use ONLY cache.prefix, the
+     * SAME rule as TTL/GET. This is the opposite of SCAN's match pattern,
+     * which needs the full two-layer prefix (see CacheMetricsService, which
+     * uses SCAN and therefore a different formula — do not copy this
+     * pattern there). Returned keys from KEYS are NOT auto-stripped either
+     * way, so the strip below still needs the full raw prefix.
+     *
      * @return int number of keys cleared, or -1 if the driver isn't Redis
      */
     public function purgeAllApplicationCacheKeys(): int
     {
         try {
-            $redis = Cache::getStore()->getRedis();
-            // The redis CLIENT-level prefix (config/database.php redis.options.prefix,
-            // applied to every physical key by phpredis/predis) — NOT cache.prefix,
-            // which is a separate layer the Cache facade adds on top.
-            $prefix = (string) config('database.redis.options.prefix', 'laravel_database_');
+            $redis = Redis::connection('cache');
+            $cachePrefix = (string) config('cache.prefix', '');
+            $fullPrefix = (string) config('database.redis.options.prefix', 'laravel_database_') . $cachePrefix;
         } catch (\Exception $e) {
             return -1; // driver isn't Redis — no safe bulk-scan equivalent exists
         }
 
-        $keys = $redis->keys($prefix.'*');
+        $keys = $redis->keys($cachePrefix.'*');
 
         foreach ($keys as $key) {
-            Cache::forget(Str::after($key, $prefix));
+            Cache::forget(Str::after($key, $fullPrefix));
         }
 
         return count($keys);

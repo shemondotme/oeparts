@@ -83,6 +83,42 @@ class SectionRendererService
         return $data;
     }
 
+    // ── Public warm-cache entry points ──────────────────────────────────────────
+    // Thin wrappers around the private loaders below, so an admin "Warm cache"
+    // action calls the exact same production query/logic instead of a
+    // hand-duplicated copy that could drift from it (App\Filament\Pages\System\
+    // CacheDashboard's Category Breakdown).
+
+    public function warmHeroStats(): array
+    {
+        return $this->loadHeroStats();
+    }
+
+    public function warmPopularOems(): array
+    {
+        return $this->loadPopularOems();
+    }
+
+    public function warmTestimonials(): Collection
+    {
+        return $this->loadTestimonials();
+    }
+
+    public function warmFaqs(): Collection
+    {
+        return $this->loadFaqs();
+    }
+
+    public function warmHomeBlogPosts(): Collection
+    {
+        return $this->loadBlogPosts();
+    }
+
+    public function warmManufacturers(): Collection
+    {
+        return $this->loadManufacturers();
+    }
+
     // ── Private data loaders ──────────────────────────────────────────────────
 
     private function loadHeroStats(): array
