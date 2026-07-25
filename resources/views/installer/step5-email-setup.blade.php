@@ -3,15 +3,15 @@
 @section('title', 'Step 5: Email Setup')
 
 @section('content')
-<div class="bg-white rounded-xl border border-slate-200 p-6 md:p-8">
-    <h1 class="text-2xl font-bold text-navy mb-2">Email Configuration</h1>
-    <p class="text-muted mb-6">Configure how your site sends emails (optional).</p>
+<div class="bg-paper rounded-2xl border border-rule shadow-admin-card p-6 md:p-10">
+    <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-ink mb-2">Email Configuration</h1>
+    <p class="text-muted mb-8">Configure how your site sends emails (optional).</p>
 
     <form method="POST" action="{{ route('installer.process-email-setup') }}">
         @csrf
 
         <div class="mb-6">
-            <label for="mail_driver" class="block text-sm font-medium text-slate-700 mb-1">
+            <label for="mail_driver" class="block text-sm font-semibold text-ink mb-1.5">
                 Mail Driver
             </label>
             <select id="mail_driver" name="mail_driver"
@@ -19,7 +19,6 @@
                 <option value="smtp" {{ old('mail_driver', 'smtp') == 'smtp' ? 'selected' : '' }}>SMTP</option>
                 <option value="sendmail" {{ old('mail_driver') == 'sendmail' ? 'selected' : '' }}>Sendmail</option>
                 <option value="log" {{ old('mail_driver') == 'log' ? 'selected' : '' }}>Log (testing)</option>
-                <option value="array" {{ old('mail_driver') == 'array' ? 'selected' : '' }}>Array (testing)</option>
             </select>
             @error('mail_driver')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -30,7 +29,7 @@
         <div id="smtp-fields" class="space-y-6 mb-6">
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
-                    <label for="mail_host" class="block text-sm font-medium text-slate-700 mb-1">
+                    <label for="mail_host" class="block text-sm font-semibold text-ink mb-1.5">
                         SMTP Host
                     </label>
                     <input type="text" id="mail_host" name="mail_host" value="{{ old('mail_host', 'smtp.mailtrap.io') }}"
@@ -42,7 +41,7 @@
                 </div>
 
                 <div>
-                    <label for="mail_port" class="block text-sm font-medium text-slate-700 mb-1">
+                    <label for="mail_port" class="block text-sm font-semibold text-ink mb-1.5">
                         SMTP Port
                     </label>
                     <input type="number" id="mail_port" name="mail_port" value="{{ old('mail_port', '587') }}"
@@ -56,7 +55,7 @@
 
             <div class="grid md:grid-cols-2 gap-6">
                 <div>
-                    <label for="mail_username" class="block text-sm font-medium text-slate-700 mb-1">
+                    <label for="mail_username" class="block text-sm font-semibold text-ink mb-1.5">
                         SMTP Username
                     </label>
                     <input type="text" id="mail_username" name="mail_username" value="{{ old('mail_username') }}"
@@ -68,7 +67,7 @@
                 </div>
 
                 <div>
-                    <label for="mail_password" class="block text-sm font-medium text-slate-700 mb-1">
+                    <label for="mail_password" class="block text-sm font-semibold text-ink mb-1.5">
                         SMTP Password
                     </label>
                     <input type="password" id="mail_password" name="mail_password" value="{{ old('mail_password') }}"
@@ -81,7 +80,7 @@
             </div>
 
             <div>
-                <label for="mail_encryption" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="mail_encryption" class="block text-sm font-semibold text-ink mb-1.5">
                     Encryption
                 </label>
                 <select id="mail_encryption" name="mail_encryption"
@@ -99,7 +98,7 @@
 
         <div class="grid md:grid-cols-2 gap-6 mb-8">
             <div>
-                <label for="mail_from_address" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="mail_from_address" class="block text-sm font-semibold text-ink mb-1.5">
                     From Email Address
                 </label>
                 <input type="email" id="mail_from_address" name="mail_from_address" value="{{ old('mail_from_address', 'noreply@example.com') }}"
@@ -112,7 +111,7 @@
             </div>
 
             <div>
-                <label for="mail_from_name" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="mail_from_name" class="block text-sm font-semibold text-ink mb-1.5">
                     From Name
                 </label>
                 <input type="text" id="mail_from_name" name="mail_from_name" value="{{ old('mail_from_name', 'OeParts') }}"
@@ -125,8 +124,8 @@
             </div>
         </div>
 
-        <div class="mb-6 p-4 border border-slate-200 rounded-lg">
-            <label for="test_to" class="block text-sm font-medium text-slate-700 mb-1">
+        <div class="mb-6 p-4 border border-rule rounded-xl">
+            <label for="test_to" class="block text-sm font-semibold text-ink mb-1.5">
                 Send a test email
             </label>
             <p class="text-xs text-muted mb-3">Verify these settings actually work before finishing — a typo'd SMTP password would otherwise only surface later, when a real order confirmation fails to send.</p>
@@ -134,35 +133,35 @@
                 <input type="email" id="test_to" name="test_to" value="{{ old('mail_from_address', 'noreply@example.com') }}"
                     class="form-input w-full sm:flex-1" placeholder="you@example.com">
                 <button type="button" id="send-test-email"
-                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200 whitespace-nowrap">
+                    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold border border-rule text-ink hover:bg-bg-page transition-all duration-200 whitespace-nowrap">
                     Send Test Email
                 </button>
             </div>
             <p id="test-email-result" class="mt-2 text-sm"></p>
         </div>
 
-        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="mb-6 p-4 bg-navy/5 border border-navy/20 rounded-xl">
             <div class="flex items-start gap-2">
-                <x-heroicon-o-information-circle class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div class="text-sm text-blue-800">
-                    <span class="font-medium">Note:</span> You can skip SMTP configuration for now and use the "log" driver for testing. Email settings can be updated later in <code>.env</code> file.
+                <x-heroicon-o-information-circle class="w-5 h-5 text-navy shrink-0 mt-0.5" />
+                <div class="text-sm text-navy">
+                    <span class="font-semibold">Note:</span> You can skip SMTP configuration for now and use the "Log" driver for testing. Email settings can be updated later in the <code>.env</code> file.
                 </div>
             </div>
         </div>
 
-        <div class="mb-8 p-4 border border-slate-200 rounded-lg">
+        <div class="mb-8 p-4 border border-rule rounded-xl">
             <label class="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" name="import_demo_data" value="1" {{ old('import_demo_data') ? 'checked' : '' }}
-                    class="mt-1 rounded border-slate-300">
+                    class="mt-1 rounded border-rule text-navy focus:ring-amber">
                 <span>
-                    <span class="block text-sm font-medium text-slate-700">Import demo catalog data</span>
+                    <span class="block text-sm font-semibold text-ink">Import demo catalog data</span>
                     <span class="block text-xs text-muted mt-0.5">Adds sample manufacturers, OEM parts, and blog posts so the storefront isn't empty on first look. Safe to skip — this never creates extra admin/customer accounts, only your own admin account from the previous step is created.</span>
                 </span>
             </label>
         </div>
 
-        <div class="flex justify-between items-center pt-6 border-t border-slate-200">
-            <a href="{{ route('installer.admin-account') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200">
+        <div class="flex justify-between items-center pt-6 border-t border-rule">
+            <a href="{{ route('installer.admin-account') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-rule text-ink hover:bg-bg-page transition-all duration-200">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 Back
             </a>
@@ -179,7 +178,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const driverSelect = document.getElementById('mail_driver');
         const smtpFields = document.getElementById('smtp-fields');
-        
+
         function toggleSmtpFields() {
             if (driverSelect.value === 'smtp') {
                 smtpFields.style.display = 'block';
@@ -197,7 +196,7 @@
                 });
             }
         }
-        
+
         driverSelect.addEventListener('change', toggleSmtpFields);
         toggleSmtpFields(); // Initial call
 

@@ -3,16 +3,16 @@
 @section('title', 'Step 2: Database Configuration')
 
 @section('content')
-<div class="bg-white rounded-xl border border-slate-200 p-6 md:p-8">
-    <h1 class="text-2xl font-bold text-navy mb-2">Database Configuration</h1>
-    <p class="text-muted mb-6">Enter your MySQL database connection details.</p>
+<div class="bg-paper rounded-2xl border border-rule shadow-admin-card p-6 md:p-10">
+    <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-ink mb-2">Database Configuration</h1>
+    <p class="text-muted mb-8">Enter your MySQL database connection details.</p>
 
     <form method="POST" action="{{ route('installer.process-database') }}">
         @csrf
 
         <div class="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-                <label for="db_host" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="db_host" class="block text-sm font-semibold text-ink mb-1.5">
                     Database Host
                 </label>
                 <input type="text" id="db_host" name="db_host" value="{{ old('db_host', '127.0.0.1') }}"
@@ -25,7 +25,7 @@
             </div>
 
             <div>
-                <label for="db_port" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="db_port" class="block text-sm font-semibold text-ink mb-1.5">
                     Database Port
                 </label>
                 <input type="number" id="db_port" name="db_port" value="{{ old('db_port', '3306') }}"
@@ -39,7 +39,7 @@
         </div>
 
         <div class="mb-6">
-            <label for="db_name" class="block text-sm font-medium text-slate-700 mb-1">
+            <label for="db_name" class="block text-sm font-semibold text-ink mb-1.5">
                 Database Name
             </label>
             <input type="text" id="db_name" name="db_name" value="{{ old('db_name') }}"
@@ -53,7 +53,7 @@
 
         <div class="grid md:grid-cols-2 gap-6 mb-8">
             <div>
-                <label for="db_username" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="db_username" class="block text-sm font-semibold text-ink mb-1.5">
                     Database Username
                 </label>
                 <input type="text" id="db_username" name="db_username" value="{{ old('db_username') }}"
@@ -65,7 +65,7 @@
             </div>
 
             <div>
-                <label for="db_password" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="db_password" class="block text-sm font-semibold text-ink mb-1.5">
                     Database Password
                 </label>
                 <input type="password" id="db_password" name="db_password" value="{{ old('db_password') }}"
@@ -77,28 +77,28 @@
             </div>
         </div>
 
-        <div class="mb-6 p-4 border border-slate-200 rounded-lg">
+        <div class="mb-6 p-4 border border-rule rounded-xl">
             <label class="flex items-start gap-3 cursor-pointer">
                 <input type="checkbox" name="create_database" value="1" {{ old('create_database') ? 'checked' : '' }}
-                    class="mt-1 rounded border-slate-300">
+                    class="mt-1 rounded border-rule text-navy focus:ring-amber">
                 <span>
-                    <span class="block text-sm font-medium text-slate-700">Create this database if it doesn't exist yet</span>
+                    <span class="block text-sm font-semibold text-ink">Create this database if it doesn't exist yet</span>
                     <span class="block text-xs text-muted mt-0.5">Requires your database user to have CREATE DATABASE privilege — common on a VPS, usually not available on shared hosting where the database must already be created via the control panel. Leave unchecked if you already created it.</span>
                 </span>
             </label>
         </div>
 
-        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="mb-6 p-4 bg-navy/5 border border-navy/20 rounded-xl">
             <div class="flex items-start gap-2">
-                <x-heroicon-o-information-circle class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div class="text-sm text-blue-800">
-                    <span class="font-medium">Note:</span> The installer will test the connection before proceeding. Ensure your database user has permission to create tables.
+                <x-heroicon-o-information-circle class="w-5 h-5 text-navy shrink-0 mt-0.5" />
+                <div class="text-sm text-navy">
+                    <span class="font-semibold">Note:</span> The installer will test the connection before proceeding. Ensure your database user has permission to create tables.
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-between items-center pt-6 border-t border-slate-200">
-            <a href="{{ route('installer.index') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200">
+        <div class="flex justify-between items-center pt-6 border-t border-rule">
+            <a href="{{ route('installer.index') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-rule text-ink hover:bg-bg-page transition-all duration-200">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 Back
             </a>

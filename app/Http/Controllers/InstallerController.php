@@ -302,7 +302,7 @@ class InstallerController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'mail_driver' => 'required|string|in:smtp,sendmail,log,array',
+            'mail_driver' => 'required|string|in:smtp,sendmail,log',
             'mail_host' => 'required_if:mail_driver,smtp|string',
             'mail_port' => 'required_if:mail_driver,smtp|numeric',
             'mail_username' => 'nullable|string',
@@ -346,7 +346,7 @@ class InstallerController extends Controller
     public function testMail(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'mail_driver' => 'required|string|in:smtp,sendmail,log,array',
+            'mail_driver' => 'required|string|in:smtp,sendmail,log',
             'mail_host' => 'required_if:mail_driver,smtp|string',
             'mail_port' => 'required_if:mail_driver,smtp|numeric',
             'mail_username' => 'nullable|string',

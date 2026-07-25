@@ -129,7 +129,10 @@ class AppServiceProvider extends ServiceProvider
         Section::observe(SectionObserver::class);
         NewsletterCampaign::observe(NewsletterCampaignObserver::class);
 
-        if ($this->app->environment('production')) {
+        // Force https for URL/asset generation only when the app is actually configured to be
+        // served over it. Forcing based on APP_ENV alone breaks any production install accessed
+        // over plain HTTP before SSL is provisioned (e.g. the shared-hosting web installer).
+        if (str_starts_with(config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
 

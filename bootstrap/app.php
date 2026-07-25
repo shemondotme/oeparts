@@ -7,6 +7,7 @@ use App\Http\Middleware\InstallerMiddleware;
 use App\Http\Middleware\IpBlocklist;
 use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
+use App\Http\Middleware\RedirectIfNotInstalled;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackUtm;
 use App\Http\Middleware\TriggerDueScheduledTasks;
@@ -48,6 +49,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'csp' => \App\Http\Middleware\ContentSecurityPolicy::class,
             'honeypot' => \Spatie\Honeypot\ProtectAgainstSpam::class,
             'auth.sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        $middleware->web(prepend: [
+            RedirectIfNotInstalled::class,
         ]);
 
         $middleware->web(append: [

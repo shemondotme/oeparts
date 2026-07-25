@@ -219,6 +219,7 @@ class InstallManager
             'create_admin',
             'persist_settings',
             'mail_env',
+            'backup_key',
         ];
 
         if (! empty($input['import_demo_data'])) {
@@ -244,6 +245,7 @@ class InstallManager
             'create_admin' => $this->stepCreateAdmin($input),
             'persist_settings' => $this->stepPersistSettings($input),
             'mail_env' => $this->stepMailEnv($input),
+            'backup_key' => $this->stepBackupKey(),
             'demo_data' => $this->stepDemoData(),
             'lock' => $this->stepLock(),
             default => throw new \RuntimeException("Unknown install step: {$key}"),
@@ -335,6 +337,30 @@ class InstallManager
         ]);
 
         return 'Mail settings written to .env.';
+    }
+
+    /**
+     * Generate a dedicated backup-encryption key so the Backup Engine (and
+     * the update system's mandatory pre-update backup) work the moment the
+     * install finishes — without this, an admin's first "Run backup now"
+     * click (or the very first self-update attempt) fails with a
+     * GDPR-driven "mandatorily encrypted, OE_BACKUP_KEY is not set" error
+     * that nothing in the wizard warned them about. Only generates when
+     * missing: re-running the installer after a failed run must never
+     * silently replace an existing key and orphan backups already
+     * encrypted with it.
+     */
+    private function stepBackupKey(): string
+    {
+        if (trim((string) config('backup.encryption.key', '')) !== '') {
+            return 'Backup encryption key already present — left unchanged.';
+        }
+
+        $this->updateEnvFile([
+            'OE_BACKUP_KEY' => app(\App\Services\Backup\BackupCipher::class)->generateKey(),
+        ]);
+
+        return 'Backup encryption key generated.';
     }
 
     /**

@@ -14,19 +14,28 @@
 
 <div class="min-h-full flex flex-col">
 
-    {{-- Installer header --}}
-    <header class="py-4 px-6" style="background-color: var(--color-navy, #1e293b); box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);">
-        <div class="max-w-3xl mx-auto flex items-center gap-3">
-            <span class="font-display font-bold text-xl text-white">OeParts</span>
-            <span class="text-xs text-amber font-medium uppercase tracking-widest">Installer</span>
+    {{-- Installer header — exact dark-background brand mark (identical markup to
+         components/footer.blade.php's logo block: same four SVG paths, same
+         tone="dark" wordmark). Static here (no href/hover), since this page has
+         nowhere else to navigate to yet. --}}
+    <header class="relative bg-ink py-6 px-6 border-b border-black/20 overflow-hidden">
+        <div class="absolute inset-0 bg-grid-navy-fine bg-grid-sm opacity-50 pointer-events-none" aria-hidden="true"></div>
+        <div class="relative max-w-3xl mx-auto flex items-center gap-4">
+            <x-brand-icon tone="dark" size="sm" class="group" />
+            <div class="min-w-0">
+                <x-brand-wordmark tone="dark" size="sm" />
+                <p class="mt-1 font-mono text-[10px] tracking-[0.24em] uppercase text-amber">
+                    Installer
+                </p>
+            </div>
         </div>
     </header>
 
     {{-- Step progress --}}
     @isset($currentStep)
-    <div class="bg-white border-b" style="border-color: var(--color-border-subtle, #e2e8f0);">
-        <div class="max-w-3xl mx-auto px-6 py-4">
-            <div class="flex items-center">
+    <div class="bg-paper border-b border-rule">
+        <div class="max-w-3xl mx-auto px-6 py-5">
+            <div class="flex items-start">
                 @foreach([
                     1 => 'Requirements',
                     2 => 'Database',
@@ -36,23 +45,33 @@
                     6 => 'Complete',
                 ] as $step => $label)
                 <div class="flex items-center {{ $loop->last ? '' : 'flex-1' }}">
-                    <div class="flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold
-                            {{ $step < $currentStep ? 'text-white' : ($step === $currentStep ? 'text-white' : '') }}"
-                            style="{{ $step < $currentStep ? 'background-color: var(--color-success, #22c55e);' : ($step === $currentStep ? 'background-color: var(--color-navy, #1e293b);' : 'background-color: var(--color-bg-muted, #e2e8f0); color: var(--color-text-muted, #64748b);') }}">
+                    <div class="flex flex-col items-center shrink-0">
+                        <div @class([
+                            'w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold font-mono transition-colors duration-200 shrink-0',
+                            'bg-amber text-ink' => $step < $currentStep,
+                            'bg-ink text-ivory ring-4 ring-amber/25' => $step === $currentStep,
+                            'bg-paper border-2 border-rule text-muted' => $step > $currentStep,
+                        ])>
                             @if($step < $currentStep)
                                 <x-heroicon-o-check class="w-4 h-4" />
                             @else
                                 {{ $step }}
                             @endif
                         </div>
-                        <span class="mt-1 text-xs font-medium hidden sm:block"
-                            style="{{ $step === $currentStep ? 'color: var(--color-navy, #1e293b);' : 'color: var(--color-text-muted, #64748b);' }}">
+                        <span @class([
+                            'mt-2 font-mono text-[10px] tracking-wider uppercase hidden sm:block text-center leading-tight',
+                            'text-ink font-bold' => $step === $currentStep,
+                            'text-ink-muted' => $step !== $currentStep,
+                        ])>
                             {{ $label }}
                         </span>
                     </div>
                     @if(!$loop->last)
-                    <div class="flex-1 h-0.5 mx-2" style="{{ $step < $currentStep ? 'background-color: var(--color-success, #22c55e);' : 'background-color: var(--color-border-subtle, #e2e8f0);' }}"></div>
+                    <div @class([
+                        'flex-1 h-px mx-2 mb-4 sm:mb-[18px] transition-colors duration-200',
+                        'bg-amber' => $step < $currentStep,
+                        'bg-rule' => $step >= $currentStep,
+                    ])></div>
                     @endif
                 </div>
                 @endforeach
@@ -62,18 +81,18 @@
     @endisset
 
     {{-- Main content --}}
-    <main class="flex-1 py-8 px-6">
+    <main class="flex-1 py-10 px-6">
         <div class="max-w-3xl mx-auto">
 
             {{-- Flash messages --}}
             @if(session('error'))
-            <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+            <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-800 text-sm">
                 <x-heroicon-o-x-circle class="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                 <span>{{ session('error') }}</span>
             </div>
             @endif
             @if(session('success'))
-            <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-lg text-green-800 text-sm">
+            <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm">
                 <x-heroicon-o-check-circle class="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
                 <span>{{ session('success') }}</span>
             </div>
@@ -83,7 +102,7 @@
         </div>
     </main>
 
-    <footer class="py-4 text-center text-xs text-muted">
+    <footer class="py-6 text-center font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">
         OeParts — Open Source OEM Parts Platform
     </footer>
 </div>

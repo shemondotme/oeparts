@@ -3,15 +3,15 @@
 @section('title', 'Step 3: Site Settings')
 
 @section('content')
-<div class="bg-white rounded-xl border border-slate-200 p-6 md:p-8">
-    <h1 class="text-2xl font-bold text-navy mb-2">Site Settings</h1>
-    <p class="text-muted mb-6">Configure your website's basic information.</p>
+<div class="bg-paper rounded-2xl border border-rule shadow-admin-card p-6 md:p-10">
+    <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-ink mb-2">Site Settings</h1>
+    <p class="text-muted mb-8">Configure your website's basic information.</p>
 
     <form method="POST" action="{{ route('installer.process-site-settings') }}">
         @csrf
 
         <div class="mb-6">
-            <label for="site_name" class="block text-sm font-medium text-slate-700 mb-1">
+            <label for="site_name" class="block text-sm font-semibold text-ink mb-1.5">
                 Site Name
             </label>
             <input type="text" id="site_name" name="site_name" value="{{ old('site_name', 'OeParts') }}"
@@ -24,7 +24,7 @@
         </div>
 
         <div class="mb-6">
-            <label for="site_url" class="block text-sm font-medium text-slate-700 mb-1">
+            <label for="site_url" class="block text-sm font-semibold text-ink mb-1.5">
                 Site URL
             </label>
             <input type="url" id="site_url" name="site_url" value="{{ old('site_url', url('/')) }}"
@@ -38,7 +38,7 @@
 
         <div class="grid md:grid-cols-2 gap-6 mb-8">
             <div>
-                <label for="default_locale" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="default_locale" class="block text-sm font-semibold text-ink mb-1.5">
                     Default Language
                 </label>
                 @php $locale = old('default_locale', $suggestedLocale ?? 'en'); @endphp
@@ -57,7 +57,7 @@
             </div>
 
             <div>
-                <label for="timezone" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="timezone" class="block text-sm font-semibold text-ink mb-1.5">
                     Timezone
                 </label>
                 @php $tzDefault = old('timezone', $suggestedTimezone ?? 'UTC'); @endphp
@@ -74,17 +74,17 @@
             </div>
         </div>
 
-        <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div class="mb-6 p-4 bg-navy/5 border border-navy/20 rounded-xl">
             <div class="flex items-start gap-2">
-                <x-heroicon-o-information-circle class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <div class="text-sm text-blue-800">
-                    <span class="font-medium">Note:</span> These settings can be changed later in the admin panel.
+                <x-heroicon-o-information-circle class="w-5 h-5 text-navy shrink-0 mt-0.5" />
+                <div class="text-sm text-navy">
+                    <span class="font-semibold">Note:</span> These settings can be changed later in the admin panel.
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-between items-center pt-6 border-t border-slate-200">
-            <a href="{{ route('installer.database') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200">
+        <div class="flex justify-between items-center pt-6 border-t border-rule">
+            <a href="{{ route('installer.database') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-rule text-ink hover:bg-bg-page transition-all duration-200">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 Back
             </a>
@@ -110,8 +110,8 @@
         const searchDiv = document.createElement('div');
         searchDiv.className = 'mb-2';
         searchDiv.innerHTML = `
-            <input type="text" id="timezone-search" 
-                   class="form-input w-full text-sm" 
+            <input type="text" id="timezone-search"
+                   class="form-input w-full text-sm"
                    placeholder="Search timezone...">
         `;
         timezoneSelect.parentNode.insertBefore(searchDiv, timezoneSelect);
@@ -120,19 +120,19 @@
         searchInput.addEventListener('input', function() {
             const query = this.value.toLowerCase();
             timezoneSelect.innerHTML = '';
-            
-            const filtered = timezones.filter(tz => 
-                tz.text.toLowerCase().includes(query) || 
+
+            const filtered = timezones.filter(tz =>
+                tz.text.toLowerCase().includes(query) ||
                 tz.value.toLowerCase().includes(query)
             );
-            
+
             filtered.forEach(tz => {
                 const option = document.createElement('option');
                 option.value = tz.value;
                 option.textContent = tz.text;
                 timezoneSelect.appendChild(option);
             });
-            
+
             // Restore selected value if still in filtered list
             if (filtered.some(tz => tz.value === '{{ $tzDefault }}')) {
                 timezoneSelect.value = '{{ $tzDefault }}';

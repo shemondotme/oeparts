@@ -55,7 +55,7 @@ class InstallManagerTest extends TestCase
         $this->assertSame('running', $progress['status']);
         $this->assertSame(0, $progress['step_index']);
         $this->assertSame('migrate', $progress['step']);
-        $this->assertSame(11, $progress['total_steps']);
+        $this->assertSame(12, $progress['total_steps']);
     }
 
     #[Test]
@@ -65,7 +65,7 @@ class InstallManagerTest extends TestCase
 
         $progress = $manager->start(['import_demo_data' => true]);
 
-        $this->assertSame(12, $progress['total_steps']);
+        $this->assertSame(13, $progress['total_steps']);
     }
 
     #[Test]
@@ -75,7 +75,7 @@ class InstallManagerTest extends TestCase
         $manager->start(['import_demo_data' => false]);
 
         $last = null;
-        for ($i = 0; $i < 11; $i++) {
+        for ($i = 0; $i < 12; $i++) {
             $last = $manager->advance();
             $this->assertNotSame('failed', $last['status']);
         }
@@ -107,7 +107,7 @@ class InstallManagerTest extends TestCase
     {
         $manager = $this->fakeManager();
         $manager->start(['import_demo_data' => false]);
-        for ($i = 0; $i < 11; $i++) {
+        for ($i = 0; $i < 12; $i++) {
             $manager->advance();
         }
 

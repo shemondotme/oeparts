@@ -3,15 +3,15 @@
 @section('title', 'Step 4: Admin Account')
 
 @section('content')
-<div class="bg-white rounded-xl border border-slate-200 p-6 md:p-8">
-    <h1 class="text-2xl font-bold text-navy mb-2">Create Admin Account</h1>
-    <p class="text-muted mb-6">Set up your super administrator account.</p>
+<div class="bg-paper rounded-2xl border border-rule shadow-admin-card p-6 md:p-10">
+    <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-ink mb-2">Create Admin Account</h1>
+    <p class="text-muted mb-8">Set up your super administrator account.</p>
 
     <form method="POST" action="{{ route('installer.process-admin-account') }}">
         @csrf
 
         <div class="mb-6">
-            <label for="name" class="block text-sm font-medium text-slate-700 mb-1">
+            <label for="name" class="block text-sm font-semibold text-ink mb-1.5">
                 Full Name
             </label>
             <input type="text" id="name" name="name" value="{{ old('name') }}"
@@ -23,7 +23,7 @@
         </div>
 
         <div class="mb-6">
-            <label for="email" class="block text-sm font-medium text-slate-700 mb-1">
+            <label for="email" class="block text-sm font-semibold text-ink mb-1.5">
                 Email Address
             </label>
             <input type="email" id="email" name="email" value="{{ old('email') }}"
@@ -37,7 +37,7 @@
 
         <div class="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-                <label for="password" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="password" class="block text-sm font-semibold text-ink mb-1.5">
                     Password
                 </label>
                 <input type="password" id="password" name="password"
@@ -50,7 +50,7 @@
             </div>
 
             <div>
-                <label for="password_confirmation" class="block text-sm font-medium text-slate-700 mb-1">
+                <label for="password_confirmation" class="block text-sm font-semibold text-ink mb-1.5">
                     Confirm Password
                 </label>
                 <input type="password" id="password_confirmation" name="password_confirmation"
@@ -59,17 +59,17 @@
             </div>
         </div>
 
-        <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+        <div class="mb-6 p-4 bg-amber/10 border border-amber/30 rounded-xl">
             <div class="flex items-start gap-2">
-                <x-heroicon-o-shield-exclamation class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div class="text-sm text-amber-800">
-                    <span class="font-medium">Security Note:</span> This account will have full access to the entire system. Choose a strong password and keep it safe.
+                <x-heroicon-o-shield-exclamation class="w-5 h-5 text-amber-text shrink-0 mt-0.5" />
+                <div class="text-sm text-amber-text">
+                    <span class="font-semibold">Security Note:</span> This account will have full access to the entire system. Choose a strong password and keep it safe.
                 </div>
             </div>
         </div>
 
-        <div class="flex justify-between items-center pt-6 border-t border-slate-200">
-            <a href="{{ route('installer.site-settings') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50 transition-all duration-200">
+        <div class="flex justify-between items-center pt-6 border-t border-rule">
+            <a href="{{ route('installer.site-settings') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-rule text-ink hover:bg-bg-page transition-all duration-200">
                 <x-heroicon-o-arrow-left class="w-4 h-4 mr-2" />
                 Back
             </a>
@@ -86,7 +86,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const password = document.getElementById('password');
         const confirm = document.getElementById('password_confirmation');
-        
+
         function validatePasswords() {
             if (password.value && confirm.value) {
                 if (password.value !== confirm.value) {
@@ -98,7 +98,7 @@
                 }
             }
         }
-        
+
         password.addEventListener('input', validatePasswords);
         confirm.addEventListener('input', validatePasswords);
     });

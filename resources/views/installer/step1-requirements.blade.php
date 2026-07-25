@@ -3,13 +3,13 @@
 @section('title', 'Step 1: Requirements')
 
 @section('content')
-<div class="bg-white rounded-xl border border-slate-200 p-6 md:p-8">
-    <h1 class="text-2xl font-bold text-navy mb-2">System Requirements</h1>
-    <p class="text-muted mb-6">Before proceeding, ensure your server meets the following requirements.</p>
+<div class="bg-paper rounded-2xl border border-rule shadow-admin-card p-6 md:p-10">
+    <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-ink mb-2">System Requirements</h1>
+    <p class="text-ink-muted mb-8">Before proceeding, ensure your server meets the following requirements.</p>
 
-    <div class="grid md:grid-cols-2 gap-6 mb-8">
+    <div class="grid md:grid-cols-2 gap-8 mb-8">
         <div>
-            <h2 class="text-lg font-semibold text-slate-800 mb-3">PHP Requirements</h2>
+            <h2 class="font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-ink mb-3">PHP Requirements</h2>
             <div class="space-y-2">
                 @foreach($requirements as $label => $met)
                 <div class="flex items-center gap-3">
@@ -18,14 +18,14 @@
                     @else
                     <x-heroicon-o-x-circle class="w-5 h-5 text-red-500 shrink-0" />
                     @endif
-                    <span class="{{ $met ? 'text-slate-700' : 'text-red-600' }}">{{ $label }}</span>
+                    <span class="{{ $met ? 'text-body' : 'text-red-600' }}">{{ $label }}</span>
                 </div>
                 @endforeach
             </div>
 
-            <div class="mt-4 p-3 bg-slate-50 rounded-lg">
-                <div class="text-sm text-slate-600">
-                    <span class="font-medium">PHP Version:</span> {{ $phpVersion }}
+            <div class="mt-4 p-3 bg-bg-page border border-rule rounded-xl">
+                <div class="text-sm text-body">
+                    <span class="font-semibold text-ink">PHP Version:</span> {{ $phpVersion }}
                     @if(version_compare($phpVersion, $phpRequired, '>='))
                     <span class="ml-2 text-green-600 font-medium">✓ OK</span>
                     @else
@@ -35,7 +35,7 @@
             </div>
 
             @if(!empty($recommended))
-            <h2 class="text-lg font-semibold text-slate-800 mb-3 mt-6">Recommended (Optional)</h2>
+            <h2 class="font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-ink mb-3 mt-6">Recommended (Optional)</h2>
             <div class="space-y-2">
                 @foreach($recommended as $label => $met)
                 <div class="flex items-center gap-3">
@@ -44,16 +44,16 @@
                     @else
                     <x-heroicon-o-information-circle class="w-5 h-5 text-amber-500 shrink-0" />
                     @endif
-                    <span class="{{ $met ? 'text-slate-700' : 'text-slate-600' }}">{{ $label }}</span>
+                    <span class="{{ $met ? 'text-body' : 'text-ink-muted' }}">{{ $label }}</span>
                 </div>
                 @endforeach
             </div>
-            <p class="mt-2 text-xs text-muted">Not required — the app runs fine on file/database cache and the sync queue driver. Install this only if you plan to use Redis for caching/queues.</p>
+            <p class="mt-2 text-xs text-ink-muted">Not required — the app runs fine on file/database cache and the sync queue driver. Install this only if you plan to use Redis for caching/queues.</p>
             @endif
         </div>
 
         <div>
-            <h2 class="text-lg font-semibold text-slate-800 mb-3">Directory Permissions</h2>
+            <h2 class="font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-ink mb-3">Directory Permissions</h2>
             <div class="space-y-2">
                 @foreach($permissions as $path => $writable)
                 <div class="flex items-center gap-3">
@@ -62,17 +62,17 @@
                     @else
                     <x-heroicon-o-x-circle class="w-5 h-5 text-red-500 shrink-0" />
                     @endif
-                    <span class="{{ $writable ? 'text-slate-700' : 'text-red-600' }}">{{ $path }}</span>
-                    <span class="text-xs text-muted">({{ $writable ? 'Writable' : 'Not writable' }})</span>
+                    <span class="{{ $writable ? 'text-body' : 'text-red-600' }}">{{ $path }}</span>
+                    <span class="text-xs text-ink-muted">({{ $writable ? 'Writable' : 'Not writable' }})</span>
                 </div>
                 @endforeach
             </div>
 
-            <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div class="mt-4 p-3 bg-amber/10 border border-amber/30 rounded-xl">
                 <div class="flex items-start gap-2">
-                    <x-heroicon-o-information-circle class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                    <div class="text-sm text-amber-800">
-                        <span class="font-medium">Note:</span> If any permissions are missing, adjust them via FTP or SSH before continuing.
+                    <x-heroicon-o-information-circle class="w-5 h-5 text-amber-text shrink-0 mt-0.5" />
+                    <div class="text-sm text-amber-text">
+                        <span class="font-semibold">Note:</span> If any permissions are missing, adjust them via FTP or SSH before continuing.
                     </div>
                 </div>
             </div>
@@ -80,18 +80,18 @@
     </div>
 
     @if(!collect($requirements)->every(fn($met) => $met) || !collect($permissions)->every(fn($writable) => $writable))
-    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
         <div class="flex items-start gap-3">
             <x-heroicon-o-exclamation-triangle class="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <div>
-                <h3 class="font-medium text-red-800">Requirements Not Met</h3>
+                <h3 class="font-semibold text-red-800">Requirements Not Met</h3>
                 <p class="text-sm text-red-700 mt-1">Please fix the issues above before proceeding with the installation.</p>
             </div>
         </div>
     </div>
     @endif
 
-    <div class="flex justify-between items-center pt-6 border-t border-slate-200">
+    <div class="flex justify-between items-center pt-6 border-t border-rule">
         <div></div>
         <div>
             @if(collect($requirements)->every(fn($met) => $met) && collect($permissions)->every(fn($writable) => $writable))
