@@ -53,6 +53,41 @@ class DashboardSettings extends SettingsPage
                             ->helperText('Hours of inactivity before a cart counts as abandoned — drives the dashboard widget and the hourly recovery-email run')
                             ->default(2),
                     ])->columns(2),
+
+                Section::make('Health Check Thresholds')
+                    ->description('Tune when the System → Health Check page flags the scheduler or backups as stale.')
+                    ->schema([
+                        Forms\Components\TextInput::make('scheduler_stale_minutes')
+                            ->label('Scheduler Heartbeat Stale Threshold (Minutes)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(60)
+                            ->required()
+                            ->helperText('Minutes since the last cron heartbeat before the Scheduler check is flagged stale')
+                            ->default(3),
+
+                        Forms\Components\TextInput::make('backup_stale_hours')
+                            ->label('Backup Stale Threshold (Hours)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(168)
+                            ->required()
+                            ->helperText('Hours since the last successful backup before the Backup check is flagged stale')
+                            ->default(26),
+                    ])->columns(2),
+
+                Section::make('Cache Dashboard Threshold')
+                    ->description('Tune when the System → Cache Dashboard page alerts admins about a degraded hit rate.')
+                    ->schema([
+                        Forms\Components\TextInput::make('cache_hit_rate_alert_threshold')
+                            ->label('Hit Rate Alert Threshold (%)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->required()
+                            ->helperText('Admins are notified once when the Redis cache hit rate drops below this percentage')
+                            ->default(50),
+                    ])->columns(2),
             ]);
     }
 }

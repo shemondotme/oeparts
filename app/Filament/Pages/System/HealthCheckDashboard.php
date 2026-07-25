@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Filament\Clusters\System;
 use App\Filament\Widgets\System\HealthCheckStats;
 use App\Models\ActivityLog;
 use App\Services\CacheService;
@@ -15,7 +14,12 @@ use Illuminate\Support\Facades\Cache;
 
 class HealthCheckDashboard extends Page
 {
-    protected static ?string $cluster = System::class;
+    protected static ?string $slug = 'system/health-check-dashboard';
+
+    public static function getNavigationGroup(): ?string
+    {
+        return 'System';
+    }
 
     protected static ?string $title = 'Health Check';
 
@@ -89,7 +93,10 @@ class HealthCheckDashboard extends Page
 
     public function runCheck(): void
     {
-        $results = app(HealthCheckService::class)->runAll();
+        // snapshot(), not runAll() — a manual run should also count toward
+        // history/uptime tracking and transition alerting (throttled the
+        // same as any other caller, so repeated clicks don't spam either).
+        $results = app(HealthCheckService::class)->snapshot();
 
         $this->logAction('health_check_run', 'Health check executed: ' . $results['status']);
 

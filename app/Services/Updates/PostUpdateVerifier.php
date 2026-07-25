@@ -66,7 +66,7 @@ class PostUpdateVerifier
     private function checkSmoke(VerifyReport $report): void
     {
         // DB reachable (mirrors the /health database check).
-        app(HealthCheckService::class)->checkDatabase() === 'ok'
+        app(HealthCheckService::class)->checkDatabase()['status'] === 'ok'
             ? $report->add('smoke:db', 'ok')
             : $report->add('smoke:db', 'fail', 'Database is not reachable after the update.');
 

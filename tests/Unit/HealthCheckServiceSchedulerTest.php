@@ -2,7 +2,10 @@
 
 namespace Tests\Unit;
 
+use App\Models\Setting;
 use App\Services\HealthCheckService;
+use App\Services\SettingsService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -23,9 +26,13 @@ use Tests\TestCase;
  */
 class HealthCheckServiceSchedulerTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function tearDown(): void
     {
         Cache::forget('scheduler_heartbeat');
+        Setting::where('group', 'dashboard')->where('key', 'scheduler_stale_minutes')->delete();
+        app(SettingsService::class)->forget('dashboard');
 
         parent::tearDown();
     }
@@ -35,7 +42,7 @@ class HealthCheckServiceSchedulerTest extends TestCase
     {
         Cache::forget('scheduler_heartbeat');
 
-        $this->assertSame('unknown', (new HealthCheckService)->checkScheduler());
+        $this->assertSame('unknown', (new HealthCheckService)->checkScheduler()['status']);
     }
 
     #[Test]
@@ -43,7 +50,7 @@ class HealthCheckServiceSchedulerTest extends TestCase
     {
         Cache::put('scheduler_heartbeat', now()->subSeconds(30)->toIso8601String(), 120);
 
-        $this->assertSame('ok', (new HealthCheckService)->checkScheduler());
+        $this->assertSame('ok', (new HealthCheckService)->checkScheduler()['status']);
     }
 
     #[Test]
@@ -51,6 +58,22 @@ class HealthCheckServiceSchedulerTest extends TestCase
     {
         Cache::put('scheduler_heartbeat', now()->subMinutes(10)->toIso8601String(), 600);
 
-        $this->assertSame('stale', (new HealthCheckService)->checkScheduler());
+        $this->assertSame('stale', (new HealthCheckService)->checkScheduler()['status']);
+    }
+
+    #[Test]
+    public function it_uses_the_configurable_stale_threshold(): void
+    {
+        Setting::updateOrCreate(
+            ['group' => 'dashboard', 'key' => 'scheduler_stale_minutes'],
+            ['value' => '5', 'type' => 'integer'],
+        );
+        app(SettingsService::class)->forget('dashboard');
+
+        // 4 minutes old would be 'stale' under the default 3-minute
+        // threshold, but 'ok' once the threshold is raised to 5.
+        Cache::put('scheduler_heartbeat', now()->subMinutes(4)->toIso8601String(), 600);
+
+        $this->assertSame('ok', (new HealthCheckService)->checkScheduler()['status']);
     }
 }

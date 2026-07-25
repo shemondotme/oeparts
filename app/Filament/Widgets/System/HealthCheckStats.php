@@ -2,25 +2,40 @@
 
 namespace App\Filament\Widgets\System;
 
+use App\Filament\Pages\System\BackupDashboard;
+use App\Filament\Pages\System\CacheDashboard;
+use App\Filament\Pages\System\QueueMonitor;
+use App\Filament\Pages\System\ScheduledTasksPage;
+use App\Filament\Pages\System\ServerMonitor;
+use App\Filament\Widgets\Concerns\HasMonitoringVisuals;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+use App\Models\HealthCheckSnapshot;
 use App\Services\HealthCheckService;
-use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use Filament\Widgets\Widget;
 
-class HealthCheckStats extends BaseWidget
+/**
+ * Dense ops row-list for the seven admin health checks — a plain Widget (not
+ * StatsOverviewWidget) because the row layout (status dot, pill, detail,
+ * inline sparkline, relative last-checked time, whole-row click-through)
+ * isn't expressible through Stat::make(). Same pattern as GroupHeaderWidget:
+ * a Widget subclass with a $view, data supplied via public methods the Blade
+ * partial calls directly.
+ */
+class HealthCheckStats extends Widget
 {
+    use HasMonitoringVisuals;
+    use InteractsWithDashboardCache;
+
     protected static bool $isLazy = false;
 
     protected ?string $pollingInterval = '30s';
 
     protected int|string|array $columnSpan = 'full';
 
-    protected function getColumns(): int
-    {
-        return 3;
-    }
+    protected string $view = 'filament.widgets.system.health-check-rows';
 
     /**
-     * key => [label, description, icon]
+     * key => [label, sub-label, icon]
      */
     private const CHECKS = [
         'database'  => ['Database', 'MySQL connectivity', 'heroicon-o-circle-stack'],
@@ -29,49 +44,81 @@ class HealthCheckStats extends BaseWidget
         'storage'   => ['Storage', 'Writable storage path', 'heroicon-o-folder'],
         'scheduler' => ['Scheduler', 'Cron heartbeat', 'heroicon-o-clock'],
         'assets'    => ['Assets', 'Compiled build manifest', 'heroicon-o-cube'],
+        'backup'    => ['Backup', 'Last successful backup age', 'heroicon-o-archive-box'],
     ];
 
-    protected function getStats(): array
+    /**
+     * One presentation row per check, for the Blade partial to render.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getRows(): array
     {
-        $results = app(HealthCheckService::class)->runAll();
-        $checks = $results['checks'] ?? [];
+        $result = $this->cachedHealthData('rows', fn () => app(HealthCheckService::class)->snapshot());
+        $checks = $result['checks'] ?? [];
 
-        $overall = match ($results['status'] ?? 'fail') {
-            'ok'       => ['All Systems Operational', 'success', 'heroicon-m-check-badge'],
-            'degraded' => ['Degraded — action needed', 'warning', 'heroicon-m-exclamation-triangle'],
-            default    => ['Systems Down', 'danger', 'heroicon-m-x-circle'],
-        };
+        $rows = [];
 
-        $stats = [
-            Stat::make('Overall Status', $overall[0])
-                ->description('Version ' . ($results['version'] ?? '—'))
-                ->descriptionIcon($overall[2])
-                ->color($overall[1]),
-        ];
+        foreach (self::CHECKS as $key => [$label, $sub, $icon]) {
+            $check = $checks[$key] ?? ['status' => 'unknown', 'detail' => '—', 'response_time_ms' => null];
 
-        foreach (self::CHECKS as $key => [$label, $description, $icon]) {
-            [$value, $color] = $this->presentStatus($checks[$key] ?? 'unknown');
+            $recent = HealthCheckSnapshot::forCheck($key)
+                ->orderByDesc('checked_at')
+                ->limit(12)
+                ->get()
+                ->reverse()
+                ->values();
 
-            $stats[] = Stat::make($label, $value)
-                ->description($description)
-                ->descriptionIcon($icon)
-                ->color($color);
+            $rows[] = [
+                'key'         => $key,
+                'label'       => $label,
+                'sub'         => $sub,
+                'icon'        => $icon,
+                'status'      => $check['status'],
+                'pill'        => $this->pillLabel($check['status']),
+                'state'       => $this->colorToState($this->statusColor($check['status'])),
+                'detail'      => $check['detail'] ?? '',
+                'latency'     => $check['response_time_ms'] !== null ? $check['response_time_ms'] . 'ms' : null,
+                'sparkline'   => $recent->map(fn ($row) => $this->colorToState($this->statusColor($row->status)))->all(),
+                'lastChecked' => $recent->last()?->checked_at?->diffForHumans() ?? 'never',
+                'url'         => $this->urlFor($key),
+            ];
         }
 
-        return $stats;
+        return $rows;
     }
 
-    /**
-     * @return array{0: string, 1: string} [value label, color]
-     */
-    private function presentStatus(string $status): array
+    private function statusColor(string $status): string
     {
         return match ($status) {
-            'ok'      => ['Operational', 'success'],
-            'fail'    => ['Failing', 'danger'],
-            'missing' => ['Missing', 'warning'],
-            'stale'   => ['Stale', 'warning'],
-            default   => ['Unknown', 'gray'],
+            'ok'                       => 'success',
+            'stale', 'missing', 'none' => 'warning',
+            'fail'                     => 'danger',
+            default                    => 'gray',
+        };
+    }
+
+    private function pillLabel(string $status): string
+    {
+        return match ($status) {
+            'ok'      => 'Operational',
+            'fail'    => 'Failing',
+            'stale'   => 'Stale',
+            'missing' => 'Missing',
+            'none'    => 'None',
+            default   => 'Unknown',
+        };
+    }
+
+    private function urlFor(string $key): ?string
+    {
+        return match ($key) {
+            'database', 'storage', 'assets' => ServerMonitor::getUrl(),
+            'cache'                          => CacheDashboard::getUrl(),
+            'queue'                          => QueueMonitor::getUrl(),
+            'scheduler'                      => ScheduledTasksPage::getUrl(),
+            'backup'                         => BackupDashboard::getUrl(),
+            default                          => null,
         };
     }
 }

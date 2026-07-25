@@ -153,10 +153,24 @@ class SettingsFactoryDefaultsTest extends TestCase
         $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\DashboardSettings::class);
 
         $this->assertArrayNotHasKey('pending_orders_attention', $defaults);
-        $this->assertArrayNotHasKey('backup_stale_hours', $defaults);
         $this->assertArrayNotHasKey('pending_orders_warning', $defaults);
         $this->assertArrayHasKey('orders_threshold', $defaults);
         $this->assertArrayHasKey('pending_delayed_minutes', $defaults);
         $this->assertArrayHasKey('cart_abandoned_hours', $defaults);
+    }
+
+    #[Test]
+    public function dashboard_factory_defaults_includes_health_check_thresholds(): void
+    {
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\DashboardSettings::class);
+
+        // backup_stale_hours used to be a phantom setting — read via
+        // settings() with a code-only fallback, but never seeded/editable.
+        // It's now a real, DB-backed setting (see HealthCheckService rework).
+        $this->assertArrayHasKey('backup_stale_hours', $defaults);
+        $this->assertSame(26, $defaults['backup_stale_hours']);
+
+        $this->assertArrayHasKey('scheduler_stale_minutes', $defaults);
+        $this->assertSame(3, $defaults['scheduler_stale_minutes']);
     }
 }
