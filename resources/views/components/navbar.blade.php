@@ -63,21 +63,7 @@
                class="group flex items-center gap-3.5 pr-6 border-r border-rule shrink-0
                       focus-visible:outline-none focus-visible:bg-ink/5"
                aria-label="{{ $siteName }} · Home">
-                {{-- Hex bolt mark — authored SVG, inverts on hover --}}
-                <div class="relative w-11 h-11 shrink-0 transition-transform duration-300 group-hover:rotate-[30deg]">
-                    <svg viewBox="0 0 60 60" class="w-full h-full" aria-hidden="true">
-                        <path d="M30 3 L53 16 L53 44 L30 57 L7 44 L7 16 Z"
-                              class="fill-ink group-hover:fill-amber transition-colors duration-200"/>
-                        <path d="M30 13 L44.5 21.5 L44.5 38.5 L30 47 L15.5 38.5 L15.5 21.5 Z"
-                              class="fill-ivory group-hover:fill-ink transition-colors duration-200"/>
-                        <path d="M30 18 L30 42 M18 30 L42 30"
-                              class="stroke-ink group-hover:stroke-amber transition-colors duration-200"
-                              stroke-width="2.5" stroke-linecap="square"/>
-                        <circle cx="30" cy="30" r="3.2"
-                                class="fill-amber group-hover:fill-ivory transition-colors duration-200"/>
-                    </svg>
-                    <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-amber group-hover:bg-ink transition-colors"></span>
-                </div>
+                <x-brand-icon tone="light" size="sm" />
                 <div class="leading-none">
                     <x-brand-wordmark tone="light" size="sm" />
                     <p class="mt-1.5 font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">

@@ -70,24 +70,7 @@
                 <a href="{{ url('/'.$lang.'/') }}"
                    class="relative shrink-0 hidden sm:block focus-visible:outline-none"
                    aria-label="{{ $siteName }} · Home">
-                    <div class="transition-transform duration-300 group-hover:rotate-[30deg]">
-                        <svg viewBox="0 0 60 60" class="w-16 h-16" aria-hidden="true">
-                            <path d="M30 3 L53 16 L53 44 L30 57 L7 44 L7 16 Z"
-                                  class="fill-ivory group-hover:fill-amber transition-colors duration-200"/>
-                            <path d="M30 13 L44.5 21.5 L44.5 38.5 L30 47 L15.5 38.5 L15.5 21.5 Z"
-                                  class="fill-ink transition-colors duration-200"/>
-                            <path d="M30 18 L30 42 M18 30 L42 30"
-                                  class="stroke-ivory group-hover:stroke-amber transition-colors duration-200"
-                                  stroke-width="2.5" stroke-linecap="square"/>
-                            <circle cx="30" cy="30" r="3.2"
-                                    class="fill-amber group-hover:fill-ivory transition-colors duration-200"/>
-                        </svg>
-                        {{-- Badge hover is ivory, NOT the navbar's ink — the navbar's hover
-                             badge (ink) is only visible because that navbar sits on a light
-                             background; this footer's own background IS ink, so copying that
-                             value verbatim made the badge disappear into the page on hover. --}}
-                        <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-amber group-hover:bg-ivory transition-colors duration-200"></span>
-                    </div>
+                    <x-brand-icon tone="dark" size="lg" />
                 </a>
 
                 <div class="min-w-0">
