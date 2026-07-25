@@ -18,23 +18,49 @@
         </include>
     </source>
     <php>
-        <!-- Use <server> for APP_ENV and APP_URL so $_SERVER is set correctly.
-             php artisan test bootstraps the app with .env first (setting $_SERVER).
-             PHPUnit's <env> only calls putenv() which loses to $_SERVER in Env::get().
-             <server> overwrites $_SERVER before each test, so Laravel picks up
-             APP_ENV=testing and loads .env.testing (which has APP_URL=http://localhost). -->
+        <!-- ALL of these use <server>, not <env>: php artisan test bootstraps
+             the app with the REAL .env first, and this project's docker
+             container also has its own real OS-level env vars baked in via
+             .env.docker.overrides (CACHE_STORE=redis, QUEUE_CONNECTION=redis,
+             SESSION_DRIVER=redis, MAIL_MAILER=smtp — confirmed live in the
+             container). Laravel's Dotenv is immutable (never overwrites an
+             already-set real env var), and PHPUnit's <env> only calls
+             putenv(), which LOSES to an already-set $_SERVER/$_ENV value in
+             Illuminate\Support\Env::get() — so those four settings could
+             silently resolve to their real container values instead of the
+             test-safe ones below, depending on exactly when a given test
+             touched them. Confirmed root cause of real jobs leaking onto the
+             live Redis queue during test runs (queue.default=redis) and a
+             test asserting cache.default reading back 'redis' instead of
+             'array'. <server> overwrites $_SERVER directly before each test,
+             which is what actually takes precedence — same fix already
+             applied to APP_ENV/APP_URL below, now applied to everything else
+             for the same reason. -->
         <server name="APP_ENV" value="testing"/>
         <server name="APP_URL" value="http://localhost"/>
-        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
-        <env name="BCRYPT_ROUNDS" value="4"/>
-        <env name="OE_BACKUP_KEY" value="base64:dGVzdC1vbmx5LWJhY2t1cC1rZXktMzJieXRlcy0hIQ=="/>
-        <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
-        <env name="MAIL_MAILER" value="array"/>
-        <env name="PULSE_ENABLED" value="false"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
-        <env name="SESSION_DRIVER" value="array"/>
-        <env name="TELESCOPE_ENABLED" value="false"/>
+        <server name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <server name="BCRYPT_ROUNDS" value="4"/>
+        <server name="OE_BACKUP_KEY" value="base64:dGVzdC1vbmx5LWJhY2t1cC1rZXktMzJieXRlcy0hIQ=="/>
+        <server name="CACHE_STORE" value="array"/>
+        <server name="DB_CONNECTION" value="sqlite"/>
+        <server name="DB_DATABASE" value=":memory:"/>
+        <server name="MAIL_MAILER" value="array"/>
+        <server name="PULSE_ENABLED" value="false"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
+        <server name="SESSION_DRIVER" value="array"/>
+        <server name="TELESCOPE_ENABLED" value="false"/>
+
+        <!-- Works around a known PHP 8.4 engine bug: the cyclic garbage
+             collector corrupts the Zend heap during long-running single-
+             process PHPUnit runs (crashes with "zend_mm_heap corrupted",
+             SIGABRT/signal 6, partway through a large suite — reproduced
+             live on this project's PHP 8.4.23 running the full ~900-test
+             suite in one process). Matches php-src issue #20307
+             ("[8.4.14] zend_mm_heap corrupted in rebuild_object_properties_
+             internal during GC"), confirmed there that disabling GC
+             (zend.enable_gc=0) prevents the crash. memory_limit is -1
+             (unlimited) in this environment, so disabling cyclic GC for the
+             test process only risks higher peak RSS, not an OOM. -->
+        <ini name="zend.enable_gc" value="0"/>
     </php>
 </phpunit>
