@@ -16,6 +16,28 @@ jobs:
       matrix:
         php: ["8.3", "8.4", "8.5"]
 
+    # Some tests (CacheMetricsService and friends) deliberately exercise the
+    # real Redis connection directly (Redis::connection('cache')), independent
+    # of CACHE_STORE=array set for the rest of the suite — same as this
+    # project's local Docker dev environment, which always has a real redis
+    # container. Without this service those tests fail with
+    # "RedisException: Connection refused", and — since the failure is
+    # uncaught inside a RefreshDatabase-wrapped test — cascades into
+    # transaction-state errors for unrelated tests sharing the same parallel
+    # worker. Exposed on the default port with no extra config: this project's
+    # redis config (config/database.php) already defaults to 127.0.0.1:6379,
+    # matching a GitHub Actions services container with no host networking.
+    services:
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
