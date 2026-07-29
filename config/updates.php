@@ -91,6 +91,18 @@ return [
         'vendor_publish_tags' => [],
         // Idempotent reference seeders (db:seed --class --force). Releases opt-in here;
         // default none, since re-running a non-idempotent seeder could reset user data.
+        //
+        // Deliberately left empty, including for v1.0.14 (which adds new rows via
+        // RolesSeeder/SettingsSeeder/TaxRatesSeeder/CmsFooterPagesSeeder): every one
+        // of those seeders keys updateOrCreate() on a natural key but then
+        // unconditionally overwrites the VALUE columns too (role permissions,
+        // setting values, tax rates, page content) — safe to run once, but wiring
+        // any of them in HERE means every single FUTURE update reapplies today's
+        // hardcoded defaults forever, silently reverting any admin who later
+        // customizes a role's permissions, corrects a seeded tax rate, or edits the
+        // returns-policy page copy. version.json's post_update_notes documents the
+        // one-time `php artisan db:seed --class=...` commands for this release
+        // instead — see there.
         'seeders' => [],
         // Rebuild config/route/view/event caches (clear then cache).
         'rebuild_cache' => true,

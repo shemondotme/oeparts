@@ -1,0 +1,17 @@
+# Defense in depth for Apache: the document root MUST be set to public/,
+# never this project-root directory — .env, storage/, vendor/, database/,
+# .git and composer.json/lock all live here and must never be reachable
+# over HTTP. If a host's docroot is ever misconfigured to point here
+# instead of public/, this blocks direct access to everything in this
+# directory rather than silently serving it. See deploy/nginx/oeparts.conf's
+# top comment for the same requirement under nginx (nginx has no .htaccess
+# equivalent — `root` in the server block must point at public/ directly).
+<IfModule mod_authz_core.c>
+    # Apache 2.4+
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    # Apache 2.2
+    Order deny,allow
+    Deny from all
+</IfModule>

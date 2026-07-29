@@ -257,6 +257,18 @@ No caching backend is required to install or run OeParts — the shipped default
 
 Host has Memcached but not Redis? Set `CACHE_STORE=memcached` and leave `SESSION_DRIVER`/`QUEUE_CONNECTION` on `file`/`sync` (or `database` if you'd rather not touch the filesystem) — Memcached is only a *documented, supported* choice for the cache role here, even though Laravel itself is technically capable of more.
 
+### Web server (Nginx / Apache)
+
+**Document root MUST be `public/`**, never the project root — `.env`, `storage/`, `vendor/`, `database/` and `.git` all live one level above `public/` and are only kept out of reach because neither web server ever serves anything outside its configured root. A root-level [`.htaccess`](.htaccess) blocks direct access under Apache as a defense-in-depth backstop if this is ever misconfigured, but the same misconfiguration under nginx has no backstop at all — get the root right.
+
+| | Apache | Nginx |
+|---|---|---|
+| Config | [`public/.htaccess`](public/.htaccess) — ships in the repo, works out of the box (needs `mod_rewrite`) | [`deploy/nginx/oeparts.conf`](deploy/nginx/oeparts.conf) — copy, edit the two placeholders, done |
+| Upload/execution limits (large CSV imports) | `.htaccess`'s `php_value` overrides work **only under `mod_php`**. Running PHP-FPM behind Apache (`mod_proxy_fcgi`, increasingly the default)? Same fix as nginx → | PHP-FPM ignores `.htaccess` entirely — set the pool overrides in [`deploy/php-fpm/oeparts-pool-overrides.conf`](deploy/php-fpm/oeparts-pool-overrides.conf), **and** raise nginx's own `client_max_body_size` (nginx enforces its cap before PHP ever sees the request) |
+| Recovery console reachability | Works automatically — Apache executes any `.php` file under the docroot | [`deploy/nginx/oeparts.conf`](deploy/nginx/oeparts.conf) intentionally routes only `index.php` to PHP-FPM (hardening — an uploaded `.php` file can never execute) with one explicit carve-out for `oe-recovery.php`. Using a different nginx template? Make sure it has the same carve-out or the recovery console 404s exactly when you need it |
+
+Behind a reverse proxy or CDN (nginx/Apache terminating TLS in front of a separate PHP-FPM pool, or Cloudflare/a load balancer in front of either)? Set `TRUSTED_PROXIES` in `.env` (see `.env.example`) so `IpBlocklist`, rate limiting, and generated `https://` URLs see the real client IP/scheme instead of the proxy's.
+
 ---
 
 ## In-App Update & Recovery System

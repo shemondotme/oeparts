@@ -396,6 +396,18 @@ class InstallManager
         session()->forget('installer');
         Artisan::call('view:clear');
 
+        // Without this, uploaded media (product images, blog/CMS images) 404
+        // on every fresh install regardless of web server — the update system's
+        // post_swap.artisan list runs storage:link on every subsequent update
+        // (config/updates.php), but nothing ran it on first install. Best-effort:
+        // a symlink failure (e.g. disabled on some shared-hosting filesystems)
+        // must not block "installation complete" — the admin can run it manually.
+        try {
+            Artisan::call('storage:link');
+        } catch (\Throwable $e) {
+            $this->writeLog('warning', 'storage:link failed during install: '.$e->getMessage());
+        }
+
         return 'Installation complete.';
     }
 

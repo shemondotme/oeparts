@@ -51,6 +51,24 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
 
+        // Off by default (no behavior change for direct-to-PHP-FPM deployments).
+        // Set TRUSTED_PROXIES in .env when nginx/Apache sits in front of PHP-FPM
+        // as a reverse proxy, or behind a CDN/load balancer, so real client IPs
+        // (X-Forwarded-For) and the original scheme (X-Forwarded-Proto, for
+        // correct https:// URL generation and secure-cookie flags) are trusted
+        // from upstream instead of reading the proxy's own IP — IpBlocklist and
+        // rate limiting key off $request->ip(), which is wrong without this.
+        // Comma-separated CIDRs/IPs, or '*' to trust any upstream (safe only
+        // when nothing but your own proxy can reach the app server directly).
+        $trustedProxies = trim((string) env('TRUSTED_PROXIES', ''));
+        $middleware->trustProxies(
+            at: $trustedProxies !== '' ? array_map('trim', explode(',', $trustedProxies)) : null,
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         $middleware->web(prepend: [
             RedirectIfNotInstalled::class,
         ]);

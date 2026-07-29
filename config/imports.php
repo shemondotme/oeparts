@@ -17,7 +17,10 @@ return [
 
     // Upload cap in KB, fed into Filament's FileUpload::maxSize(). Actual
     // uploads are also bounded by the host's upload_max_filesize/post_max_size
-    // (see public/.htaccess) — raise both together.
+    // — public/.htaccess raises these under mod_php only; PHP-FPM hosts (most
+    // nginx setups, and increasingly Apache too) need
+    // deploy/php-fpm/oeparts-pool-overrides.conf instead, and nginx additionally
+    // needs its own client_max_body_size raised (see deploy/nginx/oeparts.conf).
     'max_upload_kb' => (int) env('OE_IMPORT_MAX_UPLOAD_KB', 1024 * 1024), // 1GB
 
     // Disk + subpath where uploaded CSVs are staged for processing.
