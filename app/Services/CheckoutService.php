@@ -34,7 +34,8 @@ class CheckoutService
         private SequenceService $sequenceService,
         private SettingsService $settings,
         private CartService $cartService,
-        private ShippingService $shippingService
+        private ShippingService $shippingService,
+        private TaxRateService $taxRateService
     ) {}
 
     /**
@@ -265,7 +266,7 @@ class CheckoutService
             $handlingFee = bcadd((string) settings('shipping.handling_fee', '0.00'), '0', 2);
 
             $taxableBase = bcadd(bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);
-            $vatAmount = $this->calculateVat($taxableBase);
+            $vatAmount = $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
             $grandTotal = bcadd($taxableBase, $vatAmount, 2);
 
             // --- Coupon application ---
@@ -405,11 +406,13 @@ class CheckoutService
     }
 
     /**
-     * Calculate VAT amount on a taxable base using the storefront's default rate.
+     * Calculate VAT amount on a taxable base. Uses the destination country's
+     * rate when Country-Based VAT is enabled (Settings → Tax Settings) and a
+     * rate is configured for it; otherwise falls back to the flat store rate.
      */
-    private function calculateVat(string $amount): string
+    private function calculateVat(string $amount, ?string $countryCode = null): string
     {
-        $vatRate = (string) settings('tax.default_vat_rate', '21.00');
+        $vatRate = $this->taxRateService->resolve($countryCode);
         return bcmul($amount, bcdiv($vatRate, '100', 4), 2);
     }
 

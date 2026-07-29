@@ -104,6 +104,35 @@ class AuthSettings extends SettingsPage
                             ->helperText('Expose customer signup and registration page forms on storefront')
                             ->default(true),
                     ])->columns(2),
+
+                Section::make('Social Login (OAuth)')
+                    ->description('Google/Facebook app credentials for customer social sign-in. Secrets are encrypted at rest — never stored in .env.')
+                    ->schema([
+                        Forms\Components\TextInput::make('google_client_id')
+                            ->label('Google Client ID')
+                            ->placeholder('e.g. xxxxxxxxxxxx.apps.googleusercontent.com')
+                            ->maxLength(255)
+                            ->default(null),
+
+                        Forms\Components\TextInput::make('google_client_secret')
+                            ->label('Google Client Secret')
+                            ->password()
+                            ->revealable()
+                            ->helperText('Saved encrypted in database')
+                            ->default(null),
+
+                        Forms\Components\TextInput::make('facebook_client_id')
+                            ->label('Facebook App ID')
+                            ->maxLength(255)
+                            ->default(null),
+
+                        Forms\Components\TextInput::make('facebook_client_secret')
+                            ->label('Facebook App Secret')
+                            ->password()
+                            ->revealable()
+                            ->helperText('Saved encrypted in database')
+                            ->default(null),
+                    ])->columns(2),
             ]);
     }
 }

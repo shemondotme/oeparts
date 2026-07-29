@@ -7,6 +7,7 @@ use App\Services\CheckoutService;
 use App\Services\CartService;
 use App\Services\PaymentService;
 use App\Services\ShippingService;
+use App\Services\TaxRateService;
 use App\Enums\PaymentMethod;
 use App\Models\Order;
 use Illuminate\Http\Request;
@@ -21,7 +22,8 @@ class CheckoutController extends Controller
         private CheckoutService $checkoutService,
         private CartService $cartService,
         private PaymentService $paymentService,
-        private ShippingService $shippingService
+        private ShippingService $shippingService,
+        private TaxRateService $taxRateService
     ) {}
 
     private function guestCheckoutAllowed(): bool
@@ -519,7 +521,7 @@ class CheckoutController extends Controller
         $subtotal = bcadd((string) ($summary['subtotal'] ?? '0'), '0', 2);
         $couponDiscount = bcadd((string) ($summary['coupon_discount'] ?? '0'), '0', 2);
         $discountedSubtotal = bcsub($subtotal, $couponDiscount, 2);
-        $vatRate = (string) ($summary['vat_rate'] ?? settings('tax.default_vat_rate', 21));
+        $vatRate = $this->taxRateService->resolve($checkoutData['shipping_address']['country_code'] ?? null);
         $shipping = $shippingCost ?? '0.00';
 
         $urgentProcessing = (bool) ($checkoutData['urgent_processing'] ?? false) && (bool) settings('checkout.urgent_processing_enabled', false);

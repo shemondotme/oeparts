@@ -38,7 +38,8 @@ class OrderService
         private SequenceService $sequenceService,
         private SettingsService $settings,
         private CartService $cartService,
-        private ShippingService $shippingService
+        private ShippingService $shippingService,
+        private TaxRateService $taxRateService
     ) {}
 
     /**
@@ -79,7 +80,7 @@ class OrderService
             $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
             $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id'] ?? null);
             $taxableBase = bcadd($subtotal, $shippingCost, 2);
-            $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase);
+            $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
             $discountAmount = $data['discount_amount'] ?? '0.00';
             $grandTotal = bcsub(bcadd($taxableBase, $vatAmount, 2), $discountAmount, 2);
 
@@ -351,11 +352,11 @@ class OrderService
     }
 
     /**
-     * Calculate VAT amount based on configured rate.
+     * Calculate VAT amount based on the configured rate (country-based when enabled).
      */
-    public function calculateVat(string $amount): string
+    public function calculateVat(string $amount, ?string $countryCode = null): string
     {
-        $vatRate = (string) $this->settings->get('tax.default_vat_rate', 21);
+        $vatRate = $this->taxRateService->resolve($countryCode);
         return bcmul($amount, bcdiv($vatRate, '100', 4), 2);
     }
 

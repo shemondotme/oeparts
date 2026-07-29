@@ -37,7 +37,7 @@ class TaxSettings extends SettingsPage
                             ->maxValue(100)
                             ->suffix('%')
                             ->required()
-                            ->helperText('Flat rate applied to every order regardless of customer country. Destination-based (per-country) VAT is a compliance decision — confirm with your accountant before this store would need it.')
+                            ->helperText('Fallback rate — used for every order when Country-Based VAT (below) is off, and for any country with no active rate configured.')
                             ->default(21),
 
                         Forms\Components\Select::make('price_display')
@@ -49,6 +49,28 @@ class TaxSettings extends SettingsPage
                             ->required()
                             ->default('inc_vat'),
                     ])->columns(2),
+
+                Section::make('Country-Based VAT')
+                    ->description('Charge each order VAT at the rate of the customer\'s shipping country instead of one flat rate for everyone.')
+                    ->schema([
+                        Forms\Components\Toggle::make('country_based_vat_enabled')
+                            ->label('Enable Country-Based VAT')
+                            ->helperText('When off (default), every order uses the flat Default Store VAT Percent above regardless of country.')
+                            ->live()
+                            ->default(false),
+
+                        Forms\Components\Placeholder::make('tax_rates_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->visible(fn (\Filament\Schemas\Components\Utilities\Get $get): bool => (bool) $get('country_based_vat_enabled'))
+                            ->content(new \Illuminate\Support\HtmlString(
+                                'Manage per-country rates on the <a href="'
+                                . \App\Filament\Resources\TaxRateResource::getUrl('index')
+                                . '" class="fi-link text-primary-600">Tax Rates</a> page. Seeded starting rates are provided — '
+                                . '<strong>verify every rate before relying on it</strong>, standard VAT rates change and the seeded '
+                                . 'values may be out of date. A country with no active rate configured falls back to the flat rate above.'
+                            )),
+                    ])->columns(1),
 
                 Section::make('VIES VAT Validation')
                     ->description('Control the EU VIES integration for real-time VAT number verification.')

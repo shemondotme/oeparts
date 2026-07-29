@@ -56,6 +56,38 @@ class SettingsSyncServiceProvider extends ServiceProvider
                 }
             }
 
+            $authSettings = Setting::where('group', 'auth')->get()->keyBy('key');
+
+            if ($authSettings->isNotEmpty()) {
+                $decrypt = function (?string $key) use ($authSettings): ?string {
+                    $setting = $authSettings->get($key);
+                    $value = $setting?->value;
+
+                    if ($value && $setting->is_encrypted) {
+                        try {
+                            $value = Crypt::decryptString($value);
+                        } catch (\Exception $e) {
+                        }
+                    }
+
+                    return $value ?: null;
+                };
+
+                if ($googleClientId = $decrypt('google_client_id')) {
+                    config([
+                        'services.google.client_id' => $googleClientId,
+                        'services.google.client_secret' => $decrypt('google_client_secret'),
+                    ]);
+                }
+
+                if ($facebookClientId = $decrypt('facebook_client_id')) {
+                    config([
+                        'services.facebook.client_id' => $facebookClientId,
+                        'services.facebook.client_secret' => $decrypt('facebook_client_secret'),
+                    ]);
+                }
+            }
+
             $securitySettings = Setting::where('group', 'security')->get()->keyBy('key');
             if ($securitySettings->isNotEmpty()) {
                 $sessionLifetime = $securitySettings->get('session_lifetime')?->value;

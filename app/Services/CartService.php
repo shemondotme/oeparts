@@ -22,7 +22,8 @@ use Carbon\Carbon;
 class CartService
 {
     public function __construct(
-        private SettingsService $settings
+        private SettingsService $settings,
+        private TaxRateService $taxRateService
     ) {}
 
     /**
@@ -343,7 +344,12 @@ class CartService
             $shippingRemaining = bcsub($freeShippingThreshold, $discountedSubtotal, 2);
             $shippingNeeded = bccomp($shippingRemaining, '0', 2) > 0 ? $shippingRemaining : '0.00';
 
-            $vatRate = (string) $this->settings->get('tax.default_vat_rate', 21);
+            // Pre-checkout the customer's shipping country isn't known yet
+            // (same limitation as the free-shipping-threshold estimate above),
+            // so this always resolves to the flat default rate — TaxRateService
+            // still routes through here so there's one place VAT-rate logic
+            // lives, not a second copy of the flat-rate fallback.
+            $vatRate = $this->taxRateService->resolve(null);
             $vatAmount = bcmul($discountedSubtotal, bcdiv($vatRate, '100', 4), 2);
             $grandTotal = bcadd($discountedSubtotal, $vatAmount, 2);
 

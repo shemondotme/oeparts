@@ -92,6 +92,7 @@ class SettingsSeeder extends Seeder
             // ── TAX ──────────────────────────────────────────────────────────────
             ['group' => 'tax', 'key' => 'default_vat_rate',  'value' => '21',            'type' => $i],
             ['group' => 'tax', 'key' => 'price_display',     'value' => 'inc_vat',        'type' => $s],
+            ['group' => 'tax', 'key' => 'country_based_vat_enabled', 'value' => '0',   'type' => $b],
             ['group' => 'tax', 'key' => 'vat_validation_enabled', 'value' => '1',       'type' => $b],
 
             // ── SHIPPING ─────────────────────────────────────────────────────────
@@ -153,6 +154,10 @@ class SettingsSeeder extends Seeder
             ['group' => 'auth', 'key' => 'admin_password_min',        'value' => '12',  'type' => $i],
             ['group' => 'auth', 'key' => 'guest_checkout_enabled',    'value' => '1',   'type' => $b],
             ['group' => 'auth', 'key' => 'registration_enabled',      'value' => '1',   'type' => $b],
+            ['group' => 'auth', 'key' => 'google_client_id',          'value' => '',    'type' => $e, 'encrypted' => true],
+            ['group' => 'auth', 'key' => 'google_client_secret',      'value' => '',    'type' => $e, 'encrypted' => true],
+            ['group' => 'auth', 'key' => 'facebook_client_id',        'value' => '',    'type' => $e, 'encrypted' => true],
+            ['group' => 'auth', 'key' => 'facebook_client_secret',    'value' => '',    'type' => $e, 'encrypted' => true],
 
             // ── EMAIL ────────────────────────────────────────────────────────────
             ['group' => 'email', 'key' => 'from_name',      'value' => 'OeParts',          'type' => $s],
