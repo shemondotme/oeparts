@@ -258,6 +258,39 @@ class AdminSmokeTest extends TestCase
         }
     }
 
+    #[Test]
+    public function bulk_update_log_page_renders_with_a_row(): void
+    {
+        // Regression test: BulkUpdateLog::$casts casts action_type to the
+        // BulkUpdateAction backed enum, so a table column reading it via
+        // $record->action_type gets an enum INSTANCE, not a string. The
+        // page's formatStateUsing/color closures previously match()'d that
+        // instance against string literals (never matches — strict ===) and
+        // fell through to ucfirst($enumInstance), a TypeError. The test above
+        // never caught this because it hits the page with an EMPTY table —
+        // the crashing closures only run once a row actually exists.
+        \App\Models\BulkUpdateLog::create([
+            'admin_id' => $this->admin->id,
+            'action_type' => 'price_increase',
+            'entity_type' => \App\Models\Product::class,
+            'affected_rows_count' => 3,
+            'payload' => ['snapshot' => [], 'snapshot_truncated' => false],
+            'filters' => ['manufacturer_id' => null],
+            'updates' => ['action' => 'price_increase', 'percentage' => '10'],
+            'created_at' => now(),
+        ]);
+
+        $response = $this->get('/admin/bulk-update-log-page');
+        $response->assertStatus(200);
+    }
+
+    #[Test]
+    public function bulk_update_products_page_returns_200(): void
+    {
+        $response = $this->get('/admin/bulk-update-products');
+        $response->assertStatus(200);
+    }
+
     // ── Report Pages ────────────────────────────────────────────────────────────
 
     #[Test]

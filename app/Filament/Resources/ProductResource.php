@@ -7,6 +7,7 @@ use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Models\Condition;
+use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Services\OemNormalizerService;
 use Filament\Forms;
@@ -352,6 +353,19 @@ class ProductResource extends Resource
                     ->relationship('manufacturer', 'name')
                     ->label(__('admin.manufacturer'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => static::localizedName($record->name))
+                    ->indicateUsing(function (array $state): array {
+                        if (blank($state['value'] ?? null)) {
+                            return [];
+                        }
+
+                        $manufacturer = Manufacturer::find($state['value']);
+
+                        if (! $manufacturer) {
+                            return [];
+                        }
+
+                        return [Tables\Filters\Indicator::make(__('admin.manufacturer').': '.static::localizedName($manufacturer->name))];
+                    })
                     ->searchable()
                     ->preload()
                     ->native(false)

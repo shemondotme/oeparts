@@ -7,6 +7,7 @@ use App\Filament\Resources\BlogPostResource\Pages;
 use App\Filament\Resources\BlogPostResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Models\BlogPost;
+use App\Models\Category;
 use Filament\Forms;
 use Filament\Actions;
 use Filament\Actions\BulkAction;
@@ -256,6 +257,19 @@ class BlogPostResource extends Resource
                     ->label(__('admin.blog_category'))
                     ->relationship('category', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
+                    ->indicateUsing(function (array $state): array {
+                        if (blank($state['value'] ?? null)) {
+                            return [];
+                        }
+
+                        $category = Category::find($state['value']);
+
+                        if (! $category) {
+                            return [];
+                        }
+
+                        return [Tables\Filters\Indicator::make(__('admin.blog_category').': '.AdminUi::localizedName($category->name))];
+                    })
                     ->native(false)
                     ->helperText('Filter posts by their assigned category.'),
                 Tables\Filters\Filter::make('created_at')

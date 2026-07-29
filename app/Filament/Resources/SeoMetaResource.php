@@ -167,6 +167,8 @@ class SeoMetaResource extends Resource
                     ->options([
                         'index,follow' => 'Index, Follow',
                         'noindex,follow' => 'No Index, Follow',
+                        'index,nofollow' => 'Index, No Follow',
+                        'noindex,nofollow' => 'No Index, No Follow',
                     ])
                     ->native(false)
                     ->helperText('Filter by search engine indexing directive.'),

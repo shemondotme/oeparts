@@ -6,6 +6,7 @@ use App\Filament\Resources\CarModelResource\Pages;
 use App\Filament\Resources\CarModelResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Models\CarModel;
+use App\Models\Manufacturer;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
@@ -196,6 +197,19 @@ class CarModelResource extends Resource
                     ->relationship('manufacturer', 'name')
                     ->label(__('admin.manufacturer'))
                     ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
+                    ->indicateUsing(function (array $state): array {
+                        if (blank($state['value'] ?? null)) {
+                            return [];
+                        }
+
+                        $manufacturer = Manufacturer::find($state['value']);
+
+                        if (! $manufacturer) {
+                            return [];
+                        }
+
+                        return [Tables\Filters\Indicator::make(__('admin.manufacturer').': '.AdminUi::localizedName($manufacturer->name))];
+                    })
                     ->searchable()
                     ->preload()
                     ->native(false)

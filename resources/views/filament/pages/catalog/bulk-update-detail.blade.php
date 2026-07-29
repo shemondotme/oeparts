@@ -5,7 +5,7 @@
         <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
                 <span class="font-mono" style="color: var(--color-text-muted);">Type:</span>
-                <span class="font-medium" style="color: var(--color-text-primary);">{{ ucfirst(str_replace('_', ' ', $record->action_type ?? 'N/A')) }}</span>
+                <span class="font-medium" style="color: var(--color-text-primary);">{{ ucfirst(str_replace('_', ' ', $record->action_type?->value ?? 'N/A')) }}</span>
             </div>
             <div>
                 <span class="font-mono" style="color: var(--color-text-muted);">Entity:</span>

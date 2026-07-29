@@ -4,12 +4,15 @@ namespace App\Filament\Pages\Catalog;
 
 use App\Enums\BulkUpdateAction;
 use App\Models\BulkUpdateLog;
+use App\Models\Product;
 use Filament\Forms\Components\Select;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Support\Facades\DB;
 
 class BulkUpdateLogPage extends Page implements HasTable
 {
@@ -44,6 +47,49 @@ class BulkUpdateLogPage extends Page implements HasTable
         return auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false;
     }
 
+    private const ACTION_LABELS = [
+        'price_increase' => 'Price ↑',
+        'price_decrease' => 'Price ↓',
+        'price_set' => 'Price Set',
+        'condition_set' => 'Condition Change',
+        'mark_active' => 'Marked Active',
+        'mark_inactive' => 'Marked Inactive',
+        'stock_in' => 'Stock In',
+        'stock_out' => 'Stock Out',
+        'delivery_time_set' => 'Delivery Time',
+        'moq_set' => 'MOQ Set',
+        'import' => 'Import',
+        'revert' => 'Reverted',
+    ];
+
+    private const ACTION_COLORS = [
+        'price_increase' => 'success',
+        'price_decrease' => 'danger',
+        'price_set' => 'warning',
+        'condition_set' => 'info',
+        'mark_active' => 'success',
+        'mark_inactive' => 'gray',
+        'stock_in' => 'info',
+        'stock_out' => 'warning',
+        'delivery_time_set' => 'info',
+        'moq_set' => 'info',
+        'import' => 'primary',
+        'revert' => 'gray',
+    ];
+
+    /**
+     * action_type is cast to the BulkUpdateAction enum on the model, so a raw
+     * column value read through Filament's column state resolution is a
+     * BulkUpdateAction instance, not a string — match()'ing it against string
+     * literals directly never matches (strict comparison) and previously fell
+     * through to ucfirst($enumInstance), which throws a TypeError the moment
+     * any row exists. Unwrap ->value first.
+     */
+    private static function actionTypeValue(mixed $state): ?string
+    {
+        return $state instanceof BulkUpdateAction ? $state->value : $state;
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -69,21 +115,15 @@ class BulkUpdateLogPage extends Page implements HasTable
                 Tables\Columns\TextColumn::make('action_type')
                     ->label('Action')
                     ->badge()
-                    ->formatStateUsing(fn ($state): string => match ($state) {
-                        'price_increase' => 'Price ↑',
-                        'price_decrease' => 'Price ↓',
-                        'stock_in' => 'Stock In',
-                        'stock_out' => 'Stock Out',
-                        'import' => 'Import',
-                        default => ucfirst($state),
+                    ->formatStateUsing(function ($state): string {
+                        $value = static::actionTypeValue($state);
+
+                        return self::ACTION_LABELS[$value] ?? ($value ? ucfirst($value) : '—');
                     })
-                    ->color(fn ($state): string => match ($state) {
-                        'price_increase' => 'success',
-                        'price_decrease' => 'danger',
-                        'stock_in' => 'info',
-                        'stock_out' => 'warning',
-                        'import' => 'primary',
-                        default => 'gray',
+                    ->color(function ($state): string {
+                        $value = static::actionTypeValue($state);
+
+                        return self::ACTION_COLORS[$value] ?? 'gray';
                     })
                     ->size('sm'),
 
@@ -119,9 +159,16 @@ class BulkUpdateLogPage extends Page implements HasTable
                     ->options([
                         'price_increase' => 'Price Increase',
                         'price_decrease' => 'Price Decrease',
+                        'price_set' => 'Price Set',
+                        'condition_set' => 'Condition Change',
+                        'mark_active' => 'Marked Active',
+                        'mark_inactive' => 'Marked Inactive',
                         'stock_in' => 'Stock In',
                         'stock_out' => 'Stock Out',
+                        'delivery_time_set' => 'Delivery Time Change',
+                        'moq_set' => 'MOQ Change',
                         'import' => 'Import',
+                        'revert' => 'Reverted',
                     ])
                     ->multiple(),
                 Tables\Filters\SelectFilter::make('admin_id')
@@ -166,6 +213,98 @@ class BulkUpdateLogPage extends Page implements HasTable
                         return view('filament.pages.catalog.bulk-update-detail', ['record' => $record]);
                     })
                     ->modalSubmitAction(false),
+                Tables\Actions\Action::make('revert')
+                    ->label('Revert')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Revert this bulk update?')
+                    ->modalDescription(fn (BulkUpdateLog $record): string => 'This restores the previous value for '.number_format((int) $record->affected_rows_count).' product(s). Reverting itself creates a new, separate log entry — it cannot be undone automatically.')
+                    ->modalSubmitActionLabel('Yes, revert')
+                    ->visible(fn (BulkUpdateLog $record): bool => static::canRevert($record))
+                    ->action(function (BulkUpdateLog $record): void {
+                        abort_unless(static::canManageBulkUpdates(), 403);
+                        abort_unless(static::canRevert($record), 403);
+
+                        $snapshot = $record->payload['snapshot'] ?? [];
+                        $count = 0;
+
+                        DB::transaction(function () use ($snapshot, &$count, $record): void {
+                            foreach ($snapshot as $entry) {
+                                $product = Product::find($entry['id'] ?? null);
+
+                                if (! $product || ! isset($entry['field'])) {
+                                    continue;
+                                }
+
+                                $product->{$entry['field']} = $entry['old'];
+                                $product->save();
+                                $count++;
+                            }
+
+                            $payload = $record->payload ?? [];
+                            $payload['reverted_at'] = now()->toIso8601String();
+                            $payload['reverted_by_admin_id'] = auth('admin')->id();
+                            $record->payload = $payload;
+                            $record->save();
+
+                            BulkUpdateLog::create([
+                                'admin_id' => auth('admin')->id(),
+                                'action_type' => 'revert',
+                                'entity_type' => Product::class,
+                                'affected_rows_count' => $count,
+                                'payload' => ['reverted_log_id' => $record->id],
+                                'filters' => null,
+                                'updates' => ['note' => 'Revert of bulk update log #'.$record->id],
+                                'ip_address' => request()->ip(),
+                                'user_agent' => (string) request()->userAgent(),
+                                'created_at' => now(),
+                            ]);
+                        });
+
+                        Notification::make()->title("{$count} product(s) reverted")->success()->send();
+                    }),
             ]);
+    }
+
+    private static function canManageBulkUpdates(): bool
+    {
+        $user = auth('admin')->user();
+
+        return (bool) ($user?->can('bulk update products')
+            || $user?->can('bulk update product prices')
+            || $user?->can('bulk update product stock')
+            || $user?->can('bulk update product details'));
+    }
+
+    private static function canRevert(BulkUpdateLog $record): bool
+    {
+        if (! static::canManageBulkUpdates()) {
+            return false;
+        }
+
+        if ($record->entity_type !== Product::class) {
+            return false;
+        }
+
+        if (in_array(static::actionTypeValue($record->getRawOriginal('action_type')), ['import', 'revert'], true)) {
+            return false;
+        }
+
+        $payload = $record->payload ?? [];
+
+        if (empty($payload['snapshot'])) {
+            return false;
+        }
+
+        if (! empty($payload['snapshot_truncated'])) {
+            return false;
+        }
+
+        if (! empty($payload['reverted_at'])) {
+            return false;
+        }
+
+        return true;
     }
 }

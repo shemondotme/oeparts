@@ -148,6 +148,19 @@ class CategoryResource extends Resource
                     ->label(__('admin.parent_category'))
                     ->relationship('parent', 'name')
                     ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
+                    ->indicateUsing(function (array $state): array {
+                        if (blank($state['value'] ?? null)) {
+                            return [];
+                        }
+
+                        $category = Category::find($state['value']);
+
+                        if (! $category) {
+                            return [];
+                        }
+
+                        return [Tables\Filters\Indicator::make(__('admin.parent_category').': '.AdminUi::localizedName($category->name))];
+                    })
                     ->searchable()
                     ->preload()
                     ->native(false)
