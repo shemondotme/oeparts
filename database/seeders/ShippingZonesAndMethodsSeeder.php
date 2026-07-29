@@ -5,20 +5,25 @@ namespace Database\Seeders;
 use App\Models\ShippingCountry;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
+use App\Services\ViesService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Seeds a complete pan-European shipping matrix.
+ * Seeds a single "Europe" shipping zone covering every country in
+ * ViesService::getEuCountries() (the same 32-country EU/EEA list used by
+ * TaxRatesSeeder and the manufacturer-country dropdown), with 3 flat-rate
+ * methods attached.
  *
- *   Zone 1 — EU Core (DE-based hub, next-day reach)
- *   Zone 2 — EU Western
- *   Zone 3 — EU Nordic + Baltic
- *   Zone 4 — EU Southern + Islands
- *   Zone 5 — UK & Switzerland (non-EU VAT)
- *   Zone 6 — Extended Europe (Balkans, microstates, Ukraine, Moldova, etc.)
- *
- * Every European country is covered. Idempotent: truncates and re-seeds.
+ * This previously claimed (in this docblock) to seed a 6-zone pan-European
+ * matrix (EU Core / Western / Nordic+Baltic / Southern+Islands / UK+Switzerland
+ * / Extended Europe) but never actually created any ShippingCountry rows —
+ * it truncated the table and left it empty. Confirmed live: with zero
+ * countries assigned to any zone, ShippingService::getMethodsForCountry()
+ * never matches, so CheckoutController::buildShippingOptions() silently
+ * fell back to "every active method, regardless of country" for every
+ * customer — checkout still worked, but per-zone/per-country shipping
+ * rules had no effect at all. Idempotent: truncates and re-seeds.
  */
 class ShippingZonesAndMethodsSeeder extends Seeder
 {
@@ -43,6 +48,14 @@ class ShippingZonesAndMethodsSeeder extends Seeder
             'is_active'  => true,
             'sort_order' => 10,
         ]);
+
+        foreach (ViesService::getEuCountries() as $code => $name) {
+            ShippingCountry::create([
+                'zone_id'      => $zone->id,
+                'country_code' => $code,
+                'country_name' => $name,
+            ]);
+        }
 
         $methods = [
             [

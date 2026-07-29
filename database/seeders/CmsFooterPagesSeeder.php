@@ -8,11 +8,18 @@ use App\Models\Page;
 use Illuminate\Database\Seeder;
 
 /**
- * Seeds the four footer-linked CMS pages so /about, /privacy-policy,
- * /terms-of-service and /cookie-policy resolve instead of 404-ing.
+ * Seeds the CMS pages linked from the storefront footer — /about,
+ * /privacy-policy, /terms-of-service, /cookie-policy, /returns-policy and
+ * /shipping-information — so none of them 404. The footer's legal-links row
+ * (resources/views/components/footer.blade.php) links to returns-policy and
+ * shipping-information specifically; those two were missing from this
+ * seeder entirely (confirmed live 404s) until this pass added them.
  *
  * Content is intentionally generic boilerplate — editable from the admin
- * CMS once the team has their final copy.
+ * CMS once the team has their final copy. Returns/shipping figures here
+ * (14-day window, DHL/DPD/GLS) are pulled from the real seeded values
+ * (orders.refund_window_days, CarriersSeeder) so the copy matches what the
+ * rest of the site actually promises, not invented numbers.
  */
 class CmsFooterPagesSeeder extends Seeder
 {
@@ -683,6 +690,318 @@ HTML,
 
 <h2>5. Cambios</h2>
 <p>Actualizamos esta política cuando cambia nuestro uso de cookies. Por favor, visite esta página periódicamente para mantenerse informado.</p>
+HTML,
+                ],
+            ],
+
+            'returns-policy' => [
+                'title' => [
+                    'en' => 'Returns Policy',
+                    'de' => 'Rückgaberichtlinie',
+                    'lt' => 'Grąžinimo politika',
+                    'fr' => 'Politique de retour',
+                    'es' => 'Política de devoluciones',
+                ],
+                'meta_title' => [
+                    'en' => 'Returns Policy — OeParts',
+                    'de' => 'Rückgaberichtlinie — OeParts',
+                    'lt' => 'Grąžinimo politika — „OeParts“',
+                    'fr' => 'Politique de retour — OeParts',
+                    'es' => 'Política de devoluciones — OeParts',
+                ],
+                'meta_description' => [
+                    'en' => 'How to return a part to OeParts, what is eligible, and how refunds are processed.',
+                    'de' => 'Wie Sie ein Teil an OeParts zurücksenden, was rückgabefähig ist und wie Erstattungen abgewickelt werden.',
+                    'lt' => 'Kaip grąžinti dalį „OeParts“, kas gali būti grąžinama ir kaip vykdomas pinigų grąžinimas.',
+                    'fr' => 'Comment retourner une pièce à OeParts, ce qui est éligible et comment les remboursements sont traités.',
+                    'es' => 'Cómo devolver una pieza a OeParts, qué es elegible y cómo se procesan los reembolsos.',
+                ],
+                'content' => [
+                    'en' => <<<'HTML'
+<p class="lead">You may return most parts within 14 days of delivery. This page explains what qualifies, how to start a return, and how refunds are paid out.</p>
+
+<h2>1. Return window</h2>
+<p>Returns must be requested within 14 days of the delivery date shown on your order. Requests submitted after this window cannot be accepted, except where the part arrived damaged, defective or incorrect — see Section 5.</p>
+
+<h2>2. Eligibility</h2>
+<p>To qualify for a return, a part must be unused, in its original packaging, and not subject to a no-return exclusion (Section 4). We may decline a return that shows signs of installation or use.</p>
+
+<h2>3. How to start a return</h2>
+<p>Sign in to your account, open the order from Account &rarr; Orders, and submit a refund request with the reason for return. Our team reviews the request and provides return shipping instructions. Do not send a part back before your request has been reviewed — items returned without an approved request may be delayed or refused.</p>
+
+<h2>4. Non-returnable items</h2>
+<ul>
+    <li>Consumables (fluids, filters, gaskets and similar single-use items) once opened.</li>
+    <li>Sealed electronic units once the seal has been broken.</li>
+    <li>Parts ordered specially for you outside our standard catalogue.</li>
+</ul>
+
+<h2>5. Damaged, defective or incorrect items</h2>
+<p>If a part arrives damaged, is defective, or does not match your order, contact us within 14 days of delivery with photos of the item and packaging. We will arrange a replacement or full refund, including return shipping, at no cost to you.</p>
+
+<h2>6. Refunds</h2>
+<p>Approved refunds are issued to your original payment method. Processing times vary by payment provider; once we confirm the returned part, refunds are typically visible within a few business days. Bank-transfer orders are refunded to the account the payment originated from.</p>
+
+<h2>7. Return shipping costs</h2>
+<p>For change-of-mind returns, the customer is responsible for return shipping costs. For damaged, defective or incorrect items (Section 5), we cover return shipping.</p>
+HTML,
+                    'de' => <<<'HTML'
+<p class="lead">Die meisten Teile können Sie innerhalb von 14 Tagen nach Lieferung zurücksenden. Diese Seite erklärt, was rückgabefähig ist, wie Sie eine Rückgabe starten und wie Erstattungen ausgezahlt werden.</p>
+
+<h2>1. Rückgabefrist</h2>
+<p>Rückgaben müssen innerhalb von 14 Tagen ab dem auf Ihrer Bestellung angezeigten Lieferdatum beantragt werden. Anfragen nach Ablauf dieser Frist können nicht angenommen werden, außer wenn das Teil beschädigt, defekt oder falsch geliefert wurde — siehe Abschnitt 5.</p>
+
+<h2>2. Voraussetzungen</h2>
+<p>Um für eine Rückgabe infrage zu kommen, muss ein Teil unbenutzt, in der Originalverpackung und nicht von einem Rückgabeausschluss (Abschnitt 4) betroffen sein. Wir können eine Rückgabe ablehnen, wenn Anzeichen von Einbau oder Nutzung erkennbar sind.</p>
+
+<h2>3. So starten Sie eine Rückgabe</h2>
+<p>Melden Sie sich in Ihrem Konto an, öffnen Sie die Bestellung unter Konto &rarr; Bestellungen und reichen Sie eine Erstattungsanfrage mit dem Grund für die Rückgabe ein. Unser Team prüft die Anfrage und stellt Ihnen Rücksendeanweisungen bereit. Senden Sie das Teil nicht zurück, bevor Ihre Anfrage geprüft wurde — ohne genehmigte Anfrage zurückgesendete Artikel können verzögert oder abgelehnt werden.</p>
+
+<h2>4. Von der Rückgabe ausgeschlossene Artikel</h2>
+<ul>
+    <li>Verbrauchsmaterialien (Flüssigkeiten, Filter, Dichtungen und ähnliche Einwegartikel) nach dem Öffnen.</li>
+    <li>Versiegelte elektronische Einheiten nach Bruch der Versiegelung.</li>
+    <li>Speziell für Sie außerhalb unseres Standardkatalogs bestellte Teile.</li>
+</ul>
+
+<h2>5. Beschädigte, defekte oder falsche Artikel</h2>
+<p>Wenn ein Teil beschädigt ankommt, defekt ist oder nicht Ihrer Bestellung entspricht, kontaktieren Sie uns innerhalb von 14 Tagen nach Lieferung mit Fotos des Artikels und der Verpackung. Wir organisieren einen Ersatz oder eine vollständige Erstattung, einschließlich Rückversand, ohne Kosten für Sie.</p>
+
+<h2>6. Erstattungen</h2>
+<p>Genehmigte Erstattungen erfolgen auf Ihre ursprüngliche Zahlungsmethode. Die Bearbeitungszeit hängt vom Zahlungsanbieter ab; nach Bestätigung des zurückgesendeten Teils sind Erstattungen in der Regel innerhalb weniger Werktage sichtbar. Per Banküberweisung bezahlte Bestellungen werden auf das Konto erstattet, von dem die Zahlung stammt.</p>
+
+<h2>7. Rückversandkosten</h2>
+<p>Bei Rückgaben ohne Mangelgrund trägt der Kunde die Rückversandkosten. Bei beschädigten, defekten oder falschen Artikeln (Abschnitt 5) übernehmen wir den Rückversand.</p>
+HTML,
+                    'lt' => <<<'HTML'
+<p class="lead">Daugumą dalių galite grąžinti per 14 dienų nuo pristatymo. Šiame puslapyje paaiškinama, kas gali būti grąžinama, kaip pradėti grąžinimą ir kaip išmokamas pinigų grąžinimas.</p>
+
+<h2>1. Grąžinimo terminas</h2>
+<p>Grąžinimo prašymas turi būti pateiktas per 14 dienų nuo jūsų užsakyme nurodytos pristatymo datos. Po šio termino pateikti prašymai negali būti priimti, išskyrus atvejus, kai dalis atvyko pažeista, su defektu ar neteisinga — žr. 5 skyrių.</p>
+
+<h2>2. Tinkamumas</h2>
+<p>Kad dalis būtų tinkama grąžinti, ji turi būti nenaudota, originalioje pakuotėje ir jai neturi būti taikoma negrąžinimo išimtis (4 skyrius). Galime atsisakyti priimti grąžinimą, jei matomi montavimo ar naudojimo požymiai.</p>
+
+<h2>3. Kaip pradėti grąžinimą</h2>
+<p>Prisijunkite prie savo paskyros, atidarykite užsakymą skiltyje Paskyra &rarr; Užsakymai ir pateikite pinigų grąžinimo prašymą, nurodydami grąžinimo priežastį. Mūsų komanda peržiūri prašymą ir pateikia grąžinimo siuntimo instrukcijas. Nesiųskite dalies atgal, kol jūsų prašymas nebus peržiūrėtas — be patvirtinto prašymo grąžintos prekės gali būti vėluojamos arba atmestos.</p>
+
+<h2>4. Negrąžinamos prekės</h2>
+<ul>
+    <li>Vartojamosios medžiagos (skysčiai, filtrai, tarpikliai ir panašūs vienkartiniai daiktai) atidarius pakuotę.</li>
+    <li>Sandarūs elektroniniai įrenginiai, kai plomba pažeista.</li>
+    <li>Dalys, užsakytos specialiai jums, nepriklausančios standartiniam katalogui.</li>
+</ul>
+
+<h2>5. Pažeisti, su defektu ar neteisingi daiktai</h2>
+<p>Jei dalis atvyksta pažeista, su defektu arba neatitinka jūsų užsakymo, susisiekite su mumis per 14 dienų nuo pristatymo, pateikdami daikto ir pakuotės nuotraukas. Suorganizuosime pakeitimą arba visišką pinigų grąžinimą, įskaitant grąžinimo siuntimą, jums nemokamai.</p>
+
+<h2>6. Pinigų grąžinimas</h2>
+<p>Patvirtintas grąžinimas atliekamas į jūsų pradinį mokėjimo būdą. Apdorojimo laikas priklauso nuo mokėjimo paslaugų teikėjo; patvirtinus grąžintą dalį, pinigai paprastai matomi per kelias darbo dienas. Banko pavedimu apmokėti užsakymai grąžinami į sąskaitą, iš kurios buvo atliktas mokėjimas.</p>
+
+<h2>7. Grąžinimo siuntimo išlaidos</h2>
+<p>Grąžinant dėl apsigalvojimo, siuntimo išlaidas dengia klientas. Už pažeistus, su defektu ar neteisingus daiktus (5 skyrius) grąžinimo siuntimą apmokame mes.</p>
+HTML,
+                    'fr' => <<<'HTML'
+<p class="lead">Vous pouvez retourner la plupart des pièces dans les 14 jours suivant la livraison. Cette page explique ce qui est éligible, comment démarrer un retour et comment les remboursements sont versés.</p>
+
+<h2>1. Délai de retour</h2>
+<p>Les retours doivent être demandés dans les 14 jours suivant la date de livraison indiquée sur votre commande. Les demandes soumises après ce délai ne peuvent être acceptées, sauf si la pièce est arrivée endommagée, défectueuse ou incorrecte — voir la section 5.</p>
+
+<h2>2. Éligibilité</h2>
+<p>Pour être éligible à un retour, une pièce doit être inutilisée, dans son emballage d'origine, et ne pas faire l'objet d'une exclusion de retour (section 4). Nous pouvons refuser un retour présentant des signes d'installation ou d'utilisation.</p>
+
+<h2>3. Comment démarrer un retour</h2>
+<p>Connectez-vous à votre compte, ouvrez la commande depuis Compte &rarr; Commandes, et soumettez une demande de remboursement avec le motif du retour. Notre équipe examine la demande et vous fournit les instructions de retour. N'envoyez pas la pièce avant que votre demande n'ait été examinée — les articles retournés sans demande approuvée peuvent être retardés ou refusés.</p>
+
+<h2>4. Articles non retournables</h2>
+<ul>
+    <li>Consommables (fluides, filtres, joints et articles à usage unique similaires) une fois ouverts.</li>
+    <li>Unités électroniques scellées une fois le sceau brisé.</li>
+    <li>Pièces commandées spécialement pour vous en dehors de notre catalogue standard.</li>
+</ul>
+
+<h2>5. Articles endommagés, défectueux ou incorrects</h2>
+<p>Si une pièce arrive endommagée, est défectueuse, ou ne correspond pas à votre commande, contactez-nous dans les 14 jours suivant la livraison avec des photos de l'article et de l'emballage. Nous organiserons un remplacement ou un remboursement intégral, frais de retour inclus, sans frais pour vous.</p>
+
+<h2>6. Remboursements</h2>
+<p>Les remboursements approuvés sont émis sur votre moyen de paiement d'origine. Les délais de traitement varient selon le prestataire de paiement ; une fois la pièce retournée confirmée, les remboursements sont généralement visibles sous quelques jours ouvrés. Les commandes par virement bancaire sont remboursées sur le compte d'origine du paiement.</p>
+
+<h2>7. Frais de retour</h2>
+<p>Pour les retours par convenance, les frais de retour sont à la charge du client. Pour les articles endommagés, défectueux ou incorrects (section 5), nous prenons en charge le retour.</p>
+HTML,
+                    'es' => <<<'HTML'
+<p class="lead">Puede devolver la mayoría de las piezas dentro de los 14 días posteriores a la entrega. Esta página explica qué es elegible, cómo iniciar una devolución y cómo se abonan los reembolsos.</p>
+
+<h2>1. Plazo de devolución</h2>
+<p>Las devoluciones deben solicitarse dentro de los 14 días posteriores a la fecha de entrega indicada en su pedido. Las solicitudes enviadas después de este plazo no podrán aceptarse, salvo que la pieza haya llegado dañada, defectuosa o incorrecta — véase la sección 5.</p>
+
+<h2>2. Elegibilidad</h2>
+<p>Para ser elegible para una devolución, una pieza debe estar sin usar, en su embalaje original y no estar sujeta a una exclusión de devolución (sección 4). Podemos rechazar una devolución que muestre señales de instalación o uso.</p>
+
+<h2>3. Cómo iniciar una devolución</h2>
+<p>Inicie sesión en su cuenta, abra el pedido desde Cuenta &rarr; Pedidos, y envíe una solicitud de reembolso con el motivo de la devolución. Nuestro equipo revisa la solicitud y le proporciona las instrucciones de devolución. No envíe la pieza antes de que su solicitud haya sido revisada — los artículos devueltos sin una solicitud aprobada pueden retrasarse o rechazarse.</p>
+
+<h2>4. Artículos no devolubles</h2>
+<ul>
+    <li>Consumibles (líquidos, filtros, juntas y artículos de un solo uso similares) una vez abiertos.</li>
+    <li>Unidades electrónicas selladas una vez rota la precinta.</li>
+    <li>Piezas pedidas especialmente para usted fuera de nuestro catálogo estándar.</li>
+</ul>
+
+<h2>5. Artículos dañados, defectuosos o incorrectos</h2>
+<p>Si una pieza llega dañada, es defectuosa o no coincide con su pedido, contáctenos dentro de los 14 días posteriores a la entrega con fotos del artículo y el embalaje. Organizaremos un reemplazo o un reembolso completo, incluido el envío de devolución, sin coste para usted.</p>
+
+<h2>6. Reembolsos</h2>
+<p>Los reembolsos aprobados se emiten a su método de pago original. Los tiempos de procesamiento varían según el proveedor de pago; una vez confirmada la pieza devuelta, los reembolsos suelen ser visibles en pocos días hábiles. Los pedidos por transferencia bancaria se reembolsan a la cuenta desde la que se originó el pago.</p>
+
+<h2>7. Costes de envío de devolución</h2>
+<p>Para devoluciones por cambio de opinión, el cliente es responsable de los costes de envío de devolución. Para artículos dañados, defectuosos o incorrectos (sección 5), cubrimos el envío de devolución.</p>
+HTML,
+                ],
+            ],
+
+            'shipping-information' => [
+                'title' => [
+                    'en' => 'Shipping Information',
+                    'de' => 'Versandinformationen',
+                    'lt' => 'Pristatymo informacija',
+                    'fr' => 'Informations de livraison',
+                    'es' => 'Información de envío',
+                ],
+                'meta_title' => [
+                    'en' => 'Shipping Information — OeParts',
+                    'de' => 'Versandinformationen — OeParts',
+                    'lt' => 'Pristatymo informacija — „OeParts“',
+                    'fr' => 'Informations de livraison — OeParts',
+                    'es' => 'Información de envío — OeParts',
+                ],
+                'meta_description' => [
+                    'en' => 'Delivery areas, carriers, processing times and shipping costs for OeParts orders.',
+                    'de' => 'Liefergebiete, Versanddienstleister, Bearbeitungszeiten und Versandkosten für OeParts-Bestellungen.',
+                    'lt' => 'Pristatymo teritorijos, vežėjai, apdorojimo laikas ir pristatymo kainos „OeParts“ užsakymams.',
+                    'fr' => 'Zones de livraison, transporteurs, délais de traitement et frais de port pour les commandes OeParts.',
+                    'es' => 'Zonas de entrega, transportistas, tiempos de procesamiento y costes de envío para los pedidos de OeParts.',
+                ],
+                'content' => [
+                    'en' => <<<'HTML'
+<p class="lead">OeParts ships across the EU plus Norway, Switzerland and the UK, using tracked and insured carrier services.</p>
+
+<h2>1. Delivery area</h2>
+<p>We despatch to every EU member state, as well as Norway, Switzerland and the United Kingdom. The countries available to you are shown automatically at checkout based on your delivery address.</p>
+
+<h2>2. Carriers</h2>
+<p>Orders are shipped via DHL, DPD or GLS depending on destination and parcel size. Every shipment is tracked and insured; a tracking link is emailed once your order despatches and is also available from Account &rarr; Orders.</p>
+
+<h2>3. Processing time</h2>
+<p>Orders placed before our daily cutoff are processed the same business day; orders placed after cutoff are processed the next business day. Delivery estimates shown at checkout are calculated from despatch, not from order placement, and are provided in good faith rather than guaranteed.</p>
+
+<h2>4. Shipping costs</h2>
+<p>Shipping cost is calculated at checkout based on your delivery address and the shipping method you select. Some shipping methods offer free shipping once your order subtotal passes a threshold — this is shown in your cart when applicable.</p>
+
+<h2>5. Oversized or heavy freight</h2>
+<p>Shipping rates shown at checkout are fixed rates for standard-size parcels. Where an ordered part is classified by the carrier as oversized or heavy freight due to its size, weight or dimensions, an additional shipping surcharge may apply beyond the rate shown at checkout. Any such surcharge is invoiced separately after dispatch — placing an order confirms you accept that this surcharge may apply.</p>
+
+<h2>6. Customs &amp; import duties</h2>
+<p>Shipments within the EU move freely with no customs formalities. Shipments to Norway, Switzerland and the UK may be subject to import duties, VAT or customs clearance fees charged by the destination country — these are the responsibility of the recipient and are not included in the price shown at checkout.</p>
+
+<h2>7. Delivery issues</h2>
+<p>If a shipment is lost, significantly delayed, or arrives damaged, contact us with your order number and we will investigate with the carrier and arrange a resolution.</p>
+HTML,
+                    'de' => <<<'HTML'
+<p class="lead">OeParts versendet in die gesamte EU sowie nach Norwegen, in die Schweiz und ins Vereinigte Königreich, mit verfolgten und versicherten Versanddiensten.</p>
+
+<h2>1. Liefergebiet</h2>
+<p>Wir versenden in jeden EU-Mitgliedstaat sowie nach Norwegen, in die Schweiz und ins Vereinigte Königreich. Die für Sie verfügbaren Länder werden beim Checkout automatisch anhand Ihrer Lieferadresse angezeigt.</p>
+
+<h2>2. Versanddienstleister</h2>
+<p>Bestellungen werden je nach Ziel und Paketgröße per DHL, DPD oder GLS versandt. Jede Sendung wird verfolgt und ist versichert; ein Tracking-Link wird nach Versand Ihrer Bestellung per E-Mail gesendet und ist auch unter Konto &rarr; Bestellungen verfügbar.</p>
+
+<h2>3. Bearbeitungszeit</h2>
+<p>Bestellungen, die vor unserem täglichen Annahmeschluss aufgegeben werden, werden noch am selben Werktag bearbeitet; Bestellungen danach werden am nächsten Werktag bearbeitet. Die beim Checkout angezeigten Lieferschätzungen werden ab Versand, nicht ab Bestelldatum berechnet und nach bestem Wissen angegeben, jedoch nicht garantiert.</p>
+
+<h2>4. Versandkosten</h2>
+<p>Die Versandkosten werden beim Checkout anhand Ihrer Lieferadresse und der gewählten Versandmethode berechnet. Einige Versandmethoden bieten kostenlosen Versand ab einem bestimmten Bestellwert — dies wird in Ihrem Warenkorb angezeigt, sofern zutreffend.</p>
+
+<h2>5. Übergroße oder schwere Fracht</h2>
+<p>Die beim Checkout angezeigten Versandkosten sind Festpreise für Standardpakete. Wird eine bestellte Ware vom Transportunternehmen aufgrund ihrer Größe, ihres Gewichts oder ihrer Abmessungen als übergroße oder schwere Fracht eingestuft, kann ein zusätzlicher Versandzuschlag über den beim Checkout angezeigten Betrag hinaus anfallen. Ein solcher Zuschlag wird nach dem Versand separat in Rechnung gestellt — mit der Bestellung bestätigen Sie, dass dieser Zuschlag anfallen kann.</p>
+
+<h2>6. Zoll &amp; Einfuhrabgaben</h2>
+<p>Sendungen innerhalb der EU erfolgen ohne Zollformalitäten. Sendungen nach Norwegen, in die Schweiz und ins Vereinigte Königreich können Einfuhrabgaben, Mehrwertsteuer oder Zollabfertigungsgebühren des Bestimmungslandes unterliegen — diese gehen zulasten des Empfängers und sind im beim Checkout angezeigten Preis nicht enthalten.</p>
+
+<h2>7. Lieferprobleme</h2>
+<p>Wenn eine Sendung verloren geht, erheblich verzögert ist oder beschädigt ankommt, kontaktieren Sie uns mit Ihrer Bestellnummer; wir klären dies mit dem Versanddienstleister und finden eine Lösung.</p>
+HTML,
+                    'lt' => <<<'HTML'
+<p class="lead">„OeParts“ pristato prekes visoje ES, taip pat į Norvegiją, Šveicariją ir Jungtinę Karalystę, naudodama sekamas ir apdraustas vežėjų paslaugas.</p>
+
+<h2>1. Pristatymo teritorija</h2>
+<p>Siunčiame į visas ES valstybes nares, taip pat į Norvegiją, Šveicariją ir Jungtinę Karalystę. Jums prieinamos šalys automatiškai rodomos atsiskaitant, pagal jūsų pristatymo adresą.</p>
+
+<h2>2. Vežėjai</h2>
+<p>Užsakymai siunčiami DHL, DPD arba GLS priklausomai nuo paskirties vietos ir siuntos dydžio. Kiekviena siunta yra sekama ir apdrausta; sekimo nuoroda išsiunčiama el. paštu, kai užsakymas išsiunčiamas, ir taip pat prieinama skiltyje Paskyra &rarr; Užsakymai.</p>
+
+<h2>3. Apdorojimo laikas</h2>
+<p>Užsakymai, pateikti iki mūsų kasdienio priėmimo laiko, apdorojami tą pačią darbo dieną; po to pateikti užsakymai — kitą darbo dieną. Atsiskaitant rodomi pristatymo terminai skaičiuojami nuo išsiuntimo, o ne nuo užsakymo pateikimo, ir pateikiami sąžiningai, tačiau negarantuojami.</p>
+
+<h2>4. Pristatymo kainos</h2>
+<p>Pristatymo kaina apskaičiuojama atsiskaitant, pagal jūsų pristatymo adresą ir pasirinktą pristatymo būdą. Kai kurie pristatymo būdai siūlo nemokamą pristatymą, kai užsakymo suma viršija nustatytą ribą — tai rodoma jūsų krepšelyje, kai taikoma.</p>
+
+<h2>5. Didelių gabaritų ar sunkus krovinys</h2>
+<p>Atsiskaitymo metu rodomos pristatymo kainos yra fiksuotos standartinio dydžio siuntoms. Jei vežėjas užsakytą prekę dėl jos dydžio, svorio ar matmenų priskiria didelių gabaritų ar sunkiam kroviniui, gali būti taikomas papildomas pristatymo mokestis, viršijantis atsiskaitymo metu nurodytą sumą. Toks mokestis pateikiamas atskira sąskaita po išsiuntimo — pateikdami užsakymą patvirtinate, kad toks mokestis gali būti taikomas.</p>
+
+<h2>6. Muitai ir importo mokesčiai</h2>
+<p>Siuntos ES viduje vyksta be muitinės formalumų. Siuntoms į Norvegiją, Šveicariją ir Jungtinę Karalystę gali būti taikomi importo mokesčiai, PVM ar muitinio įforminimo mokesčiai, kuriuos taiko paskirties šalis — juos apmoka gavėjas, ir jie neįtraukti į atsiskaitymo metu rodomą kainą.</p>
+
+<h2>7. Pristatymo problemos</h2>
+<p>Jei siunta pametama, gerokai vėluoja ar atvyksta pažeista, susisiekite su mumis nurodydami užsakymo numerį — išsiaiškinsime su vežėju ir surasime sprendimą.</p>
+HTML,
+                    'fr' => <<<'HTML'
+<p class="lead">OeParts livre dans toute l'UE ainsi qu'en Norvège, en Suisse et au Royaume-Uni, via des services de transport suivis et assurés.</p>
+
+<h2>1. Zone de livraison</h2>
+<p>Nous livrons dans tous les États membres de l'UE, ainsi qu'en Norvège, en Suisse et au Royaume-Uni. Les pays disponibles pour vous sont affichés automatiquement lors du paiement, en fonction de votre adresse de livraison.</p>
+
+<h2>2. Transporteurs</h2>
+<p>Les commandes sont expédiées via DHL, DPD ou GLS selon la destination et la taille du colis. Chaque envoi est suivi et assuré ; un lien de suivi est envoyé par e-mail dès l'expédition de votre commande et est également disponible depuis Compte &rarr; Commandes.</p>
+
+<h2>3. Délai de traitement</h2>
+<p>Les commandes passées avant notre heure limite quotidienne sont traitées le jour même ; celles passées après sont traitées le jour ouvré suivant. Les délais de livraison affichés lors du paiement sont calculés à partir de l'expédition, et non de la commande, et sont fournis de bonne foi sans être garantis.</p>
+
+<h2>4. Frais de port</h2>
+<p>Les frais de port sont calculés lors du paiement en fonction de votre adresse de livraison et du mode d'expédition choisi. Certains modes d'expédition offrent la livraison gratuite au-delà d'un certain montant de commande — cela est indiqué dans votre panier lorsque applicable.</p>
+
+<h2>5. Fret hors gabarit ou lourd</h2>
+<p>Les frais de livraison affichés lors du paiement sont des tarifs fixes pour les colis de taille standard. Si un article commandé est classé par le transporteur comme fret hors gabarit ou lourd en raison de sa taille, de son poids ou de ses dimensions, un supplément de livraison peut s'appliquer au-delà du tarif affiché lors du paiement. Ce supplément est facturé séparément après expédition — en passant commande, vous confirmez accepter que ce supplément puisse s'appliquer.</p>
+
+<h2>6. Douane et droits d'importation</h2>
+<p>Les envois au sein de l'UE circulent librement sans formalités douanières. Les envois vers la Norvège, la Suisse et le Royaume-Uni peuvent être soumis à des droits d'importation, à la TVA ou à des frais de dédouanement facturés par le pays de destination — ceux-ci sont à la charge du destinataire et ne sont pas inclus dans le prix affiché lors du paiement.</p>
+
+<h2>7. Problèmes de livraison</h2>
+<p>Si un envoi est perdu, significativement retardé ou arrive endommagé, contactez-nous avec votre numéro de commande ; nous mènerons une enquête auprès du transporteur et organiserons une solution.</p>
+HTML,
+                    'es' => <<<'HTML'
+<p class="lead">OeParts envía a toda la UE, así como a Noruega, Suiza y el Reino Unido, mediante servicios de transporte rastreados y asegurados.</p>
+
+<h2>1. Zona de entrega</h2>
+<p>Enviamos a todos los estados miembros de la UE, así como a Noruega, Suiza y el Reino Unido. Los países disponibles para usted se muestran automáticamente al finalizar la compra, según su dirección de entrega.</p>
+
+<h2>2. Transportistas</h2>
+<p>Los pedidos se envían mediante DHL, DPD o GLS según el destino y el tamaño del paquete. Cada envío es rastreado y está asegurado; se envía un enlace de seguimiento por correo electrónico en cuanto su pedido se despacha, también disponible en Cuenta &rarr; Pedidos.</p>
+
+<h2>3. Tiempo de procesamiento</h2>
+<p>Los pedidos realizados antes de nuestra hora límite diaria se procesan el mismo día hábil; los realizados después se procesan al siguiente día hábil. Las estimaciones de entrega mostradas al finalizar la compra se calculan desde el envío, no desde la realización del pedido, y se proporcionan de buena fe sin garantía.</p>
+
+<h2>4. Costes de envío</h2>
+<p>El coste de envío se calcula al finalizar la compra según su dirección de entrega y el método de envío elegido. Algunos métodos de envío ofrecen envío gratuito a partir de un determinado importe de pedido — esto se muestra en su carrito cuando corresponda.</p>
+
+<h2>5. Carga de gran tamaño o pesada</h2>
+<p>Los costes de envío mostrados al finalizar la compra son tarifas fijas para paquetes de tamaño estándar. Si el transportista clasifica un artículo pedido como carga de gran tamaño o pesada debido a su tamaño, peso o dimensiones, puede aplicarse un recargo de envío adicional más allá de la tarifa mostrada al finalizar la compra. Dicho recargo se factura por separado tras el envío — al realizar un pedido, usted confirma que acepta que este recargo pueda aplicarse.</p>
+
+<h2>6. Aduanas y derechos de importación</h2>
+<p>Los envíos dentro de la UE circulan libremente sin trámites aduaneros. Los envíos a Noruega, Suiza y el Reino Unido pueden estar sujetos a derechos de importación, IVA o tasas de despacho aduanero cobrados por el país de destino — estos corren a cargo del destinatario y no están incluidos en el precio mostrado al finalizar la compra.</p>
+
+<h2>7. Problemas de entrega</h2>
+<p>Si un envío se pierde, se retrasa significativamente o llega dañado, contáctenos con su número de pedido; investigaremos con el transportista y organizaremos una solución.</p>
 HTML,
                 ],
             ],

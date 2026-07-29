@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\ShippingZoneResource\RelationManagers;
 
 use App\Filament\Support\AdminUi;
+use App\Services\ViesService;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
@@ -56,6 +58,35 @@ class CountriesRelationManager extends RelationManager
             ->headerActions([
                 Actions\CreateAction::make()
                     ->label('Add Country'),
+                Actions\Action::make('addAllEuCountries')
+                    ->label('Add All EU/EEA Countries')
+                    ->icon('heroicon-o-globe-europe-africa')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Add all EU/EEA countries to this zone?')
+                    ->modalDescription('Adds every country from the standard EU/EEA list (the same list used for VAT and manufacturer country) that is not already assigned to this zone. Existing countries and other zones are untouched.')
+                    ->action(function (): void {
+                        $existing = $this->getOwnerRecord()->countries()->pluck('country_code')->all();
+                        $added = 0;
+
+                        foreach (ViesService::getEuCountries() as $code => $name) {
+                            if (in_array($code, $existing, true)) {
+                                continue;
+                            }
+
+                            $this->getOwnerRecord()->countries()->create([
+                                'country_code' => $code,
+                                'country_name' => $name,
+                            ]);
+                            $added++;
+                        }
+
+                        Notification::make()
+                            ->title($added > 0 ? "{$added} countries added" : 'Nothing to add')
+                            ->body($added > 0 ? null : 'This zone already has every EU/EEA country.')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->actions([
                 ...AdminUi::recordActionsWithoutView(),

@@ -12,6 +12,10 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
+use Filament\Resources\Pages\CreateRecord;
+use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\ViewRecord;
+use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
@@ -101,6 +105,50 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::PAGE_START,
                 fn (): string => Blade::render('@include(\'filament.hooks.update-banner\')'),
+            )
+            // "Back to list" button on every resource Create/Edit/View page — these
+            // pages had no way back except the small breadcrumb link at the top
+            // (confirmed: zero Resource page had this before, unlike the Settings
+            // cluster's own "Back to Settings" action). Registered once here via a
+            // scope-aware render hook rather than edited into all 39 resources' ~64
+            // Create/Edit/View page classes individually — Filament has no built-in
+            // toggle for this, but Page::getRenderHookScopes() returns
+            // [static::class, static::getResource()] for every resource page, so a
+            // single global hook can detect the page type and resource from $scopes.
+            ->renderHook(
+                PanelsRenderHook::PAGE_HEADER_ACTIONS_BEFORE,
+                function (array $scopes): string {
+                    try {
+                        $isDetailPage = collect($scopes)->contains(
+                            fn ($scope): bool => is_string($scope) && class_exists($scope) && (
+                                is_subclass_of($scope, EditRecord::class)
+                                || is_subclass_of($scope, ViewRecord::class)
+                                || is_subclass_of($scope, CreateRecord::class)
+                            )
+                        );
+
+                        if (! $isDetailPage) {
+                            return '';
+                        }
+
+                        $resourceClass = collect($scopes)->first(
+                            fn ($scope): bool => is_string($scope) && class_exists($scope) && is_subclass_of($scope, Resource::class)
+                        );
+
+                        if (! $resourceClass) {
+                            return '';
+                        }
+
+                        return Blade::render(
+                            '@include(\'filament.hooks.back-to-list\', [\'url\' => $url])',
+                            ['url' => $resourceClass::getUrl('index')]
+                        );
+                    } catch (\Throwable) {
+                        // A misconfigured/index-less resource must never take down
+                        // every Create/Edit/View page in the panel over a cosmetic button.
+                        return '';
+                    }
+                },
             )
             ->navigationGroups([
                 NavigationGroup::make('Commerce'),

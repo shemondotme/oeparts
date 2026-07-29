@@ -68,7 +68,7 @@
                      IS ink, so the badge hovers to ivory instead (see its own comment
                      below) to stay visible rather than vanishing into the page. --}}
                 <a href="{{ url('/'.$lang.'/') }}"
-                   class="relative shrink-0 hidden sm:block focus-visible:outline-none"
+                   class="relative shrink-0 focus-visible:outline-none"
                    aria-label="{{ $siteName }} · Home">
                     <x-brand-icon tone="dark" size="lg" />
                 </a>
