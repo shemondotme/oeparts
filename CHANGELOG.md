@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.14 — 2026-07-29
+
+### Added
+- **Bulk Update Products rebuilt** (Catalog → Bulk Update Products) — filter products by manufacturer, condition, car model, price range, OEM number, or date added, then apply a price change (% or fixed), condition change, active/inactive toggle, delivery time, or MOQ across every match, not just a checkbox-selected page of rows. Every apply is previewable, requires an explicit confirmation, warns on batches over 500 products, can be downloaded as CSV before committing, and is fully revertible with one click from the Bulk Update Log — split across three new permissions (`bulk update product prices/stock/details`) so roles can be scoped per action type. Large batches email `super_admin`s automatically.
+- **Country-based VAT** (opt-in, off by default) — Tax Settings gained a toggle and a new Tax Rates page (Commerce) for per-country VAT rates; when enabled, checkout charges the rate of the customer's shipping country instead of one flat rate for everyone, falling back to the flat rate for any country with no active rate configured. Seeded with starting rates for all 32 EU/EEA countries (including the UK) — **verify every rate before enabling**, these are a documented starting point, not a live feed.
+- **Missing `returns-policy` and `shipping-information` footer pages** — the storefront footer has linked to these since before this release, but neither page existed in the database (a seeder/footer drift), so both 404'd. Both now ship with real (editable) content in all 5 languages.
+- **"Add All EU/EEA Countries" button** on a Shipping Zone's Countries tab — adds the standard 32-country list in one click, skipping any already assigned; doesn't touch existing countries or other zones.
+- **"Back to list" button on every resource's Create/Edit/View page** — previously the only way back to a list was the small breadcrumb link at the top.
+- **Google/Facebook OAuth credentials moved off `.env`** — set under Settings → Authentication Settings → Social Login (OAuth), stored encrypted in the database, same pattern as Airwallex payment credentials.
+- **Nginx deployment support** — `deploy/nginx/oeparts.conf` (previously only Apache's `public/.htaccess` had any web-server config in the repo, despite the README listing Nginx as supported) and `deploy/php-fpm/oeparts-pool-overrides.conf` for upload/execution limits (`.htaccess`'s overrides silently do nothing under PHP-FPM, which is what Nginx and increasingly Apache both actually run). A root-level `.htaccess` now also blocks direct access if a host's document root is ever misconfigured to the project root instead of `public/`.
+- **`TRUSTED_PROXIES`** — new opt-in `.env` key for deployments where Nginx/Apache sits in front of PHP-FPM as a reverse proxy, or behind a CDN/load balancer; without it, IP-based blocking and generated `https://` URLs see the proxy's IP/scheme instead of the real client's. Off (no behavior change) unless set.
+
+### Fixed
+- **Selecting a Manufacturer filter on Products, Car Models, Categories, or Blog Posts threw a 500** — Filament's default filter-indicator-chip logic string-interpolates the filtered relation's raw attribute, which is a translatable JSON array (not a string) for `manufacturer.name`/`category.name`; the resulting PHP warning is fatal under this app's error-reporting config. Worse, because the filter is session-persisted, the *next* page load 500'd too, with no way back except clearing cookies. All four filters (plus SeoMeta's incomplete `robots` filter dropdown) now render correctly.
+- **The Bulk Update Log page 500'd the moment it had any rows** — same root cause as above (a different case of it): `action_type` is cast to a PHP enum, but the page's badge-formatting code compared the raw enum instance against string literals, which never matches, falling through to `ucfirst()` on an object. Existing test coverage never caught this because it only ever exercised the page with an empty table.
+- **Fresh installs never ran `storage:link`** — only the update system's post-update steps did, so uploaded product/blog images 404'd on any brand-new install until someone manually ran the command.
+- **Footer logo icon was hidden entirely on mobile** (`hidden sm:block`) — unlike the navbar, which always shows its icon — now shown at every screen size, matching the navbar.
+- **`.env` cleanup**: removed `AIRWALLEX_*` (never read from `.env` — `PaymentService` only reads Settings → Payment Settings) and `VIES_TIMEOUT` (never referenced anywhere in the codebase).
+- **The "Europe" shipping zone had zero countries after seeding** — `ShippingZonesAndMethodsSeeder`'s own docblock claimed a 6-zone pan-European matrix; the actual code created one zone and three methods but never created a single `ShippingCountry` row. Checkout still worked (a missing zone match silently falls back to "every active method"), but zone-based shipping rules had no effect at all. Fresh installs now seed all 32 countries into the zone; existing installs should use the new "Add All EU/EEA Countries" button instead of re-running the seeder (which truncates first).
+
 ## 1.0.13 — 2026-07-25
 
 ### Added
