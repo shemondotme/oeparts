@@ -1,7 +1,7 @@
 {
     "version": "1.0.14",
     "codename": "Atlas",
-    "release_date": "2026-07-29",
+    "release_date": "2026-07-31",
     "channel": "stable",
     "security": false,
     "min_php": "8.3",
@@ -24,7 +24,7 @@
     ],
     "breaking_changes": [],
     "pre_update_notes": "",
-    "post_update_notes": "After this update finishes, run these three ONE-TIME commands to backfill new data (all idempotent \u2014 safe to re-run, but NOT auto-run on every future update since each one overwrites values an admin may later customize by hand): `php artisan db:seed --class=RolesSeeder` (grants the new bulk-update-products sub-permissions to existing roles), `php artisan db:seed --class=SettingsSeeder` (adds the new Country-Based VAT toggle and Social Login settings keys), and `php artisan db:seed --class=TaxRatesSeeder` (seeds starting EU/EEA VAT rates \u2014 verify every rate before enabling Country-Based VAT on the Tax Settings page). If your shipping zone has zero countries assigned, open it in the admin and click \"Add All EU/EEA Countries\" (Countries tab) instead of re-running ShippingZonesAndMethodsSeeder, which truncates and rebuilds your whole shipping setup. Running Nginx? Copy deploy/nginx/oeparts.conf and deploy/php-fpm/oeparts-pool-overrides.conf \u2014 see README's new \"Web server\" section.",
+    "post_update_notes": "Nothing manual required \u2014 RolesSeeder/SettingsSeeder/TaxRatesSeeder/CmsFooterPagesSeeder now run automatically as part of every update, backfilling the new bulk-update-products permissions, the Country-Based VAT toggle, starting EU/EEA VAT rates, and the returns-policy/shipping-information footer pages without touching anything you've already customized. Verify every seeded tax rate before enabling Country-Based VAT on the Tax Settings page \u2014 they're a documented starting point, not a live feed. If your shipping zone has zero countries assigned, open it in the admin and click \"Add All EU/EEA Countries\" (Countries tab) instead of re-running ShippingZonesAndMethodsSeeder, which truncates and rebuilds your whole shipping setup. Running Nginx? Copy deploy/nginx/oeparts.conf and deploy/php-fpm/oeparts-pool-overrides.conf \u2014 see README's \"Web server\" section. Git-managed installs can now apply this update directly from Apply Update (git fetch/checkout + composer install) instead of updating manually via SSH.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
     "sha256": "90afd45a6377f4bbb66d99f8cf0aab9ab7eb8fd5dadeb747c7ef4b675516baf5",

@@ -235,6 +235,57 @@ services:
         depends_on:
             - mysql
         profiles: ['hostingsim']
+
+    # --- Opt-in: nginx + PHP-FPM parity environment (docker compose --profile nginx up) ---
+    # The live server runs nginx + PHP-FPM (deploy/nginx/oeparts.conf,
+    # deploy/php-fpm/oeparts-pool-overrides.conf) — every other service above
+    # runs PHP's built-in server instead, which never exercises nginx's own
+    # request routing. This profile runs the real thing, so nginx-specific
+    # behavior (the index.php/oe-recovery.php-only PHP-FPM carve-out, static
+    # asset caching, nginx's own upload-size cap) gets caught locally instead
+    # of first discovered live.
+    php-fpm:
+        build:
+            context: './docker/php-fpm'
+        image: 'oeparts/php-fpm:8.3'
+        env_file:
+            - .env.docker.overrides
+        volumes:
+            - '.:/var/www/html'
+            # Pure-PHP vendor/ (no compiled extensions in the tree itself) —
+            # safe to share with laravel.test/queue-worker's PHP 8.4 install;
+            # see laravel.test's volumes comment for why this is an isolated
+            # named volume rather than part of the Windows bind mount above.
+            - 'vendor-laravel-test:/var/www/html/vendor'
+            # Bind-mounted straight from deploy/, not copied into the image,
+            # so this profile reads the exact file production does — no
+            # second copy of upload/execution-limit overrides to keep in sync.
+            # Mounted outside php-fpm.d/ on purpose (see docker/php-fpm/pool.conf,
+            # which pulls it in from here already wrapped in a [www] section).
+            - './deploy/php-fpm/oeparts-pool-overrides.conf:/etc/oeparts/php-fpm-pool-overrides.conf:ro'
+            - './docker/php-fpm/pool.conf:/usr/local/etc/php-fpm.d/99-oeparts-pool.conf:ro'
+        networks:
+            - sail
+        depends_on:
+            - mysql
+            - redis
+        profiles: ['nginx']
+
+    nginx:
+        image: 'nginx:alpine'
+        ports:
+            - '${NGINX_PORT:-8081}:80'
+        volumes:
+            # Whole project, read-only — not just public/ — so public/storage
+            # (the storage:link symlink to ../storage/app/public) actually
+            # resolves; nginx only ever reads from it, never writes.
+            - '.:/var/www/html:ro'
+            - './docker/nginx/oeparts.docker.conf:/etc/nginx/conf.d/default.conf:ro'
+        networks:
+            - sail
+        depends_on:
+            - php-fpm
+        profiles: ['nginx']
 networks:
     sail:
         driver: bridge

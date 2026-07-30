@@ -199,6 +199,15 @@ docker compose exec laravel.test php artisan migrate --seed
 
 Opening this repo in VS Code and choosing "Reopen in Container" sets everything up automatically via `.devcontainer/devcontainer.json` — no manual steps at all. The dev container matches the PHP 8.3/8.4/8.5 support matrix and simulates shared-hosting constraints (no Redis, no long-running processes) so what passes locally matches what a real self-hoster gets.
 
+By default, `docker compose up` runs the app behind PHP's own built-in server (matches `php artisan serve`), not nginx. The live server runs **nginx + PHP-FPM**, so an opt-in profile mirrors that exactly — same [`deploy/nginx/oeparts.conf`](deploy/nginx/oeparts.conf) routing rules, same [`deploy/php-fpm/oeparts-pool-overrides.conf`](deploy/php-fpm/oeparts-pool-overrides.conf), bind-mounted straight from `deploy/` so there's no second copy to drift out of sync:
+
+```bash
+docker compose --profile nginx up -d nginx php-fpm
+# App now served through nginx at http://localhost:8081 (override with NGINX_PORT)
+```
+
+Use this whenever you need to verify nginx-specific behavior locally before it ships — the recovery console's `oe-recovery.php` carve-out, the `index.php`-only PHP-FPM routing hardening, `/build/` asset caching, or upload-size limits — rather than finding out on the live server.
+
 ### XAMPP / local PHP (alternative)
 
 ```bash
@@ -268,6 +277,8 @@ Host has Memcached but not Redis? Set `CACHE_STORE=memcached` and leave `SESSION
 | Recovery console reachability | Works automatically — Apache executes any `.php` file under the docroot | [`deploy/nginx/oeparts.conf`](deploy/nginx/oeparts.conf) intentionally routes only `index.php` to PHP-FPM (hardening — an uploaded `.php` file can never execute) with one explicit carve-out for `oe-recovery.php`. Using a different nginx template? Make sure it has the same carve-out or the recovery console 404s exactly when you need it |
 
 Behind a reverse proxy or CDN (nginx/Apache terminating TLS in front of a separate PHP-FPM pool, or Cloudflare/a load balancer in front of either)? Set `TRUSTED_PROXIES` in `.env` (see `.env.example`) so `IpBlocklist`, rate limiting, and generated `https://` URLs see the real client IP/scheme instead of the proxy's.
+
+Want to test the nginx config itself, not just write it? `docker compose --profile nginx up -d nginx php-fpm` runs the real nginx + PHP-FPM stack locally against `deploy/nginx/oeparts.conf`'s actual routing rules — see [Docker](#docker-recommended-for-contributors) above.
 
 ---
 

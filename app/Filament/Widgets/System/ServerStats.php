@@ -66,8 +66,7 @@ class ServerStats extends BaseWidget
     {
         $usage = memory_get_usage(true);
         $peak = memory_get_peak_usage(true);
-        $limit = (int) ini_get('memory_limit');
-        $limit = $limit > 0 ? $limit * 1024 * 1024 : 256 * 1024 * 1024;
+        $limit = $this->parseMemoryLimit(ini_get('memory_limit'));
 
         return [
             'usage_mb' => round($usage / 1048576, 1),
@@ -75,6 +74,27 @@ class ServerStats extends BaseWidget
             'limit_mb' => round($limit / 1048576, 1),
             'usage_percent' => $limit > 0 ? round(($usage / $limit) * 100, 1) : 0,
         ];
+    }
+
+    private function parseMemoryLimit(string $limit): int
+    {
+        // ini_get('memory_limit') returns a shorthand string like "5G"/"128M"/"-1"
+        // (unlimited), not a raw byte count — casting it straight to (int) silently
+        // drops the unit suffix (e.g. "5G" becomes 5), understating a gigabyte-scale
+        // limit by up to 1024x.
+        if ($limit === '' || $limit === '-1') {
+            return 256 * 1024 * 1024;
+        }
+
+        $value = (int) $limit;
+        $unit = strtolower(substr($limit, -1));
+
+        return match ($unit) {
+            'g' => $value * 1024 * 1024 * 1024,
+            'm' => $value * 1024 * 1024,
+            'k' => $value * 1024,
+            default => $value,
+        };
     }
 
     private function disk(): array

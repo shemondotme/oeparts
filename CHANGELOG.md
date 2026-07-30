@@ -2,9 +2,11 @@
 
 All notable changes to this project are documented here.
 
-## 1.0.14 — 2026-07-29
+## 1.0.14 — 2026-07-31
 
 ### Added
+- **The one-click updater now works for git-managed deployments** — previously it hard-refused to run at all ("update with git, not the one-click updater"), forcing a manual SSH update every release. A new git-based apply path (fetch + checkout the release tag, `composer install`) runs through the exact same backup-first, poll-driven, auto-rollback flow as the zip-based path — Apply Update now does everything for a git deployment too, no manual commands.
+- **RolesSeeder/SettingsSeeder/TaxRatesSeeder/CmsFooterPagesSeeder now run automatically on every update** (rewritten to be purely additive — never revoke a permission or overwrite a value an admin already customized), so this release's new permissions, settings, tax rates, and footer pages backfill themselves with no manual `db:seed` commands.
 - **Bulk Update Products rebuilt** (Catalog → Bulk Update Products) — filter products by manufacturer, condition, car model, price range, OEM number, or date added, then apply a price change (% or fixed), condition change, active/inactive toggle, delivery time, or MOQ across every match, not just a checkbox-selected page of rows. Every apply is previewable, requires an explicit confirmation, warns on batches over 500 products, can be downloaded as CSV before committing, and is fully revertible with one click from the Bulk Update Log — split across three new permissions (`bulk update product prices/stock/details`) so roles can be scoped per action type. Large batches email `super_admin`s automatically.
 - **Country-based VAT** (opt-in, off by default) — Tax Settings gained a toggle and a new Tax Rates page (Commerce) for per-country VAT rates; when enabled, checkout charges the rate of the customer's shipping country instead of one flat rate for everyone, falling back to the flat rate for any country with no active rate configured. Seeded with starting rates for all 32 EU/EEA countries (including the UK) — **verify every rate before enabling**, these are a documented starting point, not a live feed.
 - **Missing `returns-policy` and `shipping-information` footer pages** — the storefront footer has linked to these since before this release, but neither page existed in the database (a seeder/footer drift), so both 404'd. Both now ship with real (editable) content in all 5 languages.
@@ -21,6 +23,12 @@ All notable changes to this project are documented here.
 - **Footer logo icon was hidden entirely on mobile** (`hidden sm:block`) — unlike the navbar, which always shows its icon — now shown at every screen size, matching the navbar.
 - **`.env` cleanup**: removed `AIRWALLEX_*` (never read from `.env` — `PaymentService` only reads Settings → Payment Settings) and `VIES_TIMEOUT` (never referenced anywhere in the codebase).
 - **The "Europe" shipping zone had zero countries after seeding** — `ShippingZonesAndMethodsSeeder`'s own docblock claimed a 6-zone pan-European matrix; the actual code created one zone and three methods but never created a single `ShippingCountry` row. Checkout still worked (a missing zone match silently falls back to "every active method"), but zone-based shipping rules had no effect at all. Fresh installs now seed all 32 countries into the zone; existing installs should use the new "Add All EU/EEA Countries" button instead of re-running the seeder (which truncates first).
+- **Every zip-based update left the previous release's code sitting in `storage/app/updates/swap-backup/` forever** — kept as a rollback safety net, but nothing ever cleaned up an OLDER update's copy once a newer one succeeded, so disk usage grew by one full core-paths copy per update with no cap. Now pruned automatically the moment the next update's swap succeeds (keeping only the just-applied version's backup).
+- **A zip-based (non-git) update never delivered the new `.htaccess` or `deploy/` deploy docs to a live install** — the swap only touches paths explicitly listed in `core_paths`, and both were missing from that list.
+- **The System Info memory-usage widget understated any limit set in gigabytes** — `ini_get('memory_limit')` returns a shorthand string like `"5G"`; casting it straight to `(int)` silently drops the unit suffix, understating a gigabyte-scale limit by up to 1024x (e.g. `"5G"` read as 5 bytes-worth of MB instead of 5120).
+
+### Changed
+- **Added a `docker compose --profile nginx up` environment** for contributors — every other Docker profile runs PHP's built-in server, which never exercises nginx's own request routing (the `index.php`-only PHP-FPM carve-out, static asset caching, upload-size limits). This profile runs the real nginx + PHP-FPM stack locally against the exact files the live server uses (`deploy/nginx/oeparts.conf`, `deploy/php-fpm/oeparts-pool-overrides.conf`, bind-mounted, not copied), so nginx-specific regressions surface before they ship instead of after.
 
 ## 1.0.13 — 2026-07-25
 
