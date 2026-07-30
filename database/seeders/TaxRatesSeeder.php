@@ -61,8 +61,12 @@ class TaxRatesSeeder extends Seeder
             ['LI', 'Liechtenstein', 8.10],
         ];
 
+        // firstOrCreate (not updateOrCreate): only inserts a country that isn't
+        // in the table yet — never overwrites a rate an admin has since
+        // corrected on the Tax Rates page. Safe to run unattended on every
+        // future update (e.g. this file gaining a 33rd country later).
         foreach ($rates as [$code, $name, $rate]) {
-            TaxRate::updateOrCreate(
+            TaxRate::firstOrCreate(
                 ['country_code' => $code],
                 ['country_name' => $name, 'rate' => $rate, 'is_active' => true],
             );

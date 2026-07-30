@@ -196,7 +196,11 @@ class RolesSeeder extends Seeder
             ['name' => 'manager', 'guard_name' => 'admin'],
             ['name' => 'manager', 'guard_name' => 'admin']
         );
-        $manager->syncPermissions([
+        // givePermissionTo (not syncPermissions): additive only, never revokes a
+        // permission an admin granted this role by hand through Roles → Edit —
+        // safe to run unattended on every future update (see config/updates.php's
+        // post_swap.seeders comment for why that distinction matters here).
+        $manager->givePermissionTo([
             'view orders', 'edit orders', 'cancel orders', 'export orders',
             'view refunds', 'process refunds',
             'view payments',
@@ -223,7 +227,7 @@ class RolesSeeder extends Seeder
             ['name' => 'catalog_admin', 'guard_name' => 'admin'],
             ['name' => 'catalog_admin', 'guard_name' => 'admin']
         );
-        $catalogAdmin->syncPermissions([
+        $catalogAdmin->givePermissionTo([
             'view products', 'create products', 'edit products', 'delete products',
             'import products', 'bulk update products',
             'bulk update product prices', 'bulk update product stock', 'bulk update product details',
@@ -239,7 +243,7 @@ class RolesSeeder extends Seeder
             ['name' => 'admin', 'guard_name' => 'admin'],
             ['name' => 'admin', 'guard_name' => 'admin']
         );
-        $adminRole->syncPermissions([
+        $adminRole->givePermissionTo([
             // Everything manager has
             'view orders', 'edit orders', 'cancel orders', 'export orders',
             'view refunds', 'process refunds',
@@ -270,7 +274,7 @@ class RolesSeeder extends Seeder
             ['name' => 'support', 'guard_name' => 'admin'],
             ['name' => 'support', 'guard_name' => 'admin']
         );
-        $support->syncPermissions([
+        $support->givePermissionTo([
             'view orders', 'edit orders',
             'view refunds',
             'view customers', 'edit customers',

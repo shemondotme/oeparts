@@ -27,8 +27,11 @@ class CmsFooterPagesSeeder extends Seeder
     {
         $creatorId = Admin::query()->orderBy('id')->value('id') ?? 1;
 
+        // firstOrCreate (not updateOrCreate): only creates a page whose slug
+        // doesn't exist yet — never overwrites title/content an admin has since
+        // edited via the CMS. Safe to run unattended on every future update.
         foreach ($this->pages() as $slug => $payload) {
-            Page::updateOrCreate(
+            Page::firstOrCreate(
                 ['slug' => $slug],
                 array_merge($payload, [
                     'status' => ContentStatus::Published,

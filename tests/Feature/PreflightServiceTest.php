@@ -139,12 +139,19 @@ class PreflightServiceTest extends TestCase
     }
 
     #[Test]
-    public function it_blocks_a_git_managed_deployment(): void
+    public function a_git_managed_deployment_passes_and_routes_to_the_git_update_path(): void
     {
+        // No .git: standard (zip-swap) deployment, git tooling check is n/a.
         $this->assertSame(PreflightCheck::PASS, $this->service()->checkDeploymentType()->status);
+        $this->assertSame(PreflightCheck::PASS, $this->service()->checkGitTooling()->status);
 
+        // .git present: still PASS (not FAIL — the git update path handles it,
+        // see UpdateApplier::GIT_STEPS), and the tooling check actually verifies
+        // git/composer/exec are usable rather than staying a blanket n/a.
         @mkdir($this->root.'/.git');
-        $this->assertSame(PreflightCheck::FAIL, $this->service()->checkDeploymentType()->status);
+        $this->assertSame(PreflightCheck::PASS, $this->service()->checkDeploymentType()->status);
+        $this->assertSame(PreflightCheck::PASS, $this->service()->checkGitTooling()->status,
+            'git + composer are installed in this test environment, so tooling should be available.');
     }
 
     #[Test]

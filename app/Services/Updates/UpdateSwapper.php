@@ -96,7 +96,35 @@ class UpdateSwapper
 
         $this->resetRuntimeCaches();
 
+        // Every swap dropped the PREVIOUS live code here as a manual-recovery
+        // safety net (see swapBackupDir()) — but nothing ever removed an OLDER
+        // update's leftover copy, so storage/app/updates/swap-backup/ grew by
+        // one full core-paths copy (app/, vendor/, etc.) per update, forever,
+        // with no cap. Safe to prune everything except THIS version's backup
+        // the moment a NEW swap succeeds: reaching here means the previous
+        // update has already been running live and confirmed working, so its
+        // own backup no longer serves a purpose.
+        $this->cleanupOldSwapBackups($version);
+
         return $map;
+    }
+
+    /** Remove every swap-backup subdirectory except $keepVersion's. */
+    private function cleanupOldSwapBackups(string $keepVersion): void
+    {
+        $dir = $this->stateDir().'/swap-backup';
+        if (! is_dir($dir)) {
+            return;
+        }
+
+        $keep = preg_replace('/[^A-Za-z0-9._-]+/', '_', $keepVersion);
+
+        foreach (scandir($dir) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..' || $entry === $keep) {
+                continue;
+            }
+            $this->rrmdir($dir.DIRECTORY_SEPARATOR.$entry);
+        }
     }
 
     /**

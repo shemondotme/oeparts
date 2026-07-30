@@ -50,6 +50,12 @@ return [
         'app', 'bootstrap/app.php', 'config', 'database', 'lang',
         'public/build', 'resources', 'routes', 'vendor', 'artisan',
         'composer.json', 'composer.lock', 'version.json', 'CHANGELOG.md',
+        // Added with the nginx/PHP-FPM deploy docs (v1.0.14): without these,
+        // a zip-updated (non-git) install never receives the root .htaccess
+        // or deploy/ configs shipped in the release — the swap only ever
+        // touches paths explicitly listed here, it doesn't mirror the whole
+        // release tree.
+        '.htaccess', 'deploy',
     ],
     'preserve_paths' => ['.env', 'storage'],
 
@@ -89,21 +95,30 @@ return [
         ],
         // vendor:publish --tag=<tag> --force for each (default none — avoid clobbering).
         'vendor_publish_tags' => [],
-        // Idempotent reference seeders (db:seed --class --force). Releases opt-in here;
-        // default none, since re-running a non-idempotent seeder could reset user data.
-        //
-        // Deliberately left empty, including for v1.0.14 (which adds new rows via
-        // RolesSeeder/SettingsSeeder/TaxRatesSeeder/CmsFooterPagesSeeder): every one
-        // of those seeders keys updateOrCreate() on a natural key but then
-        // unconditionally overwrites the VALUE columns too (role permissions,
-        // setting values, tax rates, page content) — safe to run once, but wiring
-        // any of them in HERE means every single FUTURE update reapplies today's
-        // hardcoded defaults forever, silently reverting any admin who later
-        // customizes a role's permissions, corrects a seeded tax rate, or edits the
-        // returns-policy page copy. version.json's post_update_notes documents the
-        // one-time `php artisan db:seed --class=...` commands for this release
-        // instead — see there.
-        'seeders' => [],
+        // Idempotent reference seeders (db:seed --class --force), run automatically
+        // after every future update — no manual SSH step required. Safe ONLY
+        // because each of these four was deliberately rewritten (v1.0.14) to be
+        // purely additive:
+        //   - RolesSeeder uses givePermissionTo() (grants missing permissions,
+        //     never revokes one an admin added by hand via Roles → Edit)
+        //   - SettingsSeeder/TaxRatesSeeder/CmsFooterPagesSeeder use
+        //     firstOrCreate() (backfills a missing settings key / tax-rate
+        //     country / footer page, never touches a row that already exists —
+        //     so an admin-corrected tax rate or admin-edited page copy is never
+        //     reverted)
+        // Before adding any FUTURE seeder here, confirm it has this same
+        // "insert-if-missing, never overwrite" shape — a seeder that
+        // unconditionally overwrites values (updateOrCreate on the value
+        // columns, syncPermissions(), etc.) must stay out of this list and be
+        // documented as a one-time manual step in that release's
+        // version.json post_update_notes instead, exactly as v1.0.14 originally
+        // was before these four were made auto-run-safe.
+        'seeders' => [
+            'Database\\Seeders\\RolesSeeder',
+            'Database\\Seeders\\SettingsSeeder',
+            'Database\\Seeders\\TaxRatesSeeder',
+            'Database\\Seeders\\CmsFooterPagesSeeder',
+        ],
         // Rebuild config/route/view/event caches (clear then cache).
         'rebuild_cache' => true,
         // queue:restart — only fires when a real worker driver is in use (not sync).

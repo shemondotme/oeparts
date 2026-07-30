@@ -34,8 +34,16 @@ use Illuminate\Support\Str;
  */
 class UpdateApplier
 {
-    /** Ordered apply steps; `complete` runs once the index passes the last. */
+    /** Ordered apply steps for a standard (shared-hosting-safe) install; `complete` runs once the index passes the last. */
     public const STEPS = ['backup', 'download', 'extract', 'swap', 'finalize', 'verify'];
+
+    /**
+     * Ordered apply steps for a git-managed install (PreflightService::
+     * checkDeploymentType() detects .git) — git fetch/checkout + composer
+     * install replace download/extract/swap; finalize/verify are identical
+     * either way (they operate on whatever's on disk, not on how it got there).
+     */
+    public const GIT_STEPS = ['backup', 'git_checkout', 'composer_install', 'finalize', 'verify'];
 
     /* ---- Preview -------------------------------------------------------- */
 
@@ -71,7 +79,7 @@ class UpdateApplier
                 'to_version'   => $version,
                 'channel'      => (string) ($manifest['channel'] ?? config('updates.channel', 'stable')),
                 'status'       => UpdateHistory::STATUS_BACKING_UP,
-                'step'         => self::STEPS[0],
+                'step'         => $this->steps()[0],
                 'initiated_by' => $initiatedBy,
                 'started_at'   => now(),
                 'meta'         => ['manifest' => $manifest, 'step_index' => 0],
@@ -100,13 +108,14 @@ class UpdateApplier
             return $history;
         }
 
+        $steps = $this->steps();
         $index = $history->stepIndex();
 
-        if ($index >= count(self::STEPS)) {
+        if ($index >= count($steps)) {
             return $this->complete($history);
         }
 
-        $step = self::STEPS[$index];
+        $step = $steps[$index];
 
         try {
             $this->{'do'.Str::studly($step)}($history);
@@ -116,7 +125,7 @@ class UpdateApplier
 
         $next = $index + 1;
         $history->setStepIndex($next);
-        $history->step   = self::STEPS[$next] ?? 'complete';
+        $history->step   = $steps[$next] ?? 'complete';
         $history->status = $this->statusFor($history->step);
         $history->save();
 
@@ -135,6 +144,17 @@ class UpdateApplier
     }
 
     /* ---- Steps (overridable) ------------------------------------------- */
+
+    /** The step list for THIS install — git-managed installs get GIT_STEPS. */
+    protected function steps(): array
+    {
+        return $this->isGitMode() ? self::GIT_STEPS : self::STEPS;
+    }
+
+    protected function isGitMode(): bool
+    {
+        return app(GitUpdater::class)->isGitManaged();
+    }
 
     protected function gate(array $manifest): void
     {
@@ -183,6 +203,22 @@ class UpdateApplier
             (string) ($history->meta['staging_dir'] ?? ''), $history->to_version
         );
         $history->putMeta('swap_completed', (bool) ($map['completed'] ?? false));
+        $history->save();
+    }
+
+    /** Git path only (GIT_STEPS): fetch + check out the target release's tag. */
+    protected function doGitCheckout(UpdateHistory $history): void
+    {
+        app(GitUpdater::class)->checkout($history->to_version);
+        $history->putMeta('git_checkout_completed', true);
+        $history->save();
+    }
+
+    /** Git path only (GIT_STEPS): install the new tag's dependencies. */
+    protected function doComposerInstall(UpdateHistory $history): void
+    {
+        app(GitUpdater::class)->composerInstall();
+        $history->putMeta('composer_install_completed', true);
         $history->save();
     }
 
@@ -254,13 +290,20 @@ class UpdateApplier
         return $history;
     }
 
-    /** A failure after the swap must reverse files + restore the DB. */
+    /** A failure after the swap (or, git path, after composer install) must reverse files + restore the DB. */
     protected function rollback(UpdateHistory $history): void
     {
         try {
-            app(UpdateSwapper::class)->rollback(); // reverse the dir-rename swap (reads last-swap.json)
+            if ($this->isGitMode()) {
+                // Check out the PREVIOUS tag and reinstall ITS dependencies — a
+                // composer-install failure partway through must never leave
+                // vendor/ matching neither the old nor the new release.
+                app(GitUpdater::class)->rollbackTo($history->from_version);
+            } else {
+                app(UpdateSwapper::class)->rollback(); // reverse the dir-rename swap (reads last-swap.json)
+            }
         } catch (\Throwable $e) {
-            Log::channel(config('updates.log_channel', 'stack'))->error('Swap rollback failed: '.$e->getMessage());
+            Log::channel(config('updates.log_channel', 'stack'))->error('File rollback failed: '.$e->getMessage());
         }
 
         if ($history->backup_run_id && ($run = BackupRun::find($history->backup_run_id))) {
@@ -274,6 +317,14 @@ class UpdateApplier
 
     protected function needsRollback(string $step): bool
     {
+        if ($this->isGitMode()) {
+            // composer_install can fail partway through (network drop mid-install)
+            // and leave vendor/ inconsistent, unlike the zip path's atomic
+            // per-directory rename — so it needs the same rollback as a
+            // post-swap failure, one step earlier than the zip path's list.
+            return in_array($step, ['composer_install', 'finalize', 'verify'], true);
+        }
+
         // Only steps AFTER a successful swap require reversing files + DB.
         return in_array($step, ['finalize', 'verify'], true);
     }
@@ -311,13 +362,15 @@ class UpdateApplier
     private function statusFor(string $step): string
     {
         return match ($step) {
-            'backup'   => UpdateHistory::STATUS_BACKING_UP,
-            'download' => UpdateHistory::STATUS_DOWNLOADING,
-            'extract'  => UpdateHistory::STATUS_EXTRACTING,
-            'swap'     => UpdateHistory::STATUS_SWAPPING,
-            'finalize' => UpdateHistory::STATUS_MIGRATING,
-            'verify'   => UpdateHistory::STATUS_FINALIZING,
-            default    => UpdateHistory::STATUS_FINALIZING,
+            'backup'           => UpdateHistory::STATUS_BACKING_UP,
+            'download'         => UpdateHistory::STATUS_DOWNLOADING,
+            'extract'          => UpdateHistory::STATUS_EXTRACTING,
+            'swap'             => UpdateHistory::STATUS_SWAPPING,
+            'git_checkout'     => UpdateHistory::STATUS_PULLING,
+            'composer_install' => UpdateHistory::STATUS_INSTALLING,
+            'finalize'         => UpdateHistory::STATUS_MIGRATING,
+            'verify'           => UpdateHistory::STATUS_FINALIZING,
+            default            => UpdateHistory::STATUS_FINALIZING,
         };
     }
 

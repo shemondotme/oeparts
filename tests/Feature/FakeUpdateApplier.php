@@ -22,6 +22,18 @@ class FakeUpdateApplier extends UpdateApplier
 
     protected function gate(array $manifest): void {}
 
+    // Force the zip path regardless of where tests happen to run — without this,
+    // isGitMode() falls back to config('updates.root_path') ?: base_path(),
+    // which in a real checkout of THIS project IS a real git repo, so every test
+    // using this fake would silently pick GIT_STEPS and then fall through to the
+    // real (unfaked) doGitCheckout()/doComposerInstall(), running actual `git`/
+    // `composer` commands against the real project during a test run. Confirmed
+    // live: exactly that happened before this override was added.
+    protected function isGitMode(): bool
+    {
+        return false;
+    }
+
     protected function doBackup(UpdateHistory $h): void { $this->tick('backup'); }
     protected function doDownload(UpdateHistory $h): void { $this->tick('download'); }
     protected function doExtract(UpdateHistory $h): void { $this->tick('extract'); }

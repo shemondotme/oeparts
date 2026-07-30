@@ -238,14 +238,18 @@
                     @endif
                 @else
                     @php
-                        $steps = \App\Services\Updates\UpdateApplier::STEPS;
+                        $steps = app(\App\Services\Updates\GitUpdater::class)->isGitManaged()
+                            ? \App\Services\Updates\UpdateApplier::GIT_STEPS
+                            : \App\Services\Updates\UpdateApplier::STEPS;
                         $stepLabels = [
-                            'backup'   => 'Backing up database & files',
-                            'download' => 'Downloading release',
-                            'extract'  => 'Extracting release',
-                            'swap'     => 'Swapping in new files',
-                            'finalize' => 'Running migrations',
-                            'verify'   => 'Verifying the update',
+                            'backup'           => 'Backing up database & files',
+                            'download'         => 'Downloading release',
+                            'extract'          => 'Extracting release',
+                            'swap'             => 'Swapping in new files',
+                            'git_checkout'     => 'Pulling latest code (git)',
+                            'composer_install' => 'Installing dependencies (composer)',
+                            'finalize'         => 'Running migrations',
+                            'verify'           => 'Verifying the update',
                         ];
                         $currentStep = $applyStatus['step'] ?? $steps[0];
                         $stepIndex = array_search($currentStep, $steps, true);

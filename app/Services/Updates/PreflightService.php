@@ -33,6 +33,7 @@ class PreflightService
             $this->checkWritability(),
             $this->checkOpcache(),
             $this->checkDeploymentType(),
+            $this->checkGitTooling(),
             $this->checkMultiServer(),
             $this->checkEnvKeys($manifest),
             $this->checkSchemaDrift($manifest),
@@ -225,7 +226,13 @@ class PreflightService
             : PreflightCheck::fail($key, $label, 'opcache_reset() unavailable and validate_timestamps=0 — new code would not load. A manual FPM reload is required.');
     }
 
-    /** Git / symlink-release deployments must use their own tooling, not one-click. */
+    /**
+     * Git-managed installs take a different apply path (UpdateApplier::GIT_STEPS —
+     * git fetch/checkout + composer install instead of download/extract/swap); see
+     * checkGitTooling() for the actual pass/fail gate on whether that path can run.
+     * Symlink-release deployments (Capistrano/Deployer-style) still have no
+     * supported one-click path and are refused outright.
+     */
     public function checkDeploymentType(): PreflightCheck
     {
         $key = 'deployment';
@@ -233,8 +240,8 @@ class PreflightService
         $root = $this->root();
 
         if (is_dir($root.DIRECTORY_SEPARATOR.'.git')) {
-            return PreflightCheck::fail($key, $label,
-                'Git-managed deployment detected — update with git, not the one-click updater.');
+            return PreflightCheck::pass($key, $label,
+                'Git-managed deployment — will update via git fetch/checkout + composer install instead of a file swap.');
         }
 
         if (is_link(rtrim($root, '/\\')) || is_dir(dirname($root).DIRECTORY_SEPARATOR.'releases')) {
@@ -243,6 +250,31 @@ class PreflightService
         }
 
         return PreflightCheck::pass($key, $label, 'Standard deployment.');
+    }
+
+    /**
+     * Only relevant (and only runs) for a git-managed install: the git apply path
+     * needs exec/proc_open enabled plus a `git` and a `composer` binary on PATH.
+     * Fails closed rather than letting a git-managed install silently attempt (and
+     * partially fail) a path it can't actually complete.
+     */
+    public function checkGitTooling(): PreflightCheck
+    {
+        $key = 'git_tooling';
+        $label = 'Git update tooling';
+        $updater = app(GitUpdater::class);
+
+        if (! $updater->isGitManaged()) {
+            return PreflightCheck::pass($key, $label, 'Not a git-managed install — n/a.');
+        }
+
+        if (! $updater->toolingAvailable()) {
+            return PreflightCheck::fail($key, $label,
+                'exec/proc_open, `git`, or `composer` is unavailable on this server — the git update path cannot run. '
+                .'Update manually via SSH instead (git pull + composer install + php artisan migrate).');
+        }
+
+        return PreflightCheck::pass($key, $label, 'git + composer + exec available.');
     }
 
     public function checkMultiServer(): PreflightCheck

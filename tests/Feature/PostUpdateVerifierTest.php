@@ -128,6 +128,14 @@ class VerifyRollbackApplier extends UpdateApplier
     public bool $rolledBack = false;
 
     protected function gate(array $manifest): void {}
+
+    // Force the zip path — without this, isGitMode() resolves against the real
+    // project root (this repo genuinely has .git), so the FSM would pick
+    // GIT_STEPS and fall through to the real (unfaked) doGitCheckout(), running
+    // an actual `git checkout` against this project during the test. Same fix
+    // as Tests\Feature\FakeUpdateApplier.
+    protected function isGitMode(): bool { return false; }
+
     protected function enterMaintenance(): void {}
     protected function exitMaintenance(): void {}
     protected function doBackup(UpdateHistory $h): void {}

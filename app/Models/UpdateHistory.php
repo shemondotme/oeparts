@@ -24,6 +24,9 @@ class UpdateHistory extends Model
     public const STATUS_DOWNLOADING = 'downloading';
     public const STATUS_EXTRACTING  = 'extracting';
     public const STATUS_SWAPPING    = 'swapping';
+    // Git-managed deployment path (UpdateApplier::GIT_STEPS) — see GitUpdater.
+    public const STATUS_PULLING     = 'pulling';
+    public const STATUS_INSTALLING  = 'installing';
     public const STATUS_MIGRATING   = 'migrating';
     public const STATUS_FINALIZING  = 'finalizing';
     public const STATUS_SUCCESS     = 'success';

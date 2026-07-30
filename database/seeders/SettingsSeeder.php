@@ -12,8 +12,14 @@ class SettingsSeeder extends Seeder
     {
         $settings = self::definitions();
 
+        // firstOrCreate (not updateOrCreate): only backfills a group+key that
+        // doesn't exist yet — never overwrites a value an admin already saved
+        // via a Settings page. Safe to run unattended on every future update;
+        // "Reset to Defaults" (SettingsPage::resetToDefaults()) is the separate,
+        // explicit, admin-triggered path for reverting an existing value back to
+        // this seeder's default — this run() is only ever backfilling new keys.
         foreach ($settings as $row) {
-            Setting::updateOrCreate(
+            Setting::firstOrCreate(
                 ['group' => $row['group'], 'key' => $row['key']],
                 [
                     'value' => $row['value'],
