@@ -90,6 +90,59 @@ class PaymentSettings extends SettingsPage
                             ->send();
                     }
                 }),
+            Action::make('testPaysera')
+                ->label('Test Connection')
+                ->icon('heroicon-o-signal')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Test Paysera Gateway')
+                ->modalDescription('Requests an OAuth2 token from Paysera to verify your Client ID and Client Secret are valid. No charges are made.')
+                ->modalSubmitActionLabel('Test Now')
+                ->action(function () {
+                    $clientId = $this->data['paysera_client_id'] ?? null;
+                    $clientSecret = $this->data['paysera_client_secret'] ?? null;
+
+                    if (! $clientId || ! $clientSecret) {
+                        Notification::make()
+                            ->title('Missing credentials')
+                            ->body('Please fill in both Client ID and Client Secret before testing.')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    try {
+                        $response = Http::asForm()->timeout(10)->post(
+                            'https://api.paysera.com/auth/realms/Paysera/protocol/openid-connect/token',
+                            [
+                                'grant_type' => 'client_credentials',
+                                'client_id' => $clientId,
+                                'client_secret' => $clientSecret,
+                            ]
+                        );
+
+                        if ($response->successful() && $response->json('access_token')) {
+                            Notification::make()
+                                ->title('Connection successful')
+                                ->body('Paysera API responded OK with a valid access token.')
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Connection failed')
+                                ->body("API returned HTTP {$response->status()}: " . $response->body())
+                                ->danger()
+                                ->send();
+                        }
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Connection error')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
         ];
     }
 
@@ -139,6 +192,39 @@ class PaymentSettings extends SettingsPage
                             ->default('LT'),
                     ])->columns(2),
 
+                Section::make('Paysera Payment Gateway')
+                    ->description('Paysera Checkout Modern card gateway. Key secrets are securely encrypted in the database.')
+                    ->schema([
+                        Forms\Components\Select::make('paysera_environment')
+                            ->label('Gateway API Environment')
+                            ->options([
+                                'sandbox' => 'Sandbox (Testing Mode)',
+                                'live' => 'Production (Live Mode)',
+                            ])
+                            ->helperText('Paysera serves both sandbox and live from the same API host — this only labels which Client ID / Secret pair you have configured below.')
+                            ->default('sandbox'),
+
+                        Forms\Components\TextInput::make('paysera_client_id')
+                            ->label('Client ID')
+                            ->placeholder('e.g. 12345abc-...')
+                            ->maxLength(255)
+                            ->default(null),
+
+                        Forms\Components\TextInput::make('paysera_client_secret')
+                            ->label('Client Secret')
+                            ->password()
+                            ->revealable()
+                            ->helperText('Saved encrypted in database')
+                            ->default(null),
+
+                        Forms\Components\TextInput::make('paysera_webhook_secret')
+                            ->label('Webhook Signoff Secret')
+                            ->password()
+                            ->revealable()
+                            ->helperText('Saved encrypted in database. Best-effort HMAC verification — confirm the exact scheme against Paysera\'s real callback delivery once available.')
+                            ->default(null),
+                    ])->columns(2),
+
                 Section::make('B2B Offline Bank Transfer')
                     ->description('Set institutional credentials for processing B2B bank wire orders.')
                     ->schema([
@@ -180,7 +266,7 @@ class PaymentSettings extends SettingsPage
                             ->label('')
                             ->columnSpanFull()
                             ->content(new \Illuminate\Support\HtmlString(
-                                'Enable or disable card / bank-transfer checkout on the <a href="'
+                                'Enable or disable card / Paysera / bank-transfer checkout on the <a href="'
                                 . CheckoutSettings::getUrl()
                                 . '" class="fi-link text-primary-600">Checkout Settings</a> page → Allowed Payment Methods.'
                             )),

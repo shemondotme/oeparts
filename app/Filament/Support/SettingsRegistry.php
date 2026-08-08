@@ -60,7 +60,7 @@ final class SettingsRegistry
         ],
         'Store Operations' => [
             'icon' => 'heroicon-o-cog',
-            'keywords' => 'orders cart shipping payment tax email smtp bank transfer airwallex company store checkout',
+            'keywords' => 'orders cart shipping payment tax email smtp bank transfer airwallex paysera company store checkout',
         ],
         'SEO & Marketing' => [
             'icon' => 'heroicon-o-globe-alt',
@@ -203,7 +203,7 @@ final class SettingsRegistry
             'section' => 'Store Operations',
             'title' => 'Payment Gateways',
             'url' => '/admin/settings/payment-settings',
-            'description' => 'Airwallex card processing, B2B bank details',
+            'description' => 'Airwallex / Paysera card processing, B2B bank details',
             'icon' => 'heroicon-o-credit-card',
             'sort' => 60,
         ],

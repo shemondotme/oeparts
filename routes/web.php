@@ -56,6 +56,10 @@ Route::post('/webhooks/airwallex', [WebhookController::class, 'handleAirwallex']
     ->name('webhooks.airwallex')
     ->middleware('throttle:webhook')
     ->withoutMiddleware(['web', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+Route::post('/webhooks/paysera', [WebhookController::class, 'handlePaysera'])
+    ->name('webhooks.paysera')
+    ->middleware('throttle:webhook')
+    ->withoutMiddleware(['web', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
 Route::post('/webhooks/bank-transfer-confirm', [WebhookController::class, 'handleBankTransferConfirm'])
     ->name('webhooks.bank-transfer-confirm')
     ->middleware('throttle:webhook')

@@ -143,6 +143,23 @@
                                     </div>
                                 </label>
 
+                                <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors hover:bg-ivory-alt">
+                                    <div class="flex items-center gap-3 shrink-0 mt-0.5">
+                                        <input type="radio" id="method-paysera" name="payment_method" value="paysera"
+                                               class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0"
+                                               {{ old('payment_method', $selectedMethod) === 'paysera' ? 'checked' : '' }}>
+                                    </div>
+                                    <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0">
+                                        <x-heroicon-o-credit-card class="w-5 h-5 text-ink" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_paysera_option_title', 'checkout.paysera_option_title') }}</p>
+                                        <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
+                                            {{ ui_copy('checkout_paysera_option_note', 'checkout.paysera_option_note') }}
+                                        </p>
+                                    </div>
+                                </label>
+
                                 <label class="flex items-start gap-4 p-5 cursor-pointer transition-colors hover:bg-ivory-alt">
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
                                         <input type="radio" id="method-bank" name="payment_method" value="bank_transfer"
@@ -193,6 +210,21 @@
                                 <div id="airwallex-dropin" class="border border-ink bg-paper p-5 min-h-[200px]"></div>
 
                                 <input type="hidden" name="payment_intent_id" id="payment-intent-id">
+                            </div>
+
+                            {{-- Paysera section --}}
+                            <div id="paysera-section" class="hidden space-y-4">
+                                <div class="border border-rule-strong bg-ivory-alt p-5 flex items-start gap-3">
+                                    <div class="w-9 h-9 border border-ink bg-paper flex items-center justify-center shrink-0">
+                                        <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
+                                    </div>
+                                    <div>
+                                        <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_secure_paysera_checkout', 'checkout.secure_paysera_checkout') }}</p>
+                                        <p class="text-sm text-body leading-relaxed">
+                                            {{ ui_copy('checkout_secure_paysera_checkout_note', 'checkout.secure_paysera_checkout_note') }}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             {{-- Bank transfer section --}}
@@ -332,7 +364,7 @@
                 <div class="mt-4 border border-rule bg-ivory-alt p-4">
                     <div class="flex items-center justify-center gap-2 px-2">
                         <x-heroicon-s-credit-card class="w-4 h-4 text-amber-ink shrink-0" />
-                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">Airwallex{{ !empty($enabledWallets) ? ' · ' . implode(' · ', $enabledWallets) : '' }}</span>
+                        <span class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink">Airwallex · Paysera{{ !empty($enabledWallets) ? ' · ' . implode(' · ', $enabledWallets) : '' }}</span>
                     </div>
                 </div>
             </aside>
@@ -345,8 +377,10 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const cardRadio = document.getElementById('method-card');
+            const payseraRadio = document.getElementById('method-paysera');
             const bankRadio = document.getElementById('method-bank');
             const cardSection = document.getElementById('card-section');
+            const payseraSection = document.getElementById('paysera-section');
             const bankSection = document.getElementById('bank-section');
             const submitBtn = document.getElementById('submit-btn');
             const submitLabel = submitBtn ? submitBtn.querySelector('span:not([x-show])') : null;
@@ -390,6 +424,7 @@
             function toggleSections() {
                 if (cardRadio.checked) {
                     cardSection.classList.remove('hidden');
+                    payseraSection.classList.add('hidden');
                     bankSection.classList.add('hidden');
                     // The Drop-in element renders its own Pay/Apple Pay/Google
                     // Pay button inside #airwallex-dropin — our own submit
@@ -398,14 +433,25 @@
                     loadAirwallexScript().then(initAirwallex).catch(function () {
                         showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
                     });
+                } else if (payseraRadio.checked) {
+                    // Paysera hosts its own payment form — no SDK/iframe here.
+                    // Submitting this form redirects the browser straight to
+                    // the Paysera-hosted payment_URL, same plain-POST flow as
+                    // bank transfer below.
+                    cardSection.classList.add('hidden');
+                    payseraSection.classList.remove('hidden');
+                    bankSection.classList.add('hidden');
+                    submitBtn.classList.remove('hidden');
                 } else if (bankRadio.checked) {
                     cardSection.classList.add('hidden');
+                    payseraSection.classList.add('hidden');
                     bankSection.classList.remove('hidden');
                     submitBtn.classList.remove('hidden');
                 }
             }
 
             cardRadio.addEventListener('change', toggleSections);
+            payseraRadio.addEventListener('change', toggleSections);
             bankRadio.addEventListener('change', toggleSections);
             toggleSections();
 

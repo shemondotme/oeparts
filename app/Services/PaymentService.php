@@ -31,6 +31,12 @@ class PaymentService
     private const AIRWALLEX_API_BASE_SANDBOX = 'https://api-demo.airwallex.com/api/v1';
     private const AIRWALLEX_API_BASE_LIVE = 'https://api.airwallex.com/api/v1';
 
+    // Paysera's docs list a single base URL for both sandbox and live —
+    // environment is distinguished only by which client_id/client_secret
+    // pair is configured, not by a different host.
+    private const PAYSERA_API_BASE = 'https://api.paysera.com';
+    private const PAYSERA_TOKEN_URL = 'https://api.paysera.com/auth/realms/Paysera/protocol/openid-connect/token';
+
     public function __construct(
         private SettingsService $settings,
         private OrderService $orderService,
@@ -141,6 +147,265 @@ class PaymentService
 
             return $response->json('token');
         });
+    }
+
+    /**
+     * Create a Paysera order + payment link for an order.
+     *
+     * Checkout Modern is a two-step flow (unlike Airwallex's single payment
+     * intent): POST /orders first, then POST /payment-links against the
+     * returned order_id. Returns the payment_URL the customer is redirected
+     * to (Paysera hosts the actual card form — no client-side SDK/iframe
+     * needed, unlike Airwallex's Drop-in element).
+     */
+    public function createPayseraPaymentLink(Order $order): array
+    {
+        $clientId = $this->settings->get('payment.paysera_client_id', '');
+        $clientSecret = $this->settings->get('payment.paysera_client_secret', '');
+
+        if (empty($clientId) || empty($clientSecret)) {
+            throw new \RuntimeException('Paysera credentials not configured.');
+        }
+
+        // Paysera expects amounts in minor currency units (cents for EUR),
+        // same convention as Airwallex above.
+        $amountMinorUnits = (int) bcmul($order->grand_total, '100', 0);
+
+        try {
+            $token = $this->payseraAuthToken($clientId, $clientSecret);
+
+            $orderResponse = Http::withToken($token)
+                ->timeout(15)->retry(3, 1000)
+                ->post(self::PAYSERA_API_BASE.'/merchant-order/integration/v1/orders', [
+                    'redirect_urls' => [
+                        'success_url' => route('frontend.checkout.thank-you', [
+                            'lang' => app()->getLocale(),
+                            'order' => $order->order_number,
+                        ]),
+                        'failure_url' => route('frontend.checkout.payment.failed', [
+                            'lang' => app()->getLocale(),
+                            'order' => $order->order_number,
+                        ]),
+                        'callback_url' => route('webhooks.paysera'),
+                    ],
+                    'purchase' => [
+                        'reference' => $order->order_number,
+                        'amount' => $amountMinorUnits,
+                        'currency' => settings('general.currency', 'EUR'),
+                    ],
+                ]);
+
+            $orderData = $orderResponse->json();
+
+            if (!$orderResponse->successful() || !isset($orderData['order_id'])) {
+                Log::error('Paysera order creation failed', [
+                    'order_id' => $order->id,
+                    'response' => $orderData,
+                ]);
+                throw new \RuntimeException('Failed to create Paysera order.');
+            }
+
+            $linkResponse = Http::withToken($token)
+                ->timeout(15)->retry(3, 1000)
+                ->post(self::PAYSERA_API_BASE.'/checkout-payment-link/integration/v1/payment-links', [
+                    'order_id' => $orderData['order_id'],
+                    'name' => 'Order #'.$order->order_number,
+                    'experience' => [
+                        'language' => app()->getLocale(),
+                    ],
+                    'purchase' => [
+                        'amount' => $amountMinorUnits,
+                    ],
+                    'payer_information' => array_filter([
+                        'email' => $order->guest_email ?? $order->user?->email,
+                    ]),
+                ]);
+
+            $linkData = $linkResponse->json();
+
+            if (!$linkResponse->successful() || !isset($linkData['payment_URL'])) {
+                Log::error('Paysera payment link creation failed', [
+                    'order_id' => $order->id,
+                    'response' => $linkData,
+                ]);
+                throw new \RuntimeException('Failed to create Paysera payment link.');
+            }
+
+            $payment = Payment::create([
+                'order_id' => $order->id,
+                'gateway' => PaymentGateway::Paysera,
+                'transaction_id' => $orderData['order_id'],
+                'status' => PaymentTransactionStatus::Pending,
+                'amount' => $order->grand_total,
+                'gateway_response' => ['order' => $orderData, 'link' => $linkData],
+            ]);
+
+            return [
+                'payment_url' => $linkData['payment_URL'],
+                'order_id' => $orderData['order_id'],
+                'payment_id' => $payment->id,
+            ];
+        } catch (\Exception $e) {
+            Log::error('Paysera API error', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('Payment gateway error: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Exchange the configured Client ID / Secret for a bearer token via
+     * Paysera's OAuth2 client-credentials flow. Tokens last 3600s per
+     * Paysera's docs (no refresh token issued); cached for 55 minutes to
+     * stay safely inside that expiry while avoiding a token round trip on
+     * every checkout.
+     */
+    private function payseraAuthToken(string $clientId, string $clientSecret): string
+    {
+        $cacheKey = 'paysera_auth_token:'.md5($clientId.$clientSecret);
+
+        return Cache::remember($cacheKey, now()->addMinutes(55), function () use ($clientId, $clientSecret) {
+            $response = Http::asForm()->timeout(15)->post(self::PAYSERA_TOKEN_URL, [
+                'grant_type' => 'client_credentials',
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+            ]);
+
+            if (!$response->successful() || !$response->json('access_token')) {
+                throw new \RuntimeException('Paysera authentication failed: HTTP '.$response->status());
+            }
+
+            return $response->json('access_token');
+        });
+    }
+
+    /**
+     * Verify a Paysera webhook signature.
+     *
+     * Best-effort HMAC-SHA256-over-raw-payload implementation per Paysera's
+     * published Checkout Modern guide — unlike Airwallex's documented
+     * timestamp+payload scheme, Paysera's public docs don't spell out the
+     * exact signed-string format or header name beyond an example, so this
+     * MUST be re-verified against a real callback delivery (header name,
+     * signing key, exact algorithm) once live/sandbox credentials are on
+     * hand, before this gateway is trusted with real traffic.
+     */
+    public function verifyPayseraWebhookSignature(string $payload, ?string $signature): bool
+    {
+        $webhookSecret = $this->settings->get('payment.paysera_webhook_secret', '');
+
+        if (empty($webhookSecret) || empty($signature)) {
+            Log::warning('Paysera webhook secret not configured or signature missing');
+
+            return false;
+        }
+
+        $expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
+
+        return hash_equals($expectedSignature, $signature);
+    }
+
+    /**
+     * Check idempotency of a Paysera webhook delivery.
+     *
+     * Keyed by order_id + status rather than order_id alone — a single
+     * order legitimately receives multiple callbacks over its lifecycle
+     * (e.g. pending_payment, then paid), and deduping on order_id alone
+     * would silently drop the second, real status transition.
+     */
+    public function isDuplicatePayseraEvent(string $orderId, ?string $status): bool
+    {
+        $cacheKey = 'paysera_webhook_'.$orderId.':'.($status ?? 'unknown');
+        $ttl = (int) settings('payment.webhook_cache_days', 7) * 24 * 60;
+
+        return !Cache::add($cacheKey, true, $ttl);
+    }
+
+    /**
+     * Process a successful (status: paid) Paysera webhook.
+     */
+    public function processSuccessfulPayseraPayment(array $webhookData): void
+    {
+        $payseraOrderId = $webhookData['order_id'] ?? null;
+
+        if (!$payseraOrderId) {
+            Log::error('Invalid Paysera webhook data', ['data' => $webhookData]);
+            throw new \RuntimeException('Invalid webhook data');
+        }
+
+        $payment = Payment::where('transaction_id', $payseraOrderId)
+            ->where('gateway', PaymentGateway::Paysera)
+            ->first();
+
+        if (!$payment) {
+            Log::error('Payment not found for Paysera webhook', ['paysera_order_id' => $payseraOrderId]);
+            throw new \RuntimeException('Payment not found');
+        }
+
+        DB::transaction(function () use ($payment, $payseraOrderId, $webhookData) {
+            $payment->update([
+                'status' => PaymentTransactionStatus::Captured,
+                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
+            ]);
+
+            $order = $payment->order;
+            $order->update([
+                'payment_status' => \App\Enums\PaymentStatus::Paid,
+                'payment_reference' => $payseraOrderId,
+            ]);
+
+            $this->orderService->transitionStatus(
+                $order,
+                \App\Enums\OrderStatus::Processing,
+                'Payment confirmed via Paysera webhook',
+                null,
+                notifyCustomer: false,
+            );
+
+            dispatch(new SendOrderConfirmationEmail($order));
+
+            \App\Events\PaymentReceived::dispatch($order, $payment);
+
+            Log::info('Paysera payment processed successfully', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+            ]);
+        });
+    }
+
+    /**
+     * Process a failed/canceled Paysera webhook.
+     */
+    public function processFailedPayseraPayment(array $webhookData): void
+    {
+        $payseraOrderId = $webhookData['order_id'] ?? null;
+        if (!$payseraOrderId) {
+            return;
+        }
+
+        $payment = Payment::where('transaction_id', $payseraOrderId)
+            ->where('gateway', PaymentGateway::Paysera)
+            ->first();
+
+        if ($payment) {
+            DB::transaction(function () use ($payment, $webhookData) {
+                $payment->update([
+                    'status' => PaymentTransactionStatus::Failed,
+                    'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
+                ]);
+
+                $order = $payment->order;
+                $order->update([
+                    'payment_status' => \App\Enums\PaymentStatus::Failed,
+                ]);
+            });
+
+            Log::warning('Paysera payment failed via webhook', [
+                'order_id' => $payment->order_id,
+                'payment_id' => $payment->id,
+            ]);
+        }
     }
 
     /**

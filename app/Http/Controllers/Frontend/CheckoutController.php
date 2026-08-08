@@ -412,7 +412,7 @@ class CheckoutController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_method' => 'required|in:card,bank_transfer',
+            'payment_method' => 'required|in:card,paysera,bank_transfer',
             'customer_note' => 'nullable|string|max:' . settings('checkout.max_note_length', 500),
         ]);
 
@@ -678,6 +678,27 @@ class CheckoutController extends Controller
             ]);
         }
         
+        // Paysera is a full redirect flow (Paysera hosts the payment form —
+        // no client-side SDK/iframe like Airwallex's Drop-in), so this is a
+        // normal synchronous form POST, same as the bank_transfer branch
+        // above, not the JSON response the card branch below returns.
+        if ($validated['payment_method'] === 'paysera') {
+            try {
+                $result = $this->paymentService->createPayseraPaymentLink($order);
+            } catch (\Throwable $e) {
+                report($e);
+
+                $message = settings_trans('checkout.payment_error_message', 'Payment method is not supported. Please try another method.');
+                if (config('app.debug')) {
+                    $message .= ' [debug: ' . $e->getMessage() . ']';
+                }
+
+                return back()->with('error', $message);
+            }
+
+            return redirect()->away($result['payment_url']);
+        }
+
         // For card payments, we rely on webhook for status updates
         return response()->json([
             'success' => true,

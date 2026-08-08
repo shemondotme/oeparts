@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\ProcessAirwallexWebhook;
+use App\Jobs\ProcessPayseraWebhook;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -83,6 +84,64 @@ class WebhookController extends Controller
         Log::info('Airwallex webhook accepted and queued', [
             'event_id' => $eventId,
             'event_type' => $eventType,
+        ]);
+
+        return response('Webhook accepted', 200);
+    }
+
+    /**
+     * Handle Paysera webhook events.
+     *
+     * POST /webhooks/paysera
+     *
+     * Paysera POSTs the order resource itself (no event-type envelope like
+     * Airwallex) — see PaymentService::verifyPayseraWebhookSignature() for
+     * why the signature scheme here is best-effort pending a real callback
+     * to verify against.
+     */
+    public function handlePaysera(Request $request): Response
+    {
+        $payload = $request->getContent();
+        $signature = $request->header('X-Paysera-Signature');
+
+        $data = json_decode($payload, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::warning('Paysera webhook invalid JSON', [
+                'error' => json_last_error_msg(),
+            ]);
+            return response('Invalid JSON', 400);
+        }
+
+        Log::debug('Paysera webhook received', [
+            'status' => $data['status'] ?? null,
+            'signature_present' => !empty($signature),
+        ]);
+
+        if (!$this->paymentService->verifyPayseraWebhookSignature($payload, $signature)) {
+            Log::warning('Paysera webhook signature verification failed', [
+                'signature' => substr($signature ?? '', 0, 8) . '***',
+            ]);
+            return response('Invalid signature', 401);
+        }
+
+        $orderId = $data['order_id'] ?? null;
+        $status = $data['status'] ?? null;
+
+        if (!$orderId) {
+            Log::warning('Paysera webhook missing order_id', ['data' => $data]);
+            return response('Missing required fields', 400);
+        }
+
+        if ($this->paymentService->isDuplicatePayseraEvent($orderId, $status)) {
+            Log::info('Paysera webhook duplicate event ignored', ['order_id' => $orderId, 'status' => $status]);
+            return response('Event already processed', 200);
+        }
+
+        ProcessPayseraWebhook::dispatch($data)->onQueue('critical');
+
+        Log::info('Paysera webhook accepted and queued', [
+            'order_id' => $orderId,
+            'status' => $status,
         ]);
 
         return response('Webhook accepted', 200);

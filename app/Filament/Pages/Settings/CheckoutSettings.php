@@ -27,6 +27,7 @@ class CheckoutSettings extends SettingsPage
                             ->label('Default Payment Method')
                             ->options([
                                 'card' => 'Card',
+                                'paysera' => 'Paysera',
                                 'bank_transfer' => 'Bank Transfer',
                             ])
                             ->default('card')
@@ -52,8 +53,8 @@ class CheckoutSettings extends SettingsPage
                     ->schema([
                         Forms\Components\TagsInput::make('allowed_payment_methods')
                             ->label('Allowed Payment Methods')
-                            ->helperText('Enter: card, bank_transfer')
-                            ->default(['card', 'bank_transfer']),
+                            ->helperText('Enter: card, paysera, bank_transfer')
+                            ->default(['card', 'paysera', 'bank_transfer']),
 
                         Forms\Components\Toggle::make('enable_apple_pay')
                             ->label('Enable Apple Pay')

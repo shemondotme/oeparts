@@ -36,6 +36,26 @@
             </div>
         </label>
 
+        {{-- Paysera --}}
+        <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors"
+               :class="paymentMethod === 'paysera' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
+            <div class="flex items-center gap-3 shrink-0 mt-0.5">
+                <input type="radio" name="payment_method" value="paysera"
+                       x-model="paymentMethod" required
+                       class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
+            </div>
+            <div class="w-10 h-10 border border-rule-strong bg-ivory-alt flex items-center justify-center shrink-0"
+                 :class="paymentMethod === 'paysera' ? 'border-ink bg-paper' : ''">
+                <x-heroicon-o-credit-card class="w-5 h-5 text-ink" />
+            </div>
+            <div class="flex-1">
+                <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_paysera_option_title', 'checkout.paysera_option_title') }}</p>
+                <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
+                    {{ ui_copy('checkout_paysera_option_note', 'checkout.paysera_option_note') }}
+                </p>
+            </div>
+        </label>
+
         {{-- Bank Transfer --}}
         <label class="flex items-start gap-4 p-5 cursor-pointer transition-colors"
                :class="paymentMethod === 'bank_transfer' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
@@ -67,6 +87,21 @@
                 <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_secure_card_checkout', 'checkout.secure_card_checkout') }}</p>
                 <p class="text-sm text-body leading-relaxed">
                     {{ ui_copy('checkout_secure_card_checkout_note', 'checkout.secure_card_checkout_note') }}
+                </p>
+            </div>
+        </div>
+    </template>
+
+    {{-- Contextual info for Paysera --}}
+    <template x-if="paymentMethod === 'paysera'">
+        <div class="border border-rule-strong bg-ivory-alt p-5 flex items-start gap-3">
+            <div class="w-9 h-9 border border-ink bg-paper flex items-center justify-center shrink-0">
+                <x-heroicon-s-lock-closed class="w-4 h-4 text-amber-ink" />
+            </div>
+            <div class="flex-1">
+                <p class="bp-spec text-amber-ink mb-1">{{ ui_copy('checkout_secure_paysera_checkout', 'checkout.secure_paysera_checkout') }}</p>
+                <p class="text-sm text-body leading-relaxed">
+                    {{ ui_copy('checkout_secure_paysera_checkout_note', 'checkout.secure_paysera_checkout_note') }}
                 </p>
             </div>
         </div>
@@ -106,7 +141,7 @@
     <div class="border border-rule bg-ivory-alt p-4">
         <div class="flex items-center justify-center gap-2 px-2">
             <x-heroicon-s-credit-card class="w-4 h-4 text-amber-ink shrink-0" />
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink">Airwallex</span>
+            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink">Airwallex · Paysera</span>
         </div>
     </div>
 </div>
