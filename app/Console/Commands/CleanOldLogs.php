@@ -10,12 +10,13 @@ use App\Models\LoginLog;
 use App\Models\SearchLog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class CleanOldLogs extends Command
 {
     protected $signature = 'logs:clean {--days= : Number of days to retain logs (defaults to search.log_retention_days setting)}';
 
-    protected $description = 'Clean old logs for GDPR compliance (default: 90 days retention)';
+    protected $description = 'Clean old logs for GDPR compliance (default: 90 days retention) and prune old install/update log files';
 
     public function handle(): int
     {
@@ -56,10 +57,27 @@ class CleanOldLogs extends Command
             ->delete();
         $this->info("Deleted {$emailLogsDeleted} email logs.");
 
-        $totalDeleted = $searchLogsDeleted + $failedSearchLogsDeleted + $loginLogsDeleted + 
+        $totalDeleted = $searchLogsDeleted + $failedSearchLogsDeleted + $loginLogsDeleted +
                         $activityLogsDeleted + $cronLogsDeleted + $emailLogsDeleted;
 
         $this->info("Total: Deleted {$totalDeleted} old log entries for GDPR compliance.");
+
+        // Install/update log files (storage/logs/install-*.log, updates-*.log) are written
+        // via a plain "single" Monolog driver with no rotation, so they never self-prune —
+        // clean them here on the same daily schedule as the DB-backed logs above.
+        $fileRetentionDays = (int) env('OE_UPDATE_LOG_DAYS', 30);
+        $fileCutoff = now()->subDays($fileRetentionDays)->getTimestamp();
+
+        $logFilesDeleted = 0;
+        foreach (['install-*.log', 'updates-*.log'] as $pattern) {
+            foreach (File::glob(storage_path('logs/'.$pattern)) as $path) {
+                if (File::lastModified($path) < $fileCutoff) {
+                    File::delete($path);
+                    $logFilesDeleted++;
+                }
+            }
+        }
+        $this->info("Deleted {$logFilesDeleted} old install/update log files (older than {$fileRetentionDays} days).");
 
         return Command::SUCCESS;
     }
