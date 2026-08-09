@@ -268,9 +268,14 @@ class PaymentService
                     null,
                     notifyCustomer: false,
                 );
-            }
 
-            dispatch(new SendOrderConfirmationEmail($order));
+                // Only send once, on the order's first authorization — a
+                // requires_capture retry delivery landing after the order has
+                // already moved on must not re-send the confirmation email
+                // (processSuccessfulPayment() sends its own later, at capture,
+                // guarded the same way).
+                dispatch(new SendOrderConfirmationEmail($order));
+            }
 
             Log::info('Airwallex payment authorized — funds held, awaiting capture', [
                 'order_id' => $order->id,
@@ -448,7 +453,8 @@ class PaymentService
     public function isDuplicatePayseraEvent(string $orderId, ?string $status): bool
     {
         $cacheKey = 'paysera_webhook_'.$orderId.':'.($status ?? 'unknown');
-        $ttl = (int) settings('payment.webhook_cache_days', 7) * 24 * 60;
+        // Cache::add()'s integer $ttl is seconds, not minutes.
+        $ttl = (int) settings('payment.webhook_cache_days', 7) * 24 * 60 * 60;
 
         return !Cache::add($cacheKey, true, $ttl);
     }
@@ -486,15 +492,24 @@ class PaymentService
                 'payment_reference' => $payseraOrderId,
             ]);
 
-            $this->orderService->transitionStatus(
-                $order,
-                \App\Enums\OrderStatus::Processing,
-                'Payment confirmed via Paysera webhook',
-                null,
-                notifyCustomer: false,
-            );
+            // Only a still-Pending order needs to advance here — same guard as
+            // processSuccessfulPayment() / processAirwallexAuthorization() use
+            // for Airwallex. A retried "paid" callback landing after the order
+            // already moved on (e.g. the idempotency cache entry expired, or
+            // Paysera redelivers because our 200 response was lost in transit)
+            // must not attempt an invalid transition and throw, nor re-send a
+            // second order confirmation email.
+            if ($order->status === \App\Enums\OrderStatus::Pending) {
+                $this->orderService->transitionStatus(
+                    $order,
+                    \App\Enums\OrderStatus::Processing,
+                    'Payment confirmed via Paysera webhook',
+                    null,
+                    notifyCustomer: false,
+                );
 
-            dispatch(new SendOrderConfirmationEmail($order));
+                dispatch(new SendOrderConfirmationEmail($order));
+            }
 
             \App\Events\PaymentReceived::dispatch($order, $payment);
 
@@ -700,9 +715,15 @@ class PaymentService
                     null,
                     notifyCustomer: false,
                 );
-            }
 
-            dispatch(new SendOrderConfirmationEmail($order));
+                // Guarded the same way as the transition above: on the plain
+                // auto-capture path this is the order's first (and only)
+                // success event, so it still always sends here. With manual
+                // capture enabled, processAirwallexAuthorization() already
+                // sent this at authorization time — don't send it again when
+                // this later succeeded/capture event lands.
+                dispatch(new SendOrderConfirmationEmail($order));
+            }
 
             \App\Events\PaymentReceived::dispatch($order, $payment);
 

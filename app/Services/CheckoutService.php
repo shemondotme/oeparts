@@ -292,6 +292,7 @@ class CheckoutService
             if (isset($data['payment_method'])) {
                 $paymentMethod = match($data['payment_method']) {
                     'card' => PaymentMethod::Card,
+                    'paysera' => PaymentMethod::Paysera,
                     'bank_transfer' => PaymentMethod::BankTransfer,
                     default => PaymentMethod::BankTransfer
                 };

@@ -90,6 +90,7 @@ class OrderService
 
             $paymentMethod = match($data['payment_method'] ?? 'bank_transfer') {
                 'card'          => \App\Enums\PaymentMethod::Card,
+                'paysera'       => \App\Enums\PaymentMethod::Paysera,
                 'bank_transfer' => \App\Enums\PaymentMethod::BankTransfer,
                 default         => \App\Enums\PaymentMethod::BankTransfer,
             };
