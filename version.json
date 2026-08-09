@@ -25,12 +25,14 @@
     "post_update_notes": "Nothing manual required. Includes a security fix for a path-traversal issue in cross-server backup restore, and a fix for the legacy backup:database command exposing your DB password to other local users via `ps aux` on shared hosting \u2014 if you've run that specific command on a shared host, consider rotating that password. Paysera is available as a second payment gateway alongside Airwallex; add credentials under Settings \u2192 Payment Settings to enable it, otherwise checkout behavior is unchanged. Airwallex's new \"Hold Funds Until Shipment\" is opt-in and off by default \u2014 existing auto-capture-at-checkout behavior does not change unless you enable it. Invoice PDFs generated before this update remain wherever they were saved; only newly-generated invoices use the corrected, collision-free file path.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": null,
-    "size_bytes": null,
-    "signature": null,
+    "sha256": "5a092ba9598ad58c5136df9d891658f7d45cf8009267a5bebca431afaec07964",
+    "size_bytes": 30504582,
+    "signature": "t+C60rGG36J4hplDufEUl8o5GBejSajGVB3JZNmOev7XCWFLTU25NNH+DBmajit0dt7sB678MxJXlpnSeC8t1m+ogmfV4WK9SYMz8dOu07fZ/PAeshEVSLKc/za2ZL+MMPffZ9vUViAu2bl6VZcT6japJGbMsX3xtae8TbJxRfwwIIlKEAERxdOa7T2KgrLTXgvNvQeIvCQUHlQ6y+ZdsVuw6JNLyLbyKiIXkpfBguX2Am41Tee1EEWBfmhzWDR9lcZEXlnPpwvL4pbL36GVl+c5/WAKI3ftoe6YhNo62YJ1wRsvjfO23zBv5s3eQqvjhHNwL/Tmk3LcWPohmm0mnA4ABaVRQ8KUzuyxSwtIXiQVv68XL+lk2AxQsOBpsPW86cqiX5t1H3ccO+zmSei66xttz4+/qevm41T9T7ToY9bXcI8Nc6cwzf2ypsHPH36kL/DKUx9e4XK5doJM9NC1EekjGmL5g7mO65bfmOE4wVk+MIyJUwmwGaCbrD4ngi5CdFHjvNEAh7XaVzV+xTTiVNRVgMz1fDi0+M0Psr1lpeIn/dq3TENmD8wT1bGDJE/kUtKeIvpL7bSmXzkUxj3xo0Z2x96JF11PwkWoJlMFQeG5eBuzbKonxTi2FEfI2DyZy7qBHOHMhyHzYbYA4wqNdU4Rknx6q1x/h1j3ZfeIOpE=",
     "download_url": "https://github.com/shemondotme/oeparts/releases/download/v1.0.15/oeparts-1.0.15.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
-    "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json"
+    "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
+    "git_commit_sha": "6ad19c11acde826fccec3bb784910907501890a2",
+    "git_signature": "r4kbc/lUiGTqhbQBRaULJ5nIkStLahDzNn8Mu+NT7RcR+AMHGJvBYSzNOlHzGRK8RWdmB9b4iJylbypnBi2mI0+FcW+6+15VAPvoQ7CrysWvS72ixoO4jwGvoCsG8vwsiTjiJ9wunTGW/7+N96LW2o54x0751KVE8g+w3UU34xBT8o5cX6zLE4wB2egqoiONMVt2x6FY7KBozslkGLhKFVplGpBrrLQ9ZVJKtQ/wya1uSdTr6koh30hjI5BC1IO7ty9bpXM7MHcEOXLw3rO7v+ZmAmYzfLRd3PD5mhDn6DzM+Bogpm/XcmNe0dHdC6rgmX938JI0HsRb2Duo+GhUsOsA/PeCLH/RuCariyf392yDk+wnZq0Ptm6hN6BEvgF7rwZFF1W2VJQ10FXh3FvFukTgg+40fWs0yns9E93GGEeaNoHfv/WzjCT/npYx7NKPw1eyJbxxWM5Bg65cCaj+lJXpKSxPnikH9ITrtNx9/RgH4afuByLJuShPMP2nSCqC435R0clewVqEwaKcRsOG/htu33h7Lfngwm2onxWaq35h5PPEddqRBXj+mU5Rn+qqo5ZxMKjhZBjJY9AMJuLEQCtTvkHs9T9GqZymh4eQaKcpprN6t4NZBFB9/DrPGcD8nlszbVIjjAzEKx350qUUwwEteC6XyGralZFgZAfYFTU="
 }
