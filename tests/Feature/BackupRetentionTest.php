@@ -23,10 +23,10 @@ class BackupRetentionTest extends TestCase
         Storage::fake('local');
     }
 
-    private function makeRun(\Illuminate\Support\Carbon $finishedAt): BackupRun
+    private function makeRun(\Illuminate\Support\Carbon $finishedAt, string $profile = BackupRun::PROFILE_FULL): BackupRun
     {
         $run = BackupRun::create([
-            'profile'     => BackupRun::PROFILE_FULL,
+            'profile'     => $profile,
             'status'      => BackupRun::STATUS_SUCCESS,
             'trigger'     => BackupRun::TRIGGER_SCHEDULED,
             'disk'        => 'local',
@@ -85,6 +85,27 @@ class BackupRetentionTest extends TestCase
         $this->assertSame(1, $result['pruned']);
         $this->assertNull($newest->refresh()->meta['pruned_at'] ?? null);
         $this->assertNotNull($older->refresh()->meta['pruned_at'] ?? null);
+    }
+
+    #[Test]
+    public function a_same_day_update_safety_backup_does_not_evict_a_full_backups_files(): void
+    {
+        config(['backup.retention' => ['daily' => 1, 'weekly' => 0, 'monthly' => 0]]);
+
+        // The morning's real disaster-recovery backup...
+        $full = $this->makeRun(now()->setTime(2, 0), BackupRun::PROFILE_FULL);
+        // ...then later the same day, an update engine pre-update safety net
+        // (DB only, by design) finishes AFTER it.
+        $updateSafety = $this->makeRun(now()->setTime(14, 0), BackupRun::PROFILE_UPDATE_SAFETY);
+
+        $result = app(BackupRetentionService::class)->prune();
+
+        // Each profile gets its own daily slot — nothing should be pruned.
+        $this->assertSame(2, $result['kept']);
+        $this->assertSame(0, $result['pruned']);
+        $this->assertNull($full->refresh()->meta['pruned_at'] ?? null);
+        $this->assertNull($updateSafety->refresh()->meta['pruned_at'] ?? null);
+        Storage::disk('local')->assertExists($full->parts()->first()->path);
     }
 
     #[Test]

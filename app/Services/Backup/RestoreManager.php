@@ -146,7 +146,18 @@ class RestoreManager
 
         try {
             foreach ($parts as $part) {
-                $sql = (string) gzdecode($this->plaintextOf($part));
+                $sql = gzdecode($this->plaintextOf($part));
+
+                if ($sql === false) {
+                    // gzdecode() failing on a corrupt part previously fell through
+                    // to (string) false === '', a silent no-op still counted as
+                    // "applied" — the admin saw a successful restore that quietly
+                    // skipped this table's schema/data entirely.
+                    $report->errors[] = 'Database part ['.$part->name.'] is corrupt (failed to decompress) — skipped.';
+
+                    continue;
+                }
+
                 DB::unprepared($sql);
                 $report->statementsRun++;
 
@@ -183,15 +194,41 @@ class RestoreManager
             return; // e.g. an update_safety backup has no files
         }
 
-        $fileManifest = json_decode((string) gzdecode($this->plaintextOf($manifestPart)), true);
-        $targetRoot   = rtrim($targetRoot, "/\\");
+        $manifestGz = gzdecode($this->plaintextOf($manifestPart));
+        if ($manifestGz === false) {
+            $report->errors[] = 'File manifest is corrupt (failed to decompress) — file restore skipped entirely.';
+
+            return;
+        }
+
+        $fileManifest = json_decode($manifestGz, true);
+        if (! is_array($fileManifest)) {
+            $report->errors[] = 'File manifest is corrupt (malformed JSON) — file restore skipped entirely.';
+
+            return;
+        }
+
+        $targetRoot = rtrim($targetRoot, "/\\");
 
         foreach ((array) ($fileManifest['files'] ?? []) as $entry) {
             if (! empty($entry['deleted']) || empty($entry['path'])) {
                 continue;
             }
 
-            $target = $targetRoot.'/'.$entry['path'];
+            // importManifest() exists specifically to accept a manifest.json
+            // copied from another server's backup disk (cross-server restore)
+            // — an untrusted input. Without normalizing away '..' segments, a
+            // crafted entry like '../../../../var/www/html/public/shell.php'
+            // would resolve outside $targetRoot entirely and let a restore
+            // write an arbitrary file on the filesystem.
+            $safePath = $this->sanitizeManifestPath((string) $entry['path']);
+            if ($safePath === null) {
+                $report->errors[] = 'Skipped a file with an unsafe path in the manifest: '.$entry['path'];
+
+                continue;
+            }
+
+            $target = $targetRoot.'/'.$safePath;
             $dir    = dirname($target);
             if (! is_dir($dir)) {
                 @mkdir($dir, 0775, true);
@@ -213,6 +250,37 @@ class RestoreManager
         }
     }
 
+    /**
+     * Normalize a manifest-supplied relative path and refuse anything that
+     * would climb above the restore root — e.g. '../../etc/passwd' or an
+     * absolute-looking '/etc/passwd' (leading slashes are just stripped,
+     * never treated as filesystem-root). Returns null for a path that can't
+     * be made safe (i.e. still tries to climb above the root after
+     * normalization).
+     */
+    private function sanitizeManifestPath(string $path): ?string
+    {
+        $path = str_replace('\\', '/', $path);
+        $safe = [];
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || $segment === '.') {
+                continue;
+            }
+            if ($segment === '..') {
+                if (empty($safe)) {
+                    return null; // would climb above the restore root
+                }
+                array_pop($safe);
+
+                continue;
+            }
+            $safe[] = $segment;
+        }
+
+        return empty($safe) ? null : implode('/', $safe);
+    }
+
     /** Reassemble one file from its volume's gzip segments. */
     private function writeFileFromVolume(BackupRun $run, array $entry, string $target): void
     {
@@ -221,6 +289,17 @@ class RestoreManager
 
         $in  = fopen($volume, 'rb');
         $out = fopen($target, 'wb');
+
+        if ($in === false || $out === false) {
+            if (is_resource($in)) {
+                fclose($in);
+            }
+            if (is_resource($out)) {
+                fclose($out);
+            }
+
+            throw new RestoreException('Could not open volume or target file while restoring: '.($entry['path'] ?? 'unknown'));
+        }
 
         try {
             foreach ($entry['segments'] as [$offset, $clen, $rawLen]) {

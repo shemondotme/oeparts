@@ -66,12 +66,25 @@ class RunBackup extends Command
 
         $this->info('Backup #'.$run->getKey().' complete — '.$run->part_count.' parts, '.$run->total_bytes.' bytes.');
 
+        $retentionNote = '';
         if (! $this->option('no-prune')) {
-            $result = $retention->prune();
-            $this->info('Retention: kept '.$result['kept'].', pruned '.$result['pruned'].'.');
+            try {
+                $result = $retention->prune();
+                $this->info('Retention: kept '.$result['kept'].', pruned '.$result['pruned'].'.');
+                $retentionNote = '; retention: kept '.$result['kept'].', pruned '.$result['pruned'];
+            } catch (\Throwable $e) {
+                // The backup itself already succeeded — a retention failure
+                // (e.g. a DB hiccup right after a long backup) must not erase
+                // that success or make the cron log silently disappear.
+                // Surface it as its own warning instead of letting it
+                // propagate and skip logCron('success') below entirely.
+                report($e);
+                $this->warn('Retention pruning failed (backup still succeeded): '.$e->getMessage());
+                $retentionNote = '; retention pruning failed: '.$e->getMessage();
+            }
         }
 
-        $this->logCron('success', $duration, 'Backup #'.$run->getKey().' ('.$run->part_count.' parts)');
+        $this->logCron('success', $duration, 'Backup #'.$run->getKey().' ('.$run->part_count.' parts)'.$retentionNote);
 
         return self::SUCCESS;
     }

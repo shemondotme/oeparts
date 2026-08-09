@@ -152,6 +152,17 @@ class BackupCipher
 
             $tag = $this->readExact($in, self::TAG_LEN);
             $len = unpack('N', $this->readExact($in, 4))[1];
+
+            // GCM ciphertext is exactly as long as the plaintext block that
+            // produced it, so nothing legitimate ever exceeds self::BLOCK. A
+            // corrupted or tampered stream with an implausible length would
+            // otherwise make readExact() accumulate an attacker/corruption
+            // -controlled amount of memory before authentication even gets a
+            // chance to fail.
+            if ($len > self::BLOCK) {
+                throw new BackupException('Corrupt encrypted backup stream (frame '.$frame.' declares an implausible length).');
+            }
+
             $ct  = $this->readExact($in, $len);
 
             $pt = openssl_decrypt(

@@ -125,34 +125,40 @@ class BackupManager
         /** @var BackupStage $stage */
         $stage = $stages[$index];
 
+        // Everything from the stage's own step() through persisting the new
+        // checkpoint must fail together — a DB error while registering a part
+        // or saving the checkpoint is just as fatal to this run as the step()
+        // call itself, and previously escaped uncaught: the run stayed
+        // "running" forever and the shared backup/update lock was never
+        // released, silently blocking every future backup and update.
         try {
             $result = $stage->step($run, $checkpoint['stage_state']);
+
+            // ->parts holds any earlier units from this (possibly batched) step, in
+            // chronological order; ->part holds the last one. Register in that
+            // order so auto-assigned `sequence` numbers stay chronological.
+            foreach ($result->parts as $partAttrs) {
+                $this->registerPart($run, $stage->key(), $partAttrs);
+            }
+            if ($result->part !== null) {
+                $this->registerPart($run, $stage->key(), $result->part);
+            }
+
+            $fraction = $result->fraction;
+
+            if ($result->done) {
+                $checkpoint['stage_index'] = $index + 1;
+                $checkpoint['stage_state'] = [];
+                $fraction = 1.0;
+            } else {
+                $checkpoint['stage_state'] = $result->state;
+            }
+
+            $run->setCheckpoint($checkpoint);
+            $run->save();
         } catch (\Throwable $e) {
             return $this->fail($run, '['.$stage->key().'] '.$e->getMessage());
         }
-
-        // ->parts holds any earlier units from this (possibly batched) step, in
-        // chronological order; ->part holds the last one. Register in that
-        // order so auto-assigned `sequence` numbers stay chronological.
-        foreach ($result->parts as $partAttrs) {
-            $this->registerPart($run, $stage->key(), $partAttrs);
-        }
-        if ($result->part !== null) {
-            $this->registerPart($run, $stage->key(), $result->part);
-        }
-
-        $fraction = $result->fraction;
-
-        if ($result->done) {
-            $checkpoint['stage_index'] = $index + 1;
-            $checkpoint['stage_state'] = [];
-            $fraction = 1.0;
-        } else {
-            $checkpoint['stage_state'] = $result->state;
-        }
-
-        $run->setCheckpoint($checkpoint);
-        $run->save();
 
         $totalStages = max(1, count($stages));
         $percent     = (int) round((($index + $fraction) / $totalStages) * 100);

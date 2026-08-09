@@ -34,33 +34,44 @@ class BackupRetentionService
             ->orderByRaw('COALESCE(finished_at, started_at, created_at) DESC')
             ->get();
 
-        $keep   = [];
-        $days   = [];
-        $weeks  = [];
-        $months = [];
+        $keep = [];
 
-        foreach ($runs as $run) {
-            $at = $run->finished_at ?? $run->started_at ?? $run->created_at;
-            if (! $at) {
-                $keep[$run->getKey()] = true; // undateable — never auto-prune
-                continue;
-            }
+        // GFS buckets are scoped PER PROFILE. A slim `update_safety` backup
+        // (database only — the update engine's own pre-update safety net,
+        // which intentionally omits files) must never compete for the same
+        // daily/weekly/monthly slot as a `full` disaster-recovery backup
+        // taken the same day: whichever finished later would otherwise win
+        // that day's slot and cause the OTHER one's files to be purged —
+        // silently losing the only file backup for that retention period if
+        // it happened to lose to a same-day update_safety run.
+        foreach ($runs->groupBy('profile') as $profileRuns) {
+            $days   = [];
+            $weeks  = [];
+            $months = [];
 
-            $day   = $at->format('Y-m-d');
-            $week  = $at->format('o-W');
-            $month = $at->format('Y-m');
+            foreach ($profileRuns as $run) {
+                $at = $run->finished_at ?? $run->started_at ?? $run->created_at;
+                if (! $at) {
+                    $keep[$run->getKey()] = true; // undateable — never auto-prune
+                    continue;
+                }
 
-            if (! isset($days[$day]) && count($days) < $daily) {
-                $days[$day] = true;
-                $keep[$run->getKey()] = true;
-            }
-            if (! isset($weeks[$week]) && count($weeks) < $weekly) {
-                $weeks[$week] = true;
-                $keep[$run->getKey()] = true;
-            }
-            if (! isset($months[$month]) && count($months) < $monthly) {
-                $months[$month] = true;
-                $keep[$run->getKey()] = true;
+                $day   = $at->format('Y-m-d');
+                $week  = $at->format('o-W');
+                $month = $at->format('Y-m');
+
+                if (! isset($days[$day]) && count($days) < $daily) {
+                    $days[$day] = true;
+                    $keep[$run->getKey()] = true;
+                }
+                if (! isset($weeks[$week]) && count($weeks) < $weekly) {
+                    $weeks[$week] = true;
+                    $keep[$run->getKey()] = true;
+                }
+                if (! isset($months[$month]) && count($months) < $monthly) {
+                    $months[$month] = true;
+                    $keep[$run->getKey()] = true;
+                }
             }
         }
 
@@ -71,7 +82,13 @@ class BackupRetentionService
                 continue;
             }
 
-            $this->janitor->purgeFiles($run);
+            if (! $this->janitor->purgeFiles($run)) {
+                // Leave meta.pruned_at unset — the whereNull('meta->pruned_at')
+                // filter above means this run is reconsidered on the next
+                // prune() call, so a failed deletion is retried instead of
+                // silently leaking storage forever.
+                continue;
+            }
 
             $meta = $run->meta ?? [];
             $meta['pruned_at'] = now()->toIso8601String();

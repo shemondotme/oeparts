@@ -108,6 +108,13 @@ class EncryptTransportStage implements BackupStage
     {
         // Idempotent: a resumed run must never re-encrypt an already-secured part.
         if (($part->meta['encrypted'] ?? false) === true) {
+            // Crash-safety belt: if a prior attempt died between marking this
+            // part encrypted and actually deleting the plaintext source below,
+            // the plaintext survives on disk — unacceptable for mandatorily
+            // encrypted backups (rule #45, customer PII). Finish the cleanup
+            // now; idempotent no-op once it's actually gone.
+            $this->deleteLeftoverPlaintext($part);
+
             return;
         }
 
@@ -121,9 +128,9 @@ class EncryptTransportStage implements BackupStage
         $meta = $this->cipher->encryptFile($srcAbs, $encAbs);
 
         $dest = $run->disk;                     // final destination (may be off-site)
+        $localEncPath = null;
 
         if ($dest === $srcDisk) {
-            Storage::disk($srcDisk)->delete($srcRel); // keep the .enc locally
             $finalDisk = $srcDisk;
         } else {
             $handle = fopen($encAbs, 'rb');
@@ -132,15 +139,18 @@ class EncryptTransportStage implements BackupStage
                 fclose($handle);
             }
 
-            if (! Storage::disk($dest)->exists($encRel)) {
-                throw new BackupException('Off-site upload of '.$encRel.' to ['.$dest.'] could not be verified.');
-            }
+            $this->verifyOffsiteUpload($dest, $encRel, (int) $meta['enc_bytes'], (string) $meta['enc_sha256']);
 
-            Storage::disk($srcDisk)->delete($srcRel); // plaintext
-            Storage::disk($srcDisk)->delete($encRel); // local encrypted copy
             $finalDisk = $dest;
+            $localEncPath = $encRel; // local .enc copy still needs cleanup below
         }
 
+        // Mark this part encrypted — and record exactly where the plaintext
+        // (and, off-site, the local .enc copy) still lives — BEFORE deleting
+        // anything. A crash between this save and the deletes below must
+        // resume straight into the "already encrypted" branch above and
+        // finish the cleanup, never re-attempt encryptFile() against a
+        // source that might already be gone.
         $part->update([
             'disk'   => $finalDisk,
             'path'   => $encRel,
@@ -152,8 +162,81 @@ class EncryptTransportStage implements BackupStage
                 'frames'       => $meta['frames'],
                 'plain_sha256' => $meta['plain_sha256'],
                 'plain_bytes'  => $meta['plain_bytes'],
+                'plain_disk'   => $srcDisk,
+                'plain_path'   => $srcRel,
+                'plain_enc_local_path' => $localEncPath,
             ]),
         ]);
+
+        $this->deleteLeftoverPlaintext($part->fresh());
+    }
+
+    /**
+     * Delete the plaintext source and (for off-site parts) the local .enc
+     * copy, if still present. Safe to call repeatedly — every check is
+     * exists()-guarded, so a resume after a crash mid-cleanup just finishes
+     * whatever deletion didn't happen yet.
+     */
+    private function deleteLeftoverPlaintext(BackupChunk $part): void
+    {
+        $meta = (array) ($part->meta ?? []);
+        $plainDisk = $meta['plain_disk'] ?? null;
+        $plainPath = $meta['plain_path'] ?? null;
+
+        if ($plainDisk && $plainPath && Storage::disk($plainDisk)->exists($plainPath)) {
+            Storage::disk($plainDisk)->delete($plainPath);
+        }
+
+        $localEncPath = $meta['plain_enc_local_path'] ?? null;
+        if ($plainDisk && $localEncPath && Storage::disk($plainDisk)->exists($localEncPath)) {
+            Storage::disk($plainDisk)->delete($localEncPath);
+        }
+    }
+
+    /**
+     * Verify an off-site upload before the caller trusts it enough to delete
+     * the only other copies (local plaintext + local .enc). Existence alone
+     * (the previous check) is satisfied by a truncated/corrupt object from a
+     * dropped connection or partial multipart upload — this additionally
+     * confirms the remote byte count and a full streaming SHA-256 match the
+     * artifact actually encrypted locally.
+     */
+    private function verifyOffsiteUpload(string $dest, string $encRel, int $expectedBytes, string $expectedSha256): void
+    {
+        if (! Storage::disk($dest)->exists($encRel)) {
+            throw new BackupException('Off-site upload of '.$encRel.' to ['.$dest.'] could not be verified: object not found.');
+        }
+
+        $actualBytes = (int) Storage::disk($dest)->size($encRel);
+        if ($actualBytes !== $expectedBytes) {
+            throw new BackupException(
+                'Off-site upload of '.$encRel.' to ['.$dest.'] failed verification: size mismatch '
+                .'(expected '.$expectedBytes.' bytes, got '.$actualBytes.').'
+            );
+        }
+
+        $stream = Storage::disk($dest)->readStream($encRel);
+        if ($stream === null) {
+            throw new BackupException('Off-site upload of '.$encRel.' to ['.$dest.'] could not be read back for verification.');
+        }
+
+        $hashContext = hash_init('sha256');
+        while (! feof($stream)) {
+            $chunk = fread($stream, 1024 * 1024);
+            if ($chunk !== false && $chunk !== '') {
+                hash_update($hashContext, $chunk);
+            }
+        }
+        fclose($stream);
+
+        $actualSha256 = hash_final($hashContext);
+
+        if (! hash_equals($expectedSha256, $actualSha256)) {
+            throw new BackupException(
+                'Off-site upload of '.$encRel.' to ['.$dest.'] failed verification: sha256 mismatch — '
+                .'the remote object is corrupt.'
+            );
+        }
     }
 
     /** Warn (don't block) if PII would leave the EU on an S3 destination. */

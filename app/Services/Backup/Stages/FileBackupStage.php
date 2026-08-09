@@ -45,6 +45,12 @@ class FileBackupStage implements BackupStage
             $state = $this->initialise($run);
         }
 
+        // Phase 0 — walk the tree + diff against the incremental baseline,
+        // time-bounded per step like every other phase (see scanBatch()).
+        if (! $state['scan_done']) {
+            return $this->scanBatch($run, $state);
+        }
+
         // Phase 1 — archive the changed/new files into volumes.
         if ((int) $state['cursor'] < (int) $state['total']) {
             return $this->archiveBatch($run, $state);
@@ -61,84 +67,189 @@ class FileBackupStage implements BackupStage
         }
 
         // Phase 3 — write the file manifest (hash baseline) and clean up.
-        if (! $state['manifest_done']) {
-            $part = $this->writeManifest($run, $state);
-            $this->cleanupWorkingFiles($run, $state);
+        // Always the LAST step: StageStepResult::complete() sets done=true,
+        // which makes the engine advance past this stage entirely (resetting
+        // its state) — step() is never called again for this run, so there
+        // was never a real "already done" case to guard against here.
+        $part = $this->writeManifest($run, $state);
+        $this->cleanupWorkingFiles($run, $state);
 
-            return StageStepResult::complete($part, 'files: manifest');
-        }
-
-        return StageStepResult::complete(null, 'files: complete');
+        return StageStepResult::complete($part, 'files: manifest');
     }
 
-    /* ---- Init: walk + incremental diff --------------------------------- */
+    /* ---- Init + walk/diff (time-bounded, resumable) --------------------- */
 
+    /**
+     * O(1) setup only — the actual tree walk happens in scanBatch(), chunked
+     * like every other phase. This used to walk + diff the ENTIRE tree in one
+     * uninterruptible call, which could blow past a shared host's execution
+     * time limit on a large install before the chunking engine this class
+     * exists for ever got a chance to chunk anything.
+     */
     private function initialise(BackupRun $run): array
     {
         $root     = rtrim((string) config('backup.files.root', base_path()), "/\\");
         $excludes = (array) config('backup.files.exclude', []);
 
-        $meta        = (array) ($run->meta ?? []);
-        $incremental = (bool) ($meta['incremental'] ?? config('backup.files.incremental', false));
-        $baseline    = $incremental ? $this->loadBaseline($run) : ['run_id' => null, 'map' => []];
-        $baselineMap = $baseline['map'];
-
-        $entriesRel  = 'backups/'.$run->getKey().'/files/_work/entries.ndjson';
-        $filelistRel = 'backups/'.$run->getKey().'/files/_work/filelist.json';
+        $entriesRel     = 'backups/'.$run->getKey().'/files/_work/entries.ndjson';
+        $toArchiveRel   = 'backups/'.$run->getKey().'/files/_work/to_archive.ndjson';
+        $filelistRel    = 'backups/'.$run->getKey().'/files/_work/filelist.json';
         $this->resetFile($run, $entriesRel);
-
-        $archive = [];
-        $seen    = [];
-        $counts  = ['archived' => 0, 'unchanged' => 0, 'deleted' => 0, 'volumes' => 0, 'file_count' => 0];
-
-        foreach ($this->walk($root, $excludes) as $rel) {
-            $seen[$rel] = true;
-            $abs        = $root.'/'.$rel;
-            $size       = @filesize($abs);
-            $mtime      = @filemtime($abs);
-
-            $prev = $baselineMap[$rel] ?? null;
-            if ($prev && (int) ($prev['size'] ?? -1) === (int) $size && (int) ($prev['mtime'] ?? -1) === (int) $mtime) {
-                // Unchanged — reference the baseline's stored bytes (incremental chain).
-                $this->appendEntry($run, $entriesRel, [
-                    'path'       => $rel,
-                    'size'       => (int) $size,
-                    'mtime'      => (int) $mtime,
-                    'sha256'     => $prev['sha256'] ?? null,
-                    'unchanged'  => true,
-                    'source_run' => $baseline['run_id'],
-                    'vol'        => $prev['vol'] ?? null,
-                    'segments'   => $prev['segments'] ?? [],
-                ]);
-                $counts['unchanged']++;
-            } else {
-                $archive[] = $rel;
-            }
-        }
-
-        // Deletions: in the baseline but gone now.
-        foreach ($baselineMap as $rel => $prev) {
-            if (! isset($seen[$rel])) {
-                $this->appendEntry($run, $entriesRel, ['path' => $rel, 'deleted' => true]);
-                $counts['deleted']++;
-            }
-        }
-
-        $counts['file_count'] = count($seen);
-        Storage::disk($this->stagingDisk())->put($filelistRel, (string) json_encode(array_values($archive)));
+        $this->resetFile($run, $toArchiveRel);
 
         return [
-            'root'            => $root,
-            'filelist'        => $filelistRel,
-            'entries'         => $entriesRel,
-            'total'           => count($archive),
-            'cursor'          => 0,
-            'vol'             => 0,
-            'vol_has_content' => false,
-            'counts'          => $counts,
-            'baseline_run_id' => $baseline['run_id'],
-            'manifest_done'   => false,
+            'root'              => $root,
+            'excludes'          => $excludes,
+            'entries'           => $entriesRel,
+            'to_archive_work'   => $toArchiveRel,
+            'filelist'          => $filelistRel,
+            'scan_done'         => false,
+            'scan_pending'      => [''], // relative dir paths still to visit; '' = root itself
+            'scan_seen_count'   => 0,
+            'scan_archive_count' => 0,
+            'counts'            => ['archived' => 0, 'unchanged' => 0, 'deleted' => 0, 'volumes' => 0, 'file_count' => 0],
+            'total'             => 0,
+            'cursor'            => 0,
+            'vol'               => 0,
+            'vol_has_content'   => false,
+            'baseline_run_id'   => null,
         ];
+    }
+
+    /**
+     * Walk one time-bounded slice of the tree (a stack of pending directories
+     * — resumable by construction, unlike RecursiveDirectoryIterator, which
+     * has no serializable resume position), diffing each file found against
+     * the incremental baseline as it's discovered. Checkpointed after every
+     * directory via the same immediate-save pattern archiveBatch() uses, so
+     * a kill mid-scan resumes from the last fully-processed directory rather
+     * than restarting the whole walk.
+     */
+    private function scanBatch(BackupRun $run, array $state): StageStepResult
+    {
+        $deadline = microtime(true) + max(0.0, (float) config('backup.files.scan_seconds', 5));
+
+        $meta        = (array) ($run->meta ?? []);
+        $incremental = (bool) ($meta['incremental'] ?? config('backup.files.incremental', false));
+        // Re-derived every call rather than cached in $state: $state is
+        // checkpointed to the DB on every directory, and a large incremental
+        // baseline has no business living inside that JSON column.
+        $baseline    = $incremental ? $this->loadBaseline($run) : ['run_id' => null, 'map' => []];
+        $baselineMap = $baseline['map'];
+        $state['baseline_run_id'] = $baseline['run_id'];
+
+        if (! isset($state['baseline_seen'])) {
+            $state['baseline_seen'] = [];
+        }
+
+        do {
+            $dirRel = array_shift($state['scan_pending']);
+            $dirAbs = $dirRel === '' ? $state['root'] : $state['root'].'/'.$dirRel;
+
+            if (is_dir($dirAbs) && ! is_link($dirAbs)) {
+                foreach (new \DirectoryIterator($dirAbs) as $entry) {
+                    if ($entry->isDot()) {
+                        continue;
+                    }
+
+                    $entryRel = $dirRel === '' ? $entry->getFilename() : $dirRel.'/'.$entry->getFilename();
+
+                    if ($this->isExcluded($entryRel, $state['excludes'])) {
+                        continue;
+                    }
+
+                    if ($entry->isDir()) {
+                        if (! $entry->isLink()) {
+                            $state['scan_pending'][] = $entryRel;
+                        }
+
+                        continue;
+                    }
+
+                    if (! $entry->isFile() || $entry->isLink()) {
+                        continue;
+                    }
+
+                    $size  = $entry->getSize();
+                    $mtime = $entry->getMTime();
+
+                    $state['scan_seen_count']++;
+                    $state['baseline_seen'][$entryRel] = true;
+
+                    $prev = $baselineMap[$entryRel] ?? null;
+                    if ($prev && (int) ($prev['size'] ?? -1) === (int) $size && (int) ($prev['mtime'] ?? -1) === (int) $mtime) {
+                        // Unchanged — reference the baseline's stored bytes (incremental chain).
+                        $this->appendEntry($run, $state['entries'], [
+                            'path'       => $entryRel,
+                            'size'       => (int) $size,
+                            'mtime'      => (int) $mtime,
+                            'sha256'     => $prev['sha256'] ?? null,
+                            'unchanged'  => true,
+                            'source_run' => $state['baseline_run_id'],
+                            'vol'        => $prev['vol'] ?? null,
+                            'segments'   => $prev['segments'] ?? [],
+                        ]);
+                        $state['counts']['unchanged']++;
+                    } else {
+                        $this->appendEntry($run, $state['to_archive_work'], ['path' => $entryRel]);
+                        $state['scan_archive_count']++;
+                    }
+                }
+            }
+
+            $this->checkpointNow($run, $state);
+        } while (! empty($state['scan_pending']) && microtime(true) < $deadline);
+
+        if (! empty($state['scan_pending'])) {
+            return StageStepResult::progress($state, null, 'files: scanning ('.$state['scan_seen_count'].' seen)', 0.02);
+        }
+
+        // Scan complete — deletions are whatever's left in the baseline that
+        // scanning never touched, then materialise the flat archive list
+        // archiveBatch() already knows how to read.
+        foreach ($baselineMap as $rel => $prev) {
+            if (! isset($state['baseline_seen'][$rel])) {
+                $this->appendEntry($run, $state['entries'], ['path' => $rel, 'deleted' => true]);
+                $state['counts']['deleted']++;
+            }
+        }
+        unset($state['baseline_seen']);
+
+        $state['counts']['file_count'] = $state['scan_seen_count'];
+        $state['total']     = $state['scan_archive_count'];
+        $state['scan_done'] = true;
+
+        Storage::disk($this->stagingDisk())->put(
+            $state['filelist'],
+            (string) json_encode($this->readToArchiveList($run, $state['to_archive_work']))
+        );
+
+        $this->checkpointNow($run, $state);
+
+        return StageStepResult::progress($state, null, 'files: scan complete ('.$state['total'].' to archive)', 0.05);
+    }
+
+    /** Read back the NDJSON list of paths scanBatch() decided need archiving. */
+    private function readToArchiveList(BackupRun $run, string $rel): array
+    {
+        $abs  = $this->absolute($run, $rel);
+        $list = [];
+
+        if (is_file($abs) && ($fh = fopen($abs, 'rb')) !== false) {
+            while (($line = fgets($fh)) !== false) {
+                $line = trim($line);
+                if ($line === '') {
+                    continue;
+                }
+                $decoded = json_decode($line, true);
+                if (isset($decoded['path'])) {
+                    $list[] = $decoded['path'];
+                }
+            }
+            fclose($fh);
+        }
+
+        return $list;
     }
 
     /* ---- Archive one batch of files ------------------------------------ */
@@ -175,6 +286,20 @@ class FileBackupStage implements BackupStage
             $processed += max(1, (int) $entry['size']);
             $cursor++;
 
+            // Checkpoint after EVERY file, not just at the end of the whole
+            // batch: appendEntry() and the fwrite()s above are real,
+            // immediate disk writes that a checkpoint saved only once per
+            // step() call can't undo. Without this, a process killed
+            // mid-batch resumes from the stale pre-batch cursor and
+            // re-archives files already appended to the (still-open, 'ab'
+            // mode) volume and entries.ndjson — duplicate segments and
+            // duplicate manifest entries for the same path. Checkpointing
+            // per file means a crash loses at most the in-flight file, never
+            // duplicates a completed one.
+            $state['cursor'] = $cursor;
+            $state['vol']    = $vol;
+            $this->checkpointNow($run, $state);
+
             if ($throttleMs > 0) {
                 usleep($throttleMs * 1000);
             }
@@ -187,6 +312,8 @@ class FileBackupStage implements BackupStage
                 $state['counts']['volumes'] = (int) $state['counts']['volumes'] + 1;
                 $vol++;
                 $state['vol_has_content'] = false;
+                $state['vol']             = $vol;
+                $this->checkpointNow($run, $state);
                 break;
             }
         }
@@ -347,37 +474,20 @@ class FileBackupStage implements BackupStage
         return ['run_id' => (int) $prev->getKey(), 'map' => $map];
     }
 
-    /* ---- Filesystem helpers -------------------------------------------- */
-
-    /** Yield included relative paths under $root, deterministic order. */
-    private function walk(string $root, array $excludes): array
+    /**
+     * Persist stage_state immediately, mid-step, keeping stage_index as-is —
+     * see the comment at the per-file checkpoint call site in archiveBatch().
+     */
+    private function checkpointNow(BackupRun $run, array $state): void
     {
-        if (! is_dir($root)) {
-            return [];
-        }
-
-        $paths    = [];
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS),
-            \RecursiveIteratorIterator::LEAVES_ONLY
-        );
-
-        foreach ($iterator as $file) {
-            if (! $file->isFile() || $file->isLink()) {
-                continue;
-            }
-
-            $rel = str_replace('\\', '/', ltrim(Str::after($file->getPathname(), $root), "/\\"));
-
-            if (! $this->isExcluded($rel, $excludes)) {
-                $paths[] = $rel;
-            }
-        }
-
-        sort($paths);
-
-        return $paths;
+        $run->setCheckpoint([
+            'stage_index' => $run->checkpoint()['stage_index'],
+            'stage_state' => $state,
+        ]);
+        $run->save();
     }
+
+    /* ---- Filesystem helpers -------------------------------------------- */
 
     private function isExcluded(string $rel, array $excludes): bool
     {
