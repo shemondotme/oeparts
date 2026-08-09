@@ -6,7 +6,7 @@ use App\Filament\Resources\PartInquiryResource\Pages\CreatePartInquiry;
 use App\Filament\Resources\ProductResource\Pages\CreateProduct;
 use App\Filament\Widgets\AbandonedCartWidget;
 use App\Filament\Widgets\RefundsPendingList;
-use App\Jobs\SendAbandonedCartEmail;
+use App\Mail\AbandonedCartReminder;
 use App\Models\AbandonedCart;
 use App\Models\Admin;
 use App\Models\RefundRequest;
@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\CartRecoveryService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -60,9 +61,13 @@ class DashboardWidgetDataAccuracyTest extends TestCase
     // ── CartRecoveryService ──────────────────────────────────────────────
 
     #[Test]
-    public function recovery_service_queues_the_email_and_flags_the_record(): void
+    public function recovery_service_queues_the_email_and_flags_the_record_once_sent(): void
     {
-        Queue::fake();
+        // recovery_email_sent is now set by the job itself, only once the
+        // send actually succeeds — not by the service at dispatch time.
+        // QUEUE_CONNECTION=sync in testing, so dispatch() below already ran
+        // the job synchronously by the time send() returns.
+        Mail::fake();
 
         $user = User::factory()->create();
         $record = $this->abandonedCartFor($user);
@@ -70,7 +75,7 @@ class DashboardWidgetDataAccuracyTest extends TestCase
         $this->assertTrue(app(CartRecoveryService::class)->send($record));
         $this->assertTrue($record->refresh()->recovery_email_sent);
 
-        Queue::assertPushed(SendAbandonedCartEmail::class, fn (SendAbandonedCartEmail $job) => $job->email === $user->email);
+        Mail::assertSent(AbandonedCartReminder::class, fn ($mail) => $mail->hasTo($user->email));
     }
 
     #[Test]
@@ -89,7 +94,7 @@ class DashboardWidgetDataAccuracyTest extends TestCase
     #[Test]
     public function widget_send_recovery_action_uses_the_real_recovery_path(): void
     {
-        Queue::fake();
+        Mail::fake();
 
         $user = User::factory()->create();
         $record = $this->abandonedCartFor($user);
@@ -98,7 +103,7 @@ class DashboardWidgetDataAccuracyTest extends TestCase
             ->callTableAction('send_recovery', $record);
 
         $this->assertTrue($record->refresh()->recovery_email_sent);
-        Queue::assertPushed(SendAbandonedCartEmail::class);
+        Mail::assertSent(AbandonedCartReminder::class);
     }
 
     // ── abandoned-cart:process command ───────────────────────────────────
@@ -106,7 +111,13 @@ class DashboardWidgetDataAccuracyTest extends TestCase
     #[Test]
     public function process_command_snapshots_stale_user_carts_and_queues_recovery(): void
     {
-        Queue::fake();
+        // Not faking the queue here: recovery_email_sent is now set by the
+        // job itself only on a successful send (QUEUE_CONNECTION=sync in
+        // testing runs it inline), and the command's own "one recovery per
+        // customer per 7 days" dedup check reads that flag — faking the
+        // queue would leave it permanently false and defeat the second-run
+        // assertion below.
+        Mail::fake();
 
         $user = User::factory()->create();
         $product = \App\Models\Product::factory()->create();
@@ -151,12 +162,12 @@ class DashboardWidgetDataAccuracyTest extends TestCase
         $this->assertSame('31.00', $record->cart_snapshot['total']);
         $this->assertSame(1, AbandonedCart::count(), 'guest cart must not be snapshotted');
 
-        Queue::assertPushed(SendAbandonedCartEmail::class, 1);
+        Mail::assertSent(AbandonedCartReminder::class, 1);
 
         // Second run within the 7-day window: no duplicate recovery.
         $this->artisan('abandoned-cart:process')->assertSuccessful();
         $this->assertSame(1, AbandonedCart::count());
-        Queue::assertPushed(SendAbandonedCartEmail::class, 1);
+        Mail::assertSent(AbandonedCartReminder::class, 1);
     }
 
     // ── RefundsPendingList ───────────────────────────────────────────────

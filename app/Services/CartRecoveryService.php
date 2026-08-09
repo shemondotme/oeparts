@@ -14,7 +14,9 @@ use App\Models\AbandonedCart;
 class CartRecoveryService
 {
     /**
-     * Queue the recovery email and flag the record.
+     * Queue the recovery email. The record's recovery_email_sent flag is set
+     * by the job itself, only once the send actually succeeds — not here,
+     * since dispatch() only guarantees the job was queued, not delivered.
      *
      * @return bool false when the record has no reachable email address
      */
@@ -27,13 +29,12 @@ class CartRecoveryService
         }
 
         dispatch(new SendAbandonedCartEmail(
+            abandonedCartId: $record->id,
             email: $email,
             cartSnapshot: $record->cart_snapshot,
             customerName: $record->user?->name ?? ($record->cart_snapshot['customer_name'] ?? null),
             locale: $record->user?->preferred_locale ?? 'en',
         ));
-
-        $record->update(['recovery_email_sent' => true]);
 
         return true;
     }

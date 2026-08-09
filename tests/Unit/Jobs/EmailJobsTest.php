@@ -297,7 +297,7 @@ class EmailJobsTest extends TestCase
     {
         Queue::fake();
 
-        dispatch(new SendAbandonedCartEmail('user@example.com', ['items' => []]));
+        dispatch(new SendAbandonedCartEmail(1, 'user@example.com', ['items' => []]));
 
         Queue::assertPushedOn('default', SendAbandonedCartEmail::class);
     }
@@ -308,7 +308,7 @@ class EmailJobsTest extends TestCase
         Mail::fake();
         $cartSnapshot = ['items' => [['id' => 1, 'quantity' => 2]]];
 
-        $job = new SendAbandonedCartEmail('user@example.com', $cartSnapshot);
+        $job = new SendAbandonedCartEmail(1, 'user@example.com', $cartSnapshot);
         $job->handle();
 
         Mail::assertSent(AbandonedCartReminder::class);
@@ -325,7 +325,7 @@ class EmailJobsTest extends TestCase
             'subtotal' => '100.00',
         ];
 
-        $job = new SendAbandonedCartEmail('user@example.com', $cartSnapshot);
+        $job = new SendAbandonedCartEmail(1, 'user@example.com', $cartSnapshot);
         $job->handle();
 
         Mail::assertSent(AbandonedCartReminder::class);
@@ -334,7 +334,7 @@ class EmailJobsTest extends TestCase
     #[Test]
     public function send_abandoned_cart_email_has_retry_policy(): void
     {
-        $job = new SendAbandonedCartEmail('user@example.com', []);
+        $job = new SendAbandonedCartEmail(1, 'user@example.com', []);
 
         $this->assertEquals(3, $job->tries);
         // Verify job has backoff configuration
@@ -344,7 +344,7 @@ class EmailJobsTest extends TestCase
     #[Test]
     public function send_abandoned_cart_email_uses_default_queue(): void
     {
-        $job = new SendAbandonedCartEmail('user@example.com', []);
+        $job = new SendAbandonedCartEmail(1, 'user@example.com', []);
 
         $this->assertEquals('default', $job->queue);
     }
@@ -354,7 +354,7 @@ class EmailJobsTest extends TestCase
     {
         Mail::fake();
 
-        $job = new SendAbandonedCartEmail('recovery@example.com', []);
+        $job = new SendAbandonedCartEmail(1, 'recovery@example.com', []);
         $job->handle();
 
         // Mail::fake() prevents MessageSent event, so verify mail was sent instead

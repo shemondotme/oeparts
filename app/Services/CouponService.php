@@ -36,6 +36,20 @@ class CouponService
             ];
         }
 
+        return $this->validateCoupon($coupon, $subtotal, $userId);
+    }
+
+    /**
+     * Same eligibility checks as validate(), against an already-resolved
+     * Coupon rather than a code. Split out so CheckoutService::createOrder()
+     * can re-run every check (including a fresh discount calculation)
+     * against the cart's subtotal at the moment of order creation, not the
+     * subtotal captured whenever the coupon was first applied earlier in
+     * checkout — the customer may have changed cart contents since then,
+     * which would otherwise leave a stale discount amount on the order.
+     */
+    public function validateCoupon(Coupon $coupon, string $subtotal, ?int $userId): array
+    {
         // 2. Is active
         if (!$coupon->is_active) {
             return [
@@ -88,16 +102,11 @@ class CouponService
             ];
         }
 
-        // 5. Usage limit
-        if ($coupon->usage_limit !== null) {
-            try {
-                DB::transaction(function () use ($coupon) {
-                    $usageCount = CouponUsage::where('coupon_id', $coupon->id)->lockForUpdate()->count();
-                    if ($coupon->usage_limit && $usageCount >= $coupon->usage_limit) {
-                        throw new \Exception('Coupon usage limit reached');
-                    }
-                });
-            } catch (\Exception $e) {
+        // 5. Usage limit — the admin form documents 0 the same as null:
+        // "Maximum total times this coupon can be used. 0 = unlimited."
+        if ($coupon->usage_limit !== null && $coupon->usage_limit > 0) {
+            $usageCount = CouponUsage::where('coupon_id', $coupon->id)->count();
+            if ($usageCount >= $coupon->usage_limit) {
                 return [
                     'valid' => false,
                     'coupon' => $coupon,
@@ -107,8 +116,11 @@ class CouponService
             }
         }
 
-        // 6. Usage limit per user
-        if ($coupon->usage_limit_per_user !== null && $userId !== null) {
+        // 6. Usage limit per user — same "0 = unlimited" convention. Without
+        // the > 0 guard this treated 0 as "0 uses allowed", blocking every
+        // customer (including first-time ones) from a coupon the admin
+        // intended to leave uncapped per-user.
+        if ($coupon->usage_limit_per_user !== null && $coupon->usage_limit_per_user > 0 && $userId !== null) {
             $userUsageCount = CouponUsage::where('coupon_id', $coupon->id)
                 ->where('user_id', $userId)
                 ->count();
@@ -166,9 +178,35 @@ class CouponService
     {
         try {
             DB::transaction(function () use ($coupon, $order) {
-                $usageCount = CouponUsage::where('coupon_id', $coupon->id)->lockForUpdate()->count();
-                if ($coupon->usage_limit !== null && $usageCount >= $coupon->usage_limit) {
-                    throw new \Exception('Coupon usage limit reached');
+                // Lock the Coupon row itself, not the CouponUsage children —
+                // locking rows that may not exist yet locks nothing at all.
+                // A brand-new usage_limit=1 coupon has zero CouponUsage rows,
+                // so two concurrent first-time redemptions each counted 0
+                // existing (locked) rows and both proceeded to insert,
+                // silently allowing 2 uses of a single-use coupon. The Coupon
+                // row always exists, so locking it actually serializes
+                // concurrent apply() calls for the same coupon.
+                $lockedCoupon = Coupon::where('id', $coupon->id)->lockForUpdate()->first();
+
+                // usage_limit/usage_limit_per_user: 0 means unlimited, same
+                // as validateCoupon() and the admin form's own documented
+                // convention ("0 = unlimited") — a bare `!== null` check
+                // would reject every single redemption of a coupon left at
+                // its default 0.
+                if ($lockedCoupon->usage_limit !== null && $lockedCoupon->usage_limit > 0) {
+                    $usageCount = CouponUsage::where('coupon_id', $coupon->id)->count();
+                    if ($usageCount >= $lockedCoupon->usage_limit) {
+                        throw new \Exception('Coupon usage limit reached');
+                    }
+                }
+
+                if ($lockedCoupon->usage_limit_per_user !== null && $lockedCoupon->usage_limit_per_user > 0 && $order->user_id !== null) {
+                    $userUsageCount = CouponUsage::where('coupon_id', $coupon->id)
+                        ->where('user_id', $order->user_id)
+                        ->count();
+                    if ($userUsageCount >= $lockedCoupon->usage_limit_per_user) {
+                        throw new \Exception('Coupon per-user usage limit reached');
+                    }
                 }
 
                 CouponUsage::create([
@@ -179,6 +217,16 @@ class CouponService
                 ]);
             });
         } catch (\Exception $e) {
+            // Not rethrown: by this point the order is already created with
+            // this coupon's discount baked into grand_total (CheckoutService
+            // re-validates and recomputes the discount immediately before
+            // this call), so failing loudly here would mean charging the
+            // customer the discounted price but then blowing up their
+            // otherwise-successful checkout over a bookkeeping write. A
+            // failure here (in practice, only a genuine last-slot race) means
+            // usage tracking under-counts for this coupon — worth paging
+            // someone, not just a log line easy to miss.
+            report($e);
             Log::warning('Failed to record coupon usage', [
                 'coupon_id' => $coupon->id,
                 'order_id' => $order->id,

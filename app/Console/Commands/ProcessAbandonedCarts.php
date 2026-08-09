@@ -65,7 +65,6 @@ class ProcessAbandonedCarts extends Command
 
             $abandonedCart = AbandonedCart::create([
                 'user_id' => $cart->user_id,
-                'guest_email' => null,
                 'cart_snapshot' => [
                     'items' => $snapshotItems,
                     'total' => $total,

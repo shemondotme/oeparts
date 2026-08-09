@@ -32,7 +32,6 @@ class CouponAjaxController extends Controller
             ], 422);
         }
 
-        $checkoutData = Session::get("checkout.{$checkoutId}.data", []);
         $cartId = Session::get("checkout.{$checkoutId}.cart_id");
 
         if (!$cartId) {

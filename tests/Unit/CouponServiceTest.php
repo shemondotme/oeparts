@@ -283,4 +283,98 @@ class CouponServiceTest extends TestCase
 
         $this->assertDatabaseCount('coupon_usages', 1);
     }
+
+    // -------------------------------------------------------------------------
+    // usage_limit = 0 — the admin form documents this as "unlimited", same as
+    // null. Regression: validate()'s per-user check had no > 0 guard at all,
+    // so usage_limit_per_user = 0 blocked every customer, including
+    // first-time ones. apply()'s total-limit check had no > 0 guard either,
+    // so usage_limit = 0 rejected every single redemption even though
+    // validate() had just approved it as "unlimited".
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function usage_limit_zero_means_unlimited_in_validate(): void
+    {
+        $coupon = Coupon::factory()->create([
+            'created_by' => $this->adminId, 'usage_limit' => 0, 'usage_limit_per_user' => null,
+            'min_order_amount' => null, 'expires_at' => null,
+        ]);
+        // Different user from the one validating — this test isolates the
+        // total-usage-limit check from the (separately tested) per-user one.
+        $priorUser = User::factory()->create();
+        $priorOrder = Order::factory()->create(['user_id' => $priorUser->id]);
+        CouponUsage::create(['coupon_id' => $coupon->id, 'user_id' => $priorUser->id, 'order_id' => $priorOrder->id, 'used_at' => now()]);
+
+        $user = User::factory()->create();
+        $result = $this->service->validate($coupon->code, '100.00', $user->id);
+
+        $this->assertTrue($result['valid']);
+    }
+
+    #[Test]
+    public function usage_limit_per_user_zero_means_unlimited_in_validate(): void
+    {
+        $coupon = Coupon::factory()->create([
+            'created_by' => $this->adminId, 'usage_limit_per_user' => 0, 'usage_limit' => null,
+            'min_order_amount' => null, 'expires_at' => null,
+        ]);
+        $user = User::factory()->create();
+
+        $result = $this->service->validate($coupon->code, '100.00', $user->id);
+
+        $this->assertTrue($result['valid']);
+    }
+
+    #[Test]
+    public function usage_limit_zero_means_unlimited_in_apply(): void
+    {
+        $coupon = Coupon::factory()->create(['created_by' => $this->adminId, 'usage_limit' => 0]);
+        $user = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id]);
+        CouponUsage::create(['coupon_id' => $coupon->id, 'user_id' => User::factory()->create()->id, 'order_id' => Order::factory()->create()->id, 'used_at' => now()]);
+
+        $this->service->apply($coupon, $order);
+
+        $this->assertDatabaseHas('coupon_usages', ['coupon_id' => $coupon->id, 'order_id' => $order->id]);
+    }
+
+    #[Test]
+    public function apply_enforces_the_per_user_limit(): void
+    {
+        // apply() previously never checked usage_limit_per_user at all — only
+        // validate() did, which runs earlier (when the coupon is applied to
+        // the cart) and isn't re-checked at the authoritative commit point.
+        $coupon = Coupon::factory()->create(['created_by' => $this->adminId, 'usage_limit_per_user' => 1, 'usage_limit' => null]);
+        $user = User::factory()->create();
+        $firstOrder = Order::factory()->create(['user_id' => $user->id]);
+        CouponUsage::create(['coupon_id' => $coupon->id, 'user_id' => $user->id, 'order_id' => $firstOrder->id, 'used_at' => now()]);
+
+        $secondOrder = Order::factory()->create(['user_id' => $user->id]);
+        $this->service->apply($coupon, $secondOrder);
+
+        $this->assertDatabaseCount('coupon_usages', 1);
+    }
+
+    #[Test]
+    public function apply_serializes_concurrent_redemptions_via_the_coupon_row_lock(): void
+    {
+        // Regression: apply() used to lock CouponUsage rows (the children),
+        // which lock nothing when none exist yet — two concurrent
+        // first-time redemptions of a fresh usage_limit=1 coupon could both
+        // read a count of 0 and both insert. Locking the Coupon row (which
+        // always exists) instead serializes them. This test can't easily
+        // simulate true concurrency, but it does confirm the second
+        // sequential apply() against an already-exhausted limit is blocked.
+        $coupon = Coupon::factory()->create(['created_by' => $this->adminId, 'usage_limit' => 1]);
+        $user = User::factory()->create();
+        $firstOrder = Order::factory()->create(['user_id' => $user->id]);
+        $secondOrder = Order::factory()->create(['user_id' => $user->id]);
+
+        $this->service->apply($coupon, $firstOrder);
+        $this->service->apply($coupon, $secondOrder);
+
+        $this->assertDatabaseCount('coupon_usages', 1);
+        $this->assertDatabaseHas('coupon_usages', ['order_id' => $firstOrder->id]);
+    }
 }

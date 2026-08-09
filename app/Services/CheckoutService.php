@@ -35,7 +35,8 @@ class CheckoutService
         private SettingsService $settings,
         private CartService $cartService,
         private ShippingService $shippingService,
-        private TaxRateService $taxRateService
+        private TaxRateService $taxRateService,
+        private CouponService $couponService
     ) {}
 
     /**
@@ -285,16 +286,41 @@ class CheckoutService
             $taxableBase = bcadd(bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);
             $vatAmount = $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
 
+            // Resolve context: explicit params or session/request helpers
+            $resolvedUserId = $userId ?? auth()->id();
+            $resolvedIp = $ipAddress ?? request()->ip();
+            $utm = $utmParams ?? [
+                'source'   => session('utm_source'),
+                'medium'   => session('utm_medium'),
+                'campaign' => session('utm_campaign'),
+                'content'  => session('utm_content'),
+            ];
+
             // --- Coupon application ---
+            // Re-validate against the cart's *current* subtotal and re-derive
+            // the discount here, rather than trusting the discount_amount
+            // CouponAjaxController cached in the checkout session whenever
+            // the coupon was first applied — the customer can still change
+            // cart contents afterwards (add/remove items, change quantity),
+            // which would otherwise leave a stale discount amount (wrong
+            // percentage-of, or one that no longer respects min_order_amount)
+            // baked into the order.
             $couponId      = $data['coupon_id'] ?? null;
-            $discountAmount = $data['discount_amount'] ?? '0.00';
+            $discountAmount = '0.00';
             $coupon = null;
 
             if ($couponId) {
                 $coupon = \App\Models\Coupon::find($couponId);
-                if (!$coupon) {
-                    $couponId      = null;
-                    $discountAmount = '0.00';
+                if ($coupon) {
+                    $revalidated = $this->couponService->validateCoupon($coupon, $subtotal, $resolvedUserId);
+                    if ($revalidated['valid']) {
+                        $discountAmount = $revalidated['discount'];
+                    } else {
+                        $couponId = null;
+                        $coupon = null;
+                    }
+                } else {
+                    $couponId = null;
                 }
             }
 
@@ -320,16 +346,6 @@ class CheckoutService
                 $shippingAddress['first_name'] ?? null,
                 $shippingAddress['last_name'] ?? null,
             ])));
-
-            // Resolve context: explicit params or session/request helpers
-            $resolvedUserId = $userId ?? auth()->id();
-            $resolvedIp = $ipAddress ?? request()->ip();
-            $utm = $utmParams ?? [
-                'source'   => session('utm_source'),
-                'medium'   => session('utm_medium'),
-                'campaign' => session('utm_campaign'),
-                'content'  => session('utm_content'),
-            ];
 
             // Create order
             $order = Order::create([
@@ -390,7 +406,7 @@ class CheckoutService
             }
 
             if ($coupon) {
-                app(\App\Services\CouponService::class)->apply($coupon, $order);
+                $this->couponService->apply($coupon, $order);
             }
 
             $cart->items()->delete();

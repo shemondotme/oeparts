@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\AbandonedCartReminder;
+use App\Models\AbandonedCart;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -19,6 +20,7 @@ class SendAbandonedCartEmail implements ShouldQueue
     public array $backoff = [60, 300, 600];
 
     public function __construct(
+        public int $abandonedCartId,
         public string $email,
         public array $cartSnapshot,
         public ?string $customerName = null,
@@ -36,5 +38,14 @@ class SendAbandonedCartEmail implements ShouldQueue
         );
 
         Mail::to($this->email)->send($mailable);
+
+        // Flagged only once the send actually succeeds — CartRecoveryService
+        // used to set this immediately after dispatch()'ing the job, before
+        // the mail was ever attempted. If the send later failed (all 3
+        // retries exhausted), the flag stayed permanently true, and
+        // ProcessAbandonedCarts' "one recovery per customer per 7 days"
+        // dedup check would then skip retrying a customer who never actually
+        // received anything.
+        AbandonedCart::where('id', $this->abandonedCartId)->update(['recovery_email_sent' => true]);
     }
 }
