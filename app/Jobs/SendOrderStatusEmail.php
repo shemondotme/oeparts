@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendOrderStatusEmail implements ShouldQueue
@@ -28,6 +29,11 @@ class SendOrderStatusEmail implements ShouldQueue
     public function handle(): void
     {
         $toEmail = $this->order->user?->email ?? $this->order->guest_email;
+
+        if (empty($toEmail)) {
+            Log::warning('Skipped order status email: no recipient address', ['order_id' => $this->order->id]);
+            return;
+        }
 
         Mail::to($toEmail)
             ->send(new OrderStatusUpdate($this->order, $this->oldStatus, $this->newStatus, $this->locale));

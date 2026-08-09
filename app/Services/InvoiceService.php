@@ -68,7 +68,10 @@ class InvoiceService
      */
     private function addressFromOrderSnapshot(Order $order): object
     {
-        $name = trim(mb_strtolower((string) ($order->shipping_name ?? '')));
+        // No case-normalization: this name is printed verbatim on the invoice
+        // PDF, so lowercasing it (as this used to do) turned "John Doe" into
+        // "john doe" on an official billing document.
+        $name = trim((string) ($order->shipping_name ?? ''));
         $parts = $name === '' ? ['', ''] : preg_split('/\s+/u', $name, 2);
 
         return (object) [

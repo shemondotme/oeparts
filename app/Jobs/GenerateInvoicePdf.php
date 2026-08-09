@@ -9,7 +9,6 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 
 class GenerateInvoicePdf implements ShouldQueue
 {
@@ -27,11 +26,17 @@ class GenerateInvoicePdf implements ShouldQueue
 
     public function handle(InvoiceService $invoiceService): void
     {
-        $pdf = $invoiceService->generate($this->order, false, true);
-
-        // Invoices contain customer PII, so this must never sit on the public
-        // disk (rule: private data stays off storage/app/public).
-        $filename = 'invoices/' . now()->format('Y/m') . "/{$this->order->invoice_number}.pdf";
-        Storage::disk('local')->put($filename, $pdf->output());
+        // Delegate to InvoiceService::saveToStorage() rather than duplicating
+        // PDF-generation/path logic here. The previous inline version keyed
+        // the filename on invoice_number and a now()-derived date directory —
+        // invoice_number is null until an order reaches Paid status (see
+        // OrderService::transitionStatus()), but this job is dispatched
+        // immediately at order creation (CheckoutService::createOrder()), so
+        // every pending order in the same month collided on the same
+        // "invoices/{Y}/{m}/.pdf" path, each overwriting the last. It also
+        // wrote to a path exists()/getFromStorage() never looked at, so those
+        // two lookups never found what this job actually saved.
+        // saveToStorage() uses order_number, which is unique and always set.
+        $invoiceService->saveToStorage($this->order);
     }
 }

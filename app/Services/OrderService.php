@@ -282,25 +282,32 @@ class OrderService
     {
         $paymentReference = Str::limit(trim($paymentReference), 100);
 
-        $order = Order::where('id', $order->id)->lockForUpdate()->first();
+        // lockForUpdate() only takes effect inside an open transaction —
+        // called bare it acquires no lock at all, defeating the point of
+        // re-fetching the row here.
+        DB::transaction(function () use ($order, $paymentReference, $paymentMethod) {
+            $order = Order::where('id', $order->id)->lockForUpdate()->first();
 
-        $order->update([
-            'payment_status'     => PaymentStatus::Paid,
-            'payment_reference'  => $paymentReference,
-            'payment_method'     => $paymentMethod === 'card'
-                ? \App\Enums\PaymentMethod::Card
-                : \App\Enums\PaymentMethod::BankTransfer,
-        ]);
+            $order->update([
+                'payment_status'     => PaymentStatus::Paid,
+                'payment_reference'  => $paymentReference,
+                'payment_method'     => match ($paymentMethod) {
+                    'card'    => \App\Enums\PaymentMethod::Card,
+                    'paysera' => \App\Enums\PaymentMethod::Paysera,
+                    default   => \App\Enums\PaymentMethod::BankTransfer,
+                },
+            ]);
 
-        if ($order->status === OrderStatus::Pending) {
-            $this->transitionStatus($order, OrderStatus::Paid, 'Payment received');
-        }
+            if ($order->status === OrderStatus::Pending) {
+                $this->transitionStatus($order, OrderStatus::Paid, 'Payment received');
+            }
+        });
     }
 
     /**
      * Mark payment as failed.
      */
-    public function markPaymentFailed(Order $order, string $reference = null): void
+    public function markPaymentFailed(Order $order, ?string $reference = null): void
     {
         try {
             $order->update([
