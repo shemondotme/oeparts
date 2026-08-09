@@ -591,6 +591,23 @@ if (! class_exists('OeRecoveryConsole', false)) {
          */
         public function rollbackFiles(): array
         {
+            $arm = $this->armInfo();
+            if (($arm['deployment_type'] ?? null) === 'git') {
+                // This action only knows how to reverse a dir-rename swap
+                // (last-swap.json), which a git-managed install never writes
+                // — it updates via `git checkout` + `composer install`
+                // instead. Reporting the generic "nothing to roll back"
+                // message here would read as a false all-clear for an
+                // install that may genuinely be broken mid-update; give the
+                // operator the real manual recovery steps instead.
+                $from = $arm['from_version'] ?? '<previous version>';
+
+                return ['ok' => false, 'action' => 'rollback_files',
+                    'message' => 'This is a git-managed install — there is no file swap for this action to reverse. '
+                        .'If the update left the app broken, recover manually via SSH: '
+                        ."git checkout v{$from} && composer install --no-dev --optimize-autoloader && php artisan migrate"];
+            }
+
             $map = $this->swapState();
             if (! $map || empty($map['swapped'])) {
                 return ['ok' => false, 'action' => 'rollback_files',
@@ -1013,6 +1030,13 @@ if (! class_exists('OeRecoveryConsole', false)) {
                     'Backup dir' => $swap['backup_dir'] ?? '—',
                     'Paths swapped' => count($swapped),
                 ]).'</section>';
+            } elseif (($arm['deployment_type'] ?? null) === 'git') {
+                $from = $arm['from_version'] ?? '<previous version>';
+                $body .= '<section><h2>Pending file swap</h2><p class="muted">This is a git-managed install — '
+                    .'updates apply via <code>git checkout</code> + <code>composer install</code>, not a file swap, '
+                    .'so "Roll back files" below cannot act here. If the app is broken, recover manually via SSH: '
+                    .'<code>git checkout v'.htmlspecialchars($from).' &amp;&amp; composer install --no-dev '
+                    .'--optimize-autoloader &amp;&amp; php artisan migrate</code></p></section>';
             } else {
                 $body .= '<section><h2>Pending file swap</h2><p class="muted">No <code>last-swap.json</code> '
                     .'— no interrupted swap to reverse.</p></section>';

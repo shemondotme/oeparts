@@ -100,6 +100,45 @@ class GenerateReleaseManifestCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_signs_the_git_commit_binding_when_a_commit_sha_and_key_are_given(): void
+    {
+        config([
+            'updates.signing.private_key' => \Tests\Fixtures\ReleaseKeys::PRIVATE_KEY,
+            'updates.signing.public_key'  => \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY,
+        ]);
+
+        $version = $this->writeJson('version.json', ['version' => '1.5.0', 'sha256' => null, 'size_bytes' => null]);
+        $catalog = $this->dir.'/releases.json';
+        $build = $this->writeJson('build-result.json', [
+            'version' => '1.5.0', 'sha256' => str_repeat('e', 64), 'size_bytes' => 64,
+        ]);
+        $commitSha = str_repeat('a1b2', 10); // 40 hex chars, like a real git SHA-1
+
+        $this->artisan('oeparts:release:manifest', [
+            '--version-file' => $version,
+            '--catalog-file' => $catalog,
+            '--build-result' => $build,
+            '--git-commit-sha' => $commitSha,
+        ])->assertExitCode(0);
+
+        $manifest = json_decode(file_get_contents($version), true);
+        $this->assertSame($commitSha, $manifest['git_commit_sha']);
+        $this->assertNotEmpty($manifest['git_signature']);
+
+        $signer = app(\App\Services\Updates\ReleaseSignature::class);
+        [$ok] = $signer->verifyGitManifest($manifest);
+        $this->assertTrue($ok, 'git_signature must verify against the same public key as the zip signature');
+
+        // Tampering with the commit SHA after signing must invalidate it —
+        // this is the whole point: a compromised git remote serving
+        // different content under the same tag must not verify.
+        $tampered = $manifest;
+        $tampered['git_commit_sha'] = str_repeat('f', 40);
+        [$tamperedOk] = $signer->verifyGitManifest($tampered);
+        $this->assertFalse($tamperedOk);
+    }
+
+    #[Test]
     public function it_fails_on_a_version_mismatch(): void
     {
         $version = $this->writeJson('version.json', ['version' => '1.2.0']);

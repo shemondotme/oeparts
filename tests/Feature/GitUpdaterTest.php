@@ -134,6 +134,38 @@ class GitUpdaterTest extends TestCase
     }
 
     #[Test]
+    public function checkout_succeeds_when_the_expected_commit_sha_matches(): void
+    {
+        $this->initRepoWithTwoTaggedVersions();
+
+        // What v1.1.0 actually points at, per the real repo — this is what a
+        // signed release manifest's git_commit_sha would carry.
+        $this->git(['fetch', '--tags', 'origin']);
+        $process = new \Symfony\Component\Process\Process(['git', 'rev-list', '-n', '1', 'v1.1.0'], $this->root);
+        $process->mustRun();
+        $expected = trim($process->getOutput());
+
+        (new GitUpdater)->checkout('1.1.0', $expected);
+
+        $this->assertSame('v1.1.0', trim(file_get_contents($this->root.'/marker.txt')));
+    }
+
+    #[Test]
+    public function checkout_throws_when_the_expected_commit_sha_does_not_match(): void
+    {
+        $this->initRepoWithTwoTaggedVersions();
+
+        // A compromised/re-pushed remote would serve real, valid-looking
+        // content under the tag name — the mismatch is only catchable by
+        // comparing against the commit the signed manifest actually expects.
+        $wrongSha = str_repeat('a', 40);
+
+        $this->expectException(UpdateException::class);
+        $this->expectExceptionMessageMatches('/does not match the signed release manifest/');
+        (new GitUpdater)->checkout('1.1.0', $wrongSha);
+    }
+
+    #[Test]
     public function rollback_to_moves_the_working_tree_back_to_the_previous_tag(): void
     {
         $this->initRepoWithTwoTaggedVersions();

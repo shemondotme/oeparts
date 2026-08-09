@@ -67,7 +67,20 @@ class PreflightService
         $minFrom = (string) ($manifest['min_version_to_update_from'] ?? '0.0.0');
 
         if ($current === 'unknown') {
-            return PreflightCheck::warn($key, $label, 'Installed version is unknown; cannot verify the update path.');
+            // A git-managed install's rollback path (GitUpdater::rollbackTo())
+            // checks out a tag literally derived from this version — 'unknown'
+            // becomes tag "vunknown", which doesn't exist. If a later step then
+            // fails, rollback silently fails to reverse the file side while the
+            // DB restore still proceeds, leaving new code paired with the old
+            // database. The zip path's rollback (UpdateSwapper::rollback(),
+            // reads last-swap.json) has no such dependency, so only block here
+            // for git-managed installs — the case that's actually unsafe.
+            return app(GitUpdater::class)->isGitManaged()
+                ? PreflightCheck::fail($key, $label,
+                    'Installed version is unknown and this is a git-managed install — a failed update could not be '
+                    .'safely rolled back (the rollback path needs a known version to check out). Fix version.json '
+                    .'or resolve manually via SSH before updating.')
+                : PreflightCheck::warn($key, $label, 'Installed version is unknown; cannot verify the update path.');
         }
 
         if (version_compare($current, $minFrom, '<')) {
@@ -239,7 +252,7 @@ class PreflightService
         $label = 'Deployment type';
         $root = $this->root();
 
-        if (is_dir($root.DIRECTORY_SEPARATOR.'.git')) {
+        if (app(GitUpdater::class)->isGitManaged()) {
             return PreflightCheck::pass($key, $label,
                 'Git-managed deployment — will update via git fetch/checkout + composer install instead of a file swap.');
         }
@@ -353,10 +366,25 @@ class PreflightService
         }
 
         [$ok, $reason] = $signer->verifyManifest($manifest);
+        if (! $ok) {
+            return PreflightCheck::fail($key, $label, $reason);
+        }
 
-        return $ok
-            ? PreflightCheck::pass($key, $label, 'Signature valid.')
-            : PreflightCheck::fail($key, $label, $reason);
+        // Zip-path authenticity (version+sha256) says nothing about what a
+        // git checkout actually pulls down — git mode never downloads or
+        // hashes a zip at all. Separately verify the manifest's signed
+        // commit binding so a compromised/re-pushed git remote can't serve
+        // different code under a validly-signed tag name undetected.
+        if (app(GitUpdater::class)->isGitManaged()) {
+            [$gitOk, $gitReason] = $signer->verifyGitManifest($manifest);
+            if (! $gitOk) {
+                return PreflightCheck::fail($key, $label, $gitReason);
+            }
+
+            return PreflightCheck::pass($key, $label, 'Signature valid (zip + git commit binding).');
+        }
+
+        return PreflightCheck::pass($key, $label, 'Signature valid.');
     }
 
     /**

@@ -95,4 +95,48 @@ class ReleaseSignature
             throw new UpdateException('Release signature check failed: '.$reason);
         }
     }
+
+    /**
+     * The canonical bytes signed/verified for a git-managed release. A
+     * SEPARATE, additive payload/signature from payloadFor()/verifyManifest()
+     * — never folded into the existing "{version}\n{sha256}" payload, which
+     * would silently invalidate every already-issued zip-path signature the
+     * moment this shipped. verifyManifest() proves the manifest came from the
+     * real release key; it says nothing about what a `git checkout` actually
+     * pulls down, since git mode never downloads or hashes a zip at all — a
+     * compromised or re-pushed git remote can serve different code under a
+     * validly-signed tag name undetected. This binds version to the exact
+     * commit that tag is expected to point at.
+     */
+    public function gitPayloadFor(array $manifest): string
+    {
+        return (string) ($manifest['version'] ?? '')."\n".(string) ($manifest['git_commit_sha'] ?? '');
+    }
+
+    /**
+     * Verify a release manifest's git-commit binding against the baked
+     * public key. Fails CLOSED (not a warning) when enforced and the
+     * manifest carries no git_commit_sha/git_signature at all — an
+     * unsigned claim is no claim.
+     *
+     * @return array{0:bool,1:string} [ok, reason]
+     */
+    public function verifyGitManifest(array $manifest): array
+    {
+        if (! $this->enforced()) {
+            return [true, 'Signature verification not enabled (no public key provisioned).'];
+        }
+
+        if (empty($manifest['git_commit_sha']) || empty($manifest['git_signature'])) {
+            return [false, 'Release manifest has no signed git commit binding — cannot verify this git-managed update.'];
+        }
+
+        $ok = $this->verify(
+            $this->gitPayloadFor($manifest),
+            $manifest['git_signature'],
+            (string) config('updates.signing.public_key')
+        );
+
+        return [$ok, $ok ? 'Git commit signature valid.' : 'Missing or invalid git commit signature.'];
+    }
 }

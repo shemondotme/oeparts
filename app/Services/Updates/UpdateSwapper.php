@@ -36,6 +36,26 @@ class UpdateSwapper
      */
     public function swap(string $stagingDir, string $version): array
     {
+        // Idempotent re-entry: a previous call may have already completed
+        // the file swap (persisted to last-swap.json) but the caller never
+        // got to record that success — e.g. this method used to run its
+        // old-swap-backup cleanup AFTER completing the swap, and a timeout
+        // or kill during THAT (non-critical, disk-hygiene) step meant the
+        // FSM's own step index never advanced. A retry then re-entered this
+        // method with a staging dir whose core paths had already been moved
+        // into root and were gone, throwing "contains none of the core
+        // paths" — a failure at the 'swap' step, which the FSM's
+        // needsRollback() matrix does NOT roll back (only finalize/verify
+        // do), leaving the site live on new, unfinalized code with nothing
+        // reversed. Recognize an already-completed swap for this exact
+        // version and treat it as success instead of redoing it.
+        $existing = $this->readState();
+        if ($existing && ($existing['completed'] ?? false) === true && ($existing['version'] ?? null) === $version) {
+            $this->safeCleanupOldSwapBackups($version);
+
+            return $existing;
+        }
+
         if (! is_dir($stagingDir)) {
             throw new UpdateException('Staging directory not found: '.$stagingDir);
         }
@@ -104,9 +124,25 @@ class UpdateSwapper
         // the moment a NEW swap succeeds: reaching here means the previous
         // update has already been running live and confirmed working, so its
         // own backup no longer serves a purpose.
-        $this->cleanupOldSwapBackups($version);
+        $this->safeCleanupOldSwapBackups($version);
 
         return $map;
+    }
+
+    /**
+     * Never let disk-hygiene cleanup turn an already-successful swap into a
+     * reported failure — whatever doesn't get cleaned this time is retried
+     * on the idempotent re-entry path above, or by the next update's own
+     * cleanup pass, either way self-healing rather than fatal.
+     */
+    private function safeCleanupOldSwapBackups(string $version): void
+    {
+        try {
+            $this->cleanupOldSwapBackups($version);
+        } catch (\Throwable $e) {
+            Log::channel(config('updates.log_channel', 'stack'))
+                ->warning('Could not clean up old swap-backup copies: '.$e->getMessage());
+        }
     }
 
     /** Remove every swap-backup subdirectory except $keepVersion's. */

@@ -146,7 +146,7 @@ class FakeGitUpdateApplier extends UpdateApplier
     protected function doFinalize(UpdateHistory $h): void { $this->tick('finalize'); }
     protected function doVerify(UpdateHistory $h): void { $this->tick('verify'); }
 
-    protected function rollback(UpdateHistory $h): void { $this->rolledBack = true; }
+    protected function rollback(UpdateHistory $h): bool { $this->rolledBack = true; return true; }
 
     private function tick(string $name): void
     {

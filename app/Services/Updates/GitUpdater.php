@@ -30,8 +30,19 @@ class GitUpdater
     /** True when exec/proc_open works and both binaries resolve — everything this class needs to actually run. */
     public function toolingAvailable(): bool
     {
-        if (! function_exists('proc_open') || in_array('proc_open', $this->disabledFunctions(), true)) {
-            return false;
+        // Symfony Process (what run()/process() below use) needs the full
+        // proc_* family, not just proc_open — a host that disables e.g.
+        // proc_close or proc_get_status while leaving proc_open enabled (a
+        // plausible partial-hardening policy) previously passed this check
+        // and then hit an uncaught fatal on the first real git command,
+        // instead of being caught cleanly by this pre-flight gate.
+        $required = ['proc_open', 'proc_close', 'proc_get_status', 'proc_terminate'];
+        $disabled = $this->disabledFunctions();
+
+        foreach ($required as $fn) {
+            if (! function_exists($fn) || in_array($fn, $disabled, true)) {
+                return false;
+            }
         }
 
         return $this->binaryExists('git') && $this->binaryExists('composer');
@@ -41,11 +52,38 @@ class GitUpdater
      * Fetch and check out the target release's tag. Leaves the working tree in
      * detached HEAD at that tag — the normal, expected state for a production
      * checkout (it doesn't need to be "on a branch").
+     *
+     * @param string|null $expectedCommitSha When given (from a signed release
+     *     manifest's git_commit_sha — see ReleaseSignature::verifyGitManifest()),
+     *     the actually-checked-out commit MUST match it exactly. Without this,
+     *     nothing here confirms the tag the remote served is the release that
+     *     was actually signed/published — a compromised or re-pushed remote
+     *     tag would be checked out and trusted silently.
      */
-    public function checkout(string $version): void
+    public function checkout(string $version, ?string $expectedCommitSha = null): void
     {
         $this->run(['git', 'fetch', '--tags', '--force', 'origin']);
         $this->run(['git', 'checkout', '--force', $this->tag($version)]);
+
+        if ($expectedCommitSha !== null && $expectedCommitSha !== '') {
+            $actual = $this->currentCommitSha();
+            if ($actual === null || ! hash_equals(strtolower($expectedCommitSha), strtolower($actual))) {
+                throw new UpdateException(
+                    'Checked-out commit ('.($actual ?? 'unknown').') does not match the signed release manifest ('
+                    .$expectedCommitSha.') for tag '.$this->tag($version).' — the git remote may be compromised '
+                    .'or the tag was re-pushed. Refusing to proceed.'
+                );
+            }
+        }
+    }
+
+    /** The commit SHA currently checked out (HEAD), or null if it can't be determined. */
+    public function currentCommitSha(): ?string
+    {
+        $process = $this->process(['git', 'rev-parse', 'HEAD']);
+        $process->run();
+
+        return $process->isSuccessful() ? trim($process->getOutput()) : null;
     }
 
     public function composerInstall(): void

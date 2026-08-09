@@ -19,6 +19,7 @@ class GenerateReleaseManifest extends Command
         {--catalog-file= : Path to releases.json (default: base path)}
         {--build-result= : Path to dist/build-result.json (default: base path)}
         {--private-key= : PEM release signing key (overrides OE_RELEASE_PRIVATE_KEY)}
+        {--git-commit-sha= : Commit SHA this release tag points at (default: `git rev-parse HEAD` in the CWD, which the CI workflow runs this command from already checked out at the release tag)}
         {--json : Emit a machine-readable summary}';
 
     protected $description = 'Fold the build result into version.json, sign it, and upsert the releases.json catalog.';
@@ -62,6 +63,22 @@ class GenerateReleaseManifest extends Command
             $this->warn('No release signing key — publishing UNSIGNED (set OE_RELEASE_PRIVATE_KEY to sign).');
         }
 
+        // The zip signature above proves nothing about what a git-managed
+        // install's `git checkout` pulls down — that path never touches the
+        // zip at all. Separately bind + sign this release's commit SHA so
+        // PreflightService::checkSignature() can catch a compromised or
+        // re-pushed git remote tag (see ReleaseSignature::verifyGitManifest()).
+        $commitSha = $this->resolveGitCommitSha();
+        if ($commitSha !== null) {
+            $manifest['git_commit_sha'] = $commitSha;
+            if ($privateKey !== null) {
+                $manifest['git_signature'] = $signer->sign($signer->gitPayloadFor($manifest), $privateKey);
+            }
+        } else {
+            $this->warn('Could not determine the git commit SHA for this release — git-managed installs '.
+                'will fail the signature pre-flight check if signing is enforced (OE_RELEASE_PUBLIC_KEY set).');
+        }
+
         $this->writeJson($versionFile, $manifest);
 
         $catalog = $this->readJson($catalogFile) ?? [
@@ -102,12 +119,38 @@ class GenerateReleaseManifest extends Command
     {
         $opt = (string) ($this->option('private-key') ?: '');
         if ($opt !== '') {
-            return is_file($opt) ? (string) file_get_contents($opt) : $opt;
+            if (is_file($opt)) {
+                $contents = @file_get_contents($opt);
+
+                // file_get_contents() failing (permissions, transient I/O
+                // error) previously fell through as an empty string, which
+                // still looks like "a key was provided" to the caller —
+                // openssl_pkey_get_private('') then fails and throws,
+                // crashing the release build instead of taking the intended
+                // "publish UNSIGNED" fallback below.
+                return $contents !== false && $contents !== '' ? $contents : null;
+            }
+
+            return $opt;
         }
 
         $key = trim((string) config('updates.signing.private_key', ''));
 
         return $key !== '' ? $key : null;
+    }
+
+    /** The commit SHA this release tag points at — from --git-commit-sha, or `git rev-parse HEAD` in the CWD. */
+    private function resolveGitCommitSha(): ?string
+    {
+        $opt = trim((string) ($this->option('git-commit-sha') ?: ''));
+        if ($opt !== '') {
+            return $opt;
+        }
+
+        $process = new \Symfony\Component\Process\Process(['git', 'rev-parse', 'HEAD']);
+        $process->run();
+
+        return $process->isSuccessful() ? trim($process->getOutput()) : null;
     }
 
     /** @return array<string,mixed>|null */

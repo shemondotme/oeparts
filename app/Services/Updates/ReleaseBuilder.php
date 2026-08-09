@@ -56,10 +56,19 @@ class ReleaseBuilder
             $abs = $dir.'/'.$rel;
             if (is_dir($abs)) {
                 $this->rrmdir($abs);
-                $removed[] = $rel;
+                // rrmdir() swallows individual unlink()/rmdir() failures
+                // (a leftover root-owned file from a prior build, etc.) —
+                // confirm the path is actually gone before reporting it as
+                // removed. A dev/secret file the release build believes it
+                // stripped, but which is still physically present, could
+                // otherwise ship in the published release zip undetected.
+                if (! is_dir($abs)) {
+                    $removed[] = $rel;
+                }
             } elseif (is_file($abs)) {
-                @unlink($abs);
-                $removed[] = $rel;
+                if (@unlink($abs)) {
+                    $removed[] = $rel;
+                }
             }
         }
 

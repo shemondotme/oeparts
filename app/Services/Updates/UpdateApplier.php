@@ -209,7 +209,8 @@ class UpdateApplier
     /** Git path only (GIT_STEPS): fetch + check out the target release's tag. */
     protected function doGitCheckout(UpdateHistory $history): void
     {
-        app(GitUpdater::class)->checkout($history->to_version);
+        $manifest = $history->manifest();
+        app(GitUpdater::class)->checkout($history->to_version, $manifest['git_commit_sha'] ?? null);
         $history->putMeta('git_checkout_completed', true);
         $history->save();
     }
@@ -269,8 +270,13 @@ class UpdateApplier
 
         $rolledBack = false;
         if ($this->needsRollback($step)) {
-            $this->rollback($history);
-            $rolledBack = true;
+            // rollback() now reports whether it actually succeeded — previously
+            // this was hardcoded true the moment rollback() was attempted, so a
+            // rollback that itself failed (e.g. git checkout to an unresolvable
+            // tag) was still reported and treated as a successful rollback,
+            // which disarms the Recovery Console below at exactly the moment an
+            // operator needs it most.
+            $rolledBack = $this->rollback($history);
         }
 
         $history->status      = $rolledBack ? UpdateHistory::STATUS_ROLLED_BACK : UpdateHistory::STATUS_FAILED;
@@ -290,9 +296,20 @@ class UpdateApplier
         return $history;
     }
 
-    /** A failure after the swap (or, git path, after composer install) must reverse files + restore the DB. */
-    protected function rollback(UpdateHistory $history): void
+    /**
+     * A failure after the swap (or, git path, after composer install) must
+     * reverse files + restore the DB.
+     *
+     * @return bool true only if BOTH the file rollback and the DB restore
+     *              actually succeeded — the caller uses this to decide
+     *              whether the install is genuinely back to a known-good
+     *              state (and so safe to disarm the Recovery Console), not
+     *              just whether a rollback was attempted.
+     */
+    protected function rollback(UpdateHistory $history): bool
     {
+        $filesOk = true;
+
         try {
             if ($this->isGitMode()) {
                 // Check out the PREVIOUS tag and reinstall ITS dependencies — a
@@ -304,15 +321,21 @@ class UpdateApplier
             }
         } catch (\Throwable $e) {
             Log::channel(config('updates.log_channel', 'stack'))->error('File rollback failed: '.$e->getMessage());
+            $filesOk = false;
         }
+
+        $dbOk = true;
 
         if ($history->backup_run_id && ($run = BackupRun::find($history->backup_run_id))) {
             try {
                 app(RestoreManager::class)->restore($run, RestoreOptions::databaseOnly());
             } catch (\Throwable $e) {
                 Log::channel(config('updates.log_channel', 'stack'))->error('DB restore during rollback failed: '.$e->getMessage());
+                $dbOk = false;
             }
         }
+
+        return $filesOk && $dbOk;
     }
 
     protected function needsRollback(string $step): bool
@@ -345,10 +368,20 @@ class UpdateApplier
 
     protected function armRecovery(UpdateHistory $history): void
     {
+        // deployment_type lets the Recovery Console (public/oe-recovery.php)
+        // tell a git-managed install apart from a zip-swap one. Its only
+        // destructive action, rollback_files, is zip-swap-specific (reads
+        // last-swap.json, which a git-managed update never writes) — without
+        // this, the console silently reported "No interrupted file swap to
+        // roll back" for a genuinely broken git-mode update, reading as a
+        // false all-clear instead of the truth: there's nothing this
+        // particular action can do for THIS deployment type, here's what to
+        // do manually instead.
         app(RecoveryWindowFlag::class)->arm([
-            'history_id'   => $history->getKey(),
-            'from_version' => $history->from_version,
-            'to_version'   => $history->to_version,
+            'history_id'      => $history->getKey(),
+            'from_version'    => $history->from_version,
+            'to_version'      => $history->to_version,
+            'deployment_type' => $this->isGitMode() ? 'git' : 'zip',
         ]);
     }
 
@@ -376,10 +409,22 @@ class UpdateApplier
 
     private function estimateEta(array $manifest): int
     {
-        // Rough: download (assume ~2 MB/s) + a fixed backup/migrate/swap budget.
+        $migrations = (int) ($manifest['migration_count'] ?? 0) * 3;
+
+        if ($this->isGitMode()) {
+            // git fetch is typically fast (a tag's diff, not a full clone), but
+            // `composer install` over the network is comfortably the slowest
+            // step of this path (its own timeout is 300s) — this was never
+            // accounted for, so the "don't close this window" progress screen
+            // showed an estimate based purely on zip-download bandwidth for
+            // every git-mode update, regardless of how long composer actually
+            // took.
+            return 60 + 45 /* git fetch/checkout */ + 90 /* typical composer install */ + $migrations;
+        }
+
+        // Zip path: download (assume ~2 MB/s) + a fixed backup/migrate/swap budget.
         $size = (int) ($manifest['size_bytes'] ?? 0);
         $download = $size > 0 ? (int) ceil($size / (2 * 1024 * 1024)) : 30;
-        $migrations = (int) ($manifest['migration_count'] ?? 0) * 3;
 
         return 60 + $download + $migrations; // seconds
     }

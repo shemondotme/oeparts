@@ -146,7 +146,11 @@ class UpdateExtractor
         if (! is_dir($dir)) {
             return;
         }
-        foreach (scandir($dir) as $entry) {
+        // scandir() failing (permission/transient FS error) returns false —
+        // without this guard, foreach silently iterated zero times instead
+        // of surfacing the problem, leaving stale files from a previous
+        // failed extraction mixed in with the new one instead of cleared.
+        foreach (scandir($dir) ?: [] as $entry) {
             if ($entry === '.' || $entry === '..') {
                 continue;
             }

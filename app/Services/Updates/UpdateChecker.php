@@ -121,8 +121,24 @@ class UpdateChecker
         $latest        = end($releases);
         $latestVersion = (string) $latest['version'];
 
-        $available   = $current !== 'unknown'
-            && version_compare($latestVersion, $current, '>');
+        // 'unknown' (version.json missing/unparsable) previously forced
+        // $available to false with no error set at all — a genuinely broken
+        // install (e.g. after a partial swap) looked identical to a healthy,
+        // fully-up-to-date one in the admin UI, silently hiding the real
+        // problem instead of surfacing it.
+        if ($current === 'unknown') {
+            return new UpdateStatus(
+                currentVersion: $current,
+                latestVersion: $latestVersion,
+                channel: $channel,
+                reachable: true,
+                error: 'Installed version could not be determined (version.json is missing or unreadable) — '
+                    .'cannot tell whether an update is available.',
+                checkedAt: $now,
+            );
+        }
+
+        $available   = version_compare($latestVersion, $current, '>');
         $upgradePath = $available ? $this->resolveUpgradePath($current, $releases) : [];
 
         // The release an apply should actually target — upgradePath[0], NOT

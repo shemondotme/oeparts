@@ -143,5 +143,5 @@ class VerifyRollbackApplier extends UpdateApplier
     protected function doExtract(UpdateHistory $h): void {}
     protected function doSwap(UpdateHistory $h): void {}
     protected function doFinalize(UpdateHistory $h): void {}
-    protected function rollback(UpdateHistory $h): void { $this->rolledBack = true; }
+    protected function rollback(UpdateHistory $h): bool { $this->rolledBack = true; return true; }
 }
