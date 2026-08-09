@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\Cart;
 use App\Models\ShippingCountry;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
@@ -157,6 +158,42 @@ class ShippingServiceTest extends TestCase
         $snapshot = $this->service->getMethodSnapshot(99999);
 
         $this->assertNull($snapshot);
+    }
+
+    // -------------------------------------------------------------------------
+    // calculateCost()
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function calculates_cost_for_a_method_serving_the_destination_country(): void
+    {
+        $cart = Cart::create(['expires_at' => now()->addDays(7)]);
+
+        $cost = $this->service->calculateCost($cart, $this->standardMethod->id, 'DE');
+
+        $this->assertSame('9.90', $cost);
+    }
+
+    #[Test]
+    public function throws_when_the_method_does_not_serve_the_destination_country(): void
+    {
+        // 'DE' is the only country wired to $this->zone in setUp() — 'FR' is
+        // not, so a request forcing this method_id against an FR address
+        // must be rejected rather than silently charged at $9.90.
+        $cart = Cart::create(['expires_at' => now()->addDays(7)]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->service->calculateCost($cart, $this->standardMethod->id, 'FR');
+    }
+
+    #[Test]
+    public function skips_the_country_check_when_no_destination_is_given(): void
+    {
+        $cart = Cart::create(['expires_at' => now()->addDays(7)]);
+
+        $cost = $this->service->calculateCost($cart, $this->standardMethod->id);
+
+        $this->assertSame('9.90', $cost);
     }
 
     // -------------------------------------------------------------------------

@@ -269,7 +269,11 @@ class CheckoutService
 
             $cartSummary = $this->cartService->getSummary($cart);
             $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
-            $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id']);
+            $shippingCost = $this->calculateShippingCost(
+                $cart,
+                $data['shipping_method_id'],
+                $data['shipping_address']['country_code'] ?? null
+            );
 
             // Rush-processing upsell: re-check the merchant toggle at charge
             // time, not just the session flag — a customer's session could
@@ -409,13 +413,13 @@ class CheckoutService
     /**
      * Calculate shipping cost based on selected method from database.
      */
-    public function calculateShippingCost(Cart $cart, ?int $shippingMethodId): string
+    public function calculateShippingCost(Cart $cart, ?int $shippingMethodId, ?string $destinationCountryCode = null): string
     {
         if (! $shippingMethodId) {
             return '0.00';
         }
 
-        return $this->shippingService->calculateCost($cart, $shippingMethodId);
+        return $this->shippingService->calculateCost($cart, $shippingMethodId, $destinationCountryCode);
     }
 
     /**

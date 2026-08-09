@@ -71,14 +71,34 @@ class ShippingService
      *
      * @param Cart $cart
      * @param int $methodId
+     * @param string|null $destinationCountryCode  When given, the method must
+     *   belong to a zone that actually serves this country — nothing else
+     *   validated that server-side (the Frontend checkout form's Rule::in()
+     *   only restricts the <select> options, not the raw submitted value;
+     *   the API checkout controller didn't restrict it at all), so a client
+     *   could otherwise request any active method — e.g. a cheap
+     *   single-country flat rate — while shipping to a country it was never
+     *   configured for.
      * @return string  Flat rate cost as string (e.g. "15.00"), or "0.00" for free shipping
+     *
+     * @throws \RuntimeException if the method doesn't serve $destinationCountryCode
      */
-    public function calculateCost(Cart $cart, int $methodId): string
+    public function calculateCost(Cart $cart, int $methodId, ?string $destinationCountryCode = null): string
     {
         $method = ShippingMethod::find($methodId);
 
         if (!$method || !$method->is_active) {
             return '0.00';
+        }
+
+        if ($destinationCountryCode !== null) {
+            $servesDestination = ShippingCountry::where('zone_id', $method->zone_id)
+                ->where('country_code', strtoupper($destinationCountryCode))
+                ->exists();
+
+            if (!$servesDestination) {
+                throw new \RuntimeException('Selected shipping method is not available for the destination country.');
+            }
         }
 
         // Check free shipping threshold

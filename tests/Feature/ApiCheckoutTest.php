@@ -10,6 +10,7 @@ use App\Models\Manufacturer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Sequence;
+use App\Models\ShippingCountry;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\User;
@@ -64,6 +65,7 @@ class ApiCheckoutTest extends TestCase
         $this->user = User::factory()->create();
 
         $zone = ShippingZone::create(['name' => 'Europe', 'description' => 'European countries', 'is_active' => true]);
+        ShippingCountry::create(['zone_id' => $zone->id, 'country_code' => 'DE', 'country_name' => 'Germany']);
         $this->shippingMethod = ShippingMethod::create([
             'zone_id' => $zone->id,
             'name' => ['en' => 'Standard'],

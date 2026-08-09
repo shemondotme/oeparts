@@ -78,7 +78,11 @@ class OrderService
             // Calculate totals
             $cartSummary = $this->cartService->getSummary($cart);
             $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
-            $shippingCost = $this->calculateShippingCost($cart, $data['shipping_method_id'] ?? null);
+            $shippingCost = $this->calculateShippingCost(
+                $cart,
+                $data['shipping_method_id'] ?? null,
+                $data['shipping_address']['country_code'] ?? null
+            );
             $taxableBase = bcadd($subtotal, $shippingCost, 2);
             $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
             $discountAmount = $data['discount_amount'] ?? '0.00';
@@ -395,13 +399,13 @@ class OrderService
     /**
      * Calculate shipping cost. Returns '0.00' if no method selected.
      */
-    public function calculateShippingCost(Cart $cart, ?int $shippingMethodId): string
+    public function calculateShippingCost(Cart $cart, ?int $shippingMethodId, ?string $destinationCountryCode = null): string
     {
         if (!$shippingMethodId) {
             return '0.00';
         }
 
-        return $this->shippingService->calculateCost($cart, $shippingMethodId);
+        return $this->shippingService->calculateCost($cart, $shippingMethodId, $destinationCountryCode);
     }
 
     /**

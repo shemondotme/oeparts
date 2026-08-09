@@ -31,12 +31,21 @@ class VatValidationController extends BaseApiController
             'country_code' => 'nullable|string|size:2',
         ]);
 
-        $vatNumber = strtoupper(trim($validated['vat_number']));
+        $vatNumber = strtoupper(preg_replace('/[\s.\-]/', '', $validated['vat_number']));
 
-        $countryCode = strtoupper(trim($validated['country_code'] ?? substr($vatNumber, 0, 2)));
-
-        if (str_starts_with($vatNumber, $countryCode)) {
-            $vatNumber = substr($vatNumber, strlen($countryCode));
+        // A standard EU VAT number carries its own 2-letter alpha country
+        // prefix (e.g. "DE123456789") — that prefix is authoritative and
+        // must win over a separately-submitted country_code (e.g. from a
+        // shipping-country dropdown). The previous version only stripped the
+        // prefix when it happened to match the (possibly different)
+        // country_code param; when they disagreed, the mismatched pair
+        // ("DE", "FR123456789") was sent to VIES as-is and always failed
+        // validation instead of actually checking against FR.
+        if (preg_match('/^([A-Z]{2})([A-Z0-9]+)$/', $vatNumber, $matches)) {
+            $countryCode = $matches[1];
+            $vatNumber = $matches[2];
+        } else {
+            $countryCode = strtoupper(trim($validated['country_code'] ?? ''));
         }
 
         // Validate via VIES, unless the operator has disabled the check
