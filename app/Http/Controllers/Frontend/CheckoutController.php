@@ -9,6 +9,8 @@ use App\Services\PaymentService;
 use App\Services\ShippingService;
 use App\Services\TaxRateService;
 use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
+use App\Enums\PaymentTransactionStatus;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -562,7 +564,10 @@ class CheckoutController extends Controller
         
         $this->authorizePaymentAccess($order);
 
-        if ($order->payment_status === 'paid') {
+        // payment_status is Eloquent-cast to the PaymentStatus enum — comparing
+        // it against the raw string 'paid' can never be true regardless of the
+        // enum's backing value, which silently broke this redirect entirely.
+        if ($order->payment_status === PaymentStatus::Paid) {
             return redirect()->route('frontend.checkout.payment.success', [
                 'lang' => $lang,
                 'order' => $order->order_number,
@@ -719,9 +724,11 @@ class CheckoutController extends Controller
         $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
         
-        // Check payment status via webhook
+        // Check payment status via webhook. status is cast to the
+        // PaymentTransactionStatus enum (Captured, not 'paid') — comparing
+        // against a raw string can never match.
         $payment = $order->payment;
-        if ($payment && $payment->status === 'paid') {
+        if ($payment && $payment->status === PaymentTransactionStatus::Captured) {
             return redirect()->route('frontend.checkout.thank-you', [
                 'lang' => $lang,
                 'order' => $order->order_number,
@@ -743,8 +750,10 @@ class CheckoutController extends Controller
         $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
 
+        // Same enum-vs-string bug as payment()/paymentReturn() above — status
+        // is cast to PaymentTransactionStatus (Captured, not 'paid').
         $payment = $order->payment;
-        if (!$payment || ($payment->status !== 'paid' && $payment->status !== 'pending')) {
+        if (!$payment || ($payment->status !== PaymentTransactionStatus::Captured && $payment->status !== PaymentTransactionStatus::Pending)) {
             return redirect()->route('frontend.checkout.payment', [
                 'lang' => $lang,
                 'order' => $order->order_number,

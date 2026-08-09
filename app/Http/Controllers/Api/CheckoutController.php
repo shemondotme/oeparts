@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\OtpPurpose;
 use App\Services\CheckoutService;
 use App\Services\CartService;
 use App\Services\OtpService;
@@ -91,11 +92,16 @@ class CheckoutController extends BaseApiController
         }
 
         if (!empty($validated['otp'])) {
-            $otpVerified = $this->otpService->verify(
+            // verify() returns a RESULT_* status string, not a bool — was being
+            // assigned straight into otp_verified, so it was always truthy
+            // (even 'invalid'/'expired') and 'guest_checkout' was passed as a
+            // raw string where OtpPurpose (a backed enum) is required.
+            $result = $this->otpService->verify(
                 $validated['email'],
                 $validated['otp'],
-                'guest_checkout'
+                OtpPurpose::GuestCheckout
             );
+            $otpVerified = $result === OtpService::RESULT_OK;
         }
 
         $this->checkoutService->update($checkoutId, [
@@ -209,7 +215,7 @@ class CheckoutController extends BaseApiController
     public function step5(Request $request, string $checkoutId): JsonResponse
     {
         $validated = $request->validate([
-            'payment_method' => 'required|in:card,bank_transfer',
+            'payment_method' => 'required|in:card,bank_transfer,paysera',
             'customer_note' => 'nullable|string|max:500',
         ]);
 

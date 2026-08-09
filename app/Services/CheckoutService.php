@@ -214,11 +214,15 @@ class CheckoutService
             return null;
         }
 
-        $name = is_array($method->name) ? ($method->name['en'] ?? reset($method->name)) : $method->name;
-
+        // trans_field() — the same multilingual-name resolver
+        // CheckoutController's own copy of this lookup uses — not a hand
+        // rolled 'en'-first fallback. The two independent name-resolution
+        // implementations could silently diverge if trans_field()'s fallback
+        // order ever changed, showing a different shipping method name on
+        // the review page than what gets snapshotted onto the order.
         return (object) [
             'id' => $method->id,
-            'name' => $name,
+            'name' => trans_field($method->name),
             'flat_rate' => $method->flat_rate,
             'estimated_days_min' => $method->estimated_days_min,
             'estimated_days_max' => $method->estimated_days_max,
@@ -246,7 +250,16 @@ class CheckoutService
                 throw new \RuntimeException('Checkout session expired or not found.');
             }
 
-            $cart = Cart::find($checkout['cart_id']);
+            // lockForUpdate(), not find(): a double-click on "Place order" (or a
+            // client retry after a slow response) can otherwise fire two
+            // concurrent createOrder() calls for the same cart — the database
+            // session driver doesn't serialize concurrent requests for one
+            // session the way file-session locking does. The second call now
+            // blocks here until the first transaction finishes; if the first
+            // committed, this cart row is already deleted (below) and the
+            // second call cleanly fails with "Cart is empty or invalid"
+            // instead of creating a second Order charged from the same cart.
+            $cart = Cart::where('id', $checkout['cart_id'])->lockForUpdate()->first();
             if (!$cart || $cart->items->isEmpty()) {
                 throw new \RuntimeException('Cart is empty or invalid.');
             }
@@ -267,7 +280,6 @@ class CheckoutService
 
             $taxableBase = bcadd(bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);
             $vatAmount = $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
-            $grandTotal = bcadd($taxableBase, $vatAmount, 2);
 
             // --- Coupon application ---
             $couponId      = $data['coupon_id'] ?? null;
