@@ -67,6 +67,7 @@ return [
     'condition' => 'Condición',
     'condition_name' => 'Nombre de la condición',
     'confirm_payment' => 'Confirmar pago',
+    'capture_payment' => 'Capturar pago',
     'countries' => 'Países',
     'countries_range' => 'Rango de países',
     'country' => 'País',

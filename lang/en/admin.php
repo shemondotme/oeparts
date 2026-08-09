@@ -77,6 +77,7 @@ return [
     'condition' => 'Condition',
     'condition_name' => 'Condition Name',
     'confirm_payment' => 'Confirm Payment',
+    'capture_payment' => 'Capture Payment',
     'countries' => 'Countries',
     'countries_range' => 'Countries Range',
     'country' => 'Country',

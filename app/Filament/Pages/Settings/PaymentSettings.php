@@ -190,6 +190,12 @@ class PaymentSettings extends SettingsPage
                             ->helperText('ISO 3166-1 alpha-2 code of the country transactions are processed from. Required by Airwallex to offer Apple Pay / Google Pay in the Drop-in element.')
                             ->maxLength(2)
                             ->default('LT'),
+
+                        Forms\Components\Toggle::make('airwallex_manual_capture_enabled')
+                            ->label('Hold Funds Until Shipment (Manual Capture)')
+                            ->helperText('When on, card payments are authorized (held) at checkout but not charged. The customer\'s card is only actually charged once the order is marked Shipped — or earlier via "Capture Payment" on the order. Authorizations expire after ~7 days if never captured, so don\'t leave orders unshipped indefinitely. Off by default: card payments are charged immediately at checkout, as before.')
+                            ->columnSpanFull()
+                            ->default(false),
                     ])->columns(2),
 
                 Section::make('Paysera Payment Gateway')

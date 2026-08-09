@@ -159,6 +159,54 @@ class ViewOrder extends ViewRecord
                     $this->getRecord()->payment_method === PaymentMethod::BankTransfer
                     && $this->getRecord()->payment_status === PaymentStatus::Pending
                 ),
+            Actions\Action::make('capturePayment')
+                ->label(__('admin.capture_payment'))
+                ->icon('heroicon-o-lock-open')
+                ->color('success')
+                ->authorize('update')
+                ->requiresConfirmation()
+                ->modalHeading('Capture Held Payment')
+                ->modalDescription('Charge the customer\'s card now for the amount already authorized and held. This normally happens automatically when the order ships.')
+                ->action(function (): void {
+                    $record = $this->getRecord();
+
+                    $payment = $record->payments()
+                        ->where('gateway', PaymentGateway::Airwallex)
+                        ->where('status', PaymentTransactionStatus::Authorized)
+                        ->latest()
+                        ->first();
+
+                    if (! $payment) {
+                        Notification::make()
+                            ->title('No held payment found')
+                            ->danger()
+                            ->send();
+
+                        return;
+                    }
+
+                    try {
+                        app(PaymentService::class)->captureAirwallexPayment($payment);
+
+                        Notification::make()
+                            ->title('Capture requested')
+                            ->body('Airwallex will confirm shortly; the payment record updates automatically.')
+                            ->success()
+                            ->send();
+
+                        $this->dispatch('$refresh');
+                    } catch (\RuntimeException $e) {
+                        Notification::make()
+                            ->title('Capture failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                })
+                ->visible(fn (): bool => $this->getRecord()->payments()
+                    ->where('gateway', PaymentGateway::Airwallex)
+                    ->where('status', PaymentTransactionStatus::Authorized)
+                    ->exists()),
             Actions\EditAction::make(),
             Actions\ActionGroup::make([
                 Actions\DeleteAction::make()

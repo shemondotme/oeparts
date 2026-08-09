@@ -62,6 +62,11 @@ class PaymentService
         // Format amount: Airwallex expects smallest currency unit (cents for EUR)
         $amountCents = bcmul($order->grand_total, '100', 0);
 
+        $manualCaptureEnabled = filter_var(
+            $this->settings->get('payment.airwallex_manual_capture_enabled', false),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
         $payload = [
             'request_id' => Str::uuid()->toString(),
             'amount' => (string) $amountCents,
@@ -74,6 +79,14 @@ class PaymentService
                 'lang' => app()->getLocale(),
                 'order' => $order->order_number,
             ]),
+            // auto_capture defaults to true on Airwallex's side when omitted —
+            // only send this when manual capture is actually enabled, so the
+            // request shape for the (default) auto-capture path is unchanged.
+            ...($manualCaptureEnabled ? [
+                'payment_method_options' => [
+                    'card' => ['auto_capture' => false],
+                ],
+            ] : []),
         ];
 
         try {
@@ -146,6 +159,124 @@ class PaymentService
             }
 
             return $response->json('token');
+        });
+    }
+
+    /**
+     * Capture a previously-authorized (held, not yet charged) Airwallex
+     * payment intent. Only issues the capture call — the resulting Payment/
+     * Order status update happens via the payment_intent.succeeded webhook
+     * (processSuccessfulPayment()), same "webhook is the source of truth"
+     * pattern the rest of this class already follows, and the same event
+     * Airwallex fires for both an auto-captured AND a manually-captured
+     * intent, so no separate handler is needed for that side of it.
+     */
+    public function captureAirwallexPayment(Payment $payment): void
+    {
+        if ($payment->gateway !== PaymentGateway::Airwallex) {
+            throw new \RuntimeException('Payment is not an Airwallex payment.');
+        }
+
+        if ($payment->status !== PaymentTransactionStatus::Authorized) {
+            throw new \RuntimeException('Payment is not in an authorized (held) state — nothing to capture.');
+        }
+
+        $apiKey = $this->settings->get('payment.airwallex_api_key', '');
+        $clientId = $this->settings->get('payment.airwallex_client_id', '');
+        $environment = $this->settings->get('payment.airwallex_environment', 'sandbox');
+        $baseUrl = $environment === 'live' ? self::AIRWALLEX_API_BASE_LIVE : self::AIRWALLEX_API_BASE_SANDBOX;
+
+        try {
+            $token = $this->airwallexAuthToken($baseUrl, $clientId, $apiKey);
+
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$token}",
+                'Content-Type' => 'application/json',
+            ])->timeout(15)->retry(3, 1000)->post(
+                "{$baseUrl}/pa/payment_intents/{$payment->transaction_id}/capture",
+                (object) []
+            );
+
+            if (!$response->successful()) {
+                Log::error('Airwallex capture failed', [
+                    'payment_id' => $payment->id,
+                    'payment_intent_id' => $payment->transaction_id,
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+                throw new \RuntimeException('Failed to capture payment: HTTP '.$response->status());
+            }
+
+            Log::info('Airwallex capture requested successfully', [
+                'payment_id' => $payment->id,
+                'payment_intent_id' => $payment->transaction_id,
+            ]);
+        } catch (\RuntimeException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Airwallex capture API error', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('Payment gateway error: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Process an Airwallex payment_intent.requires_capture webhook — the
+     * customer has paid and funds are authorized/held, but not yet charged
+     * (auto_capture was false). Does NOT mark the order paid or dispatch
+     * PaymentReceived (no money has actually moved yet); the order still
+     * moves out of Pending so fulfillment can start, same as the
+     * auto-capture path today.
+     */
+    public function processAirwallexAuthorization(array $webhookData): void
+    {
+        $eventId = $webhookData['id'] ?? null;
+        $paymentIntentId = $webhookData['data']['object']['id'] ?? null;
+
+        if (!$eventId || !$paymentIntentId) {
+            Log::error('Invalid Airwallex requires_capture webhook data', ['data' => $webhookData]);
+            throw new \RuntimeException('Invalid webhook data');
+        }
+
+        $payment = Payment::where('transaction_id', $paymentIntentId)
+            ->where('gateway', PaymentGateway::Airwallex)
+            ->first();
+
+        if (!$payment) {
+            Log::error('Payment not found for requires_capture webhook', ['payment_intent_id' => $paymentIntentId]);
+            throw new \RuntimeException('Payment not found');
+        }
+
+        DB::transaction(function () use ($payment, $paymentIntentId, $webhookData, $eventId) {
+            $payment->update([
+                'status' => PaymentTransactionStatus::Authorized,
+                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
+            ]);
+
+            $order = $payment->order;
+
+            // Same guard as processSuccessfulPayment() below — only advance a
+            // still-Pending order. A requires_capture retry delivery landing
+            // after the order has already moved on must not re-trigger this.
+            if ($order->status === \App\Enums\OrderStatus::Pending) {
+                $this->orderService->transitionStatus(
+                    $order,
+                    \App\Enums\OrderStatus::Processing,
+                    'Payment authorized (funds held) via Airwallex webhook',
+                    null,
+                    notifyCustomer: false,
+                );
+            }
+
+            dispatch(new SendOrderConfirmationEmail($order));
+
+            Log::info('Airwallex payment authorized — funds held, awaiting capture', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'event_id' => $eventId,
+            ]);
         });
     }
 
@@ -553,13 +684,23 @@ class PaymentService
                 'payment_reference' => $paymentIntentId,
             ]);
 
-            $this->orderService->transitionStatus(
-                $order,
-                \App\Enums\OrderStatus::Processing,
-                'Payment confirmed via Airwallex webhook',
-                null,
-                notifyCustomer: false,
-            );
+            // Only a still-Pending order needs to advance here. With manual
+            // capture, this succeeded event can land long after the order was
+            // already authorized-and-moved-to-Processing (see
+            // processAirwallexAuthorization()) — possibly even after it
+            // shipped, since capture is triggered on the Shipped transition.
+            // Forcing Processing again on an order that's already Shipped
+            // would violate OrderService's transition matrix and throw,
+            // failing this webhook job despite the capture having succeeded.
+            if ($order->status === \App\Enums\OrderStatus::Pending) {
+                $this->orderService->transitionStatus(
+                    $order,
+                    \App\Enums\OrderStatus::Processing,
+                    'Payment confirmed via Airwallex webhook',
+                    null,
+                    notifyCustomer: false,
+                );
+            }
 
             dispatch(new SendOrderConfirmationEmail($order));
 

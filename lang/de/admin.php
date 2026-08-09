@@ -67,6 +67,7 @@ return [
     'condition' => 'Zustand',
     'condition_name' => 'Zustandsbezeichnung',
     'confirm_payment' => 'Zahlung bestätigen',
+    'capture_payment' => 'Zahlung einziehen',
     'countries' => 'Länder',
     'countries_range' => 'Länderbereich',
     'country' => 'Land',

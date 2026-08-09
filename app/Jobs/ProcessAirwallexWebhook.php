@@ -48,6 +48,7 @@ class ProcessAirwallexWebhook implements ShouldQueue
         try {
             match ($eventType) {
                 'payment_intent.succeeded' => $this->handlePaymentSucceeded($paymentService),
+                'payment_intent.requires_capture' => $this->handlePaymentAuthorized($paymentService),
                 'payment_intent.failed' => $this->handlePaymentFailed($paymentService),
                 'payment_intent.canceled' => $this->handlePaymentCanceled($paymentService),
                 default => $this->handleUnknownEvent($eventType),
@@ -68,6 +69,11 @@ class ProcessAirwallexWebhook implements ShouldQueue
     private function handlePaymentSucceeded(PaymentService $paymentService): void
     {
         $paymentService->processSuccessfulPayment($this->webhookData);
+    }
+
+    private function handlePaymentAuthorized(PaymentService $paymentService): void
+    {
+        $paymentService->processAirwallexAuthorization($this->webhookData);
     }
 
     private function handlePaymentFailed(PaymentService $paymentService): void

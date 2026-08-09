@@ -67,6 +67,7 @@ return [
     'condition' => 'État',
     'condition_name' => "Nom de l'état",
     'confirm_payment' => 'Confirmer le paiement',
+    'capture_payment' => 'Capturer le paiement',
     'countries' => 'Pays',
     'countries_range' => 'Plage de pays',
     'country' => 'Pays',

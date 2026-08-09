@@ -194,7 +194,7 @@ class OrderService
             );
         }
 
-        return DB::transaction(function () use ($order, $oldStatus, $newStatus, $note, $adminId, $notifyCustomer) {
+        $result = DB::transaction(function () use ($order, $oldStatus, $newStatus, $note, $adminId, $notifyCustomer) {
             $order->update(['status' => $newStatus]);
 
             $this->logStatusChange($order, $oldStatus, $newStatus, $note, $adminId);
@@ -227,6 +227,51 @@ class OrderService
 
             return true;
         });
+
+        // Runs after the transaction commits — an outbound HTTP call to
+        // Airwallex has no business holding a DB transaction/row locks open.
+        // Never blocks or throws back to the caller: the order has already
+        // physically shipped either way, so a capture failure here needs an
+        // admin's attention (logged), not a rolled-back shipment.
+        if ($result && $newStatus === OrderStatus::Shipped) {
+            $this->captureAuthorizedAirwallexPaymentIfAny($order);
+        }
+
+        return $result;
+    }
+
+    /**
+     * The whole point of authorize-now/capture-later: hold funds while an
+     * order might still get cancelled or turn out unfulfillable, only
+     * actually take the money once it's guaranteed to go out the door. Every
+     * order-shipped transition (admin "Change Status", the Awaiting
+     * Confirmation widget, bulk actions — all of them funnel through
+     * transitionStatus()) checks for a still-held Airwallex payment here.
+     * A no-op for orders paid via auto-capture (nothing Authorized to find)
+     * or any other gateway.
+     */
+    private function captureAuthorizedAirwallexPaymentIfAny(Order $order): void
+    {
+        $payment = $order->payments()
+            ->where('gateway', \App\Enums\PaymentGateway::Airwallex)
+            ->where('status', \App\Enums\PaymentTransactionStatus::Authorized)
+            ->latest()
+            ->first();
+
+        if (!$payment) {
+            return;
+        }
+
+        try {
+            app(PaymentService::class)->captureAirwallexPayment($payment);
+        } catch (\Throwable $e) {
+            Log::error('Auto-capture on ship failed — payment remains authorized, needs manual capture', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+            report($e);
+        }
     }
 
     /**

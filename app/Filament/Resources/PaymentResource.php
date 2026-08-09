@@ -73,14 +73,17 @@ class PaymentResource extends Resource
                 ->badge()
                 ->formatStateUsing(fn (PaymentGateway $state): string => match ($state) {
                     PaymentGateway::Airwallex => 'Airwallex',
+                    PaymentGateway::Paysera => 'Paysera',
                     PaymentGateway::BankTransfer => 'Bank Transfer',
                 })
                 ->color(fn (PaymentGateway $state): string => match ($state) {
                     PaymentGateway::Airwallex => 'info',
+                    PaymentGateway::Paysera => 'success',
                     PaymentGateway::BankTransfer => 'warning',
                 })
                 ->icon(fn (PaymentGateway $state): string => match ($state) {
                     PaymentGateway::Airwallex => 'heroicon-o-globe-alt',
+                    PaymentGateway::Paysera => 'heroicon-o-credit-card',
                     PaymentGateway::BankTransfer => 'heroicon-o-building-library',
                 })
                 ->sortable(),
@@ -230,14 +233,17 @@ class PaymentResource extends Resource
                                             ->badge()
                                             ->formatStateUsing(fn (PaymentGateway $state): string => match ($state) {
                                                 PaymentGateway::Airwallex => 'Airwallex',
+                                                PaymentGateway::Paysera => 'Paysera',
                                                 PaymentGateway::BankTransfer => 'Bank Transfer',
                                             })
                                             ->color(fn (PaymentGateway $state): string => match ($state) {
                                                 PaymentGateway::Airwallex => 'info',
+                                                PaymentGateway::Paysera => 'success',
                                                 PaymentGateway::BankTransfer => 'warning',
                                             })
                                             ->icon(fn (PaymentGateway $state): string => match ($state) {
                                                 PaymentGateway::Airwallex => 'heroicon-o-globe-alt',
+                                                PaymentGateway::Paysera => 'heroicon-o-credit-card',
                                                 PaymentGateway::BankTransfer => 'heroicon-o-building-library',
                                             }),
                                         TextEntry::make('transaction_id')

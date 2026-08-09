@@ -595,6 +595,50 @@ class OrderResource extends Resource
                             $record->payment_method === PaymentMethod::BankTransfer
                             && $record->payment_status === PaymentStatus::Pending
                         ),
+                    Actions\Action::make('capturePayment')
+                        ->label(__('admin.capture_payment'))
+                        ->icon('heroicon-o-lock-open')
+                        ->color('success')
+                        ->authorize('update')
+                        ->requiresConfirmation()
+                        ->modalHeading('Capture Held Payment')
+                        ->modalDescription('Charge the customer\'s card now for the amount already authorized and held. This normally happens automatically when the order ships.')
+                        ->action(function (Order $record): void {
+                            $payment = $record->payments()
+                                ->where('gateway', PaymentGateway::Airwallex)
+                                ->where('status', PaymentTransactionStatus::Authorized)
+                                ->latest()
+                                ->first();
+
+                            if (! $payment) {
+                                Notification::make()
+                                    ->title('No held payment found')
+                                    ->danger()
+                                    ->send();
+
+                                return;
+                            }
+
+                            try {
+                                app(PaymentService::class)->captureAirwallexPayment($payment);
+
+                                Notification::make()
+                                    ->title('Capture requested')
+                                    ->body('Airwallex will confirm shortly; the payment record updates automatically.')
+                                    ->success()
+                                    ->send();
+                            } catch (\RuntimeException $e) {
+                                Notification::make()
+                                    ->title('Capture failed')
+                                    ->body($e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
+                        })
+                        ->visible(fn (Order $record): bool => $record->payments()
+                            ->where('gateway', PaymentGateway::Airwallex)
+                            ->where('status', PaymentTransactionStatus::Authorized)
+                            ->exists()),
                 ]),
             ])
             ->bulkActions([

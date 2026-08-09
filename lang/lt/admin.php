@@ -67,6 +67,7 @@ return [
     'condition' => 'Būklė',
     'condition_name' => 'Būklės pavadinimas',
     'confirm_payment' => 'Patvirtinti mokėjimą',
+    'capture_payment' => 'Nuskaityti mokėjimą',
     'countries' => 'Šalys',
     'countries_range' => 'Šalių intervalas',
     'country' => 'Šalis',
