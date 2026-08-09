@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.15 — 2026-08-09
+
+### Added
+- **Paysera added as a second card payment gateway alongside Airwallex** — wired in the same way as Airwallex (raw HTTP, no SDK): OAuth2 client-credentials auth, order + payment-link creation, and a signature-verified webhook. Card (Airwallex) and Paysera are offered side by side at checkout as independent options.
+- **"Hold Funds Until Shipment" for Airwallex card payments** (opt-in, off by default — existing behavior is unchanged unless enabled) — authorizes and holds the customer's card at checkout instead of charging immediately; the charge only actually happens when the order ships (or an admin captures it early from the order page), so you're never left charging a customer for an order that turns out unfulfillable.
+- **Git-managed installs now cryptographically verify the exact code `git checkout` pulls down**, not just a downloaded zip's signature — closes a gap where a compromised or re-pushed git remote could have served different code under a validly-signed release tag without detection.
+
+### Security
+- **Fixed a path-traversal vulnerability in cross-server backup restore** — a restore manifest's file path was joined onto the restore destination without sanitization, which could allow a crafted backup manifest to write outside the intended restore directory.
+- **The legacy `backup:database` command exposed your database password to other local users on shared hosting** — it was passed to `mysqldump` as a plain command-line argument, visible to anyone on the same server via `ps aux` or `/proc/<pid>/cmdline`. Now passed through a temporary, permission-locked credentials file. If you've run this specific command on a shared host, consider rotating that database password.
+
+### Fixed
+- **The `/api/cart/*` endpoints used by the mobile app were completely broken** — every single request (add to cart, update quantity, apply coupon, etc.) failed outright due to a routing mismatch, plus a wrong method name and wrong service calls on top. All cart API endpoints now work correctly, with new regression tests covering them.
+- **A double-click (or slow-network retry) on "Place Order" could create two paid orders from the same cart** — checkout now locks the cart during order creation so a second concurrent submission cleanly fails instead of double-charging.
+- **The payment-success and payment-return pages could fail to recognize a payment that had actually completed successfully**, due to a status comparison bug — affected both Airwallex and Paysera checkouts.
+- **Invoice PDFs from different orders placed in the same month could silently overwrite one another** — the save path wasn't unique per order. Every invoice is now saved under its own order number.
+- **Invoice PDFs were printing customer names in all-lowercase** ("John Doe" rendered as "john doe" on the billing document).
+- **The mobile app's checkout could accept a shipping method that doesn't actually serve the customer's destination country**, and the mobile shipping-methods endpoint had no way to filter by country at all — both fixed; requesting an out-of-zone method is now rejected server-side, and `/api/shipping-methods?country_code=..` now filters correctly.
+- **VAT number validation could wrongly reject a valid EU VAT number** when its own embedded country prefix (e.g. the "DE" in "DE123456789") disagreed with a separately-selected country field — the VAT number's own prefix now always takes priority.
+- **A coupon configured as "0 = unlimited" uses could incorrectly block every customer from using it (per-customer limit) or reject its own use at checkout (total limit) despite having just been accepted as valid** — both limits now correctly treat 0 the same as no limit at all, matching what the admin panel's own help text has always said.
+- **A single-use coupon could, under concurrent checkouts, be redeemed more than once** — usage tracking now locks correctly so this can't happen.
+- **A coupon's discount amount could go stale if the cart changed after the coupon was applied** (adding/removing items after applying a % coupon), leading to an incorrect final discount on the order. The discount is now recalculated fresh against the final cart, immediately before the order is placed.
+- **Abandoned-cart recovery emails could be marked "sent" even when the email actually failed to deliver**, which meant that customer would never get a retry. The record is now only marked sent once delivery genuinely succeeds.
+- **A backup could get permanently stuck "running"** after a database error mid-run, silently blocking every future backup and update until manually cleared from the admin panel.
+- **The backup restore command showed version-compatibility warnings *after* the destructive confirmation prompt** — you could confirm an overwrite before ever seeing the warning most relevant to that decision. Warnings (and version-check failures) now surface before you're asked to confirm. The documented `--strict-version` safety flag is also now actually usable — it existed in the underlying options but was never exposed on the command line.
+- **A failed update rollback could report itself as successful**, hiding a broken update from the Recovery Console at the exact moment its real recovery steps were needed most.
+- **A git-managed install with a missing/unreadable `version.json` only warned instead of blocking an update** — since the rollback path for a git install depends on knowing the current version, this risked starting an update with no way back if anything went wrong. Now hard-blocked for git installs specifically (the zip-update path doesn't share this dependency, so it still only warns there).
+- **Backup retention (GFS pruning) could evict a different backup type's files sharing the same day's slot** — retention now correctly scopes to each backup profile independently.
+- **`storage/logs/install-*.log` and `updates-*.log` grew forever with no cleanup**, unlike every other log type in the app. Now pruned daily in the same sweep as the rest, honoring the existing 30-day retention setting.
+- **Paysera payments were sometimes internally mislabeled as "Bank Transfer"**, showing bank-transfer instructions on the payment page for an order that was never a bank transfer. A retried/duplicate Paysera webhook could also fail unnecessarily, and the webhook duplicate-detection window was about 60x shorter than configured (a units bug: minutes vs. seconds). Manual-capture orders could also receive two confirmation emails instead of one.
+
 ## 1.0.14 — 2026-07-31
 
 ### Added
