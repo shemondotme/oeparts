@@ -32,6 +32,7 @@ class RestoreBackup extends Command
         {--files : Restore files}
         {--files-to= : Target directory for restored files (default: storage/app/restore/run-{id})}
         {--table= : Restore a single database table only}
+        {--strict-version : Abort instead of warning if the backup is from a newer app version than this server}
         {--force : Skip the confirmation prompt}';
 
     protected $description = 'Restore a backup, same-server or cross-server (see --import-manifest)';
@@ -50,14 +51,26 @@ class RestoreBackup extends Command
             $this->warn('This OVERWRITES tables in the CURRENT database with data from the backup.');
         }
 
+        // Version-compatibility warnings must reach the operator BEFORE they
+        // decide whether to proceed, not after — this used to run the
+        // destructive confirm() prompt first, so the one fact most relevant
+        // to that decision only appeared once the restore was already
+        // underway. validateVersion() itself throws (aborting before the
+        // prompt) when --strict-version is set and the backup is newer.
+        try {
+            foreach ($manager->validateVersion($run, $options->strictVersion) as $warning) {
+                $this->warn($warning);
+            }
+        } catch (\Throwable $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
         if (! $this->option('force') && ! $this->confirm('Continue?')) {
             $this->info('Cancelled — nothing was changed.');
 
             return self::SUCCESS;
-        }
-
-        foreach ($manager->validateVersion($run, $options->strictVersion) as $warning) {
-            $this->warn($warning);
         }
 
         $report = $manager->restore($run, $options);
@@ -110,8 +123,13 @@ class RestoreBackup extends Command
         $wantsFiles = (bool) $this->option('files');
         $table = $this->option('table');
 
-        // Neither --database nor --files given → restore both (the common case).
-        if (! $wantsDatabase && ! $wantsFiles && ! $table) {
+        // Neither --database nor --files given → restore both (the common
+        // case). Must check `$table === null`, not `! $table` — PHP treats
+        // the STRING "0" as falsy, so `--table=0` (restoring a table
+        // literally named "0") previously satisfied `! $table` too, silently
+        // forcing $wantsFiles = true even though --files was never passed —
+        // an unrequested files restore alongside the requested table.
+        if (! $wantsDatabase && ! $wantsFiles && $table === null) {
             $wantsDatabase = true;
             $wantsFiles = true;
         }
@@ -121,6 +139,7 @@ class RestoreBackup extends Command
             files: $wantsFiles,
             table: $table,
             targetRoot: $this->option('files-to'),
+            strictVersion: (bool) $this->option('strict-version'),
         );
     }
 }

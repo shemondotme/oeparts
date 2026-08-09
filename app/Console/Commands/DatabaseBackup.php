@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\CronLog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -35,12 +34,22 @@ class DatabaseBackup extends Command
             mkdir($backupDir, 0755, true);
         }
 
+        // Credentials go in a temporary MySQL option file, never on the
+        // command line — a --password=<plaintext> argument is visible to
+        // any other local user on the same host via `ps aux` or
+        // /proc/<pid>/cmdline for as long as mysqldump runs. escapeshellarg()
+        // only prevents shell injection; it does nothing about process-list
+        // visibility.
+        $optionFile = tempnam(sys_get_temp_dir(), 'oe-db-backup-');
+        file_put_contents($optionFile, "[client]\npassword=".$dbPass."\n");
+        chmod($optionFile, 0600);
+
         $command = sprintf(
-            'mysqldump --host=%s --port=%s --user=%s --password=%s %s > %s',
+            'mysqldump --defaults-extra-file=%s --host=%s --port=%s --user=%s %s > %s',
+            escapeshellarg($optionFile),
             escapeshellarg($dbHost),
             escapeshellarg($dbPort),
             escapeshellarg($dbUser),
-            escapeshellarg($dbPass),
             escapeshellarg($dbName),
             escapeshellarg($outputPath)
         );
@@ -49,7 +58,12 @@ class DatabaseBackup extends Command
 
         $returnCode = 0;
         $output = [];
-        exec($command . ' 2>&1', $output, $returnCode);
+
+        try {
+            exec($command . ' 2>&1', $output, $returnCode);
+        } finally {
+            @unlink($optionFile);
+        }
 
         if ($returnCode !== 0) {
             $errorMessage = implode("\n", $output);
