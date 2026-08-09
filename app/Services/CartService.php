@@ -86,32 +86,39 @@ class CartService
      * @param int $productId
      * @param int $quantity
      * @return \App\Models\CartItem
-     * @throws \Exception if product not found or out of stock
+     * @throws \RuntimeException if product not found or out of stock
      */
     public function addItem(Cart $cart, int $productId, int $quantity = 1): CartItem
     {
         return DB::transaction(function () use ($cart, $productId, $quantity) {
-            $maxItems = $this->settings->get('cart.max_items', 50);
-            if ($cart->items()->count() >= $maxItems) {
-                throw new \Exception("Cart cannot have more than {$maxItems} items.");
-            }
-
             $product = Product::lockForUpdate()->findOrFail($productId);
 
             if (!$product->is_in_stock) {
-                throw new \Exception("Product is out of stock.");
+                throw new \RuntimeException("Product is out of stock.");
             }
 
             $existingItem = $cart->items()->where('product_id', $productId)->first();
 
             if ($existingItem) {
-                $newQuantity = $existingItem->quantity + $quantity;
+                // Bumping quantity on a product already in the cart never
+                // grows the row count, so it must never be blocked by the
+                // max-items cap below — that check only applies when this
+                // add would create a genuinely new row. Also: price_at_add
+                // is intentionally left untouched here — it's the price the
+                // customer originally saw, and checkPriceChanges() relies on
+                // it staying put to detect/warn about a price change since
+                // then. Overwriting it on every quantity bump silently erased
+                // that history.
                 $existingItem->update([
-                    'quantity' => $newQuantity,
-                    'price_at_add' => $product->price,
+                    'quantity' => $existingItem->quantity + $quantity,
                 ]);
                 Cache::forget("cart_summary:{$cart->id}");
                 return $existingItem;
+            }
+
+            $maxItems = $this->settings->get('cart.max_items', 50);
+            if ($cart->items()->count() >= $maxItems) {
+                throw new \RuntimeException("Cart cannot have more than {$maxItems} items.");
             }
 
             $newItem = CartItem::create([
@@ -168,7 +175,7 @@ class CartService
 
         $product = $item->product;
         if (!$product->is_in_stock) {
-            throw new \Exception("Product is out of stock.");
+            throw new \RuntimeException("Product is out of stock.");
         }
 
         $item->update(['quantity' => $quantity]);
@@ -278,6 +285,14 @@ class CartService
             $itemCount = 0;
 
             foreach ($cart->items as $item) {
+                // A product already sitting in someone's cart can be
+                // soft-deleted later (admin removes/discontinues it) — same
+                // guard checkPriceChanges() below already applies, just
+                // missing here, where it broke the cart entirely for anyone
+                // holding a now-gone product.
+                if (!$item->product) {
+                    continue;
+                }
                 $lineTotal = bcmul((string) $item->product->price, (string) $item->quantity, 2);
                 $subtotal = bcadd($subtotal, $lineTotal, 2);
                 $itemCount += $item->quantity;
@@ -369,13 +384,4 @@ class CartService
         });
     }
 
-    /**
-     * Clear expired carts (run via scheduled command).
-     *
-     * @return int Number of carts deleted
-     */
-    public function clearExpiredCarts(): int
-    {
-        return Cart::where('expires_at', '<', Carbon::now())->delete();
-    }
 }

@@ -30,8 +30,13 @@ class CleanExpiredCarts extends Command
             ->whereIn('cart_id', $expiredCartIds)
             ->delete();
 
+        // Delete by the SAME id set fetched above, not a second
+        // `expires_at < now()` query — a cart that crosses the expiry
+        // threshold in the window between the two calls would otherwise be
+        // deleted here without its items having been targeted by the
+        // query above (only saved today by the FK cascade covering the gap).
         $deletedCartsCount = DB::table('carts')
-            ->where('expires_at', '<', now())
+            ->whereIn('id', $expiredCartIds)
             ->delete();
 
         $this->info("Deleted {$deletedItemsCount} cart items from {$deletedCartsCount} expired carts.");

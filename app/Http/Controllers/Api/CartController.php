@@ -10,6 +10,14 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
+/**
+ * These endpoints previously declared a required `string $lang` second
+ * parameter that no route in routes/api.php ever supplies (this API group
+ * has no `{lang}` segment, unlike the Frontend/SSR routes these controllers
+ * were likely adapted from) — every single call here threw an
+ * ArgumentCountError before even reaching this class's own logic. Removed;
+ * it was unused in every method body anyway.
+ */
 class CartController extends BaseApiController
 {
     public function __construct(
@@ -20,7 +28,7 @@ class CartController extends BaseApiController
     /**
      * Get cart summary.
      */
-    public function summary(Request $request, string $lang): JsonResponse
+    public function summary(Request $request): JsonResponse
     {
         $user = Auth::user();
         $guestToken = $request->cookie('guest_token');
@@ -37,7 +45,7 @@ class CartController extends BaseApiController
     /**
      * Add item to cart.
      */
-    public function add(Request $request, string $lang): JsonResponse
+    public function add(Request $request): JsonResponse
     {
         // Rate limit: add requests per minute per IP
         $maxAdds = (int) settings('cart.rate_limit_per_minute', 60);
@@ -75,7 +83,7 @@ class CartController extends BaseApiController
     /**
      * Update cart item quantity.
      */
-    public function update(Request $request, string $lang, int $itemId): JsonResponse
+    public function update(Request $request, int $itemId): JsonResponse
     {
         $validated = $request->validate([
             'quantity' => 'required|integer|min:0|max:' . settings('cart.max_quantity', 99),
@@ -89,7 +97,7 @@ class CartController extends BaseApiController
             if ($validated['quantity'] <= 0) {
                 $this->cartService->removeItem($cart, $itemId);
             } else {
-                $this->cartService->updateItemQuantity($cart, $itemId, $validated['quantity']);
+                $this->cartService->updateQuantity($cart, $itemId, $validated['quantity']);
             }
 
             return response()->json([
@@ -108,7 +116,7 @@ class CartController extends BaseApiController
     /**
      * Remove item from cart.
      */
-    public function remove(Request $request, string $lang, int $itemId): JsonResponse
+    public function remove(Request $request, int $itemId): JsonResponse
     {
         $user = Auth::user();
         $guestToken = $request->cookie('guest_token');
@@ -125,8 +133,18 @@ class CartController extends BaseApiController
 
     /**
      * Apply coupon to cart.
+     *
+     * CouponService::apply()/remove() operate on an Order at checkout time
+     * (recording actual usage against a completed order) — a different
+     * concern from staging a coupon on a still-open Cart, which is what this
+     * endpoint needs. The previous code called apply($code, $cart) /
+     * remove($cart) against those order-based signatures, throwing a
+     * TypeError on every request. Mirrors the working pattern already used
+     * by Frontend\CartController::applyCoupon()/removeCoupon(): validate,
+     * then persist onto Cart::coupon_code (which CartService::getSummary()
+     * already reads to compute the discount).
      */
-    public function applyCoupon(Request $request, string $lang): JsonResponse
+    public function applyCoupon(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'code' => 'required|string|max:50',
@@ -136,35 +154,42 @@ class CartController extends BaseApiController
         $guestToken = $request->cookie('guest_token');
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
 
-        try {
-            $this->couponService->apply($validated['code'], $cart);
+        $summary = $this->cartService->getSummary($cart);
+        $result = $this->couponService->validate($validated['code'], (string) $summary['subtotal'], $user?->id);
 
-            return response()->json([
-                'success' => true,
-                'message' => __('Coupon applied successfully'),
-            ]);
-        } catch (\RuntimeException $e) {
+        if (!$result['valid']) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => $result['message'],
             ], 422);
         }
+
+        $cart->update(['coupon_code' => $validated['code']]);
+        \Illuminate\Support\Facades\Cache::forget("cart_summary:{$cart->id}");
+
+        return response()->json([
+            'success' => true,
+            'message' => __('Coupon applied successfully'),
+            'summary' => $this->cartService->getSummary($cart),
+        ]);
     }
 
     /**
      * Remove coupon from cart.
      */
-    public function removeCoupon(Request $request, string $lang): JsonResponse
+    public function removeCoupon(Request $request): JsonResponse
     {
         $user = Auth::user();
         $guestToken = $request->cookie('guest_token');
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
 
-        $this->couponService->remove($cart);
+        $cart->update(['coupon_code' => null]);
+        \Illuminate\Support\Facades\Cache::forget("cart_summary:{$cart->id}");
 
         return response()->json([
             'success' => true,
             'message' => __('Coupon removed'),
+            'summary' => $this->cartService->getSummary($cart),
         ]);
     }
 }

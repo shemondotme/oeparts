@@ -181,25 +181,32 @@ class CartController extends Controller
         $cart->load('items.product');
         $summary = $this->cartService->getSummary($cart);
 
-        $items = $cart->items->map(function ($item) {
-            $product = $item->product;
-            return [
-                'id' => $item->id,
-                'quantity' => $item->quantity,
-                'price' => $product->price,
-                'line_total' => bcmul((string) $product->price, (string) $item->quantity, 2),
-                'oem_number' => $product->oem_number,
-                'name' => trans_field($product->name),
-                // The cart page's mapItem() reads stock to render the In/Out-of-stock
-                // flag; without this the row falls back to "Out of stock" after any
-                // update/remove (which re-hydrates items from this endpoint).
-                'is_in_stock' => (bool) $product->is_in_stock,
-                'condition_slug' => $product->condition?->slug ?? 'new',
-                'condition_name' => condition_label($product->condition),
-                'condition_bg' => $product->condition?->bg_color ?? '#DCFCE7',
-                'condition_text' => $product->condition?->text_color ?? '#16A34A',
-            ];
-        });
+        $items = $cart->items
+            // A product already sitting in someone's cart can be
+            // soft-deleted later (admin removes/discontinues it); CartItem::
+            // product() has no withTrashed(), so it resolves to null and
+            // this dropdown crashed for that user on every hover.
+            ->filter(fn ($item) => $item->product !== null)
+            ->values()
+            ->map(function ($item) {
+                $product = $item->product;
+                return [
+                    'id' => $item->id,
+                    'quantity' => $item->quantity,
+                    'price' => $product->price,
+                    'line_total' => bcmul((string) $product->price, (string) $item->quantity, 2),
+                    'oem_number' => $product->oem_number,
+                    'name' => trans_field($product->name),
+                    // The cart page's mapItem() reads stock to render the In/Out-of-stock
+                    // flag; without this the row falls back to "Out of stock" after any
+                    // update/remove (which re-hydrates items from this endpoint).
+                    'is_in_stock' => (bool) $product->is_in_stock,
+                    'condition_slug' => $product->condition?->slug ?? 'new',
+                    'condition_name' => condition_label($product->condition),
+                    'condition_bg' => $product->condition?->bg_color ?? '#DCFCE7',
+                    'condition_text' => $product->condition?->text_color ?? '#16A34A',
+                ];
+            });
 
         return response()->json([
             'success' => true,
