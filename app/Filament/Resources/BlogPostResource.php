@@ -351,9 +351,23 @@ class BlogPostResource extends Resource
                             ? ContentStatus::Draft
                             : ContentStatus::Published;
 
+                        // Publishing always overwrote published_at with now(),
+                        // silently discarding a future date the admin had
+                        // deliberately scheduled via the edit form (unpublish
+                        // then re-publish used to reset a "goes live next
+                        // Monday" post to live immediately). Only defaults to
+                        // now() when there's no date, or it's already past —
+                        // a genuinely future date is left alone.
+                        $publishedAt = $record->published_at;
+                        if ($newStatus === ContentStatus::Published) {
+                            $publishedAt = ($publishedAt && $publishedAt->isFuture()) ? $publishedAt : now();
+                        } else {
+                            $publishedAt = null;
+                        }
+
                         $record->update([
                             'status' => $newStatus,
-                            'published_at' => $newStatus === ContentStatus::Published ? now() : null,
+                            'published_at' => $publishedAt,
                         ]);
 
                         Notification::make()

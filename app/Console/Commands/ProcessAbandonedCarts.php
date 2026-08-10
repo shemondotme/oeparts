@@ -45,13 +45,21 @@ class ProcessAbandonedCarts extends Command
             // Guest carts have no user_id to key this on — fall back to the
             // email itself so the same guest doesn't get spammed across
             // multiple abandoned guest carts either.
-            $alreadySentQuery = AbandonedCart::where('recovery_email_sent', true)
-                ->where('created_at', '>', now()->subDays(7));
-            $alreadySentQuery = $cart->user_id
-                ? $alreadySentQuery->where('user_id', $cart->user_id)
-                : $alreadySentQuery->where('guest_email', $email);
+            //
+            // Deliberately NOT filtered to recovery_email_sent=true: that
+            // flag only flips once SendAbandonedCartEmail's mail send
+            // actually succeeds (see its own docblock), so a row still
+            // in-flight (queued but not yet sent — or this same command
+            // running again before the queue worker catches up, if the real
+            // system cron overlaps its own previous run) was invisible to
+            // this check and could get a second AbandonedCart row + a
+            // second recovery email queued for the exact same cart.
+            $alreadyHandledQuery = AbandonedCart::where('created_at', '>', now()->subDays(7));
+            $alreadyHandledQuery = $cart->user_id
+                ? $alreadyHandledQuery->where('user_id', $cart->user_id)
+                : $alreadyHandledQuery->where('guest_email', $email);
 
-            if ($alreadySentQuery->exists()) {
+            if ($alreadyHandledQuery->exists()) {
                 continue;
             }
 

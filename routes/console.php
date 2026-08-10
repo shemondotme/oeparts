@@ -33,7 +33,12 @@ Schedule::command('cart:clean')->dailyAt('03:00');
 Schedule::command('logs:clean')->dailyAt('04:00');
 
 // Process abandoned carts — hourly at minute 5
-Schedule::command('abandoned-cart:process')->hourlyAt(5);
+// withoutOverlapping(): a slow run (large cart backlog) still in progress
+// when the next hourly tick fires used to let two runs process the same
+// stale carts concurrently — the dedup check above closes the "was it
+// already handled" race, but there's no reason to let two runs overlap at
+// all when one is still working.
+Schedule::command('abandoned-cart:process')->hourlyAt(5)->withoutOverlapping();
 
 // Dispatch newsletter campaigns whose scheduled send time has arrived —
 // this is what makes the admin's "Scheduled Send Date" actually fire.
