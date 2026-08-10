@@ -59,6 +59,24 @@ class CommerceAuthorizationTest extends TestCase
         $this->assertFalse($catalogAdmin->can('delete', $refund));
     }
 
+    /**
+     * support-9: create() previously fell through to BasePolicy's default
+     * 'create refunds' permission — never seeded for any role — leaving it
+     * silently super_admin-only via Gate::before with no explicit
+     * documentation of that. A manager who CAN process refunds (update/
+     * delete) still should not be able to create one, since no
+     * RefundRequestResource create route exists at all.
+     */
+    #[Test]
+    public function only_super_admin_can_create_a_refund_request_via_the_policy(): void
+    {
+        $manager = $this->adminWithRole('manager');
+        $superAdmin = $this->adminWithRole('super_admin');
+
+        $this->assertFalse($manager->can('create', RefundRequest::class));
+        $this->assertTrue($superAdmin->can('create', RefundRequest::class));
+    }
+
     // ── Regression tests for Bug 1: RefundRequestResource workflow actions ──
 
     #[Test]
