@@ -183,7 +183,6 @@ class SettingsSeeder extends Seeder
             ['group' => 'search', 'key' => 'autocomplete_count',   'value' => '5',  'type' => $i],
             ['group' => 'search', 'key' => 'rate_limit_per_minute', 'value' => '30', 'type' => $i],
             ['group' => 'search', 'key' => 'log_searches',         'value' => '1',  'type' => $b],
-            ['group' => 'search', 'key' => 'log_retention_days',   'value' => '90', 'type' => $i],
             ['group' => 'search', 'key' => 'cross_ref_enabled',    'value' => '1',  'type' => $b],
             ['group' => 'search', 'key' => 'partial_match_enabled', 'value' => '1',  'type' => $b],
             ['group' => 'search', 'key' => 'partial_match_min_length', 'value' => '4', 'type' => $i],
@@ -213,6 +212,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'security', 'key' => 'login_window_minutes',  'value' => '15', 'type' => $i],
             ['group' => 'security', 'key' => 'inquiry_max_per_email', 'value' => '10', 'type' => $i],
             ['group' => 'security', 'key' => 'session_lifetime',      'value' => '120', 'type' => $i],
+            ['group' => 'security', 'key' => 'log_retention_days',    'value' => '90', 'type' => $i],
 
             // ── INTEGRATIONS ─────────────────────────────────────────────────────
             ['group' => 'integrations', 'key' => 'gtm_id',           'value' => '', 'type' => $s],

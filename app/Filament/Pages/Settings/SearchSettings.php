@@ -59,7 +59,7 @@ class SearchSettings extends SettingsPage
                     ])->columns(2),
 
                 Section::make('Search & Diagnostic Logging')
-                    ->description('Log operations to optimize query indexes and identify missing OEM part demands.')
+                    ->description('Log operations to optimize query indexes and identify missing OEM part demands. Retention for these logs is set on Security Settings, alongside login and admin-activity audit history.')
                     ->schema([
                         Forms\Components\Toggle::make('log_searches')
                             ->label('Log All Keyword Search Queries')
@@ -70,15 +70,6 @@ class SearchSettings extends SettingsPage
                             ->label('Log Failed Searches')
                             ->helperText('Saves queries yielding zero matches (extremely useful to expand supplier catalogs)')
                             ->default(true),
-
-                        Forms\Components\TextInput::make('log_retention_days')
-                            ->label('Audit Log Retention (Days)')
-                            ->numeric()
-                            ->minValue(1)
-                            ->maxValue(365)
-                            ->required()
-                            ->helperText('Days to keep search audit histories before automatic cleanups')
-                            ->default(90),
                     ])->columns(2),
 
                 Section::make('Search Matching Options')

@@ -83,6 +83,19 @@ class SecuritySettings extends SettingsPage
                             ->helperText('Minutes of inactivity before the admin panel session expires')
                             ->default(120),
                     ])->columns(2),
+
+                Section::make('Audit Log Retention')
+                    ->description('How long security-relevant logs are kept before the daily GDPR cleanup job permanently deletes them.')
+                    ->schema([
+                        Forms\Components\TextInput::make('log_retention_days')
+                            ->label('Log Retention (Days)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(365)
+                            ->required()
+                            ->helperText('Applies to login attempts, admin activity history, search/failed-search logs, cron logs, and email logs. Lowering this shortens how far back you can investigate a security incident or admin action — do not lower it just to save database space.')
+                            ->default(90),
+                    ])->columns(2),
             ]);
     }
 }

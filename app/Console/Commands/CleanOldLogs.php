@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\File;
 
 class CleanOldLogs extends Command
 {
-    protected $signature = 'logs:clean {--days= : Number of days to retain logs (defaults to search.log_retention_days setting)}';
+    protected $signature = 'logs:clean {--days= : Number of days to retain logs (defaults to security.log_retention_days setting)}';
 
     protected $description = 'Clean old logs for GDPR compliance (default: 90 days retention) and prune old install/update log files';
 
@@ -22,7 +22,7 @@ class CleanOldLogs extends Command
     {
         $days = $this->option('days') !== null
             ? (int) $this->option('days')
-            : (int) settings('search.log_retention_days', 90);
+            : (int) settings('security.log_retention_days', 90);
         $cutoffDate = now()->subDays($days);
 
         $this->info("Cleaning logs older than {$days} days (before {$cutoffDate->toDateString()})...");
