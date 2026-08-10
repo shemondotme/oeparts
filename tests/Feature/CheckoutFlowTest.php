@@ -161,6 +161,11 @@ class CheckoutFlowTest extends TestCase
         $this->assertTrue($checkout['data']['otp_verified'] ?? false, 'otp_verified should be true');
         $this->assertEquals(2, $checkout['step'] ?? 0, 'Should be at step 2 after OTP verification');
 
+        // Persisted onto the Cart itself, not just this (ephemeral)
+        // checkout session — this is what lets ProcessAbandonedCarts reach
+        // a guest who never completes checkout.
+        $this->assertSame('guest@example.com', $cart->fresh()->guest_email);
+
         // Step 2: Address
         $response = $this->post('/en/checkout', [
             'first_name' => 'John',

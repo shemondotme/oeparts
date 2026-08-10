@@ -242,6 +242,15 @@ class CheckoutController extends Controller
             'otp_pending_phone' => null,
         ]);
 
+        // A guest's email otherwise only ever lives in this checkout
+        // session, which expires long before the hourly abandoned-cart
+        // sweep runs — persisting it onto the Cart itself is what lets
+        // ProcessAbandonedCarts reach a guest who never completes checkout.
+        if ($isGuest) {
+            $cart = $this->cartService->getCartByCheckout($checkoutId);
+            $cart?->update(['guest_email' => $email]);
+        }
+
         $this->checkoutService->advance($checkoutId);
 
         return redirect()->route('frontend.checkout', compact('lang'));

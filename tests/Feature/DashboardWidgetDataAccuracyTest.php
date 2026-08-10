@@ -170,6 +170,52 @@ class DashboardWidgetDataAccuracyTest extends TestCase
         Mail::assertSent(AbandonedCartReminder::class, 1);
     }
 
+    /**
+     * A guest's email otherwise only ever lived in the ephemeral checkout
+     * session — never on the Cart itself — so ProcessAbandonedCarts had no
+     * reachable address for any guest cart and silently skipped the entire
+     * guest-checkout segment. CheckoutController::processStep1() now
+     * persists it onto carts.guest_email once verified.
+     */
+    #[Test]
+    public function process_command_recovers_a_guest_cart_that_has_a_captured_guest_email(): void
+    {
+        Mail::fake();
+
+        $product = \App\Models\Product::factory()->create();
+
+        $guestCartId = DB::table('carts')->insertGetId([
+            'user_id' => null,
+            'guest_token' => 'guest-token-with-email',
+            'guest_email' => 'guest@example.com',
+            'expires_at' => now()->addDays(5),
+            'created_at' => now()->subDays(2),
+            'updated_at' => now()->subDays(1),
+        ]);
+        DB::table('cart_items')->insert([
+            'cart_id' => $guestCartId,
+            'product_id' => $product->id,
+            'quantity' => 1,
+            'price_at_add' => '9.99',
+            'created_at' => now()->subDays(1),
+            'updated_at' => now()->subDays(1),
+        ]);
+
+        $this->artisan('abandoned-cart:process')->assertSuccessful();
+
+        $record = AbandonedCart::where('guest_email', 'guest@example.com')->first();
+        $this->assertNotNull($record, 'guest cart with a captured email must be recovered');
+        $this->assertNull($record->user_id);
+        $this->assertTrue($record->recovery_email_sent);
+        Mail::assertSent(AbandonedCartReminder::class, 1);
+
+        // Second run within the 7-day window: deduped by guest_email (no
+        // user_id to key on for a guest).
+        $this->artisan('abandoned-cart:process')->assertSuccessful();
+        $this->assertSame(1, AbandonedCart::where('guest_email', 'guest@example.com')->count());
+        Mail::assertSent(AbandonedCartReminder::class, 1);
+    }
+
     // ── RefundsPendingList ───────────────────────────────────────────────
 
     #[Test]

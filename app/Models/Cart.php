@@ -11,7 +11,7 @@ class Cart extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'guest_token', 'expires_at', 'coupon_code'];
+    protected $fillable = ['user_id', 'guest_token', 'guest_email', 'expires_at', 'coupon_code'];
 
     protected $casts = [
         'expires_at' => 'datetime',

@@ -111,6 +111,15 @@ class CheckoutController extends BaseApiController
             'otp_verified' => $otpVerified,
         ]);
 
+        // See the matching comment in Frontend\CheckoutController::
+        // processStep1() — persisted onto the Cart itself (not just this
+        // checkout session) so ProcessAbandonedCarts can reach a guest who
+        // never completes checkout.
+        if (! Auth::user()) {
+            $cart = $this->cartService->getCartByCheckout($checkoutId);
+            $cart?->update(['guest_email' => $validated['email']]);
+        }
+
         $this->checkoutService->advance($checkoutId);
 
         return $this->successResponse([

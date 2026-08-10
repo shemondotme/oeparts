@@ -31,18 +31,27 @@ class ProcessAbandonedCarts extends Command
         $emailCount = 0;
 
         foreach ($staleCarts as $cart) {
-            // Guest carts carry no email address — nothing to recover to.
-            if (! $cart->user?->email) {
+            // guest_email is persisted onto the Cart the moment a guest
+            // enters and verifies it in checkout step 1 (see
+            // CheckoutController::processStep1()) — before this fix, guest
+            // carts carried no reachable address anywhere and the entire
+            // guest-checkout segment of the funnel was silently unrecovered.
+            $email = $cart->user?->email ?? $cart->guest_email;
+            if (! $email) {
                 continue;
             }
 
             // One recovery per customer per 7 days, regardless of cart churn.
-            $alreadySent = AbandonedCart::where('user_id', $cart->user_id)
-                ->where('recovery_email_sent', true)
-                ->where('created_at', '>', now()->subDays(7))
-                ->exists();
+            // Guest carts have no user_id to key this on — fall back to the
+            // email itself so the same guest doesn't get spammed across
+            // multiple abandoned guest carts either.
+            $alreadySentQuery = AbandonedCart::where('recovery_email_sent', true)
+                ->where('created_at', '>', now()->subDays(7));
+            $alreadySentQuery = $cart->user_id
+                ? $alreadySentQuery->where('user_id', $cart->user_id)
+                : $alreadySentQuery->where('guest_email', $email);
 
-            if ($alreadySent) {
+            if ($alreadySentQuery->exists()) {
                 continue;
             }
 
@@ -65,10 +74,11 @@ class ProcessAbandonedCarts extends Command
 
             $abandonedCart = AbandonedCart::create([
                 'user_id' => $cart->user_id,
+                'guest_email' => $cart->user_id ? null : $email,
                 'cart_snapshot' => [
                     'items' => $snapshotItems,
                     'total' => $total,
-                    'customer_name' => $cart->user->name,
+                    'customer_name' => $cart->user->name ?? null,
                 ],
                 'last_active_at' => $cart->updated_at,
                 'recovery_email_sent' => false,
@@ -76,7 +86,7 @@ class ProcessAbandonedCarts extends Command
 
             if ($recovery->send($abandonedCart)) {
                 $emailCount++;
-                $this->info("Queued recovery email for: {$cart->user->email}");
+                $this->info("Queued recovery email for: {$email}");
             }
         }
 
