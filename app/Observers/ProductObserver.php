@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Services\CacheService;
+use App\Services\SearchService;
 use App\Services\WidgetPreferenceService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -46,6 +47,7 @@ class ProductObserver
             $cache->forget("product.{$product->id}");
             $cache->forgetManufacturers();
             Cache::forget('sitemap_parts');
+            SearchService::bumpCacheVersion();
 
             foreach (['stock_alert', 'manufacturing_stats', 'new_products_added'] as $widgetId) {
                 WidgetPreferenceService::forgetCache($widgetId);

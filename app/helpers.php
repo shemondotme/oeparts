@@ -288,15 +288,15 @@ function format_datetime($datetime, int $dateStyle = IntlDateFormatter::MEDIUM, 
  * Falls back to the raw DB name for any slug without a matching translation key,
  * so an admin can add a brand-new condition type without a code change breaking it.
  */
-function condition_label(?Condition $condition): string
+function condition_label(?Condition $condition, ?string $locale = null): string
 {
     if (! $condition) {
-        return __('search.condition_label_new');
+        return __('search.condition_label_new', [], $locale);
     }
 
     $key = 'condition_label_' . str_replace('-', '_', $condition->slug);
 
-    return Lang::has("search.{$key}") ? __("search.{$key}") : $condition->name;
+    return Lang::has("search.{$key}", $locale) ? __("search.{$key}", [], $locale) : $condition->name;
 }
 
 /**

@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Services\SearchService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CatalogController extends BaseApiController
 {
@@ -154,9 +155,20 @@ class CatalogController extends BaseApiController
         }
 
         if (!empty($validated['q']) && empty($validated['oem'])) {
-            $query->where(function ($q) use ($validated) {
+            // Product.name is a JSON-cast {locale: text} column — a plain
+            // `name LIKE %term%` matched against the raw encoded JSON text
+            // (locale keys, quotes, punctuation from every OTHER locale
+            // included), producing both false positives and false negatives
+            // instead of a real per-locale text match. Same fix as
+            // ManufacturerController::index()'s locale-aware lookup.
+            $lang = $request->query('lang', app()->getLocale());
+            $jsonPath = DB::connection()->getDriverName() === 'sqlite'
+                ? "json_extract(name, '$.\"{$lang}\"')"
+                : "JSON_UNQUOTE(JSON_EXTRACT(name, '$.\"{$lang}\"'))";
+
+            $query->where(function ($q) use ($validated, $jsonPath) {
                 $term = $validated['q'];
-                $q->where('name', 'LIKE', "%{$term}%")
+                $q->whereRaw("{$jsonPath} LIKE ?", ["%{$term}%"])
                   ->orWhere('oem_number', 'LIKE', "%{$term}%")
                   ->orWhere('normalized_oem', 'LIKE', "%" . strtoupper($term) . "%");
             });

@@ -90,9 +90,19 @@ class SitemapService
         $writer = null;
         $count = 0;
 
+        // Dedupe by normalized_oem: multiple Product rows can share the same
+        // OEM (different sellers/conditions), but the storefront
+        // search-result URL is keyed by OEM alone — each duplicate row
+        // previously wrote an identical <loc> once per row, wasting crawl
+        // budget and sending a duplicate-content signal.
+        // is_in_stock is deliberately NOT filtered here — the real search
+        // page only gates visibility on is_active; in_stock is an optional
+        // filter a visitor can apply, not a 404. Filtering on it here
+        // dropped otherwise-reachable, indexable pages from the sitemap.
         Product::where('is_active', true)
-            ->where('is_in_stock', true)
-            ->orderBy('updated_at', 'desc')
+            ->selectRaw('normalized_oem, MAX(updated_at) as updated_at')
+            ->groupBy('normalized_oem')
+            ->orderByDesc('updated_at')
             ->cursor()
             ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count) {
                 foreach ($this->supportedLocales as $locale) {

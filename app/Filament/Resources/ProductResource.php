@@ -410,11 +410,17 @@ class ProductResource extends Resource
                     })
                     ->columns(2)
                     ->columnSpan(2),
+                AdminUi::trashedFilter(),
             ])
             ->filtersFormColumns(2)
             // Copy-OEM and stock-toggle row actions removed: the OEM column is
             // click-to-copy and the Stock column is an inline toggle already.
-            ->actions(AdminUi::recordActions())
+            // recordActionsWithTrash (not recordActions): Product uses
+            // SoftDeletes, but nothing previously exposed a restore path — a
+            // deleted product's row (and its historical OrderItem/CartItem
+            // references) survived in the DB with no way back for even a
+            // super_admin.
+            ->actions(AdminUi::recordActionsWithTrash())
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     AdminUi::impactBulkAction(

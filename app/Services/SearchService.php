@@ -34,6 +34,26 @@ class SearchService
     ) {}
 
     /**
+     * Search/autocomplete/manufacturer-count results are cached by a hash of
+     * their query params, not by product ID — there's no single key to
+     * forget when a product's price/stock/active state changes. Rather than
+     * require a tag-capable cache driver (the default CACHE_STORE=file does
+     * not support Cache::tags()), every cache key below folds in this
+     * generation counter; ProductObserver bumps it on any product write,
+     * which invalidates every previously-cached search result at once
+     * without needing to enumerate or pattern-match keys.
+     */
+    public static function cacheVersion(): int
+    {
+        return (int) Cache::get('search_cache_version', 1);
+    }
+
+    public static function bumpCacheVersion(): void
+    {
+        Cache::forever('search_cache_version', self::cacheVersion() + 1);
+    }
+
+    /**
      * Main search entry point.
      *
      * @param  string  $query  Raw OEM query from user
@@ -138,7 +158,7 @@ class SearchService
             return $resolver();
         }
 
-        $cacheKey = 'search:' . md5(implode('|', [
+        $cacheKey = 'search:v' . self::cacheVersion() . ':' . md5(implode('|', [
             $normalized, $manufacturerId ?? '', $carModelId ?? '',
             $limit, $paginate ? '1' : '0', $perPage, $sort,
             $condition ?? '', $inStockOnly ? '1' : '0',
@@ -220,7 +240,7 @@ class SearchService
      */
     public function getManufacturerCounts(string $matchType, string $normalized, ?int $carModelId, bool $inStockOnly, ?string $condition): array
     {
-        $cacheKey = 'mfr_counts:' . md5(implode('|', [$matchType, $normalized, $carModelId ?? '', $inStockOnly ? '1' : '0', $condition ?? '']));
+        $cacheKey = 'mfr_counts:v' . self::cacheVersion() . ':' . md5(implode('|', [$matchType, $normalized, $carModelId ?? '', $inStockOnly ? '1' : '0', $condition ?? '']));
 
         return Cache::remember($cacheKey, 300, function () use ($matchType, $normalized, $carModelId, $inStockOnly, $condition) {
             $q = $this->buildMatchQuery($matchType, $normalized)->where('is_active', true);
@@ -469,7 +489,7 @@ class SearchService
 
         // Backs every OEM search-box keystroke sitewide — was fully-loaded
         // columns + an unloaded `condition` relation (N+1 per row) + uncached.
-        $cacheKey = 'search:autocomplete:' . md5(implode('|', [$normalized, $lang, $limit]));
+        $cacheKey = 'search:autocomplete:v' . self::cacheVersion() . ':' . md5(implode('|', [$normalized, $lang, $limit]));
 
         return Cache::remember($cacheKey, 300, function () use ($normalized, $lang, $limit) {
             $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $normalized);
@@ -492,7 +512,7 @@ class SearchService
                     'title' => filled($name) ? $name : null,
                     'price' => bcadd((string) $product->price, '0', 2),
                     'condition' => $product->condition?->slug ?? 'new',
-                    'condition_label' => $product->condition?->name ?? 'New',
+                    'condition_label' => condition_label($product->condition, $lang),
                     'in_stock' => (bool) $product->is_in_stock,
                     'url' => route('frontend.search.results', ['lang' => $lang, 'oem' => $product->normalized_oem]),
                 ];

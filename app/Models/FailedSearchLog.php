@@ -14,7 +14,7 @@ class FailedSearchLog extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'search_query', 'normalized_query', 'lang',
+        'search_query', 'normalized_query', 'manufacturer_id', 'car_model_id', 'lang',
         'user_id', 'ip_address', 'inquiry_submitted',
     ];
 
@@ -39,6 +39,16 @@ class FailedSearchLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function manufacturer(): BelongsTo
+    {
+        return $this->belongsTo(Manufacturer::class);
+    }
+
+    public function carModel(): BelongsTo
+    {
+        return $this->belongsTo(CarModel::class);
     }
 
     public function partInquiries(): HasMany

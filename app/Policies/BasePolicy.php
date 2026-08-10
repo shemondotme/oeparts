@@ -49,6 +49,32 @@ abstract class BasePolicy
         return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
     }
 
+    /**
+     * Only relevant for SoftDeletes models (e.g. Product) — undefined here
+     * means Filament's RestoreAction/ForceDeleteAction deny by default for
+     * everyone except super_admin (via Gate::before), so a deleted record
+     * had no way back even for an admin who could otherwise delete it.
+     */
+    public function restore(Admin $admin, $record): bool
+    {
+        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+    }
+
+    public function restoreAny(Admin $admin): bool
+    {
+        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+    }
+
+    public function forceDelete(Admin $admin, $record): bool
+    {
+        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+    }
+
+    public function forceDeleteAny(Admin $admin): bool
+    {
+        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+    }
+
     protected function getKey(): string
     {
         return $this->permissionKey ?? $this->model ?? 'records';

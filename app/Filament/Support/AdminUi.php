@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontWeight;
+use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -515,6 +516,56 @@ final class AdminUi
         return [
             Actions\ActionGroup::make($actions),
         ];
+    }
+
+    /**
+     * View / edit / delete / restore / force-delete for SoftDeletes models —
+     * RestoreAction/ForceDeleteAction only render for an already-trashed
+     * record, so this is safe to use even before any row has been deleted.
+     * Pair with trashedFilter() in the table's ->filters() so deleted rows
+     * are actually reachable to restore.
+     *
+     * @param  array<int, Actions\Action>  $before
+     * @param  array<int, Actions\Action>  $after
+     * @return array<int, Actions\ActionGroup>
+     */
+    public static function recordActionsWithTrash(array $before = [], array $after = []): array
+    {
+        $actions = array_merge(
+            $before,
+            [
+                Actions\ViewAction::make(),
+                Actions\EditAction::make(),
+            ],
+            $after,
+            [
+                Actions\DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete Record')
+                    ->modalDescription('Are you sure you want to delete this record? It can be restored later from the Trashed filter.')
+                    ->modalSubmitActionLabel('Yes, delete'),
+                Actions\RestoreAction::make(),
+                Actions\ForceDeleteAction::make()
+                    ->requiresConfirmation()
+                    ->modalHeading('Permanently Delete Record')
+                    ->modalDescription('This permanently erases the record — unlike Delete, this cannot be undone.')
+                    ->modalSubmitActionLabel('Yes, permanently delete'),
+            ],
+        );
+
+        return [
+            Actions\ActionGroup::make($actions),
+        ];
+    }
+
+    /**
+     * A "Trashed" table filter for SoftDeletes models — without this,
+     * deleted rows are invisible everywhere with no path back, even to a
+     * super_admin, despite RestoreAction being wired up in the row menu.
+     */
+    public static function trashedFilter(): Tables\Filters\TrashedFilter
+    {
+        return Tables\Filters\TrashedFilter::make();
     }
 
     /**
