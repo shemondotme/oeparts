@@ -14,6 +14,16 @@ class CmsSectionController extends Controller
 {
     public function preview(Section $section, Request $request): JsonResponse
     {
+        // update()/restoreVersion() both check 'edit sections' — this one
+        // didn't, relying only on the blanket auth.admin middleware, so any
+        // authenticated admin (not just ones who can edit sections) could
+        // call it. Low impact (it renders into an auto-escaped view and
+        // never touches the DB) but inconsistent with its siblings.
+        $admin = Auth::guard('admin')->user();
+        if (!$admin || $admin->cannot('edit sections')) {
+            abort(403, 'Unauthorized.');
+        }
+
         $data = $request->validate([
             'content' => 'required|array',
             'lang' => 'required|string|size:2',

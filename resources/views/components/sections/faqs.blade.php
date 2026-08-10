@@ -8,6 +8,18 @@
     $headline = trans_field($section->content['headline'] ?? null);
     $subheadline = trans_field($section->content['subheadline'] ?? null);
     $sectionNumber = str_pad((int)(($section->sort_order ?? 10) / 10), 2, '0', STR_PAD_LEFT);
+
+    // The admin form's own helper text promises this ("Group related FAQs
+    // together for better organization"), but nothing ever grouped by it —
+    // every FAQ rendered as one flat, unsorted-by-topic list regardless of
+    // the category picked in the admin. groupBy() preserves each group's
+    // existing sort_order ordering; uncategorized entries fall under
+    // 'general' as their own group rather than being dropped.
+    $faqCategoryLabels = [
+        'shipping' => 'Shipping', 'ordering' => 'Ordering', 'returns' => 'Returns',
+        'payment' => 'Payment', 'products' => 'Products', 'general' => 'General',
+    ];
+    $groupedFaqs = $faqs->groupBy(fn ($faq) => $faq->category ?: 'general');
 @endphp
 
 @if($faqs->isNotEmpty())
@@ -42,15 +54,22 @@
                 <div class="mt-2 h-[3px] w-10 bg-amber"></div>
             </aside>
 
-            {{-- Right: FAQ ledger --}}
+            {{-- Right: FAQ ledger, grouped by category --}}
             <dl class="col-span-12 lg:col-span-8 border border-ink bg-paper">
-                @foreach($faqs as $index => $faq)
+                @php $runningIndex = 0; @endphp
+                @foreach($groupedFaqs as $categoryKey => $categoryFaqs)
+                <div class="px-6 pt-5 pb-2 bg-ivory border-b border-rule">
+                    <span class="bp-spec text-ink-muted">{{ $faqCategoryLabels[$categoryKey] ?? ucfirst($categoryKey) }}</span>
+                </div>
+                @foreach($categoryFaqs as $faq)
                 @php
+                    $index = $runningIndex++;
                     $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
-                    $isLast = $loop->last;
+                    $isLastInGroup = $loop->last;
+                    $isLastGroup = $loop->parent->last;
                 @endphp
                 <div x-data="{ open: {{ $index === 0 ? 'true' : 'false' }} }"
-                     class="{{ !$isLast ? 'border-b border-rule' : '' }}">
+                     class="{{ !($isLastInGroup && $isLastGroup) ? 'border-b border-rule' : '' }}">
                     <dt>
                         <button @click="open = !open"
                                 :aria-expanded="open"
@@ -84,6 +103,7 @@
                         </div>
                     </dd>
                 </div>
+                @endforeach
                 @endforeach
             </dl>
         </div>
