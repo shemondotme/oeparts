@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\AdminFatalErrorNotifier;
+use App\Http\Middleware\CacheGuestStorefrontResponse;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
 use App\Http\Middleware\InstallerMiddleware;
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'installer' => InstallerMiddleware::class,
             'track.utm' => TrackUtm::class,
             'handle.redirects' => HandleRedirects::class,
+            'cache.guest' => CacheGuestStorefrontResponse::class,
             'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
             'csp' => \App\Http\Middleware\ContentSecurityPolicy::class,
             'honeypot' => \Spatie\Honeypot\ProtectAgainstSpam::class,

@@ -113,7 +113,7 @@ Route::prefix('{lang}')
     ->middleware(['set.locale', 'customer.idle-timeout', 'ip.blocklist', 'maintenance', 'track.utm', 'handle.redirects'])
     ->group(function () {
         // Homepage
-        Route::get('/', [HomeController::class, 'index'])->name('frontend.home');
+        Route::get('/', [HomeController::class, 'index'])->middleware('cache.guest:60')->name('frontend.home');
 
         // Authentication routes (Sprint 10)
         // No throttle:login here — AuthController::login() already runs its own
@@ -167,12 +167,13 @@ Route::prefix('{lang}')
 
         // Search Console — empty-state landing / browse-parts entry point
         Route::get('/parts', [SearchController::class, 'console'])
+            ->middleware('cache.guest:60')
             ->name('frontend.search.console');
 
         // OEM Search (with OEM normalization middleware)
         Route::get('/parts/{oem}', [SearchController::class, 'results'])
             ->where('oem', '[A-Z0-9\-\.\s]+')
-            ->middleware('normalize.oem')
+            ->middleware(['normalize.oem', 'cache.guest:60'])
             ->name('frontend.search.results');
 
         // Autocomplete endpoint
@@ -182,25 +183,31 @@ Route::prefix('{lang}')
 
         // Human-readable HTML sitemap (the machine-readable /sitemap.xml lives at root)
         Route::get('/sitemap', [SitemapController::class, 'index'])
+            ->middleware('cache.guest:300')
             ->name('frontend.sitemap');
 
         // Legal Notice / Impressum — must come before the CMS catch-all slug below
         Route::get('/impressum', [ImpressumController::class, 'index'])
+            ->middleware('cache.guest:300')
             ->name('frontend.impressum');
 
         // Manufacturers
         Route::get('/brands', [ManufacturerController::class, 'index'])
+            ->middleware('cache.guest:180')
             ->name('frontend.manufacturer.index');
         Route::get('/brand/{manufacturer}', [ManufacturerController::class, 'show'])
             ->where('manufacturer', '[a-z0-9\-]+')
+            ->middleware('cache.guest:180')
             ->name('frontend.manufacturer.show');
 
         // Car Models
         Route::get('/brand/{manufacturer}/models', [CarModelController::class, 'index'])
             ->where('manufacturer', '[a-z0-9\-]+')
+            ->middleware('cache.guest:180')
             ->name('frontend.car-model.index');
         Route::get('/brand/{manufacturer}/{model}', [CarModelController::class, 'show'])
             ->where(['manufacturer' => '[a-z0-9\-]+', 'model' => '[a-z0-9\-]+'])
+            ->middleware('cache.guest:180')
             ->name('frontend.car-model.show');
 
         // Cart Routes
@@ -253,8 +260,8 @@ Route::prefix('{lang}')
             ->name('frontend.newsletter.confirm.confirmed');
 
         // Blog
-        Route::get('/blog', [BlogController::class, 'index'])->name('frontend.blog.index');
-        Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('frontend.blog.show');
+        Route::get('/blog', [BlogController::class, 'index'])->middleware('cache.guest:180')->name('frontend.blog.index');
+        Route::get('/blog/{slug}', [BlogController::class, 'show'])->middleware('cache.guest:300')->name('frontend.blog.show');
 
         // Contact
         Route::get('/contact', [ContactController::class, 'show'])->name('frontend.contact.show');
@@ -270,6 +277,7 @@ Route::prefix('{lang}')
         // CMS catch-all slug — MUST be defined LAST
         Route::get('/{slug}', [PageController::class, 'show'])
             ->where('slug', '[a-z0-9\-]+')
+            ->middleware('cache.guest:300')
             ->name('frontend.page');
     });
 
