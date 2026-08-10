@@ -16,7 +16,10 @@ class HandleRedirects
             return $next($request);
         }
 
-        $path = ltrim($request->path(), '/');
+        // Request::path() already strips leading/trailing slashes, but not
+        // case — lowercase to match Redirect::from_url, which the model
+        // normalizes to lowercase on save (see Redirect::booted()).
+        $path = strtolower(ltrim($request->path(), '/'));
 
         // Cache::remember() only short-circuits on a non-null cached value.
         // "No redirect for this path" — true for the overwhelming majority

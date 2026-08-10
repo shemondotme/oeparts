@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -60,16 +61,46 @@ class RedirectResource extends Resource
                                     ->schema([
                                         Forms\Components\TextInput::make('from_url')
                                             ->label(__('admin.source_url_from'))
-                                            ->placeholder('e.g. /old-page or /en/old-path')
+                                            // No leading slash: HandleRedirects matches against
+                                            // Request::path(), which never has one — the old
+                                            // placeholder's own example ("/old-page") produced a
+                                            // stored value that could never match. Saved value is
+                                            // also lowercased (Redirect::booted()), so the example
+                                            // here matches exactly what gets stored.
+                                            ->placeholder('e.g. old-page or en/old-path')
                                             ->required()
                                             ->maxLength(500)
-                                            ->helperText('The old URL path that should redirect. Use relative paths for internal redirects.'),
+                                            ->unique(ignoreRecord: true)
+                                            ->helperText('The old URL path that should redirect — without a leading slash (e.g. "old-page" or "en/old-path"). Use relative paths for internal redirects.'),
                                         Forms\Components\TextInput::make('to_url')
                                             ->label(__('admin.destination_url_to'))
                                             ->placeholder('e.g. /new-page or https://example.com')
                                             ->required()
                                             ->maxLength(500)
-                                            ->helperText('The new URL where visitors should be redirected to.'),
+                                            ->helperText('The new URL where visitors should be redirected to.')
+                                            ->rules([
+                                                fn (Get $get, ?Redirect $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                                    $from = strtolower(trim((string) $get('from_url'), '/'));
+                                                    $to = strtolower(trim((string) $value, '/'));
+
+                                                    if ($from !== '' && $from === $to) {
+                                                        $fail('The destination cannot be the same as the source — this would redirect a visitor to themselves in an infinite loop.');
+
+                                                        return;
+                                                    }
+
+                                                    $reverseExists = Redirect::query()
+                                                        ->where('is_active', true)
+                                                        ->where('from_url', $to)
+                                                        ->where('to_url', $from)
+                                                        ->when($record, fn ($q) => $q->whereKeyNot($record->getKey()))
+                                                        ->exists();
+
+                                                    if ($reverseExists) {
+                                                        $fail('An active redirect already sends this destination back to the source — saving this would create an infinite redirect loop.');
+                                                    }
+                                                },
+                                            ]),
                                         Forms\Components\Select::make('type')
                                             ->label(__('admin.redirect_type'))
                                             ->options(RedirectType::class)
@@ -91,7 +122,16 @@ class RedirectResource extends Resource
                                             ->label(__('admin.redirect_active'))
                                             ->helperText('Inactive redirects are not enforced.')
                                             ->default(true),
-                                        AdminUi::readOnlyField('hit_count', 'Hit Count', 'Number of times this redirect has been triggered.'),
+                                        // No form-level default: this readOnly field
+                                        // dehydrates as null on Create (nothing sets
+                                        // it), which overrides the DB column's own
+                                        // default(0) — an explicit NULL in the INSERT
+                                        // still fails redirects.hit_count's NOT NULL
+                                        // constraint even though the column has a
+                                        // default. Crashed every "Create Redirect"
+                                        // submission via the admin panel.
+                                        AdminUi::readOnlyField('hit_count', 'Hit Count', 'Number of times this redirect has been triggered.')
+                                            ->default(0),
                                     ]),
                             ]),
                     ]),

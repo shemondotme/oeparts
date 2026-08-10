@@ -210,6 +210,21 @@ class NotFoundLogResource extends Resource
             ])
             ->fillForm(fn (NotFoundLog $record): array => ['from_url' => $record->path])
             ->action(function (NotFoundLog $record, array $data): void {
+                // Redirect::from_url is unique — an admin could already have
+                // created a manual redirect for this exact path (e.g. from
+                // a different 404 log entry for the same URL), which used to
+                // crash this action with a raw duplicate-key QueryException
+                // instead of the friendly message below.
+                if (Redirect::where('from_url', strtolower(trim($record->path, '/')))->exists()) {
+                    Notification::make()
+                        ->title('A redirect for this path already exists')
+                        ->body('Edit the existing redirect on the Redirects page instead.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
                 Redirect::create([
                     'from_url' => $record->path,
                     'to_url' => $data['to_url'],
