@@ -520,6 +520,7 @@ class SearchService
                     'manufacturer' => $product->manufacturer ? trans_field($product->manufacturer->name, $lang) : null,
                     'title' => filled($name) ? $name : null,
                     'price' => bcadd((string) $product->price, '0', 2),
+                    'price_formatted' => format_money($product->price, null, $lang),
                     'condition' => $product->condition?->slug ?? 'new',
                     'condition_label' => condition_label($product->condition, $lang),
                     'in_stock' => (bool) $product->is_in_stock,

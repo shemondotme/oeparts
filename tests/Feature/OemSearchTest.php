@@ -239,8 +239,31 @@ class OemSearchTest extends TestCase
         $response = $this->get('/en/search/autocomplete?q=06L9');
         $response->assertStatus(200);
         $response->assertJsonStructure([[
-            'id', 'oem', 'normalized_oem', 'manufacturer', 'price', 'condition', 'url',
+            'id', 'oem', 'normalized_oem', 'manufacturer', 'price', 'price_formatted', 'condition', 'url',
         ]]);
+    }
+
+    /**
+     * The frontend autocomplete dropdown renders this directly (no VAT/locale
+     * math client-side) — must be a ready-to-display string, not a raw decimal.
+     */
+    #[Test]
+    public function autocomplete_price_formatted_includes_a_currency_symbol(): void
+    {
+        Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => '06L906036L',
+            'normalized_oem' => '06L906036L',
+            'condition_id' => $this->condition->id,
+            'price' => '123.45',
+            'is_in_stock' => true,
+            'is_active' => true,
+        ]);
+
+        $response = $this->get('/en/search/autocomplete?q=06L9');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('€', $response->json()[0]['price_formatted']);
+        $this->assertStringContainsString('123.45', $response->json()[0]['price_formatted']);
     }
 
     #[Test]
