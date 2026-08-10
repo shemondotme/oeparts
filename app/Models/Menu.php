@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MenuLocation;
+use App\Support\MenuRegistry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -21,5 +22,11 @@ class Menu extends Model
     public function items(): HasMany
     {
         return $this->hasMany(MenuItem::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => MenuRegistry::forgetAll());
+        static::deleted(fn () => MenuRegistry::forgetAll());
     }
 }

@@ -5,6 +5,7 @@ return [
     'search_by_oem' => 'Paieška pagal OE numerį',
     'browse_brands' => 'Naršyti markes',
     'journal' => 'Žurnalas',
+    'faq' => 'DUK',
     'account_heading' => 'Paskyra',
     'basket' => 'Krepšelis',
     'phone_label' => 'Telefonas',

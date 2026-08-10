@@ -5,6 +5,7 @@ return [
     'search_by_oem' => 'Search by OEM',
     'browse_brands' => 'Browse Brands',
     'journal' => 'Journal',
+    'faq' => 'FAQ',
     'account_heading' => 'Account',
     'basket' => 'Basket',
     'phone_label' => 'Phone',

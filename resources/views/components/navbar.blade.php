@@ -7,28 +7,47 @@
     $isHomepage = request()->routeIs('frontend.home')
         || (request()->path() === $lang . '/' || request()->path() === $lang);
 
-    $navLinks = [
-        [
-            'href'  => route('frontend.search.console', ['lang' => $lang]),
-            'label' => ui_copy('nav_label_parts', 'navbar.label_parts'),
-            'active' => request()->routeIs('frontend.search.*'),
-        ],
-        [
-            'href'  => url("/{$lang}/brands"),
-            'label' => ui_copy('nav_label_brands', 'navbar.label_brands'),
-            'active' => request()->routeIs('frontend.manufacturer.*') || request()->routeIs('frontend.car-model.*'),
-        ],
-        [
-            'href'  => url("/{$lang}/blog/"),
-            'label' => ui_copy('nav_label_journal', 'navbar.label_journal'),
-            'active' => request()->routeIs('frontend.blog.*'),
-        ],
-        [
-            'href'  => url("/{$lang}/about"),
-            'label' => ui_copy('nav_label_about', 'navbar.label_about'),
-            'active' => request()->routeIs('frontend.page') && request()->route('slug') === 'about',
-        ],
-    ];
+    // A header Menu built via Content > Menus (MenuResource) takes over
+    // once an operator has actually configured one for this locale — until
+    // then, MenuRegistry::items() returns null and these defaults (the
+    // storefront's only nav for its entire history) keep working exactly
+    // as before. Menu-driven items don't have route-pattern-based active
+    // detection (they're arbitrary URLs/CMS pages, not fixed routes), so
+    // "active" is a simple current-path match instead.
+    $menuLinks = \App\Support\MenuRegistry::items('header', $lang);
+
+    if ($menuLinks !== null) {
+        $currentPath = url(request()->path());
+        $navLinks = array_map(fn (array $item) => [
+            'href' => $item['url'],
+            'label' => $item['label'],
+            'active' => rtrim($item['url'], '/') === rtrim($currentPath, '/'),
+            'target' => $item['target'],
+        ], $menuLinks);
+    } else {
+        $navLinks = [
+            [
+                'href'  => route('frontend.search.console', ['lang' => $lang]),
+                'label' => ui_copy('nav_label_parts', 'navbar.label_parts'),
+                'active' => request()->routeIs('frontend.search.*'),
+            ],
+            [
+                'href'  => url("/{$lang}/brands"),
+                'label' => ui_copy('nav_label_brands', 'navbar.label_brands'),
+                'active' => request()->routeIs('frontend.manufacturer.*') || request()->routeIs('frontend.car-model.*'),
+            ],
+            [
+                'href'  => url("/{$lang}/blog/"),
+                'label' => ui_copy('nav_label_journal', 'navbar.label_journal'),
+                'active' => request()->routeIs('frontend.blog.*'),
+            ],
+            [
+                'href'  => url("/{$lang}/about"),
+                'label' => ui_copy('nav_label_about', 'navbar.label_about'),
+                'active' => request()->routeIs('frontend.page') && request()->route('slug') === 'about',
+            ],
+        ];
+    }
 @endphp
 
 {{-- ══════════════════════════════════════════════════════════════════════
@@ -77,6 +96,7 @@
                 @foreach($navLinks as $link)
                     <a href="{{ $link['href'] }}"
                        @if($link['active']) aria-current="page" @endif
+                       @if(($link['target'] ?? '_self') === '_blank') target="_blank" rel="noopener noreferrer" @endif
                        class="group relative flex items-center gap-2.5 px-3.5 xl:px-5
                               text-ink hover:bg-ink/[0.04]
                               transition-colors duration-150
@@ -444,6 +464,7 @@
             @foreach($navLinks as $link)
                 <a href="{{ $link['href'] }}"
                    @if($link['active']) aria-current="page" @endif
+                   @if(($link['target'] ?? '_self') === '_blank') target="_blank" rel="noopener noreferrer" @endif
                    class="flex items-center gap-4 py-4 group">
                     <span class="font-sans text-sm font-bold uppercase tracking-[0.16em] {{ $link['active'] ? 'text-amber-ink' : 'text-ink' }}">
                         {{ $link['label'] }}

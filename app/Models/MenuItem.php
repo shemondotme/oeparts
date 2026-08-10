@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MenuTarget;
+use App\Support\MenuRegistry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,12 @@ class MenuItem extends Model
         'label'  => 'array',
         'target' => MenuTarget::class,
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => MenuRegistry::forgetAll());
+        static::deleted(fn () => MenuRegistry::forgetAll());
+    }
 
     public function menu(): BelongsTo
     {

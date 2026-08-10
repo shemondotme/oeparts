@@ -29,7 +29,7 @@
             return route($route->getName(), $params);
         } catch (\Exception $e) {
             $path = request()->path();
-            $newPath = preg_replace('#^(en|de|lt|fr|es)(/|$)#', $code . '$2', $path);
+            $newPath = preg_replace('#^(' . \App\Support\LocaleRegistry::routePattern() . ')(/|$)#', $code . '$2', $path);
             return url('/'.$newPath);
         }
     };
@@ -112,12 +112,18 @@
                     <h3 class="bp-spec-light">{{ ui_copy('footer_catalogue', 'footer.catalogue') }}</h3>
                 </div>
                 <ul class="space-y-3">
-                    @foreach([
-                        [route('frontend.search.console', ['lang' => $lang]), ui_copy('footer_search_by_oem', 'footer.search_by_oem')],
-                        [url('/'.$lang.'/brands'),  ui_copy('footer_browse_brands', 'footer.browse_brands')],
-                        [url('/'.$lang.'/blog'),    ui_copy('footer_journal', 'footer.journal')],
-                        [url('/'.$lang.'/contact'), ui_copy('nav_label_contact', 'navbar.label_contact')],
-                    ] as [$href, $label])
+                    @foreach(array_filter([
+                        [route('frontend.search.console', ['lang' => $lang]), ui_copy('footer_search_by_oem', 'footer.search_by_oem'), true],
+                        [url('/'.$lang.'/brands'),  ui_copy('footer_browse_brands', 'footer.browse_brands'), true],
+                        // These four rows are the Menu Settings > Footer Links
+                        // toggles (settings group "menu") — until now those
+                        // toggles had no code reading them at all, so turning
+                        // any of them off in the admin had no visible effect.
+                        [url('/'.$lang.'/blog'),    ui_copy('footer_journal', 'footer.journal'), filter_var(settings('menu.footer_show_blog', true), FILTER_VALIDATE_BOOLEAN)],
+                        [url('/'.$lang.'/about'),   ui_copy('nav_label_about', 'navbar.label_about'), filter_var(settings('menu.footer_show_about', true), FILTER_VALIDATE_BOOLEAN)],
+                        [url('/'.$lang.'/faq'),     ui_copy('footer_faq', 'footer.faq'), filter_var(settings('menu.footer_show_faq', true), FILTER_VALIDATE_BOOLEAN)],
+                        [url('/'.$lang.'/contact'), ui_copy('nav_label_contact', 'navbar.label_contact'), filter_var(settings('menu.footer_show_contact', true), FILTER_VALIDATE_BOOLEAN)],
+                    ], fn ($row) => $row[2]) as [$href, $label, $show])
                         <li>
                             <a href="{{ $href }}"
                                class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
@@ -353,6 +359,14 @@
                 <a href="#cookies" @click.prevent="$dispatch('open-cookie-consent')" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_cookies', 'footer.cookies') }}</a>
                 <a href="{{ url('/'.$lang.'/impressum') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_impressum', 'footer.impressum') }}</a>
                 <a href="{{ route('frontend.sitemap', ['lang' => $lang]) }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_sitemap', 'footer.sitemap') }}</a>
+                {{-- An operator-built footer Menu (Content > Menus, location
+                     "footer") appends here once configured for this locale —
+                     previously had no effect on the storefront at all. --}}
+                @foreach(\App\Support\MenuRegistry::items('footer', $lang) ?? [] as $menuLink)
+                    <a href="{{ $menuLink['url'] }}"
+                       @if($menuLink['target'] === '_blank') target="_blank" rel="noopener noreferrer" @endif
+                       class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ $menuLink['label'] }}</a>
+                @endforeach
             </nav>
         </div>
     </div>

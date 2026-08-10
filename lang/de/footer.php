@@ -5,6 +5,7 @@ return [
     'search_by_oem' => 'Suche nach OE-Nummer',
     'browse_brands' => 'Marken durchsuchen',
     'journal' => 'Journal',
+    'faq' => 'FAQ',
     'account_heading' => 'Konto',
     'basket' => 'Warenkorb',
     'phone_label' => 'Telefon',

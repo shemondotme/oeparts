@@ -5,6 +5,7 @@ return [
     'search_by_oem' => 'Buscar por número OEM',
     'browse_brands' => 'Ver marcas',
     'journal' => 'Blog',
+    'faq' => 'Preguntas frecuentes',
     'account_heading' => 'Cuenta',
     'basket' => 'Cesta',
     'phone_label' => 'Teléfono',
