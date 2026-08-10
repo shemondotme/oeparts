@@ -459,13 +459,12 @@
 
         {{-- ── Language picker (mobile) ── --}}
         @php
-            $mobileLanguages = json_decode(settings('store.languages', json_encode([
-                'en' => ['fi' => 'gb', 'native' => 'English'],
-                'de' => ['fi' => 'de', 'native' => 'Deutsch'],
-                'lt' => ['fi' => 'lt', 'native' => 'Lietuvių'],
-                'fr' => ['fi' => 'fr', 'native' => 'Français'],
-                'es' => ['fi' => 'es', 'native' => 'Español'],
-            ])), true);
+            // Driven by LocaleRegistry (the `languages` table), same as the
+            // desktop <x-language-switcher> — this used to read from a
+            // separate settings('store.languages') JSON blob (falling back
+            // to a hardcoded five-locale array), a second independent
+            // mechanism that LanguageResource never touched at all.
+            $mobileLanguages = \App\Support\LocaleRegistry::languages();
             $mobileLangUrl = function($newLocale) {
                 $current = request()->route();
                 if (!$current || !$current->getName()) { return "/{$newLocale}/"; }
@@ -478,7 +477,7 @@
                     return $url . (empty($query) ? '' : '?' . http_build_query($query));
                 } catch (\Exception $e) {
                     $path = request()->path();
-                    $newPath = preg_replace('#^(en|de|lt|fr|es)(/|$)#', $newLocale . '$2', $path);
+                    $newPath = preg_replace('#^(' . \App\Support\LocaleRegistry::routePattern() . ')(/|$)#', $newLocale . '$2', $path);
                     return url('/' . $newPath);
                 }
             };
@@ -489,17 +488,15 @@
                 <span class="bp-spec-mono">{{ count($mobileLanguages) }} options</span>
             </div>
             <div class="grid grid-cols-5 gap-[2px] border border-ink bg-ink">
-                @foreach($mobileLanguages as $code => $data)
-                    @php $isActive = $lang === $code; @endphp
-                    <a href="{{ $mobileLangUrl($code) }}"
-                       aria-label="{{ $data['native'] }}"
+                @foreach($mobileLanguages as $language)
+                    @php $isActive = $lang === $language['code']; @endphp
+                    <a href="{{ $mobileLangUrl($language['code']) }}"
+                       aria-label="{{ $language['native_name'] }}"
                        class="flex flex-col items-center justify-center gap-1.5 py-3 transition-colors
                               {{ $isActive ? 'bg-amber text-ink' : 'bg-paper text-ink hover:bg-ivory-alt' }}">
-                        <img src="{{ asset('flags/' . $data['fi'] . '.svg') }}"
-                             alt="{{ $data['native'] }}"
-                             class="w-6 h-[16px] object-cover border {{ $isActive ? 'border-ink/30' : 'border-rule' }}">
+                        <span class="text-lg leading-none" aria-hidden="true">{{ $language['flag_emoji'] }}</span>
                         <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase tabular-nums">
-                            {{ strtoupper($code) }}
+                            {{ strtoupper($language['code']) }}
                         </span>
                     </a>
                 @endforeach

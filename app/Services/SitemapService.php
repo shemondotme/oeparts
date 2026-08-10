@@ -8,6 +8,7 @@ use App\Models\CarModel;
 use App\Models\Manufacturer;
 use App\Models\Page;
 use App\Models\Product;
+use App\Support\LocaleRegistry;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
@@ -32,13 +33,15 @@ class SitemapService
 {
     private const MAX_URLS_PER_FILE = 50_000;
 
-    private array $supportedLocales = ['en', 'de', 'lt', 'fr', 'es'];
+    private array $supportedLocales;
 
     private string $sitemapDirectory = 'sitemaps';
 
     public function __construct(
         private SettingsService $settings
-    ) {}
+    ) {
+        $this->supportedLocales = LocaleRegistry::codes();
+    }
 
     /**
      * Generate all sitemaps and the master index.

@@ -141,10 +141,10 @@ function localized_country_name(string $code, ?string $locale = null): string
  */
 function detectBrowserLanguage(Request $request): string
 {
-    $supported = ['en', 'de', 'lt', 'fr', 'es'];
+    $supported = \App\Support\LocaleRegistry::codes();
     $preferred = $request->getPreferredLanguage($supported);
 
-    return in_array($preferred, $supported) ? $preferred : 'en';
+    return in_array($preferred, $supported, true) ? $preferred : \App\Support\LocaleRegistry::defaultCode();
 }
 
 /**

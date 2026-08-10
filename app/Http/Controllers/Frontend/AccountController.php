@@ -283,7 +283,7 @@ class AccountController extends Controller
         $user = Auth::guard('web')->user();
 
         $validated = $request->validate([
-            'language' => 'required|string|in:en,de,lt,fr,es',
+            'language' => ['required', 'string', Rule::in(\App\Support\LocaleRegistry::codes())],
             'timezone' => 'nullable|string|max:100',
         ]);
 

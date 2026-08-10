@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\LocaleRegistry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -30,5 +31,12 @@ class Language extends Model
                     ->update(['is_default' => false]);
             }
         });
+
+        // LocaleRegistry caches the active-language list forever — without
+        // this, activating/deactivating a language (or changing its name,
+        // flag, or default status) never took effect anywhere on the
+        // storefront until the cache happened to be cleared some other way.
+        static::saved(fn () => LocaleRegistry::forget());
+        static::deleted(fn () => LocaleRegistry::forget());
     }
 }

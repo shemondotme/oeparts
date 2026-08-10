@@ -102,9 +102,14 @@ if (config('app.debug')) {
 // Installer routes (Sprint 18)
 require __DIR__.'/installer.php';
 
-// Frontend routes — language-prefixed
+// Frontend routes — language-prefixed. The {lang} pattern is driven by
+// LocaleRegistry (backed by the `languages` table's is_active flag) instead
+// of a hardcoded list, so activating/deactivating a language in the admin
+// panel actually changes which locale URLs resolve at all — falls back to
+// the original five-locale pattern if the table isn't queryable yet (fresh
+// install, pre-migration).
 Route::prefix('{lang}')
-    ->where(['lang' => 'en|de|lt|fr|es'])
+    ->where(['lang' => \App\Support\LocaleRegistry::routePattern()])
     ->middleware(['set.locale', 'customer.idle-timeout', 'ip.blocklist', 'maintenance', 'track.utm', 'handle.redirects'])
     ->group(function () {
         // Homepage

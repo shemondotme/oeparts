@@ -6,6 +6,7 @@ use App\Models\BlogPost;
 use App\Models\Page;
 use App\Models\Product;
 use App\Models\SeoMeta;
+use App\Support\LocaleRegistry;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -15,18 +16,20 @@ use Illuminate\Support\Facades\URL;
  *
  * Responsibilities:
  * 1. Generate JSON‑LD structured data for products, pages, homepage
- * 2. Build hreflang link tags for all 5 supported locales
+ * 2. Build hreflang link tags for all active locales (LocaleRegistry)
  * 3. Provide canonical URL for any route (respecting language prefix)
  * 4. Retrieve SEO meta from SeoMeta morphable table
  * 5. Fallback to sensible defaults when no custom meta exists
  */
 class SeoService
 {
-    private array $supportedLocales = ['en', 'de', 'lt', 'fr', 'es'];
+    private array $supportedLocales;
 
     public function __construct(
         private SettingsService $settings
-    ) {}
+    ) {
+        $this->supportedLocales = LocaleRegistry::codes();
+    }
 
     /**
      * Generate JSON‑LD structured data for the current page.

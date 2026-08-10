@@ -4,13 +4,7 @@
     $siteName = settings('general.site_name', 'OeParts');
     $pageTitle = __('sitemap.page_title');
 
-    $languageNames = [
-        'en' => 'English',
-        'de' => 'Deutsch',
-        'lt' => 'Lietuvių',
-        'fr' => 'Français',
-        'es' => 'Español',
-    ];
+    $languageNames = collect(\App\Support\LocaleRegistry::languages())->pluck('native_name', 'code')->all();
 
     $coreLinks = [
         ['href' => url('/'.$lang.'/'),                                  'num' => '01.01', 'label' => __('sitemap.link_home')],

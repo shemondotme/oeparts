@@ -10,20 +10,16 @@
 --}}
 
 @php
-    $languages = [
-        'en' => ['name' => 'English',     'fi' => 'gb', 'native' => 'English'],
-        'de' => ['name' => 'German',      'fi' => 'de', 'native' => 'Deutsch'],
-        'lt' => ['name' => 'Lithuanian',  'fi' => 'lt', 'native' => 'Lietuvių'],
-        'fr' => ['name' => 'French',      'fi' => 'fr', 'native' => 'Français'],
-        'es' => ['name' => 'Spanish',     'fi' => 'es', 'native' => 'Español'],
-    ];
+    // Driven by LocaleRegistry (the `languages` table's is_active/sort_order),
+    // not a hardcoded list — a language deactivated in the admin panel used
+    // to keep showing up here (and still work if selected) regardless.
+    $availableLanguages = collect(\App\Support\LocaleRegistry::languages())
+        ->map(fn (array $l) => ['code' => $l['code'], 'name' => $l['name'], 'native' => $l['native_name'], 'flag_emoji' => $l['flag_emoji']])
+        ->values()->toArray();
 
     $currentLocale = app()->getLocale();
-    $currentLanguage = $languages[$currentLocale] ?? $languages['en'];
-
-    $availableLanguages = collect($languages)->map(function($data, $code) {
-        return array_merge(['code' => $code], $data);
-    })->values()->toArray();
+    $currentLanguage = collect($availableLanguages)->firstWhere('code', $currentLocale)
+        ?? ($availableLanguages[0] ?? ['code' => 'en', 'name' => 'English', 'native' => 'English', 'flag_emoji' => '🇬🇧']);
 
     $getLanguageUrl = function($newLocale) {
         $current = request()->route();
@@ -39,7 +35,7 @@
             return $url . (empty($query) ? '' : '?' . http_build_query($query));
         } catch (\Exception $e) {
             $path = request()->path();
-            $newPath = preg_replace('#^(en|de|lt|fr|es)(/|$)#', $newLocale . '$2', $path);
+            $newPath = preg_replace('#^(' . \App\Support\LocaleRegistry::routePattern() . ')(/|$)#', $newLocale . '$2', $path);
             return '/' . $newPath;
         }
     };
@@ -93,9 +89,7 @@
         aria-haspopup="menu"
         :aria-expanded="open"
     >
-        <img src="{{ asset('flags/' . $currentLanguage['fi'] . '.svg') }}"
-             alt="{{ $currentLanguage['name'] }}"
-             class="w-5 h-[14px] object-cover border {{ $isDark ? 'border-white/20' : 'border-rule' }}">
+        <span class="text-base leading-none" aria-hidden="true">{{ $currentLanguage['flag_emoji'] }}</span>
         <span class="tabular-nums">{{ strtoupper($currentLocale) }}</span>
         <svg class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-180': open }"
              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -156,14 +150,7 @@
                                    {{ $isDark ? 'hover:bg-white/5' : 'hover:bg-ivory-alt' }}
                                @endif"
                     >
-                        <img src="{{ asset('flags/' . $lang['fi'] . '.svg') }}"
-                             alt="{{ $lang['name'] }}"
-                             class="w-5 h-[14px] object-cover border
-                                    @if($active)
-                                        {{ $isDark ? 'border-ink/30' : 'border-ivory/30' }}
-                                    @else
-                                        {{ $isDark ? 'border-white/20' : 'border-rule' }}
-                                    @endif">
+                        <span class="text-lg leading-none" aria-hidden="true">{{ $lang['flag_emoji'] }}</span>
                         <div class="flex-1 min-w-0">
                             <p class="font-sans text-[13px] font-bold tracking-tight leading-tight
                                       @if(!$active) {{ $isDark ? 'text-ivory' : 'text-ink' }} @endif">

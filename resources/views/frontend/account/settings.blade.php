@@ -348,11 +348,11 @@
                     </label>
                     @php $prefLang = old('language', $user->preferred_locale ?? $lang); @endphp
                     <select id="language" name="language" class="bp-input w-full">
-                        <option value="en" {{ $prefLang === 'en' ? 'selected' : '' }}>English</option>
-                        <option value="de" {{ $prefLang === 'de' ? 'selected' : '' }}>Deutsch (German)</option>
-                        <option value="lt" {{ $prefLang === 'lt' ? 'selected' : '' }}>Lietuvių (Lithuanian)</option>
-                        <option value="fr" {{ $prefLang === 'fr' ? 'selected' : '' }}>Français (French)</option>
-                        <option value="es" {{ $prefLang === 'es' ? 'selected' : '' }}>Español (Spanish)</option>
+                        @foreach (\App\Support\LocaleRegistry::languages() as $language)
+                            <option value="{{ $language['code'] }}" {{ $prefLang === $language['code'] ? 'selected' : '' }}>
+                                {{ $language['native_name'] }} ({{ $language['name'] }})
+                            </option>
+                        @endforeach
                     </select>
                 </div>
 
