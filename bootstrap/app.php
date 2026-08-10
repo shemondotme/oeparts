@@ -91,7 +91,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if (! $request->is('admin/*') && ! $request->is('api/*') && ! $request->is('livewire/*')) {
                 try {
                     $segments = $request->segments();
-                    $lang = (in_array($segments[0] ?? null, ['en', 'de', 'lt', 'fr', 'es'], true))
+                    $lang = (in_array($segments[0] ?? null, \App\Support\LocaleRegistry::codes(), true))
                         ? $segments[0] : null;
 
                     NotFoundLog::recordHit(
