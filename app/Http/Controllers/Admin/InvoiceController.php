@@ -20,6 +20,6 @@ class InvoiceController extends Controller
 
         $invoiceService = app(InvoiceService::class);
 
-        return $invoiceService->generate($order, true);
+        return $invoiceService->download($order);
     }
 }

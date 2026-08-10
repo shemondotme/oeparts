@@ -21,8 +21,6 @@ class ContactMessageResource extends Resource
 {
     protected static ?string $model = ContactMessage::class;
 
-    protected static ?string $recordTitleAttribute = 'subject';
-
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
         return 'heroicon-o-chat-bubble-left-ellipsis';
@@ -300,5 +298,17 @@ class ContactMessageResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         return ['name', 'email', 'subject_type', 'message'];
+    }
+
+    // ContactMessage has no 'subject' column (it has subject_type, an enum)
+    // — the default $recordTitleAttribute = 'subject' this used to be set to
+    // resolved to null via getAttribute(), so every single global search
+    // result fell back to the generic model label ("Contact Message"),
+    // making every match in the dropdown indistinguishable from the others.
+    public static function getGlobalSearchResultTitle(\Illuminate\Database\Eloquent\Model $record): string
+    {
+        return $record->name . ' — ' . ($record->subject_type instanceof ContactSubjectType
+            ? str($record->subject_type->value)->replace('_', ' ')->title()
+            : (string) $record->subject_type);
     }
 }

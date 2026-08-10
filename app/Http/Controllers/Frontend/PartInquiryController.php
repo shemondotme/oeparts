@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Enums\PartInquiryStatus;
+use App\Events\PartInquiryReceived;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\PartInquiryRequest;
 use App\Jobs\SendPartInquiryNotification;
@@ -61,6 +62,22 @@ class PartInquiryController extends Controller
         // whose PartInquiry row is already safely persisted.
         try {
             dispatch(new SendPartInquiryNotification($inquiry));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        // PartInquiryReceived was never dispatched anywhere — unlike Contact
+        // Message/Refund, a new part inquiry produced no Filament bell/
+        // database notification at all, only the plain SendPartInquiryNotification
+        // email above. A misconfigured site_email meant admins could miss new
+        // inquiries entirely with zero in-panel trace.
+        try {
+            event(new PartInquiryReceived(
+                $inquiry->id,
+                $inquiry->oem_number,
+                $inquiry->email,
+                $inquiry->notes
+            ));
         } catch (\Throwable $e) {
             report($e);
         }

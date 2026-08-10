@@ -98,7 +98,7 @@ class AccountController extends Controller
             abort(404);
         }
 
-        return app(InvoiceService::class)->generate($order, true);
+        return app(InvoiceService::class)->download($order);
     }
 
     /**

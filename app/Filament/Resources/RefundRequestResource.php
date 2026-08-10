@@ -16,6 +16,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -77,6 +78,12 @@ class RefundRequestResource extends Resource
                                             ->searchable()
                                             ->preload()
                                             ->required()
+                                            // live(): amount_requested's maxValue/helperText below read
+                                            // this field's current value to cap the refund at the
+                                            // selected order's total — without live(), picking a
+                                            // different order wouldn't recompute that cap until the
+                                            // next full page load.
+                                            ->live()
                                             ->helperText('The order this refund request is associated with.'),
                                         Forms\Components\Select::make('user_id')
                                             ->label(__('admin.customer'))
@@ -150,12 +157,24 @@ class RefundRequestResource extends Resource
                                             ->prefix('€')
                                             ->required()
                                             ->minValue(0.01)
-                                            ->maxValue(fn (?RefundRequest $record): ?float => $record?->order ? (float) $record->order->grand_total : null)
+                                            // $record is always null on the Create page — reading the
+                                            // cap from $record->order left it completely unbounded
+                                            // there (only enforced once you'd already saved and came
+                                            // back to Edit). Get('order_id') reads the form's live,
+                                            // currently-selected order on both Create and Edit.
+                                            ->maxValue(function (Get $get, ?RefundRequest $record): ?float {
+                                                $orderId = $get('order_id') ?? $record?->order_id;
+
+                                                return $orderId ? (float) (\App\Models\Order::find($orderId)?->grand_total) : null;
+                                            })
                                             ->step(0.01)
                                             ->placeholder('0.00')
-                                            ->helperText(fn (?RefundRequest $record): ?string => $record?->order
-                                                ? 'Cannot exceed the order total of ' . format_money($record->order->grand_total) . '.'
-                                                : null)
+                                            ->helperText(function (Get $get, ?RefundRequest $record): ?string {
+                                                $orderId = $get('order_id') ?? $record?->order_id;
+                                                $order = $orderId ? \App\Models\Order::find($orderId) : null;
+
+                                                return $order ? 'Cannot exceed the order total of ' . format_money($order->grand_total) . '.' : null;
+                                            })
                                             ->extraAttributes(['class' => 'op-fin-form-total']),
                                     ]),
                                 Section::make('Return Images')

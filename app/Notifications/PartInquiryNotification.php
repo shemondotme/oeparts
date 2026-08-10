@@ -14,7 +14,7 @@ class PartInquiryNotification extends Notification implements ShouldQueue
     use Queueable;
 
     public function __construct(
-        public readonly int $productId,
+        public readonly int $partInquiryId,
         public readonly string $oemNumber,
         public readonly string $customerEmail,
         public readonly ?string $message,
@@ -30,7 +30,6 @@ class PartInquiryNotification extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject("New Part Inquiry: {$this->oemNumber}")
             ->line("OEM Number: {$this->oemNumber}")
-            ->line("Product ID: {$this->productId}")
             ->line("From: {$this->customerEmail}")
             ->when($this->message, fn ($mail) => $mail->line("Message: {$this->message}"));
     }
@@ -39,7 +38,7 @@ class PartInquiryNotification extends Notification implements ShouldQueue
     {
         return [
             'type' => 'part_inquiry',
-            'product_id' => $this->productId,
+            'part_inquiry_id' => $this->partInquiryId,
             'oem_number' => $this->oemNumber,
             'customer_email' => $this->customerEmail,
             'message' => $this->message,

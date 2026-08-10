@@ -14,7 +14,7 @@ class NotifyAdminOfPartInquiry
 
         foreach ($admins as $admin) {
             $admin->notify(new PartInquiryNotification(
-                $event->productId,
+                $event->partInquiryId,
                 $event->oemNumber,
                 $event->customerEmail,
                 $event->message

@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Services\InvoiceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -78,5 +79,33 @@ class InvoiceServiceTest extends TestCase
         $this->assertInstanceOf(\Illuminate\Http\Response::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
+    }
+
+    // ── support-10: download() actually reads/writes the invoice cache ──
+
+    #[Test]
+    public function download_writes_to_the_cache_when_none_exists_yet(): void
+    {
+        Storage::fake('local');
+        $this->actingAs($this->order->user, 'web');
+        $filename = "invoices/{$this->order->order_number}.pdf";
+        $this->assertFalse(Storage::disk('local')->exists($filename));
+
+        $this->service->download($this->order);
+
+        $this->assertTrue(Storage::disk('local')->exists($filename));
+    }
+
+    #[Test]
+    public function download_serves_the_cached_file_instead_of_regenerating_when_one_already_exists(): void
+    {
+        Storage::fake('local');
+        $this->actingAs($this->order->user, 'web');
+        $filename = "invoices/{$this->order->order_number}.pdf";
+        Storage::disk('local')->put($filename, '%PDF-FAKE-CACHED-CONTENT');
+
+        $response = $this->service->download($this->order);
+
+        $this->assertSame('%PDF-FAKE-CACHED-CONTENT', $response->getContent());
     }
 }

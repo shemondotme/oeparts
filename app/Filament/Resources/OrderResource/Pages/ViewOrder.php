@@ -10,7 +10,6 @@ use App\Enums\PaymentTransactionStatus;
 use App\Filament\Support\AdminUi;
 use App\Filament\Resources\OrderResource;
 use App\Models\OrderNote;
-use App\Jobs\GenerateInvoicePdf;
 use App\Services\PaymentService;
 use App\Services\SequenceService;
 use Filament\Actions;
@@ -81,7 +80,14 @@ class ViewOrder extends ViewRecord
                     ->icon('heroicon-o-document-text')
                     ->color('gray')
                     ->authorize('update')
-                    ->action(function (): void {
+                    // Was a fire-a-queue-job-and-notify action whose
+                    // notification never actually linked anywhere — see the
+                    // matching comment on OrderResource's printInvoice
+                    // action for the full reasoning; same fix here. Unlike
+                    // that action, this one is reachable on any order
+                    // status (no ->visible() gate), so the invoice_number
+                    // backfill genuinely is still needed here.
+                    ->action(function () {
                         $record = $this->getRecord();
 
                         if (! $record->invoice_number) {
@@ -89,13 +95,7 @@ class ViewOrder extends ViewRecord
                             $record->save();
                         }
 
-                        GenerateInvoicePdf::dispatch($record);
-
-                        Notification::make()
-                            ->title('Invoice generated')
-                            ->body("Invoice {$record->invoice_number} is being generated.")
-                            ->success()
-                            ->send();
+                        return redirect()->to(route('admin.orders.invoice', ['order' => $record]));
                     }),
             ])
                 ->label('Actions')

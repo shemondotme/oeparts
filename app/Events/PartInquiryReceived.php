@@ -10,7 +10,7 @@ class PartInquiryReceived
     use Dispatchable, SerializesModels;
 
     public function __construct(
-        public readonly int $productId,
+        public readonly int $partInquiryId,
         public readonly string $oemNumber,
         public readonly string $customerEmail,
         public readonly ?string $message = null

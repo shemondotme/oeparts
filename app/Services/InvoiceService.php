@@ -89,6 +89,31 @@ class InvoiceService
     }
 
     /**
+     * Download an invoice, serving a cached PDF when one already exists
+     * instead of always re-rendering. Previously every download (customer
+     * account page AND admin) called generate($order, true) directly, live-
+     * rendering on every single request — the GenerateInvoicePdf job's
+     * saveToStorage() output (dispatched at checkout, and from the admin
+     * "Print Invoice"/"Generate Invoice PDF" actions) was written but never
+     * read back by anything, making that whole pipeline pure waste.
+     */
+    public function download(Order $order): Response
+    {
+        $this->authorize($order);
+
+        $filename = "invoices/{$order->order_number}.pdf";
+
+        if (! Storage::disk('local')->exists($filename)) {
+            $this->saveToStorage($order);
+        }
+
+        return response(Storage::disk('local')->get($filename), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="invoice-' . $order->order_number . '.pdf"',
+        ]);
+    }
+
+    /**
      * Save invoice to storage and return path.
      */
     public function saveToStorage(Order $order): string

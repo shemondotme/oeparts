@@ -9,7 +9,6 @@ use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Filament\Resources\OrderResource\Pages;
 use App\Filament\Support\AdminUi;
-use App\Jobs\GenerateInvoicePdf;
 use App\Jobs\SendTrackingUpdateEmail;
 use App\Models\Order;
 use App\Services\OrderService;
@@ -486,17 +485,23 @@ class OrderResource extends Resource
                         ->icon('heroicon-o-document-text')
                         ->color('gray')
                         ->authorize('update')
-                        ->action(function (Order $record): void {
+                        // Was a fire-a-queue-job-and-notify action whose
+                        // notification never actually linked anywhere — an
+                        // admin had no way to reach the PDF it claimed to be
+                        // generating short of navigating elsewhere and
+                        // guessing. Now redirects straight to the same
+                        // cache-aware download route customers use
+                        // (InvoiceService::download()); its
+                        // Content-Disposition: attachment means the browser
+                        // downloads the file in place rather than actually
+                        // navigating away from this list.
+                        ->action(function (Order $record) {
                             if (! $record->invoice_number) {
                                 $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
                                 $record->save();
                             }
-                            GenerateInvoicePdf::dispatch($record);
-                            Notification::make()
-                                ->title('Invoice queued')
-                                ->body("Invoice {$record->invoice_number} is being generated.")
-                                ->success()
-                                ->send();
+
+                            return redirect()->to(route('admin.orders.invoice', ['order' => $record]));
                         })
                         ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped, OrderStatus::Delivered])),
                     Actions\Action::make('sendTracking')
