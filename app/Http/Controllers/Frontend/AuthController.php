@@ -56,6 +56,12 @@ class AuthController extends Controller
             ], 401);
         }
 
+        // Rotate the session ID on every successful authentication so a
+        // session ID an attacker planted in the victim's browser before
+        // login (session fixation) doesn't inherit the now-authenticated
+        // session — session data itself is preserved.
+        $request->session()->regenerate();
+
         $user = Auth::guard('web')->user();
         if (! $user->is_active) {
             Auth::guard('web')->logout();
@@ -189,6 +195,9 @@ class AuthController extends Controller
             // above, so sign the new user in immediately instead of making
             // them go through a login step that no longer needs one.
             Auth::guard('web')->login($user);
+            // See the matching comment in login() — rotate the session ID
+            // on this new authentication too.
+            $request->session()->regenerate();
         }
 
         return response()->json([
