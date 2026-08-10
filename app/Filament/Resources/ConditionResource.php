@@ -186,7 +186,33 @@ class ConditionResource extends Resource
                     ->columnSpan(1),
             ])
             ->filtersFormColumns(2)
-            ->actions(AdminUi::recordActions())
+            ->actions([
+                Actions\ActionGroup::make([
+                    Actions\ViewAction::make(),
+                    Actions\EditAction::make(),
+                    Actions\DeleteAction::make()
+                        ->requiresConfirmation()
+                        ->modalHeading('Delete Record')
+                        ->modalDescription('Are you sure you want to delete this record? This action cannot be undone.')
+                        ->modalSubmitActionLabel('Yes, delete')
+                        // products.condition_id is NOT NULL with
+                        // restrictOnDelete(), so deleting an in-use condition
+                        // used to throw a raw, unhandled QueryException
+                        // straight to the admin instead of the friendly
+                        // message the bulk-delete guard already gives.
+                        ->before(function (Actions\DeleteAction $action, Condition $record) {
+                            $inUseCount = $record->products()->count();
+                            if ($inUseCount > 0) {
+                                \Filament\Notifications\Notification::make()
+                                    ->danger()
+                                    ->title("Cannot delete \"{$record->name}\"")
+                                    ->body("{$inUseCount} product(s) still use this condition. Reassign them first.")
+                                    ->send();
+                                $action->halt();
+                            }
+                        }),
+                ]),
+            ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     AdminUi::exportCsvBulkAction('Export Conditions', [

@@ -218,39 +218,6 @@ class CatalogController extends BaseApiController
     }
 
     /**
-     * GET /api/v1/parts/{oem}/supersessions
-     */
-    public function supersessions(string $oem): JsonResponse
-    {
-        $normalized = preg_replace('/[^A-Z0-9]/i', '', strtoupper($oem));
-
-        $product = Product::where('normalized_oem', $normalized)->first();
-        if (!$product) {
-            return $this->errorResponse('Part not found.', null, 404);
-        }
-
-        // Follow supersession chain
-        $chain = [];
-        $current = $product;
-        $visited = [$product->id];
-
-        while ($current->superseded_by_id) {
-            $next = Product::find($current->superseded_by_id);
-            if (!$next || in_array($next->id, $visited)) {
-                break; // prevent infinite loops
-            }
-            $chain[] = new ProductApiResource($next);
-            $visited[] = $next->id;
-            $current = $next;
-        }
-
-        return $this->successResponse([
-            'oem' => $oem,
-            'supersessions' => $chain,
-        ]);
-    }
-
-    /**
      * GET /api/v1/parts/{oem}/cross-references
      */
     public function crossReferences(string $oem): JsonResponse

@@ -160,7 +160,14 @@ class SitemapService
         $count = 0;
         $written = [];
 
+        // CarModelController::show() 404s unless BOTH the manufacturer and
+        // the car model are active — this used to only check the model,
+        // so deactivating a manufacturer left its models' URLs in the
+        // sitemap pointing at pages that immediately 404 on crawl, feeding
+        // Google dead links (and populating the very NotFoundLog table
+        // built to catch this class of problem).
         CarModel::where('is_active', true)
+            ->whereHas('manufacturer', fn ($q) => $q->where('is_active', true))
             ->with('manufacturer')
             ->orderBy('updated_at', 'desc')
             ->cursor()

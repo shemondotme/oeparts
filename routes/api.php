@@ -27,7 +27,6 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/car-models/{id}', [\App\Http\Controllers\Api\CatalogController::class, 'carModel'])->name('api.car-models.show');
     Route::get('/parts', [\App\Http\Controllers\Api\CatalogController::class, 'parts'])->name('api.parts');
     Route::get('/parts/{oem}', [\App\Http\Controllers\Api\CatalogController::class, 'partByOem'])->name('api.parts.oem');
-    Route::get('/parts/{oem}/supersessions', [\App\Http\Controllers\Api\CatalogController::class, 'supersessions'])->name('api.parts.supersessions');
     Route::get('/parts/{oem}/cross-references', [\App\Http\Controllers\Api\CatalogController::class, 'crossReferences'])->name('api.parts.cross-references');
     Route::get('/product-details/{id}', [\App\Http\Controllers\Api\CatalogController::class, 'productDetails'])->name('api.product-details');
     Route::get('/shipping-methods', [\App\Http\Controllers\Api\ShippingController::class, 'index'])->name('api.shipping-methods');

@@ -73,4 +73,41 @@ class ConditionBulkDeleteTest extends TestCase
         $this->assertModelMissing($a);
         $this->assertModelMissing($b);
     }
+
+    // -------------------------------------------------------------------------
+    // Single-row delete (catalog-9): products.condition_id is NOT NULL with
+    // restrictOnDelete(), so deleting an in-use condition via the row-level
+    // action used to throw a raw, unhandled QueryException straight to the
+    // admin instead of a friendly message.
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function single_row_delete_is_rejected_with_a_friendly_message_when_in_use(): void
+    {
+        $inUse = Condition::create(['name' => 'In Use', 'slug' => 'in-use-single', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        $manufacturer = Manufacturer::create(['name' => 'Test Mfr 2', 'slug' => 'test-mfr-2', 'country_code' => 'DE', 'is_active' => true]);
+        Product::create([
+            'manufacturer_id' => $manufacturer->id,
+            'oem_number' => 'X2', 'normalized_oem' => 'X2',
+            'name' => 'Part', 'description' => 'Part',
+            'price' => 10, 'condition_id' => $inUse->id,
+            'is_in_stock' => true, 'is_active' => true,
+        ]);
+
+        Livewire::test(ListConditions::class)
+            ->callTableAction('delete', $inUse);
+
+        $this->assertModelExists($inUse);
+    }
+
+    #[Test]
+    public function single_row_delete_succeeds_when_not_in_use(): void
+    {
+        $unused = Condition::create(['name' => 'Unused', 'slug' => 'unused-single', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+
+        Livewire::test(ListConditions::class)
+            ->callTableAction('delete', $unused);
+
+        $this->assertModelMissing($unused);
+    }
 }
