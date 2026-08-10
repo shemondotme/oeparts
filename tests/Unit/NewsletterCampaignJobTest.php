@@ -188,4 +188,93 @@ class NewsletterCampaignJobTest extends TestCase
         $this->assertCount(1, $subscriber->campaignRecipients);
         $this->assertTrue($subscriber->campaignRecipients->first()->campaign->is($campaign));
     }
+
+    // -------------------------------------------------------------------------
+    // Retry safety (Marketing module audit, Critical): a job retry after a
+    // mid-run failure (tries = 3) used to re-select every active subscriber
+    // from scratch with no idempotency guard, re-creating recipient rows and
+    // re-queueing a send even for subscribers a prior, partially-completed
+    // attempt had already emailed.
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function a_retry_does_not_re_email_a_subscriber_already_marked_sent(): void
+    {
+        Mail::fake();
+
+        $alreadySent = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $notYetSent = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $campaign = NewsletterCampaign::factory()->create(['status' => 'sending']);
+
+        \App\Models\NewsletterCampaignRecipient::create([
+            'campaign_id' => $campaign->id,
+            'subscriber_id' => $alreadySent->id,
+            'email' => $alreadySent->email,
+            'status' => 'sent',
+            'sent_at' => now()->subMinute(),
+        ]);
+
+        // Simulates the job being retried after a mid-run failure.
+        (new SendNewsletterCampaign($campaign))->handle();
+
+        Mail::assertQueued(NewsletterCampaignEmail::class, 1);
+        Mail::assertQueued(NewsletterCampaignEmail::class, function ($mail) use ($notYetSent) {
+            return $mail->hasTo($notYetSent->email);
+        });
+        $this->assertDatabaseCount('newsletter_campaign_recipients', 2);
+    }
+
+    #[Test]
+    public function a_retry_re_attempts_a_subscriber_whose_prior_row_was_only_pending_or_failed(): void
+    {
+        Mail::fake();
+
+        $stuckPending = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $campaign = NewsletterCampaign::factory()->create(['status' => 'sending']);
+
+        \App\Models\NewsletterCampaignRecipient::create([
+            'campaign_id' => $campaign->id,
+            'subscriber_id' => $stuckPending->id,
+            'email' => $stuckPending->email,
+            'status' => 'pending',
+        ]);
+
+        (new SendNewsletterCampaign($campaign))->handle();
+
+        Mail::assertQueued(NewsletterCampaignEmail::class, 1);
+        $this->assertDatabaseHas('newsletter_campaign_recipients', [
+            'campaign_id' => $campaign->id,
+            'subscriber_id' => $stuckPending->id,
+            'status' => 'sent',
+        ]);
+        // upsert(), not insert(): the pre-existing row is reused, not
+        // duplicated (which would otherwise collide with the new unique
+        // (campaign_id, subscriber_id) index).
+        $this->assertDatabaseCount('newsletter_campaign_recipients', 1);
+    }
+
+    #[Test]
+    public function final_sent_count_reflects_all_attempts_not_just_the_last_retry(): void
+    {
+        Mail::fake();
+
+        $fromEarlierRun = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $fromThisRun = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $campaign = NewsletterCampaign::factory()->create(['status' => 'sending']);
+
+        \App\Models\NewsletterCampaignRecipient::create([
+            'campaign_id' => $campaign->id,
+            'subscriber_id' => $fromEarlierRun->id,
+            'email' => $fromEarlierRun->email,
+            'status' => 'sent',
+            'sent_at' => now()->subMinute(),
+        ]);
+
+        (new SendNewsletterCampaign($campaign))->handle();
+
+        $this->assertDatabaseHas('newsletter_campaigns', [
+            'id' => $campaign->id,
+            'sent_count' => 2,
+        ]);
+    }
 }

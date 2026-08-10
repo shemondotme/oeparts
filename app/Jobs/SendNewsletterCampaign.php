@@ -32,16 +32,21 @@ class SendNewsletterCampaign implements ShouldQueue
     {
         $this->campaign->update(['status' => 'sending']);
 
-        $sentCount = 0;
-        $failedCount = 0;
-
-        // Chunked + batched (was: one create() + one status update() + one
-        // increment() per subscriber — thousands of individual queries on a
-        // large list, risking queue-worker timeouts). Recipient rows are
-        // bulk-inserted per chunk, then their sent/failed status is written
-        // back in at most two queries per chunk instead of one per row.
+        // A retry after a mid-run failure (tries = 3) used to re-select
+        // every active subscriber from scratch and re-insert/re-queue a
+        // send for every one of them — including subscribers a prior,
+        // partially-completed attempt had already emailed. Excluding
+        // already-'sent' recipients here makes a retry pick up only where
+        // it left off. Subscribers whose only prior row is 'pending' or
+        // 'failed' are intentionally retried.
         NewsletterSubscriber::where('is_active', true)
-            ->chunkById(self::CHUNK_SIZE, function ($subscribers) use (&$sentCount, &$failedCount) {
+            ->whereNotIn('id', function ($query) {
+                $query->select('subscriber_id')
+                    ->from('newsletter_campaign_recipients')
+                    ->where('campaign_id', $this->campaign->id)
+                    ->where('status', 'sent');
+            })
+            ->chunkById(self::CHUNK_SIZE, function ($subscribers) {
                 $recipients = $this->createRecipientsFor($subscribers);
 
                 $sentIds = [];
@@ -67,33 +72,38 @@ class SendNewsletterCampaign implements ShouldQueue
                 if ($failedIds !== []) {
                     NewsletterCampaignRecipient::whereIn('id', $failedIds)->update(['status' => 'failed']);
                 }
-
-                $sentCount += count($sentIds);
-                $failedCount += count($failedIds);
             });
 
+        // Computed fresh from the recipients table (not accumulated in-job)
+        // so a retry's totals reflect every attempt, not just this run's —
+        // an earlier partial run's already-'sent' rows must still count.
         $this->campaign->update([
             'status'       => 'sent',
             'sent_at'      => now(),
-            'sent_count'   => $sentCount,
-            'failed_count' => $failedCount,
+            'sent_count'   => NewsletterCampaignRecipient::where('campaign_id', $this->campaign->id)->where('status', 'sent')->count(),
+            'failed_count' => NewsletterCampaignRecipient::where('campaign_id', $this->campaign->id)->where('status', 'failed')->count(),
         ]);
     }
 
     /**
-     * Bulk-insert a pending recipient row per subscriber in this chunk, then
-     * fetch them back (one INSERT + one SELECT, instead of one create() per
-     * subscriber) keyed by subscriber_id for the send loop above.
+     * Upsert a pending recipient row per subscriber in this chunk, then
+     * fetch them back keyed by subscriber_id for the send loop above.
+     * upsert() (not insert()) matters on a retry: the outer query already
+     * excludes 'sent' subscribers, but one with an existing 'pending' or
+     * 'failed' row from a prior attempt would otherwise collide with the
+     * unique (campaign_id, subscriber_id) index instead of being reused.
      */
     private function createRecipientsFor($subscribers): \Illuminate\Support\Collection
     {
-        NewsletterCampaignRecipient::insert(
+        NewsletterCampaignRecipient::upsert(
             $subscribers->map(fn ($subscriber) => [
                 'campaign_id'   => $this->campaign->id,
                 'subscriber_id' => $subscriber->id,
                 'email'         => $subscriber->email,
                 'status'        => 'pending',
-            ])->all()
+            ])->all(),
+            ['campaign_id', 'subscriber_id'],
+            ['email', 'status'],
         );
 
         return NewsletterCampaignRecipient::where('campaign_id', $this->campaign->id)
