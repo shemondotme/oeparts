@@ -13,8 +13,16 @@ class SocialAuthController extends Controller
 {
     /**
      * Redirect to Google/Facebook for authentication.
+     *
+     * $lang must come before $provider: Laravel's ControllerDispatcher binds
+     * route parameters positionally (array_values(), not by parameter name),
+     * in the order they're captured from the URI. The {lang} prefix group
+     * captures before the route's own {provider} segment, so a (provider,
+     * lang) signature silently received them swapped — every "Log in with
+     * Google" click 404'd into "Unsupported social provider." instead of
+     * ever reaching Socialite.
      */
-    public function redirect(string $provider, string $lang)
+    public function redirect(string $lang, string $provider)
     {
         if (!in_array($provider, ['google', 'facebook'])) {
             return redirect()->route('frontend.home', ['lang' => $lang])
@@ -26,8 +34,10 @@ class SocialAuthController extends Controller
 
     /**
      * Handle the callback from Google/Facebook.
+     *
+     * $lang before $provider — see the matching comment on redirect().
      */
-    public function callback(string $provider, string $lang)
+    public function callback(string $lang, string $provider)
     {
         if (!in_array($provider, ['google', 'facebook'])) {
             return redirect()->route('frontend.home', ['lang' => $lang])
@@ -43,9 +53,26 @@ class SocialAuthController extends Controller
                     ->with('error', 'Could not retrieve email from social account.');
             }
 
+            // Google explicitly reports whether the email on the account was
+            // verified (email_verified in the OIDC claims); trust that flag
+            // when the provider gives one. Facebook's Graph API doesn't
+            // expose an equivalent field, but only ever returns a
+            // platform-confirmed email in the first place, so absence of the
+            // flag is not itself a signal of an unverified address.
+            $emailVerified = $socialUser->user['email_verified'] ?? $socialUser->user['verified_email'] ?? true;
+            if (! filter_var($emailVerified, FILTER_VALIDATE_BOOLEAN)) {
+                return redirect()->route('frontend.home', ['lang' => $lang])
+                    ->with('error', 'Your ' . ucfirst($provider) . ' email address is not verified. Please verify it with ' . ucfirst($provider) . ' and try again.');
+            }
+
             $user = User::where('email', $email)->first();
 
             if (!$user) {
+                if (! filter_var(settings('auth.registration_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+                    return redirect()->route('frontend.home', ['lang' => $lang])
+                        ->with('error', __('auth.registration_disabled'));
+                }
+
                 $user = User::create([
                     'name'              => $socialUser->getName() ?? $socialUser->getNickname() ?? 'User',
                     'email'             => $email,
@@ -57,7 +84,19 @@ class SocialAuthController extends Controller
                 ]);
             }
 
+            if (! $user->is_active) {
+                return redirect()->route('frontend.home', ['lang' => $lang])
+                    ->with('error', __('auth.account_deactivated'));
+            }
+
             Auth::guard('web')->login($user, true);
+
+            // Rotate the session ID on every successful authentication — see
+            // the matching comment in AuthController::login(). Not injecting
+            // Request here: Laravel's ControllerDispatcher passes route
+            // parameters positionally (array_values(), not by name), and a
+            // typed Request param shifts $provider/$lang out of position.
+            session()->regenerate();
 
             return redirect()->route('frontend.home', ['lang' => $lang])
                 ->with('success', 'Logged in successfully via ' . ucfirst($provider) . '.');
