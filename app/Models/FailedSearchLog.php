@@ -20,7 +20,21 @@ class FailedSearchLog extends Model
 
     protected $casts = [
         'inquiry_submitted' => 'boolean',
+        'created_at' => 'datetime',
     ];
+
+    /**
+     * See the matching comment on SearchLog — same shape (created_at only,
+     * no updated_at column), same silent-NULL bug: the admin "failed
+     * searches today" navigation badge filters on created_at and was
+     * permanently stuck at zero.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (FailedSearchLog $log) {
+            $log->created_at ??= now();
+        });
+    }
 
     public function user(): BelongsTo
     {
