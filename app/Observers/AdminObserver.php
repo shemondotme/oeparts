@@ -11,7 +11,7 @@ class AdminObserver
 {
     public function created(Admin $admin): void
     {
-        $this->log($admin, 'created', [], $admin->getAttributes());
+        $this->log($admin, 'created', [], $this->redact($admin, $admin->getAttributes()));
         $this->invalidateCache();
     }
 
@@ -24,7 +24,7 @@ class AdminObserver
         unset($original['updated_at']);
 
         if (!empty($changes)) {
-            $this->log($admin, 'updated', $original, $changes);
+            $this->log($admin, 'updated', $this->redact($admin, $original), $this->redact($admin, $changes));
         }
 
         $this->invalidateCache();
@@ -32,8 +32,27 @@ class AdminObserver
 
     public function deleted(Admin $admin): void
     {
-        $this->log($admin, 'deleted', $admin->getAttributes(), []);
+        $this->log($admin, 'deleted', $this->redact($admin, $admin->getAttributes()), []);
         $this->invalidateCache();
+    }
+
+    /**
+     * getAttributes()/getChanges()/getOriginal() bypass $hidden (unlike
+     * toArray()/JSON serialization), so without this the admin's password
+     * hash and remember_token would be written into activity_logs in the
+     * clear — visible to any admin with "view activity logs" permission,
+     * not just super_admin, and a leaked remember_token can forge a
+     * persistent-login cookie for this admin outright.
+     */
+    protected function redact(Admin $admin, array $attributes): array
+    {
+        foreach ($admin->getHidden() as $key) {
+            if (array_key_exists($key, $attributes) && $attributes[$key] !== null) {
+                $attributes[$key] = '***';
+            }
+        }
+
+        return $attributes;
     }
 
     protected function invalidateCache(): void

@@ -11,7 +11,7 @@ class UserObserver
 {
     public function created(User $user): void
     {
-        $this->log($user, 'created', [], $user->getAttributes());
+        $this->log($user, 'created', [], $this->redact($user, $user->getAttributes()));
     }
 
     public function updated(User $user): void
@@ -23,7 +23,7 @@ class UserObserver
         unset($original['updated_at']);
 
         if (!empty($changes)) {
-            $this->log($user, 'updated', $original, $changes);
+            $this->log($user, 'updated', $this->redact($user, $original), $this->redact($user, $changes));
         }
 
         Cache::forget("user:{$user->id}");
@@ -31,8 +31,27 @@ class UserObserver
 
     public function deleted(User $user): void
     {
-        $this->log($user, 'deleted', $user->getAttributes(), []);
+        $this->log($user, 'deleted', $this->redact($user, $user->getAttributes()), []);
         Cache::forget("user:{$user->id}");
+    }
+
+    /**
+     * getAttributes()/getChanges()/getOriginal() bypass $hidden (unlike
+     * toArray()/JSON serialization), so without this the customer's
+     * password hash and remember_token would be written into activity_logs
+     * in the clear — visible to any admin with "view activity logs"
+     * permission, and a leaked remember_token can forge a persistent-login
+     * cookie for this account outright.
+     */
+    protected function redact(User $user, array $attributes): array
+    {
+        foreach ($user->getHidden() as $key) {
+            if (array_key_exists($key, $attributes) && $attributes[$key] !== null) {
+                $attributes[$key] = '***';
+            }
+        }
+
+        return $attributes;
     }
 
     protected function log(User $user, string $action, array $old, array $new): void
