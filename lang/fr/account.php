@@ -293,6 +293,7 @@ return [
     'address_deleted' => 'Adresse supprimée.',
     'current_password_incorrect' => 'Le mot de passe actuel est incorrect.',
     'settings_updated' => 'Paramètres mis à jour avec succès.',
+    'email_changed_please_reverify' => 'Votre adresse e-mail a été mise à jour. Veuillez vous reconnecter et vérifier votre nouvelle adresse e-mail.',
     'password_updated' => 'Mot de passe mis à jour avec succès.',
     'notification_prefs_updated' => 'Préférences de notification mises à jour.',
     'language_prefs_updated' => 'Préférences de langue mises à jour.',

@@ -293,6 +293,7 @@ return [
     'address_deleted' => 'Dirección eliminada.',
     'current_password_incorrect' => 'La contraseña actual es incorrecta.',
     'settings_updated' => 'Ajustes actualizados correctamente.',
+    'email_changed_please_reverify' => 'Se actualizó su dirección de correo electrónico. Vuelva a iniciar sesión y verifique su nueva dirección de correo electrónico.',
     'password_updated' => 'Contraseña actualizada correctamente.',
     'notification_prefs_updated' => 'Preferencias de notificación actualizadas.',
     'language_prefs_updated' => 'Preferencias de idioma actualizadas.',

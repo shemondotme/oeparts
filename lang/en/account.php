@@ -293,6 +293,7 @@ return [
     'address_deleted' => 'Address deleted.',
     'current_password_incorrect' => 'Current password is incorrect.',
     'settings_updated' => 'Settings updated successfully.',
+    'email_changed_please_reverify' => 'Your email address was updated. Please log in again and verify your new email address.',
     'password_updated' => 'Password updated successfully.',
     'notification_prefs_updated' => 'Notification preferences updated.',
     'language_prefs_updated' => 'Language preferences updated.',

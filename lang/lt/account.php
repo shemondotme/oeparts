@@ -293,6 +293,7 @@ return [
     'address_deleted' => 'Adresas ištrintas.',
     'current_password_incorrect' => 'Dabartinis slaptažodis neteisingas.',
     'settings_updated' => 'Nustatymai sėkmingai atnaujinti.',
+    'email_changed_please_reverify' => 'Jūsų el. pašto adresas buvo atnaujintas. Prisijunkite iš naujo ir patvirtinkite naują el. pašto adresą.',
     'password_updated' => 'Slaptažodis sėkmingai atnaujintas.',
     'notification_prefs_updated' => 'Pranešimų nuostatos atnaujintos.',
     'language_prefs_updated' => 'Kalbos nuostatos atnaujintos.',

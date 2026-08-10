@@ -204,9 +204,32 @@ class AccountController extends Controller
         // Update basic info
         $user->name = trim($validated['first_name'] . ' ' . $validated['last_name']);
         $user->phone = $validated['phone'];
+
+        $emailChanged = $validated['email'] !== $user->email;
         $user->email = $validated['email'];
 
+        if ($emailChanged) {
+            // email_verified_at proved the user received mail at their OLD
+            // address — carrying it forward onto an unproven new address
+            // would let anyone claim any inbox (a typo'd address, or one
+            // they don't yet control) as "verified" just by typing it in
+            // here. Re-run the same OTP-or-auto-verify decision registration
+            // uses (App\Http\Controllers\Frontend\AuthController::register()).
+            $otpEnabled = app(\App\Services\OtpService::class)->enabled();
+            $user->forceFill(['email_verified_at' => $otpEnabled ? null : now()]);
+        }
+
         $user->save();
+
+        if ($emailChanged && app(\App\Services\OtpService::class)->enabled()) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('frontend.home', ['lang' => $lang])
+                ->with('info', __('account.email_changed_please_reverify'))
+                ->with('show_auth_modal', true);
+        }
 
         return redirect()->route('frontend.account.settings', ['lang' => $lang])
             ->with('success', __('account.settings_updated'));

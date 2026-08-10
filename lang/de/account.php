@@ -293,6 +293,7 @@ return [
     'address_deleted' => 'Adresse gelöscht.',
     'current_password_incorrect' => 'Das aktuelle Passwort ist falsch.',
     'settings_updated' => 'Einstellungen erfolgreich aktualisiert.',
+    'email_changed_please_reverify' => 'Ihre E-Mail-Adresse wurde aktualisiert. Bitte melden Sie sich erneut an und bestätigen Sie Ihre neue E-Mail-Adresse.',
     'password_updated' => 'Passwort erfolgreich aktualisiert.',
     'notification_prefs_updated' => 'Benachrichtigungseinstellungen aktualisiert.',
     'language_prefs_updated' => 'Spracheinstellungen aktualisiert.',
