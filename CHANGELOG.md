@@ -2,6 +2,84 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.16 — 2026-08-10
+
+A large batch: a full audit of the Auth, Catalog, Marketing, CMS, Support, and System modules (89 findings, all fixed), plus a dedicated performance pass after the catalog grew to ~100k products. Nothing manual required — every migration applies automatically.
+
+### Security
+- **Session fixation on login and registration** — a session ID planted in a victim's browser before they logged in (shared terminal, subdomain cookie trick, leaked session ID) previously inherited full account access the moment they authenticated. Both password and social login now regenerate the session ID on login.
+- **Hardened social login (Google/Facebook)** — fixed a routing bug that swapped the `lang`/`provider` parameters and made social login entirely non-functional; existing accounts are now only matched by email when the provider itself verified that address; deactivated accounts and the "registration disabled" setting are now enforced on the social path exactly as they already were on password signup.
+- **Prevented a non-super_admin admin from granting themselves (or anyone) the super_admin role** — the Admins → Roles picker listed every role including super_admin to anyone holding the generic "edit admins" permission, an unintended full-access escalation path.
+- **Admin/customer password hashes and remember-me tokens were being written into the Activity Log in plain text** on every account create/update/delete — visible to any admin with "view activity logs", not just super_admin. Both are now redacted, matching the `***` convention already used for encrypted settings.
+- **Fixed an XSS gap in the WYSIWYG editor's preview endpoint** — its sanitizer stripped disallowed tag names but left attributes on allowed tags untouched, so something like `<img onerror=...>` passed straight through. Now uses the project's existing HTMLPurifier profile.
+- **Account self-deletion (Account → Settings) now requires re-entering your current password** — previously only a client-side confirmation dialog stood between a hijacked/left-open session and permanently deleting the account.
+- **Password-reset now gives an identical response for an unregistered email as for a real one** — the two previously took visibly different UI paths, an account-enumeration signal independent of the message wording.
+- **Login throttling is now keyed by email+IP everywhere**, not IP alone in one spot — an attacker spraying bad credentials from one IP could otherwise lock out every legitimate user sharing that IP (office NAT/CGNAT).
+- Closed a missing-authorization gap on the CMS section live-preview endpoint (low impact — read-only, auto-escaped output — but inconsistent with its sibling endpoints).
+
+### Fixed — Catalog & Search
+- **Product stock now automatically restores when an order is cancelled or refunded** — previously it flipped to "out of stock" the instant an order was placed and nothing ever flipped it back, permanently misrepresenting availability for anything that was never actually delivered.
+- **Checkout now re-verifies stock at order creation, not just at add-to-cart** — closes a window where a product going out of stock (or a second concurrent checkout for the last unit) between add-to-cart and payment still resulted in a charged, unfulfillable order.
+- Product's soft-delete now has a real restore path in the admin (previously a deleted product, and its order/cart history, had no way back for anyone).
+- The Condition bulk-delete action no longer fatal-errors and partially deletes when one of the selected conditions is still in use — now all-or-nothing.
+- Deleting a single Condition still in use by products now shows a friendly warning instead of a raw database error.
+- The XML product sitemap no longer writes a duplicate URL per seller/condition sharing the same OEM, and no longer excludes in-stock-filtered (but still visible) products.
+- The XML car-model sitemap no longer lists models under a deactivated manufacturer (those pages 404 on crawl).
+- Non-English visitors now see the Brands page's A–Z letter index and grouping built from the correct language, not always English.
+- The catalog search box's free-text `q` search now matches the requested language's product name, not the raw multi-language JSON blob.
+- Search/autocomplete/failed-search logs now correctly record their manufacturer/car-model context (columns existed in code but not in the database) and always get a real timestamp (previously silently `NULL`, breaking the zero-results "you might mean" suggestions, the admin Search Logs sort, and the failed-searches nav badge).
+- Search result caches now invalidate correctly whenever a product's price, stock, or active state changes.
+- Removed a long-dead, always-empty public API endpoint (`/api/v1/parts/{oem}/supersessions`) referencing a data model that was never built.
+
+### Fixed — CMS
+- **Page/BlogPost creation and editing was crashing on every single save** in the admin panel (a missing default on the SEO "robots" field) — found and fixed during this release's own final test sweep.
+- **The Menu Builder now actually renders in the storefront header and footer** — a fully-built admin feature with no code reading it until now; opt-in, existing sites keep their current nav until an operator builds a menu.
+- **The Translations admin screen now actually changes site copy** — edits previously had zero effect on any page; now layered over the file-based translations, database wins when both exist.
+- **A Page's "Set as Homepage" / "Show in Header" / "Show in Footer" toggles now actually do what their own helper text has always promised.**
+- **SEO Meta (canonical URL, Open Graph, robots directives) is now wired into Page and BlogPost edit screens and their real rendered output** — previously an orphaned feature with no way to create or use it.
+- **Deactivating/activating a Language now actually takes effect sitewide** — six different places (locale routing, sitemaps, both language switchers, account settings) each independently hardcoded the same five-language list.
+- Matched redirects no longer crash with a 500 (an enum was passed somewhere an integer status code was required); the "no redirect configured" cache-miss case is now actually cached, removing a database query from every storefront page view.
+- Redirect URLs are now normalized consistently, duplicate/looping redirects are rejected with a friendly error instead of a crash, and creating a new redirect no longer crashes on its Hit Count field.
+- Deleting a media file still referenced by a Page/Post/Manufacturer/SEO record now shows a friendly "still in use" error instead of silently breaking that reference.
+- Fixed a crash creating a menu item that links to a CMS page rather than a raw URL.
+- A duplicate Language code now shows a friendly inline validation error instead of a raw database error.
+
+### Fixed — Checkout, Support & Marketing
+- **Guest abandoned-cart recovery emails now actually go out** — a guest's email was never persisted anywhere the recovery job could find it; only logged-in customers' abandoned carts were ever recovered before.
+- Newsletter campaign sends are now safely retry-safe — a mid-send failure no longer risks double-emailing subscribers who already received that campaign.
+- A newsletter campaign can no longer be sent twice from a backed-up queue or a double-clicked "Send Now".
+- Duplicating an already-sent newsletter campaign no longer inherits its old (already-past) schedule and silently re-sends itself.
+- Newsletter unsubscribe/confirm links no longer trigger just from an email client's link-prescanning — they now require an actual page visit and a real button click.
+- A manually admin-added newsletter subscriber can now actually receive campaigns (was crashing at send time).
+- Scheduled-future blog posts no longer appear early on the homepage or in category/tag counts.
+- The Part Inquiry "New Inquiry" admin page (for phone/in-person requests) can now actually be filled in — every field was locked regardless of context.
+- A new Part Inquiry now raises an admin bell notification, not just an easy-to-miss email.
+- Refund status can no longer be changed by directly editing the record, bypassing the approve/reject/mark-processed workflow and its side effects; concurrent double-processing of the same refund is now blocked.
+- Global search results for Contact Messages are no longer all indistinguishable from each other.
+- Downloading an invoice PDF now actually serves the pre-generated cached copy instead of silently re-rendering it live on every request.
+
+### Fixed — System & Admin
+- **"Seed Demo Data" in the admin panel could silently wipe the entire database** — a flag-collision bug meant its normal confirmation click also triggered a full `migrate:fresh`. Now requires its own explicit flag, plus an additional production safeguard.
+- Cron/scheduled task history (Admin → System → Scheduled Tasks) is now actually recorded — the page and its "failed today" badge were permanently empty before.
+- The "Run Now" button on a scheduled task now actually runs it, instead of failing every time.
+- Moved the audit-log retention setting out of Search Settings (where it was mislabeled) into Security Settings, since it also controls how far back login/admin-action history can be investigated.
+- Closed two race conditions where two near-simultaneous requests could both pass a "one at a time" guard (product catalog import start, and the HTTP cron-fallback trigger).
+- Sensitive install-time credentials (mail password, admin password hash) are no longer left sitting in a state file indefinitely after a successful install.
+- VIES VAT-number validation now has a real timeout on slow/unresponsive responses, not just on the initial connection.
+- Re-validating the same VAT number within its 24-hour cache window no longer burns through the rate limit for no reason.
+- Settings are now read from cache on every request instead of running four uncached queries on every single page load.
+- A shipped order can no longer be wrongly auto-completed off a stale "shipped" record from months earlier if it was later moved back to Processing and re-shipped.
+- OTP resend requests can no longer create a duplicate, guessable one-time code under rapid double-clicking.
+- Fixed several smaller inconsistencies: rejecting a refund now stamps a processed timestamp; the password-change form now respects the configured minimum length everywhere; expired-OTP cleanup no longer deletes a code still inside its "recently verified" grace window; a Testimonial rating outside 1–5 is now rejected at the database level, not just in the admin form.
+
+### Performance — built for the ~100k product catalog
+- **Bulk Update Products** now processes matching products in chunks instead of loading the entire matched set into memory at once — removes a real memory/timeout risk on a broad filter against a large catalog.
+- Added missing database indexes backing the admin product list's default sort and the out-of-stock navigation badge's query.
+- **OEM partial/substring search** (storefront fallback, admin table search, admin global search) no longer forces a full table scan on every keystroke — now backed by a MySQL full-text index. Also fixed a pagination bug this surfaced: search results with many identically-priced/stocked products (common right after a bulk import) could shift between pages on reload.
+- **"Regenerate sitemap now"** no longer risks running past the request timeout on a large catalog — it now runs as a background job.
+- **The storefront OEM search box's autocomplete dropdown is now actually wired up** — the caching and API endpoint behind it already existed but nothing ever called it; it now suggests matches live as you type, with keyboard navigation.
+- Guest visitors now get a short-lived, browser-only cache header on safe pages (home, search, brand, blog, CMS pages) — a repeat view or back/forward navigation can skip a full round-trip to the server.
+
 ## 1.0.15 — 2026-08-09
 
 ### Added
