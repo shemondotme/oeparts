@@ -111,6 +111,27 @@ class TriggerDueScheduledTasksTest extends TestCase
         Artisan::shouldNotHaveReceived('call');
     }
 
+    /**
+     * system-8: the throttle claim must be Cache::add() (atomic), not a
+     * separate get-then-put — a claim already held by a concurrent request
+     * must block this one from ALSO running schedule:run, even though
+     * isDue()'s own Cache::get() peek can't itself detect that.
+     */
+    #[Test]
+    public function a_throttle_key_set_between_the_due_check_and_the_claim_still_blocks_a_second_run(): void
+    {
+        Artisan::spy();
+        Cache::forget('scheduler_heartbeat');
+        Cache::forget('scheduler.http_fallback_lock');
+        // Simulates a concurrent request winning the race right before this
+        // one reaches its own claim attempt.
+        Cache::add('scheduler.http_fallback_lock', true, 60);
+
+        $this->alwaysSafe()->terminate(Request::create('/'), new Response);
+
+        Artisan::shouldNotHaveReceived('call');
+    }
+
     #[Test]
     public function it_disables_itself_via_config(): void
     {

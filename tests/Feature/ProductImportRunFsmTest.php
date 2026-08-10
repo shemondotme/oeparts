@@ -179,6 +179,32 @@ class ProductImportRunFsmTest extends TestCase
         }
     }
 
+    /**
+     * system-9: the exists()-then-create() race is now closed by
+     * Cache::lock() around the whole check-and-insert — proven here by
+     * holding that exact lock ourselves before calling start(), simulating
+     * a concurrent request that got there first.
+     */
+    #[Test]
+    public function start_is_blocked_while_another_process_holds_the_start_lock(): void
+    {
+        $admin = Admin::factory()->create();
+        $path  = $this->putCsv('imports/one.csv', [
+            ['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock'],
+        ]);
+
+        $externalLock = Cache::lock('product_import.start', 10);
+        $this->assertTrue($externalLock->get(), 'test setup: must be able to acquire the lock first');
+
+        try {
+            $this->expectException(ImportException::class);
+            $this->manager()->start($path, 'local', 'one.csv', $admin->id, false);
+        } finally {
+            $externalLock->release();
+            $this->assertSame(0, ProductImportRun::count(), 'a lock-blocked start() must not persist any row');
+        }
+    }
+
     #[Test]
     public function row_level_errors_are_captured_without_stopping_the_run_and_the_true_count_is_never_hidden(): void
     {

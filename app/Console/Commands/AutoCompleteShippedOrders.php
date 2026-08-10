@@ -24,12 +24,19 @@ class AutoCompleteShippedOrders extends Command
             return self::SUCCESS;
         }
 
+        // Correlates on each order's MOST RECENT transition into Shipped,
+        // not just ANY historical one — an order that was shipped, moved
+        // back to Processing (e.g. a shipping issue), and re-shipped
+        // recently still has its old, past-cutoff "Shipped" history row.
+        // Matching on any row let a same-day re-ship get auto-completed
+        // within a day purely because of that stale first shipment.
         $due = Order::query()
             ->where('status', OrderStatus::Shipped)
             ->whereIn('id', OrderStatusHistory::query()
                 ->select('order_id')
                 ->where('new_status', OrderStatus::Shipped->value)
-                ->where('created_at', '<=', now()->subDays($days)))
+                ->groupBy('order_id')
+                ->havingRaw('MAX(created_at) <= ?', [now()->subDays($days)]))
             ->get();
 
         foreach ($due as $order) {

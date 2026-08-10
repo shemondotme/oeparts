@@ -6,6 +6,7 @@ use App\Models\ProductImportRun;
 use App\Services\Imports\Contracts\ImportStage;
 use App\Services\Imports\Exceptions\ImportException;
 use App\Services\ProductImportService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -43,24 +44,43 @@ class ImportManager
     /** @throws ImportException if another import is already running */
     public function start(string $diskPath, string $disk, string $originalFilename, int $adminId, bool $updateExisting): ProductImportRun
     {
-        if (ProductImportRun::where('status', ProductImportRun::STATUS_RUNNING)->exists()) {
-            throw new ImportException('An import is already running. Wait for it to finish before starting another.');
+        // The exists()-check and create() below are two separate queries with
+        // no DB-level constraint tying them together (status is a plain
+        // indexed column, not a partial-unique one) — two nearly-simultaneous
+        // double-submits/retries could both pass the check before either had
+        // inserted its row, leaving two `running` imports processing the
+        // same or different CSVs concurrently, both writing to
+        // products/InventoryLog. Cache::lock() (atomic on every driver
+        // Laravel ships, including 'file' — no Redis dependency) makes the
+        // check-then-create a single critical section.
+        $lock = Cache::lock('product_import.start', 10);
+
+        if (! $lock->get()) {
+            throw new ImportException('Another import is being started right now. Please try again in a moment.');
         }
 
-        $run = ProductImportRun::create([
-            'admin_id'         => $adminId,
-            'status'           => ProductImportRun::STATUS_RUNNING,
-            'original_filename' => $originalFilename,
-            'disk'             => $disk,
-            'path'             => $diskPath,
-            'update_existing'  => $updateExisting,
-            'started_at'       => now(),
-        ]);
+        try {
+            if (ProductImportRun::where('status', ProductImportRun::STATUS_RUNNING)->exists()) {
+                throw new ImportException('An import is already running. Wait for it to finish before starting another.');
+            }
 
-        $run->setCheckpoint(['stage_index' => 0, 'stage_state' => []]);
-        $run->save();
+            $run = ProductImportRun::create([
+                'admin_id'         => $adminId,
+                'status'           => ProductImportRun::STATUS_RUNNING,
+                'original_filename' => $originalFilename,
+                'disk'             => $disk,
+                'path'             => $diskPath,
+                'update_existing'  => $updateExisting,
+                'started_at'       => now(),
+            ]);
 
-        return $run;
+            $run->setCheckpoint(['stage_index' => 0, 'stage_state' => []]);
+            $run->save();
+
+            return $run;
+        } finally {
+            $lock->release();
+        }
     }
 
     /** Advance the run by one chunk. Returns a progress snapshot for the poll UI. */

@@ -115,6 +115,7 @@ class InstallManager
 
         if ($index >= count($steps)) {
             $state['status'] = 'success';
+            $state = $this->scrubSecretsOnSuccess($state);
             $this->writeState($state);
 
             return $this->progressPayload($state);
@@ -130,6 +131,10 @@ class InstallManager
 
             $state['step_index'] = $index + 1;
             $state['status'] = $state['step_index'] >= count($steps) ? 'success' : 'running';
+
+            if ($state['status'] === 'success') {
+                $state = $this->scrubSecretsOnSuccess($state);
+            }
         } catch (\Throwable $e) {
             $state['status'] = 'failed';
             $state['error'] = "[{$key}] ".$e->getMessage();
@@ -146,6 +151,22 @@ class InstallManager
     public function reset(): void
     {
         @unlink($this->statePath());
+    }
+
+    /**
+     * mail_password (plaintext SMTP credential) and admin_password_hash sat
+     * in $state['input'] indefinitely once an install finished — reset()
+     * only ever ran on a FAILED run being retried, never on success, so
+     * these secrets stayed readable on disk (storage/app/install/state.json)
+     * for as long as the file existed, which was forever. Called the moment
+     * a run transitions to 'success', not after; the rest of $state (steps,
+     * log, timestamps) is kept so the progress screen still renders normally.
+     */
+    private function scrubSecretsOnSuccess(array $state): array
+    {
+        unset($state['input']['mail_password'], $state['input']['admin_password_hash']);
+
+        return $state;
     }
 
     /**

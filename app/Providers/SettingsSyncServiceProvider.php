@@ -2,8 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\Setting;
-use Illuminate\Support\Facades\Crypt;
+use App\Services\SettingsService;
 use Illuminate\Support\ServiceProvider;
 
 class SettingsSyncServiceProvider extends ServiceProvider
@@ -13,34 +12,37 @@ class SettingsSyncServiceProvider extends ServiceProvider
         //
     }
 
+    // Previously ran 4 uncached Setting::where('group', ...)->get() queries
+    // directly against the DB on every single request boot — not a
+    // correctness bug, but needless DB load for values that barely ever
+    // change. SettingsService::getGroup() shares the exact same 5-minute
+    // "settings.{group}" cache SettingsPage::save() already invalidates on
+    // write, so this now costs one DB query per group per 5 minutes
+    // (cache-wide, not per-request) instead of 4 queries every request. It
+    // also returns already-decrypted values, so the manual
+    // is_encrypted/Crypt::decryptString handling below is gone too.
     public function boot(): void
     {
         try {
-            $emailSettings = Setting::where('group', 'email')->get()->keyBy('key');
+            $settings = app(SettingsService::class);
 
-            if ($emailSettings->isNotEmpty()) {
-                $smtpHost = $emailSettings->get('smtp_host')?->value;
+            $emailSettings = $settings->getGroup('email');
+
+            if ($emailSettings !== []) {
+                $smtpHost = $emailSettings['smtp_host'] ?? null;
                 if ($smtpHost) {
-                    $smtpPassword = $emailSettings->get('smtp_password')?->value;
-                    if ($smtpPassword && $emailSettings->get('smtp_password')?->is_encrypted) {
-                        try {
-                            $smtpPassword = Crypt::decryptString($smtpPassword);
-                        } catch (\Exception $e) {
-                        }
-                    }
-
                     config([
                         'mail.mailers.smtp.host' => $smtpHost,
-                        'mail.mailers.smtp.port' => (int) ($emailSettings->get('smtp_port')?->value ?? 587),
-                        'mail.mailers.smtp.encryption' => $emailSettings->get('smtp_encryption')?->value ?? 'tls',
-                        'mail.mailers.smtp.username' => $emailSettings->get('smtp_username')?->value ?? '',
-                        'mail.mailers.smtp.password' => $smtpPassword ?? '',
-                        'mail.from.address' => $emailSettings->get('from_address')?->value ?? config('mail.from.address'),
-                        'mail.from.name' => $emailSettings->get('from_name')?->value ?? config('mail.from.name'),
+                        'mail.mailers.smtp.port' => (int) ($emailSettings['smtp_port'] ?? 587),
+                        'mail.mailers.smtp.encryption' => $emailSettings['smtp_encryption'] ?? 'tls',
+                        'mail.mailers.smtp.username' => $emailSettings['smtp_username'] ?? '',
+                        'mail.mailers.smtp.password' => $emailSettings['smtp_password'] ?? '',
+                        'mail.from.address' => $emailSettings['from_address'] ?? config('mail.from.address'),
+                        'mail.from.name' => $emailSettings['from_name'] ?? config('mail.from.name'),
                     ]);
                 }
 
-                $replyTo = $emailSettings->get('reply_to')?->value;
+                $replyTo = $emailSettings['reply_to'] ?? null;
                 if ($replyTo) {
                     // Laravel's MailManager::setGlobalAddress() unconditionally reads
                     // mail.reply_to (for every mailer resolution, not just mailables
@@ -56,49 +58,35 @@ class SettingsSyncServiceProvider extends ServiceProvider
                 }
             }
 
-            $authSettings = Setting::where('group', 'auth')->get()->keyBy('key');
+            $authSettings = $settings->getGroup('auth');
 
-            if ($authSettings->isNotEmpty()) {
-                $decrypt = function (?string $key) use ($authSettings): ?string {
-                    $setting = $authSettings->get($key);
-                    $value = $setting?->value;
-
-                    if ($value && $setting->is_encrypted) {
-                        try {
-                            $value = Crypt::decryptString($value);
-                        } catch (\Exception $e) {
-                        }
-                    }
-
-                    return $value ?: null;
-                };
-
-                if ($googleClientId = $decrypt('google_client_id')) {
+            if ($authSettings !== []) {
+                if ($googleClientId = ($authSettings['google_client_id'] ?? null)) {
                     config([
                         'services.google.client_id' => $googleClientId,
-                        'services.google.client_secret' => $decrypt('google_client_secret'),
+                        'services.google.client_secret' => $authSettings['google_client_secret'] ?? null,
                     ]);
                 }
 
-                if ($facebookClientId = $decrypt('facebook_client_id')) {
+                if ($facebookClientId = ($authSettings['facebook_client_id'] ?? null)) {
                     config([
                         'services.facebook.client_id' => $facebookClientId,
-                        'services.facebook.client_secret' => $decrypt('facebook_client_secret'),
+                        'services.facebook.client_secret' => $authSettings['facebook_client_secret'] ?? null,
                     ]);
                 }
             }
 
-            $securitySettings = Setting::where('group', 'security')->get()->keyBy('key');
-            if ($securitySettings->isNotEmpty()) {
-                $sessionLifetime = $securitySettings->get('session_lifetime')?->value;
+            $securitySettings = $settings->getGroup('security');
+            if ($securitySettings !== []) {
+                $sessionLifetime = $securitySettings['session_lifetime'] ?? null;
                 if ($sessionLifetime) {
                     config(['session.lifetime' => (int) $sessionLifetime]);
                 }
             }
 
-            $performanceSettings = Setting::where('group', 'performance')->get()->keyBy('key');
-            if ($performanceSettings->isNotEmpty()) {
-                $retryAfter = $performanceSettings->get('queue_retry_after')?->value;
+            $performanceSettings = $settings->getGroup('performance');
+            if ($performanceSettings !== []) {
+                $retryAfter = $performanceSettings['queue_retry_after'] ?? null;
                 if ($retryAfter) {
                     config(['queue.connections.redis.retry_after' => (int) $retryAfter]);
                 }

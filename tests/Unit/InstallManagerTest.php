@@ -117,6 +117,36 @@ class InstallManagerTest extends TestCase
         $this->assertSame(100, $again['percent']);
     }
 
+    /**
+     * system-10: mail_password (plaintext SMTP credential) and
+     * admin_password_hash used to sit in storage/app/install/state.json
+     * indefinitely once an install finished — reset() only ever ran when
+     * retrying a FAILED run, never after a successful one.
+     */
+    #[Test]
+    public function successful_install_scrubs_plaintext_secrets_from_the_state_file(): void
+    {
+        $manager = $this->fakeManager();
+        $manager->start([
+            'import_demo_data' => false,
+            'mail_password' => 'super-secret-smtp-pass',
+            'admin_password_hash' => '$2y$10$fakehashfakehashfakehashfa',
+            'admin_email' => 'admin@example.com',
+        ]);
+
+        for ($i = 0; $i < 12; $i++) {
+            $manager->advance();
+        }
+
+        $state = json_decode(file_get_contents($manager->statePath()), true);
+
+        $this->assertSame('success', $state['status']);
+        $this->assertArrayNotHasKey('mail_password', $state['input']);
+        $this->assertArrayNotHasKey('admin_password_hash', $state['input']);
+        // Non-secret input is kept — only the two secret keys are scrubbed.
+        $this->assertSame('admin@example.com', $state['input']['admin_email']);
+    }
+
     #[Test]
     public function reset_clears_state_so_a_new_run_can_start(): void
     {

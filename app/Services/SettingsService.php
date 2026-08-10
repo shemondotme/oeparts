@@ -28,6 +28,22 @@ class SettingsService
             return $default;
         }
 
+        return $this->getGroup($group)[$settingKey] ?? $default;
+    }
+
+    /**
+     * Fetch an entire settings group as a flat [key => decrypted value]
+     * array, cached for 5 minutes under the same "settings.{group}" key
+     * get() itself uses — anything that needs a whole group at once (e.g.
+     * SettingsSyncServiceProvider's boot-time mail/OAuth/session config
+     * sync) should call this instead of querying the Setting model
+     * directly, so it shares this cache rather than running its own
+     * uncached query on every single request.
+     *
+     * @return array<string, mixed>
+     */
+    public function getGroup(string $group): array
+    {
         $cacheKey = "settings.{$group}";
 
         $fetchFromDb = function () use ($group) {
@@ -64,7 +80,7 @@ class SettingsService
         // so an uncaught cache-driver exception here takes down every single page,
         // including the web installer itself, before any request-level code runs.
         try {
-            $groupSettings = Cache::remember($cacheKey, now()->addMinutes(5), $fetchFromDb);
+            return Cache::remember($cacheKey, now()->addMinutes(5), $fetchFromDb);
         } catch (\Throwable $e) {
             // \Throwable, not \Exception: a missing Redis extension surfaces as
             // \Error ("Class \"Redis\" not found"), which \Exception does not catch.
@@ -72,10 +88,8 @@ class SettingsService
                 'group' => $group,
                 'error' => $e->getMessage(),
             ]);
-            $groupSettings = $fetchFromDb();
+            return $fetchFromDb();
         }
-
-        return $groupSettings[$settingKey] ?? $default;
     }
 
     /**

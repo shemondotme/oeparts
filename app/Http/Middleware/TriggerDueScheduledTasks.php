@@ -54,9 +54,15 @@ class TriggerDueScheduledTasks
             return;
         }
 
-        // Claim the throttle window immediately — even if schedule:run itself
-        // is slow, no other concurrent request should also fire it.
-        Cache::put(self::THROTTLE_KEY, true, self::MIN_INTERVAL_SECONDS);
+        // Cache::add() (not get-then-put) is the actual atomic claim — two
+        // concurrent PHP-FPM workers can both pass isDue()'s plain Cache::get()
+        // peek in the same instant; only add() guarantees exactly one of them
+        // wins the window and only one schedule:run actually fires. Matches
+        // the same atomic-lock pattern already used by HealthCheckService and
+        // CacheMetricsService for their own once-per-window guards.
+        if (! Cache::add(self::THROTTLE_KEY, true, self::MIN_INTERVAL_SECONDS)) {
+            return;
+        }
 
         try {
             Artisan::call('schedule:run');

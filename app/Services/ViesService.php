@@ -112,9 +112,19 @@ class ViesService
             $cacheKey = "vies:{$countryCode}:{$vatNumber}";
 
             return Cache::remember($cacheKey, 86400, function () use ($countryCode, $vatNumber) {
+                // connection_timeout only bounds the initial TCP handshake —
+                // VIES is notoriously slow/flaky, and a connected-but-stalled
+                // server could hold this synchronous, in-request call (the
+                // checkout VAT-exemption flow calls this inline) open for
+                // PHP's default socket timeout (60s+) with nothing here
+                // bounding the actual response wait. stream_context's
+                // http.timeout covers that read phase too.
                 $client = new \SoapClient(self::WSDL, [
                     'connection_timeout' => 10,
                     'cache_wsdl'         => WSDL_CACHE_DISK,
+                    'stream_context'     => stream_context_create([
+                        'http' => ['timeout' => 10],
+                    ]),
                 ]);
 
                 $response = $client->checkVat([
