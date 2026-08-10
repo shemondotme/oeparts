@@ -308,6 +308,25 @@ class AuthTest extends TestCase
             ->assertSessionHasErrors(['email']);
     }
 
+    /**
+     * auth-10: a well-formed but unregistered email used to take a
+     * different response path (->withErrors(), which this page's view
+     * never even renders) than a real account (->with('status', ...), the
+     * only thing the view shows) — silence vs. a visible confirmation is
+     * itself an enumeration signal, regardless of message wording.
+     */
+    #[Test]
+    public function password_reset_for_an_unregistered_email_gives_the_same_generic_response_as_a_real_one(): void
+    {
+        $response = $this->post('/en/reset-password', [
+            'email' => 'nobody-has-this-address@example.com',
+        ]);
+
+        $response->assertStatus(302)
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', trans('passwords.sent'));
+    }
+
     // ── Account Routes (Protected) ────────────────────────────────────────────
 
     #[Test]

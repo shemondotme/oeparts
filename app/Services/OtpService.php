@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\OtpPurpose;
 use App\Models\Otp;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -34,47 +35,67 @@ class OtpService
      */
     public function generate(string $email, OtpPurpose $purpose, ?string $ipAddress = null): Otp
     {
-        $cooldown = (int) settings('auth.otp_resend_cooldown', 60);
+        // No DB-level uniqueness guard on (email, purpose) while unverified —
+        // two near-simultaneous "resend code" requests could both read the
+        // cooldown as clear before either had deleted/inserted, leaving two
+        // live OTP rows: the newest one usable, the other an unused-but-
+        // still-guessable code that never gets cleaned up until it expires.
+        // Cache::lock() (atomic on every driver Laravel ships, no Redis
+        // dependency) makes the whole cooldown-check + delete + insert one
+        // critical section per email+purpose.
+        $lock = Cache::lock("otp.generate:{$email}:{$purpose->value}", 10);
 
-        // Enforce resend cooldown
-        $existing = Otp::where('email', $email)
-            ->where('purpose', $purpose)
-            ->whereNull('verified_at')
-            ->latest('expires_at')
-            ->first();
-
-        if ($existing) {
-            $sentAt   = $existing->expires_at->subMinutes((int) settings('auth.otp_expiry_minutes', 10));
-            $cooldownEnd = $sentAt->addSeconds($cooldown);
-
-            if (now()->lt($cooldownEnd)) {
-                $wait = (int) ceil(now()->diffInSeconds($cooldownEnd, false));
-                throw new \RuntimeException(__('otp.wait_before_resend', ['wait' => $wait]));
-            }
-
-            // Invalidate old OTPs
-            Otp::where('email', $email)
-                ->where('purpose', $purpose)
-                ->whereNull('verified_at')
-                ->delete();
+        try {
+            $lock->block(5);
+        } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
+            throw new \RuntimeException(__('otp.wait_before_resend', ['wait' => 5]));
         }
 
-        $length  = (int) settings('auth.otp_length', 6);
-        $expiry  = (int) settings('auth.otp_expiry_minutes', 10);
-        $code    = $this->generateCode($length);
+        try {
+            $cooldown = (int) settings('auth.otp_resend_cooldown', 60);
 
-        $otp = Otp::create([
-            'email'      => $email,
-            'otp_code'   => $code,
-            'purpose'    => $purpose,
-            'expires_at' => now()->addMinutes($expiry),
-            'attempts'   => 0,
-            'ip_address' => $ipAddress,
-        ]);
+            // Enforce resend cooldown
+            $existing = Otp::where('email', $email)
+                ->where('purpose', $purpose)
+                ->whereNull('verified_at')
+                ->latest('expires_at')
+                ->first();
 
-        Log::info('OTP generated', ['email' => $email, 'purpose' => $purpose->value]);
+            if ($existing) {
+                $sentAt   = $existing->expires_at->subMinutes((int) settings('auth.otp_expiry_minutes', 10));
+                $cooldownEnd = $sentAt->addSeconds($cooldown);
 
-        return $otp;
+                if (now()->lt($cooldownEnd)) {
+                    $wait = (int) ceil(now()->diffInSeconds($cooldownEnd, false));
+                    throw new \RuntimeException(__('otp.wait_before_resend', ['wait' => $wait]));
+                }
+
+                // Invalidate old OTPs
+                Otp::where('email', $email)
+                    ->where('purpose', $purpose)
+                    ->whereNull('verified_at')
+                    ->delete();
+            }
+
+            $length  = (int) settings('auth.otp_length', 6);
+            $expiry  = (int) settings('auth.otp_expiry_minutes', 10);
+            $code    = $this->generateCode($length);
+
+            $otp = Otp::create([
+                'email'      => $email,
+                'otp_code'   => $code,
+                'purpose'    => $purpose,
+                'expires_at' => now()->addMinutes($expiry),
+                'attempts'   => 0,
+                'ip_address' => $ipAddress,
+            ]);
+
+            Log::info('OTP generated', ['email' => $email, 'purpose' => $purpose->value]);
+
+            return $otp;
+        } finally {
+            $lock->release();
+        }
     }
 
     /**

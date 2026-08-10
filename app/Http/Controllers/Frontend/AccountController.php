@@ -302,6 +302,16 @@ class AccountController extends Controller
     {
         $user = Auth::guard('web')->user();
 
+        // Re-authentication: previously only a client-side confirm() dialog
+        // stood between "session is open" and "account permanently deleted"
+        // — no proof the person clicking still knows the account password.
+        // Defense-in-depth against a hijacked or left-open session (see
+        // auth-1's session-fixation fix) destroying the account outright.
+        $request->validate(['current_password' => 'required|string']);
+        if (! \Hash::check($request->input('current_password'), $user->password)) {
+            return back()->withErrors(['current_password' => __('account.current_password_incorrect')])->withInput();
+        }
+
         $user->email = 'deleted_'.$user->id.'@oeparts.invalid';
         $user->name = 'Deleted User';
         $user->phone = null;

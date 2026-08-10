@@ -404,9 +404,35 @@
                     </p>
                 </div>
 
-                <form id="account-delete-form" action="{{ route('frontend.account.delete', ['lang' => $lang]) }}" method="POST">
+                <form id="account-delete-form" action="{{ route('frontend.account.delete', ['lang' => $lang]) }}" method="POST" class="space-y-4" x-data="{ pw: false }">
                     @csrf
                     @method('DELETE')
+
+                    {{-- Re-authentication: a hijacked/left-open session used to be
+                         able to permanently delete the account with nothing more
+                         than a JS confirm() dialog — no proof the person clicking
+                         still knows the account password. --}}
+                    <div class="max-w-sm">
+                        <label for="delete_current_password" class="bp-spec block mb-2 text-ink">
+                            {{ ui_copy('account_current_password', 'account.current_password') }} <span class="text-red-600">*</span>
+                        </label>
+                        <div class="relative">
+                            <input :type="pw ? 'text' : 'password'" id="delete_current_password" name="current_password" required
+                                   autocomplete="current-password"
+                                   class="bp-input w-full pr-11 font-mono">
+                            <button type="button" @click="pw = !pw"
+                                    :aria-label="pw ? '{{ addslashes(ui_copy('account_hide_password', 'account.hide_password')) }}' : '{{ addslashes(ui_copy('account_show_password', 'account.show_password')) }}'"
+                                    class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 border border-rule-strong bg-paper
+                                           flex items-center justify-center text-ink-muted hover:text-ink hover:border-ink transition-colors focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-ink">
+                                <x-heroicon-s-eye x-show="!pw" class="w-3.5 h-3.5" />
+                                <x-heroicon-s-eye-slash x-show="pw" x-cloak class="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                        @error('current_password')
+                            <p class="text-sm text-red-700 mt-1.5">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <button type="button"
                             x-on:click="if(confirm('{{ addslashes(ui_copy('account_delete_account_confirm', 'account.delete_account_confirm')) }}')) document.getElementById('account-delete-form').submit();"
                             class="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-ivory border border-red-600

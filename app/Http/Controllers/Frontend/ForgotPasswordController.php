@@ -26,14 +26,16 @@ class ForgotPasswordController extends Controller
             'website' => 'max:0',
         ]);
 
-        $status = Password::broker('users')->sendResetLink(
-            $request->only('email')
-        );
+        // Always the same generic message regardless of what Password::
+        // broker()->sendResetLink() actually resolved to (RESET_LINK_SENT
+        // vs. INVALID_USER) and via the same 'status' flash channel either
+        // way. The view only ever renders session('status') — the other
+        // branch's ->withErrors() had no on-page effect at all, so a real
+        // account got a visible confirmation while a nonexistent one got
+        // silence, itself already an account-enumeration signal distinct
+        // from the message text.
+        Password::broker('users')->sendResetLink($request->only('email'));
 
-        if ($status === Password::RESET_LINK_SENT) {
-            return back()->with('status', trans($status));
-        }
-
-        return back()->withErrors(['email' => trans($status)]);
+        return back()->with('status', trans(Password::RESET_LINK_SENT));
     }
 }
