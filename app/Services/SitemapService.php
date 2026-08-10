@@ -234,7 +234,14 @@ class SitemapService
             $count++;
         }
 
+        // is_homepage pages are excluded — they're already covered by the
+        // "/{locale}/" entries written above. Without this, a page flagged
+        // as the homepage got a SECOND, separate <loc> entry at its own
+        // slug, sending search engines a duplicate-content signal for what
+        // is really the same page (matches SitemapController's human-
+        // readable sitemap, which already excludes is_homepage the same way).
         Page::where('status', ContentStatus::Published->value)
+            ->where('is_homepage', false)
             ->orderBy('updated_at', 'desc')
             ->cursor()
             ->each(function (Page $page) use (&$writer, &$batch, &$count, &$written) {

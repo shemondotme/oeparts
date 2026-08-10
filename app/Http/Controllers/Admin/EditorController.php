@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Mews\Purifier\Facades\Purifier;
 
 class EditorController extends Controller
 {
@@ -42,9 +43,15 @@ class EditorController extends Controller
     {
         $request->validate(['html' => 'required|string']);
 
+        // strip_tags() only filters TAG names — it leaves every attribute on
+        // an allowed tag untouched, so `<img src=x onerror=alert(1)>` or
+        // `<a href="javascript:...">` passed straight through into the JSON
+        // response. HTMLPurifier (already a project dependency, used with
+        // the same 'default' profile as other rich-text content) strips
+        // dangerous attributes/protocols too, not just disallowed tags.
         return response()->json([
             'success' => true,
-            'preview' => strip_tags($request->input('html'), '<p><br><strong><em><u><h1><h2><h3><h4><h5><h6><ul><ol><li><a><img><blockquote><pre><code><table><thead><tbody><tr><th><td><div><span>'),
+            'preview' => Purifier::clean($request->input('html'), 'default'),
         ]);
     }
 }

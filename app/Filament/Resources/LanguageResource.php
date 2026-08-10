@@ -60,6 +60,7 @@ class LanguageResource extends Resource
                                             ->placeholder('e.g. en, de, lt')
                                             ->required()
                                             ->maxLength(2)
+                                            ->unique(ignoreRecord: true)
                                             ->helperText('ISO 639-1 two-letter code (e.g. "en" for English).'),
                                         Forms\Components\TextInput::make('name')
                                             ->label(__('admin.display_name'))

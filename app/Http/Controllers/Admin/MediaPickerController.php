@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\BlogPost;
+use App\Models\Manufacturer;
 use App\Models\MediaFile;
+use App\Models\Page;
+use App\Models\SeoMeta;
 use App\Services\UploadedImageSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -84,6 +88,27 @@ class MediaPickerController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin || $admin->cannot('delete media files')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
+
+        // Every FK referencing media_files.id is nullOnDelete() — deleting
+        // used-elsewhere media silently blanked out a Page/BlogPost's
+        // featured image, a Manufacturer's logo, or a SeoMeta's OG image,
+        // with no warning that anything else was depending on this file.
+        $usages = [
+            'page featured image' => Page::where('featured_image_id', $media->id)->count(),
+            'blog post featured image' => BlogPost::where('featured_image_id', $media->id)->count(),
+            'manufacturer logo' => Manufacturer::where('logo_id', $media->id)->count(),
+            'SEO OG image' => SeoMeta::where('og_image_id', $media->id)->count(),
+        ];
+        $usages = array_filter($usages);
+
+        if ($usages !== []) {
+            $summary = collect($usages)->map(fn ($count, $label) => "{$count} {$label}(s)")->implode(', ');
+
+            return response()->json([
+                'success' => false,
+                'message' => "This file is still in use: {$summary}. Remove it from those places first.",
+            ], 422);
         }
 
         if ($media->file_path) {

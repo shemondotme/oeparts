@@ -57,11 +57,36 @@ class CmsEditorFeaturesTest extends TestCase
     public function feature_2_rich_editor_generates_html_preview()
     {
         $html = '<h1>Test</h1><p>Content</p>';
-        
-        $this->post(route('admin.editor.preview-html'), [
+
+        $response = $this->post(route('admin.editor.preview-html'), [
             'html' => $html,
-        ])->assertJsonPath('success', true)
-         ->assertJsonPath('preview', $html);
+        ])->assertJsonPath('success', true);
+
+        // HTMLPurifier reformats whitespace between block elements (unlike
+        // the old strip_tags(), which passed the string through byte-for-
+        // byte) — assert the allowed content survived, not an exact match.
+        $preview = $response->json('preview');
+        $this->assertStringContainsString('<h1>Test</h1>', $preview);
+        $this->assertStringContainsString('<p>Content</p>', $preview);
+    }
+
+    /**
+     * cms-16: strip_tags() only filtered tag NAMES — it left every
+     * attribute on an allowed tag untouched, so a malicious attribute on an
+     * otherwise-allowed tag (img, a) passed straight through into the JSON
+     * response returned to the browser. Switched to HTMLPurifier, which
+     * strips disallowed attributes/protocols too.
+     */
+    #[Test]
+    public function feature_2_rich_editor_preview_strips_dangerous_attributes_not_just_tags()
+    {
+        $response = $this->post(route('admin.editor.preview-html'), [
+            'html' => '<img src="x" onerror="alert(1)"><a href="javascript:alert(2)">click</a>',
+        ])->assertJsonPath('success', true);
+
+        $preview = $response->json('preview');
+        $this->assertStringNotContainsString('onerror', $preview);
+        $this->assertStringNotContainsString('javascript:', $preview);
     }
 
     // ============= FEATURE 3: LIVE PREVIEW =============

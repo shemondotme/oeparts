@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\MenuResource\RelationManagers;
 
 use App\Enums\MenuTarget;
+use App\Models\MenuItem;
 use App\Models\Page;
 use App\Filament\Support\AdminUi;
 use Filament\Forms;
@@ -58,10 +59,14 @@ class MenuItemRelationManager extends RelationManager
                     ->hidden(fn ($get): bool => $get('type') !== 'page'),
                 Forms\Components\Select::make('parent_id')
                     ->label('Parent Item')
-                    ->options(function (RelationManager $livewire): array {
+                    // Excludes the record being edited from its own options —
+                    // without this, a top-level item could be set as its own
+                    // parent, creating an immediate self-reference cycle.
+                    ->options(function (RelationManager $livewire, ?MenuItem $record): array {
                         $menu = $livewire->getOwnerRecord();
                         return $menu->items()
                             ->whereNull('parent_id')
+                            ->when($record, fn ($q) => $q->whereKeyNot($record->getKey()))
                             ->get()
                             ->mapWithKeys(fn ($item): array => [
                                 $item->id => AdminUi::localizedName($item->label),
