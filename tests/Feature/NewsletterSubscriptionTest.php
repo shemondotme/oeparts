@@ -41,8 +41,15 @@ class NewsletterSubscriptionTest extends TestCase
         });
     }
 
+    // GET no longer mutates state on its own — an email security scanner or
+    // "Safe Links"-style prefetcher follows every link in an inbound email
+    // before a human ever clicks it, so a bare GET that activated/cancelled
+    // a subscription immediately let a prefetch act on the recipient's
+    // behalf with no real click involved. GET now only shows a confirmation
+    // page; the actual mutation requires a POST (a real form submission).
+
     #[Test]
-    public function confirm_route_activates_pending_subscription(): void
+    public function confirm_route_get_shows_a_confirmation_page_without_activating_yet(): void
     {
         $subscriber = NewsletterSubscriber::create([
             'email' => 'pending@example.com',
@@ -55,6 +62,25 @@ class NewsletterSubscriptionTest extends TestCase
 
         $response = $this->get('/en/newsletter/confirm/test-confirm-token');
 
+        $response->assertOk();
+        $response->assertSee('test-confirm-token', false);
+        $this->assertFalse($subscriber->refresh()->is_active);
+    }
+
+    #[Test]
+    public function confirm_route_post_activates_pending_subscription(): void
+    {
+        $subscriber = NewsletterSubscriber::create([
+            'email' => 'pending@example.com',
+            'lang' => 'en',
+            'is_active' => false,
+            'subscribed_at' => now(),
+            'ip_address' => '127.0.0.1',
+            'unsubscribe_token' => 'test-confirm-token',
+        ]);
+
+        $response = $this->post('/en/newsletter/confirm/test-confirm-token');
+
         $response->assertRedirect();
         $this->assertTrue($subscriber->refresh()->is_active);
         $this->assertNull($subscriber->unsubscribed_at);
@@ -66,5 +92,42 @@ class NewsletterSubscriptionTest extends TestCase
         $response = $this->get('/en/newsletter/confirm/no-such-token');
 
         $response->assertRedirect();
+    }
+
+    #[Test]
+    public function unsubscribe_route_get_shows_a_confirmation_page_without_unsubscribing_yet(): void
+    {
+        $subscriber = NewsletterSubscriber::create([
+            'email' => 'active@example.com',
+            'lang' => 'en',
+            'is_active' => true,
+            'subscribed_at' => now(),
+            'ip_address' => '127.0.0.1',
+            'unsubscribe_token' => 'test-unsub-token',
+        ]);
+
+        $response = $this->get('/en/newsletter/unsubscribe/test-unsub-token');
+
+        $response->assertOk();
+        $this->assertTrue($subscriber->refresh()->is_active);
+    }
+
+    #[Test]
+    public function unsubscribe_route_post_unsubscribes(): void
+    {
+        $subscriber = NewsletterSubscriber::create([
+            'email' => 'active@example.com',
+            'lang' => 'en',
+            'is_active' => true,
+            'subscribed_at' => now(),
+            'ip_address' => '127.0.0.1',
+            'unsubscribe_token' => 'test-unsub-token',
+        ]);
+
+        $response = $this->post('/en/newsletter/unsubscribe/test-unsub-token');
+
+        $response->assertRedirect();
+        $this->assertFalse($subscriber->refresh()->is_active);
+        $this->assertNotNull($subscriber->unsubscribed_at);
     }
 }

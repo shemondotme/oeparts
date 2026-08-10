@@ -16,9 +16,7 @@ class BlogController extends Controller
     public function index(Request $request, string $lang)
     {
         $query = BlogPost::with(['author', 'category', 'featuredImage'])
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now());
+            ->published();
 
         if ($request->filled('category')) {
             $query->whereHas('category', function ($q) use ($request) {
@@ -53,8 +51,6 @@ class BlogController extends Controller
         // main list below to avoid showing the same post twice on the page.
         $featuredPost = BlogPost::with('featuredImage')
             ->published()
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now())
             ->whereNotNull('featured_image_id')
             ->orderBy('published_at', 'desc')
             ->first();
@@ -86,16 +82,12 @@ class BlogController extends Controller
     {
         $post = BlogPost::with(['author', 'category', 'tags', 'featuredImage'])
             ->where('slug', $slug)
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now())
+            ->published()
             ->firstOrFail();
 
         // Get related posts (same category or tags)
         $relatedPosts = BlogPost::with('featuredImage')
-            ->where('status', 'published')
-            ->whereNotNull('published_at')
-            ->where('published_at', '<=', now())
+            ->published()
             ->where('id', '!=', $post->id)
             ->where(function ($q) use ($post) {
                 $q->where('category_id', $post->category_id)

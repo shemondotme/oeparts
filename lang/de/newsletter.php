@@ -19,4 +19,11 @@ return [
     'unsubscribed_success' => 'Sie wurden von unserem Newsletter abgemeldet.',
     'invalid_confirmation_link' => 'Ungültiger Bestätigungslink.',
     'confirmed_success' => 'Ihr Newsletter-Abonnement wurde bestätigt!',
+    'confirm_page_eyebrow' => 'Newsletter',
+    'unsubscribe_confirm_heading' => 'Newsletter abbestellen?',
+    'unsubscribe_confirm_description' => 'Klicken Sie auf die Schaltfläche unten, um zu bestätigen, dass Sie unseren Newsletter nicht mehr erhalten möchten. Es wurde noch nichts geändert.',
+    'unsubscribe_confirm_button' => 'Ja, abbestellen',
+    'confirm_confirm_heading' => 'Newsletter-Abonnement bestätigen',
+    'confirm_confirm_description' => 'Klicken Sie auf die Schaltfläche unten, um Ihr Abonnement zu bestätigen. Es wurde noch nichts geändert.',
+    'confirm_confirm_button' => 'Ja, Abonnement bestätigen',
 ];

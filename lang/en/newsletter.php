@@ -19,4 +19,11 @@ return [
     'unsubscribed_success' => 'You have been unsubscribed from our newsletter.',
     'invalid_confirmation_link' => 'Invalid confirmation link.',
     'confirmed_success' => 'Your newsletter subscription has been confirmed!',
+    'confirm_page_eyebrow' => 'Newsletter',
+    'unsubscribe_confirm_heading' => 'Unsubscribe from our newsletter?',
+    'unsubscribe_confirm_description' => 'Click the button below to confirm you want to stop receiving our newsletter. Nothing has changed yet.',
+    'unsubscribe_confirm_button' => 'Yes, unsubscribe me',
+    'confirm_confirm_heading' => 'Confirm your newsletter subscription',
+    'confirm_confirm_description' => 'Click the button below to confirm your subscription. Nothing has changed yet.',
+    'confirm_confirm_button' => 'Yes, confirm my subscription',
 ];

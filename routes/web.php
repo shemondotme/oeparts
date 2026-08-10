@@ -242,9 +242,15 @@ Route::prefix('{lang}')
         Route::get('/newsletter/unsubscribe/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'unsubscribe'])
             ->middleware('throttle:10,1')
             ->name('frontend.newsletter.unsubscribe');
+        Route::post('/newsletter/unsubscribe/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'unsubscribeConfirmed'])
+            ->middleware('throttle:10,1')
+            ->name('frontend.newsletter.unsubscribe.confirmed');
         Route::get('/newsletter/confirm/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'confirm'])
             ->middleware('throttle:10,1')
             ->name('frontend.newsletter.confirm');
+        Route::post('/newsletter/confirm/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'confirmConfirmed'])
+            ->middleware('throttle:10,1')
+            ->name('frontend.newsletter.confirm.confirmed');
 
         // Blog
         Route::get('/blog', [BlogController::class, 'index'])->name('frontend.blog.index');

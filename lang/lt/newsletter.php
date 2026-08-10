@@ -19,4 +19,11 @@ return [
     'unsubscribed_success' => 'Jūs atsisakėte mūsų naujienlaiškio.',
     'invalid_confirmation_link' => 'Neteisinga patvirtinimo nuoroda.',
     'confirmed_success' => 'Jūsų naujienlaiškio prenumerata patvirtinta!',
+    'confirm_page_eyebrow' => 'Naujienlaiškis',
+    'unsubscribe_confirm_heading' => 'Atsisakyti mūsų naujienlaiškio?',
+    'unsubscribe_confirm_description' => 'Spustelėkite mygtuką žemiau, kad patvirtintumėte, jog norite nebegauti mūsų naujienlaiškio. Kol kas niekas nepakeista.',
+    'unsubscribe_confirm_button' => 'Taip, atsisakyti',
+    'confirm_confirm_heading' => 'Patvirtinkite naujienlaiškio prenumeratą',
+    'confirm_confirm_description' => 'Spustelėkite mygtuką žemiau, kad patvirtintumėte prenumeratą. Kol kas niekas nepakeista.',
+    'confirm_confirm_button' => 'Taip, patvirtinti prenumeratą',
 ];

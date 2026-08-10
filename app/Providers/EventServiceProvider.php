@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Events\CartAbandoned;
 use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
 use App\Events\PaymentReceived;
@@ -11,7 +10,6 @@ use App\Listeners\LogEmailSent;
 use App\Listeners\LogOrderStatusChange;
 use App\Listeners\LogPaymentReceived;
 use App\Listeners\LogScheduledTaskRun;
-use App\Listeners\RecoverAbandonedCart;
 use App\Listeners\SendOrderConfirmation;
 use App\Models\Admin;
 use App\Models\AdminSession;
@@ -55,9 +53,6 @@ class EventServiceProvider extends ServiceProvider
         ],
         PaymentReceived::class => [
             LogPaymentReceived::class,
-        ],
-        CartAbandoned::class => [
-            RecoverAbandonedCart::class,
         ],
         \App\Events\RefundRequested::class => [
             \App\Listeners\NotifyAdminOfRefund::class,

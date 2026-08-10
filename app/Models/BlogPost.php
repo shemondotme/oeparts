@@ -55,8 +55,19 @@ class BlogPost extends Model
         return $this->morphOne(SeoMeta::class, 'metable');
     }
 
+    /**
+     * status=Published alone isn't "live" — a post can be scheduled with a
+     * future published_at. BlogController's own list/show queries always
+     * added a separate published_at <= now() check on top of this scope,
+     * but callers that used ONLY this scope (the blog index sidebar's
+     * category/tag counts) showed a future-scheduled post's category/tag as
+     * already having content — a non-zero count and a working-looking
+     * filter link that led to an empty/404 result until the schedule hit.
+     */
     public function scopePublished($q)
     {
-        return $q->where('status', ContentStatus::Published);
+        return $q->where('status', ContentStatus::Published)
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now());
     }
 }

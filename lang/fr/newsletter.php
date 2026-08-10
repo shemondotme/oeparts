@@ -19,4 +19,11 @@ return [
     'unsubscribed_success' => 'Vous avez été désabonné de notre newsletter.',
     'invalid_confirmation_link' => 'Lien de confirmation invalide.',
     'confirmed_success' => 'Votre abonnement à la newsletter a été confirmé !',
+    'confirm_page_eyebrow' => 'Newsletter',
+    'unsubscribe_confirm_heading' => 'Se désabonner de notre newsletter ?',
+    'unsubscribe_confirm_description' => 'Cliquez sur le bouton ci-dessous pour confirmer que vous souhaitez ne plus recevoir notre newsletter. Rien n\'a encore été modifié.',
+    'unsubscribe_confirm_button' => 'Oui, me désabonner',
+    'confirm_confirm_heading' => 'Confirmez votre abonnement à la newsletter',
+    'confirm_confirm_description' => 'Cliquez sur le bouton ci-dessous pour confirmer votre abonnement. Rien n\'a encore été modifié.',
+    'confirm_confirm_button' => 'Oui, confirmer mon abonnement',
 ];

@@ -102,9 +102,32 @@ class NewsletterController extends Controller
     }
 
     /**
-     * Unsubscribe from newsletter.
+     * Show the unsubscribe confirmation page (GET, read-only). Email
+     * security scanners and "Safe Links"-style prefetchers follow every
+     * link in an inbound email before a human ever clicks it — a bare GET
+     * that unsubscribed immediately let a prefetch silently opt a real
+     * subscriber out with no click involved. The actual mutation now only
+     * happens in unsubscribeConfirmed() below, via a real POST.
      */
     public function unsubscribe(Request $request, string $lang, string $token)
+    {
+        $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
+
+        if (!$subscriber) {
+            return redirect()->route('frontend.home', compact('lang'))
+                ->with('error', __('newsletter.invalid_unsubscribe_link'));
+        }
+
+        return view('frontend.newsletter.confirm-action', [
+            'lang' => $lang,
+            'heading' => __('newsletter.unsubscribe_confirm_heading'),
+            'description' => __('newsletter.unsubscribe_confirm_description'),
+            'buttonLabel' => __('newsletter.unsubscribe_confirm_button'),
+            'actionUrl' => route('frontend.newsletter.unsubscribe.confirmed', ['lang' => $lang, 'token' => $token]),
+        ]);
+    }
+
+    public function unsubscribeConfirmed(Request $request, string $lang, string $token)
     {
         $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
 
@@ -123,9 +146,29 @@ class NewsletterController extends Controller
     }
 
     /**
-     * Confirm a pending newsletter subscription (double opt-in).
+     * Show the subscription-confirmation page (GET, read-only) — same
+     * prefetch concern as unsubscribe() above. The actual mutation only
+     * happens in confirmConfirmed() below, via a real POST.
      */
     public function confirm(Request $request, string $lang, string $token)
+    {
+        $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
+
+        if (!$subscriber) {
+            return redirect()->route('frontend.home', compact('lang'))
+                ->with('error', __('newsletter.invalid_confirmation_link'));
+        }
+
+        return view('frontend.newsletter.confirm-action', [
+            'lang' => $lang,
+            'heading' => __('newsletter.confirm_confirm_heading'),
+            'description' => __('newsletter.confirm_confirm_description'),
+            'buttonLabel' => __('newsletter.confirm_confirm_button'),
+            'actionUrl' => route('frontend.newsletter.confirm.confirmed', ['lang' => $lang, 'token' => $token]),
+        ]);
+    }
+
+    public function confirmConfirmed(Request $request, string $lang, string $token)
     {
         $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
 

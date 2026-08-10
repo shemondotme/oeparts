@@ -19,4 +19,11 @@ return [
     'unsubscribed_success' => 'Se ha dado de baja de nuestro boletín.',
     'invalid_confirmation_link' => 'Enlace de confirmación no válido.',
     'confirmed_success' => '¡Su suscripción al boletín ha sido confirmada!',
+    'confirm_page_eyebrow' => 'Boletín',
+    'unsubscribe_confirm_heading' => '¿Cancelar la suscripción a nuestro boletín?',
+    'unsubscribe_confirm_description' => 'Haga clic en el botón de abajo para confirmar que desea dejar de recibir nuestro boletín. Todavía no se ha realizado ningún cambio.',
+    'unsubscribe_confirm_button' => 'Sí, cancelar mi suscripción',
+    'confirm_confirm_heading' => 'Confirme su suscripción al boletín',
+    'confirm_confirm_description' => 'Haga clic en el botón de abajo para confirmar su suscripción. Todavía no se ha realizado ningún cambio.',
+    'confirm_confirm_button' => 'Sí, confirmar mi suscripción',
 ];
