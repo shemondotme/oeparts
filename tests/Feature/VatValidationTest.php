@@ -79,4 +79,25 @@ class VatValidationTest extends TestCase
 
         $response->assertOk()->assertJson(['success' => true, 'valid' => true]);
     }
+
+    /**
+     * system-13: the 'vies-validation' named rate limiter (AppServiceProvider)
+     * was defined but never actually applied to this route — only the
+     * generic 60/min throttle:api shared by every public catalog endpoint
+     * covered it. Now the dedicated 30/min limit applies too.
+     */
+    #[Test]
+    public function the_route_is_throttled_at_30_requests_per_minute(): void
+    {
+        $this->mock(ViesService::class, function ($mock) {
+            $mock->shouldReceive('validate')
+                ->andReturn(new ViesResult(valid: true, reason: null, countryCode: 'DE', vatNumber: '123456789'));
+        });
+
+        for ($i = 0; $i < 30; $i++) {
+            $this->postJson('/api/validate-vat', ['vat_number' => 'DE123456789'])->assertOk();
+        }
+
+        $this->postJson('/api/validate-vat', ['vat_number' => 'DE123456789'])->assertStatus(429);
+    }
 }

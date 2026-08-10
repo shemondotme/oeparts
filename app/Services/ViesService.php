@@ -106,12 +106,19 @@ class ViesService
             ]);
             return new ViesResult(valid: null, reason: 'rate_limited', countryCode: $countryCode, vatNumber: $vatNumber);
         }
-        RateLimiter::hit($rateKey, 60);
 
         try {
             $cacheKey = "vies:{$countryCode}:{$vatNumber}";
 
-            return Cache::remember($cacheKey, 86400, function () use ($countryCode, $vatNumber) {
+            // RateLimiter::hit() moved inside this closure — it used to run
+            // unconditionally BEFORE the cache check, so the exact same VAT
+            // number re-validated repeatedly (served entirely from this
+            // 24-hour cache, no real VIES call made) still burned through
+            // the 30-request budget every time. Now only a real cache MISS
+            // (an actual outbound SOAP call) counts against the limit.
+            return Cache::remember($cacheKey, 86400, function () use ($countryCode, $vatNumber, $rateKey) {
+                RateLimiter::hit($rateKey, 60);
+
                 // connection_timeout only bounds the initial TCP handshake —
                 // VIES is notoriously slow/flaky, and a connected-but-stalled
                 // server could hold this synchronous, in-request call (the

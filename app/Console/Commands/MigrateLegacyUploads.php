@@ -55,7 +55,18 @@ class MigrateLegacyUploads extends Command
         return (bool) preg_match('#/\d{4}/\d{2}/#', $path);
     }
 
-    private function move(string $disk, string $from, string $to): bool
+    /**
+     * Returns the path the file actually ended up at (which can differ from
+     * the requested $to on a collision — see below), or false if there was
+     * nothing to move. Callers that persist the new path to the DB
+     * (migrateMedia(), migrateRefundImages()) MUST use this return value,
+     * not their own precomputed $target — collision renaming used to happen
+     * only inside here, invisible to the caller, so a media/refund-image row
+     * could get updated to point at a path the file was never actually
+     * moved to (it silently moved somewhere else instead), breaking that
+     * image/file's link with no error anywhere.
+     */
+    private function move(string $disk, string $from, string $to): string|false
     {
         $storage = Storage::disk($disk);
 
@@ -76,7 +87,7 @@ class MigrateLegacyUploads extends Command
             $storage->move($from, $to);
         }
 
-        return true;
+        return $to;
     }
 
     private function migrateMedia(): void
@@ -98,7 +109,9 @@ class MigrateLegacyUploads extends Command
                     . '-' . $media->id . '.' . pathinfo($target, PATHINFO_EXTENSION);
             }
 
-            if (! $this->move('public', $media->file_path, $finalTarget)) {
+            $movedTo = $this->move('public', $media->file_path, $finalTarget);
+
+            if ($movedTo === false) {
                 continue;
             }
 
@@ -106,8 +119,8 @@ class MigrateLegacyUploads extends Command
 
             if (! $this->dryRun) {
                 $media->update([
-                    'file_path' => $finalTarget,
-                    'file_url' => Storage::disk('public')->url($finalTarget),
+                    'file_path' => $movedTo,
+                    'file_url' => Storage::disk('public')->url($movedTo),
                 ]);
             }
         }
@@ -128,8 +141,9 @@ class MigrateLegacyUploads extends Command
             $date = date('Y/m', $mtime ?: time());
             $target = "{$directory}/{$date}/" . basename($path);
 
-            $this->move($disk, $path, $target);
-            $moved++;
+            if ($this->move($disk, $path, $target) !== false) {
+                $moved++;
+            }
         }
 
         return $moved;
@@ -173,14 +187,16 @@ class MigrateLegacyUploads extends Command
 
                 $target = 'refund-images/' . $date . '/' . basename($path);
 
-                if (! $this->move('local', $path, $target)) {
+                $movedTo = $this->move('local', $path, $target);
+
+                if ($movedTo === false) {
                     continue;
                 }
 
                 if ($isObject) {
-                    $images[$index]['path'] = $target;
+                    $images[$index]['path'] = $movedTo;
                 } else {
-                    $images[$index] = $target;
+                    $images[$index] = $movedTo;
                 }
 
                 $changed = true;

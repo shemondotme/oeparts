@@ -144,6 +144,41 @@ class MigrateLegacyUploadsTest extends TestCase
         $this->assertSame('media/dry-run-test.png', $media->fresh()->file_path);
     }
 
+    /**
+     * system-12: move() computes its own collision-renamed destination
+     * internally when the naive target already exists, but used to only
+     * return a bool — callers persisted their own precomputed (now-stale)
+     * $target to the DB regardless of what move() actually did. Two files
+     * that both resolve to the exact same target path force that internal
+     * rename; the second refund's stored path must match where the file
+     * really ended up, not the path move() silently renamed away from.
+     */
+    #[Test]
+    public function a_destination_collision_persists_the_actual_renamed_path_not_the_stale_precomputed_one(): void
+    {
+        Storage::disk('local')->put('refund-images/a/photo.jpg', 'first');
+        Storage::disk('local')->put('refund-images/b/photo.jpg', 'second');
+
+        $refundA = RefundRequest::factory()->create([
+            'status' => RefundStatus::Pending,
+            'return_images' => [['path' => 'refund-images/a/photo.jpg', 'original_name' => 'photo.jpg', 'size' => 5, 'uploaded_at' => '2026-02-10T00:00:00+00:00']],
+        ]);
+        $refundB = RefundRequest::factory()->create([
+            'status' => RefundStatus::Pending,
+            'return_images' => [['path' => 'refund-images/b/photo.jpg', 'original_name' => 'photo.jpg', 'size' => 5, 'uploaded_at' => '2026-02-10T00:00:00+00:00']],
+        ]);
+
+        $this->artisan('oeparts:storage:migrate-legacy-uploads')->assertSuccessful();
+
+        $pathA = $refundA->fresh()->return_images[0]['path'];
+        $pathB = $refundB->fresh()->return_images[0]['path'];
+
+        $this->assertSame('refund-images/2026/02/photo.jpg', $pathA);
+        $this->assertNotSame($pathA, $pathB, 'the second file must have been renamed to avoid colliding with the first');
+        Storage::disk('local')->assertExists($pathB);
+        $this->assertSame('second', Storage::disk('local')->get($pathB));
+    }
+
     #[Test]
     public function it_is_idempotent(): void
     {

@@ -32,7 +32,14 @@ Route::middleware('throttle:api')->group(function () {
     Route::get('/shipping-methods', [\App\Http\Controllers\Api\ShippingController::class, 'index'])->name('api.shipping-methods');
 
     // ─── Public Utility Endpoints ────────────────────────────────────
-    Route::post('/validate-vat', [\App\Http\Controllers\Api\VatValidationController::class, 'validate'])->name('api.validate-vat');
+    // 'vies-validation' (AppServiceProvider) was defined but never actually
+    // applied to any route — only the generic 60/min throttle:api shared by
+    // every public catalog endpoint covered this. Adds the VAT-specific
+    // 30/min-per-user-or-IP limit on top, matching what ViesService's own
+    // internal RateLimiter check already enforces deeper in the call stack.
+    Route::post('/validate-vat', [\App\Http\Controllers\Api\VatValidationController::class, 'validate'])
+        ->middleware('throttle:vies-validation')
+        ->name('api.validate-vat');
     Route::get('/search/autocomplete', [\App\Http\Controllers\Api\SearchController::class, 'autocomplete'])->name('api.search.autocomplete');
 
     // ─── Sections (public, CMS-driven) ──────────────────────────────
