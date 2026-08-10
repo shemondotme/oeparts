@@ -398,9 +398,7 @@ class BulkUpdateProducts extends Page
             return;
         }
 
-        $records = $this->matchingQuery()->get();
-
-        if ($records->isEmpty()) {
+        if (! (clone $this->matchingQuery())->exists()) {
             Notification::make()->title('No matching products')->warning()->send();
             $this->resetPreview();
 
@@ -411,22 +409,33 @@ class BulkUpdateProducts extends Page
         $snapshot = [];
         $snapshotTruncated = false;
 
-        DB::transaction(function () use ($records, &$count, &$snapshot, &$snapshotTruncated): void {
-            foreach ($records as $record) {
-                $changed = $this->applyToRecord($record);
+        // Was $this->matchingQuery()->get() — hydrating every matching row
+        // into memory simultaneously as one Eloquent collection. Fine when
+        // a filter matched a few hundred demo rows; a broad filter (or no
+        // filter at all) against a real ~100k-row catalog risks a large
+        // memory spike and a long PHP execution time for one Livewire
+        // request. chunkById() processes 500 rows at a time, keeping only
+        // one chunk's worth of models in memory — still inside a single
+        // DB::transaction() so the whole operation (and its BulkUpdateLog
+        // row) stays atomic.
+        DB::transaction(function () use (&$count, &$snapshot, &$snapshotTruncated): void {
+            $this->matchingQuery()->chunkById(500, function ($records) use (&$count, &$snapshot, &$snapshotTruncated): void {
+                foreach ($records as $record) {
+                    $changed = $this->applyToRecord($record);
 
-                if ($changed === null) {
-                    continue;
+                    if ($changed === null) {
+                        continue;
+                    }
+
+                    $count++;
+
+                    if (count($snapshot) < self::MAX_SNAPSHOT_ROWS) {
+                        $snapshot[] = ['id' => $record->id, ...$changed];
+                    } else {
+                        $snapshotTruncated = true;
+                    }
                 }
-
-                $count++;
-
-                if (count($snapshot) < self::MAX_SNAPSHOT_ROWS) {
-                    $snapshot[] = ['id' => $record->id, ...$changed];
-                } else {
-                    $snapshotTruncated = true;
-                }
-            }
+            });
 
             BulkUpdateLog::create([
                 'admin_id' => auth('admin')->id(),
