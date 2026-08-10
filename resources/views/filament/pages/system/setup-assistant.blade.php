@@ -227,7 +227,7 @@
 
                     {{-- Seed Demo Data --}}
                     <button wire:click="seedDemoData"
-                        wire:confirm.prompt="HIGH-RISK: This will seed demo data. Type SEED to confirm:"
+                        wire:confirm.prompt="This runs pending migrations and seeds sample products/manufacturers/blog posts. It does NOT drop existing tables. Type SEED to confirm:"
                         wire:loading
                         wire:loading.attr="disabled"
                         wire:loading.class="opacity-50"

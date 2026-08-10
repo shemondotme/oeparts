@@ -13,7 +13,8 @@ class DemoSetup extends Command
     protected $signature = 'demo:setup
                             {--fresh : Drop all tables and re-run migrations}
                             {--seed : Seed demo data after setup}
-                            {--yes : Skip confirmation prompts}';
+                            {--yes : Skip confirmation prompts (does NOT imply --fresh)}
+                            {--force-production-wipe : Required in addition to --fresh when running against a production environment}';
 
     protected $description = 'Set up a demo instance of OeParts with sample data';
 
@@ -32,7 +33,15 @@ class DemoSetup extends Command
             }
         }
 
-        $fresh = $this->option('fresh') || $this->option('yes');
+        $fresh = (bool) $this->option('fresh');
+
+        if ($fresh && app()->environment('production') && ! $this->option('force-production-wipe')) {
+            $this->error('Refusing to run --fresh against a production environment.');
+            $this->error('This drops every table and permanently deletes all live data (orders, customers, products, everything).');
+            $this->error('If you really intend to wipe this production database, re-run with --force-production-wipe.');
+
+            return 1;
+        }
 
         $this->step('Running migrations...');
         $migrateCommand = $fresh ? 'migrate:fresh' : 'migrate';

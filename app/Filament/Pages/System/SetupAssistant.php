@@ -239,7 +239,7 @@ class SetupAssistant extends Page
             'seedDemoData' => [
                 'level' => 'HIGH',
                 'color' => 'danger',
-                'label' => 'Destructive — Populates database with sample data. May overwrite existing demo records. Cannot be undone.',
+                'label' => 'Runs pending migrations (incremental — does NOT drop tables) and seeds sample products, manufacturers, and blog posts. Existing records with matching identifiers (e.g. admin@example.com) are updated in place, not replaced.',
                 'requireTypedConfirmation' => true,
                 'confirmText' => 'SEED',
             ],
