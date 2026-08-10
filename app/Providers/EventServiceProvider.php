@@ -10,6 +10,7 @@ use App\Listeners\LogEmailFailed;
 use App\Listeners\LogEmailSent;
 use App\Listeners\LogOrderStatusChange;
 use App\Listeners\LogPaymentReceived;
+use App\Listeners\LogScheduledTaskRun;
 use App\Listeners\RecoverAbandonedCart;
 use App\Listeners\SendOrderConfirmation;
 use App\Models\Admin;
@@ -69,6 +70,15 @@ class EventServiceProvider extends ServiceProvider
         ],
         \Illuminate\Queue\Events\JobFailed::class => [
             \App\Listeners\NotifyAdminsOnJobFailure::class,
+        ],
+        \Illuminate\Console\Events\ScheduledTaskStarting::class => [
+            [LogScheduledTaskRun::class, 'starting'],
+        ],
+        \Illuminate\Console\Events\ScheduledTaskFinished::class => [
+            [LogScheduledTaskRun::class, 'finished'],
+        ],
+        \Illuminate\Console\Events\ScheduledTaskFailed::class => [
+            [LogScheduledTaskRun::class, 'failed'],
         ],
     ];
 

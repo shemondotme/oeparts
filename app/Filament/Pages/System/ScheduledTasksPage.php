@@ -2,7 +2,9 @@
 
 namespace App\Filament\Pages\System;
 
+use App\Enums\LogStatus;
 use App\Models\CronLog;
+use App\Support\ScheduleCommandName;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Artisan;
@@ -44,10 +46,17 @@ public static function getNavigationSort(): ?int
 
         $tasks = [];
         foreach ($events as $event) {
-            $command = $event->command;
-            if ($command === null) {
+            if ($event->command === null) {
                 continue;
             }
+
+            // Event::$command is the raw shell invocation (php binary +
+            // artisan path + command), not the bare command name — using it
+            // directly here made the "description" fallback show that whole
+            // shell string, and passing it to Artisan::call() in runTask()
+            // below threw CommandNotFoundException every time "Run Now" was
+            // clicked.
+            $command = ScheduleCommandName::for($event);
 
             $description = Artisan::all()[$command]->description ?? $command;
 
@@ -121,8 +130,19 @@ public static function getNavigationSort(): ?int
 
     public function runTask(string $command): void
     {
+        $start = microtime(true);
+
         try {
             $exitCode = Artisan::call($command);
+            $durationMs = (int) round((microtime(true) - $start) * 1000);
+
+            CronLog::create([
+                'job_name'    => \Illuminate\Support\Str::limit($command, 100, ''),
+                'status'      => $exitCode === 0 ? LogStatus::Success : LogStatus::Failed,
+                'duration_ms' => $durationMs,
+                'output'      => \Illuminate\Support\Str::limit(trim(Artisan::output()), 2000),
+                'ran_at'      => now(),
+            ]);
 
             if ($exitCode === 0) {
                 Notification::make()
@@ -138,6 +158,14 @@ public static function getNavigationSort(): ?int
                     ->send();
             }
         } catch (\Exception $e) {
+            CronLog::create([
+                'job_name'    => \Illuminate\Support\Str::limit($command, 100, ''),
+                'status'      => LogStatus::Failed,
+                'duration_ms' => (int) round((microtime(true) - $start) * 1000),
+                'output'      => \Illuminate\Support\Str::limit($e->getMessage(), 2000),
+                'ran_at'      => now(),
+            ]);
+
             Notification::make()
                 ->title('Task error')
                 ->body($e->getMessage())
