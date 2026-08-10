@@ -769,6 +769,40 @@ class ExtendedAuthorizationTest extends TestCase
         $this->assertTrue($manufacturer->refresh()->is_active);
     }
 
+    #[Test]
+    public function testimonial_bulk_toggle_active_requires_update_permission(): void
+    {
+        $testimonial = Testimonial::factory()->create(['is_active' => false]);
+        $viewOnly = $this->adminWithPermissions('testimonials_bulk_view_only_test', ['view testimonials']);
+        $editor = $this->adminWithPermissions('testimonials_bulk_editor_test', ['view testimonials', 'edit testimonials']);
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListTestimonials::class)->assertTableBulkActionHidden('bulkToggleActive');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListTestimonials::class)
+            ->assertTableBulkActionVisible('bulkToggleActive')
+            ->callTableBulkAction('bulkToggleActive', [$testimonial]);
+        $this->assertTrue($testimonial->refresh()->is_active);
+    }
+
+    #[Test]
+    public function blog_post_bulk_archive_requires_update_permission(): void
+    {
+        $post = BlogPost::factory()->create(['status' => 'published']);
+        $viewOnly = $this->adminWithPermissions('blog_archive_view_only_test', ['view blog']);
+        $editor = $this->adminWithPermissions('blog_archive_editor_test', ['view blog', 'edit blog']);
+
+        $this->actingAs($viewOnly, 'admin');
+        Livewire::test(ListBlogPosts::class)->assertTableBulkActionHidden('bulkArchive');
+
+        $this->actingAs($editor, 'admin');
+        Livewire::test(ListBlogPosts::class)
+            ->assertTableBulkActionVisible('bulkArchive')
+            ->callTableBulkAction('bulkArchive', [$post]);
+        $this->assertSame('draft', $post->refresh()->status->value);
+    }
+
     // RolesSeeder only ever seeded 'view'/'edit testimonials' — 'create'/
     // 'delete testimonials' didn't exist under any spelling, so no role
     // could ever be granted them even though TestimonialPolicy (via
