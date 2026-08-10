@@ -151,6 +151,93 @@ class CommerceAuthorizationTest extends TestCase
         $this->assertSame(OrderStatus::Refunded, $order->refresh()->status);
     }
 
+    // ── Regression tests: refund state-machine bypass (support-5/6/7/8) ──
+
+    /**
+     * ->visible() already stops a normal double-click (the button
+     * disappears once status is no longer Pending) — this test covers the
+     * narrower, genuinely concurrent case ->visible() can't: two requests
+     * whose mount() both read Pending before either commits. The action
+     * closures now re-check $record->fresh()->status before doing anything,
+     * so a closure invoked after the state already moved on is a no-op
+     * rather than a duplicate customer email / double transition.
+     */
+    #[Test]
+    public function approve_action_is_a_no_op_if_the_record_already_moved_on_by_the_time_it_runs(): void
+    {
+        Queue::fake();
+
+        $pending = RefundRequest::factory()->create(['status' => RefundStatus::Pending]);
+
+        // Simulates the closure's fresh() read seeing a status a concurrent
+        // request already committed, despite this action having been
+        // mounted (and passed ->visible()) against the earlier Pending row.
+        $pending->update(['status' => RefundStatus::Approved]);
+
+        $action = \App\Filament\Resources\RefundRequestResource::approveAction();
+        app()->call($action->getActionFunction(), ['record' => $pending]);
+
+        Queue::assertNotPushed(\App\Jobs\SendRefundStatusEmail::class);
+        $this->assertSame(RefundStatus::Approved, $pending->fresh()->status);
+    }
+
+    #[Test]
+    public function rejecting_a_refund_stamps_processed_at(): void
+    {
+        Queue::fake();
+
+        $manager = $this->adminWithRole('manager');
+        $this->actingAs($manager, 'admin');
+
+        $pending = RefundRequest::factory()->create(['status' => RefundStatus::Pending, 'processed_at' => null]);
+
+        Livewire::test(ListRefundRequests::class)
+            ->callTableAction('reject', $pending, data: ['admin_note' => 'Return window expired.']);
+
+        $fresh = $pending->refresh();
+        $this->assertSame(RefundStatus::Rejected, $fresh->status);
+        $this->assertNotNull($fresh->processed_at, 'processed_at must be stamped so PruneRefundImages can ever purge this rejection\'s images');
+    }
+
+    #[Test]
+    public function the_edit_form_status_field_is_locked_and_saving_it_does_not_bypass_the_workflow(): void
+    {
+        $manager = $this->adminWithRole('manager');
+        $this->actingAs($manager, 'admin');
+
+        $pending = RefundRequest::factory()->create(['status' => RefundStatus::Pending, 'processed_at' => null]);
+
+        Livewire::test(\App\Filament\Resources\RefundRequestResource\Pages\EditRefundRequest::class, ['record' => $pending->id])
+            ->assertFormFieldIsDisabled('status')
+            ->fillForm(['status' => RefundStatus::Processed->value])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        // Disabled fields don't accept fillForm() input either way, but the
+        // real point is the persisted record: saving the Edit form must
+        // never move status to Processed by itself (no processed_at, no
+        // order transition, no customer email) — only the dedicated actions
+        // may do that.
+        $fresh = $pending->refresh();
+        $this->assertSame(RefundStatus::Pending, $fresh->status);
+        $this->assertNull($fresh->processed_at);
+    }
+
+    #[Test]
+    public function the_refund_requests_list_has_no_broken_create_action(): void
+    {
+        $manager = $this->adminWithRole('manager');
+        $this->actingAs($manager, 'admin');
+
+        // RefundRequestResource registers no 'create' route — a stray
+        // CreateAction header button used to throw an uncaught
+        // RouteNotFoundException the moment Filament tried to resolve its
+        // target URL.
+        Livewire::test(ListRefundRequests::class)
+            ->assertOk()
+            ->assertActionDoesNotExist('create');
+    }
+
     // ── Regression tests for Bug 1: OrderResource custom actions ──
 
     #[Test]

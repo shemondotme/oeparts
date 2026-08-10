@@ -114,7 +114,26 @@ class RefundRequestResource extends Resource
                                             ->options(RefundStatus::class)
                                             ->required()
                                             ->default(RefundStatus::Pending)
-                                            ->helperText('Current processing state of this refund request.'),
+                                            // Saving straight through this generic Edit form used
+                                            // to skip everything the dedicated Approve/Reject/Mark
+                                            // Processed actions do (customer email,
+                                            // processed_at, syncing the order status) — an admin
+                                            // could jump status here (e.g. Processed) with the
+                                            // order left stuck on "Refund Requested" forever, or
+                                            // roll an already-resolved refund back to Pending,
+                                            // re-exposing actions that had already fired. Disabled
+                                            // (not hidden) so the current state is still visible.
+                                            // Deliberately NOT ->dehydrated(): a disabled field is
+                                            // excluded from the saved payload by default, so
+                                            // EditRecord::save() never touches this column at all
+                                            // — that exclusion is the real protection. Forcing
+                                            // dehydration would submit whatever value arrives in
+                                            // the underlying Livewire request regardless of the
+                                            // disabled HTML attribute, which only stops a real
+                                            // browser's UI, not a crafted request — reopening
+                                            // exactly the bypass this fixes.
+                                            ->disabled()
+                                            ->helperText('Current processing state of this refund request. Change it using the Approve / Reject / Mark Processed actions on the View page, not here.'),
                                         Forms\Components\DateTimePicker::make('processed_at')
                                             ->label(__('admin.processed_at'))
                                             ->nullable()
@@ -285,6 +304,10 @@ class RefundRequestResource extends Resource
                     ])
                     ->visible(fn (RefundRequest $record): bool => $record->status === RefundStatus::Pending)
                     ->action(function (RefundRequest $record, array $data): void {
+                        if ($record->fresh()->status !== RefundStatus::Pending) {
+                            return;
+                        }
+
                         $record->status = RefundStatus::Processed;
                         $record->processed_at = now();
                         $record->admin_note = $data['admin_note'] ?? $record->admin_note;
@@ -361,6 +384,15 @@ class RefundRequestResource extends Resource
             ->modalDescription('Mark this refund request as approved. The customer receives an approval email; process the payout, then use "Mark Processed".')
             ->visible(fn (RefundRequest $record): bool => $record->status === RefundStatus::Pending)
             ->action(function (RefundRequest $record): void {
+                // ->visible() only gates the UI — a double-click, or two
+                // admins racing the same record, can both pass it before
+                // either save lands. Re-checking the live status here (not
+                // the $record instance handed to the closure, which may be
+                // stale) is what actually stops a duplicate customer email.
+                if ($record->fresh()->status !== RefundStatus::Pending) {
+                    return;
+                }
+
                 $record->status = RefundStatus::Approved;
                 $record->save();
 
@@ -393,8 +425,21 @@ class RefundRequestResource extends Resource
             ])
             ->visible(fn (RefundRequest $record): bool => $record->status === RefundStatus::Pending)
             ->action(function (RefundRequest $record, array $data): void {
+                if ($record->fresh()->status !== RefundStatus::Pending) {
+                    return;
+                }
+
                 $record->status = RefundStatus::Rejected;
                 $record->admin_note = $data['admin_note'];
+                // Rejected is a terminal state — stamp it the same as
+                // markProcessed() does for Processed. Without this,
+                // PruneRefundImages (which requires processed_at to be set
+                // before purging return_images, across all three terminal
+                // statuses including Rejected) never had a start-of-
+                // retention timestamp to work from for a rejected refund,
+                // so the customer's uploaded photos were retained forever —
+                // a silent GDPR data-minimization failure.
+                $record->processed_at = now();
                 $record->save();
 
                 static::dispatchSafely(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Rejected));
@@ -419,6 +464,10 @@ class RefundRequestResource extends Resource
             ->modalDescription('Confirm that the refund has been successfully processed and the customer has been reimbursed. An email notification will be sent to the customer.')
             ->visible(fn (RefundRequest $record): bool => $record->status === RefundStatus::Approved)
             ->action(function (RefundRequest $record): void {
+                if ($record->fresh()->status !== RefundStatus::Approved) {
+                    return;
+                }
+
                 $record->status = RefundStatus::Processed;
                 $record->processed_at = now();
                 $record->save();
