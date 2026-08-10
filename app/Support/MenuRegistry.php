@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Enums\ContentStatus;
 use App\Models\Menu;
+use App\Models\Page;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 
@@ -96,6 +97,51 @@ class MenuRegistry
         foreach (['header', 'footer'] as $location) {
             foreach (LocaleRegistry::codes() as $locale) {
                 self::forget($location, $locale);
+            }
+        }
+    }
+
+    /**
+     * Pages with is_header/is_footer set — PageResource's own quick-toggle
+     * ("Add this page link to the main header/footer navigation menu"),
+     * independent of and additive to an operator-curated Menu. Also had no
+     * reader anywhere before this fix.
+     *
+     * @return array<int, array{label: string, url: string, target: string}>
+     */
+    public static function pageFlaggedItems(string $column, string $locale): array
+    {
+        $cacheKey = "menus.pages.{$column}.{$locale}";
+
+        return Cache::rememberForever($cacheKey, function () use ($column, $locale) {
+            try {
+                if (! Schema::hasTable('pages')) {
+                    return [];
+                }
+
+                return Page::where($column, true)
+                    ->where('status', ContentStatus::Published)
+                    ->whereNotNull('published_at')
+                    ->where('published_at', '<=', now())
+                    ->orderBy('title')
+                    ->get()
+                    ->map(fn (Page $page) => [
+                        'label' => trans_field($page->title, $locale) ?: $page->slug,
+                        'url' => url("/{$locale}/{$page->slug}"),
+                        'target' => '_self',
+                    ])
+                    ->all();
+            } catch (\Throwable) {
+                return [];
+            }
+        });
+    }
+
+    public static function forgetPageFlagged(): void
+    {
+        foreach (['is_header', 'is_footer'] as $column) {
+            foreach (LocaleRegistry::codes() as $locale) {
+                Cache::forget("menus.pages.{$column}.{$locale}");
             }
         }
     }

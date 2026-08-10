@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ContentStatus;
+use App\Support\MenuRegistry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,5 +38,28 @@ class Page extends Model
     public function featuredImage(): BelongsTo
     {
         return $this->belongsTo(MediaFile::class, 'featured_image_id');
+    }
+
+    protected static function booted(): void
+    {
+        // Single-homepage invariant, mirroring Language::is_default — the
+        // form's own helper text already promises "Only one page can be
+        // set as the homepage. This will override the current homepage,"
+        // but nothing enforced it, so two pages could both carry the flag
+        // with no defined winner.
+        static::saved(function (Page $page): void {
+            // Not gated on wasChanged(): a page mass-assigned is_homepage
+            // at creation time (not just toggled later via an update) must
+            // enforce the invariant too, and this query is cheap enough to
+            // not need the optimization.
+            if ($page->is_homepage) {
+                static::whereKeyNot($page->getKey())
+                    ->where('is_homepage', true)
+                    ->update(['is_homepage' => false]);
+            }
+        });
+
+        static::saved(fn () => MenuRegistry::forgetPageFlagged());
+        static::deleted(fn () => MenuRegistry::forgetPageFlagged());
     }
 }

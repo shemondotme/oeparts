@@ -367,6 +367,12 @@
                        @if($menuLink['target'] === '_blank') target="_blank" rel="noopener noreferrer" @endif
                        class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ $menuLink['label'] }}</a>
                 @endforeach
+                {{-- PageResource's "Add this page link to the main footer
+                     navigation menu" quick-toggle. --}}
+                @foreach(\App\Support\MenuRegistry::pageFlaggedItems('is_footer', $lang) as $pageLink)
+                    <a href="{{ $pageLink['url'] }}"
+                       class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ $pageLink['label'] }}</a>
+                @endforeach
             </nav>
         </div>
     </div>

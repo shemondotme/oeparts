@@ -48,6 +48,19 @@
             ],
         ];
     }
+
+    // PageResource's "Add this page link to the main header navigation
+    // menu" quick-toggle — additive to whichever nav rendered above
+    // (default or Menu-driven), not a third exclusive mode.
+    $currentPath = $currentPath ?? url(request()->path());
+    foreach (\App\Support\MenuRegistry::pageFlaggedItems('is_header', $lang) as $pageLink) {
+        $navLinks[] = [
+            'href' => $pageLink['url'],
+            'label' => $pageLink['label'],
+            'active' => rtrim($pageLink['url'], '/') === rtrim($currentPath, '/'),
+            'target' => $pageLink['target'],
+        ];
+    }
 @endphp
 
 {{-- ══════════════════════════════════════════════════════════════════════
