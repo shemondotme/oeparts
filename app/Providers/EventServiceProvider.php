@@ -50,6 +50,7 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderStatusChanged::class => [
             LogOrderStatusChange::class,
+            \App\Listeners\RestoreInventory::class,
         ],
         PaymentReceived::class => [
             LogPaymentReceived::class,
