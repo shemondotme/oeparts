@@ -17,6 +17,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Support\Enums\FontWeight;
+use Illuminate\Support\Facades\DB;
 
 class ConditionResource extends Resource
 {
@@ -200,18 +201,35 @@ class ConditionResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading('Delete Conditions')
                         ->modalDescription('Are you sure you want to delete these conditions? Conditions that are still in use by products cannot be deleted.')
-                        ->action(function ($records): void {
-                            $records->each(function ($record) {
-                                if ($record->products()->count() > 0) {
-                                    \Filament\Notifications\Notification::make()
-                                        ->danger()
-                                        ->title("Cannot delete \"{$record->name}\"")
-                                        ->body("{$record->products()->count()} product(s) still use this condition. Reassign them first.")
-                                        ->send();
-                                    $this->halt();
-                                }
-                                $record->delete();
-                            });
+                        ->action(function (Actions\DeleteBulkAction $action, $records): void {
+                            // $this->halt() used to be called from inside a
+                            // closure defined in this static method — fatal
+                            // "Using $this when not in object context" the
+                            // moment any selected condition was still in use.
+                            // Worse, records were deleted one at a time with
+                            // no transaction, so any conditions earlier in the
+                            // batch were already permanently deleted before
+                            // that fatal error interrupted the request. Now
+                            // the whole batch is all-or-nothing: one blocked
+                            // condition rolls back every delete in this run.
+                            try {
+                                DB::transaction(function () use ($records) {
+                                    foreach ($records as $record) {
+                                        $inUseCount = $record->products()->count();
+                                        if ($inUseCount > 0) {
+                                            throw new \RuntimeException("Cannot delete \"{$record->name}\": {$inUseCount} product(s) still use this condition. Reassign them first.");
+                                        }
+                                        $record->delete();
+                                    }
+                                });
+                            } catch (\RuntimeException $e) {
+                                \Filament\Notifications\Notification::make()
+                                    ->danger()
+                                    ->title('Delete failed')
+                                    ->body($e->getMessage())
+                                    ->send();
+                                $action->halt();
+                            }
                         }),
                 ]),
             ])
