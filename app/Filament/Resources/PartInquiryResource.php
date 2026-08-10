@@ -52,12 +52,15 @@ class PartInquiryResource extends Resource
                                     ->schema([
                                         Forms\Components\TextInput::make('oem_number')
                                             ->label(__('admin.oem_part_number'))
-                                            ->readOnly()
+                                            ->required()
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null)
                                             ->extraAttributes(['class' => 'font-mono uppercase']),
                                         Forms\Components\TextInput::make('quantity')
                                             ->label(__('admin.requested_quantity'))
                                             ->numeric()
-                                            ->readOnly()
+                                            ->default(1)
+                                            ->required()
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null)
                                             ->helperText('Number of units the customer needs.'),
                                         Forms\Components\Select::make('urgency')
                                             ->label(__('admin.urgency_level'))
@@ -66,7 +69,10 @@ class PartInquiryResource extends Resource
                                                 'soon' => 'Soon (within a week)',
                                                 'urgent' => 'Urgent (ASAP)',
                                             ])
-                                            ->disabled()
+                                            ->default('normal')
+                                            ->required()
+                                            ->disabled(fn (?PartInquiry $record): bool => $record !== null)
+                                            ->dehydrated()
                                             ->helperText('Customer-specified delivery urgency.'),
                                     ])
                                     ->columns(3),
@@ -77,16 +83,16 @@ class PartInquiryResource extends Resource
                                     ->schema([
                                         Forms\Components\TextInput::make('manufacturer')
                                             ->label(__('admin.vehicle_manufacturer'))
-                                            ->readOnly(),
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null),
                                         Forms\Components\TextInput::make('car_model')
                                             ->label(__('admin.car_model'))
-                                            ->readOnly(),
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null),
                                         Forms\Components\TextInput::make('year')
                                             ->label(__('admin.model_year'))
-                                            ->readOnly(),
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null),
                                         Forms\Components\TextInput::make('vin_number')
                                             ->label(__('admin.vin_number'))
-                                            ->readOnly()
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null)
                                             ->extraAttributes(['class' => 'font-mono uppercase']),
                                     ])
                                     ->columns(2),
@@ -98,7 +104,7 @@ class PartInquiryResource extends Resource
                                         Forms\Components\Textarea::make('notes')
                                             ->hiddenLabel()
                                             ->rows(4)
-                                            ->readOnly()
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null)
                                             ->placeholder('No additional notes provided by the customer.')
                                             ->columnSpanFull(),
                                     ]),
@@ -115,6 +121,7 @@ class PartInquiryResource extends Resource
                                         Forms\Components\Select::make('status')
                                             ->label(__('admin.inquiry_status'))
                                             ->options(PartInquiryStatus::class)
+                                            ->default(PartInquiryStatus::New)
                                             ->native(false)
                                             ->required()
                                             ->helperText('Current processing state of this part inquiry.'),
@@ -133,11 +140,12 @@ class PartInquiryResource extends Resource
                                         Forms\Components\TextInput::make('email')
                                             ->label(__('admin.email_address'))
                                             ->email()
-                                            ->readOnly(),
+                                            ->required()
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null),
                                         Forms\Components\TextInput::make('phone')
                                             ->label(__('admin.phone_number'))
                                             ->tel()
-                                            ->readOnly()
+                                            ->readOnly(fn (?PartInquiry $record): bool => $record !== null)
                                             ->placeholder('Not provided'),
                                     ]),
                             ]),

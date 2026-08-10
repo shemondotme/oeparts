@@ -30,6 +30,13 @@ class CreatePartInquiry extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['status'] ??= 'new';
+        // ip_address is NOT NULL with no form field and no prior default —
+        // submitting this form crashed with a raw NOT NULL constraint
+        // violation. There's no real customer-originated IP for a manually
+        // recorded inquiry (phone/in-person), so this records the acting
+        // admin's own request IP, matching the same convention used for
+        // NewsletterSubscriberResource's manual-add flow.
+        $data['ip_address'] ??= request()->ip();
 
         return $data;
     }
