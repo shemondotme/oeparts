@@ -3,7 +3,7 @@
 namespace App\Filament\Pages\Settings;
 
 use App\Filament\Support\AdminUi;
-use App\Services\SitemapService;
+use App\Jobs\RegenerateSitemap;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -35,9 +35,12 @@ class SeoSettings extends SettingsPage
                 ->authorize(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false)
                 ->requiresConfirmation()
                 ->modalDescription('Rebuilds sitemap.xml and every sub-sitemap (parts, brands, models, pages, blog) from current data. This can take a moment on a large catalog.')
-                ->action(function (SitemapService $sitemaps): void {
+                ->action(function (): void {
+                    // Dispatched (not called inline) so a large catalog can't run
+                    // the whole rebuild inside this single web request — see
+                    // RegenerateSitemap's docstring for the sync-queue caveat.
                     try {
-                        $files = $sitemaps->generateAll();
+                        RegenerateSitemap::dispatch(auth('admin')->user()?->name ?? 'An admin');
                     } catch (\Throwable $e) {
                         Notification::make()->title('Sitemap regeneration failed')->body($e->getMessage())->danger()->send();
 
@@ -45,8 +48,8 @@ class SeoSettings extends SettingsPage
                     }
 
                     Notification::make()
-                        ->title('Sitemap regenerated')
-                        ->body(count($files).' file(s) written, last updated just now.')
+                        ->title('Sitemap regeneration requested')
+                        ->body("You'll get a notification here (the bell icon) once it finishes.")
                         ->success()
                         ->send();
                 }),
