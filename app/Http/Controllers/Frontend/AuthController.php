@@ -37,10 +37,15 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Rate limit login attempts (5 per 15 minutes per IP)
+        // Rate limit login attempts (5 per 15 minutes) — keyed by email+IP,
+        // not IP alone, so one attacker spraying bad credentials from a
+        // shared IP (office NAT/CGNAT) can't lock out every legitimate user
+        // behind it. Matches the 'login'/'password-reset' named limiters'
+        // keying in AppServiceProvider.
         $maxAttempts = (int) settings('security.login_max_attempts', 5);
         $decayMinutes = (int) settings('security.login_window_minutes', 15);
-        if (! RateLimiter::attempt("login:{$request->ip()}", $maxAttempts, function () {
+        $throttleKey = 'login:' . $request->input('email', '') . '|' . $request->ip();
+        if (! RateLimiter::attempt($throttleKey, $maxAttempts, function () {
             return true;
         }, $decayMinutes * 60)) {
             throw new TooManyRequestsHttpException($decayMinutes * 60, __('auth.too_many_login_attempts', ['minutes' => $decayMinutes]));

@@ -14,9 +14,15 @@ class AccountPasswordRequest extends FormRequest
 
     public function rules(): array
     {
+        // Matches AuthController::register()/ResetPasswordController's use of
+        // the same setting — this form previously hardcoded 8, silently
+        // ignoring an operator-raised minimum (e.g. 12) for every OTHER
+        // password entry point.
+        $pwMin = (int) settings('auth.customer_password_min', 8);
+
         return [
             'current_password' => 'required|string',
-            'new_password'     => ['required', 'string', 'confirmed', Password::min(8)->mixedCase()->numbers()->symbols()->uncompromised()],
+            'new_password'     => ['required', 'string', 'confirmed', Password::min($pwMin)->mixedCase()->numbers()->symbols()->uncompromised()],
         ];
     }
 
