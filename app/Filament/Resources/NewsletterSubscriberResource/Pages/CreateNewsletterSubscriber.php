@@ -29,6 +29,17 @@ class CreateNewsletterSubscriber extends CreateRecord
         $data['subscribed_at'] = now();
         $data['ip_address'] = request()->ip();
 
+        // unsubscribe_token is nullable, so this saved fine without it — but
+        // NewsletterCampaignEmail builds the unsubscribe link from
+        // route('frontend.newsletter.unsubscribe', ['token' => ...]), a
+        // required route segment. For a manually-added subscriber that's
+        // always null, so rendering the campaign email threw at send time —
+        // after SendNewsletterCampaign had already marked this recipient's
+        // row 'sent', so the UI reported delivery while no email ever went
+        // out. Same generation as the frontend signup flow
+        // (App\Http\Controllers\Frontend\NewsletterController).
+        $data['unsubscribe_token'] = hash_hmac('sha256', $data['email'], config('app.key'));
+
         return $data;
     }
 }

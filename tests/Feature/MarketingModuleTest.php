@@ -206,4 +206,30 @@ class MarketingModuleTest extends TestCase
         $this->assertNotNull($subscriber->subscribed_at);
         $this->assertNotNull($subscriber->ip_address);
     }
+
+    /**
+     * unsubscribe_token is nullable, so a manually-added subscriber saved
+     * fine without one — but NewsletterCampaignEmail builds the unsubscribe
+     * link from a required route segment, so rendering the campaign email
+     * threw at send time, after the recipient row was already marked
+     * 'sent'. The campaign therefore silently never reached these
+     * subscribers while reporting them as delivered.
+     */
+    public function test_subscriber_creation_sets_an_unsubscribe_token_matching_the_frontend_signup_flow(): void
+    {
+        Livewire::test(\App\Filament\Resources\NewsletterSubscriberResource\Pages\CreateNewsletterSubscriber::class)
+            ->fillForm(['email' => 'admin-added@example.com', 'lang' => 'en', 'is_active' => true])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $subscriber = \App\Models\NewsletterSubscriber::where('email', 'admin-added@example.com')->firstOrFail();
+
+        $this->assertNotNull($subscriber->unsubscribe_token);
+        $this->assertSame(hash_hmac('sha256', 'admin-added@example.com', config('app.key')), $subscriber->unsubscribe_token);
+
+        // The unsubscribe route (and therefore NewsletterCampaignEmail's
+        // rendering of it) must not throw for this subscriber.
+        $url = route('frontend.newsletter.unsubscribe', ['lang' => 'en', 'token' => $subscriber->unsubscribe_token]);
+        $this->assertIsString($url);
+    }
 }
