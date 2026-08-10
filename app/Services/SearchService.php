@@ -172,10 +172,20 @@ class SearchService
      */
     private function applySort(Builder $query, string $sort): Builder
     {
+        // ->orderBy('id') as a final tiebreaker on every branch: without one,
+        // rows tied on the primary sort key(s) come back in whatever
+        // incidental order the storage engine/query plan happens to produce
+        // — not guaranteed stable across requests, and NOT guaranteed to
+        // match between two paginated requests for page 1 vs page 2 of the
+        // same query (a schema/index change, or just normal write activity,
+        // can silently reorder ties). A large batch of otherwise-identical
+        // products (same price, same stock state — a very real scenario for
+        // a freshly-imported catalog) could show duplicates across pages or
+        // skip rows entirely when paginating without this.
         return match ($sort) {
-            'price_asc' => $query->orderBy('price', 'asc'),
-            'price_desc' => $query->orderBy('price', 'desc'),
-            default => $query->orderByDesc('is_in_stock')->orderBy('price', 'asc'),
+            'price_asc' => $query->orderBy('price', 'asc')->orderBy('id'),
+            'price_desc' => $query->orderBy('price', 'desc')->orderBy('id'),
+            default => $query->orderByDesc('is_in_stock')->orderBy('price', 'asc')->orderBy('id'),
         };
     }
 
@@ -442,9 +452,8 @@ class SearchService
         ?string $condition = null,
         bool $inStockOnly = false
     ) {
-        $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $normalized);
         $query = Product::query()
-            ->where('normalized_oem', 'LIKE', "%{$escaped}%")
+            ->oemContains($normalized)
             ->where('is_active', true)
             ->with(['manufacturer.logo', 'crossReferences', 'condition']);
 

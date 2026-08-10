@@ -267,15 +267,15 @@ class ProductResource extends Resource
             ->columns([
                 AdminUi::oemColumn('oem_number', 'OEM number copied')
                     ->description(fn (Product $record): ?string => static::localizedName($record->name) ?: null)
-                    // Rule #12: OEM search always on normalized_oem (BTREE), matching
-                    // dashes/spaces/dots the way global search and the storefront do —
-                    // not a leading-wildcard LIKE on the raw oem_number column.
+                    // Rule #12: OEM search always on normalized_oem, matching
+                    // dashes/spaces/dots the way global search and the storefront do.
+                    // Product::scopeOemContains() — a leading-wildcard LIKE here
+                    // can't use a plain BTREE index; at ~100k products this ran a
+                    // full table scan on every search-box keystroke.
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         $normalized = app(OemNormalizerService::class)->normalize($search);
 
-                        return $normalized === ''
-                            ? $query->whereRaw('1 = 0')
-                            : $query->where('normalized_oem', 'like', "%{$normalized}%");
+                        return $query->oemContains($normalized);
                     }),
                 Tables\Columns\TextColumn::make('manufacturer.name')
                     ->label(__('admin.manufacturer'))
@@ -653,7 +653,10 @@ class ProductResource extends Resource
         $normalized = app(OemNormalizerService::class)->normalize($search);
 
         if ($normalized !== '') {
-            $query->orWhere('normalized_oem', 'like', "%{$normalized}%");
+            // Product::scopeOemContains() — a leading-wildcard LIKE here
+            // can't use the normalized_oem index; at ~100k products this
+            // ran a full table scan on every keystroke of a global search.
+            $query->orWhere(fn (Builder $q) => $q->oemContains($normalized));
         }
     }
 

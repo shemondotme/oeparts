@@ -89,4 +89,33 @@ class Product extends Model
     {
         return $q->where('manufacturer_id', $manufacturerId);
     }
+
+    /**
+     * Substring match on normalized_oem — "does this OEM contain $term
+     * anywhere" (partial/cross-reference-style lookups, not the primary
+     * exact-match path). A plain `LIKE "%term%"` can never use the
+     * normalized_oem BTREE index (leading wildcard) — full table scan on
+     * every call. On MySQL, uses the FULLTEXT ngram index instead (see the
+     * add_oem_fulltext_ngram_index migration), which supports genuine
+     * substring matching and stays index-assisted at any catalog size.
+     * SQLite (the test DB) has no ngram FULLTEXT equivalent, so it falls
+     * back to the original LIKE scan there — fine for a test-sized table.
+     *
+     * @param  string  $term  Already alphanumeric-normalized (see
+     *                        OemNormalizerService) — never raw user input.
+     */
+    public function scopeOemContains($query, string $term)
+    {
+        if ($term === '') {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($query->getConnection()->getDriverName() === 'mysql') {
+            return $query->whereRaw('MATCH(normalized_oem) AGAINST(? IN BOOLEAN MODE)', [$term]);
+        }
+
+        $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $term);
+
+        return $query->where('normalized_oem', 'LIKE', "%{$escaped}%");
+    }
 }
