@@ -108,6 +108,62 @@ class SystemModuleTest extends TestCase
         $this->assertTrue($editAction->isHidden(), 'edit must be hidden for the super_admin role');
     }
 
+    public function test_admin_with_only_edit_admins_permission_cannot_grant_super_admin_role(): void
+    {
+        $superRole = Role::findByName('super_admin', 'admin');
+        $managerRole = Role::findByName('manager', 'admin');
+
+        $manager = Admin::where('email', 'manager@oeparts.test')->firstOrFail();
+        $manager->givePermissionTo(['view admins', 'edit admins', 'create admins']);
+
+        // Policy-level guard (would fire even off a crafted request that
+        // bypasses the form entirely):
+        $this->actingAs($manager, 'admin');
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        AdminPolicy::assertCanAssignRoles([$superRole->id, $managerRole->id]);
+    }
+
+    public function test_admin_with_only_edit_admins_permission_cannot_grant_super_admin_role_via_ui(): void
+    {
+        $superRole = Role::findByName('super_admin', 'admin');
+        $managerRole = Role::findByName('manager', 'admin');
+
+        $manager = Admin::where('email', 'manager@oeparts.test')->firstOrFail();
+        $manager->givePermissionTo(['view admins', 'edit admins', 'create admins']);
+
+        $target = Admin::where('email', 'support@oeparts.test')->firstOrFail();
+
+        $this->actingAs($manager, 'admin');
+        Livewire::test(\App\Filament\Resources\AdminResource\Pages\EditAdmin::class, ['record' => $target->id])
+            // The roles picker's own modifyQueryUsing() already excludes
+            // super_admin from a non-super_admin actor's options, so
+            // submitting it here fails Filament's own "exists in the
+            // scoped relationship query" validation before the resource's
+            // AdminPolicy::assertCanAssignRoles() guard is even reached —
+            // both layers exist per the audit's "filter the picker AND add
+            // a server-side guard" recommendation. What matters behaviorally
+            // is that the save is rejected and nothing persists.
+            ->fillForm(['roles' => [$superRole->id, $managerRole->id]])
+            ->call('save')
+            ->assertHasErrors();
+
+        $this->assertFalse($target->fresh()->hasRole('super_admin'));
+    }
+
+    public function test_super_admin_can_still_grant_super_admin_role(): void
+    {
+        $superRole = Role::findByName('super_admin', 'admin');
+        $target = Admin::where('email', 'support@oeparts.test')->firstOrFail();
+
+        $this->actingAs($this->superAdmin, 'admin');
+        Livewire::test(\App\Filament\Resources\AdminResource\Pages\EditAdmin::class, ['record' => $target->id])
+            ->fillForm(['roles' => [$superRole->id]])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue($target->fresh()->hasRole('super_admin'));
+    }
+
     public function test_default_and_english_languages_are_undeletable(): void
     {
         $en = Language::where('code', 'en')->firstOrFail();

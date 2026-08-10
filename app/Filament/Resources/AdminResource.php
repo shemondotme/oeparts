@@ -86,7 +86,19 @@ class AdminResource extends Resource
                                             ->helperText(fn (): string => 'Minimum '.settings('auth.admin_password_min', 12).' characters with at least one uppercase letter and one number.'),
                                         Forms\Components\Select::make('roles')
                                             ->label(__('admin.assigned_roles'))
-                                            ->relationship('roles', 'name')
+                                            ->relationship(
+                                                'roles',
+                                                'name',
+                                                // UI-layer half of the guard: only a super_admin actor
+                                                // can even see the super_admin option here. The
+                                                // authoritative half — server-side, since this alone
+                                                // is bypassable via a crafted request — is
+                                                // AdminPolicy::assertCanAssignRoles(), called from
+                                                // both Create/EditAdmin before the record is saved.
+                                                modifyQueryUsing: fn ($query) => auth('admin')->user()?->hasRole('super_admin')
+                                                    ? $query
+                                                    : $query->where('name', '!=', 'super_admin'),
+                                            )
                                             ->multiple()
                                             ->preload()
                                             ->native(false)

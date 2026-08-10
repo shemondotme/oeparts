@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Policies;
 
 use App\Models\Admin;
+use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Role;
 
 class AdminPolicy extends BasePolicy
 {
@@ -41,5 +43,28 @@ class AdminPolicy extends BasePolicy
             ->where('is_active', true)
             ->whereKeyNot($record->getKey())
             ->doesntExist();
+    }
+
+    /**
+     * Server-side guard behind AdminResource's role picker: the picker
+     * itself hides super_admin from non-super_admin actors, but that's a UI
+     * convenience, not enforcement — without this, any admin holding only
+     * "edit admins" could grant super_admin (to themselves or anyone else)
+     * via a crafted request, instantly gaining full access through the
+     * Gate::before super_admin bypass.
+     *
+     * @param  array<int, int|string>  $roleIds
+     */
+    public static function assertCanAssignRoles(array $roleIds): void
+    {
+        if (auth('admin')->user()?->hasRole('super_admin')) {
+            return;
+        }
+
+        if (Role::whereIn('id', $roleIds)->where('name', 'super_admin')->exists()) {
+            throw ValidationException::withMessages([
+                'data.roles' => 'Only a super admin can assign the super_admin role.',
+            ]);
+        }
     }
 }

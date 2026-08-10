@@ -31,6 +31,8 @@ class EditAdmin extends EditRecord
             ]);
         }
 
+        AdminPolicy::assertCanAssignRoles($data['roles'] ?? []);
+
         return $data;
     }
 
