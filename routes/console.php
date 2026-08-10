@@ -37,7 +37,10 @@ Schedule::command('abandoned-cart:process')->hourlyAt(5);
 
 // Dispatch newsletter campaigns whose scheduled send time has arrived —
 // this is what makes the admin's "Scheduled Send Date" actually fire.
-Schedule::command('oeparts:newsletter:send-due')->everyFiveMinutes();
+// withoutOverlapping(): the command's own atomic per-campaign claim already
+// prevents a double-dispatch of the same campaign, but this still avoids a
+// second run doing pointless duplicate work while the first is still going.
+Schedule::command('oeparts:newsletter:send-due')->everyFiveMinutes()->withoutOverlapping();
 
 // Auto-complete shipped orders after the operator-configured window —
 // this is what makes OrdersSettings' "Auto-Complete Fulfillment" real.

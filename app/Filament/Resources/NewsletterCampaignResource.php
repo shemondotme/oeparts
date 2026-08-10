@@ -181,7 +181,15 @@ class NewsletterCampaignResource extends Resource
                         ->color('gray')
                         ->authorize('update')
                         ->action(function (NewsletterCampaign $record) {
-                            $duplicate = $record->replicate(['status', 'sent_count', 'failed_count', 'sent_at']);
+                            // scheduled_at wasn't excluded here, so duplicating
+                            // an already-sent campaign reset status to 'draft'
+                            // (defaulted) but kept its old, already-past
+                            // scheduled_at — the very next send-due cron tick
+                            // (within 5 minutes) picked it straight up and
+                            // blasted it to every active subscriber, without
+                            // the admin ever clicking "Send" or setting a new
+                            // schedule.
+                            $duplicate = $record->replicate(['status', 'sent_count', 'failed_count', 'sent_at', 'scheduled_at']);
                             $duplicate->created_by = auth('admin')->user()->id;
                             $duplicate->save();
 

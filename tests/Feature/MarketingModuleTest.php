@@ -84,6 +84,64 @@ class MarketingModuleTest extends TestCase
         Queue::assertPushed(SendNewsletterCampaign::class, fn ($job) => $job->campaign->is($due));
     }
 
+    /**
+     * The command used to select due campaigns and dispatch every one of
+     * them with no atomic claim — status only flipped to 'sending' inside
+     * the job itself. A backed-up queue (job still running past the next
+     * 5-minute tick) or a second concurrent run re-selected and
+     * re-dispatched the same still-draft/scheduled campaign.
+     */
+    public function test_send_due_command_atomically_claims_each_campaign_and_wont_redispatch_an_already_claimed_one(): void
+    {
+        Queue::fake();
+
+        $due = $this->makeCampaign(['subject' => 'Due', 'status' => 'scheduled', 'scheduled_at' => now()->subMinute()]);
+
+        // Simulates a concurrent run (or the job itself) having already
+        // claimed this campaign a moment earlier.
+        $due->update(['status' => 'sending']);
+
+        $this->artisan('oeparts:newsletter:send-due')->assertSuccessful();
+
+        Queue::assertNotPushed(SendNewsletterCampaign::class);
+    }
+
+    public function test_send_due_command_marks_the_campaign_sending_before_dispatch(): void
+    {
+        Queue::fake();
+
+        $due = $this->makeCampaign(['subject' => 'Due', 'status' => 'scheduled', 'scheduled_at' => now()->subMinute()]);
+
+        $this->artisan('oeparts:newsletter:send-due')->assertSuccessful();
+
+        $this->assertSame('sending', $due->fresh()->status);
+    }
+
+    /**
+     * Duplicating an already-sent campaign used to keep its old, already-
+     * past scheduled_at — the very next send-due tick picked the "new"
+     * draft straight up and sent it to everyone, without the admin ever
+     * clicking anything.
+     */
+    public function test_duplicating_a_campaign_does_not_carry_over_its_old_scheduled_at(): void
+    {
+        $original = $this->makeCampaign([
+            'subject' => 'Original', 'status' => 'sent', 'sent_at' => now()->subDay(),
+            'scheduled_at' => now()->subDay(),
+        ]);
+
+        $admin = Admin::first();
+        $this->actingAs($admin, 'admin');
+
+        Livewire::test(\App\Filament\Resources\NewsletterCampaignResource\Pages\ListNewsletterCampaigns::class)
+            ->callTableAction('duplicateCampaign', $original);
+
+        $duplicate = NewsletterCampaign::where('subject', 'Original')->where('id', '!=', $original->id)->firstOrFail();
+
+        $this->assertNull($duplicate->scheduled_at);
+        $this->assertSame('draft', $duplicate->status);
+    }
+
     public function test_unknown_mailables_log_as_other_and_inquiry_status_maps(): void
     {
         $listener = new \App\Listeners\LogEmailSent();
