@@ -437,6 +437,12 @@ class CheckoutController extends Controller
 
         try {
             $order = $this->checkoutService->createOrder($checkoutId);
+        } catch (\RuntimeException $e) {
+            // Stock-availability and cart-state failures carry a safe,
+            // customer-facing message (see CheckoutService::createOrder) —
+            // fine to show verbatim, same convention as the OTP handling
+            // above, so the customer knows exactly what to fix.
+            return back()->with('error', $e->getMessage());
         } catch (\Throwable $e) {
             report($e);
 

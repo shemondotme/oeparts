@@ -9,6 +9,7 @@ use App\Jobs\GenerateInvoicePdf;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
@@ -267,6 +268,21 @@ class CheckoutService
 
             $data = $checkout['data'];
             $cart->loadMissing('items.product.manufacturer', 'items.product.condition');
+
+            // Re-verify stock at the moment of charge, not just at add-to-cart
+            // time: a product can go out of stock between add-to-cart and
+            // checkout (admin deactivation, or a concurrent checkout for the
+            // same item). lockForUpdate() here holds the row lock for the
+            // rest of this transaction, so a second concurrent checkout for
+            // the same product blocks until this one commits or rolls back
+            // instead of both succeeding against the same unit of stock.
+            foreach ($cart->items as $item) {
+                $lockedProduct = Product::where('id', $item->product_id)->lockForUpdate()->first();
+                if (! $lockedProduct || ! $lockedProduct->is_in_stock) {
+                    $label = $item->product->oem_number ?? ('#' . $item->product_id);
+                    throw new \RuntimeException("\"{$label}\" is no longer in stock and can't be ordered. Please remove it from your cart to continue.");
+                }
+            }
 
             $cartSummary = $this->cartService->getSummary($cart);
             $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);

@@ -231,11 +231,17 @@ class CheckoutController extends BaseApiController
 
         // Create order with explicit params (API context)
         $user = Auth::user();
-        $order = $this->checkoutService->createOrder(
-            $checkoutId,
-            $user?->id,
-            $request->ip(),
-        );
+        try {
+            $order = $this->checkoutService->createOrder(
+                $checkoutId,
+                $user?->id,
+                $request->ip(),
+            );
+        } catch (\RuntimeException $e) {
+            // Stock-availability / cart-state failures carry a safe,
+            // customer-facing message (see CheckoutService::createOrder).
+            return $this->errorResponse($e->getMessage(), null, 409);
+        }
 
         return $this->createdResponse([
             'order_id' => $order->id,
