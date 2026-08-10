@@ -236,9 +236,16 @@ class SectionRendererService
     {
         try {
             return $this->cache->rememberHomeBlogPosts(function () {
+                // BlogController@index/@show additionally require
+                // published_at <= now() (a post can be status=Published
+                // with a future date, to schedule it) — this only checked
+                // status + non-null, so a scheduled-but-not-yet-live post
+                // appeared on the homepage immediately, with its link
+                // 404ing until the scheduled time actually arrived.
                 return BlogPost::where('status', 'published')
                     ->with(['category', 'author'])
                     ->whereNotNull('published_at')
+                    ->where('published_at', '<=', now())
                     ->orderByDesc('published_at')
                     ->limit((int) settings('sections.blog_limit', 6))
                     ->get();
