@@ -401,6 +401,16 @@ class CartTest extends TestCase
         // concern — leaves every genuinely-cold caller doing a fresh N+1 on
         // ->product per item. Now always does a flat load('items.product')
         // (exactly 2 queries) regardless of item count.
+        //
+        // Warm-up call: HandleRedirects caches its "no redirect configured
+        // for this path" result (a separate, correct fix — see its own
+        // comment about Cache::remember() not short-circuiting on null).
+        // Without this warm-up, the FIRST measured call below pays for that
+        // one-time redirects lookup and the second doesn't, making it look
+        // like query count varies with item count when it's really just
+        // cold vs. warm unrelated cache.
+        $this->getJson('/en/cart/summary');
+
         $this->postJson('/en/cart/add', [
             'product_id' => $this->product1->id,
             'quantity' => 1,

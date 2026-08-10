@@ -212,6 +212,14 @@ class BlogPostResource extends Resource
                                             ])
                                             ->native(false)
                                             ->nullable()
+                                            // Same bug as PageResource's identical field: this
+                                            // Section uses ->relationship('seoMeta'), so a
+                                            // SeoMeta row is created on every save regardless
+                                            // of whether the section was touched — without a
+                                            // form default matching the DB column's own
+                                            // default('index,follow'), it submits an explicit
+                                            // NULL, crashing every blog post creation.
+                                            ->default('index,follow')
                                             ->helperText('Control how search engines crawl and index this post.'),
                                     ])->columns(2),
                             ]),

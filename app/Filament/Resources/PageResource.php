@@ -177,6 +177,14 @@ class PageResource extends Resource
                                             ])
                                             ->native(false)
                                             ->nullable()
+                                            // This Section uses ->relationship('seoMeta'), so
+                                            // Filament creates/saves a SeoMeta row on EVERY
+                                            // page save, even with the section left untouched
+                                            // — without a form-level default matching the DB
+                                            // column's own default('index,follow'), it submits
+                                            // an explicit NULL for this NOT NULL column,
+                                            // crashing every single page creation.
+                                            ->default('index,follow')
                                             ->helperText('Control how search engines crawl and index this page.'),
                                     ])->columns(2),
                             ]),
