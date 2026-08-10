@@ -12,19 +12,37 @@
     $readTime   = max(1, (int) ceil($wordCount / 200));
     $publishedAt = \Carbon\Carbon::parse($post->published_at);
     $postUrl    = route('frontend.blog.show', ['lang' => $lang, 'slug' => $post->slug]);
+
+    // Advanced SEO (canonical/OG/robots overrides) — set via the Advanced
+    // SEO section on this post's edit screen (backed by seo_meta), layered
+    // on top of the meta_title/description/featured-image defaults below.
+    $seoService = app(\App\Services\SeoService::class);
+    $seoOverride = $seoService->getMetaFor($post);
+    $canonicalUrl = $seoOverride['canonical_url'] ?: $postUrl;
 @endphp
 
 @section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
 @section('meta_description'){{ $metaDescr }}@endsection
 
+@if($seoOverride['robots'])
+@section('meta_robots')
+    <meta name="robots" content="{{ $seoOverride['robots'] }}">
+@endsection
+@endif
+
 @section('og_type', 'article')
-@section('og_title'){{ $metaTitle }}@endsection
-@section('og_description'){{ $metaDescr }}@endsection
+@section('og_title'){{ $seoOverride['og_title'] ?: $metaTitle }}@endsection
+@section('og_description'){{ $seoOverride['og_description'] ?: $metaDescr }}@endsection
 
 @php
+    // Falls back to the post's own featured image when no OG image is set
+    // in Advanced SEO (which itself falls back to the site-wide default).
     $ogImage = $post->featuredImage?->file_url ?: null;
+    $ogImageOverrideTag = $seoOverride['og_image_id'] ? $seoService->ogImageTag($seoOverride['og_image_id']) : null;
 @endphp
-@if($ogImage)
+@if($ogImageOverrideTag)
+@section('og_image'){!! $ogImageOverrideTag !!}@endsection
+@elseif($ogImage)
 @section('og_image')
     <meta property="og:image" content="{{ $ogImage }}">
     <meta property="og:image:width" content="1200">
@@ -34,14 +52,14 @@
 @endif
 
 @section('canonical')
-    <link rel="canonical" href="{{ $postUrl }}">
+    <link rel="canonical" href="{{ $canonicalUrl }}">
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
+    @foreach(\App\Support\LocaleRegistry::codes() as $hLang)
         <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.blog.show', ['lang' => $hLang, 'slug' => $post->slug]) }}">
     @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.blog.show', ['lang' => 'en', 'slug' => $post->slug]) }}">
+    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.blog.show', ['lang' => \App\Support\LocaleRegistry::defaultCode(), 'slug' => $post->slug]) }}">
 @endsection
 
 @section('json_ld')

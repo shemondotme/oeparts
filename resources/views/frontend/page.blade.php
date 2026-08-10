@@ -9,6 +9,16 @@
     $slugUpper = strtoupper(str_replace('-', '·', $page->slug));
     $updatedAt = $page->updated_at ?? $page->created_at;
 
+    // Advanced SEO (canonical/OG/robots overrides) — set via the Advanced
+    // SEO section on this page's edit screen (backed by seo_meta), on top
+    // of the meta_title/meta_description already handled above.
+    $seoService = app(\App\Services\SeoService::class);
+    $seoOverride = $seoService->getMetaFor($page);
+@endphp
+
+@php
+    $pageCanonicalUrl = $seoOverride['canonical_url'] ?: url('/' . $lang . '/' . $page->slug);
+
     $slugKey = strtolower($page->slug);
     $iconMap = [
         'about'            => 'heroicon-s-information-circle',
@@ -37,16 +47,28 @@
 
 @section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
 @section('meta_description'){{ $metaDescr }}@endsection
+@section('og_title'){{ $seoOverride['og_title'] ?: $metaTitle }}@endsection
+@section('og_description'){{ $seoOverride['og_description'] ?: $metaDescr }}@endsection
+
+@if($seoOverride['robots'])
+@section('meta_robots')
+    <meta name="robots" content="{{ $seoOverride['robots'] }}">
+@endsection
+@endif
+
+@if($ogImageTag = $seoService->ogImageTag($seoOverride['og_image_id']))
+@section('og_image'){!! $ogImageTag !!}@endsection
+@endif
 
 @section('canonical')
-    <link rel="canonical" href="{{ url('/' . $lang . '/' . $page->slug) }}">
+    <link rel="canonical" href="{{ $pageCanonicalUrl }}">
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
+    @foreach(\App\Support\LocaleRegistry::codes() as $hLang)
         <link rel="alternate" hreflang="{{ $hLang }}" href="{{ url('/' . $hLang . '/' . $page->slug) }}">
     @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ url('/en/' . $page->slug) }}">
+    <link rel="alternate" hreflang="x-default" href="{{ url('/' . \App\Support\LocaleRegistry::defaultCode() . '/' . $page->slug) }}">
 @endsection
 
 @section('json_ld')

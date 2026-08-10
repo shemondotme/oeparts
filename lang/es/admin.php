@@ -237,6 +237,7 @@ return [
     'oem_verification' => 'Verificación OEM',
     'open_graph_description' => 'Descripción Open Graph',
     'open_graph_title' => 'Título Open Graph',
+    'open_graph_image' => 'Imagen Open Graph',
     'order' => 'Pedido',
     'order_date_range' => 'Rango de fechas del pedido',
     'order_notifications' => 'Notificaciones de pedidos',

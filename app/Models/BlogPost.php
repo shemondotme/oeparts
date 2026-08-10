@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class BlogPost extends Model
 {
@@ -47,6 +48,11 @@ class BlogPost extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(BlogTag::class, 'blog_post_tags', 'post_id', 'tag_id');
+    }
+
+    public function seoMeta(): MorphOne
+    {
+        return $this->morphOne(SeoMeta::class, 'metable');
     }
 
     public function scopePublished($q)

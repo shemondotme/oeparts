@@ -223,6 +223,36 @@ class SeoServiceTest extends TestCase
         $this->assertStringContainsString('images/og-default.png', $tag);
     }
 
+    /**
+     * ogImageTag() used to ignore $ogImageId entirely — both branches
+     * returned the same site-wide default, so a per-entity OG image
+     * selected in SeoMeta's Advanced SEO section never actually appeared.
+     */
+    #[Test]
+    public function og_image_tag_with_a_real_image_id_uses_that_images_url_not_the_default(): void
+    {
+        Setting::updateOrCreate(
+            ['group' => 'seo', 'key' => 'default_og_image'],
+            ['value' => 'images/og-default.png', 'type' => 'string', 'is_encrypted' => false]
+        );
+        app(SettingsService::class)->forget('seo');
+
+        $admin = Admin::factory()->create();
+        $image = \App\Models\MediaFile::create([
+            'uploaded_by' => $admin->id,
+            'file_name' => 'custom-og.png',
+            'file_path' => 'media/custom-og.png',
+            'file_url' => 'ignored-legacy-value',
+            'mime_type' => 'image/png',
+            'size' => 12345,
+        ]);
+
+        $tag = $this->service->ogImageTag($image->id);
+
+        $this->assertStringContainsString('media/custom-og.png', $tag);
+        $this->assertStringNotContainsString('images/og-default.png', $tag);
+    }
+
     #[Test]
     public function og_image_tag_without_image_id_but_default_returns_default(): void
     {

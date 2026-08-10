@@ -237,6 +237,7 @@ return [
     'oem_verification' => 'OEM patvirtinimas',
     'open_graph_description' => 'Open Graph aprašymas',
     'open_graph_title' => 'Open Graph pavadinimas',
+    'open_graph_image' => 'Open Graph paveikslėlis',
     'order' => 'Užsakymas',
     'order_date_range' => 'Užsakymo datų intervalas',
     'order_notifications' => 'Užsakymų pranešimai',

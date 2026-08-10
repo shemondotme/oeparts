@@ -7,6 +7,7 @@ use App\Support\MenuRegistry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 class Page extends Model
 {
@@ -38,6 +39,11 @@ class Page extends Model
     public function featuredImage(): BelongsTo
     {
         return $this->belongsTo(MediaFile::class, 'featured_image_id');
+    }
+
+    public function seoMeta(): MorphOne
+    {
+        return $this->morphOne(SeoMeta::class, 'metable');
     }
 
     protected static function booted(): void

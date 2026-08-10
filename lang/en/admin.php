@@ -247,6 +247,7 @@ return [
     'oem_verification' => 'OEM Verification',
     'open_graph_description' => 'Open Graph Description',
     'open_graph_title' => 'Open Graph Title',
+    'open_graph_image' => 'Open Graph Image',
     'order' => 'Order',
     'order_date_range' => 'Order Date Range',
     'order_notifications' => 'Order Notifications',

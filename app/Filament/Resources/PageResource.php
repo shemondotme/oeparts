@@ -127,6 +127,58 @@ class PageResource extends Resource
                                             )
                                             ->columnSpanFull(),
                                     ]),
+
+                                // Backed by the polymorphic seo_meta table
+                                // (SeoMetaResource) via a nested singular
+                                // relationship — previously had no creation
+                                // path anywhere (metable_type/id can't be
+                                // set from a blank standalone form) and no
+                                // render path either, so this whole feature
+                                // was decorative. canonical/OG/robots are
+                                // real capabilities the basic meta_title/
+                                // description fields above don't cover.
+                                Section::make('Advanced SEO')
+                                    ->icon('heroicon-o-magnifying-glass-circle')
+                                    ->description('Canonical URL, social sharing preview, and search-engine indexing directives.')
+                                    ->collapsible()
+                                    ->collapsed()
+                                    ->relationship('seoMeta')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('canonical_url')
+                                            ->label(__('admin.canonical_url'))
+                                            ->url()
+                                            ->maxLength(500)
+                                            ->nullable()
+                                            ->columnSpanFull()
+                                            ->helperText('The preferred URL for this page. Leave empty to use the default URL.'),
+                                        Forms\Components\TextInput::make('og_title')
+                                            ->label(__('admin.open_graph_title'))
+                                            ->maxLength(255)
+                                            ->nullable()
+                                            ->helperText('Falls back to the meta title above when empty.'),
+                                        Forms\Components\Textarea::make('og_description')
+                                            ->label(__('admin.open_graph_description'))
+                                            ->rows(2)
+                                            ->nullable()
+                                            ->helperText('Falls back to the meta description above when empty.'),
+                                        Forms\Components\Select::make('og_image_id')
+                                            ->label(__('admin.open_graph_image'))
+                                            ->relationship('ogImage', 'file_name')
+                                            ->searchable()
+                                            ->nullable()
+                                            ->helperText('Falls back to the site-wide default OG image when empty.'),
+                                        Forms\Components\Select::make('robots')
+                                            ->label(__('admin.robots_directive'))
+                                            ->options([
+                                                'index,follow' => 'Index, Follow',
+                                                'noindex,follow' => 'No Index, Follow',
+                                                'index,nofollow' => 'Index, No Follow',
+                                                'noindex,nofollow' => 'No Index, No Follow',
+                                            ])
+                                            ->native(false)
+                                            ->nullable()
+                                            ->helperText('Control how search engines crawl and index this page.'),
+                                    ])->columns(2),
                             ]),
 
                         // ─── Sidebar column ───────────────────────────────

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BlogPost;
+use App\Models\MediaFile;
 use App\Models\Page;
 use App\Models\Product;
 use App\Models\SeoMeta;
@@ -297,16 +298,17 @@ class SeoService
      */
     public function ogImageTag(?int $ogImageId): string
     {
-        if (! $ogImageId) {
-            $defaultImage = $this->settings->get('seo.default_og_image');
-            if ($defaultImage) {
-                return sprintf('<meta property="og:image" content="%s">', URL::asset($defaultImage));
+        // Both branches used to return the same site-wide default,
+        // ignoring $ogImageId entirely — a per-entity OG image selected in
+        // SeoMeta never actually appeared; every page rendered the default
+        // image regardless.
+        if ($ogImageId) {
+            $image = MediaFile::find($ogImageId);
+            if ($image?->file_url) {
+                return sprintf('<meta property="og:image" content="%s">', $image->file_url);
             }
-
-            return '';
         }
 
-        // MediaFile URL is resolved via public storage; if not available fall back to default
         $defaultImage = $this->settings->get('seo.default_og_image');
         if ($defaultImage) {
             return sprintf('<meta property="og:image" content="%s">', URL::asset($defaultImage));
