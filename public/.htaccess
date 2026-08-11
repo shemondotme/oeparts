@@ -9,6 +9,44 @@
     php_value max_input_time 300
 </IfModule>
 
+# Compress text-based responses (HTML/CSS/JS/JSON/SVG/fonts) before sending
+# — no compression was configured anywhere, so every response shipped
+# uncompressed. Guarded by <IfModule> since mod_deflate isn't guaranteed
+# enabled on every shared host (matches this file's own mod_php guard
+# above) — silently does nothing rather than erroring if it's absent.
+# Excludes already-compressed formats (images) — recompressing wastes CPU
+# for zero size benefit.
+<IfModule mod_deflate.c>
+    <IfModule mod_filter.c>
+        AddOutputFilterByType DEFLATE text/plain text/css text/xml text/javascript
+        AddOutputFilterByType DEFLATE application/javascript application/json
+        AddOutputFilterByType DEFLATE application/xml application/rss+xml application/atom+xml
+        AddOutputFilterByType DEFLATE image/svg+xml
+        AddOutputFilterByType DEFLATE font/ttf font/otf application/font-woff font/woff2
+    </IfModule>
+</IfModule>
+
+# Long-cache static asset files — the versioned Vite build output
+# (public/build/**, content-hashed filenames: a new deploy always ships new
+# filenames, never overwrites an old one) and uploaded media
+# (public/storage/** via the storage:link symlink: Laravel's default upload
+# flow always generates a random, unique filename, so a replacement upload
+# never overwrites the old file at the same path either). Neither had any
+# caching headers before — every repeat view re-validated with the origin
+# for no reason. Matched by extension rather than by /build//storage/ path
+# (<FilesMatch> matches the basename, not the request path — a prefix
+# pattern here would silently never match) — safe site-wide since every
+# other static-asset location an admin might add later gets the same win.
+<IfModule mod_expires.c>
+    <IfModule mod_headers.c>
+        <FilesMatch "\.(css|js|mjs|png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf|otf)$">
+            ExpiresActive On
+            ExpiresDefault "access plus 1 year"
+            Header set Cache-Control "public, immutable"
+        </FilesMatch>
+    </IfModule>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

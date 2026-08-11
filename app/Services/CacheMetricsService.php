@@ -75,7 +75,7 @@ class CacheMetricsService
     }
 
     /**
-     * Static definitions for the 8 known cache categories: label, the logical
+     * Static definitions for the known cache categories: label, the logical
      * key pattern(s) used for SCAN counting, how to read its TTL, and its
      * warm/clear callables. `warm` is null for categories with no clean
      * "warm all" concept (coupons are per-code/dynamic, settings groups are
@@ -199,6 +199,112 @@ class CacheMetricsService
                 'warm' => null,
                 'clear' => function (): int {
                     return $this->clearByPattern('settings.*');
+                },
+            ],
+            'search_console_stats' => [
+                'label' => 'Search Console Stats',
+                'sub' => 'active brand / product counts (/parts)',
+                'patterns' => ['search_console_stats'],
+                'ttlMinutes' => fn () => ((int) settings('search.cache_ttl_hours', 6)) * 60,
+                'warm' => function (): int {
+                    $this->cacheService->rememberSearchConsoleStats(fn () => [
+                        'brands'   => \App\Models\Manufacturer::where('is_active', true)->count(),
+                        'products' => \App\Models\Product::where('is_active', true)->count(),
+                    ]);
+
+                    return 1;
+                },
+                'clear' => function (): int {
+                    $this->cacheService->forgetSearchConsoleStats();
+
+                    return 1;
+                },
+            ],
+            'brands_listing' => [
+                'label' => 'Brands Directory',
+                'sub' => 'every active manufacturer (/brands page)',
+                'patterns' => ['manufacturers.active.all'],
+                'ttlMinutes' => fn () => (int) settings('performance.cache_ttl_manufacturers', 60),
+                'warm' => function (): int {
+                    $this->cacheService->rememberAllActiveManufacturers(
+                        fn () => \App\Models\Manufacturer::where('is_active', true)->with('logo')->get()
+                    );
+
+                    return 1;
+                },
+                'clear' => function (): int {
+                    $this->cacheService->forgetManufacturers();
+
+                    return 1;
+                },
+            ],
+            'conditions_by_slug' => [
+                'label' => 'Conditions (by slug)',
+                'sub' => '<x-ui.condition-badge> string-prop lookups',
+                'patterns' => ['conditions.by_slug'],
+                'ttlMinutes' => fn () => 60,
+                'warm' => function (): int {
+                    $this->cacheService->rememberConditionsBySlug(fn () => Condition::all()->keyBy('slug'));
+
+                    return 1;
+                },
+                'clear' => function (): int {
+                    $this->cacheService->forgetConditionsBySlug();
+
+                    return 1;
+                },
+            ],
+            'blog_listing' => [
+                'label' => 'Blog Listing',
+                'sub' => 'featured post · category & tag counts (/blog)',
+                'patterns' => ['blog.featured_post', 'blog.categories', 'blog.tags'],
+                'ttlMinutes' => fn () => (int) settings('performance.cache_ttl_sections', 60),
+                'warm' => function (): int {
+                    $this->cacheService->rememberBlogFeaturedPost(
+                        fn () => \App\Models\BlogPost::with('featuredImage')
+                            ->published()
+                            ->whereNotNull('featured_image_id')
+                            ->orderBy('published_at', 'desc')
+                            ->first()
+                    );
+                    $this->cacheService->rememberBlogCategories(
+                        fn () => \App\Models\Category::whereHas('blogPosts', fn ($q) => $q->published())
+                            ->withCount(['blogPosts as blog_posts_count' => fn ($q) => $q->published()])
+                            ->get()
+                    );
+                    $this->cacheService->rememberBlogTags(
+                        fn () => \App\Models\BlogTag::whereHas('posts', fn ($q) => $q->published())->get()
+                    );
+
+                    return 3;
+                },
+                'clear' => function (): int {
+                    $this->cacheService->forgetBlogFeaturedPost();
+                    $this->cacheService->forgetBlogFilters();
+
+                    return 3;
+                },
+            ],
+            'homepage_override' => [
+                'label' => 'Homepage Page Override',
+                'sub' => '"Set as Homepage" lookup',
+                'patterns' => ['page.homepage_override'],
+                'ttlMinutes' => fn () => (int) settings('performance.cache_ttl_sections', 60),
+                'warm' => function (): int {
+                    $this->cacheService->rememberHomepagePageOverride(fn () => ['page' => \App\Models\Page::with('featuredImage')
+                        ->where('is_homepage', true)
+                        ->where('status', \App\Enums\ContentStatus::Published)
+                        ->whereNotNull('published_at')
+                        ->where('published_at', '<=', now())
+                        ->first(),
+                    ]);
+
+                    return 1;
+                },
+                'clear' => function (): int {
+                    $this->cacheService->forgetHomepagePageOverride();
+
+                    return 1;
                 },
             ],
         ];

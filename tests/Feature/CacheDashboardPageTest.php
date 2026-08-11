@@ -65,7 +65,7 @@ class CacheDashboardPageTest extends TestCase
     }
 
     #[Test]
-    public function category_breakdown_shows_all_eight_categories(): void
+    public function category_breakdown_shows_all_known_categories(): void
     {
         $this->actingAs($this->adminWithRole('super_admin'), 'admin');
 
@@ -78,7 +78,15 @@ class CacheDashboardPageTest extends TestCase
             ->assertSee('Coupon Lookups')
             ->assertSee('Hero Stats')
             ->assertSee('Popular OEMs')
-            ->assertSee('Settings Groups');
+            ->assertSee('Settings Groups')
+            // Added after the ~100k-scale performance pass — these caches
+            // exist but previously had no manual "Warm"/"Clear" remediation
+            // path anywhere in the admin panel.
+            ->assertSee('Search Console Stats')
+            ->assertSee('Brands Directory')
+            ->assertSee('Conditions (by slug)')
+            ->assertSee('Blog Listing')
+            ->assertSee('Homepage Page Override');
     }
 
     #[Test]

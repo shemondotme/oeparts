@@ -53,6 +53,13 @@ class CacheMetricsServiceTest extends TestCase
         Cache::forget('oe_test_scan.beta');
         Cache::forget('manufacturers.active');
         Cache::forget('conditions.active');
+        Cache::forget('search_console_stats');
+        Cache::forget('manufacturers.active.all');
+        Cache::forget('conditions.by_slug');
+        Cache::forget('blog.featured_post');
+        Cache::forget('blog.categories');
+        Cache::forget('blog.tags');
+        Cache::forget('page.homepage_override');
 
         parent::tearDown();
     }
@@ -132,6 +139,27 @@ class CacheMetricsServiceTest extends TestCase
             'action' => 'cache_category_cleared',
             'model_type' => 'conditions',
         ]);
+    }
+
+    /**
+     * Added after the ~100k-scale performance pass — five new caches
+     * (search_console_stats, brands_listing, conditions_by_slug,
+     * blog_listing, homepage_override) previously had no entry in
+     * categoryDefinitions() at all, meaning no manual warm/clear path
+     * existed anywhere in the admin panel for them.
+     */
+    #[Test]
+    public function warm_and_clear_round_trips_for_every_new_category_added_this_pass(): void
+    {
+        $admin = Admin::factory()->create(['is_active' => true]);
+
+        foreach (['search_console_stats', 'brands_listing', 'conditions_by_slug', 'blog_listing', 'homepage_override'] as $key) {
+            $warmedCount = $this->service()->warmCategory($key, $admin->id);
+            $this->assertGreaterThan(0, $warmedCount, "{$key} should warm at least one key");
+
+            $clearedCount = $this->service()->clearCategory($key, $admin->id);
+            $this->assertGreaterThan(0, $clearedCount, "{$key} should clear at least one key");
+        }
     }
 
     #[Test]
