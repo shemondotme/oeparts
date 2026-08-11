@@ -6,10 +6,12 @@ use App\Models\BackupRun;
 use App\Models\UpdateHistory;
 use App\Services\Backup\BackupLock;
 use App\Services\Backup\BackupManager;
+use App\Services\Updates\ReleaseSignature;
 use App\Services\Updates\UpdateApplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Fixtures\ReleaseKeys;
 use Tests\TestCase;
 
 /**
@@ -221,9 +223,19 @@ class UpdateApplierTest extends TestCase
         file_put_contents($root.'/.env', "APP_KEY=base64:x\n");
         config(['updates.root_path' => $root]);
 
-        $preview = app(UpdateApplier::class)->preview($this->manifest([
+        // resources/keys/release-public.pem is a REAL committed file (this
+        // app's actual release trust anchor as of the v1.0.16 signing
+        // rollout), so PreflightService::checkSignature() enforces it here
+        // exactly like it does for a real install — sign against the test
+        // fixture keypair rather than bypassing the check.
+        config(['updates.signing.public_key' => ReleaseKeys::PUBLIC_KEY]);
+        $manifest = $this->manifest([
             'min_php' => '8.2', 'required_extensions' => ['json'], 'min_version_to_update_from' => '0.0.0',
-        ]));
+        ]);
+        $signer = app(ReleaseSignature::class);
+        $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), ReleaseKeys::PRIVATE_KEY);
+
+        $preview = app(UpdateApplier::class)->preview($manifest);
 
         $this->assertSame('1.1.0', $preview->toVersion);
         $this->assertSame(2, $preview->migrationCount);

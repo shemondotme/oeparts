@@ -5,8 +5,10 @@ namespace Tests\Feature;
 use App\Services\Backup\BackupLock;
 use App\Services\Updates\PreflightCheck;
 use App\Services\Updates\PreflightService;
+use App\Services\Updates\ReleaseSignature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Fixtures\ReleaseKeys;
 use Tests\TestCase;
 
 /**
@@ -33,6 +35,16 @@ class PreflightServiceTest extends TestCase
 
         config(['updates.root_path' => $this->root]);
         config(['updates.state_path' => $this->base.'/state']);
+
+        // resources/keys/release-public.pem is a REAL committed file (this
+        // app's actual release trust anchor as of the v1.0.16 signing
+        // rollout) — ReleaseSignature::enforced() reads it by default, so
+        // signature verification is ON in every test unless overridden here,
+        // same as it now is for every real install. cleanManifest() signs
+        // against this fixture keypair so "a clean environment" actually
+        // means clean under the SAME enforced check production runs, not an
+        // accidentally-bypassed one.
+        config(['updates.signing.public_key' => ReleaseKeys::PUBLIC_KEY]);
     }
 
     protected function tearDown(): void
@@ -64,13 +76,20 @@ class PreflightServiceTest extends TestCase
     /** A manifest that should pass every check in the fixture environment. */
     private function cleanManifest(array $overrides = []): array
     {
-        return array_merge([
+        $manifest = array_merge([
+            'version'                     => '1.1.0',
+            'sha256'                      => hash('sha256', 'clean-manifest-fixture'),
             'min_php'                     => '8.2',
             'required_extensions'         => ['json'],
             'min_version_to_update_from'  => '0.0.0',
             'size_bytes'                  => 1024,
             'new_env_keys'                => [],
         ], $overrides);
+
+        $signer = app(ReleaseSignature::class);
+        $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), ReleaseKeys::PRIVATE_KEY);
+
+        return $manifest;
     }
 
     #[Test]

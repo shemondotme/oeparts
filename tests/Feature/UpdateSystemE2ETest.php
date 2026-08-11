@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\UpdateHistory;
+use App\Services\Updates\ReleaseSignature;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateDownloader;
 use App\Services\Updates\UpdateExtractor;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Fixtures\ReleaseKeys;
 use Tests\TestCase;
 
 /**
@@ -123,13 +125,23 @@ class UpdateSystemE2ETest extends TestCase
         DB::statement('CREATE TABLE e2e_widgets (id INTEGER PRIMARY KEY, name TEXT)');
         DB::table('e2e_widgets')->insert(['id' => 1, 'name' => 'original']);
 
+        // resources/keys/release-public.pem is a REAL committed file (this
+        // app's actual release trust anchor as of the v1.0.16 signing
+        // rollout), so PreflightService::checkSignature() enforces it here
+        // exactly like it does for a real install — sign against the test
+        // fixture keypair rather than bypassing the check, matching this
+        // test's own real-services-over-stubs philosophy.
+        config(['updates.signing.public_key' => ReleaseKeys::PUBLIC_KEY]);
         $manifest = [
             'version'                    => '1.1.0',
+            'sha256'                     => hash('sha256', 'e2e-fixture'),
             'channel'                    => 'stable',
             'min_version_to_update_from' => '1.0.0',
             'required_extensions'        => ['json'],
             'migration_count'            => 0,
         ];
+        $signer = app(ReleaseSignature::class);
+        $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), ReleaseKeys::PRIVATE_KEY);
 
         $applier = new E2EApplier;
         $applier->staging = $this->staging;
