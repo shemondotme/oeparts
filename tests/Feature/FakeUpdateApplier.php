@@ -19,8 +19,37 @@ class FakeUpdateApplier extends UpdateApplier
     public array $log = [];
     public ?string $failAt = null;
     public bool $rolledBack = false;
+    public bool $throwOnExitMaintenance = false;
+    public bool $throwDuringStart = false;
 
     protected function gate(array $manifest): void {}
+
+    /** Forces start()'s own try block to fail, exercising its catch/cleanup path. */
+    protected function armRecovery(UpdateHistory $history): void
+    {
+        if ($this->throwDuringStart) {
+            throw new \RuntimeException('simulated failure during start()');
+        }
+
+        parent::armRecovery($history);
+    }
+
+    /**
+     * Simulates exitMaintenance()'s real failure mode: it writes a setting
+     * through the database, so the same broken connection that can cause an
+     * update to fail in the first place can ALSO make cleanup itself throw.
+     * start()/complete()/fail() must still release the BackupLock when this
+     * happens — see the finally blocks in UpdateApplier for the fix this
+     * flag verifies.
+     */
+    protected function exitMaintenance(): void
+    {
+        if ($this->throwOnExitMaintenance) {
+            throw new \RuntimeException('simulated DB failure while exiting maintenance mode');
+        }
+
+        parent::exitMaintenance();
+    }
 
     // Force the zip path regardless of where tests happen to run — without this,
     // isGitMode() falls back to config('updates.root_path') ?: base_path(),

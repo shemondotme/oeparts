@@ -75,6 +75,72 @@ class UpdateApplierTest extends TestCase
         $this->assertFalse((bool) settings('maintenance.enabled'), 'maintenance lifted on success');
     }
 
+    /**
+     * exitMaintenance()/disarmRecovery() write through the database — the
+     * same kind of failure that can cause an update to need cleanup in the
+     * first place can also make the cleanup itself throw. Confirmed live: a
+     * DB hiccup during a real update left the BackupLock permanently held,
+     * blocking every future backup AND update until the lock file was
+     * deleted by hand. complete()/fail()/start() now release the lock in a
+     * finally block specifically so this can't happen.
+     */
+    #[Test]
+    public function the_lock_is_released_on_success_even_if_exiting_maintenance_mode_fails(): void
+    {
+        $applier = new FakeUpdateApplier;
+        $applier->throwOnExitMaintenance = true;
+
+        $history = $applier->start($this->manifest());
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('simulated DB failure while exiting maintenance mode');
+
+        try {
+            $applier->run($history);
+        } finally {
+            $this->assertFalse(app(BackupLock::class)->isLocked(), 'lock must be released even though exitMaintenance() failed');
+        }
+    }
+
+    #[Test]
+    public function the_lock_is_released_on_failure_even_if_exiting_maintenance_mode_fails(): void
+    {
+        $applier = new FakeUpdateApplier;
+        $applier->failAt = 'download';
+        $applier->throwOnExitMaintenance = true;
+
+        $history = $applier->start($this->manifest());
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('simulated DB failure while exiting maintenance mode');
+
+        try {
+            $applier->run($history);
+        } finally {
+            $this->assertFalse(app(BackupLock::class)->isLocked(), 'lock must be released even though exitMaintenance() failed');
+        }
+    }
+
+    #[Test]
+    public function the_lock_is_released_when_start_itself_fails_even_if_exiting_maintenance_mode_also_fails(): void
+    {
+        $applier = new FakeUpdateApplier;
+        $applier->throwDuringStart = true;
+        $applier->throwOnExitMaintenance = true;
+
+        try {
+            $applier->start($this->manifest());
+            $this->fail('start() should have thrown its own failure, not the cleanup failure');
+        } catch (\RuntimeException $e) {
+            // The ORIGINAL failure must surface, not the cleanup failure that
+            // happens while handling it — a cleanup error silently replacing
+            // the real cause would hide what actually went wrong.
+            $this->assertSame('simulated failure during start()', $e->getMessage());
+        }
+
+        $this->assertFalse(app(BackupLock::class)->isLocked(), 'lock must be released even though start()\'s own cleanup also failed');
+    }
+
     #[Test]
     public function a_failure_before_the_swap_does_not_roll_back(): void
     {

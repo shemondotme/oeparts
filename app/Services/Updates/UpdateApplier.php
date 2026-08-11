@@ -96,8 +96,24 @@ class UpdateApplier
 
             return $history;
         } catch (\Throwable $e) {
-            $this->exitMaintenance();
-            app(BackupLock::class)->release();
+            // The lock must be released regardless of what else fails during
+            // cleanup — a broken DB connection (the very thing that can cause
+            // $e in the first place) also breaks exitMaintenance(), which
+            // writes a setting via the database. Previously that second
+            // failure propagated in place of $e and skipped release()
+            // entirely, permanently stuck-locking every future backup AND
+            // update until someone manually deleted the lock file by hand
+            // (confirmed live: a DB hiccup during start() left exactly this
+            // state). finally guarantees release() always runs; the inner
+            // try/catch keeps a cleanup failure from masking the real $e.
+            try {
+                $this->exitMaintenance();
+            } catch (\Throwable $cleanupError) {
+                Log::channel(config('updates.log_channel', 'stack'))
+                    ->error('Failed to exit maintenance mode while cleaning up a failed start(): '.$cleanupError->getMessage());
+            } finally {
+                app(BackupLock::class)->release();
+            }
             throw $e;
         }
     }
@@ -271,9 +287,19 @@ class UpdateApplier
         $history->finished_at = now();
         $history->save();
 
-        $this->exitMaintenance();
-        $this->disarmRecovery(); // install is known-good → close the recovery window
-        app(BackupLock::class)->release();
+        // finally guarantees the lock is released even if exitMaintenance()/
+        // disarmRecovery() throws (both write through the database) — the
+        // same stuck-lock risk fixed in start()'s catch block and fail()
+        // below applies here too: a successful update that then can't turn
+        // maintenance mode back off must still hand the lock back, or every
+        // future backup/update stays permanently blocked over an unrelated
+        // cleanup failure.
+        try {
+            $this->exitMaintenance();
+            $this->disarmRecovery(); // install is known-good → close the recovery window
+        } finally {
+            app(BackupLock::class)->release();
+        }
 
         Log::channel(config('updates.log_channel', 'stack'))->notice('update.success', [
             'history' => $history->getKey(), 'to' => $history->to_version,
@@ -305,14 +331,21 @@ class UpdateApplier
         $history->finished_at = now();
         $history->save();
 
-        $this->exitMaintenance();
-        // A completed rollback restored a known-good install → close the recovery
-        // window. A hard failure (no rollback) may have left the app unbootable, so
-        // KEEP it armed — that is exactly when an operator needs the console (rule #47).
-        if ($rolledBack) {
-            $this->disarmRecovery();
+        // finally guarantees the lock is released even if exitMaintenance()
+        // itself throws (e.g. the same broken DB connection that likely
+        // caused this failure in the first place) — see start()'s catch
+        // block for the live-confirmed stuck-lock scenario this prevents.
+        try {
+            $this->exitMaintenance();
+            // A completed rollback restored a known-good install → close the recovery
+            // window. A hard failure (no rollback) may have left the app unbootable, so
+            // KEEP it armed — that is exactly when an operator needs the console (rule #47).
+            if ($rolledBack) {
+                $this->disarmRecovery();
+            }
+        } finally {
+            app(BackupLock::class)->release();
         }
-        app(BackupLock::class)->release();
 
         return $history;
     }

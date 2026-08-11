@@ -7,6 +7,7 @@ use App\Services\Updates\UpdateChecker;
 use App\Services\Updates\UpdateStatus;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Update & Recovery System (Module 21, Chunk 1.2) — scheduled/manual check tier.
@@ -78,7 +79,21 @@ class CheckForUpdates extends Command
             return;
         }
 
-        NotifyAdminsOfUpdate::dispatch($status->toArray());
-        Cache::forever($key, $status->latestVersion);
+        try {
+            NotifyAdminsOfUpdate::dispatch($status->toArray());
+            Cache::forever($key, $status->latestVersion);
+        } catch (\Throwable $e) {
+            // QUEUE_CONNECTION=sync (a valid, documented default for a fresh
+            // install) runs this job inline — an unconfigured/failing SMTP
+            // server previously crashed this ENTIRE command (including the
+            // scheduled daily run) even though update detection itself had
+            // already succeeded and been cached correctly above. Log and
+            // skip the dedup cache write so tomorrow's run retries once mail
+            // is fixed, instead of silently giving up on this version.
+            Log::warning('Failed to notify admins of an available update', [
+                'version' => $status->latestVersion,
+                'error'   => $e->getMessage(),
+            ]);
+        }
     }
 }
