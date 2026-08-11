@@ -95,3 +95,57 @@ A few project-specific security properties worth knowing when you deploy:
   unsigned or tampered release before it's ever applied.
 - **All payment webhooks are HMAC-verified** before being trusted, and
   processed idempotently to prevent replay-driven double-fulfillment.
+
+### File Ownership & Permissions
+
+The self-updater (git-managed installs) runs `git checkout --force` and
+`composer install` as whatever system user your web server (PHP-FPM) runs
+as. That user must therefore **own every git-tracked file in the project**
+— not just be able to read it. If any tracked file was ever created or
+edited by a *different* user (most commonly: hand-editing a config file
+with `sudo` directly on the server), git can no longer delete/overwrite it
+during an update, and the update fails with `Permission denied` naming
+that exact file.
+
+This is why a WordPress install rarely runs into this: shared hosting
+almost always gives PHP-FPM and SSH/SFTP access to the site under the
+*same single account user* by construction, so there's structurally no
+other user that could ever touch its files. A self-managed VPS with git
+deployment has no such guarantee built in — you have to set it up
+deliberately. The fix is one rule, not a list of exceptions:
+
+> **Never edit a file inside the project directory as `root`/via bare
+> `sudo`.** Either edit as the deploy user (`sudo -u deployuser -i`, then
+> edit normally), or if a change genuinely requires root, `chown` the file
+> back to the deploy user immediately afterward.
+
+**One-time setup** (run once per server; replace `deployuser` with whatever
+user PHP-FPM runs as — commonly `www-data`, sometimes a dedicated account):
+
+```bash
+# Make the deploy user own the entire project — code, configs, everything
+# git tracks, PLUS the runtime-writable directories below.
+sudo chown -R deployuser:deployuser /path/to/oeparts
+
+# Laravel's own writable directories (cache, sessions, logs, compiled views).
+find /path/to/oeparts/storage /path/to/oeparts/bootstrap/cache -type d -exec chmod 775 {} \;
+find /path/to/oeparts/storage /path/to/oeparts/bootstrap/cache -type f -exec chmod 664 {} \;
+
+# .env holds secrets — not git-tracked, but still needs the same owner;
+# tighten it so only that user can read it at all.
+chmod 600 /path/to/oeparts/.env
+```
+
+**What actually needs to be writable, and by whom** (everything else in
+the tree only needs to be *readable* by the web server user):
+
+| Path | Needs write access from | Why |
+|---|---|---|
+| `storage/app/*` | web server user | backup staging, uploaded media, generated invoices |
+| `storage/framework/*` | web server user | compiled views, sessions/cache if file-driven |
+| `storage/logs/*` | web server user | application logs |
+| `storage/app/updates/*` | web server user | update lock file, recovery arm-flag, resumable state |
+| `bootstrap/cache/*` | web server user | config/route/event cache |
+| `public/storage` | — (symlink only) | points at `storage/app/public`; run `php artisan storage:link` once, never chmod the symlink target's permissions differently from `storage/app/public` itself |
+| Every git-tracked file (`app/`, `config/`, `public/build/`, `deploy/`, `docker/`, …) | web server user (**own**, not just write) | `git checkout --force` during a self-update must be able to replace any of these |
+| `.env` | web server user (own); `600` | secrets — no group/world access needed or wanted |

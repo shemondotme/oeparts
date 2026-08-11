@@ -105,6 +105,8 @@ cp .env.example .env
 php artisan key:generate
 ```
 
+> **Git-managed deployment (self-updates via `git checkout`)?** Clone and run every command in this section as the *same* user your web server (PHP-FPM) runs as — not `root`. The one-click updater's `git checkout --force` needs to own every tracked file to replace it later; a file touched by a different user (most commonly: hand-editing a config with `sudo`) breaks future updates with `Permission denied`. See [SECURITY.md § File Ownership & Permissions](SECURITY.md#file-ownership--permissions) for the full list and a one-time setup script.
+
 ### 2. Configure `.env`
 
 At minimum, set your database credentials:
