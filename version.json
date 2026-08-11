@@ -25,14 +25,14 @@
     "post_update_notes": "Hotfix for v1.0.16: on some installs, the update process could fail during the migration step with a \"Duplicate key name products_normalized_oem_ngram_fulltext\" error, which stopped the update from completing (your site was not left broken \u2014 the update system's backup-first flow protects against that). This release makes that migration safe to retry from any state; if you're on 1.0.15, updating straight to this version skips the affected step entirely. If you're currently stuck on a failed v1.0.16 update attempt, just try updating again.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": null,
-    "size_bytes": null,
-    "signature": null,
+    "sha256": "2589f34e118a3cfe90b36109077a134e325d327a7b527cb093a5a95444cc00c0",
+    "size_bytes": 30561141,
+    "signature": "qcJNQi+7Mjz5BOK8KCswQUw0rCbDKp8VRv9mTI2e6zbYPYPPckj1D6RCK3v+e4JGI6VijzN/DVb2pNqByM7IaCNs8Ge2Xx0TxoOdHzz9lWpWAKMencW/iEFaDrkbx/i+iasK+TnWwj2XFMg2sGK9C9kaxeDMgs9zwN2SVlJOAKOsDiypPsq+gDNSnIcJSmAH35D1FLL0+/AB0OGO6RFtQyn+azyIEXbGOXXkVq/d98cJGnAsOPX+vpf5SDncBPXGjYSx7G/L1FMil3M8c6nwmsrEA5H1x9I2HH6LVF5rNC04jlYNeZrJZsGHSFUeMTpAwxEi9Hpz+6C3N4Zwwr1d3U3DEGEilbfGa5ZZkibzdeBTK6UJLd9sb9Y59u5Z7/dxrYS95u2WnpOvDz6FHTZdA7usXFzw9gr/u7HPqoIyFbEnxbGGeT89HlNFFDsEMpNlncHcj8c/Q8xlxzo59EXFvn0BzH3pKab9MMtWur23FVBa9gw2/lVI4G89XxM9+FSw82sEbIChwXlKFW6G3APSxt9KhoCsbvgwulaAcnl+bbDel+qjaoaH0cDkBFXufie3/NMNTnsTbtlZAnchcHsMafCjLNDbwiQW0piEBZxNkvgRW72IVKG9QrIGwjxMGuEXRFlbZ7XqaCWGwUaqNFjDIttPh9FikuFfoVrTqcHhdR0=",
     "download_url": "https://github.com/shemondotme/oeparts/releases/download/v1.0.17/oeparts-1.0.17.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "826862c824a1e443d1589290ff0a470e830bbe32",
-    "git_signature": "lgbYjFtDqn2TA8cDeE86ocJpWstM2VA31Z+UoomnGf6Xk8V/iM+vu7F6UMqiQluuQYEPa4mvq8xilMg76drbqflBJ2+4iVaNMg2tKHoem6sxnRoHORoxZj+8oM6B+zbgSU1PLvfeNzB+CFKYszaciqfk3gfHg+PnkpjnsHDR1DAfMFyehP6fhwCAecebVy0GVtrknT/Cufq709Oqh9oQbsOH8wzmKxwWSY1kBplc+WbVmC7kLKIvZX/4fc65y7OzXREXzlTihu4guvb1CC9QiLi7z08mD7lpfP6hnf3CHpYeZHaddxNZo3oza42k6frIThXKi76qRxW0af7thFVlo+24c3wXqMAZ7gJ7rUqFmHOklf99QOW9aBJ4GTt8d7rPTMP3AN02dKtD9bdDues4aY2UDsYAYElQXAWu6OA7y8H/3r9Ff0NhZjolytOhcizltQJ7VcaLZEY+ex4WMDFCB4gEfk8kGq81tYHp9bGHmMDGwErjeNNk68X6mMG6f1bi77X/GGBp+BChtcwPxiw5vfpbXY7Q5Dv7H+oFslTPim473XB+phFPjAagUbmOIRXq9qJdWABlO2Tt2mOO3hRYBqo+aZax85UJYhhQoIE+Igop2nVC++XuM3krx2fK4jKQdFGYqEDoPv4ta8O24Gqvp9ZE1MucY/hJVY7+/jvh2iY="
+    "git_commit_sha": "58bcdc6ecff8b983462a9f26de4b5333ea50fae9",
+    "git_signature": "LOq+FEzpV86ELP9W7Vsn03TaA4/KX8yx7eTxYJGE+J96L+CyGGnZwCJZ/+x18GsHnM2cRglmG/odWwj5ohLptlcgJSDf6VXP3loeSF618MM9P3JyH803wyRSKiSt1GDNhiR7Dh0JwAcZklSqtib4uruhZYd/5yEKbMHFaP+8rlwguKBVOFcdLDgINFn649pdJOuzIu4tOcjPCLSMIdOOFi6C94z4zCEamjLII1u1couJwcgMVupPOx/SQArj/mwPekrbxPi8A2xGpcT63GuRLIdpB6HfEby9wRK/tQTCWpozjUvzQay7rJpbeJVyQht1826+zRgoq87wPXbN8qsuvXBKFdiROT3tT5ySKNZ/jf1cr7ncBqRfvjwWyFx0GsNhRvvmCNIrxCPB476o55ja6AJQhYFLd8mMjQkL5K+VbQlSH/4BvMP+n0HdNXtkE9Gqvt1ciHy7lfi/QIafk1QG3vfu2he53MuZp1fVI/J46xLYOmtkSI3NK7kcpUAyXuLQyT4Y18d6lioi0Vz7FsJhWqD1YFeUOVL+SZY+YNmYxxaOY+ShqVV9hbeGpfz5UT4+mNyUBZfcTR1WO3bs9Yx5hjNHY1orRHqPeNv3Lwuem6H/66zsxU/W56m4K7FVR4Ti+fHqh+4FBXhYvCd9oFF8j/vxZivjsLXVetvCavjRZds="
 }
