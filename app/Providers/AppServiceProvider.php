@@ -10,6 +10,7 @@ use App\Models\Faq;
 use App\Models\Manufacturer;
 use App\Models\NewsletterCampaign;
 use App\Models\Order;
+use App\Models\Page;
 use App\Models\Product;
 use App\Models\RefundRequest;
 use App\Models\Section;
@@ -23,6 +24,7 @@ use App\Observers\FaqObserver;
 use App\Observers\ManufacturerObserver;
 use App\Observers\NewsletterCampaignObserver;
 use App\Observers\OrderObserver;
+use App\Observers\PageObserver;
 use App\Observers\ProductObserver;
 use App\Observers\RefundRequestObserver;
 use App\Observers\SectionObserver;
@@ -128,6 +130,7 @@ class AppServiceProvider extends ServiceProvider
         BlogPost::observe(BlogPostObserver::class);
         Section::observe(SectionObserver::class);
         NewsletterCampaign::observe(NewsletterCampaignObserver::class);
+        Page::observe(PageObserver::class);
 
         // Force https for URL/asset generation only when the app is actually configured to be
         // served over it. Forcing based on APP_ENV alone breaks any production install accessed

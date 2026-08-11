@@ -46,6 +46,14 @@ class ProductObserver
 
             $cache->forget("product.{$product->id}");
             $cache->forgetManufacturers();
+            $cache->forgetSearchConsoleStats();
+            // Previously only invalidated by the bulk CSV import path and a
+            // manual "Clear" click on the Cache Dashboard — a single product
+            // created/edited/deleted through the admin panel (not the
+            // importer) left the homepage hero "parts indexed" stat and
+            // popular-OEMs strip stale for up to 6h/1h.
+            $cache->forgetHeroStats();
+            $cache->forgetPopularOems();
             Cache::forget('sitemap_parts');
             SearchService::bumpCacheVersion();
 

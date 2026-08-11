@@ -2,22 +2,22 @@
 
 namespace App\Observers;
 
-use App\Models\Condition;
+use App\Models\Page;
 use App\Services\CacheService;
 
-class ConditionObserver
+class PageObserver
 {
-    public function created(Condition $condition): void
+    public function created(Page $page): void
     {
         $this->invalidateCache();
     }
 
-    public function updated(Condition $condition): void
+    public function updated(Page $page): void
     {
         $this->invalidateCache();
     }
 
-    public function deleted(Condition $condition): void
+    public function deleted(Page $page): void
     {
         $this->invalidateCache();
     }
@@ -25,8 +25,7 @@ class ConditionObserver
     protected function invalidateCache(): void
     {
         try {
-            app(CacheService::class)->forgetActiveConditions();
-            app(CacheService::class)->forgetConditionsBySlug();
+            app(CacheService::class)->forgetHomepagePageOverride();
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
         }

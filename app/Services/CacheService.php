@@ -81,11 +81,36 @@ class CacheService
     }
 
     /**
-     * Invalidate the manufacturer list cache.
+     * Invalidate the manufacturer list cache(s).
      */
     public function forgetManufacturers(): void
     {
         Cache::forget('manufacturers.active');
+        Cache::forget('manufacturers.active.all');
+    }
+
+    /**
+     * Remember EVERY active manufacturer (with logo), unfiltered/unpaginated
+     * and locale-independent — the source collection for the /brands
+     * directory page. ManufacturerController::index() used to run a fresh
+     * DB query on every single visit (letter-filter + a locale-aware
+     * ORDER BY on a JSON_EXTRACT expression, which can't use an index) —
+     * this page is linked from the nav on every single page of the site.
+     * Caching once and doing the locale-aware sort/letter-filter/pagination
+     * in PHP on this collection avoids both the non-indexable DB sort and a
+     * combinatorial explosion of per-locale/per-letter/per-page cache keys.
+     * Invalidated the same way as manufacturers.active — same
+     * ManufacturerObserver/ProductObserver call sites, no new wiring needed.
+     */
+    public function rememberAllActiveManufacturers(callable $callback): mixed
+    {
+        if (! settings('performance.cache_manufacturers', true)) {
+            return $callback();
+        }
+
+        $ttl = (int) settings('performance.cache_ttl_manufacturers', 60);
+
+        return Cache::remember('manufacturers.active.all', now()->addMinutes($ttl), $callback);
     }
 
     /**
@@ -129,11 +154,35 @@ class CacheService
     }
 
     /**
+     * Remember EVERY condition (active or not) keyed by slug — backs
+     * <x-ui.condition-badge>'s string-slug prop path (currently unused by
+     * any live call site, which always passes an already-loaded Condition
+     * model instead, but a per-call uncached lookup sitting in a shared UI
+     * component is a landmine for whoever uses that prop shape next,
+     * especially inside a @foreach over products). Deliberately unfiltered
+     * by is_active (unlike rememberActiveConditions()) to match this
+     * lookup's prior behavior — a product tagged with a since-deactivated
+     * condition should still show its real badge, not silently fall back.
+     */
+    public function rememberConditionsBySlug(callable $callback): mixed
+    {
+        return Cache::remember('conditions.by_slug', now()->addHour(), $callback);
+    }
+
+    /**
      * Invalidate the active condition list cache.
      */
     public function forgetActiveConditions(): void
     {
         Cache::forget('conditions.active');
+    }
+
+    /**
+     * Invalidate the by-slug condition map.
+     */
+    public function forgetConditionsBySlug(): void
+    {
+        Cache::forget('conditions.by_slug');
     }
 
     // ── Homepage content-block cache ─────────────────────────────────────────
@@ -172,6 +221,73 @@ class CacheService
         Cache::forget('home.blog_posts');
     }
 
+    // ── Blog listing page cache ──────────────────────────────────────────────
+    // (/{lang}/blog — NOT the paginated/filtered post query itself, which is
+    // genuinely fresh-per-request "search" work like SearchService's own
+    // results; these three run identically on EVERY visit regardless of
+    // category/tag/search filters, so were pure redundant cost.)
+
+    /**
+     * Remember the "Featured" post (newest published post with an image) —
+     * ran unconditionally on every single /blog visit.
+     */
+    public function rememberBlogFeaturedPost(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('blog.featured_post', $callback);
+    }
+
+    public function forgetBlogFeaturedPost(): void
+    {
+        Cache::forget('blog.featured_post');
+    }
+
+    /**
+     * Remember the sidebar category/tag filter lists (with published-post
+     * counts) — also ran unconditionally on every /blog visit.
+     */
+    public function rememberBlogCategories(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('blog.categories', $callback);
+    }
+
+    public function rememberBlogTags(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('blog.tags', $callback);
+    }
+
+    public function forgetBlogFilters(): void
+    {
+        Cache::forget('blog.categories');
+        Cache::forget('blog.tags');
+    }
+
+    // ── Homepage Page-override cache ─────────────────────────────────────────
+
+    /**
+     * Remember the "Set as Homepage" Page lookup — ran unconditionally at
+     * the very top of every single homepage request, before the (already
+     * cached) section-based path is even reached. Bound by the same TTL as
+     * every other section-family cache, so a scheduled future publish takes
+     * up to that long to actually flip the homepage over — same tradeoff
+     * this codebase already accepts for scheduled blog posts.
+     *
+     * $callback must return a nullable Page wrapped in an array
+     * (`['page' => $pageOrNull]`), never the bare nullable value — Laravel's
+     * Cache::remember() re-invokes its callback on every call when the
+     * stored value reads back as literal null (it can't tell "cached null on
+     * purpose" from "nothing cached yet"), which would make this a permanent
+     * no-op for the common case (no page is flagged as the homepage).
+     */
+    public function rememberHomepagePageOverride(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('page.homepage_override', $callback)['page'];
+    }
+
+    public function forgetHomepagePageOverride(): void
+    {
+        Cache::forget('page.homepage_override');
+    }
+
     private function rememberHomeContent(string $key, callable $callback): mixed
     {
         if (! settings('performance.cache_sections', true)) {
@@ -194,6 +310,27 @@ class CacheService
     public function rememberCouponByCode(string $code, callable $callback): mixed
     {
         return Cache::remember("coupon.code.{$code}", now()->addMinutes(15), $callback);
+    }
+
+    // ── Search Console stats cache ───────────────────────────────────────────
+
+    /**
+     * Remember the Search Console landing page's status-panel counts (active
+     * brands/products) — was a bare Cache::remember() with no matching
+     * forget() anywhere, so an admin deactivating a product or manufacturer
+     * left this stale for up to search.cache_ttl_hours (default 6h). Now
+     * invalidated by ProductObserver and ManufacturerObserver on every write.
+     */
+    public function rememberSearchConsoleStats(callable $callback): mixed
+    {
+        $ttl = (int) settings('search.cache_ttl_hours', 6);
+
+        return Cache::remember('search_console_stats', now()->addHours($ttl), $callback);
+    }
+
+    public function forgetSearchConsoleStats(): void
+    {
+        Cache::forget('search_console_stats');
     }
 
     // ── Hero stats cache ──────────────────────────────────────────────────────

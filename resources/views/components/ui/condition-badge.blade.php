@@ -10,7 +10,9 @@
         $text = $condition->text_color;
         $label = condition_label($condition);
     } elseif (is_string($condition)) {
-        $conditionModel = \App\Models\Condition::where('slug', $condition)->first();
+        $conditionModel = app(\App\Services\CacheService::class)
+            ->rememberConditionsBySlug(fn () => \App\Models\Condition::all()->keyBy('slug'))
+            ->get($condition);
         if ($conditionModel) {
             $bg = $conditionModel->bg_color;
             $text = $conditionModel->text_color;

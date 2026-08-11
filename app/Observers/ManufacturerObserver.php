@@ -27,6 +27,7 @@ class ManufacturerObserver
     {
         try {
             app(CacheService::class)->forgetManufacturers();
+            app(CacheService::class)->forgetSearchConsoleStats();
 
             foreach (['manufacturer_revenue', 'manufacturing_stats'] as $widgetId) {
                 WidgetPreferenceService::forgetCache($widgetId);

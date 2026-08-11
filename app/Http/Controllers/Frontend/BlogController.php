@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\BlogPost;
 use App\Models\BlogTag;
 use App\Models\Category;
+use App\Services\CacheService;
 use Illuminate\Http\Request;
 
 class BlogController extends Controller
 {
+    public function __construct(
+        private CacheService $cacheService,
+    ) {}
+
     /**
      * Display blog listing page.
      */
@@ -49,11 +54,15 @@ class BlogController extends Controller
         // "Featured" is just the newest published post with an image — when no
         // filter is active that's also list item 001, so exclude it from the
         // main list below to avoid showing the same post twice on the page.
-        $featuredPost = BlogPost::with('featuredImage')
-            ->published()
-            ->whereNotNull('featured_image_id')
-            ->orderBy('published_at', 'desc')
-            ->first();
+        // Cached: identical on every visit regardless of filters, was
+        // ran unconditionally on every single /blog request.
+        $featuredPost = $this->cacheService->rememberBlogFeaturedPost(
+            fn () => BlogPost::with('featuredImage')
+                ->published()
+                ->whereNotNull('featured_image_id')
+                ->orderBy('published_at', 'desc')
+                ->first()
+        );
 
         if ($featuredPost && ! $request->anyFilled(['category', 'tag', 'search'])) {
             $query->where('id', '!=', $featuredPost->id);
@@ -67,10 +76,15 @@ class BlogController extends Controller
         // to render the count badge in the sidebar (was an N+1 + heavy rows).
         // Both scoped to published posts only — otherwise a category/tag whose
         // only posts are drafts shows an inflated count and a dead-end filter link.
-        $categories = Category::whereHas('blogPosts', fn ($q) => $q->published())
-            ->withCount(['blogPosts as blog_posts_count' => fn ($q) => $q->published()])
-            ->get();
-        $tags = BlogTag::whereHas('posts', fn ($q) => $q->published())->get();
+        // Cached alongside $featuredPost, same reasoning.
+        $categories = $this->cacheService->rememberBlogCategories(
+            fn () => Category::whereHas('blogPosts', fn ($q) => $q->published())
+                ->withCount(['blogPosts as blog_posts_count' => fn ($q) => $q->published()])
+                ->get()
+        );
+        $tags = $this->cacheService->rememberBlogTags(
+            fn () => BlogTag::whereHas('posts', fn ($q) => $q->published())->get()
+        );
 
         return view('frontend.blog.index', compact('posts', 'categories', 'tags', 'featuredPost'));
     }
