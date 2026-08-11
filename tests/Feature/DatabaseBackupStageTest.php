@@ -253,4 +253,65 @@ class DatabaseBackupStageTest extends TestCase
         $this->assertNotNull($manifest);
         $this->assertSame($run->part_count, count($manifest['parts']));
     }
+
+    /**
+     * MySqlGrammar::compileSchemaWhereClause() resolves a null $schema to
+     * "table_schema not in ('information_schema', 'mysql', ...)" — i.e.
+     * EVERY table the connected user can see across EVERY database on the
+     * server, not just the one this app is configured to use. On any real
+     * MySQL host where the app's DB user also has grants on another
+     * database (confirmed live: this project's own local 'sail' user has
+     * grants on both `oeparts` and `oeparts_test`), resolveTables() used to
+     * pull in that other database's tables too — SHOW CREATE TABLE on a
+     * same-named-but-foreign table then fails outright (reproduced live
+     * against a real multi-database MySQL server while verifying the
+     * v1.0.15 -> v1.0.16 update end-to-end), or worse, would have backed up
+     * a different database's data into this app's backup file.
+     *
+     * The default test connection is sqlite (phpunit.xml) specifically so
+     * the suite runs without a real database server — but sqlite has no
+     * equivalent cross-database concept, so it can't exercise this MySQL
+     * grammar quirk at all. This test deliberately opens the real 'mysql'
+     * connection this project's own Docker stack already provides; it
+     * skips itself if that service isn't reachable (CI environments that
+     * don't run one) rather than false-passing on a connection that was
+     * never actually exercised.
+     */
+    #[Test]
+    public function resolve_tables_never_includes_a_different_databases_tables_on_mysql(): void
+    {
+        config(['database.connections.mysql.database' => 'oeparts_test']);
+
+        try {
+            DB::connection('mysql')->select('select 1');
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('Real MySQL service not reachable: '.$e->getMessage());
+        }
+
+        $suffix = getmypid();
+        $ownTable = "oe_leak_own_{$suffix}";
+        $foreignTable = "oe_leak_foreign_{$suffix}";
+
+        DB::connection('mysql')->statement("CREATE TABLE `{$ownTable}` (id INT)");
+        // Fully-qualified name deliberately creates this table in the
+        // SIBLING `oeparts` database, not the connection's own `oeparts_test`
+        // — the same-user, different-database scenario that leaked before.
+        DB::connection('mysql')->statement("CREATE TABLE `oeparts`.`{$foreignTable}` (id INT)");
+
+        try {
+            $stage = new DatabaseBackupStage();
+            $resolve = new \ReflectionMethod($stage, 'resolveTables');
+            $resolve->setAccessible(true);
+
+            config(['database.default' => 'mysql']);
+            $tables = $resolve->invoke($stage);
+
+            $this->assertContains($ownTable, $tables, 'a table in the connection\'s own database must still be backed up');
+            $this->assertNotContains($foreignTable, $tables, 'a table in a different database on the same server must never be backed up');
+        } finally {
+            config(['database.default' => 'sqlite']);
+            DB::connection('mysql')->statement("DROP TABLE IF EXISTS `{$ownTable}`");
+            DB::connection('mysql')->statement("DROP TABLE IF EXISTS `oeparts`.`{$foreignTable}`");
+        }
+    }
 }

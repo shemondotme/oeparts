@@ -278,9 +278,28 @@ class DatabaseBackupStage implements BackupStage
     /** @return array<int,string> base tables to back up, deterministic order. */
     private function resolveTables(): array
     {
+        // Schema::getTableListing() with no argument does NOT scope to the
+        // current database on MySQL — MySqlGrammar::compileSchemaWhereClause()
+        // resolves a null $schema to "table_schema not in ('information_schema',
+        // 'mysql', ...)", i.e. every table the connected user can see across
+        // EVERY database on the server. On any host where the app's DB user has
+        // visibility into other databases (common: one MySQL user shared across
+        // multiple sites/local dev installs), this silently pulled in other
+        // databases' tables too — confirmed live against a real multi-database
+        // MySQL server, where it crashed the backup outright (SHOW CREATE TABLE
+        // on a same-named table that doesn't exist in THIS database) and would
+        // otherwise have backed up a different database's data into this app's
+        // backup file. Passing the connection's own database name scopes MySQL
+        // correctly; SQLite (tests) has no such cross-database concept for a
+        // single-file connection, so it's left unscoped as before.
+        $connection = DB::connection();
+        $schema = in_array($connection->getDriverName(), ['mysql', 'mariadb'], true)
+            ? $connection->getDatabaseName()
+            : null;
+
         $tables = array_map(
             fn ($t) => Str::contains($t, '.') ? Str::afterLast($t, '.') : $t,
-            Schema::getTableListing()
+            Schema::getTableListing($schema)
         );
 
         $excludedEntirely = (array) config('backup.db.exclude_tables_entirely', []);
