@@ -83,7 +83,7 @@
                         @endphp
                         <img src="{{ $logoSrc }}"
                              alt="{{ $brandName }}"
-                             loading="lazy"
+                             loading="{{ lazy_loading_attr() }}"
                              class="max-h-[90px] w-auto object-contain
                                     grayscale opacity-85 group-hover:grayscale-0 group-hover:opacity-100
                                     transition-all duration-300">

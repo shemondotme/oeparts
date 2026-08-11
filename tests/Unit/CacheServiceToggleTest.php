@@ -74,6 +74,69 @@ class CacheServiceToggleTest extends TestCase
     }
 
     #[Test]
+    public function toggling_cache_conditions_off_actually_disables_it(): void
+    {
+        $this->disable('cache_conditions');
+
+        $calls = 0;
+        $callback = function () use (&$calls) {
+            $calls++;
+
+            return collect();
+        };
+
+        app(CacheService::class)->rememberActiveConditions($callback);
+        app(CacheService::class)->rememberActiveConditions($callback);
+        app(CacheService::class)->rememberConditionsBySlug($callback);
+        app(CacheService::class)->rememberConditionsBySlug($callback);
+
+        $this->assertSame(4, $calls);
+        $this->assertNull(Cache::get('conditions.active'));
+        $this->assertNull(Cache::get('conditions.by_slug'));
+    }
+
+    #[Test]
+    public function toggling_cache_homepage_stats_off_actually_disables_it(): void
+    {
+        $this->disable('cache_homepage_stats');
+
+        $calls = 0;
+        $callback = function () use (&$calls) {
+            $calls++;
+
+            return [];
+        };
+
+        app(CacheService::class)->rememberHeroStats($callback);
+        app(CacheService::class)->rememberHeroStats($callback);
+        app(CacheService::class)->rememberPopularOems($callback);
+        app(CacheService::class)->rememberPopularOems($callback);
+
+        $this->assertSame(4, $calls);
+        $this->assertNull(Cache::get('hero.stats'));
+        $this->assertNull(Cache::get('hero.popular_oems'));
+    }
+
+    #[Test]
+    public function toggling_cache_search_console_stats_off_actually_disables_it(): void
+    {
+        $this->disable('cache_search_console_stats');
+
+        $calls = 0;
+        $callback = function () use (&$calls) {
+            $calls++;
+
+            return [];
+        };
+
+        app(CacheService::class)->rememberSearchConsoleStats($callback);
+        app(CacheService::class)->rememberSearchConsoleStats($callback);
+
+        $this->assertSame(2, $calls);
+        $this->assertNull(Cache::get('search_console_stats'));
+    }
+
+    #[Test]
     public function the_seeded_default_still_enables_caching(): void
     {
         // Sanity check the fix didn't flip the DEFAULT behavior — no row at

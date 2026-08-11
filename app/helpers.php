@@ -17,6 +17,19 @@ function settings(string $key, mixed $default = null): mixed
 }
 
 /**
+ * `loading` attribute value for a below-the-fold `<img>` — 'lazy' unless the
+ * admin has turned lazy-loading off in Performance settings, in which case
+ * 'eager' preserves the pre-toggle browser default. NEVER use this for a
+ * page's own primary/hero image (article featured image, brand page logo) —
+ * eagerly loading that one is correct regardless of this setting, since it's
+ * usually the LCP element.
+ */
+function lazy_loading_attr(): string
+{
+    return filter_var(settings('performance.lazy_load_images', true), FILTER_VALIDATE_BOOLEAN) ? 'lazy' : 'eager';
+}
+
+/**
  * Per-request Content-Security-Policy nonce.
  *
  * Bound by App\Http\Middleware\ContentSecurityPolicy before the response renders.

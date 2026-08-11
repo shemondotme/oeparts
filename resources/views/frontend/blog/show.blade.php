@@ -379,6 +379,7 @@
                                    class="block aspect-[16/10] overflow-hidden bg-ivory-alt border-b border-ink">
                                     <img src="{{ $relatedPost->featuredImage->file_url }}"
                                          alt="{{ trans_field($relatedPost->title) }}"
+                                         loading="{{ lazy_loading_attr() }}"
                                          class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300" />
                                 </a>
                             @endif

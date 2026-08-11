@@ -142,6 +142,21 @@ class PerformanceSettings extends SettingsPage
                             ->maxValue(1440)
                             ->required()
                             ->default(60),
+
+                        Forms\Components\Toggle::make('cache_conditions')
+                            ->label('Cache Condition List (New/Used/Refurbished)')
+                            ->helperText('Rarely-changing reference data read on every search-results page. Fixed 1-hour TTL.')
+                            ->default(true),
+
+                        Forms\Components\Toggle::make('cache_homepage_stats')
+                            ->label('Cache Homepage Hero Stats')
+                            ->helperText('Parts/manufacturer/cross-ref counts and the "INDEXED:" popular-OEM strip. Fixed 1-6 hour TTL.')
+                            ->default(true),
+
+                        Forms\Components\Toggle::make('cache_search_console_stats')
+                            ->label('Cache Search Console Status Panel')
+                            ->helperText('Active brand/product counts shown on the admin Search Console page — does not affect the storefront.')
+                            ->default(true),
                     ])->columns(2),
 
                 Section::make('Image Optimization')
@@ -188,6 +203,15 @@ class PerformanceSettings extends SettingsPage
                             ->default(2000)
                             ->visible(fn (Get $get) => $get('optimize_images')),
                     ])->columns(2),
+
+                Section::make('Page Loading')
+                    ->description('How images already on the page are delivered to the browser — separate from Image Optimization above, which controls how uploads are stored.')
+                    ->schema([
+                        Forms\Components\Toggle::make('lazy_load_images')
+                            ->label('Lazy-Load Below-the-Fold Images')
+                            ->helperText('Defers loading images outside the initial viewport (brand logos, blog/manufacturer grid thumbnails) until the visitor scrolls near them. The first hero/featured image on any page always loads immediately regardless of this setting, to avoid delaying it.')
+                            ->default(true),
+                    ]),
 
                 Section::make('Cloudflare CDN')
                     ->description('Purge-only integration — this panel never changes your live Cloudflare zone configuration, only tells it to drop cached copies when content changes. Configure the dashboard settings below directly on Cloudflare.')

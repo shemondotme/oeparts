@@ -222,6 +222,7 @@
                                                     @if($brand->logo && $brand->logo->file_url)
                                                         <img src="{{ $brand->logo->file_url }}"
                                                              alt="{{ trans_field($brand->name) }}"
+                                                             loading="{{ ($loop->parent->first && $loop->first) ? 'eager' : lazy_loading_attr() }}"
                                                              class="max-w-[82%] max-h-[82%] object-contain" />
                                                     @else
                                                         <span class="font-mono text-base font-bold text-ink group-hover:text-amber">

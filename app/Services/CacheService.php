@@ -154,6 +154,10 @@ class CacheService
      */
     public function rememberActiveConditions(callable $callback): mixed
     {
+        if (! filter_var(settings('performance.cache_conditions', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $callback();
+        }
+
         return Cache::remember('conditions.active', now()->addHour(), $callback);
     }
 
@@ -170,6 +174,10 @@ class CacheService
      */
     public function rememberConditionsBySlug(callable $callback): mixed
     {
+        if (! filter_var(settings('performance.cache_conditions', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $callback();
+        }
+
         return Cache::remember('conditions.by_slug', now()->addHour(), $callback);
     }
 
@@ -331,6 +339,10 @@ class CacheService
      */
     public function rememberSearchConsoleStats(callable $callback): mixed
     {
+        if (! filter_var(settings('performance.cache_search_console_stats', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $callback();
+        }
+
         $ttl = (int) settings('search.cache_ttl_hours', 6);
 
         return Cache::remember('search_console_stats', now()->addHours($ttl), $callback);
@@ -349,6 +361,10 @@ class CacheService
      */
     public function rememberHeroStats(callable $callback): mixed
     {
+        if (! filter_var(settings('performance.cache_homepage_stats', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $callback();
+        }
+
         return Cache::remember('hero.stats', now()->addHours(6), $callback);
     }
 
@@ -366,6 +382,10 @@ class CacheService
      */
     public function rememberPopularOems(callable $callback): mixed
     {
+        if (! filter_var(settings('performance.cache_homepage_stats', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $callback();
+        }
+
         return Cache::remember('hero.popular_oems', now()->addHour(), $callback);
     }
 

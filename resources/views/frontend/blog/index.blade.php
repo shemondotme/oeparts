@@ -209,6 +209,7 @@
                                             @if($post->featured_image_id && $post->featuredImage)
                                                 <img src="{{ $post->featuredImage->file_url }}"
                                                      alt="{{ trans_field($post->title) }}"
+                                                     loading="{{ $loop->first ? 'eager' : lazy_loading_attr() }}"
                                                      class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300" />
                                             @else
                                                 <div class="w-full h-full flex items-center justify-center">

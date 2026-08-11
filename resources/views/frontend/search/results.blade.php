@@ -657,7 +657,7 @@
                                                 <img src="{{ asset('storage/' . $logoPath) }}"
                                                      alt="{{ trans_field($manufacturer->name) }}"
                                                      class="h-9 w-9 shrink-0 object-contain border border-rule p-1 bg-paper"
-                                                     loading="lazy" width="36" height="36">
+                                                     loading="{{ lazy_loading_attr() }}" width="36" height="36">
                                                 @else
                                                 <div class="w-9 h-9 border border-rule flex items-center justify-center shrink-0 bg-ivory-alt">
                                                     <x-heroicon-o-building-office-2 class="w-4 h-4 text-ink-muted" />
@@ -904,7 +904,7 @@
                                     <img src="{{ asset('storage/' . $logoPath) }}"
                                          alt="{{ trans_field($manufacturer->name) }}"
                                          class="w-9 h-9 object-contain border border-rule p-1 shrink-0"
-                                         loading="lazy" width="36" height="36">
+                                         loading="{{ lazy_loading_attr() }}" width="36" height="36">
                                     @else
                                     <div class="w-9 h-9 border border-rule flex items-center justify-center shrink-0 bg-ivory-alt">
                                         <x-heroicon-o-building-office-2 class="w-4 h-4 text-ink-muted" />

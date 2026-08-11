@@ -4,6 +4,23 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    {{-- Resource hints — only for third-party origins actually loaded below,
+         and only when that integration is configured. Kept this early in
+         <head> so the browser starts the connection before it reaches the
+         actual <script>/<img> tag further down. --}}
+    @if(settings('integrations.gtm_id', '') || settings('integrations.ga4_measurement_id', ''))
+    <link rel="preconnect" href="https://www.googletagmanager.com">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    @endif
+    @if(settings('integrations.fb_pixel_id', ''))
+    <link rel="preconnect" href="https://connect.facebook.net">
+    <link rel="dns-prefetch" href="https://connect.facebook.net">
+    @endif
+    @if(settings('integrations.crisp_website_id', ''))
+    <link rel="preconnect" href="https://client.crisp.chat">
+    <link rel="dns-prefetch" href="https://client.crisp.chat">
+    @endif
 @php
     $preloaderService = app(\App\Services\PreloaderService::class);
     $showPreloader = $preloaderService->shouldRender();
