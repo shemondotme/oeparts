@@ -180,7 +180,10 @@ class ContentModuleTest extends TestCase
 
         $record = MediaFile::where('alt_text', 'Brake diagram')->first();
         $this->assertNotNull($record);
-        $this->assertSame('image/png', $record->mime_type);
+        // ImageOptimizationService converts to WebP by default (settings-
+        // gated, see ImageOptimizationServiceTest for the toggle behavior) —
+        // the uploaded PNG is no longer stored as-is.
+        $this->assertSame('image/webp', $record->mime_type);
         Storage::disk('public')->assertExists($record->file_path);
     }
 

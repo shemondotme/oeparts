@@ -8,6 +8,7 @@ use App\Models\Manufacturer;
 use App\Models\MediaFile;
 use App\Models\Page;
 use App\Models\SeoMeta;
+use App\Services\ImageOptimizationService;
 use App\Services\UploadedImageSanitizer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,7 @@ use Illuminate\Support\Str;
 
 class MediaPickerController extends Controller
 {
-    public function upload(Request $request, UploadedImageSanitizer $sanitizer): JsonResponse
+    public function upload(Request $request, UploadedImageSanitizer $sanitizer, ImageOptimizationService $optimizer): JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'file' => 'required|image|mimes:jpeg,png,gif,webp|max:5120',
@@ -39,19 +40,20 @@ class MediaPickerController extends Controller
 
         $path = $file->store('media/' . now()->format('Y/m'), 'public');
         $sanitizer->sanitize('public', $path, $file->getMimeType());
+        $optimized = $optimizer->optimize('public', $path, $file->getMimeType());
 
         $media = MediaFile::create([
             'uploaded_by' => Auth::guard('admin')->id(),
             'file_name' => $file->getClientOriginalName(),
-            'file_path' => $path,
+            'file_path' => $optimized['path'],
             // Storage::url() alone resolves against config('filesystems.default')
             // (currently 'local', a private disk with no url mapping — see
             // MediaFile::getFileUrlAttribute()), NOT the 'public' disk this file
             // was just stored to two lines up. Explicit disk keeps the stored
             // value correct regardless of what the default disk is set to.
-            'file_url' => Storage::disk('public')->url($path),
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
+            'file_url' => Storage::disk('public')->url($optimized['path']),
+            'mime_type' => $optimized['mime'],
+            'size' => $optimized['size'] ?? $file->getSize(),
             'alt_text' => $request->input('alt_text'),
         ]);
 

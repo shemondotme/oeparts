@@ -244,13 +244,20 @@ class MediaFileResource extends Resource
                     // Same content-safety check + GD re-encode as every other
                     // upload endpoint (see UploadedImageSanitizer) — run after
                     // Filament's own default save so its directory/naming/
-                    // move-vs-copy logic is untouched.
+                    // move-vs-copy logic is untouched. ImageOptimizationService
+                    // runs after that — may return a different (.webp) path,
+                    // which is why this returns ITS path, not the sanitized one;
+                    // the action() below re-reads mime/size fresh from whatever
+                    // file actually ends up on disk.
                     ->saveUploadedFileUsing(function (Forms\Components\FileUpload $component, $file) {
                         $path = $component->saveUploadedFile($file);
 
                         if ($path) {
+                            $mime = $component->getDisk()->mimeType($path) ?: null;
                             app(\App\Services\UploadedImageSanitizer::class)
-                                ->sanitize('public', $path, $component->getDisk()->mimeType($path) ?: null);
+                                ->sanitize('public', $path, $mime);
+                            $path = app(\App\Services\ImageOptimizationService::class)
+                                ->optimize('public', $path, $mime)['path'];
                         }
 
                         return $path;

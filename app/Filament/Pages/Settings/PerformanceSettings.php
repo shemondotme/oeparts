@@ -7,6 +7,7 @@ use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Support\Facades\Cache;
 
 class PerformanceSettings extends SettingsPage
@@ -110,6 +111,51 @@ class PerformanceSettings extends SettingsPage
                             ->maxValue(1440)
                             ->required()
                             ->default(60),
+                    ])->columns(2),
+
+                Section::make('Image Optimization')
+                    ->description('Applies to Media Library / editor / logo uploads — never to refund evidence photos, which must stay exactly as the customer submitted them.')
+                    ->schema([
+                        Forms\Components\Toggle::make('optimize_images')
+                            ->label('Optimize Uploaded Images')
+                            ->helperText('Resize oversized uploads and re-compress, in addition to the security re-encode every upload already goes through.')
+                            ->default(true)
+                            ->live(),
+
+                        Forms\Components\Toggle::make('image_convert_webp')
+                            ->label('Convert to WebP')
+                            ->helperText('Re-saves JPEG/PNG uploads as WebP (smaller files, near-universal browser support). GIFs are left untouched — GD would flatten an animation to one frame.')
+                            ->default(true)
+                            ->visible(fn (Get $get) => $get('optimize_images')),
+
+                        Forms\Components\TextInput::make('image_quality')
+                            ->label('Compression Quality')
+                            ->helperText('1-100. Lower = smaller files, more visible compression. 82 is a strong default for photos and logos alike.')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->required()
+                            ->default(82)
+                            ->visible(fn (Get $get) => $get('optimize_images')),
+
+                        Forms\Components\TextInput::make('image_max_width')
+                            ->label('Max Width (px)')
+                            ->helperText('A cap, not a target — smaller uploads are never upscaled.')
+                            ->numeric()
+                            ->minValue(100)
+                            ->maxValue(10000)
+                            ->required()
+                            ->default(2000)
+                            ->visible(fn (Get $get) => $get('optimize_images')),
+
+                        Forms\Components\TextInput::make('image_max_height')
+                            ->label('Max Height (px)')
+                            ->numeric()
+                            ->minValue(100)
+                            ->maxValue(10000)
+                            ->required()
+                            ->default(2000)
+                            ->visible(fn (Get $get) => $get('optimize_images')),
                     ])->columns(2),
 
                 Section::make('Queue')

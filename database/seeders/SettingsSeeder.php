@@ -200,6 +200,11 @@ class SettingsSeeder extends Seeder
             ['group' => 'performance', 'key' => 'cache_ttl_sections',      'value' => '60',    'type' => $i],
             ['group' => 'performance', 'key' => 'cache_manufacturers',     'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'cache_ttl_manufacturers', 'value' => '60',    'type' => $i],
+            ['group' => 'performance', 'key' => 'optimize_images',        'value' => '1',     'type' => $b],
+            ['group' => 'performance', 'key' => 'image_convert_webp',     'value' => '1',     'type' => $b],
+            ['group' => 'performance', 'key' => 'image_quality',          'value' => '82',    'type' => $i],
+            ['group' => 'performance', 'key' => 'image_max_width',        'value' => '2000',  'type' => $i],
+            ['group' => 'performance', 'key' => 'image_max_height',       'value' => '2000',  'type' => $i],
 
             // ── SECURITY ─────────────────────────────────────────────────────────
             // otp_enabled seeded OFF: a fresh install has no SMTP configured yet

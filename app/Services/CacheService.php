@@ -25,7 +25,11 @@ class CacheService
      */
     public function rememberSection(string $location, callable $callback): mixed
     {
-        if (! settings('performance.cache_sections', true)) {
+        // Booleans an admin toggles via the Performance settings page save as
+        // the literal string 'false' (SettingsPage::persistChanges()) — a
+        // naive `! settings(...)` truthiness check never disables anything,
+        // since any non-empty string (including 'false') is PHP-truthy.
+        if (! filter_var(settings('performance.cache_sections', true), FILTER_VALIDATE_BOOLEAN)) {
             return $callback();
         }
 
@@ -71,7 +75,7 @@ class CacheService
      */
     public function rememberManufacturers(callable $callback): mixed
     {
-        if (! settings('performance.cache_manufacturers', true)) {
+        if (! filter_var(settings('performance.cache_manufacturers', true), FILTER_VALIDATE_BOOLEAN)) {
             return $callback();
         }
 
@@ -104,7 +108,7 @@ class CacheService
      */
     public function rememberAllActiveManufacturers(callable $callback): mixed
     {
-        if (! settings('performance.cache_manufacturers', true)) {
+        if (! filter_var(settings('performance.cache_manufacturers', true), FILTER_VALIDATE_BOOLEAN)) {
             return $callback();
         }
 
@@ -129,7 +133,7 @@ class CacheService
      */
     public function rememberBrandProductCounts(array $manufacturerIds, callable $callback): mixed
     {
-        if (! settings('performance.cache_manufacturers', true)) {
+        if (! filter_var(settings('performance.cache_manufacturers', true), FILTER_VALIDATE_BOOLEAN)) {
             return $callback();
         }
 
@@ -290,7 +294,11 @@ class CacheService
 
     private function rememberHomeContent(string $key, callable $callback): mixed
     {
-        if (! settings('performance.cache_sections', true)) {
+        // Booleans an admin toggles via the Performance settings page save as
+        // the literal string 'false' (SettingsPage::persistChanges()) — a
+        // naive `! settings(...)` truthiness check never disables anything,
+        // since any non-empty string (including 'false') is PHP-truthy.
+        if (! filter_var(settings('performance.cache_sections', true), FILTER_VALIDATE_BOOLEAN)) {
             return $callback();
         }
 
