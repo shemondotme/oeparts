@@ -25,14 +25,14 @@
     "post_update_notes": "Fixes the actual root cause behind the BackupRun error, confirmed from your log file. A database restore (used to undo a failed update) replays each table as drop-then-recreate, and the backup system's own bookkeeping tables were included in that \u2014 so a failed update's automatic rollback could wipe out a fresh retry's in-progress backup record. Those bookkeeping tables are now permanently excluded from every backup/restore, so this can't happen again. Also fixed 6 migrations from v1.0.16 that weren't safe to re-run after an interrupted update (the same underlying cause as the earlier admin_sessions/FULLTEXT-index errors) \u2014 all are now idempotent. If you're on 1.0.15, update straight to this version.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": null,
-    "size_bytes": null,
-    "signature": null,
+    "sha256": "eef3e91c345fcaba2c5f1f70ff69a663485fe09c555e8b5507edb5c44e9277e9",
+    "size_bytes": 30564562,
+    "signature": "RGPvsCKoLJmsaETv+nJhIcUCH34irs9/Vy2Sh8m7i00gV4S7mgHtCV+iy/JXNVIa3eN/5L1YqR+JLitRo+iPrZ2FUgn1cw0lNiXewlawy4ARmaD1ptKstJeDO/1Jt/+7Jii9k7VgRhYtzXHx2UWbqhphcTUeEYsJvJvCX7jf7MCI9HKRmHanrnfajdZOgtCPUfMyKOhkdMsRKc0w2IfI8JHkxQOltHZpDkBs7TXY4D74myLRpMYb1sMTVEsgiAiCqLoRdHmqxGvV7sQ+7zAfUZxmL2/+HA1jpdXBknU9xcm8IRS7v5kAOHySdG48P2AyvAJaTluVJHF5nnNVPRxRk9yk0KbuEvJw4yOKPOY2JB3XT292mRytF84yZBEkMi4QughaSb7Yt9ERGUy7SSGNsw9z6N4ofTN/aLOs/LsOk9zrl8Hud3COmxICcCDJkOdjqVSiAHGXu1IX49a1GtyGmUTCYVqOHxPhy8nxMBc/8wHdW4eKnjGB509+zBYIAcLwMcDD34J+Vk81m+4QphcFSPCpcB95+Ek5TCPOacIloflvb2DoCCvPdXINp35vQ6bnvoEmqN38jdHl5NeA3X1Fq+Sw7hdsVweMd2/3slA7iS/4XgynPOO+wCS4F9yT1jCtiRGd3ikfBEulI+mxOgVKIXV9lQ19NGBVuYVnfLHuAEg=",
     "download_url": "https://github.com/shemondotme/oeparts/releases/download/v1.0.19/oeparts-1.0.19.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "9ee18cd62e1b13a9be1d59ce90a4d66cc266c7a8",
-    "git_signature": "MDoNACLGw9yicfvEr0VPXL/QSa1tJ/3bYjGPwuZMCP270ycZCe/VIGBK3pwRezZ4g67629nJHnByTgHebJKgz9DABVyTqSMk+TqhrwHTHDHtz2TMwgGoyfNUxnTgHG5sxKXoDQCmSEGDn8vTT+Uj1WXDpJ+LKZkEowuMzjXdbGn7LwHMTnGaCes2CMpUMovyZzs6ZK1iE94s+iDLy1nx6Z7bsDrcJXh60il439o/FS1Kc0yssJq0HYLoPpQJKgySValQXK+Fsv6Shov/aYAn7f+1Kdv+seXGeyfrsqW98nX18GzUkVLdh9CRkJhpAxlJFNwuTK9+Er/HcOfmBancA0ZpODwPn8tm9rM/Nrauz1+wwSjz7POjqmN3oOgJ3tcLrkCNt9CLmYw3Ty8/VvmWYxslOt+7XL9xWBhLc4shJhp9MCqZQJgwgQT/uqiUO1Cof3PlUMdteaSODcrLdV0Q1SFqdTTijCl1GinvaH5gEWuvJLqxG3Gs0UKTWY9f1ztnOTOYtB/Eg4gdcH2FPDSOuSfFFsc7OXI+efhDcS8FktbBk2mb1ZoSFlheJ4+Ea8VLx7PtgzRgIi/004+o+ZeJbgTzItceYUw64xfNpKyle5cv9Gv/ul4q5YTlj1gXye2VvZY2BZiwbXr2t08iKlyy+AjqCGHKxMf6+sDrJLj5P4g="
+    "git_commit_sha": "620a1537d676ffad5e2a8feb235123b6f346828a",
+    "git_signature": "jubE5Xk4D60z34Olb5Hx4sm9H8LKaQkM9XQXm8/HqR+nUDtucpnHkrhgZHBN+tXB9iza2c3j0jCIKZADhrdlaACFvTJlnQXj1K4n194yBzR6fWdHtjwE8nNR6xyzkr31k9rqdGBJlQVzVOxk+ceJ/p38oU1pkCE3gxOi136jFGuGUIKlYJbewgiakrj0LrSWXGxEgiFVCE/WFYR539aveDeX7myMj9+r0+Bi3ZXPangHWW1ZuDUQA4RdEHFvuzae+sklGo3Xukw3qK3qezVkyajF7dxlKrmGgE911YEu61sNtn2nk6mwJArtWczzQg+qWJkEFxKY5lwLf/fCtbu5mMjdrADhdKQiN5Cymz36aChY1e/VcOaEGPn7EgfR335SD1LowfcGUka45mea4rBJ/2P0BPUs5HOO5NhBRYFpKEazbFDuxwVGuU02mpX2rX3cyWoazog2k3s8iKnarUFdj5iVCCAYehnh+IUdalIPoedXeVhg/M+vMSLtSQ/ClZnNyVwkiRxHqnhod2b+BSWf0pflszt+dSEBGs2Pid0aq0UOYrG4HJxmnduzUl9CA7+fN0GWGWQj0+UaUgv0cWvlL1FIuRjgQq8Xk7fshDpiOBczmeNGIl8OlcQ63LSpmQcjlNgClf946zebESyV6BN4dLx7lcZ6MnvXEc77a3yDq/4="
 }
