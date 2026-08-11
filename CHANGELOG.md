@@ -2,25 +2,9 @@
 
 All notable changes to this project are documented here.
 
-## 1.0.19 — 2026-08-11
+## 1.0.16 — 2026-08-11
 
-### Fixed
-- **Found the actual root cause of the `BackupRun` error** (v1.0.18 hardened against a symptom; this fixes the cause, confirmed from a real production log). A database restore — used to undo a failed update — replays each table as `DROP TABLE` then `CREATE TABLE`, and the backup engine's own bookkeeping tables (`backup_runs`, `backup_parts`) were being backed up and restored just like any other table. A failed update's automatic rollback could therefore wipe out a *different*, freshly-started backup's own row while it was still being written, failing every subsequent retry with a foreign-key error. These tables (plus `update_histories`) are now permanently excluded from every backup and restore — they're the engine's own live operational state, not data that should ever be rolled back.
-- **Made 6 more migrations from v1.0.16 safe to re-run** (`newsletter_campaign_recipients`'s unique index, `admin_sessions`, `carts.guest_email`, `failed_search_logs`'s manufacturer/car-model columns, `testimonials`' rating check, and the `products` performance indexes) — the same underlying issue as the `admin_sessions`/OEM-FULLTEXT-index errors already fixed in v1.0.17: a restore can only revert tables present in its snapshot, so a table/column/index created by one migration in a batch can survive a rollback even after the batch as a whole is reported as failed, causing "already exists" on the next retry.
-
-## 1.0.18 — 2026-08-11
-
-### Fixed
-- **Hardened the update process against overlapping progress polls.** A poll to the update-progress endpoint slower than the browser's polling interval (more likely on a larger database) could overlap with the next poll, both running the same step at once — surfaced live as a `No query results for model [App\Models\BackupRun]` error during the pre-update backup step. Each step is now locked so an overlapping poll is safely skipped instead of re-run, and a backup run whose record genuinely goes missing mid-run now reports a clear message instead of a raw database error.
-
-## 1.0.17 — 2026-08-11
-
-### Fixed
-- **Hotfix for v1.0.16**: the update process could fail during the migration step with `Duplicate key name products_normalized_oem_ngram_fulltext`, stopping the update from completing. Caused by the new full-text search index migration not being safe to retry from a partially-applied state (MySQL's `ALTER TABLE` isn't transactional, so an interrupted migration run can leave the index in place without Laravel recording it as done). The migration now checks whether the index already exists before creating it. If you hit this on v1.0.16, updating again will now succeed; a v1.0.15 install can update straight to this version.
-
-## 1.0.16 — 2026-08-10
-
-A large batch: a full audit of the Auth, Catalog, Marketing, CMS, Support, and System modules (89 findings, all fixed), plus a dedicated performance pass after the catalog grew to ~100k products. Nothing manual required — every migration applies automatically.
+A large batch: a full audit of the Auth, Catalog, Marketing, CMS, Support, and System modules (89 findings, all fixed), a dedicated performance pass after the catalog grew to ~100k products, a sweep for uncached/uninvalidated hot queries sitewide, a new Cloudflare CDN integration, and an image optimization pipeline. Nothing manual required — every migration applies automatically, and every new behavior defaults to matching what the site already did (opt-in where it changes anything user-visible).
 
 ### Security
 - **Session fixation on login and registration** — a session ID planted in a victim's browser before they logged in (shared terminal, subdomain cookie trick, leaked session ID) previously inherited full account access the moment they authenticated. Both password and social login now regenerate the session ID on login.
@@ -87,6 +71,7 @@ A large batch: a full audit of the Auth, Catalog, Marketing, CMS, Support, and S
 - A shipped order can no longer be wrongly auto-completed off a stale "shipped" record from months earlier if it was later moved back to Processing and re-shipped.
 - OTP resend requests can no longer create a duplicate, guessable one-time code under rapid double-clicking.
 - Fixed several smaller inconsistencies: rejecting a refund now stamps a processed timestamp; the password-change form now respects the configured minimum length everywhere; expired-OTP cleanup no longer deletes a code still inside its "recently verified" grace window; a Testimonial rating outside 1–5 is now rejected at the database level, not just in the admin form.
+- The Payment Settings page had two buttons both labeled "Test Connection" (Airwallex and Paysera), with nothing distinguishing them — now labeled "Test Airwallex Connection" and "Test Paysera Connection".
 
 ### Performance — built for the ~100k product catalog
 - **Bulk Update Products** now processes matching products in chunks instead of loading the entire matched set into memory at once — removes a real memory/timeout risk on a broad filter against a large catalog.
@@ -95,6 +80,16 @@ A large batch: a full audit of the Auth, Catalog, Marketing, CMS, Support, and S
 - **"Regenerate sitemap now"** no longer risks running past the request timeout on a large catalog — it now runs as a background job.
 - **The storefront OEM search box's autocomplete dropdown is now actually wired up** — the caching and API endpoint behind it already existed but nothing ever called it; it now suggests matches live as you type, with keyboard navigation.
 - Guest visitors now get a short-lived, browser-only cache header on safe pages (home, search, brand, blog, CMS pages) — a repeat view or back/forward navigation can skip a full round-trip to the server.
+
+### Performance — caching, Cloudflare CDN, and image optimization
+- **Fixed 6 more hot pages/queries sitewide that ran uncached (or cached but never invalidated) on every single visit** — homepage featured-brand product counts, the manufacturer directory, condition lookups, blog listing/sidebar filters, the homepage-override page lookup, and Search Console's status panel. Each now caches with a proper on/off toggle and invalidates the moment the underlying data changes, rather than serving stale counts or re-querying needlessly.
+- **Static assets and uploaded media now ship gzip/Brotli-compressed with a 1-year immutable cache header** (`/build`, `/storage`) — previously served uncompressed with no cache header at all, so a repeat visitor re-downloaded every CSS/JS/image file on every page.
+- **New image optimization pipeline for uploads** (Media Library, blog/page editor, logos) — automatically resizes oversized images and re-compresses to WebP, configurable (or fully off) from Performance settings. Never applied to refund evidence photos, which must stay exactly as the customer submitted them.
+- **New Cloudflare CDN integration** (Performance settings, opt-in, off by default) — purge-only by design: a Test Connection action, a manual "Purge Everything" action, and automatic purging of `sitemap.xml` whenever it regenerates. Deliberately does not push any Cloudflare zone settings (Browser Cache TTL, Auto Minify, etc.) — those are shown as dashboard guidance instead, to configure directly on Cloudflare.
+- **Closed 3 more caches with no admin on/off switch** (condition list, homepage hero stats, Search Console status panel) — previously always on with no way to disable; now each has its own toggle, matching the sections/manufacturers caches that already had one.
+- **Below-the-fold images now lazy-load** (brand grids, blog/manufacturer listings) — toggleable in Performance settings; the first/hero image on any page always loads immediately regardless of the setting.
+- **Preconnect/DNS-prefetch hints** for Google Tag Manager, Facebook Pixel, and Crisp Chat — emitted only when that integration is actually configured, so the browser can open the connection before it's needed instead of after.
+- **Releases are now cryptographically signed** — every update is verified against a signing key baked into the app before it's allowed to apply, closing a gap where a tampered release manifest or zip could otherwise be applied even if its checksum matched.
 
 ## 1.0.15 — 2026-08-09
 
