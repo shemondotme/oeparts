@@ -188,6 +188,14 @@ return [
             'storage/app/backups', 'storage/app/updates', 'storage/logs',
             // Local Docker dev environment (Sail) — never relevant to an installed release.
             'compose.yaml', 'docker',
+            // Node/build tooling — public/build/ ships pre-compiled (production has no
+            // Node.js at all, git-managed installs never run `npm run build`), so these
+            // configs and lockfiles have zero runtime purpose on an installed site.
+            'package.json', 'package-lock.json', 'vite.config.js',
+            'tailwind.config.js', 'postcss.config.js', 'playwright.config.js',
+            // GitHub community-health files — meaningful on the repo's GitHub page,
+            // meaningless on a running install.
+            'CODE_OF_CONDUCT.md',
             // Internal dev docs (CHANGELOG.md + README.md still ship). Moved under
             // docs/ during the root cleanup — CLAUDE.md stays at root (the project's
             // own coding-standards file, read by contributors) so its entry doesn't.

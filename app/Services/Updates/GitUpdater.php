@@ -75,6 +75,8 @@ class GitUpdater
                 );
             }
         }
+
+        $this->stripDevFilesFromWorkingTree();
     }
 
     /** The commit SHA currently checked out (HEAD), or null if it can't be determined. */
@@ -103,6 +105,7 @@ class GitUpdater
     public function rollbackTo(string $previousVersion): void
     {
         $this->run(['git', 'checkout', '--force', $this->tag($previousVersion)]);
+        $this->stripDevFilesFromWorkingTree();
         $this->run(
             ['composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction'],
             timeout: 300,
@@ -121,6 +124,40 @@ class GitUpdater
     private function tag(string $version): string
     {
         return 'v'.ltrim($version, 'v');
+    }
+
+    /**
+     * `git checkout --force` puts EVERY tracked file on disk, including
+     * config('updates.build.exclude') paths that were only ever meant to
+     * ship in the git repository itself, never on an installed site
+     * (docker/, compose.yaml, tests/, .github/, build tooling configs, …).
+     * The zip-export release pipeline (ReleaseBuilder::stripDevFiles(),
+     * via oeparts:build) already strips exactly this list — but only for a
+     * throwaway export directory, never for a git-managed install's live
+     * working tree, which this method now also runs it against. Reuses the
+     * SAME exclude list (one source of truth for "what's a dev file") minus
+     * the three entries a live git repo still needs to keep functioning:
+     * .git itself, plus .gitignore/.gitattributes (harmless to keep, and
+     * their absence only makes `git status` noisier for no benefit).
+     *
+     * Confirmed live: a self-hosted git deployment failed to update because
+     * `docker/nginx/oeparts.docker.conf` — a file that should never have
+     * been on that server's filesystem in the first place — had different
+     * ownership than the rest of the repo (hand-edited via sudo at some
+     * point) and `git checkout --force` couldn't unlink it. Stripping these
+     * paths after every checkout means they simply aren't there to ever
+     * cause that class of problem again.
+     */
+    private function stripDevFilesFromWorkingTree(): void
+    {
+        $config = (array) config('updates.build', []);
+        $exclude = array_values(array_diff(
+            (array) ($config['exclude'] ?? []),
+            ['.git', '.gitignore', '.gitattributes']
+        ));
+
+        (new ReleaseBuilder(array_merge($config, ['exclude' => $exclude])))
+            ->stripDevFiles($this->root());
     }
 
     private function run(array $command, int $timeout = 120): void

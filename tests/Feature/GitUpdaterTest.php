@@ -75,6 +75,13 @@ class GitUpdaterTest extends TestCase
         // valid or it fails before ever reaching the git assertions below.
         file_put_contents($this->root.'/composer.json', json_encode(['name' => 'oe/gitupdater-test']));
 
+        // Dev-only files that a real tag also carries (config('updates.build.exclude'))
+        // — checkout() must strip these from the working tree; a real install should
+        // never end up with a docker/ folder or a test suite sitting on disk.
+        @mkdir($this->root.'/docker', 0775, true);
+        file_put_contents($this->root.'/docker/oeparts.docker.conf', 'dev only');
+        file_put_contents($this->root.'/compose.yaml', 'dev only');
+
         file_put_contents($this->root.'/marker.txt', 'v1.0.0');
         $this->git(['add', '.']);
         $this->git(['commit', '-m', 'v1.0.0']);
@@ -122,6 +129,65 @@ class GitUpdaterTest extends TestCase
         $this->assertSame('v1.1.0', trim(file_get_contents($this->root.'/marker.txt')),
             'checkout() should have fetched origin and moved the working tree to the v1.1.0 tag.');
         $this->assertSame('v1.1.0', (new GitUpdater)->currentTag());
+    }
+
+    /**
+     * `git checkout --force` writes every tracked file, including dev-only
+     * paths (docker/, compose.yaml, tests/, .github/, …) that a real
+     * install should never carry — confirmed live: a self-hosted git
+     * deployment's update failed because `docker/nginx/oeparts.docker.conf`
+     * had different file ownership than the rest of the repo (hand-edited
+     * via sudo at some point) and git couldn't unlink it during checkout.
+     * These files shouldn't be on an installed site's disk in the first
+     * place. checkout() now strips config('updates.build.exclude') from
+     * the working tree — the SAME list the zip-release pipeline already
+     * uses (ReleaseBuilder::stripDevFiles()) — every time it runs.
+     */
+    #[Test]
+    public function checkout_strips_dev_only_files_from_the_working_tree(): void
+    {
+        $this->initRepoWithTwoTaggedVersions();
+        $this->assertFileExists($this->root.'/docker/oeparts.docker.conf', 'sanity: the fixture repo really does carry this file');
+
+        (new GitUpdater)->checkout('1.1.0');
+
+        $this->assertFileDoesNotExist($this->root.'/docker/oeparts.docker.conf');
+        $this->assertDirectoryDoesNotExist($this->root.'/docker');
+        $this->assertFileDoesNotExist($this->root.'/compose.yaml');
+        $this->assertSame('v1.1.0', trim(file_get_contents($this->root.'/marker.txt')), 'real app files must survive the strip');
+    }
+
+    /**
+     * .git itself is one of the SAME excluded paths in the zip pipeline's
+     * list (a throwaway export dir shouldn't carry git history) — but a
+     * git-managed install's live working tree needs .git to remain a
+     * functioning repo for every FUTURE update, so it must never be
+     * stripped here even though it shares the same underlying config list.
+     */
+    #[Test]
+    public function checkout_never_strips_git_itself(): void
+    {
+        $this->initRepoWithTwoTaggedVersions();
+
+        (new GitUpdater)->checkout('1.1.0');
+
+        $this->assertDirectoryExists($this->root.'/.git');
+        // Proof it's not just present but still a working repo: a second
+        // real checkout (back to the older tag) must still succeed.
+        (new GitUpdater)->checkout('1.0.0');
+        $this->assertSame('v1.0.0', trim(file_get_contents($this->root.'/marker.txt')));
+    }
+
+    #[Test]
+    public function rollback_to_also_strips_dev_only_files(): void
+    {
+        $this->initRepoWithTwoTaggedVersions();
+        (new GitUpdater)->checkout('1.1.0');
+
+        (new GitUpdater)->rollbackTo('1.0.0');
+
+        $this->assertFileDoesNotExist($this->root.'/docker/oeparts.docker.conf');
+        $this->assertDirectoryExists($this->root.'/.git');
     }
 
     #[Test]
