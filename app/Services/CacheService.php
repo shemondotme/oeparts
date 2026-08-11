@@ -88,6 +88,33 @@ class CacheService
         Cache::forget('manufacturers.active');
     }
 
+    /**
+     * Remember the active-product count per manufacturer for the given ids
+     * (featured-brands homepage tile: "N pcs" under each logo) — was a raw,
+     * uncached GROUP BY COUNT query embedded directly in the Blade component,
+     * run fresh on every single homepage render regardless of the section
+     * list itself already being cached above.
+     *
+     * Keyed by SearchService::cacheVersion() (already bumped by
+     * ProductObserver on every product create/update/delete) instead of a
+     * dedicated forget*() method — the same driver-agnostic invalidation
+     * SearchService's own product-count caches use, since a specific
+     * $manufacturerIds combination has no single cache key to forget and the
+     * default CACHE_STORE=file doesn't support Cache::tags().
+     */
+    public function rememberBrandProductCounts(array $manufacturerIds, callable $callback): mixed
+    {
+        if (! settings('performance.cache_manufacturers', true)) {
+            return $callback();
+        }
+
+        $ttl = (int) settings('performance.cache_ttl_manufacturers', 60);
+        sort($manufacturerIds);
+        $key = 'brand_product_counts.v'.SearchService::cacheVersion().'.'.implode('_', $manufacturerIds);
+
+        return Cache::remember($key, now()->addMinutes($ttl), $callback);
+    }
+
     // ── Condition cache ───────────────────────────────────────────────────────
 
     /**

@@ -10,12 +10,15 @@
     $brandProductCounts = [];
     if ($featuredBrands->isNotEmpty()) {
         $brandIds = $featuredBrands->pluck('id')->toArray();
-        $brandProductCounts = \App\Models\Product::whereIn('manufacturer_id', $brandIds)
-            ->where('is_active', true)
-            ->groupBy('manufacturer_id')
-            ->selectRaw('manufacturer_id, COUNT(*) as count')
-            ->pluck('count', 'manufacturer_id')
-            ->toArray();
+        $brandProductCounts = app(\App\Services\CacheService::class)->rememberBrandProductCounts(
+            $brandIds,
+            fn () => \App\Models\Product::whereIn('manufacturer_id', $brandIds)
+                ->where('is_active', true)
+                ->groupBy('manufacturer_id')
+                ->selectRaw('manufacturer_id, COUNT(*) as count')
+                ->pluck('count', 'manufacturer_id')
+                ->toArray()
+        );
     }
 
     $alphabet = range('A', 'Z');
