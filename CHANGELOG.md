@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.17 — 2026-08-11
+
+### Fixed
+- **Hotfix for v1.0.16**: the update process could fail during the migration step with `Duplicate key name products_normalized_oem_ngram_fulltext`, stopping the update from completing. Caused by the new full-text search index migration not being safe to retry from a partially-applied state (MySQL's `ALTER TABLE` isn't transactional, so an interrupted migration run can leave the index in place without Laravel recording it as done). The migration now checks whether the index already exists before creating it. If you hit this on v1.0.16, updating again will now succeed; a v1.0.15 install can update straight to this version.
+
 ## 1.0.16 — 2026-08-10
 
 A large batch: a full audit of the Auth, Catalog, Marketing, CMS, Support, and System modules (89 findings, all fixed), plus a dedicated performance pass after the catalog grew to ~100k products. Nothing manual required — every migration applies automatically.
