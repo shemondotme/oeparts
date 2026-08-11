@@ -46,10 +46,28 @@ class BackupCipher
     {
         $key = $this->key();
 
-        $in  = @fopen($src, 'rb');
+        // @ suppresses fopen()'s own warning from being displayed/logged, but
+        // error_get_last() still captures the underlying reason regardless
+        // (PHP tracks it independently of error_reporting) — checked
+        // immediately after each call, before anything else can overwrite
+        // it. Previously the exception said only "Could not open files for
+        // encryption", with no path and no reason, making a real permission/
+        // missing-file/disk-space problem on a self-hosted server
+        // undiagnosable without SSH access and a code change just to find
+        // out which of the two files failed and why.
+        $in = @fopen($src, 'rb');
+        if ($in === false) {
+            $reason = error_get_last()['message'] ?? 'unknown reason';
+
+            throw new BackupException("Could not open source file for reading: {$src} ({$reason}).");
+        }
+
         $out = @fopen($dst, 'wb');
-        if ($in === false || $out === false) {
-            throw new BackupException('Could not open files for encryption.');
+        if ($out === false) {
+            $reason = error_get_last()['message'] ?? 'unknown reason';
+            fclose($in);
+
+            throw new BackupException("Could not open destination file for writing: {$dst} ({$reason}).");
         }
 
         fwrite($out, self::MAGIC.chr(self::VERSION));

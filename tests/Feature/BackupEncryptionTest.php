@@ -131,6 +131,44 @@ class BackupEncryptionTest extends TestCase
         app(BackupCipher::class)->encryptFile($this->statePath.'/a', $this->statePath.'/b');
     }
 
+    /**
+     * A self-hoster hitting a real permission/missing-file/disk-space
+     * problem on their own server previously got only "Could not open
+     * files for encryption" — no path, no reason, undiagnosable without
+     * SSH access and a code change just to find out which of the two
+     * files failed and why. Confirmed live against a real production
+     * failure report.
+     */
+    #[Test]
+    public function a_missing_source_file_reports_the_path_and_reason(): void
+    {
+        $missing = $this->statePath.'/does-not-exist.bin';
+
+        try {
+            app(BackupCipher::class)->encryptFile($missing, $this->statePath.'/out.enc');
+            $this->fail('expected a BackupException');
+        } catch (BackupException $e) {
+            $this->assertStringContainsString($missing, $e->getMessage());
+            $this->assertStringContainsString('reading', $e->getMessage());
+        }
+    }
+
+    #[Test]
+    public function an_unwritable_destination_reports_the_path_and_reason(): void
+    {
+        $src = $this->statePath.'/readable-source.bin';
+        file_put_contents($src, 'data');
+        $badDst = $this->statePath.'/no-such-directory/out.enc';
+
+        try {
+            app(BackupCipher::class)->encryptFile($src, $badDst);
+            $this->fail('expected a BackupException');
+        } catch (BackupException $e) {
+            $this->assertStringContainsString($badDst, $e->getMessage());
+            $this->assertStringContainsString('writing', $e->getMessage());
+        }
+    }
+
     /* ---- Transport stage (via the manager) ------------------------------ */
 
     #[Test]
