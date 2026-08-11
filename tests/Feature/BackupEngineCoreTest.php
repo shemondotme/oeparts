@@ -228,6 +228,26 @@ class BackupEngineCoreTest extends TestCase
 
         $this->assertTrue($lock->isLocked(), 'a live lock must not be reaped');
     }
+
+    /**
+     * Live incident (v1.0.17): a stray, opaque "No query results for model
+     * [App\Models\BackupRun]" — refresh()'s own exception carries no id or
+     * context. If the run's row genuinely disappears mid-run (e.g. a
+     * concurrent restore/update attempt touching the same row), run() must
+     * surface a clear, actionable message instead of that bare Eloquent one.
+     */
+    #[Test]
+    public function a_run_whose_row_disappears_mid_run_fails_with_a_clear_message_not_a_bare_eloquent_one(): void
+    {
+        config(['backup.stages.full' => [new FakeDeletingStage()]]);
+
+        $run = $this->manager()->start(BackupRun::PROFILE_FULL);
+
+        $this->expectException(BackupException::class);
+        $this->expectExceptionMessageMatches('/disappeared mid-run/');
+
+        $this->manager()->run($run);
+    }
 }
 
 /* ---- Fake stages (test doubles for the 2.2/2.3 concrete stages) ---------- */
@@ -276,5 +296,21 @@ class FakeThrowingStage implements BackupStage
     public function step(BackupRun $run, array $state): StageStepResult
     {
         throw new \RuntimeException('disk exploded');
+    }
+}
+
+/** Simulates a concurrent process (e.g. a racing restore) deleting the run's own row mid-step. */
+class FakeDeletingStage implements BackupStage
+{
+    public function key(): string
+    {
+        return BackupChunk::TYPE_FILES;
+    }
+
+    public function step(BackupRun $run, array $state): StageStepResult
+    {
+        BackupRun::whereKey($run->getKey())->delete();
+
+        return StageStepResult::complete(null, 'stage complete');
     }
 }

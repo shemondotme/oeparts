@@ -176,7 +176,20 @@ class BackupManager
 
         while (! $run->isTerminal() && $steps++ < self::MAX_STEPS) {
             $this->advance($run);
-            $run->refresh();
+
+            try {
+                $run->refresh();
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+                // The row is genuinely gone (not just "still running") — refresh()'s
+                // own exception gives no useful detail (Eloquent's default message
+                // carries no id/context). Surface something an operator can act on
+                // instead of a bare "No query results for model [BackupRun]".
+                throw new BackupException(
+                    "Backup run {$run->getKey()} disappeared mid-run — its database row no longer exists. ".
+                    'This can happen if two update/backup attempts overlapped. Wait for any other in-progress '.
+                    'backup or update to finish, then retry.'
+                );
+            }
         }
 
         return $run;

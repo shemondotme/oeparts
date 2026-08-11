@@ -10,6 +10,7 @@ use App\Services\Backup\RestoreManager;
 use App\Services\Backup\RestoreOptions;
 use App\Services\SettingsService;
 use App\Services\Updates\Exceptions\UpdateException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -108,28 +109,48 @@ class UpdateApplier
             return $history;
         }
 
-        $steps = $this->steps();
-        $index = $history->stepIndex();
+        // A poll that outlasts the browser's polling interval (a slow step —
+        // e.g. the pre-update backup on a large database) can overlap with
+        // the NEXT poll, both seeing the same not-yet-advanced step and both
+        // running it concurrently. Two concurrent doBackup() calls create two
+        // independent BackupRun rows racing each other with no coordination,
+        // which surfaced live as a stray "No query results for model
+        // [BackupRun]" — same class of bug already fixed elsewhere in this
+        // codebase (product import start, the HTTP cron-fallback trigger)
+        // via the same non-blocking Cache::lock() pattern. A poll that loses
+        // the race just returns the history unchanged; the next poll retries.
+        $lock = Cache::lock('update_apply.advance.'.$history->getKey(), 300);
 
-        if ($index >= count($steps)) {
-            return $this->complete($history);
+        if (! $lock->get()) {
+            return $history;
         }
-
-        $step = $steps[$index];
 
         try {
-            $this->{'do'.Str::studly($step)}($history);
-        } catch (\Throwable $e) {
-            return $this->fail($history, $step, $e->getMessage());
+            $steps = $this->steps();
+            $index = $history->stepIndex();
+
+            if ($index >= count($steps)) {
+                return $this->complete($history);
+            }
+
+            $step = $steps[$index];
+
+            try {
+                $this->{'do'.Str::studly($step)}($history);
+            } catch (\Throwable $e) {
+                return $this->fail($history, $step, $e->getMessage());
+            }
+
+            $next = $index + 1;
+            $history->setStepIndex($next);
+            $history->step   = $steps[$next] ?? 'complete';
+            $history->status = $this->statusFor($history->step);
+            $history->save();
+
+            return $history;
+        } finally {
+            $lock->release();
         }
-
-        $next = $index + 1;
-        $history->setStepIndex($next);
-        $history->step   = $steps[$next] ?? 'complete';
-        $history->status = $this->statusFor($history->step);
-        $history->save();
-
-        return $history;
     }
 
     /** Drive to a terminal state (CLI / sync / tests). The web UI polls advance(). */

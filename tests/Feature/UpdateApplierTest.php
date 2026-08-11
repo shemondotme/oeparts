@@ -119,6 +119,40 @@ class UpdateApplierTest extends TestCase
         $this->assertSame(UpdateHistory::STATUS_SUCCESS, $done->status);
     }
 
+    /**
+     * A poll that outlasts the browser's polling interval (a slow step — e.g.
+     * the pre-update backup on a large database) can overlap with the next
+     * poll, both seeing the same not-yet-advanced step. Without a lock, both
+     * would run doBackup() concurrently, creating two independent BackupRun
+     * rows racing each other — this surfaced live as a stray "No query
+     * results for model [BackupRun]" when one poll's run raced the other's.
+     * advance() now takes a per-history Cache::lock() around the whole step;
+     * a poll that loses the race just returns the history unchanged instead
+     * of re-running (or corrupting) the step.
+     */
+    #[Test]
+    public function a_concurrent_advance_call_on_the_same_history_is_skipped_not_re_run(): void
+    {
+        $applier = new FakeUpdateApplier;
+        $history = $applier->start($this->manifest());
+
+        // Simulate an overlapping poll already holding the per-history lock.
+        $lock = \Illuminate\Support\Facades\Cache::lock('update_apply.advance.'.$history->getKey(), 300);
+        $this->assertTrue($lock->get(), 'test setup: acquire the lock the real advance() would need');
+
+        $result = $applier->advance($history->refresh());
+
+        $this->assertSame([], $applier->log, 'the step never ran while another advance() held the lock');
+        $this->assertSame(0, $result->stepIndex(), 'step index is unchanged');
+        $this->assertSame(UpdateHistory::STATUS_BACKING_UP, $result->status);
+
+        $lock->release();
+
+        // Once the lock is free, a normal advance() proceeds as usual.
+        $applier->advance($history->refresh());
+        $this->assertSame(['backup'], $applier->log);
+    }
+
     #[Test]
     public function the_pre_update_backup_does_not_release_the_updaters_lock(): void
     {
