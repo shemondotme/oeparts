@@ -22,7 +22,7 @@ class PaymentSettings extends SettingsPage
         return [
             ...parent::getHeaderActions(),
             Action::make('testAirwallex')
-                ->label('Test Connection')
+                ->label('Test Airwallex Connection')
                 ->icon('heroicon-o-signal')
                 ->color('warning')
                 ->requiresConfirmation()
@@ -91,7 +91,7 @@ class PaymentSettings extends SettingsPage
                     }
                 }),
             Action::make('testPaysera')
-                ->label('Test Connection')
+                ->label('Test Paysera Connection')
                 ->icon('heroicon-o-signal')
                 ->color('warning')
                 ->requiresConfirmation()
