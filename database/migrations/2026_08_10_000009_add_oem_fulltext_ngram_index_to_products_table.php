@@ -32,6 +32,15 @@ return new class extends Migration
             return;
         }
 
+        // MySQL DDL isn't transactional — if a prior run of this migration
+        // was interrupted after the ALTER TABLE succeeded but before Laravel
+        // recorded the migration row (or the index was created out-of-band,
+        // e.g. manual testing), a bare ADD FULLTEXT INDEX here fails with
+        // "Duplicate key name" and blocks every future update attempt.
+        if ($this->indexExists()) {
+            return;
+        }
+
         DB::statement('ALTER TABLE products ADD FULLTEXT INDEX products_normalized_oem_ngram_fulltext (normalized_oem) WITH PARSER ngram');
     }
 
@@ -41,6 +50,21 @@ return new class extends Migration
             return;
         }
 
+        if (! $this->indexExists()) {
+            return;
+        }
+
         DB::statement('ALTER TABLE products DROP INDEX products_normalized_oem_ngram_fulltext');
+    }
+
+    private function indexExists(): bool
+    {
+        $row = DB::selectOne(
+            'SELECT 1 FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?',
+            ['products', 'products_normalized_oem_ngram_fulltext']
+        );
+
+        return $row !== null;
     }
 };
