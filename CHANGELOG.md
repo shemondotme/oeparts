@@ -2,6 +2,11 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.18 — 2026-08-11
+
+### Fixed
+- **Hardened the update process against overlapping progress polls.** A poll to the update-progress endpoint slower than the browser's polling interval (more likely on a larger database) could overlap with the next poll, both running the same step at once — surfaced live as a `No query results for model [App\Models\BackupRun]` error during the pre-update backup step. Each step is now locked so an overlapping poll is safely skipped instead of re-run, and a backup run whose record genuinely goes missing mid-run now reports a clear message instead of a raw database error.
+
 ## 1.0.17 — 2026-08-11
 
 ### Fixed
