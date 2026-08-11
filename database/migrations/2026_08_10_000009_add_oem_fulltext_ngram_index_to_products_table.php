@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Schema;
  * else). SQLite (the test DB) has no equivalent — this migration is a
  * no-op there, matching Product::scopeOemContains()'s driver-aware
  * fallback to LIKE for tests.
+ *
+ * Idempotent + reversible (rule #42).
  */
 return new class extends Migration
 {

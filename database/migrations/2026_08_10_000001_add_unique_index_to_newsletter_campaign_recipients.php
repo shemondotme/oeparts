@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
+// Idempotent + reversible (rule #42).
 return new class extends Migration
 {
     public function up(): void
@@ -37,15 +38,19 @@ return new class extends Migration
             }
         }
 
-        Schema::table('newsletter_campaign_recipients', function (Blueprint $table) {
-            $table->unique(['campaign_id', 'subscriber_id']);
-        });
+        if (! Schema::hasIndex('newsletter_campaign_recipients', ['campaign_id', 'subscriber_id'], 'unique')) {
+            Schema::table('newsletter_campaign_recipients', function (Blueprint $table) {
+                $table->unique(['campaign_id', 'subscriber_id']);
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('newsletter_campaign_recipients', function (Blueprint $table) {
-            $table->dropUnique(['campaign_id', 'subscriber_id']);
-        });
+        if (Schema::hasIndex('newsletter_campaign_recipients', ['campaign_id', 'subscriber_id'], 'unique')) {
+            Schema::table('newsletter_campaign_recipients', function (Blueprint $table) {
+                $table->dropUnique(['campaign_id', 'subscriber_id']);
+            });
+        }
     }
 };

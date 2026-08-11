@@ -16,22 +16,32 @@ use Illuminate\Support\Facades\Schema;
  * - The out-of-stock navigation badge counts
  *   where('is_active', true)->where('is_in_stock', false) — only single-
  *   column indexes exist on each, no composite covering both.
+ *
+ * Idempotent + reversible (rule #42).
  */
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->index('created_at');
-            $table->index(['is_active', 'is_in_stock']);
+            if (! Schema::hasIndex('products', ['created_at'])) {
+                $table->index('created_at');
+            }
+            if (! Schema::hasIndex('products', ['is_active', 'is_in_stock'])) {
+                $table->index(['is_active', 'is_in_stock']);
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropIndex(['created_at']);
-            $table->dropIndex(['is_active', 'is_in_stock']);
+            if (Schema::hasIndex('products', ['created_at'])) {
+                $table->dropIndex(['created_at']);
+            }
+            if (Schema::hasIndex('products', ['is_active', 'is_in_stock'])) {
+                $table->dropIndex(['is_active', 'is_in_stock']);
+            }
         });
     }
 };

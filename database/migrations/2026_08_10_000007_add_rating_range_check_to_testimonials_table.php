@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Schema;
  * str_repeat('★', $rating) ran (TestimonialResource's table column and
  * ViewTestimonial both format the rating this way — str_repeat() rejects a
  * negative count).
+ *
+ * Idempotent + reversible (rule #42).
  */
 return new class extends Migration
 {
@@ -28,6 +30,10 @@ return new class extends Migration
             return;
         }
 
+        if ($this->constraintExists()) {
+            return;
+        }
+
         DB::statement('ALTER TABLE testimonials ADD CONSTRAINT testimonials_rating_range CHECK (rating BETWEEN 1 AND 5)');
     }
 
@@ -39,6 +45,21 @@ return new class extends Migration
             return;
         }
 
+        if (! $this->constraintExists()) {
+            return;
+        }
+
         DB::statement('ALTER TABLE testimonials DROP CONSTRAINT testimonials_rating_range');
+    }
+
+    private function constraintExists(): bool
+    {
+        $row = DB::selectOne(
+            "SELECT 1 FROM information_schema.TABLE_CONSTRAINTS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'testimonials'
+               AND CONSTRAINT_NAME = 'testimonials_rating_range'"
+        );
+
+        return $row !== null;
     }
 };

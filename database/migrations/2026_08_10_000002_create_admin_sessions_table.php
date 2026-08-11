@@ -15,11 +15,22 @@ use Illuminate\Support\Facades\Schema;
  * customer happens to share the same numeric ID, it would delete that
  * unrelated customer's session instead. This table tracks admin-guard
  * sessions explicitly so that feature actually works.
+ *
+ * Idempotent + reversible (rule #42) — confirmed live (2026-08-11): a
+ * database restore triggered by a failed update's rollback can leave this
+ * table's own migration row reverted while the table itself (created by an
+ * earlier, already-successful step of the same migrate batch) still exists,
+ * since the restore only replays tables present in its snapshot. A bare
+ * Schema::create() then fails "table already exists" on every retry.
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('admin_sessions')) {
+            return;
+        }
+
         Schema::create('admin_sessions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('admin_id')->constrained('admins')->cascadeOnDelete();

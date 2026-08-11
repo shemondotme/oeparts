@@ -171,6 +171,38 @@ class DatabaseBackupStageTest extends TestCase
         $this->assertSame('schema', $mine[0]['meta']['kind']);
     }
 
+    /**
+     * Live incident (2026-08-11): a database restore replays a table's schema
+     * part as `DROP TABLE IF EXISTS x; CREATE TABLE x`. backup_runs/backup_parts
+     * were being backed up (and therefore restored/dropped) like any other
+     * table — a failed update's rollback-restore dropped backup_runs while a
+     * fresh retry's backup was actively inserting backup_parts rows
+     * referencing it, failing every retry with a foreign-key violation.
+     * These tables (the backup/update engine's own live bookkeeping) must
+     * never be included in a backup at all, so a restore can never touch them.
+     */
+    #[Test]
+    public function backup_and_update_bookkeeping_tables_are_never_backed_up(): void
+    {
+        config(['backup.db.exclude_tables_entirely' => ['oe_bk_widget']]);
+
+        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
+        $mine  = array_filter($parts, fn ($p) => $p['name'] === 'oe_bk_widget');
+
+        $this->assertCount(0, $mine, 'neither schema nor data — not even structure-only');
+    }
+
+    #[Test]
+    public function the_real_backup_and_update_tables_are_excluded_by_default(): void
+    {
+        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
+        $names = array_unique(array_map(fn ($p) => $p['name'], $parts));
+
+        $this->assertNotContains('backup_runs', $names);
+        $this->assertNotContains('backup_parts', $names);
+        $this->assertNotContains('update_histories', $names);
+    }
+
     #[Test]
     public function it_backs_up_tables_without_a_single_column_pk_via_offset(): void
     {

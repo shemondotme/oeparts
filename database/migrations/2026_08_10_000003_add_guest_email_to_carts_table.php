@@ -10,11 +10,17 @@ use Illuminate\Support\Facades\Schema;
  * minutes) — it was never persisted onto the Cart itself. ProcessAbandoned
  * Carts therefore had no reachable address for any guest cart and silently
  * skipped the entire guest-checkout segment of abandoned-cart recovery.
+ *
+ * Idempotent + reversible (rule #42).
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasColumn('carts', 'guest_email')) {
+            return;
+        }
+
         Schema::table('carts', function (Blueprint $table) {
             $table->string('guest_email', 255)->nullable()->after('guest_token');
         });
@@ -22,6 +28,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasColumn('carts', 'guest_email')) {
+            return;
+        }
+
         Schema::table('carts', function (Blueprint $table) {
             $table->dropColumn('guest_email');
         });

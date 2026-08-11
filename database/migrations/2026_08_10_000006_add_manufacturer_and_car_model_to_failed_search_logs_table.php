@@ -11,22 +11,32 @@ use Illuminate\Support\Facades\Schema;
  * mass-assignment silently dropped them on every single failed-search log.
  * The filter-scoped search context (which manufacturer/car-model page a
  * zero-result search happened on) was lost for every row, ever.
+ *
+ * Idempotent + reversible (rule #42).
  */
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::table('failed_search_logs', function (Blueprint $table) {
-            $table->foreignId('manufacturer_id')->nullable()->after('normalized_query')->constrained('manufacturers')->nullOnDelete();
-            $table->foreignId('car_model_id')->nullable()->after('manufacturer_id')->constrained('car_models')->nullOnDelete();
+            if (! Schema::hasColumn('failed_search_logs', 'manufacturer_id')) {
+                $table->foreignId('manufacturer_id')->nullable()->after('normalized_query')->constrained('manufacturers')->nullOnDelete();
+            }
+            if (! Schema::hasColumn('failed_search_logs', 'car_model_id')) {
+                $table->foreignId('car_model_id')->nullable()->after('manufacturer_id')->constrained('car_models')->nullOnDelete();
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('failed_search_logs', function (Blueprint $table) {
-            $table->dropConstrainedForeignId('manufacturer_id');
-            $table->dropConstrainedForeignId('car_model_id');
+            if (Schema::hasColumn('failed_search_logs', 'manufacturer_id')) {
+                $table->dropConstrainedForeignId('manufacturer_id');
+            }
+            if (Schema::hasColumn('failed_search_logs', 'car_model_id')) {
+                $table->dropConstrainedForeignId('car_model_id');
+            }
         });
     }
 };

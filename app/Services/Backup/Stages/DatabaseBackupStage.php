@@ -26,7 +26,9 @@ use Illuminate\Support\Str;
  * paged by the table's single-column primary key (keyset cursor: memory stays
  * flat on huge tables); tables without a usable PK fall back to a
  * deterministic OFFSET walk. Tables in config('backup.db.exclude_table_data')
- * are dumped structure-only (logs / sessions / cache / jobs).
+ * are dumped structure-only (logs / sessions / cache / jobs); tables in
+ * config('backup.db.exclude_tables_entirely') are never dumped at all (the
+ * backup/update engine's own live bookkeeping — see that key's comment).
  *
  * Portable output: identifiers are backtick-quoted (accepted by both MySQL and
  * SQLite) and values quoted via PDO, so a dump is restorable on the production
@@ -281,9 +283,12 @@ class DatabaseBackupStage implements BackupStage
             Schema::getTableListing()
         );
 
+        $excludedEntirely = (array) config('backup.db.exclude_tables_entirely', []);
+
         $tables = array_values(array_filter(
             $tables,
             fn ($t) => ! Str::startsWith($t, 'sqlite_') // skip engine-internal tables
+                && ! in_array($t, $excludedEntirely, true)
         ));
 
         sort($tables);

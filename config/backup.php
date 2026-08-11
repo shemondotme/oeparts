@@ -64,6 +64,25 @@ return [
             'search_logs', 'failed_search_logs', 'sessions', 'cache', 'cache_locks',
             'jobs', 'job_batches', 'failed_jobs',
         ],
+        // Never backed up (schema OR data) — the backup/update engine's OWN live
+        // operational bookkeeping, not application data. A database restore
+        // replays a schema part as `DROP TABLE IF EXISTS x; CREATE TABLE x`, so
+        // including these here would let a restore triggered by one update
+        // attempt's rollback wipe a DIFFERENT, concurrently- or subsequently-
+        // running backup/update attempt's own live rows out from under it —
+        // confirmed live (2026-08-11): a rollback's restore dropped `backup_runs`
+        // while a fresh retry's backup was actively inserting `backup_parts` rows
+        // referencing it, failing every retry with a foreign-key violation.
+        // `migrations` is deliberately NOT here — Laravel's migration-tracking
+        // must stay consistent with whatever state the rest of a restore leaves
+        // the schema in, even though that has its own known limitation (a table
+        // created by a migration that ran AFTER the backup was taken survives a
+        // restore untouched, since the restore only replays tables present in
+        // the snapshot) — mitigated by keeping every migration in this app
+        // idempotent (existence-checked) rather than by excluding this table.
+        'exclude_tables_entirely' => [
+            'backup_runs', 'backup_parts', 'update_histories',
+        ],
     ],
 
     'files' => [
