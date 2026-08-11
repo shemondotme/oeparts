@@ -25,14 +25,14 @@
     "post_update_notes": "Hardens the updater itself. If a poll to the update-progress endpoint runs slower than the browser's polling interval (more likely on a larger database, e.g. a big product catalog), a second overlapping poll could run the same step twice at once, which surfaced as a \"No query results for model [BackupRun]\" error partway through the pre-update backup step. The updater now locks each step so an overlapping poll is safely skipped instead of re-run, and a run whose record genuinely goes missing now reports a clear message instead of a raw database error. If you're on 1.0.15, updating straight to this version is recommended. If you hit the BackupRun error before, please try again \u2014 and if it recurs, let us know so we can dig further with more detail.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": null,
-    "size_bytes": null,
-    "signature": null,
+    "sha256": "5d5f7a34b319f9ef08a850891cf4f8a3115ff2ab4227f15769a8e4015d931e28",
+    "size_bytes": 30562616,
+    "signature": "oROQ9fNcg/H3j5dsnuzVDGRMHpz99119qujYv+3Wh61lcc8L8gaDzL5wU/+GQpJroIJYxUuAuLsdBcOAiwhPAdAgeRg6K5O/X7TmxLBnyxyUEi6ANDOKTS+KzGHqCJyEkzfQNfBcLAlgne11PmMSEdQN39ot8R/URWBoGVh5y3W5iY1CWvkiwHUyM/UcAEGbz4FGICryUbwgpQebtyozPXnHQK9H7A7QaDeO/CMTidOj/yflBQv/8r3Ughxnh4m3LdrUe9ZgbWm9IzvveYmsWLwrX2YvqzO9cAxSdjkcJDLEVIexWjQy8BWg9ybwNz7130Nje14PAVJArEHtsePVFrJCRsXrT5BrZ1IHQ/ilUjzDSMhGThhx3FePDkpo5I3ccOc4uNSRGIW/w3gi41c7G2GTlkA5vaNcKPMK8yh0AMF7myCCXK947YEBSk0E1OiCWg3B1LBMv6NMKthqWlf6FtL3yjTVwYvedhxCKEJIlgYh5Ch0uIxbLeJsbga/tkutVdJbvsE2AI8BHK49NUZzSuZrEkFukScvHIsPii+Tp/fXMMjUjuFdRLohUtPEfWXu281J1pIG3np9v34L4cCG5hfUh1Af9nFs9vr5pRSfDBFjxWYq5g4tDf4Kclx/U2vShdMoYfkmin9N232mLMG/mo6KMksXCjfAgoI6uOPWaPs=",
     "download_url": "https://github.com/shemondotme/oeparts/releases/download/v1.0.18/oeparts-1.0.18.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "58bcdc6ecff8b983462a9f26de4b5333ea50fae9",
-    "git_signature": "LOq+FEzpV86ELP9W7Vsn03TaA4/KX8yx7eTxYJGE+J96L+CyGGnZwCJZ/+x18GsHnM2cRglmG/odWwj5ohLptlcgJSDf6VXP3loeSF618MM9P3JyH803wyRSKiSt1GDNhiR7Dh0JwAcZklSqtib4uruhZYd/5yEKbMHFaP+8rlwguKBVOFcdLDgINFn649pdJOuzIu4tOcjPCLSMIdOOFi6C94z4zCEamjLII1u1couJwcgMVupPOx/SQArj/mwPekrbxPi8A2xGpcT63GuRLIdpB6HfEby9wRK/tQTCWpozjUvzQay7rJpbeJVyQht1826+zRgoq87wPXbN8qsuvXBKFdiROT3tT5ySKNZ/jf1cr7ncBqRfvjwWyFx0GsNhRvvmCNIrxCPB476o55ja6AJQhYFLd8mMjQkL5K+VbQlSH/4BvMP+n0HdNXtkE9Gqvt1ciHy7lfi/QIafk1QG3vfu2he53MuZp1fVI/J46xLYOmtkSI3NK7kcpUAyXuLQyT4Y18d6lioi0Vz7FsJhWqD1YFeUOVL+SZY+YNmYxxaOY+ShqVV9hbeGpfz5UT4+mNyUBZfcTR1WO3bs9Yx5hjNHY1orRHqPeNv3Lwuem6H/66zsxU/W56m4K7FVR4Ti+fHqh+4FBXhYvCd9oFF8j/vxZivjsLXVetvCavjRZds="
+    "git_commit_sha": "9ee18cd62e1b13a9be1d59ce90a4d66cc266c7a8",
+    "git_signature": "MDoNACLGw9yicfvEr0VPXL/QSa1tJ/3bYjGPwuZMCP270ycZCe/VIGBK3pwRezZ4g67629nJHnByTgHebJKgz9DABVyTqSMk+TqhrwHTHDHtz2TMwgGoyfNUxnTgHG5sxKXoDQCmSEGDn8vTT+Uj1WXDpJ+LKZkEowuMzjXdbGn7LwHMTnGaCes2CMpUMovyZzs6ZK1iE94s+iDLy1nx6Z7bsDrcJXh60il439o/FS1Kc0yssJq0HYLoPpQJKgySValQXK+Fsv6Shov/aYAn7f+1Kdv+seXGeyfrsqW98nX18GzUkVLdh9CRkJhpAxlJFNwuTK9+Er/HcOfmBancA0ZpODwPn8tm9rM/Nrauz1+wwSjz7POjqmN3oOgJ3tcLrkCNt9CLmYw3Ty8/VvmWYxslOt+7XL9xWBhLc4shJhp9MCqZQJgwgQT/uqiUO1Cof3PlUMdteaSODcrLdV0Q1SFqdTTijCl1GinvaH5gEWuvJLqxG3Gs0UKTWY9f1ztnOTOYtB/Eg4gdcH2FPDSOuSfFFsc7OXI+efhDcS8FktbBk2mb1ZoSFlheJ4+Ea8VLx7PtgzRgIi/004+o+ZeJbgTzItceYUw64xfNpKyle5cv9Gv/ul4q5YTlj1gXye2VvZY2BZiwbXr2t08iKlyy+AjqCGHKxMf6+sDrJLj5P4g="
 }
