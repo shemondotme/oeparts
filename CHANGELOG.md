@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.19 — 2026-08-11
+
+### Fixed
+- **Found the actual root cause of the `BackupRun` error** (v1.0.18 hardened against a symptom; this fixes the cause, confirmed from a real production log). A database restore — used to undo a failed update — replays each table as `DROP TABLE` then `CREATE TABLE`, and the backup engine's own bookkeeping tables (`backup_runs`, `backup_parts`) were being backed up and restored just like any other table. A failed update's automatic rollback could therefore wipe out a *different*, freshly-started backup's own row while it was still being written, failing every subsequent retry with a foreign-key error. These tables (plus `update_histories`) are now permanently excluded from every backup and restore — they're the engine's own live operational state, not data that should ever be rolled back.
+- **Made 6 more migrations from v1.0.16 safe to re-run** (`newsletter_campaign_recipients`'s unique index, `admin_sessions`, `carts.guest_email`, `failed_search_logs`'s manufacturer/car-model columns, `testimonials`' rating check, and the `products` performance indexes) — the same underlying issue as the `admin_sessions`/OEM-FULLTEXT-index errors already fixed in v1.0.17: a restore can only revert tables present in its snapshot, so a table/column/index created by one migration in a batch can survive a rollback even after the batch as a whole is reported as failed, causing "already exists" on the next retry.
+
 ## 1.0.18 — 2026-08-11
 
 ### Fixed
