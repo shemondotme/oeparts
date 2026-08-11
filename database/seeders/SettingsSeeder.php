@@ -205,6 +205,9 @@ class SettingsSeeder extends Seeder
             ['group' => 'performance', 'key' => 'image_quality',          'value' => '82',    'type' => $i],
             ['group' => 'performance', 'key' => 'image_max_width',        'value' => '2000',  'type' => $i],
             ['group' => 'performance', 'key' => 'image_max_height',       'value' => '2000',  'type' => $i],
+            ['group' => 'performance', 'key' => 'cloudflare_enabled',     'value' => '0',     'type' => $b],
+            ['group' => 'performance', 'key' => 'cloudflare_zone_id',     'value' => '',      'type' => $s],
+            ['group' => 'performance', 'key' => 'cloudflare_api_token',   'value' => '',      'type' => $e, 'encrypted' => true],
 
             // ── SECURITY ─────────────────────────────────────────────────────────
             // otp_enabled seeded OFF: a fresh install has no SMTP configured yet

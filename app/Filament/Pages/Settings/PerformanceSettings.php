@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Services\CloudflareService;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -59,6 +60,36 @@ class PerformanceSettings extends SettingsPage
                             ->danger()
                             ->send();
                     }
+                }),
+            Action::make('testCloudflare')
+                ->label('Test Cloudflare Connection')
+                ->icon('heroicon-o-signal')
+                ->color('gray')
+                ->action(function (CloudflareService $cloudflare) {
+                    $result = $cloudflare->testConnection();
+
+                    Notification::make()
+                        ->title($result['success'] ? 'Cloudflare connected' : 'Cloudflare connection failed')
+                        ->body($result['message'])
+                        ->color($result['success'] ? 'success' : 'danger')
+                        ->send();
+                }),
+            Action::make('purgeCloudflare')
+                ->label('Purge Cloudflare Cache')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->modalHeading('Purge Entire Cloudflare Cache')
+                ->modalDescription('Removes every cached file at the Cloudflare edge for this zone. The next visitor to each page/asset re-fetches it from this server. Safe to do any time — never breaks anything, just costs a moment of extra origin load.')
+                ->modalSubmitActionLabel('Purge Everything')
+                ->action(function (CloudflareService $cloudflare) {
+                    $result = $cloudflare->purgeEverything();
+
+                    Notification::make()
+                        ->title($result['success'] ? 'Cloudflare cache purged' : 'Purge failed')
+                        ->body($result['message'])
+                        ->color($result['success'] ? 'success' : 'danger')
+                        ->send();
                 }),
         ];
     }
@@ -156,6 +187,36 @@ class PerformanceSettings extends SettingsPage
                             ->required()
                             ->default(2000)
                             ->visible(fn (Get $get) => $get('optimize_images')),
+                    ])->columns(2),
+
+                Section::make('Cloudflare CDN')
+                    ->description('Purge-only integration — this panel never changes your live Cloudflare zone configuration, only tells it to drop cached copies when content changes. Configure the dashboard settings below directly on Cloudflare.')
+                    ->schema([
+                        Forms\Components\Toggle::make('cloudflare_enabled')
+                            ->label('Enable Cloudflare Integration')
+                            ->helperText('Turns on auto-purge (sitemap regeneration) and the Test/Purge actions above. Off by default — nothing changes until you turn this on and fill in both fields below.')
+                            ->default(false)
+                            ->live(),
+
+                        Forms\Components\TextInput::make('cloudflare_zone_id')
+                            ->label('Zone ID')
+                            ->helperText('Cloudflare dashboard → your domain → Overview (right sidebar, "API" box).')
+                            ->maxLength(255)
+                            ->default(null)
+                            ->visible(fn (Get $get) => $get('cloudflare_enabled')),
+
+                        Forms\Components\TextInput::make('cloudflare_api_token')
+                            ->label('API Token')
+                            ->password()
+                            ->revealable()
+                            ->helperText('Saved encrypted in database. Create one at Cloudflare → My Profile → API Tokens, with "Zone → Cache Purge → Purge" permission scoped to this zone — never use your Global API Key here.')
+                            ->default(null)
+                            ->visible(fn (Get $get) => $get('cloudflare_enabled')),
+
+                        Forms\Components\Placeholder::make('cloudflare_dashboard_note')
+                            ->label('Recommended Cloudflare dashboard settings')
+                            ->content('This app already sends correct Cache-Control headers for compiled assets and uploaded media (1 year, immutable) — Cloudflare respects those by default under Standard caching. Worth checking directly on Cloudflare\'s side: Speed → Optimization → Auto Minify (HTML/CSS/JS) and Brotli, both on; Caching → Browser Cache TTL → "Respect Existing Headers"; Caching → Always Online → on (serves a cached copy if this server is ever briefly unreachable).')
+                            ->visible(fn (Get $get) => $get('cloudflare_enabled')),
                     ])->columns(2),
 
                 Section::make('Queue')

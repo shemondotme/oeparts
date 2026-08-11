@@ -38,7 +38,8 @@ class SitemapService
     private string $sitemapDirectory = 'sitemaps';
 
     public function __construct(
-        private SettingsService $settings
+        private SettingsService $settings,
+        private CloudflareService $cloudflare,
     ) {
         $this->supportedLocales = LocaleRegistry::codes();
     }
@@ -65,6 +66,22 @@ class SitemapService
 
             if ($this->settings->get('seo.google_ping_enabled', true)) {
                 $this->pingGoogle();
+            }
+
+            // sitemap.xml and every sub-file live at a FIXED URL that gets
+            // overwritten in place on every regeneration (unlike uploaded
+            // media/build assets, which always get a new unique filename) —
+            // exactly the "same URL, content changed" case an edge cache
+            // needs telling about. Best-effort: CloudflareService itself
+            // no-ops when not configured, and any failure here must never
+            // fail sitemap generation, which already succeeded.
+            try {
+                $this->cloudflare->purgeUrls(array_merge(
+                    [url('sitemap.xml')],
+                    array_map(fn (string $file) => \Illuminate\Support\Facades\URL::asset("{$this->sitemapDirectory}/{$file}"), $files)
+                ));
+            } catch (\Throwable $e) {
+                Log::warning('Cloudflare sitemap purge failed', ['error' => $e->getMessage()]);
             }
 
             return array_merge([$indexPath], $files);
