@@ -242,6 +242,43 @@ class SeoControlCenter extends SettingsPage
                             ->placeholder('bing-verification-token')
                             ->default(null),
                     ])->columns(2),
+
+                Section::make('Health Dashboard: Google Search Console')
+                    ->description('Powers the Health Dashboard\'s indexed/submitted/errors widget. Needs a Google Cloud OAuth client and a one-time authorization to obtain a refresh token — both happen outside this admin panel, in Google Cloud Console / the OAuth consent screen.')
+                    ->schema([
+                        Forms\Components\TextInput::make('gsc_property_url')
+                            ->label('Search Console Property URL')
+                            ->placeholder('https://oeparts.com/')
+                            ->maxLength(255)
+                            ->default(null),
+                        Forms\Components\TextInput::make('gsc_client_id')
+                            ->label('OAuth Client ID')
+                            ->maxLength(255)
+                            ->default(null),
+                        Forms\Components\TextInput::make('gsc_client_secret')
+                            ->label('OAuth Client Secret')
+                            ->maxLength(255)
+                            ->password()
+                            ->revealable()
+                            ->default(null),
+                        Forms\Components\TextInput::make('gsc_refresh_token')
+                            ->label('OAuth Refresh Token')
+                            ->maxLength(1000)
+                            ->password()
+                            ->revealable()
+                            ->default(null),
+                    ])->columns(2),
+
+                Section::make('Health Dashboard: Core Web Vitals')
+                    ->description('Powers the Health Dashboard\'s real-user LCP/CLS/INP widget via the free Chrome UX Report (CrUX) API — needs a Google Cloud API key with the Chrome UX Report API enabled, no OAuth required.')
+                    ->schema([
+                        Forms\Components\TextInput::make('crux_api_key')
+                            ->label('CrUX API Key')
+                            ->maxLength(255)
+                            ->password()
+                            ->revealable()
+                            ->default(null),
+                    ]),
             ]);
     }
 

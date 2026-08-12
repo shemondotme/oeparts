@@ -340,6 +340,19 @@ class SettingsSeeder extends Seeder
             // for this yet, lands with the SEO Control Center).
             ['group' => 'seo', 'key' => 'canonical_host',           'value' => '',             'type' => $s],
 
+            // Credential-dependent SEO Health Dashboard widgets — both ship
+            // empty/unconfigured; the widgets themselves detect that and
+            // show a "not connected" state rather than erroring. Google
+            // Search Console needs a real OAuth app (client id/secret) plus
+            // a one-time authorization to obtain the refresh token; the
+            // CrUX API only needs a Google Cloud API key with the Chrome
+            // UX Report API enabled.
+            ['group' => 'seo', 'key' => 'gsc_client_id',             'value' => '',             'type' => $s],
+            ['group' => 'seo', 'key' => 'gsc_client_secret',         'value' => '',             'type' => $e, 'encrypted' => true],
+            ['group' => 'seo', 'key' => 'gsc_refresh_token',         'value' => '',             'type' => $e, 'encrypted' => true],
+            ['group' => 'seo', 'key' => 'gsc_property_url',          'value' => '',             'type' => $s],
+            ['group' => 'seo', 'key' => 'crux_api_key',              'value' => '',             'type' => $e, 'encrypted' => true],
+
             // Fallback description template for products with no manual
             // description — {manufacturer} {condition} {oem} {fitment}
             // {delivery} {moq} {cross_ref_count} placeholders. Genuinely

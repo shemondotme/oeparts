@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\SeoHealthDashboard;
 use App\Filament\Widgets\Seo\ContentHealthWidget;
+use App\Filament\Widgets\Seo\CoreWebVitalsWidget;
 use App\Filament\Widgets\Seo\FeatureAdoptionWidget;
+use App\Filament\Widgets\Seo\GoogleSearchConsoleWidget;
 use App\Filament\Widgets\Seo\IndexNowActivityWidget;
 use App\Filament\Widgets\Seo\InternalSearchAnalyticsWidget;
 use App\Filament\Widgets\Seo\RedirectHealthWidget;
@@ -17,10 +19,12 @@ use App\Models\Product;
 use App\Models\Redirect;
 use App\Models\SearchLog;
 use App\Models\Setting;
+use App\Services\SettingsService;
 use Database\Seeders\RolesSeeder;
 use Database\Seeders\SettingsSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -140,5 +144,72 @@ class SeoHealthDashboardTest extends TestCase
         Livewire::test(RedirectHealthWidget::class)
             ->assertSee('loop back on themselves', false)
             ->assertSee('Unresolved 404s');
+    }
+
+    #[Test]
+    public function google_search_console_widget_shows_not_connected_without_credentials(): void
+    {
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(GoogleSearchConsoleWidget::class)
+            ->assertSee('Not Connected');
+    }
+
+    #[Test]
+    public function google_search_console_widget_shows_indexed_and_submitted_counts_once_configured(): void
+    {
+        $service = app(SettingsService::class);
+        $service->set('seo.gsc_client_id', 'client-123');
+        $service->set('seo.gsc_client_secret', 'secret-abc');
+        $service->set('seo.gsc_refresh_token', 'refresh-xyz');
+        $service->set('seo.gsc_property_url', 'https://oeparts.test/');
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            'searchconsole.googleapis.com/*' => Http::response([
+                'sitemap' => [
+                    ['errors' => 0, 'warnings' => 0, 'contents' => [['submitted' => 10, 'indexed' => 8]]],
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(GoogleSearchConsoleWidget::class)
+            ->assertSee('Indexed vs Submitted')
+            ->assertSee('8 / 10');
+    }
+
+    #[Test]
+    public function core_web_vitals_widget_shows_not_connected_without_an_api_key(): void
+    {
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(CoreWebVitalsWidget::class)
+            ->assertSee('Not Connected');
+    }
+
+    #[Test]
+    public function core_web_vitals_widget_shows_ratings_once_configured(): void
+    {
+        app(SettingsService::class)->set('seo.crux_api_key', 'crux-key-123');
+
+        Http::fake([
+            'chromeuxreport.googleapis.com/*' => Http::response([
+                'record' => [
+                    'metrics' => [
+                        'largest_contentful_paint' => ['percentiles' => ['p75' => 1800]],
+                        'cumulative_layout_shift' => ['percentiles' => ['p75' => '0.05']],
+                        'interaction_to_next_paint' => ['percentiles' => ['p75' => 150]],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(CoreWebVitalsWidget::class)
+            ->assertSee('LCP (p75)')
+            ->assertSee('Good');
     }
 }

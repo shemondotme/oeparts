@@ -8,4 +8,8 @@
     @livewire(\App\Filament\Widgets\Seo\IndexNowActivityWidget::class)
 
     @livewire(\App\Filament\Widgets\Seo\RedirectHealthWidget::class)
+
+    @livewire(\App\Filament\Widgets\Seo\GoogleSearchConsoleWidget::class)
+
+    @livewire(\App\Filament\Widgets\Seo\CoreWebVitalsWidget::class)
 </x-filament-panels::page>
