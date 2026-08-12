@@ -13,7 +13,7 @@ class SearchLog extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'search_query', 'normalized_query', 'result_count',
+        'search_query', 'normalized_query', 'result_count', 'match_type',
         'manufacturer_id', 'car_model_id', 'lang', 'user_id', 'ip_address',
     ];
 

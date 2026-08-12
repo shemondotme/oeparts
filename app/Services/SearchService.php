@@ -86,7 +86,7 @@ class SearchService
             // Step 1: Exact match
             $exactResult = $this->exactMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
             if ($exactResult['total'] > 0) {
-                $logId = $log ? $this->logSearch($query, $normalized, $lang, $exactResult['total'], $manufacturerId, $carModelId) : null;
+                $logId = $log ? $this->logSearch($query, $normalized, $lang, $exactResult['total'], $manufacturerId, $carModelId, 'exact') : null;
 
                 return $this->buildResult('exact', $exactResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
             }
@@ -100,7 +100,7 @@ class SearchService
             if ($crossRefEnabled) {
                 $crossResult = $this->crossReferenceMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
                 if ($crossResult['total'] > 0) {
-                    $logId = $log ? $this->logSearch($query, $normalized, $lang, $crossResult['total'], $manufacturerId, $carModelId) : null;
+                    $logId = $log ? $this->logSearch($query, $normalized, $lang, $crossResult['total'], $manufacturerId, $carModelId, 'cross_reference') : null;
 
                     return $this->buildResult('cross_reference', $crossResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
                 }
@@ -119,7 +119,7 @@ class SearchService
             if ($partialEnabled && strlen($normalized) >= $minPartialLen) {
                 $partialResult = $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
                 if ($partialResult['total'] > 0) {
-                    $logId = $log ? $this->logSearch($query, $normalized, $lang, $partialResult['total'], $manufacturerId, $carModelId) : null;
+                    $logId = $log ? $this->logSearch($query, $normalized, $lang, $partialResult['total'], $manufacturerId, $carModelId, 'partial') : null;
 
                     return $this->buildResult('partial', $partialResult, $normalized, $logId, $manufacturerId, $carModelId, $inStockOnly, $condition);
                 }
@@ -539,7 +539,8 @@ class SearchService
         string $lang = 'en',
         int $resultCount = 0,
         ?int $manufacturerId = null,
-        ?int $carModelId = null
+        ?int $carModelId = null,
+        ?string $matchType = null
     ): ?int {
         if (! filter_var($this->settings->get('search.log_searches', true), FILTER_VALIDATE_BOOLEAN)) {
             return null;
@@ -550,6 +551,7 @@ class SearchService
                 'search_query' => $rawQuery,
                 'normalized_query' => $normalized,
                 'result_count' => $resultCount,
+                'match_type' => $matchType,
                 'manufacturer_id' => $manufacturerId,
                 'car_model_id' => $carModelId,
                 'lang' => $lang,
