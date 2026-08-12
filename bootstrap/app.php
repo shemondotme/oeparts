@@ -2,6 +2,7 @@
 
 use App\Exceptions\AdminFatalErrorNotifier;
 use App\Http\Middleware\CacheGuestStorefrontResponse;
+use App\Http\Middleware\EnforceCanonicalHost;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
 use App\Http\Middleware\InstallerMiddleware;
@@ -70,6 +71,16 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PORT
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
+
+        // Global (not .web()-scoped) so a request that won't match any
+        // route still gets canonicalized before routing decides it's a
+        // 404. append(), not prepend(): must run AFTER TrustProxies (which
+        // Laravel always places ahead of prepended middleware regardless
+        // of call order here) so $request->secure()/getHost() already
+        // reflect trusted X-Forwarded-Proto/Host when behind a reverse
+        // proxy — reading them before TrustProxies runs would misdetect
+        // an already-https request as plain HTTP and redirect-loop.
+        $middleware->append(EnforceCanonicalHost::class);
 
         $middleware->web(prepend: [
             RedirectIfNotInstalled::class,
