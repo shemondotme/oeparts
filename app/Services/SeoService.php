@@ -110,6 +110,22 @@ class SeoService
                 '@type' => 'Brand',
                 'name' => trans_field($product->manufacturer->name),
             ],
+            // Every OEM number this product answers to — its own primary
+            // number plus every cross-reference (other manufacturers'
+            // numbers for the same physical part). Without this, structured
+            // data only ever reflected the primary number even when a
+            // visitor arrived here via a cross-reference search.
+            'additionalProperty' => $product->crossReferences
+                ->pluck('cross_oem_number')
+                ->push($product->oem_number)
+                ->unique()
+                ->map(fn (string $oem) => [
+                    '@type' => 'PropertyValue',
+                    'name' => 'OEM Number',
+                    'value' => $oem,
+                ])
+                ->values()
+                ->all(),
             'offers' => [
                 '@type' => 'Offer',
                 'price' => $price,

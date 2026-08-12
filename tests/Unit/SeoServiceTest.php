@@ -94,6 +94,42 @@ class SeoServiceTest extends TestCase
     }
 
     #[Test]
+    public function json_ld_product_additional_property_includes_primary_and_cross_reference_oems(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+        $product->crossReferences()->create([
+            'cross_oem_number' => 'XREF999',
+            'normalized_cross_oem' => 'XREF999',
+        ]);
+
+        $output = $this->service->jsonLd('product', $product->fresh(['crossReferences']));
+
+        $this->assertStringContainsString('"additionalProperty"', $output);
+        $this->assertStringContainsString('"value":"' . $product->oem_number . '"', $output);
+        $this->assertStringContainsString('"value":"XREF999"', $output);
+        $this->assertStringContainsString('"name":"OEM Number"', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_additional_property_has_no_duplicates_when_lists_overlap(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+        // Data-quality edge case: a cross-reference row accidentally equal
+        // to the product's own primary OEM must not produce a duplicate
+        // PropertyValue entry.
+        $product->crossReferences()->create([
+            'cross_oem_number' => $product->oem_number,
+            'normalized_cross_oem' => $product->normalized_oem,
+        ]);
+
+        $output = $this->service->jsonLd('product', $product->fresh(['crossReferences']));
+
+        $this->assertSame(1, substr_count($output, '"value":"' . $product->oem_number . '"'));
+    }
+
+    #[Test]
     public function json_ld_product_out_of_stock_reflects_availability(): void
     {
         $manufacturer = $this->createManufacturer();
