@@ -121,4 +121,48 @@ class ProductObserverIndexNowTest extends TestCase
                 && in_array('https://oeparts.test/en/parts/06L906036L', $request['urlList'], true);
         });
     }
+
+    #[Test]
+    public function a_successful_push_is_logged_for_the_health_dashboard(): void
+    {
+        $this->enableIndexNow();
+        \Illuminate\Support\Facades\Http::fake(['api.indexnow.org/*' => \Illuminate\Support\Facades\Http::response('OK', 200)]);
+
+        (new PushIndexNow(['https://oeparts.test/en/parts/06L906036L']))->handle();
+
+        $this->assertDatabaseHas('indexnow_push_logs', [
+            'url_count' => 1,
+            'status' => 'success',
+        ]);
+    }
+
+    #[Test]
+    public function a_failed_push_is_logged_via_the_jobs_failed_hook(): void
+    {
+        $this->enableIndexNow();
+
+        (new PushIndexNow(['https://oeparts.test/en/parts/06L906036L']))
+            ->failed(new \RuntimeException('IndexNow push failed with status 500'));
+
+        $this->assertDatabaseHas('indexnow_push_logs', [
+            'url_count' => 1,
+            'status' => 'failed',
+            'error_message' => 'IndexNow push failed with status 500',
+        ]);
+    }
+
+    #[Test]
+    public function logging_a_push_never_throws_even_if_the_table_is_unreachable(): void
+    {
+        $this->enableIndexNow();
+        \Illuminate\Support\Facades\Http::fake(['api.indexnow.org/*' => \Illuminate\Support\Facades\Http::response('OK', 200)]);
+
+        \Illuminate\Support\Facades\Schema::drop('indexnow_push_logs');
+
+        // The push itself (and the job) must succeed regardless of whether
+        // the best-effort activity log could be written.
+        (new PushIndexNow(['https://oeparts.test/en/parts/06L906036L']))->handle();
+
+        $this->assertTrue(true);
+    }
 }

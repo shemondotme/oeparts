@@ -5,5 +5,7 @@
 
     @livewire(\App\Filament\Widgets\Seo\FeatureAdoptionWidget::class)
 
+    @livewire(\App\Filament\Widgets\Seo\IndexNowActivityWidget::class)
+
     @livewire(\App\Filament\Widgets\Seo\RedirectHealthWidget::class)
 </x-filament-panels::page>

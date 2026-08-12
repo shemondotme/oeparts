@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\IndexNowPushLog;
 use App\Support\AdminNotifier;
 use Filament\Notifications\Notification;
 use Illuminate\Bus\Queueable;
@@ -65,6 +66,8 @@ class PushIndexNow implements ShouldQueue
             throw new \RuntimeException("IndexNow push failed with status {$response->status()}: {$response->body()}");
         }
 
+        $this->recordPush('success');
+
         try {
             AdminNotifier::toRoles(
                 ['super_admin', 'admin'],
@@ -81,6 +84,8 @@ class PushIndexNow implements ShouldQueue
 
     public function failed(Throwable $e): void
     {
+        $this->recordPush('failed', $e->getMessage());
+
         try {
             AdminNotifier::toRoles(
                 ['super_admin', 'admin'],
@@ -92,6 +97,24 @@ class PushIndexNow implements ShouldQueue
             );
         } catch (Throwable $inner) {
             // A bell notification must never mask the original failure.
+        }
+    }
+
+    /**
+     * Best-effort activity log for the SEO Health Dashboard's IndexNow
+     * widget — a logging failure must never mask (or throw over) the
+     * actual push outcome, which has already happened by the time this runs.
+     */
+    private function recordPush(string $status, ?string $errorMessage = null): void
+    {
+        try {
+            IndexNowPushLog::create([
+                'url_count' => count($this->urls),
+                'status' => $status,
+                'error_message' => $errorMessage,
+            ]);
+        } catch (Throwable $e) {
+            // Swallowed — see docblock.
         }
     }
 }

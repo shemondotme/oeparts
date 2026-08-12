@@ -6,10 +6,12 @@ use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\SeoHealthDashboard;
 use App\Filament\Widgets\Seo\ContentHealthWidget;
 use App\Filament\Widgets\Seo\FeatureAdoptionWidget;
+use App\Filament\Widgets\Seo\IndexNowActivityWidget;
 use App\Filament\Widgets\Seo\InternalSearchAnalyticsWidget;
 use App\Filament\Widgets\Seo\RedirectHealthWidget;
 use App\Models\Admin;
 use App\Models\FailedSearchLog;
+use App\Models\IndexNowPushLog;
 use App\Models\NotFoundLog;
 use App\Models\Product;
 use App\Models\Redirect;
@@ -110,6 +112,20 @@ class SeoHealthDashboardTest extends TestCase
         Livewire::test(FeatureAdoptionWidget::class)
             ->assertSee('Enabled')
             ->assertSee('Own Product Images');
+    }
+
+    #[Test]
+    public function index_now_activity_widget_reports_enabled_state_and_recent_failures(): void
+    {
+        Setting::where('group', 'seo')->where('key', 'indexnow_enabled')->update(['value' => 'true']);
+        IndexNowPushLog::create(['url_count' => 3, 'status' => 'success']);
+        IndexNowPushLog::create(['url_count' => 1, 'status' => 'failed', 'error_message' => 'timeout']);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(IndexNowActivityWidget::class)
+            ->assertSee('Enabled')
+            ->assertSee('Last Push');
     }
 
     #[Test]
