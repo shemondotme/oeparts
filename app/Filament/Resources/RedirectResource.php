@@ -6,6 +6,7 @@ use App\Enums\RedirectType;
 use App\Filament\Resources\RedirectResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Redirect;
+use App\Services\RedirectLoopDetector;
 use Filament\Forms;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -98,6 +99,21 @@ class RedirectResource extends Resource
 
                                                     if ($reverseExists) {
                                                         $fail('An active redirect already sends this destination back to the source — saving this would create an infinite redirect loop.');
+
+                                                        return;
+                                                    }
+
+                                                    // The direct-pair check above only catches a 2-hop
+                                                    // loop (A->B, B->A). A longer chain (A->B, B->C,
+                                                    // then saving C->A) went undetected — walk the full
+                                                    // chain instead. Kept as a separate check below the
+                                                    // direct-pair one (rather than replacing it) because
+                                                    // its error message is more specific for the common
+                                                    // 2-hop case.
+                                                    $loopNode = app(RedirectLoopDetector::class)->findLoop($from, $to, $record?->getKey());
+
+                                                    if ($loopNode !== null) {
+                                                        $fail("Saving this would create a redirect loop — the chain eventually comes back to \"{$loopNode}\".");
                                                     }
                                                 },
                                             ]),

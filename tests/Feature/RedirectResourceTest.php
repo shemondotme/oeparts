@@ -86,6 +86,33 @@ class RedirectResourceTest extends TestCase
     }
 
     #[Test]
+    public function a_three_hop_redirect_loop_is_rejected(): void
+    {
+        // The direct-pair check alone only catches A->B/B->A. A longer
+        // chain (A->B, B->C, then saving C->A) previously went undetected —
+        // RedirectLoopDetector's full chain walk is what catches this.
+        Redirect::create(['from_url' => 'page-a', 'to_url' => 'page-b', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        Redirect::create(['from_url' => 'page-b', 'to_url' => 'page-c', 'type' => RedirectType::Permanent, 'is_active' => true]);
+
+        Livewire::test(CreateRedirect::class)
+            ->fillForm(['from_url' => 'page-c', 'to_url' => 'page-a', 'type' => RedirectType::Permanent->value, 'is_active' => true])
+            ->call('create')
+            ->assertHasFormErrors(['to_url']);
+    }
+
+    #[Test]
+    public function a_legitimate_three_hop_non_cyclic_chain_is_accepted(): void
+    {
+        Redirect::create(['from_url' => 'page-a', 'to_url' => 'page-b', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        Redirect::create(['from_url' => 'page-b', 'to_url' => 'page-c', 'type' => RedirectType::Permanent, 'is_active' => true]);
+
+        Livewire::test(CreateRedirect::class)
+            ->fillForm(['from_url' => 'page-c', 'to_url' => 'page-d', 'type' => RedirectType::Permanent->value, 'is_active' => true])
+            ->call('create')
+            ->assertHasNoFormErrors();
+    }
+
+    #[Test]
     public function editing_a_redirect_without_changing_to_url_is_not_rejected_as_its_own_reverse_loop(): void
     {
         $redirect = Redirect::create(['from_url' => 'page-c', 'to_url' => 'page-d', 'type' => RedirectType::Permanent, 'is_active' => true]);
