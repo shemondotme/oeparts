@@ -34,4 +34,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # environments read the exact same overrides file with no risk of drift.
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+# OPcache tuning (see opcache.ini's own header for why validate_timestamps
+# stays at 1) — dropped into conf.d rather than appended to php.ini so it
+# stays a single reviewable diff instead of a merge into a stock file.
+COPY opcache.ini "$PHP_INI_DIR/conf.d/zz-opcache-tuning.ini"
+
 WORKDIR /var/www/html
