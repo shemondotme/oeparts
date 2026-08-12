@@ -69,9 +69,9 @@
         "@type": "SearchAction",
         "target": {
             "@type": "EntryPoint",
-            "urlTemplate": "{{ settings('general.site_url', url('/')) }}/{{ app()->getLocale() }}/parts/{oem}"
+            "urlTemplate": "{{ settings('general.site_url', url('/')) }}/{{ app()->getLocale() }}/parts/{search_term_string}"
         },
-        "query-input": "required name=oem"
+        "query-input": "required name=search_term_string"
     }
 }
 </script>

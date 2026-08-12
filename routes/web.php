@@ -171,8 +171,15 @@ Route::prefix('{lang}')
             ->name('frontend.search.console');
 
         // OEM Search (with OEM normalization middleware)
+        // Regex accepts lowercase too (A-Za-z) so a lowercase-cased OEM segment
+        // (e.g. from the homepage's SearchAction sitelinks box, which substitutes
+        // a raw user query) still matches the route and reaches normalize.oem
+        // below — Laravel evaluates this constraint during route matching,
+        // BEFORE any middleware runs, so an uppercase-only pattern would 404
+        // lowercase requests outright instead of letting NormalizeOemUrl 301
+        // them to the canonical uppercase form.
         Route::get('/parts/{oem}', [SearchController::class, 'results'])
-            ->where('oem', '[A-Z0-9\-\.\s]+')
+            ->where('oem', '[A-Za-z0-9\-\.\s]+')
             ->middleware(['normalize.oem', 'cache.guest:60'])
             ->name('frontend.search.results');
 
