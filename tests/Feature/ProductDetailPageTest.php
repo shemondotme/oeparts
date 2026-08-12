@@ -40,6 +40,9 @@ class ProductDetailPageTest extends TestCase
             ['group' => 'seo', 'key' => 'detail_pages_enabled'],
             ['value' => '1', 'type' => 'boolean', 'is_encrypted' => false]
         );
+        // A raw Eloquent write, unlike SettingsService::set(), never busts
+        // SettingsService::getGroup()'s 5-minute per-group cache.
+        app(\App\Services\SettingsService::class)->forget('seo');
     }
 
     private function makeProduct(array $overrides = []): Product
@@ -206,6 +209,12 @@ class ProductDetailPageTest extends TestCase
             ['group' => 'seo', 'key' => 'detail_pages_enabled'],
             ['value' => '0', 'type' => 'boolean', 'is_encrypted' => false]
         );
+        // SettingsService::getGroup() caches the whole 'seo' group for 5
+        // minutes; Product::create() above already triggered a read of it
+        // (ProductObserver's IndexNow trigger checks seo.indexnow_enabled)
+        // while detail_pages_enabled was still '1' — a raw Eloquent write,
+        // unlike SettingsService::set(), never busts that cache itself.
+        app(\App\Services\SettingsService::class)->forget('seo');
 
         $response = $this->get($staleUrl);
 

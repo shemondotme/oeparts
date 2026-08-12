@@ -97,6 +97,24 @@ class SeoService
     }
 
     /**
+     * Maps this catalog's Condition.slug values to the correct schema.org
+     * ItemCondition URL. Only 'new'/'used' are ever seeded (ConditionSeeder),
+     * but the model defines no fixed enum — an admin can freely add a
+     * custom Condition row (the pre-2026-03-30 enum literally had
+     * used_grade_a/b/c, remanufactured, aftermarket, new_old_stock before
+     * being collapsed to just new/used, so these richer distinctions could
+     * plausibly return). An unmapped slug OMITS the key entirely rather
+     * than guessing — safer for a merchant feed than declaring a wrong
+     * condition.
+     */
+    private const CONDITION_SCHEMA_MAP = [
+        'new' => 'https://schema.org/NewCondition',
+        'used' => 'https://schema.org/UsedCondition',
+        'refurbished' => 'https://schema.org/RefurbishedCondition',
+        'remanufactured' => 'https://schema.org/RefurbishedCondition',
+    ];
+
+    /**
      * JSON‑LD for a product.
      */
     private function productJsonLd(Product $product): array
@@ -109,7 +127,7 @@ class SeoService
             '@context' => 'https://schema.org',
             '@type' => 'Product',
             'name' => trans_field($product->name) ?: $product->oem_number,
-            'description' => trans_field($product->description) ?: '',
+            'description' => $product->descriptionOrFallback(),
             'sku' => $product->oem_number,
             'mpn' => $product->oem_number,
             'brand' => [
@@ -143,6 +161,19 @@ class SeoService
                 ]),
             ],
         ];
+
+        if ($product->condition && isset(self::CONDITION_SCHEMA_MAP[$product->condition->slug])) {
+            $data['itemCondition'] = self::CONDITION_SCHEMA_MAP[$product->condition->slug];
+        }
+
+        // Gallery images (featured first) if any exist, else the same
+        // fallback chain the visible page uses (manufacturer logo, then a
+        // placeholder) — structured data should reflect what a visitor
+        // actually sees, not silently omit image entirely.
+        $galleryUrls = $product->images->isNotEmpty()
+            ? $product->images->sortByDesc('is_featured')->map(fn ($image) => $image->medium_url)->values()->all()
+            : [$product->resolvedImageUrl('medium')];
+        $data['image'] = $galleryUrls;
 
         return $data;
     }

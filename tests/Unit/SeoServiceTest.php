@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\Category;
+use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\SeoMeta;
@@ -127,6 +128,71 @@ class SeoServiceTest extends TestCase
         $output = $this->service->jsonLd('product', $product->fresh(['crossReferences']));
 
         $this->assertSame(1, substr_count($output, '"value":"' . $product->oem_number . '"'));
+    }
+
+    #[Test]
+    public function json_ld_product_item_condition_maps_new_and_used_to_the_correct_schema_url(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $newCondition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        $usedCondition = Condition::firstOrCreate(['slug' => 'used'], ['name' => 'Used', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+
+        $newProduct = Product::factory()->create(['manufacturer_id' => $manufacturer->id, 'condition_id' => $newCondition->id]);
+        $usedProduct = Product::factory()->create(['manufacturer_id' => $manufacturer->id, 'condition_id' => $usedCondition->id]);
+
+        $this->assertStringContainsString('"itemCondition":"https://schema.org/NewCondition"', $this->service->jsonLd('product', $newProduct));
+        $this->assertStringContainsString('"itemCondition":"https://schema.org/UsedCondition"', $this->service->jsonLd('product', $usedProduct));
+    }
+
+    #[Test]
+    public function json_ld_product_item_condition_is_omitted_for_an_unmapped_condition_slug(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $customCondition = Condition::create(['name' => 'Salvage', 'slug' => 'salvage', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id, 'condition_id' => $customCondition->id]);
+
+        $output = $this->service->jsonLd('product', $product);
+
+        // Omitted, not guessed — a wrong declared condition is worse for a
+        // merchant feed than a missing optional field.
+        $this->assertStringNotContainsString('itemCondition', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_image_falls_back_to_resolved_image_url_when_no_gallery_exists(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+
+        $output = $this->service->jsonLd('product', $product);
+
+        $this->assertStringContainsString('product-placeholder.svg', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_image_lists_gallery_urls_featured_first(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+        $product->images()->create(['path' => 'product-images/gallery-1.jpg', 'is_featured' => false, 'sort_order' => 1]);
+        $product->images()->create(['path' => 'product-images/featured.jpg', 'is_featured' => true, 'sort_order' => 0]);
+
+        $output = $this->service->jsonLd('product', $product->fresh(['images']));
+
+        $data = json_decode(str_replace(['<script type="application/ld+json">', '</script>'], '', $output), true);
+        $this->assertStringContainsString('featured.jpg', $data['image'][0]);
+    }
+
+    #[Test]
+    public function json_ld_product_description_uses_the_auto_fallback_when_no_manual_description_exists(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id, 'description' => null]);
+
+        $output = $this->service->jsonLd('product', $product);
+
+        // Never empty/lorem-ipsum-style — at minimum the OEM number appears.
+        $this->assertStringContainsString($product->oem_number, $output);
     }
 
     #[Test]
