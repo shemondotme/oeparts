@@ -147,13 +147,47 @@ class GitUpdater
      * point) and `git checkout --force` couldn't unlink it. Stripping these
      * paths after every checkout means they simply aren't there to ever
      * cause that class of problem again.
+     *
+     * CRITICAL: also excludes config('updates.preserve_paths') (.env,
+     * storage) — AND anything under those paths, e.g. this same exclude
+     * list's own 'storage/app/backups' / 'storage/app/updates' /
+     * 'storage/logs' entries — from the strip list. The build-exclude
+     * list's entries mean "don't ship this in a fresh release zip," which
+     * is correct for a disposable export directory, never for a live
+     * install's real .env, backups, or logs. Found via a real end-to-end
+     * update rehearsal (fresh v1.0.16 git-managed install -> self-update to
+     * v1.0.17): without this exclusion, every git-managed update deleted
+     * the site's actual .env outright (the update FSM itself still
+     * reported "success" — the already-booted PHP process kept its config
+     * in memory for the rest of that request — but the very next request
+     * had no database credentials, no APP_KEY, nothing, bricking the
+     * site) — AND deleted storage/app/backups wholesale, including the
+     * pre-update safety backup this exact update had just taken moments
+     * earlier at the backing_up step, defeating rollback for the rest of
+     * that same update: a failure at finalize/verify from this point on
+     * would have tried to restore from a backup that no longer existed on
+     * disk. The zip-swap path never had either problem — UpdateSwapper
+     * already treats preserve_paths as untouchable — this method just
+     * wasn't consulting the same list.
      */
     private function stripDevFilesFromWorkingTree(): void
     {
         $config = (array) config('updates.build', []);
-        $exclude = array_values(array_diff(
+        $protected = array_merge(['.git', '.gitignore', '.gitattributes'], (array) config('updates.preserve_paths', []));
+
+        $isProtected = function (string $path) use ($protected): bool {
+            foreach ($protected as $p) {
+                if ($path === $p || str_starts_with($path, $p.'/')) {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        $exclude = array_values(array_filter(
             (array) ($config['exclude'] ?? []),
-            ['.git', '.gitignore', '.gitattributes']
+            fn (string $path) => ! $isProtected($path)
         ));
 
         (new ReleaseBuilder(array_merge($config, ['exclude' => $exclude])))

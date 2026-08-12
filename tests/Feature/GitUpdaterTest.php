@@ -178,6 +178,43 @@ class GitUpdaterTest extends TestCase
         $this->assertSame('v1.0.0', trim(file_get_contents($this->root.'/marker.txt')));
     }
 
+    /**
+     * Found via a real end-to-end update rehearsal (fresh v1.0.16
+     * git-managed install -> self-update to v1.0.17): checkout() deleted
+     * the live install's real .env outright (the app kept working for the
+     * REST of that one already-booted PHP process, masking the bug — the
+     * very next request had no DB credentials, no APP_KEY, nothing) and
+     * wholesale-deleted storage/app/backups, including the pre-update
+     * safety backup that same update had just taken moments earlier —
+     * defeating rollback for any failure later in that same update. Both
+     * are untracked (matching .gitignore), so `git checkout --force`
+     * itself never touches them — this was purely stripDevFilesFromWorkingTree()
+     * deleting anything on config('updates.build.exclude')'s list without
+     * checking config('updates.preserve_paths') at all.
+     */
+    #[Test]
+    public function checkout_never_touches_env_or_storage_even_though_they_share_the_exclude_list(): void
+    {
+        $this->initRepoWithTwoTaggedVersions();
+
+        file_put_contents($this->root.'/.env', 'APP_KEY=real-secret');
+        @mkdir($this->root.'/storage/app/backups', 0775, true);
+        file_put_contents($this->root.'/storage/app/backups/manifest.json', 'a real pre-update backup');
+        @mkdir($this->root.'/storage/logs', 0775, true);
+        file_put_contents($this->root.'/storage/logs/laravel.log', 'real log lines');
+
+        (new GitUpdater)->checkout('1.1.0');
+
+        $this->assertFileExists($this->root.'/.env');
+        $this->assertSame('APP_KEY=real-secret', file_get_contents($this->root.'/.env'));
+        $this->assertFileExists($this->root.'/storage/app/backups/manifest.json');
+        $this->assertFileExists($this->root.'/storage/logs/laravel.log');
+
+        // The unrelated dev-only strip must still work — this isn't a
+        // blanket "never delete anything under storage" regression either.
+        $this->assertFileDoesNotExist($this->root.'/docker/oeparts.docker.conf');
+    }
+
     #[Test]
     public function rollback_to_also_strips_dev_only_files(): void
     {
