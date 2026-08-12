@@ -10,7 +10,7 @@ use App\Models\Page;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
 use App\Support\LocaleRegistry;
-use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use XMLWriter;
@@ -67,8 +67,14 @@ class SitemapService
 
             $indexPath = $this->generateIndex($files);
 
-            if ($this->settings->get('seo.google_ping_enabled', true)) {
+            // filter_var: admin-saved booleans persist as the literal
+            // string 'false' (PHP-truthy) — a bare truthy check on the raw
+            // settings value never actually disabled this ping.
+            if (filter_var($this->settings->get('seo.google_ping_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
                 $this->pingGoogle();
+            }
+            if (filter_var($this->settings->get('seo.bing_ping_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
+                $this->pingBing();
             }
 
             // sitemap.xml and every sub-file live at a FIXED URL that gets
@@ -508,12 +514,22 @@ class SitemapService
     private function pingGoogle(): void
     {
         try {
-            $client = new Client(['timeout' => 5]);
-            $client->get('https://www.google.com/ping', [
-                'query' => ['sitemap' => url('sitemap.xml')],
+            Http::timeout(5)->get('https://www.google.com/ping', [
+                'sitemap' => url('sitemap.xml'),
             ]);
         } catch (\Exception $e) {
             Log::debug('Google ping failed', ['error' => $e->getMessage()]);
+        }
+    }
+
+    private function pingBing(): void
+    {
+        try {
+            Http::timeout(5)->get('https://www.bing.com/ping', [
+                'sitemap' => url('sitemap.xml'),
+            ]);
+        } catch (\Exception $e) {
+            Log::debug('Bing ping failed', ['error' => $e->getMessage()]);
         }
     }
 

@@ -323,6 +323,7 @@ class SettingsSeeder extends Seeder
                 'type' => $j],
 
             ['group' => 'seo', 'key' => 'google_ping_enabled',      'value' => '1',            'type' => $b],
+            ['group' => 'seo', 'key' => 'bing_ping_enabled',        'value' => '1',            'type' => $b],
             ['group' => 'seo', 'key' => 'default_robots',           'value' => 'index,follow', 'type' => $s],
             ['group' => 'seo', 'key' => 'default_og_image',         'value' => '',             'type' => $s],
             ['group' => 'seo', 'key' => 'twitter_handle',           'value' => '',             'type' => $s],

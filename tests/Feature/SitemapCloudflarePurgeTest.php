@@ -89,10 +89,13 @@ class SitemapCloudflarePurgeTest extends TestCase
     #[Test]
     public function no_cloudflare_call_is_made_when_not_configured(): void
     {
+        // Not assertNothingSent(): generateAll() also pings Google/Bing
+        // (both default enabled) — this test's actual claim is narrower,
+        // that no CLOUDFLARE call happens without configuration.
         Http::fake();
 
         app(SitemapService::class)->generateAll();
 
-        Http::assertNothingSent();
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), 'cloudflare.com'));
     }
 }
