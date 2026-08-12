@@ -130,6 +130,20 @@ class SeoServiceTest extends TestCase
     }
 
     #[Test]
+    public function json_ld_product_sku_and_mpn_both_equal_the_primary_oem_number(): void
+    {
+        // Locking assertion — a future refactor touching productJsonLd()
+        // must not silently regress this without a test failing.
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+
+        $output = $this->service->jsonLd('product', $product);
+
+        $this->assertStringContainsString('"sku":"' . $product->oem_number . '"', $output);
+        $this->assertStringContainsString('"mpn":"' . $product->oem_number . '"', $output);
+    }
+
+    #[Test]
     public function json_ld_product_out_of_stock_reflects_availability(): void
     {
         $manufacturer = $this->createManufacturer();
@@ -138,6 +152,32 @@ class SeoServiceTest extends TestCase
         $output = $this->service->jsonLd('product', $product);
 
         $this->assertStringContainsString('OutOfStock', $output);
+    }
+
+    #[Test]
+    public function json_ld_breadcrumb_returns_breadcrumb_list_schema_with_home_prepended(): void
+    {
+        $output = $this->service->jsonLd('breadcrumb', [
+            ['label' => 'Bosch', 'url' => 'https://oeparts.test/en/brand/bosch'],
+            ['label' => '06L906036L', 'url' => 'https://oeparts.test/en/parts/06L906036L'],
+        ]);
+
+        $this->assertStringContainsString('"@type":"BreadcrumbList"', $output);
+        $this->assertStringContainsString('"position":1', $output);
+        $this->assertStringContainsString('"name":"OeParts"', $output); // auto-prepended Home entry
+        $this->assertStringContainsString('"position":2', $output);
+        $this->assertStringContainsString('"name":"Bosch"', $output);
+        $this->assertStringContainsString('"position":3', $output);
+        $this->assertStringContainsString('"name":"06L906036L"', $output);
+    }
+
+    #[Test]
+    public function json_ld_breadcrumb_with_empty_array_still_returns_home_only(): void
+    {
+        $output = $this->service->jsonLd('breadcrumb', []);
+
+        $this->assertStringContainsString('"@type":"BreadcrumbList"', $output);
+        $this->assertStringContainsString('"position":1', $output);
     }
 
     #[Test]

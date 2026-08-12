@@ -79,6 +79,13 @@ class SearchController extends Controller
                      : null;
         $inStockOnly = $request->boolean('in_stock');
 
+        // No pagination — the whole hub page shows up to results_limit
+        // (default 100) on one page. Removes the entire class of "page
+        // 2+ never gets a crawl signal" gap (robots.txt blocked ?page=,
+        // and canonical always collapsed to page 1) rather than patching
+        // it: a 100-result comparison page is normal e-commerce length,
+        // not "thin infinite pagination" the way a general catalog browse
+        // page would be.
         $result = $this->searchService->search(
             query: $oem,
             manufacturerId: $manufacturerId ? (int) $manufacturerId : null,
@@ -86,8 +93,7 @@ class SearchController extends Controller
             options: [
                 'limit'        => settings('search.results_limit', 100),
                 'lang'         => $lang,
-                'paginate'     => true,
-                'per_page'     => settings('search.per_page', 20),
+                'paginate'     => false,
                 'sort'         => $sort,
                 'condition'    => $condition,
                 'in_stock_only' => $inStockOnly,

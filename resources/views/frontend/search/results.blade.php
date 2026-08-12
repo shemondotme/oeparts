@@ -101,6 +101,9 @@
 @if(!empty($jsonLdItems))
 <script type="application/ld+json">{!! json_encode($jsonLdSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
 @endif
+@if(!empty($breadcrumbs))
+{!! app(\App\Services\SeoService::class)->jsonLd('breadcrumb', $breadcrumbs) !!}
+@endif
 @endsection
 
 @section('og_type', 'product.group')
@@ -197,14 +200,6 @@
                                 <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_hits_label', 'search.hits_label') }}</dt>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink shrink-0">{{ number_format($total) }}</dd>
                             </div>
-                            @if($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
-                            <div class="flex items-baseline justify-between gap-3 py-2.5 border-b border-rule">
-                                <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_page_label', 'search.page_label') }}</dt>
-                                <dd class="font-mono text-sm tabular-nums text-ink shrink-0">
-                                    {{ $products->currentPage() }} / {{ $products->lastPage() }}
-                                </dd>
-                            </div>
-                            @endif
                             <div class="flex items-baseline justify-between gap-3 py-2.5">
                                 <dt class="bp-spec-mono shrink-0">{{ ui_copy('search_filters', 'search.filters') }}</dt>
                                 <dd class="font-mono text-sm font-bold text-ink shrink-0">
@@ -1073,13 +1068,6 @@
                     @endforeach
                 </div>
 
-            </div>
-            @endif
-
-            {{-- ── Pagination ──────────────────────────────────────────── --}}
-            @if($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
-            <div class="mt-10 pt-8 border-t border-rule">
-                {{ $products->links('components.ui.pagination') }}
             </div>
             @endif
 

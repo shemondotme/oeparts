@@ -203,6 +203,32 @@ class OemSearchTest extends TestCase
         $response->assertSeeText('Test Manufacturer');
         $response->assertSeeText('€100.00');
         $response->assertDontSee('€150.00');
+
+        // Manufacturer filter active -> buildResultsViewData() populates
+        // $breadcrumbs -> the hub page must emit a BreadcrumbList (was
+        // previously only hand-rolling an ItemList, never a breadcrumb).
+        $response->assertSee('"@type":"BreadcrumbList"', false);
+        $response->assertSee('"name":"Test Manufacturer"', false);
+    }
+
+    #[Test]
+    public function hub_page_omits_breadcrumb_list_when_no_filter_context_is_active(): void
+    {
+        Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => '06L906036L',
+            'normalized_oem' => '06L906036L',
+            'condition_id' => $this->condition->id,
+            'price' => '100.00',
+            'is_in_stock' => true,
+            'is_active' => true,
+        ]);
+
+        // No manufacturer/car-model filter -> $breadcrumbs is empty -> no
+        // BreadcrumbList (matches the plan's "only render when non-empty").
+        $response = $this->get('/en/parts/06L906036L');
+
+        $response->assertDontSee('"@type":"BreadcrumbList"', false);
     }
 
     #[Test]
@@ -407,8 +433,13 @@ class OemSearchTest extends TestCase
     }
 
     #[Test]
-    public function search_results_paginate_second_page(): void
+    public function search_results_shows_more_than_20_matches_on_a_single_page_without_pagination(): void
     {
+        // Pagination was removed entirely (see SearchController::results())
+        // — up to search.results_limit (default 100) now renders on ONE
+        // page, closing the "page 2+ never gets a crawl signal" gap
+        // (robots.txt blocked ?page=, canonical always collapsed to page 1)
+        // rather than patching it.
         for ($i = 0; $i < 21; $i++) {
             Product::create([
                 'manufacturer_id' => $this->manufacturer->id,
@@ -421,8 +452,35 @@ class OemSearchTest extends TestCase
             ]);
         }
 
-        $response = $this->get('/en/parts/PAGETEST01?page=2');
+        $response = $this->get('/en/parts/PAGETEST01');
         $response->assertStatus(200);
+        // The 21st result (would have needed page 2 under the old 20/page
+        // limit) is visible on the single unpaginated page.
         $response->assertSee('PAGETEST01-20', false);
+    }
+
+    #[Test]
+    public function search_results_page_contains_no_pagination_markup_even_with_more_than_100_matches(): void
+    {
+        for ($i = 0; $i < 105; $i++) {
+            Product::create([
+                'manufacturer_id' => $this->manufacturer->id,
+                'oem_number' => 'BIGSET01-' . $i,
+                'normalized_oem' => 'BIGSET01',
+                'condition_id' => $this->condition->id,
+                'price' => '100.00',
+                'is_in_stock' => true,
+                'is_active' => true,
+            ]);
+        }
+
+        $response = $this->get('/en/parts/BIGSET01');
+
+        $response->assertStatus(200);
+        $response->assertDontSee('rel="next"', false);
+        $response->assertDontSee('rel="prev"', false);
+        // Capped at search.results_limit (default 100) — the 101st+ rows
+        // genuinely aren't rendered, but the page itself must not paginate
+        // to reach them; that cap is a separate, pre-existing concern.
     }
 }

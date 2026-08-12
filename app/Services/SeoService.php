@@ -35,8 +35,9 @@ class SeoService
     /**
      * Generate JSON‑LD structured data for the current page.
      *
-     * @param  string  $type  'website', 'product', 'article', 'organization'
-     * @param  mixed  $entity  Product, Page, BlogPost, or null
+     * @param  string  $type  'website', 'product', 'article', 'organization', 'breadcrumb'
+     * @param  mixed  $entity  Product, Page, BlogPost, an array of breadcrumb
+     *         items (['label' => ..., 'url' => ...]) for 'breadcrumb', or null
      * @return string JSON‑LD script tag (empty string if nothing to output)
      */
     public function jsonLd(string $type = 'website', $entity = null): string
@@ -59,6 +60,11 @@ class SeoService
                 break;
             case 'organization':
                 $data = $this->organizationJsonLd();
+                break;
+            case 'breadcrumb':
+                if (is_array($entity)) {
+                    $data = $this->breadcrumbJsonLd($entity);
+                }
                 break;
         }
 
@@ -139,6 +145,41 @@ class SeoService
         ];
 
         return $data;
+    }
+
+    /**
+     * JSON‑LD BreadcrumbList from a plain ['label' => ..., 'url' => ...]
+     * array — the same shape SearchController::buildResultsViewData() and
+     * buildProductBreadcrumbs() already produce. Auto-prepends "Home" so
+     * every caller only needs to supply the entity-specific trail.
+     */
+    private function breadcrumbJsonLd(array $items): array
+    {
+        $siteName = $this->settings->get('general.site_name', 'OeParts');
+
+        $elements = [
+            [
+                '@type' => 'ListItem',
+                'position' => 1,
+                'name' => $siteName,
+                'item' => URL::to('/'),
+            ],
+        ];
+
+        foreach ($items as $item) {
+            $elements[] = [
+                '@type' => 'ListItem',
+                'position' => count($elements) + 1,
+                'name' => $item['label'],
+                'item' => $item['url'],
+            ];
+        }
+
+        return [
+            '@context' => 'https://schema.org',
+            '@type' => 'BreadcrumbList',
+            'itemListElement' => $elements,
+        ];
     }
 
     /**
