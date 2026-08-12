@@ -502,15 +502,42 @@ class SearchService
 
         return Cache::remember($cacheKey, 300, function () use ($normalized, $lang, $limit) {
             $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $normalized);
-            $products = Product::query()
-                ->select(['id', 'oem_number', 'normalized_oem', 'price', 'condition_id', 'is_in_stock', 'name', 'manufacturer_id'])
+            $columns = ['id', 'oem_number', 'normalized_oem', 'price', 'condition_id', 'is_in_stock', 'name', 'manufacturer_id'];
+
+            $primaryProducts = Product::query()
+                ->select($columns)
                 ->where('normalized_oem', 'LIKE', "{$escaped}%")
                 ->where('is_active', true)
                 ->with(['manufacturer:id,name', 'condition:id,slug,name'])
                 ->limit($limit)
                 ->get();
 
-            return $products->map(function (Product $product) use ($lang) {
+            // Cross-reference matches fill any remaining slots, sorted
+            // after exact-prefix-on-primary-OEM matches — typing a
+            // cross-reference number into the search box's live-suggestion
+            // dropdown previously returned nothing even though submitting
+            // the full search would find it via crossReferenceMatch().
+            $remaining = $limit - $primaryProducts->count();
+            $crossRefProducts = collect();
+
+            if ($remaining > 0) {
+                $crossRefProductIds = ProductCrossReference::where('normalized_cross_oem', 'LIKE', "{$escaped}%")
+                    ->pluck('product_id')
+                    ->unique()
+                    ->diff($primaryProducts->pluck('id'));
+
+                if ($crossRefProductIds->isNotEmpty()) {
+                    $crossRefProducts = Product::query()
+                        ->select($columns)
+                        ->whereIn('id', $crossRefProductIds)
+                        ->where('is_active', true)
+                        ->with(['manufacturer:id,name', 'condition:id,slug,name'])
+                        ->limit($remaining)
+                        ->get();
+                }
+            }
+
+            return $primaryProducts->concat($crossRefProducts)->map(function (Product $product) use ($lang) {
                 $name = is_array($product->name) ? trans_field($product->name, $lang) : null;
 
                 return [

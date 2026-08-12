@@ -247,6 +247,72 @@ class OemSearchTest extends TestCase
         ]]);
     }
 
+    #[Test]
+    public function autocomplete_matches_a_cross_reference_number_prefix(): void
+    {
+        $product = Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => '06L906036L',
+            'normalized_oem' => '06L906036L',
+            'condition_id' => $this->condition->id,
+            'price' => '100.00',
+            'is_in_stock' => true,
+            'is_active' => true,
+        ]);
+        $product->crossReferences()->create([
+            'cross_oem_number' => 'XREF999',
+            'normalized_cross_oem' => 'XREF999',
+        ]);
+
+        // Typing the cross-ref prefix (not the primary OEM) into the live
+        // suggestion box previously returned nothing at all.
+        $response = $this->get('/en/search/autocomplete?q=XREF9');
+
+        $response->assertStatus(200);
+        $response->assertJsonFragment(['oem' => '06L906036L']);
+        // Suggestions always lead to the product's own hub page, regardless
+        // of which number matched it.
+        $response->assertJsonFragment(['url' => route('frontend.search.results', ['lang' => 'en', 'oem' => '06L906036L'])]);
+    }
+
+    #[Test]
+    public function autocomplete_prioritizes_primary_oem_matches_over_cross_reference_matches(): void
+    {
+        $primaryProduct = Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => 'MATCH001',
+            'normalized_oem' => 'MATCH001',
+            'condition_id' => $this->condition->id,
+            'price' => '100.00',
+            'is_in_stock' => true,
+            'is_active' => true,
+        ]);
+        $otherProduct = Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => 'OTHER001',
+            'normalized_oem' => 'OTHER001',
+            'condition_id' => $this->condition->id,
+            'price' => '50.00',
+            'is_in_stock' => true,
+            'is_active' => true,
+        ]);
+        $otherProduct->crossReferences()->create([
+            'cross_oem_number' => 'MATCH001-ALT',
+            'normalized_cross_oem' => 'MATCH001ALT',
+        ]);
+
+        \App\Models\Setting::updateOrCreate(
+            ['group' => 'search', 'key' => 'autocomplete_count'],
+            ['value' => '1', 'type' => 'string', 'is_encrypted' => false]
+        );
+
+        $response = $this->get('/en/search/autocomplete?q=MATCH001');
+
+        // With only one slot available, the primary-OEM match must win.
+        $response->assertJsonFragment(['oem' => 'MATCH001']);
+        $response->assertJsonMissing(['oem' => 'OTHER001']);
+    }
+
     /**
      * The frontend autocomplete dropdown renders this directly (no VAT/locale
      * math client-side) — must be a ready-to-display string, not a raw decimal.
