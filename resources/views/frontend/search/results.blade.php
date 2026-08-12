@@ -61,10 +61,20 @@
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.search.results', ['lang' => $hLang, 'oem' => $normalized_query]) }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.search.results', ['lang' => 'en', 'oem' => $normalized_query]) }}">
+    {{--
+        Was: unconditionally emitting all 5 locales regardless of whether
+        the first matching product actually has real content in each one
+        — falsely claiming an English-fallback page as "this is the
+        French version." Delegates to SeoService::hreflang(), the same
+        locale-completeness-aware method the detail page uses, keyed off
+        the first result (a representative product for this OEM query;
+        multiple sellers under one OEM are typically catalogued in the
+        same locales anyway).
+    --}}
+    {!! app(\App\Services\SeoService::class)->hreflang(
+        route('frontend.search.results', ['lang' => app()->getLocale(), 'oem' => $normalized_query]),
+        ($products instanceof \Illuminate\Contracts\Pagination\Paginator ? $products->items() : $products)[0] ?? null
+    ) !!}
 @endsection
 
 @section('json_ld')
