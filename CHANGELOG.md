@@ -2,6 +2,38 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.17 — 2026-08-12
+
+A full SEO program aimed at getting every OEM part page indexed fast at 100k+-product scale, plus a same-scope fix to a settings-staleness issue found while evaluating (not adopting) Laravel Octane. Every migration applies automatically; every new behavior defaults to matching what the site already did — the new detail pages, IndexNow, and Bing ping all ship off/disabled until you opt in from the new SEO Control Center.
+
+### Added — Per-product detail pages
+- Every product can now get its own indexable detail page at `/parts/{oem}/{id}-slug` (opt-in toggle, off by default) — image gallery (featured image + thumbnail strip, click a thumbnail to swap the main image), cross-reference OEM numbers, and a real breadcrumb trail.
+- A single confirmed exact/cross-reference match on the search-results hub now 301s straight to that product's detail page instead of showing a one-row hub; a lone *partial* match still shows the hub with its partial-match context, on purpose.
+- Discontinued or soft-deleted products, and any detail URL indexed while the feature was later turned back off, always 301 cleanly back to the hub — never a dead link.
+- Products with no manual description now get a real, per-product auto-generated one (fitment, delivery time, MOQ, condition, cross-reference count) instead of empty or generic boilerplate text — deliberately designed to vary product-to-product rather than repeat a fixed template.
+
+### Added — Cross-reference discoverability
+- Cross-reference OEM numbers are now listed in the sitemap (deduped, pointing at the detail page when there's a single match) and in Product JSON-LD's `additionalProperty`, and now match in storefront autocomplete too.
+- A genuinely zero-result search now returns a real HTTP 404 instead of a 200 "soft 404".
+
+### Added — Crawling & indexing infrastructure
+- Googlebot/Bingbot are now verified (reverse+forward DNS, not just User-Agent string) and exempted from the search rate limiter — previously every crawler request counted against the same 30/min/IP limit as a regular visitor.
+- IndexNow support (pushes changed product URLs to Bing/Yandex/Naver/Seznam on save) and a Bing sitemap ping alongside the existing Google one — both admin-configurable, off by default. (Google does not support IndexNow — a common misconception; Google discovery still runs through the sitemap + ping.)
+- Per-bot AI-crawler allow/block policy (GPTBot, Google-Extended, PerplexityBot, ClaudeBot, etc., each independently configurable) and a new `/llms.txt`.
+- Redirect-loop detection now catches 3+ hop chains, not just a direct reverse pair.
+- Global scheme/host/trailing-slash canonicalization (one consistent 301 regardless of which web server fronts a given environment), and tuned OPcache settings for both the Docker and traditional PHP-FPM deployments.
+
+### Added — Structured data & hreflang
+- Product JSON-LD now includes `itemCondition`, a real product image, and every known OEM number (primary + cross-references); a BreadcrumbList block was added to the search-results hub page.
+- Hreflang now omits a locale entirely when a product has no genuine translation for it, instead of silently pointing at English-fallback content under that locale's tag — fixes a pre-existing bug on the hub page too, not just new pages.
+
+### Added — SEO Control Center & Health Dashboard
+- Replaced the old single-purpose SEO Settings page with a tabbed **SEO Control Center** (General / Search Results / Structured Data / Crawlers & AI / Sitemap & Indexing / Social) covering every setting above plus the pre-existing ones.
+- New **SEO Health Dashboard**: internal search analytics (exact/cross-reference/partial ratio, zero-result rate), content-translation health, feature adoption, IndexNow activity, redirect/404 health, and optional Google Search Console + Core Web Vitals widgets (add your own credentials to enable — both fully built and unit-tested, but need a real property/API key to verify end to end).
+
+### Fixed — Settings & background workers
+- Settings changes (SMTP host, Google/Facebook OAuth credentials, session lifetime, queue retry timing) now take effect on the very next request or queued job, instead of only at the next full process restart — previously affected the long-running queue worker the moment an admin changed one of these mid-shift. Found during an evaluation of Laravel Octane (not adopted this release — flagged as a future staged trial only if it's ever needed).
+
 ## 1.0.16 — 2026-08-11
 
 A large batch: a full audit of the Auth, Catalog, Marketing, CMS, Support, and System modules (89 findings, all fixed), a dedicated performance pass after the catalog grew to ~100k products, a sweep for uncached/uninvalidated hot queries sitewide, a new Cloudflare CDN integration, and an image optimization pipeline. Nothing manual required — every migration applies automatically, and every new behavior defaults to matching what the site already did (opt-in where it changes anything user-visible).
