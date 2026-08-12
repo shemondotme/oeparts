@@ -183,6 +183,18 @@ Route::prefix('{lang}')
             ->middleware(['normalize.oem', 'cache.guest:60'])
             ->name('frontend.search.results');
 
+        // Per-product detail page — Amazon-style /dp/{id} shape, since
+        // Laravel has no native two-part-single-segment route syntax; the
+        // controller splits {idSlug} into id (the real lookup key) and slug
+        // (cosmetic only). Gated behind seo.detail_pages_enabled at request
+        // time (SearchController::detail()), not here — the route always
+        // exists so a stale link never 404s even when the toggle is off.
+        Route::get('/parts/{oem}/{idSlug}', [SearchController::class, 'detail'])
+            ->where('oem', '[A-Za-z0-9\-\.\s]+')
+            ->where('idSlug', '[0-9]+-[a-z0-9\-]+')
+            ->middleware(['normalize.oem', 'cache.guest:60'])
+            ->name('frontend.search.detail');
+
         // Autocomplete endpoint
         Route::get('/search/autocomplete', [SearchController::class, 'autocomplete'])
             ->middleware('throttle:' . settings('search.autocomplete_rate_limit', 60) . ',1')

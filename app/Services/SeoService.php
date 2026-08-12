@@ -174,9 +174,16 @@ class SeoService
      * Generate hreflang link tags for the current route in all supported locales.
      *
      * @param  string|null  $canonicalUrl  If provided, used as the x‑default href
+     * @param  \Illuminate\Database\Eloquent\Model|null  $entity  When a Product,
+     *         a locale is skipped entirely unless it has a GENUINE translation
+     *         (not one trans_field() would silently fall back to English for)
+     *         — pointing an hreflang tag at English-fallback content under a
+     *         false "this is the French version" claim is worse than omitting
+     *         the tag. Backward-compatible: every other existing caller passes
+     *         no entity and keeps today's unconditional-all-locales behavior.
      * @return string HTML link tags
      */
-    public function hreflang(?string $canonicalUrl = null): string
+    public function hreflang(?string $canonicalUrl = null, ?object $entity = null): string
     {
         $currentRoute = request()->route();
         if (! $currentRoute) {
@@ -187,6 +194,10 @@ class SeoService
         $currentLocale = App::getLocale();
 
         foreach ($this->supportedLocales as $locale) {
+            if ($entity instanceof Product && ! $entity->hasRealTranslation('name', $locale)) {
+                continue;
+            }
+
             $url = $this->localizedUrl($locale);
             if ($url) {
                 $tags[] = sprintf('<link rel="alternate" hreflang="%s" href="%s">', $locale, $url);

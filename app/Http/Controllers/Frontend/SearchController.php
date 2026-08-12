@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Services\CacheService;
 use App\Services\CrawlerVerificationService;
+use App\Services\ProductSlugService;
 use App\Services\SearchService;
 use App\Models\CarModel;
 use App\Models\Condition;
@@ -20,6 +21,7 @@ class SearchController extends Controller
         private SearchService $searchService,
         private CacheService $cacheService,
         private CrawlerVerificationService $crawlerVerification,
+        private ProductSlugService $productSlugService,
     ) {}
 
     /**
@@ -111,9 +113,119 @@ class SearchController extends Controller
             ]);
         }
 
+        // Single confirmed match (exact or cross-reference — NOT partial,
+        // a substring hit isn't a confirmed equality match, and silently
+        // redirecting a fuzzy hit away from its "partial match" context
+        // would be a real trust/UX regression) auto-redirects straight to
+        // the product's own detail page, skipping a 1-row hub page —
+        // Hub+Detail mode only.
+        if ($result['total'] === 1 && in_array($result['search_type'], ['exact', 'cross_reference'], true)
+            && filter_var(settings('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN)) {
+            $product = $result['products']->first();
+
+            if ($product) {
+                return redirect()->route('frontend.search.detail', [
+                    'lang' => $lang,
+                    'oem' => $product->normalized_oem,
+                    'idSlug' => $this->productSlugService->buildIdSlug($product, $lang),
+                ], 301);
+            }
+        }
+
         return view('frontend.search.results',
             $this->buildResultsViewData($result, $lang, $sort, $condition, $inStockOnly, $manufacturerId, $carModelId, $activeConditions)
         );
+    }
+
+    /**
+     * Per-product detail page.
+     *
+     * Route: /{lang}/parts/{oem}/{idSlug}
+     */
+    public function detail(Request $request, string $lang, string $oem, string $idSlug)
+    {
+        $this->enforceSearchRateLimit($request);
+
+        $id = (int) strtok($idSlug, '-');
+
+        $product = Product::withTrashed()
+            ->with(['manufacturer.logo', 'crossReferences', 'condition', 'carModels', 'images'])
+            ->find($id);
+
+        // Toggle check FIRST — this single check is what makes "toggle off
+        // after going live," "stale bookmarked link," and "toggle off then
+        // on then off again" all collapse into one code path, rather than
+        // needing separate handling for each.
+        $detailPagesEnabled = filter_var(settings('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN);
+        if (! $detailPagesEnabled) {
+            return $this->redirectToHub($lang, $product, $oem);
+        }
+
+        // Discontinued or soft-deleted — 301 to the hub rather than a dead
+        // end, so old links/index entries don't 404.
+        if (! $product || $product->trashed() || ! $product->is_active) {
+            return $this->redirectToHub($lang, $product, $oem);
+        }
+
+        // Canonical drift — the URL's own OEM segment or slug half no
+        // longer matches the product's current values (renamed product,
+        // OEM corrected, etc.). Consistent with this codebase's existing
+        // 301-correctness philosophy (NormalizeOemUrl, redirect-loop
+        // validation) rather than silently rendering under a stale URL.
+        $canonicalIdSlug = $this->productSlugService->buildIdSlug($product, $lang);
+        if ($oem !== $product->normalized_oem || $idSlug !== $canonicalIdSlug) {
+            return redirect()->route('frontend.search.detail', [
+                'lang' => $lang,
+                'oem' => $product->normalized_oem,
+                'idSlug' => $canonicalIdSlug,
+            ], 301);
+        }
+
+        return view('frontend.search.detail', [
+            'product' => $product,
+            'breadcrumbs' => $this->buildProductBreadcrumbs($product, $lang),
+        ]);
+    }
+
+    /**
+     * 301s to the hub page for whatever OEM we can resolve — the product's
+     * own normalized_oem if it still exists, else the URL's own (already-
+     * normalized, per NormalizeOemUrl) oem segment. Shared by every
+     * detail() branch that needs to bail out to the hub.
+     */
+    private function redirectToHub(string $lang, ?Product $product, string $fallbackOem)
+    {
+        return redirect()->route('frontend.search.results', [
+            'lang' => $lang,
+            'oem' => $product?->normalized_oem ?? $fallbackOem,
+        ], 301);
+    }
+
+    /**
+     * Home > Manufacturer (if any) > OEM search results (hub) > this
+     * product — the detail page's own breadcrumb chain. Deliberately
+     * separate from buildResultsViewData()'s breadcrumb block, which
+     * reflects the HUB page's active query-string filters (manufacturer/
+     * car-model), a genuinely different concept from "where does this one
+     * product sit in the site hierarchy."
+     */
+    private function buildProductBreadcrumbs(Product $product, string $lang): array
+    {
+        $breadcrumbs = [];
+
+        if ($product->manufacturer) {
+            $breadcrumbs[] = [
+                'label' => trans_field($product->manufacturer->name, $lang),
+                'url' => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $product->manufacturer->slug]),
+            ];
+        }
+
+        $breadcrumbs[] = [
+            'label' => $product->oem_number,
+            'url' => route('frontend.search.results', ['lang' => $lang, 'oem' => $product->normalized_oem]),
+        ];
+
+        return $breadcrumbs;
     }
 
     /**

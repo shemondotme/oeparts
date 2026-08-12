@@ -86,6 +86,85 @@ class Product extends Model
         return asset('images/product-placeholder.svg');
     }
 
+    /**
+     * True only if a multilang column has a GENUINE, non-empty value for
+     * $locale — not a value trans_field() would silently fall back to
+     * English for. Shared by hreflang omission (SeoService::hreflang())
+     * and the description auto-fallback below — both need the exact same
+     * "is this locale genuinely present" answer, mirroring trans_field()'s
+     * own fallback-decision logic.
+     */
+    public function hasRealTranslation(string $field, string $locale): bool
+    {
+        $value = $this->{$field};
+
+        return is_array($value) && array_key_exists($locale, $value) && trim((string) $value[$locale]) !== '';
+    }
+
+    public function hasManualDescription(?string $locale = null): bool
+    {
+        return $this->hasRealTranslation('description', $locale ?? app()->getLocale());
+    }
+
+    /**
+     * Manual description always wins. When absent, composes a fallback
+     * from real per-product structured facts (car-model fitment, delivery
+     * time, MOQ, condition, cross-reference count) via a settings-driven
+     * template — two products with different facts genuinely produce
+     * different sentences from the same template skeleton, which is what
+     * keeps this out of "scaled content abuse" territory (a fixed,
+     * unvarying sentence repeated across near-identical listings is
+     * exactly the pattern Google's 2026 SpamBrain update targets). Never
+     * returns an empty string.
+     */
+    public function descriptionOrFallback(?string $locale = null): string
+    {
+        $locale ??= app()->getLocale();
+
+        if ($this->hasRealTranslation('description', $locale)) {
+            return trans_field($this->description, $locale);
+        }
+
+        $manufacturerName = $this->manufacturer ? trans_field($this->manufacturer->name, $locale) : '';
+        $conditionLabel = $this->condition ? condition_label($this->condition, $locale) : '';
+        $fitment = $this->carModels->pluck('name')->filter()->unique()->implode(', ');
+        $crossRefCount = $this->crossReferences->count();
+
+        $template = trim(settings_trans('seo.auto_description_template', ''));
+
+        if ($template !== '') {
+            $rendered = strtr($template, [
+                '{manufacturer}' => $manufacturerName,
+                '{condition}' => $conditionLabel,
+                '{oem}' => $this->oem_number,
+                '{fitment}' => $fitment,
+                '{delivery}' => (string) ($this->delivery_time ?? ''),
+                '{moq}' => $this->moq ? (string) $this->moq : '',
+                '{cross_ref_count}' => $crossRefCount > 0 ? (string) $crossRefCount : '',
+            ]);
+            $rendered = trim(preg_replace('/\s+/', ' ', $rendered));
+
+            if ($rendered !== '') {
+                return $rendered;
+            }
+        }
+
+        // No template configured (or it rendered empty) — build a minimal
+        // but still-factual line from whichever facts exist. Always
+        // includes the OEM number + condition, so this is never empty and
+        // never lorem-ipsum-style filler.
+        $sentence = trim(implode(' ', array_filter([$conditionLabel, $manufacturerName, 'OEM', $this->oem_number])));
+
+        $clauses = array_filter([
+            $fitment !== '' ? "Fits: {$fitment}." : null,
+            $this->delivery_time ? "Delivery: {$this->delivery_time}." : null,
+            $this->moq ? "Minimum order quantity: {$this->moq}." : null,
+            $crossRefCount > 0 ? "Cross-references {$crossRefCount} other OEM number(s)." : null,
+        ]);
+
+        return trim($sentence . '. ' . implode(' ', $clauses));
+    }
+
     public function carModels(): BelongsToMany
     {
         return $this->belongsToMany(CarModel::class, 'product_car_models');

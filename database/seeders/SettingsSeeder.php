@@ -334,6 +334,23 @@ class SettingsSeeder extends Seeder
             // for this yet, lands with the SEO Control Center).
             ['group' => 'seo', 'key' => 'canonical_host',           'value' => '',             'type' => $s],
 
+            // Fallback description template for products with no manual
+            // description — {manufacturer} {condition} {oem} {fitment}
+            // {delivery} {moq} {cross_ref_count} placeholders. Genuinely
+            // blank placeholders render as empty (Product::descriptionOrFallback()
+            // then falls through to a minimal factual line) — same accepted
+            // trade-off as this codebase's other placeholder templates
+            // (e.g. {manufacturer} in the search-results title template).
+            ['group' => 'seo', 'key' => 'auto_description_template',
+                'value' => json_encode([
+                    'en' => '{condition} OEM part {oem} from {manufacturer}. Fits: {fitment}. Delivery: {delivery}. Minimum order quantity: {moq}.',
+                    'de' => '{condition} OEM-Teil {oem} von {manufacturer}. Passend für: {fitment}. Lieferzeit: {delivery}. Mindestbestellmenge: {moq}.',
+                    'lt' => '{condition} OEM dalis {oem} nuo {manufacturer}. Tinka: {fitment}. Pristatymas: {delivery}. Minimalus užsakymo kiekis: {moq}.',
+                    'fr' => 'Pièce OEM {condition} {oem} de {manufacturer}. Compatible : {fitment}. Livraison : {delivery}. Quantité minimale : {moq}.',
+                    'es' => 'Pieza OEM {condition} {oem} de {manufacturer}. Compatible: {fitment}. Entrega: {delivery}. Cantidad mínima: {moq}.',
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
+
             // Announcement bar — high-intent visitors get a conversion nudge
             // (set enabled=1 in admin when ready to activate)
             ['group' => 'announcement', 'key' => 'cta_text',

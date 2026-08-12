@@ -245,4 +245,10 @@ return [
     'console_need_quantity' => 'Quantité nécessaire',
 
     'start_button_label' => 'Lancer la recherche',
+
+    // Product detail page (resources/views/frontend/search/detail.blade.php)
+    'oem_label' => 'Numéro OEM',
+    'availability_label' => 'Disponibilité',
+    'out_of_stock' => 'Rupture de stock',
+    'price_label' => 'Prix',
 ];

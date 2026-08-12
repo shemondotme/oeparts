@@ -245,4 +245,10 @@ return [
     'console_need_quantity' => 'Reikiamas kiekis',
 
     'start_button_label' => 'Pradėti paiešką',
+
+    // Product detail page (resources/views/frontend/search/detail.blade.php)
+    'oem_label' => 'OEM numeris',
+    'availability_label' => 'Prieinamumas',
+    'out_of_stock' => 'Nėra sandėlyje',
+    'price_label' => 'Kaina',
 ];

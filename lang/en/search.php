@@ -250,4 +250,10 @@ return [
     // Empty mini-cart CTA (navbar.blade.php) — previously hardcoded English
     // via settings() instead of ui_copy().
     'start_button_label' => 'Start search',
+
+    // Product detail page (resources/views/frontend/search/detail.blade.php)
+    'oem_label' => 'OEM Number',
+    'availability_label' => 'Availability',
+    'out_of_stock' => 'Out of Stock',
+    'price_label' => 'Price',
 ];
