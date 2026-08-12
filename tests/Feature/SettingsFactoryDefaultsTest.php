@@ -68,11 +68,27 @@ class SettingsFactoryDefaultsTest extends TestCase
             ->map(fn ($rows) => $rows->pluck('key')->sort()->values()->all());
 
         foreach ($this->discoverConcreteSettingsPageClasses() as $pageClass) {
-            $groupProperty = new \ReflectionProperty($pageClass, 'settingsGroup');
-            $groupProperty->setAccessible(true);
-            $group = $groupProperty->getValue();
+            $reflection = new ReflectionClass($pageClass);
 
-            $expectedKeys = $seededGroups->get($group, []);
+            // Multi-group pages (e.g. SeoControlCenter, which spans 'seo'
+            // and 'crawlers') declare their own $settingsGroups array
+            // instead of relying on the single-group $settingsGroup the
+            // base class assumes — check for that override first.
+            if ($reflection->hasProperty('settingsGroups')) {
+                $groupsProperty = $reflection->getProperty('settingsGroups');
+                $groupsProperty->setAccessible(true);
+                $groups = $groupsProperty->getValue();
+            } else {
+                $groupProperty = $reflection->getProperty('settingsGroup');
+                $groupProperty->setAccessible(true);
+                $groups = [$groupProperty->getValue()];
+            }
+
+            $expectedKeys = collect($groups)
+                ->flatMap(fn (string $group) => $seededGroups->get($group, []))
+                ->sort()
+                ->values()
+                ->all();
 
             if ($expectedKeys === []) {
                 continue; // about/database: display-only, no seeded rows, no factory defaults expected
@@ -83,7 +99,7 @@ class SettingsFactoryDefaultsTest extends TestCase
             $this->assertSame(
                 $expectedKeys,
                 $actualKeys,
-                "{$pageClass}::getFactoryDefaults() keys don't match the seeded '{$group}' group keys."
+                "{$pageClass}::getFactoryDefaults() keys don't match the seeded '".implode(',', $groups)."' group keys."
             );
         }
     }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
 use App\Models\Setting;
 use App\Services\CrawlerVerificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -23,6 +24,12 @@ class SearchRateLimitCrawlerBypassTest extends TestCase
             ['group' => 'search', 'key' => 'rate_limit_per_minute'],
             ['value' => '2', 'type' => 'string', 'is_encrypted' => false]
         );
+
+        // Zero-result searches now return a real HTTP 404 (§3.3 of the SEO
+        // program) — seed a real match so this test's 200s are testing the
+        // rate-limit bypass itself, not incidentally asserting on the
+        // zero-results status code.
+        Product::factory()->create(['oem_number' => '06L906036L', 'normalized_oem' => '06L906036L']);
     }
 
     #[Test]

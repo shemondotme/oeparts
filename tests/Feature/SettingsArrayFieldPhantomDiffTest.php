@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Settings\GeneralSettings;
-use App\Filament\Pages\Settings\SeoSettings;
+use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Models\Admin;
 use App\Models\Setting;
 use Database\Seeders\RolesSeeder;
@@ -64,7 +64,7 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(SeoSettings::class)
+        Livewire::test(SeoControlCenter::class)
             ->call('save')
             ->assertSet('pendingChanges', null);
     }
@@ -97,7 +97,7 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(SeoSettings::class)
+        Livewire::test(SeoControlCenter::class)
             ->set('data.google_ping_enabled', false)
             ->call('save');
 

@@ -115,6 +115,16 @@ class SeoService
     ];
 
     /**
+     * Read-only accessor for the SEO Control Center's "Structured Data"
+     * tab, which displays this mapping for admin visibility — the map
+     * itself is code, not an editable setting.
+     */
+    public static function conditionSchemaMap(): array
+    {
+        return self::CONDITION_SCHEMA_MAP;
+    }
+
+    /**
      * JSON‑LD for a product.
      */
     private function productJsonLd(Product $product): array

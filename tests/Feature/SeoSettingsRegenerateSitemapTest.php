@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\Settings\SeoSettings;
+use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Jobs\RegenerateSitemap;
 use App\Models\Admin;
 use Database\Seeders\RolesSeeder;
@@ -42,7 +42,7 @@ class SeoSettingsRegenerateSitemapTest extends TestCase
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');
 
-        Livewire::test(SeoSettings::class)
+        Livewire::test(SeoControlCenter::class)
             ->assertActionExists('regenerateSitemap')
             ->callAction('regenerateSitemap');
 

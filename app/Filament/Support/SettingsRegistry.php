@@ -29,7 +29,7 @@ use App\Filament\Pages\Settings\PreloaderSettings;
 use App\Filament\Pages\Settings\SearchSettings;
 use App\Filament\Pages\Settings\SectionsSettings;
 use App\Filament\Pages\Settings\SecuritySettings;
-use App\Filament\Pages\Settings\SeoSettings;
+use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\ShippingSettings;
 use App\Filament\Pages\Settings\SocialLinkSettings;
 use App\Filament\Pages\Settings\StatsCounterSettings;
@@ -235,11 +235,11 @@ final class SettingsRegistry
             'sort' => 10,
         ],
         'seo-settings' => [
-            'class' => SeoSettings::class,
+            'class' => SeoControlCenter::class,
             'section' => 'SEO & Marketing',
-            'title' => 'SEO & Meta',
+            'title' => 'SEO Control Center',
             'url' => '/admin/settings/seo-settings',
-            'description' => 'Global OpenGraph, robots tags, sitemap ping',
+            'description' => 'Detail pages, structured data, crawlers/AI, sitemap, IndexNow, OpenGraph',
             'icon' => 'heroicon-o-globe-alt',
             'sort' => 20,
         ],

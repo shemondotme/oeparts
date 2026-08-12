@@ -37,7 +37,7 @@ class IntegrationsSettings extends SettingsPage
                             ->label('')
                             ->content(new \Illuminate\Support\HtmlString(
                                 'Search Console verification is set on the <a href="'
-                                . SeoSettings::getUrl()
+                                . SeoControlCenter::getUrl()
                                 . '" class="fi-link text-primary-600">SEO &amp; Meta</a> page, alongside the other webmaster verification codes.'
                             )),
                     ])->columns(2),
