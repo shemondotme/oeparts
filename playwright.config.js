@@ -50,5 +50,17 @@ export default defineConfig({
             },
             dependencies: ['setup'],
         },
+        {
+            // Unauthenticated storefront flows (search, product detail,
+            // cross-reference navigation) — no `setup` dependency and no
+            // storageState, unlike `chromium` above, since these must be
+            // exercised as a real anonymous visitor would see them.
+            name: 'guest',
+            testDir: './tests/e2e/guest',
+            use: {
+                ...devices['Desktop Chrome'],
+                viewport: { width: 1280, height: 800 },
+            },
+        },
     ],
 });

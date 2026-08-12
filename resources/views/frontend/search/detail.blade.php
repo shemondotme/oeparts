@@ -90,19 +90,27 @@
 
         {{-- Gallery: featured image large + thumbnail strip. Falls back
              through Product::resolvedImageUrl() (featured -> manufacturer
-             logo -> placeholder) — never a broken image. --}}
-        <div>
-            <img src="{{ $product->resolvedImageUrl('medium') }}"
+             logo -> placeholder) — never a broken image. Clicking a
+             thumbnail swaps the main image client-side (Alpine, no page
+             reload); the main <img> keeps its own real src (not just an
+             Alpine binding) so it's still a real image on first paint for
+             crawlers/no-JS clients. --}}
+        <div x-data="{ mainImage: '{{ $product->resolvedImageUrl('medium') }}' }">
+            <img :src="mainImage"
+                 src="{{ $product->resolvedImageUrl('medium') }}"
                  alt="{{ $product->featuredImage?->alt_text ? trans_field($product->featuredImage->alt_text, $lang) : $productName }}"
                  width="800" height="800"
-                 class="w-full aspect-square object-contain rounded-lg border border-rule bg-paper">
+                 class="w-full aspect-square object-contain rounded-lg border border-rule bg-paper"
+                 data-testid="product-main-image">
             @if($product->images->count() > 1)
             <div class="flex gap-2 mt-3 flex-wrap">
                 @foreach($product->images as $galleryImage)
                 <img src="{{ $galleryImage->thumbnail_url }}"
                      alt="{{ $galleryImage->alt_text ? trans_field($galleryImage->alt_text, $lang) : $productName }}"
                      width="150" height="150"
-                     class="w-16 h-16 object-cover rounded border border-rule-strong">
+                     @click="mainImage = '{{ $galleryImage->medium_url }}'"
+                     class="w-16 h-16 object-cover rounded border border-rule-strong cursor-pointer hover:border-ink transition-colors"
+                     data-testid="product-thumbnail">
                 @endforeach
             </div>
             @endif
@@ -155,6 +163,7 @@
         <div class="flex flex-wrap gap-1.5">
             @foreach($product->crossReferences as $cross)
             <a href="{{ route('frontend.search.results', ['lang' => $lang, 'oem' => $cross->normalized_cross_oem]) }}"
+               data-testid="product-cross-ref-link"
                class="inline-flex items-center gap-1 px-2 py-1 border border-rule-strong bg-paper font-mono text-[10px] font-semibold tabular-nums text-ink hover:bg-ink hover:text-ivory hover:border-ink transition-colors">
                 {{ $cross->cross_oem_number }}
             </a>
