@@ -11,6 +11,7 @@ use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
 use App\Http\Middleware\RedirectIfNotInstalled;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\SyncRuntimeSettingsIntoConfig;
 use App\Http\Middleware\TrackUtm;
 use App\Http\Middleware\TriggerDueScheduledTasks;
 use App\Models\NotFoundLog;
@@ -81,6 +82,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // proxy — reading them before TrustProxies runs would misdetect
         // an already-https request as plain HTTP and redirect-loop.
         $middleware->append(EnforceCanonicalHost::class);
+
+        // Global for the same reason RuntimeSettingsSyncService's docblock
+        // explains: a long-running worker process (a future Octane
+        // adoption, or arguably the existing supervisor-managed
+        // queue:work worker on the queue side) only runs ServiceProvider
+        // boot() once, so settings edited afterward would go stale until
+        // the worker restarts unless something re-applies them per request.
+        $middleware->append(SyncRuntimeSettingsIntoConfig::class);
 
         $middleware->web(prepend: [
             RedirectIfNotInstalled::class,
