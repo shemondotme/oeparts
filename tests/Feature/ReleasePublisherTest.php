@@ -83,6 +83,36 @@ class ReleasePublisherTest extends TestCase
     }
 
     #[Test]
+    public function catalog_entry_carries_the_git_commit_binding(): void
+    {
+        // Found via a real end-to-end update rehearsal (fresh v1.0.16
+        // git-managed install -> self-update to a locally-built v1.0.17):
+        // UpdateChecker prefers releases.json (the catalog) over version.json
+        // whenever the catalog is reachable — the normal case — so a
+        // git-managed install's pre-flight signature check
+        // (ReleaseSignature::verifyGitManifest()) was handed a manifest with
+        // no git_commit_sha/git_signature at all and failed every time with
+        // "no signed git commit binding," even though version.json itself
+        // had both fields correctly signed.
+        $entry = $this->publisher()->toCatalogEntry($this->manifest([
+            'git_commit_sha' => str_repeat('a', 40),
+            'git_signature'  => 'base64-signature-blob',
+        ]));
+
+        $this->assertSame(str_repeat('a', 40), $entry['git_commit_sha']);
+        $this->assertSame('base64-signature-blob', $entry['git_signature']);
+    }
+
+    #[Test]
+    public function catalog_entry_git_binding_is_null_when_the_manifest_has_none(): void
+    {
+        $entry = $this->publisher()->toCatalogEntry($this->manifest());
+
+        $this->assertNull($entry['git_commit_sha']);
+        $this->assertNull($entry['git_signature']);
+    }
+
+    #[Test]
     public function upsert_adds_replaces_sorts_and_tracks_latest(): void
     {
         $publisher = $this->publisher();

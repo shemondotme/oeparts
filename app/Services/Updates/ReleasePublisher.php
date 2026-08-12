@@ -82,6 +82,20 @@ class ReleasePublisher
             'signature'                  => $manifest['signature'] ?? null,
             'changelog_url'              => $manifest['changelog_url'] ?? null,
             'download_url'               => $manifest['download_url'] ?? null,
+            // Zip-path authenticity (signature, above) says nothing about
+            // what a git checkout actually pulls down — ReleaseSignature::
+            // verifyGitManifest() needs these two fields on whatever
+            // manifest UpdateChecker hands to a git-managed install's
+            // pre-flight. UpdateChecker prefers the catalog (this entry)
+            // over the single version.json manifest whenever the catalog
+            // is reachable — which is the normal case — so omitting these
+            // here made every git-managed self-update fail pre-flight with
+            // "no signed git commit binding," found via a real end-to-end
+            // update rehearsal (fresh v1.0.16 git-managed install ->
+            // self-update to v1.0.17) where it reproduced on the very
+            // first attempt.
+            'git_commit_sha'             => $manifest['git_commit_sha'] ?? null,
+            'git_signature'              => $manifest['git_signature'] ?? null,
         ];
     }
 
