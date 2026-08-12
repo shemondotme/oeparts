@@ -326,6 +326,13 @@ class SettingsSeeder extends Seeder
             ['group' => 'seo', 'key' => 'default_robots',           'value' => 'index,follow', 'type' => $s],
             ['group' => 'seo', 'key' => 'default_og_image',         'value' => '',             'type' => $s],
             ['group' => 'seo', 'key' => 'twitter_handle',           'value' => '',             'type' => $s],
+            // Ships disabled — per-product detail pages (/parts/{oem}/{id}-{slug})
+            // are an opt-in mode toggle, not on by default for existing installs.
+            ['group' => 'seo', 'key' => 'detail_pages_enabled',     'value' => '0',            'type' => $b],
+            // Empty by default — opts the EnforceCanonicalHost middleware's
+            // host-forcing check out entirely until an admin sets it (no UI
+            // for this yet, lands with the SEO Control Center).
+            ['group' => 'seo', 'key' => 'canonical_host',           'value' => '',             'type' => $s],
 
             // Announcement bar — high-intent visitors get a conversion nudge
             // (set enabled=1 in admin when ready to activate)

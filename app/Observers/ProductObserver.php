@@ -5,6 +5,7 @@ namespace App\Observers;
 use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Services\CacheService;
+use App\Services\ProductSlugService;
 use App\Services\SearchService;
 use App\Services\WidgetPreferenceService;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,7 @@ class ProductObserver
     public function created(Product $product): void
     {
         $this->log($product, 'created', [], $product->getAttributes());
+        $this->refreshSlug($product);
         $this->invalidateCache($product);
     }
 
@@ -30,7 +32,35 @@ class ProductObserver
             $this->log($product, 'updated', $original, $changes);
         }
 
+        if (array_intersect(array_keys($changes), ['name', 'manufacturer_id', 'condition_id'])) {
+            $this->refreshSlug($product);
+        }
+
         $this->invalidateCache($product);
+    }
+
+    /**
+     * Keeps products.slug (always the English-locale slug — sitemap
+     * generation has no per-request "current locale" to compute one from)
+     * in sync when a field that feeds ProductSlugService changes. The
+     * detail page itself never reads this column for its own URL — it
+     * calls ProductSlugService::generate() fresh in the visitor's current
+     * locale — this stored copy exists purely for the sitemap.
+     *
+     * updateQuietly() (not save()) so this doesn't re-fire created/updated
+     * and recurse into itself.
+     */
+    protected function refreshSlug(Product $product): void
+    {
+        try {
+            $slug = app(ProductSlugService::class)->generate($product, 'en');
+
+            if ($product->slug !== $slug) {
+                $product->updateQuietly(['slug' => $slug]);
+            }
+        } catch (\Throwable $e) {
+            // Slug refresh must not break CRUD
+        }
     }
 
     public function deleted(Product $product): void

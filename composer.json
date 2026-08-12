@@ -17,6 +17,7 @@
         "blade-ui-kit/blade-heroicons": "^2.3",
         "filament/filament": "^5.6",
         "flowframe/laravel-trend": "*",
+        "intervention/image": "3.0",
         "laravel/framework": "^12.0",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.27",

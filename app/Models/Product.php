@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -15,7 +16,7 @@ class Product extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'manufacturer_id', 'oem_number', 'normalized_oem',
+        'manufacturer_id', 'oem_number', 'normalized_oem', 'slug',
         'name', 'description', 'condition_id', 'price',
         'delivery_time', 'moq', 'is_in_stock', 'is_active',
     ];
@@ -53,6 +54,36 @@ class Product extends Model
     public function crossReferences(): HasMany
     {
         return $this->hasMany(ProductCrossReference::class);
+    }
+
+    public function images(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    public function featuredImage(): HasOne
+    {
+        return $this->hasOne(ProductImage::class)->where('is_featured', true);
+    }
+
+    /**
+     * Featured image, else the manufacturer's logo, else a coded
+     * placeholder — the single place this fallback chain lives, so hub
+     * and detail pages (and JSON-LD) never re-derive it differently.
+     */
+    public function resolvedImageUrl(string $variant = 'medium'): string
+    {
+        $featured = $this->featuredImage;
+
+        if ($featured) {
+            return $variant === 'thumbnail' ? $featured->thumbnail_url : $featured->medium_url;
+        }
+
+        if ($this->manufacturer?->logo) {
+            return $this->manufacturer->logo->file_url;
+        }
+
+        return asset('images/product-placeholder.svg');
     }
 
     public function carModels(): BelongsToMany
