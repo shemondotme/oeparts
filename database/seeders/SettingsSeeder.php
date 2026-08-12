@@ -357,6 +357,33 @@ class SettingsSeeder extends Seeder
                 ], JSON_UNESCAPED_UNICODE),
                 'type' => $j],
 
+            // AI crawlers — decided ALLOW by default (business wants
+            // AI-answer-engine citation traffic, not to block it).
+            // Per-bot so an admin can later block one specific bot without
+            // affecting the rest. Read by RobotsController::aiBotRules().
+            ['group' => 'crawlers', 'key' => 'ai_bot_rules',
+                'value' => json_encode([
+                    ['user_agent' => 'GPTBot', 'action' => 'allow'],
+                    ['user_agent' => 'ChatGPT-User', 'action' => 'allow'],
+                    ['user_agent' => 'Google-Extended', 'action' => 'allow'],
+                    ['user_agent' => 'PerplexityBot', 'action' => 'allow'],
+                    ['user_agent' => 'CCBot', 'action' => 'allow'],
+                    ['user_agent' => 'ClaudeBot', 'action' => 'allow'],
+                ]),
+                'type' => $j],
+            // Translatable body for the new llms.txt route
+            // (LlmsTxtController) — sensible non-empty default so the
+            // route works before an admin ever customises it.
+            ['group' => 'crawlers', 'key' => 'llms_txt_body',
+                'value' => json_encode([
+                    'en' => "OeParts is an OEM auto-parts catalog searchable by manufacturer part number, including cross-reference numbers across manufacturers for the same physical part.\n\nKey entry points:\n- Homepage: {site_url}/en/\n- Parts search: {site_url}/en/parts\n- Sitemap: {site_url}/sitemap.xml",
+                    'de' => "OeParts ist ein OEM-Autoteile-Katalog, durchsuchbar nach Herstellerteilenummer, einschließlich Kreuzreferenznummern verschiedener Hersteller für dasselbe Teil.\n\nWichtige Einstiegspunkte:\n- Startseite: {site_url}/de/\n- Teilesuche: {site_url}/de/parts\n- Sitemap: {site_url}/sitemap.xml",
+                    'lt' => "OeParts yra OEM automobilių dalių katalogas, ieškomas pagal gamintojo dalies numerį, įskaitant kryžmines nuorodas tarp gamintojų tai pačiai daliai.\n\nSvarbūs įėjimo taškai:\n- Pagrindinis puslapis: {site_url}/lt/\n- Dalių paieška: {site_url}/lt/parts\n- Sitemap: {site_url}/sitemap.xml",
+                    'fr' => "OeParts est un catalogue de pièces auto OEM consultable par numéro de pièce du fabricant, y compris les numéros de référence croisée entre fabricants pour la même pièce.\n\nPoints d'entrée clés :\n- Accueil : {site_url}/fr/\n- Recherche de pièces : {site_url}/fr/parts\n- Sitemap : {site_url}/sitemap.xml",
+                    'es' => "OeParts es un catálogo de piezas de automóviles OEM que se puede buscar por número de pieza del fabricante, incluidos los números de referencia cruzada entre fabricantes para la misma pieza.\n\nPuntos de entrada clave:\n- Inicio: {site_url}/es/\n- Búsqueda de piezas: {site_url}/es/parts\n- Sitemap: {site_url}/sitemap.xml",
+                ], JSON_UNESCAPED_UNICODE),
+                'type' => $j],
+
             // Announcement bar — high-intent visitors get a conversion nudge
             // (set enabled=1 in admin when ready to activate)
             ['group' => 'announcement', 'key' => 'cta_text',

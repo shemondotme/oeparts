@@ -69,8 +69,15 @@ Route::post('/webhooks/bank-transfer-confirm', [WebhookController::class, 'handl
 Route::get('/robots.txt', [RobotsController::class, 'index'])
     ->name('robots.txt');
 
+// llms.txt (dynamic, admin-editable body)
+Route::get('/llms.txt', [\App\Http\Controllers\LlmsTxtController::class, 'index'])
+    ->name('llms.txt');
+
 // IndexNow key-verification file — must be reachable at the site root
-// (not locale-prefixed), same as robots.txt/sitemap.xml.
+// (not locale-prefixed), same as robots.txt/sitemap.xml. Registered AFTER
+// the literal /llms.txt and /robots.txt routes so those exact matches win
+// first; this wildcard would otherwise also technically match "llms" or
+// "robots" as a {key} value.
 Route::get('/{key}.txt', [\App\Http\Controllers\IndexNowController::class, 'verify'])
     ->where('key', '[a-zA-Z0-9]+')
     ->name('indexnow.verify');
