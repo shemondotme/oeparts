@@ -12,6 +12,7 @@ use App\Models\NewsletterCampaign;
 use App\Models\Order;
 use App\Models\Page;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\RefundRequest;
 use App\Models\Section;
 use App\Models\Testimonial;
@@ -25,6 +26,7 @@ use App\Observers\ManufacturerObserver;
 use App\Observers\NewsletterCampaignObserver;
 use App\Observers\OrderObserver;
 use App\Observers\PageObserver;
+use App\Observers\ProductImageObserver;
 use App\Observers\ProductObserver;
 use App\Observers\RefundRequestObserver;
 use App\Observers\SectionObserver;
@@ -119,6 +121,7 @@ class AppServiceProvider extends ServiceProvider
         // Register Eloquent observers for CRUD audit logging
         Order::observe(OrderObserver::class);
         Product::observe(ProductObserver::class);
+        ProductImage::observe(ProductImageObserver::class);
         Manufacturer::observe(ManufacturerObserver::class);
         Condition::observe(ConditionObserver::class);
         Testimonial::observe(TestimonialObserver::class);

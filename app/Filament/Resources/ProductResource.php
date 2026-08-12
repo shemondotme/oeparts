@@ -593,6 +593,7 @@ class ProductResource extends Resource
         return [
             RelationManagers\CrossReferencesRelationManager::class,
             RelationManagers\CarModelsRelationManager::class,
+            RelationManagers\ProductImagesRelationManager::class,
         ];
     }
 
