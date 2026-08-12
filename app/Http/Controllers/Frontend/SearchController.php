@@ -102,15 +102,18 @@ class SearchController extends Controller
             ));
         }
 
-        // True zero results → zero-results page
+        // True zero results → zero-results page. Real HTTP 404 (previously
+        // 200 — a "soft 404" that told Google this URL was a valid,
+        // permanent page with no content, rather than "nothing here."
+        // Content/copy is unchanged, only the status code.
         if ($result['total'] === 0) {
-            return view('frontend.search.zero-results', [
+            return response()->view('frontend.search.zero-results', [
                 'normalized_query'     => $result['normalized_query'],
                 'search_type'          => $result['search_type'],
                 'popularOems'          => $this->getPopularOems(),
                 'failed_search_log_id' => $result['search_log_id'],
                 'cross_ref_checked'    => $result['cross_ref_checked'] ?? true,
-            ]);
+            ], 404);
         }
 
         // Single confirmed match (exact or cross-reference — NOT partial,

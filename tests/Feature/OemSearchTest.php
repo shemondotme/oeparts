@@ -122,7 +122,11 @@ class OemSearchTest extends TestCase
     public function search_returns_zero_results_page_when_no_match(): void
     {
         $response = $this->get('/en/parts/NONEXISTENT123');
-        $response->assertStatus(200);
+        // Real 404, not a "soft 404" — this URL genuinely has no matching
+        // product; previously returned 200, telling Google this was a
+        // valid, permanent page with no content. Content/copy is
+        // unchanged, only the status code.
+        $response->assertStatus(404);
         // Check that the OEM number appears on the page (in the title or somewhere)
         $response->assertSee('NONEXISTENT123');
         // The page should show some indication of no results (locale-aware)
