@@ -8,6 +8,7 @@ use App\Models\CarModel;
 use App\Models\Manufacturer;
 use App\Models\Page;
 use App\Models\Product;
+use App\Models\ProductCrossReference;
 use App\Support\LocaleRegistry;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
@@ -40,6 +41,7 @@ class SitemapService
     public function __construct(
         private SettingsService $settings,
         private CloudflareService $cloudflare,
+        private ProductSlugService $productSlugService,
     ) {
         $this->supportedLocales = LocaleRegistry::codes();
     }
@@ -57,6 +59,7 @@ class SitemapService
             $files = [];
 
             array_push($files, ...$this->generateProductsSitemap());
+            array_push($files, ...$this->generateCrossReferencesSitemap());
             array_push($files, ...$this->generateManufacturersSitemap());
             array_push($files, ...$this->generateCarModelsSitemap());
             array_push($files, ...$this->generatePagesSitemap());
@@ -147,6 +150,87 @@ class SitemapService
         }
 
         return $written ?: [$this->emptyFile('sitemap-parts-1.xml')];
+    }
+
+    /**
+     * Cross-reference OEM numbers (other manufacturers' numbers for the
+     * same physical part) are functionally searchable today
+     * (SearchService::crossReferenceMatch()) but were never proactively
+     * listed anywhere — Google only found them by crawling internal links,
+     * with no priority signal. Deduped GLOBALLY by normalized_cross_oem
+     * across the whole product_cross_references table (not per-product):
+     * the storefront URL for a cross-ref number is keyed by that number
+     * alone, and two different products could theoretically share one.
+     *
+     * One extra query per DISTINCT cross-OEM value (not per row) to
+     * resolve how many active products share it, deciding hub-vs-detail
+     * URL below — bounded by the number of distinct cross-references, not
+     * total catalog size; an accepted trade-off for correctness/clarity
+     * over a more complex single-query grouped fetch.
+     */
+    private function generateCrossReferencesSitemap(): array
+    {
+        $written = [];
+        $batch = 1;
+        $writer = null;
+        $count = 0;
+        $detailPagesEnabled = filter_var($this->settings->get('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN);
+
+        ProductCrossReference::query()
+            ->join('products', 'products.id', '=', 'product_cross_references.product_id')
+            ->where('products.is_active', true)
+            ->selectRaw('product_cross_references.normalized_cross_oem as normalized_cross_oem, MAX(products.updated_at) as updated_at')
+            ->groupBy('product_cross_references.normalized_cross_oem')
+            ->orderByDesc('updated_at')
+            ->cursor()
+            ->each(function ($row) use (&$written, &$batch, &$writer, &$count, $detailPagesEnabled) {
+                $crossOem = $row->normalized_cross_oem;
+                $lastmod = $row->updated_at ? \Illuminate\Support\Carbon::parse($row->updated_at)->toIso8601String() : now()->toIso8601String();
+
+                // For a single-active-product match in Hub+Detail mode,
+                // point straight at the canonical detail URL — skips a
+                // wasted redirect hop the hub URL would otherwise cost
+                // (single-match auto-redirect in SearchController::results()).
+                $activeProducts = Product::query()
+                    ->whereIn('id', ProductCrossReference::where('normalized_cross_oem', $crossOem)->pluck('product_id'))
+                    ->where('is_active', true)
+                    ->get(['id', 'normalized_oem']);
+
+                $singleProduct = ($detailPagesEnabled && $activeProducts->count() === 1) ? $activeProducts->first() : null;
+
+                foreach ($this->supportedLocales as $locale) {
+                    if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
+                        if ($writer !== null) {
+                            $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch);
+                            $batch++;
+                        }
+                        $writer = $this->openWriter();
+                        $count = 0;
+                    }
+
+                    $loc = $singleProduct
+                        ? URL::route('frontend.search.detail', [
+                            'lang' => $locale,
+                            'oem' => $singleProduct->normalized_oem,
+                            'idSlug' => $this->productSlugService->buildIdSlug($singleProduct, $locale),
+                        ])
+                        : URL::route('frontend.search.results', ['lang' => $locale, 'oem' => $crossOem]);
+
+                    $this->writeUrl($writer, [
+                        'loc' => $loc,
+                        'lastmod' => $lastmod,
+                        'changefreq' => 'weekly',
+                        'priority' => '0.5',
+                    ]);
+                    $count++;
+                }
+            });
+
+        if ($writer !== null) {
+            $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch);
+        }
+
+        return $written ?: [$this->emptyFile('sitemap-crossrefs-1.xml')];
     }
 
     private function generateManufacturersSitemap(): array
@@ -441,7 +525,7 @@ class SitemapService
     public function cleanup(): void
     {
         $keep = [
-            'sitemap-parts.xml', 'sitemap-brands.xml',
+            'sitemap-parts.xml', 'sitemap-crossrefs.xml', 'sitemap-brands.xml',
             'sitemap-models.xml', 'sitemap-pages.xml', 'sitemap-blog.xml',
         ];
 
