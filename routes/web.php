@@ -69,6 +69,12 @@ Route::post('/webhooks/bank-transfer-confirm', [WebhookController::class, 'handl
 Route::get('/robots.txt', [RobotsController::class, 'index'])
     ->name('robots.txt');
 
+// IndexNow key-verification file — must be reachable at the site root
+// (not locale-prefixed), same as robots.txt/sitemap.xml.
+Route::get('/{key}.txt', [\App\Http\Controllers\IndexNowController::class, 'verify'])
+    ->where('key', '[a-zA-Z0-9]+')
+    ->name('indexnow.verify');
+
 // Public health check (unauthenticated, for uptime monitoring)
 Route::get('/health', HealthController::class)
     ->name('health');

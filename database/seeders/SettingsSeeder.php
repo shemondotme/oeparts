@@ -324,6 +324,11 @@ class SettingsSeeder extends Seeder
 
             ['group' => 'seo', 'key' => 'google_ping_enabled',      'value' => '1',            'type' => $b],
             ['group' => 'seo', 'key' => 'bing_ping_enabled',        'value' => '1',            'type' => $b],
+            // Ships disabled — needs a real IndexNow key before it does
+            // anything useful. Bing/Yandex/Naver/Seznam consume this
+            // protocol; Google does not (a common misconception).
+            ['group' => 'seo', 'key' => 'indexnow_enabled',         'value' => '0',            'type' => $b],
+            ['group' => 'seo', 'key' => 'indexnow_api_key',         'value' => '',             'type' => $e, 'encrypted' => true],
             ['group' => 'seo', 'key' => 'default_robots',           'value' => 'index,follow', 'type' => $s],
             ['group' => 'seo', 'key' => 'default_og_image',         'value' => '',             'type' => $s],
             ['group' => 'seo', 'key' => 'twitter_handle',           'value' => '',             'type' => $s],

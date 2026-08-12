@@ -2,12 +2,14 @@
 
 namespace App\Observers;
 
+use App\Jobs\PushIndexNow;
 use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Services\CacheService;
 use App\Services\ProductSlugService;
 use App\Services\SearchService;
 use App\Services\WidgetPreferenceService;
+use App\Support\LocaleRegistry;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
@@ -92,6 +94,36 @@ class ProductObserver
             }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+        }
+
+        // Separate try/catch from the cache-forget block above: a
+        // Guzzle/queue failure here is a different failure domain than a
+        // cache-store failure, and keeping them independent means one
+        // failing never masks whether the other also failed — both stay
+        // individually non-fatal to the CRUD operation that triggered them.
+        $this->pushToIndexNow($product);
+    }
+
+    /**
+     * PushIndexNow itself no-ops when disabled/unkeyed — this check is
+     * just to avoid building URLs and dispatching a job for nothing on
+     * every single product write when the feature isn't in use at all.
+     */
+    protected function pushToIndexNow(Product $product): void
+    {
+        try {
+            if (! filter_var(settings('seo.indexnow_enabled', false), FILTER_VALIDATE_BOOLEAN)) {
+                return;
+            }
+
+            $urls = array_map(
+                fn (string $locale) => route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]),
+                LocaleRegistry::codes()
+            );
+
+            PushIndexNow::dispatch($urls);
+        } catch (\Throwable $e) {
+            // Must not break the product save that triggered this.
         }
     }
 
