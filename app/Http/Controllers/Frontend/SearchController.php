@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
 use App\Services\CacheService;
+use App\Services\CrawlerVerificationService;
 use App\Services\SearchService;
 use App\Models\CarModel;
 use App\Models\Condition;
@@ -18,7 +19,32 @@ class SearchController extends Controller
     public function __construct(
         private SearchService $searchService,
         private CacheService $cacheService,
+        private CrawlerVerificationService $crawlerVerification,
     ) {}
+
+    /**
+     * Rate limit search requests (default 30/min/IP) — shared by results()
+     * and detail(), so both routes get the same crawler exemption from one
+     * place. Verified Googlebot/Bingbot IPs bypass the limiter entirely;
+     * everyone else keeps the existing behavior unchanged.
+     */
+    private function enforceSearchRateLimit(Request $request): void
+    {
+        if ($this->crawlerVerification->isVerifiedCrawler($request->ip() ?? '')) {
+            return;
+        }
+
+        $maxSearches = (int) settings('search.rate_limit_per_minute', 30);
+        if (!RateLimiter::attempt("search:{$request->ip()}", $maxSearches, function () {
+            return true;
+        })) {
+            // No message here — bootstrap/app.php's TooManyRequestsHttpException
+            // renderer falls back to the translated search.error_429_message
+            // ONLY when getMessage() is empty; a hardcoded string here would
+            // silently win over the per-locale translation for every visitor.
+            throw new TooManyRequestsHttpException(60);
+        }
+    }
 
     /**
      * Show search results for an OEM number.
@@ -33,17 +59,7 @@ class SearchController extends Controller
             abort(404);
         }
 
-        // Rate limit search requests (30 per minute per IP)
-        $maxSearches = (int) settings('search.rate_limit_per_minute', 30);
-        if (!RateLimiter::attempt("search:{$request->ip()}", $maxSearches, function () {
-            return true;
-        })) {
-            // No message here — bootstrap/app.php's TooManyRequestsHttpException
-            // renderer falls back to the translated search.error_429_message
-            // ONLY when getMessage() is empty; a hardcoded string here would
-            // silently win over the per-locale translation for every visitor.
-            throw new TooManyRequestsHttpException(60);
-        }
+        $this->enforceSearchRateLimit($request);
 
         $manufacturerId = $request->query('manufacturer');
         $carModelId     = $request->query('model');
