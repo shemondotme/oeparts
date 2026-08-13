@@ -62,7 +62,16 @@ class EnforceCanonicalHost
         }
 
         $scheme = $needsSchemeChange ? 'https' : $request->getScheme();
-        $host = $needsHostChange ? $canonicalHost : $request->getHost();
+        // getHost() strips the port entirely — fine for $canonicalHost (an
+        // admin-entered bare domain, never expected to include one), but
+        // wrong when keeping the request's own host: it silently dropped
+        // a non-standard port on every scheme/slash-only redirect (e.g.
+        // Docker port-mapped local/staging setups), sending the browser to
+        // the same host on the default port instead — found by actually
+        // browsing a port-mapped rehearsal instance, not by code reading.
+        // getHttpHost() includes the port only when it's non-default for
+        // the scheme, so a normal production install on 80/443 is unaffected.
+        $host = $needsHostChange ? $canonicalHost : $request->getHttpHost();
         $finalPath = $needsSlashStrip ? (rtrim($path, '/') ?: '/') : $path;
         $query = $request->getQueryString();
 

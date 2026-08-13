@@ -139,6 +139,45 @@ class CanonicalHostRedirectTest extends TestCase
         $this->assertNotSame(301, $response->getStatusCode());
     }
 
+    /**
+     * Found by actually browsing a Docker port-mapped rehearsal instance
+     * (localhost:8080), not by reading code: the trailing-slash strip
+     * redirected to http://localhost/en instead of http://localhost:8080/en,
+     * because getHost() unconditionally drops the port. getHttpHost() only
+     * omits it when it's the scheme's default (80 for http, 443 for
+     * https), so a normal production install on 80/443 sees no change —
+     * this only matters for non-standard-port setups (Docker port mapping,
+     * some staging environments).
+     */
+    #[Test]
+    public function trailing_slash_strip_preserves_a_non_standard_port(): void
+    {
+        config(['app.url' => 'http://localhost:8080']);
+
+        $response = $this->getWithRawUri('http://localhost:8080/en/parts/', ['Host' => 'localhost:8080']);
+
+        $response->assertStatus(301);
+        $response->assertHeader('Location', 'http://localhost:8080/en/parts');
+    }
+
+    #[Test]
+    public function canonical_host_redirect_still_uses_the_bare_configured_host_not_the_requests_port(): void
+    {
+        config(['app.url' => 'http://localhost']);
+        Setting::updateOrCreate(
+            ['group' => 'seo', 'key' => 'canonical_host'],
+            ['value' => 'oeparts.com', 'type' => 'string', 'is_encrypted' => false]
+        );
+
+        // An admin-configured canonical host is never expected to carry a
+        // port — this must redirect to the bare configured host regardless
+        // of what port the mismatched request itself arrived on.
+        $response = $this->withHeaders(['Host' => 'www.oeparts.com:8080'])->get('/en/parts');
+
+        $response->assertStatus(301);
+        $response->assertHeader('Location', 'http://oeparts.com/en/parts');
+    }
+
     #[Test]
     public function scheme_and_host_and_slash_are_combined_into_one_redirect_not_a_chain(): void
     {
