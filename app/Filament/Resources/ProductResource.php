@@ -137,6 +137,30 @@ class ProductResource extends Resource
                                                     ->label('Featured (main product image)')
                                                     ->helperText('Only one image per product can be featured — setting this un-sets any other featured image.')
                                                     ->columnSpan(1),
+                                                Forms\Components\TextInput::make('image_url')
+                                                    ->label('Or fetch from an image URL')
+                                                    ->url()
+                                                    ->live(onBlur: true)
+                                                    ->dehydrated(false)
+                                                    ->columnSpanFull()
+                                                    ->helperText('For scraped products where only the image link was captured, not the file itself. Paste the link and leave the field — it is fetched and stored automatically.')
+                                                    ->afterStateUpdated(function (?string $state, callable $set): void {
+                                                        if (blank($state)) {
+                                                            return;
+                                                        }
+
+                                                        try {
+                                                            $path = app(\App\Services\RemoteImageDownloadService::class)->downloadToProductImages($state);
+                                                            $set('path', $path);
+                                                            $set('image_url', null);
+                                                        } catch (\InvalidArgumentException $e) {
+                                                            Notification::make()
+                                                                ->title('Could not fetch that image')
+                                                                ->body($e->getMessage())
+                                                                ->danger()
+                                                                ->send();
+                                                        }
+                                                    }),
                                                 AdminUi::translatableTabs('Alt Text', [
                                                     'alt_text' => [
                                                         'label' => 'Alt Text',

@@ -29,9 +29,21 @@ class UploadedImageSanitizer
     {
         $contents = file_get_contents($file->getRealPath());
 
+        if ($contents !== false) {
+            $this->assertSafeContents($contents);
+        }
+    }
+
+    /**
+     * Same check as assertSafe(), for bytes that didn't arrive as an
+     * UploadedFile — e.g. a product image fetched server-side from an
+     * admin-supplied URL (RemoteImageDownloadService).
+     */
+    public function assertSafeContents(string $contents): void
+    {
         foreach (self::SUSPICIOUS_SIGNATURES as $signature) {
-            if ($contents !== false && stripos($contents, $signature) !== false) {
-                throw new \InvalidArgumentException('Uploaded file failed a content safety check.');
+            if (stripos($contents, $signature) !== false) {
+                throw new \InvalidArgumentException('Image failed a content safety check.');
             }
         }
     }
