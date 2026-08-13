@@ -104,7 +104,12 @@ class SeoHealthDashboardTest extends TestCase
 
         Livewire::test(SeoHealthDashboard::class)
             ->assertSee('Translation Coverage')
-            ->assertSee('Manual Descriptions');
+            ->assertSee('Manual Descriptions')
+            // Locale codes (DE/LT/FR/ES) are shown as a real flag icon (an
+            // SVG asset — flag *emoji* render as plain two-letter codes on
+            // Windows 10, defeating the point) + full country name.
+            ->assertSee('Germany')
+            ->assertSee('flags/de.svg', false);
     }
 
     #[Test]

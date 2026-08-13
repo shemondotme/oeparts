@@ -101,7 +101,24 @@ class SeoHealthDashboard extends Page
     }
 
     /**
-     * @return array{translationSummary:string, manualPercent:int, manualCount:int, total:int}
+     * LocaleRegistry's own `name` field is the LANGUAGE name ("German"),
+     * used for the site's language switcher — this dashboard instead wants
+     * the COUNTRY name ("Germany") next to the flag, so it's mapped here
+     * rather than repurposing LocaleRegistry's field for a second meaning.
+     * Falls back to the language name for any locale not in this map.
+     *
+     * @var array<string, string>
+     */
+    private const COUNTRY_NAMES = [
+        'de' => 'Germany',
+        'lt' => 'Lithuania',
+        'fr' => 'France',
+        'es' => 'Spain',
+        'en' => 'United Kingdom',
+    ];
+
+    /**
+     * @return array{translations: array<int, array{code:string, name:string, flag:string, percent:int}>, manualPercent:int, manualCount:int, total:int}
      */
     public function contentHealth(): array
     {
@@ -109,25 +126,31 @@ class SeoHealthDashboard extends Page
             $total = Product::query()->active()->count();
 
             if ($total === 0) {
-                return ['translationSummary' => 'No active products yet', 'manualPercent' => 0, 'manualCount' => 0, 'total' => 0];
+                return ['translations' => [], 'manualPercent' => 0, 'manualCount' => 0, 'total' => 0];
             }
 
             $default = LocaleRegistry::defaultCode();
-            $parts = [];
+            $translations = [];
 
-            foreach (LocaleRegistry::codes() as $code) {
-                if ($code === $default) {
+            foreach (LocaleRegistry::languages() as $language) {
+                if ($language['code'] === $default) {
                     continue;
                 }
 
-                $count = Product::query()->active()->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('name', $code)))->count();
-                $parts[] = strtoupper($code).' '.round(100 * $count / $total).'%';
+                $count = Product::query()->active()->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('name', $language['code'])))->count();
+
+                $translations[] = [
+                    'code' => $language['code'],
+                    'name' => self::COUNTRY_NAMES[$language['code']] ?? $language['name'],
+                    'flag' => $language['flag_emoji'],
+                    'percent' => (int) round(100 * $count / $total),
+                ];
             }
 
             $manualCount = Product::query()->active()->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('description', $default)))->count();
 
             return [
-                'translationSummary' => $parts === [] ? 'Only one active locale configured' : implode(' · ', $parts),
+                'translations' => $translations,
                 'manualPercent' => (int) round(100 * $manualCount / $total),
                 'manualCount' => $manualCount,
                 'total' => $total,
