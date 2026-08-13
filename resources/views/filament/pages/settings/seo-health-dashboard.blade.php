@@ -1,5 +1,69 @@
+<style>
+    /* Clarity — light, minimal, table-row-driven layout the business owner
+     * picked from a set of design directions. Scoped under .op-clarity so it
+     * never leaks into the rest of the admin's op-* vocabulary; built from
+     * the same theme tokens (--color-*) as everywhere else, so dark mode
+     * still holds — only the layout/visual language is bespoke to this page. */
+    .op-clarity .oc-kpis {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1px;
+        background: var(--color-border-subtle);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+    }
+    .op-clarity .oc-kpi { background: var(--color-bg-surface); padding: 1.1rem 1.25rem; }
+    .op-clarity .oc-kpi-label { font-size: 0.72rem; font-weight: 600; color: var(--color-text-muted); margin-bottom: 0.6rem; }
+    .op-clarity .oc-kpi-value { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; color: var(--color-text-primary); margin-bottom: 0.35rem; }
+    .op-clarity .oc-kpi-meta { font-size: 0.75rem; color: var(--color-text-disabled); }
+    .op-clarity .oc-tick { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; font-weight: 600; padding: 0.1rem 0.5rem; border-radius: 6px; }
+    .op-clarity .oc-tick::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .op-clarity .oc-card {
+        background: var(--color-bg-surface);
+        border: 1px solid var(--color-border-subtle);
+        border-radius: var(--radius-md);
+        padding: 1.1rem 1.25rem;
+    }
+    .op-clarity .oc-flag-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.6rem 1.5rem; margin-top: 0.6rem; }
+    .op-clarity .oc-flag-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; }
+
+    .op-clarity .oc-section { background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle); border-radius: var(--radius-md); overflow: hidden; }
+    .op-clarity .oc-section-head { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--color-border-subtle); font-size: 0.8rem; font-weight: 700; color: var(--color-text-primary); display: flex; align-items: center; gap: 0.5rem; }
+    .op-clarity .oc-section-head svg { color: var(--color-text-link); width: 1rem; height: 1rem; flex: none; }
+
+    .op-clarity .oc-row { display: grid; grid-template-columns: 1.4fr 0.8fr 1.8fr; align-items: center; gap: 0.75rem; padding: 0.8rem 1.25rem; border-bottom: 1px solid var(--color-border-subtle); }
+    .op-clarity .oc-row:last-child { border-bottom: none; }
+    .op-clarity .oc-row .oc-name { font-size: 0.8rem; font-weight: 600; color: var(--color-text-primary); }
+    .op-clarity .oc-row .oc-subtext { font-size: 0.72rem; color: var(--color-text-disabled); margin-top: 0.1rem; }
+    .op-clarity .oc-row .oc-detail { font-size: 0.75rem; color: var(--color-text-muted); text-align: right; }
+
+    .op-clarity .oc-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.68rem; font-weight: 700; padding: 0.18rem 0.55rem; border-radius: 6px; width: fit-content; }
+    .op-clarity .oc-badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .op-clarity .oc-badge-ok { color: #16a34a; background: rgba(34, 197, 94, 0.14); }
+    .op-clarity .oc-badge-warn { color: #b45309; background: rgba(245, 158, 11, 0.14); }
+    .op-clarity .oc-badge-down { color: #dc2626; background: rgba(239, 68, 68, 0.14); }
+    .op-clarity .oc-badge-off { color: var(--color-text-disabled); background: var(--color-bg-inset); }
+
+    .op-clarity .oc-ext-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .op-clarity .oc-ext-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+    .op-clarity .oc-ext-name { font-size: 0.8rem; font-weight: 700; color: var(--color-text-primary); }
+    .op-clarity .oc-ext-desc { font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.5; }
+    .op-clarity .oc-ext-link { font-size: 0.72rem; font-weight: 700; color: var(--color-text-link); margin-top: 0.6rem; display: inline-block; }
+    .op-clarity .oc-ext-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; margin-top: 0.75rem; }
+    .op-clarity .oc-ext-stat-label { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); margin-bottom: 0.3rem; }
+    .op-clarity .oc-ext-stat-value { font-size: 1rem; font-weight: 700; color: var(--color-text-primary); }
+
+    @media (max-width: 860px) {
+        .op-clarity .oc-kpis, .op-clarity .oc-ext-grid { grid-template-columns: 1fr; }
+        .op-clarity .oc-row { grid-template-columns: 1fr; row-gap: 0.3rem; }
+        .op-clarity .oc-row .oc-detail { text-align: left; }
+    }
+</style>
+
 <x-filament-panels::page>
-    <div class="space-y-6">
+    <div class="op-clarity space-y-4">
         @php
             $search = $this->searchAnalytics();
             $content = $this->contentHealth();
@@ -8,293 +72,201 @@
             $redirects = $this->redirectHealth();
             $gsc = $this->googleSearchConsole();
             $cwv = $this->coreWebVitals();
+
+            $zrTone = $search['zeroResultRate'] > 20 ? 'down' : ($search['zeroResultRate'] > 5 ? 'warn' : 'ok');
+            $mdTone = $content['manualPercent'] < 20 ? 'warn' : 'ok';
+            $toneColor = fn (string $tone) => match ($tone) {
+                'ok' => '#16a34a', 'warn' => '#b45309', 'down' => '#dc2626', default => 'var(--color-text-disabled)',
+            };
+            $toneBg = fn (string $tone) => match ($tone) {
+                'ok' => 'rgba(34, 197, 94, 0.14)', 'warn' => 'rgba(245, 158, 11, 0.14)', 'down' => 'rgba(239, 68, 68, 0.14)', default => 'var(--color-bg-inset)',
+            };
         @endphp
 
-        {{-- ── Search & Content ─────────────────────────────────────────── --}}
-        <div class="op-card overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
-            <div class="px-6 py-4 flex items-center gap-3" style="border-bottom: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);">
-                <div class="p-1.5 rounded-lg" style="background: var(--color-bg-surface); color: var(--color-text-muted);">
-                    <x-heroicon-o-magnifying-glass class="w-4 h-4" />
-                </div>
-                <h3 class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">
-                    Search &amp; Content
-                </h3>
+        {{-- ── Key metrics strip ────────────────────────────────────────── --}}
+        <div class="oc-kpis">
+            <div class="oc-kpi">
+                <div class="oc-kpi-label">Searches (30d)</div>
+                <div class="oc-kpi-value">{{ number_format($search['total']) }}</div>
+                <div class="oc-kpi-meta">{{ $search['ratioLabel'] }}</div>
             </div>
-
-            <div class="p-6">
-                <div class="op-tile-grid">
-                    <div class="op-tile">
-                        <div class="op-tile-label">Searches (30d)</div>
-                        <div class="op-tile-value">{{ number_format($search['total']) }}</div>
-                        <div class="op-tile-meta">{{ $search['ratioLabel'] }}</div>
-                    </div>
-
-                    @php
-                        $zrTone = $search['zeroResultRate'] > 20 ? 'op-status-pill-down' : ($search['zeroResultRate'] > 5 ? 'op-status-pill-warn' : 'op-status-pill-ok');
-                    @endphp
-                    <div class="op-tile">
-                        <div class="op-tile-label">Zero-Result Rate</div>
-                        <div class="op-tile-value">{{ $search['zeroResultRate'] }}%</div>
-                        <span class="op-status-pill {{ $zrTone }} op-tile-meta-pill">{{ number_format($search['zeroResult']) }} found nothing</span>
-                    </div>
-
-                    @php
-                        $mdTone = $content['manualPercent'] < 20 ? 'op-status-pill-warn' : 'op-status-pill-ok';
-                    @endphp
-                    <div class="op-tile">
-                        <div class="op-tile-label">Manual Descriptions</div>
-                        <div class="op-tile-value">{{ $content['manualPercent'] }}%</div>
-                        <span class="op-status-pill {{ $mdTone }} op-tile-meta-pill">{{ number_format($content['manualCount']) }} / {{ number_format($content['total']) }} products</span>
-                    </div>
-
-                    <div class="op-tile" style="grid-column: 1 / -1;">
-                        <div class="op-tile-label">Translation Coverage</div>
-                        @if (empty($content['translations']))
-                            <div class="op-tile-meta" style="margin-top: 0.5rem;">Only one active locale configured</div>
-                        @else
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem 1.5rem; margin-top: 0.6rem;">
-                                @foreach ($content['translations'] as $t)
-                                    <div style="display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem;">
-                                        <img src="{{ asset('flags/' . $t['code'] . '.svg') }}" alt="" width="20" height="15" style="border-radius: 2px; box-shadow: 0 0 0 1px var(--color-border-subtle); flex: none;">
-                                        <span style="flex: 1; color: var(--color-text-secondary);">{{ $t['name'] }}</span>
-                                        <span style="font-weight: 700; font-variant-numeric: tabular-nums; color: {{ $t['percent'] < 50 ? '#f59e0b' : '#22c55e' }};">{{ $t['percent'] }}%</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                            <div class="op-tile-meta" style="margin-top: 0.6rem;">Genuine (non-fallback) name per locale</div>
-                        @endif
-                    </div>
-                </div>
+            <div class="oc-kpi">
+                <div class="oc-kpi-label">Zero-Result Rate</div>
+                <div class="oc-kpi-value">{{ $search['zeroResultRate'] }}%</div>
+                <span class="oc-tick" style="color: {{ $toneColor($zrTone) }}; background: {{ $toneBg($zrTone) }};">{{ number_format($search['zeroResult']) }} found nothing</span>
+            </div>
+            <div class="oc-kpi">
+                <div class="oc-kpi-label">Manual Descriptions</div>
+                <div class="oc-kpi-value">{{ $content['manualPercent'] }}%</div>
+                <span class="oc-tick" style="color: {{ $toneColor($mdTone) }}; background: {{ $toneBg($mdTone) }};">{{ number_format($content['manualCount']) }} / {{ number_format($content['total']) }} products</span>
             </div>
         </div>
 
-        {{-- ── Feature Adoption ─────────────────────────────────────────── --}}
-        <div class="op-card overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
-            <div class="px-6 py-4 flex items-center gap-3" style="border-bottom: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);">
-                <div class="p-1.5 rounded-lg" style="background: var(--color-bg-surface); color: var(--color-text-muted);">
-                    <x-heroicon-o-rocket-launch class="w-4 h-4" />
+        {{-- ── Translation coverage ─────────────────────────────────────── --}}
+        <div class="oc-card">
+            <div class="oc-kpi-label">Translation Coverage</div>
+            @if (empty($content['translations']))
+                <div class="oc-kpi-meta" style="margin-top: 0.5rem;">Only one active locale configured</div>
+            @else
+                <div class="oc-flag-grid">
+                    @foreach ($content['translations'] as $t)
+                        <div class="oc-flag-row">
+                            <img src="{{ asset('flags/' . $t['code'] . '.svg') }}" alt="" width="20" height="15" style="border-radius: 2px; box-shadow: 0 0 0 1px var(--color-border-subtle); flex: none;">
+                            <span style="flex: 1; color: var(--color-text-secondary);">{{ $t['name'] }}</span>
+                            <span style="font-weight: 700; font-variant-numeric: tabular-nums; color: {{ $t['percent'] < 50 ? '#b45309' : '#16a34a' }};">{{ $t['percent'] }}%</span>
+                        </div>
+                    @endforeach
                 </div>
-                <h3 class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">
-                    Feature Adoption
-                </h3>
+                <div class="oc-kpi-meta" style="margin-top: 0.6rem;">Genuine (non-fallback) name per locale</div>
+            @endif
+        </div>
+
+        {{-- ── Feature Adoption ─────────────────────────────────────────── --}}
+        @php
+            $detailPagesState = $adoption['detailPagesEnabled'] ? 'ok' : 'off';
+            $imgState = $adoption['ownImagePercent'] < 10 ? 'warn' : 'ok';
+            $indexNowAdoptionState = $adoption['indexNowEnabled'] ? 'ok' : 'off';
+        @endphp
+        <div class="oc-section">
+            <div class="oc-section-head">
+                <x-heroicon-o-rocket-launch />
+                Feature Adoption
             </div>
-
-            <div class="op-health-row op-health-row-head">
-                <span>Feature</span>
-                <span>Status</span>
-                <span>Detail</span>
-                <span></span>
-                <span style="text-align: right;">&nbsp;</span>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Per-Product Detail Pages</div>
+                    <div class="oc-subtext">Individual product pages beyond the search hub</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $detailPagesState }}">{{ $adoption['detailPagesEnabled'] ? 'Enabled' : 'Disabled' }}</span>
+                <div class="oc-detail">{{ $adoption['detailPagesEnabled'] ? '/parts/{oem}/{id}-slug is live' : 'Toggle on the Control Center' }}</div>
             </div>
-
-            @php
-                $detailPagesState = $adoption['detailPagesEnabled'] ? 'ok' : 'muted';
-                $imgState = $adoption['ownImagePercent'] < 10 ? 'warn' : 'ok';
-                $indexNowAdoptionState = $adoption['indexNowEnabled'] ? 'ok' : 'muted';
-            @endphp
-
-            <div class="op-health-row op-table-row">
-                <span class="op-health-name">
-                    <span class="op-dot {{ $detailPagesState === 'ok' ? 'op-dot-live' : '' }}" style="{{ $detailPagesState !== 'ok' ? 'background: var(--color-text-disabled);' : '' }}"></span>
-                    <span>
-                        <span style="display: block; font-weight: 600;">Per-Product Detail Pages</span>
-                        <span class="op-widget-title" style="text-transform: none; font-weight: 400; opacity: 1; letter-spacing: normal;">Individual product pages beyond the search hub</span>
-                    </span>
-                </span>
-                <span class="op-status-pill op-status-pill-{{ $detailPagesState }}">{{ $adoption['detailPagesEnabled'] ? 'Enabled' : 'Disabled' }}</span>
-                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ $adoption['detailPagesEnabled'] ? '/parts/{oem}/{id}-slug is live' : 'Toggle on the Control Center' }}</span>
-                <span></span>
-                <span style="text-align: right;"></span>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Own Product Images</div>
+                    <div class="oc-subtext">Products with a real uploaded photo</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $imgState }}">{{ $adoption['ownImagePercent'] }}%</span>
+                <div class="oc-detail">{{ number_format($adoption['withOwnImage']) }} / {{ number_format($adoption['total']) }} products</div>
             </div>
-
-            <div class="op-health-row op-table-row">
-                <span class="op-health-name">
-                    <span class="op-dot {{ $imgState === 'ok' ? 'op-dot-live' : '' }}" style="{{ $imgState !== 'ok' ? 'background: var(--color-text-disabled);' : '' }}"></span>
-                    <span>
-                        <span style="display: block; font-weight: 600;">Own Product Images</span>
-                        <span class="op-widget-title" style="text-transform: none; font-weight: 400; opacity: 1; letter-spacing: normal;">Products with a real uploaded photo</span>
-                    </span>
-                </span>
-                <span class="op-status-pill op-status-pill-{{ $imgState }}">{{ $adoption['ownImagePercent'] }}%</span>
-                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ number_format($adoption['withOwnImage']) }} / {{ number_format($adoption['total']) }} products</span>
-                <span></span>
-                <span style="text-align: right;"></span>
-            </div>
-
-            <div class="op-health-row op-table-row">
-                <span class="op-health-name">
-                    <span class="op-dot {{ $indexNowAdoptionState === 'ok' ? 'op-dot-live' : '' }}" style="{{ $indexNowAdoptionState !== 'ok' ? 'background: var(--color-text-disabled);' : '' }}"></span>
-                    <span>
-                        <span style="display: block; font-weight: 600;">IndexNow</span>
-                        <span class="op-widget-title" style="text-transform: none; font-weight: 400; opacity: 1; letter-spacing: normal;">Instant search-engine indexing pings</span>
-                    </span>
-                </span>
-                <span class="op-status-pill op-status-pill-{{ $indexNowAdoptionState }}">{{ $adoption['indexNowEnabled'] ? 'Enabled' : 'Disabled' }}</span>
-                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ $adoption['indexNowEnabled'] ? 'Pushing to Bing/Yandex/Naver/Seznam' : 'Enable on the Crawlers & AI tab' }}</span>
-                <span></span>
-                <span style="text-align: right;"></span>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">IndexNow</div>
+                    <div class="oc-subtext">Instant search-engine indexing pings</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $indexNowAdoptionState }}">{{ $adoption['indexNowEnabled'] ? 'Enabled' : 'Disabled' }}</span>
+                <div class="oc-detail">{{ $adoption['indexNowEnabled'] ? 'Pushing to Bing/Yandex/Naver/Seznam' : 'Enable on the Crawlers & AI tab' }}</div>
             </div>
         </div>
 
         {{-- ── Technical Health ─────────────────────────────────────────── --}}
-        <div class="op-card overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
-            <div class="px-6 py-4 flex items-center gap-3" style="border-bottom: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);">
-                <div class="p-1.5 rounded-lg" style="background: var(--color-bg-surface); color: var(--color-text-muted);">
-                    <x-heroicon-o-signal class="w-4 h-4" />
+        @php
+            $redirectState = $redirects['loopCount'] > 0 ? 'down' : 'ok';
+            $notFoundState = $redirects['unresolved404s'] > 0 ? 'warn' : 'ok';
+            $indexNowHealthState = ! $indexNow['enabled'] ? 'off' : ($indexNow['recentFailures'] > 0 ? 'warn' : 'ok');
+        @endphp
+        <div class="oc-section">
+            <div class="oc-section-head">
+                <x-heroicon-o-signal />
+                Technical Health
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Redirects</div>
+                    <div class="oc-subtext">Loop sweep across active redirects</div>
                 </div>
-                <h3 class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">
-                    Technical Health
-                </h3>
+                <span class="oc-badge oc-badge-{{ $redirectState }}">{{ $redirects['loopCount'] > 0 ? $redirects['loopCount'].' loop(s)' : 'Clean' }}</span>
+                <div class="oc-detail">{{ number_format($redirects['activeRedirects']) }} active redirects</div>
             </div>
-
-            <div class="op-health-row op-health-row-head">
-                <span>Check</span>
-                <span>Status</span>
-                <span>Detail</span>
-                <span></span>
-                <span style="text-align: right;">&nbsp;</span>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Unresolved 404s</div>
+                    <div class="oc-subtext">Dead-link paths without a redirect</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $notFoundState }}">{{ number_format($redirects['unresolved404s']) }}</span>
+                <div class="oc-detail">Candidates for a new Redirect row</div>
             </div>
-
-            @php
-                $redirectState = $redirects['loopCount'] > 0 ? 'down' : 'ok';
-                $notFoundState = $redirects['unresolved404s'] > 0 ? 'warn' : 'ok';
-                $indexNowState = ! $indexNow['enabled'] ? 'muted' : ($indexNow['recentFailures'] > 0 ? 'warn' : 'ok');
-            @endphp
-
-            <div class="op-health-row op-table-row op-health-{{ $redirectState }}">
-                <span class="op-health-name">
-                    <span class="op-dot {{ $redirectState === 'ok' ? 'op-dot-live' : '' }}" style="{{ $redirectState !== 'ok' ? 'background: var(--color-text-disabled);' : '' }}"></span>
-                    <span>
-                        <span style="display: block; font-weight: 600;">Redirects</span>
-                        <span class="op-widget-title" style="text-transform: none; font-weight: 400; opacity: 1; letter-spacing: normal;">Loop sweep across active redirects</span>
-                    </span>
-                </span>
-                <span class="op-status-pill op-status-pill-{{ $redirectState }}">{{ $redirects['loopCount'] > 0 ? $redirects['loopCount'].' loop(s)' : 'Clean' }}</span>
-                <span style="color: var(--text-secondary); font-size: 0.8rem;">{{ number_format($redirects['activeRedirects']) }} active redirects</span>
-                <span></span>
-                <span style="text-align: right;"></span>
-            </div>
-
-            <div class="op-health-row op-table-row op-health-{{ $notFoundState }}">
-                <span class="op-health-name">
-                    <span class="op-dot {{ $notFoundState === 'ok' ? 'op-dot-live' : '' }}" style="{{ $notFoundState !== 'ok' ? 'background: var(--color-text-disabled);' : '' }}"></span>
-                    <span>
-                        <span style="display: block; font-weight: 600;">Unresolved 404s</span>
-                        <span class="op-widget-title" style="text-transform: none; font-weight: 400; opacity: 1; letter-spacing: normal;">Dead-link paths without a redirect</span>
-                    </span>
-                </span>
-                <span class="op-status-pill op-status-pill-{{ $notFoundState }}">{{ number_format($redirects['unresolved404s']) }}</span>
-                <span style="color: var(--text-secondary); font-size: 0.8rem;">Candidates for a new Redirect row</span>
-                <span></span>
-                <span style="text-align: right;"></span>
-            </div>
-
-            <div class="op-health-row op-table-row op-health-{{ $indexNowState }}">
-                <span class="op-health-name">
-                    <span class="op-dot {{ $indexNowState === 'ok' ? 'op-dot-live' : '' }}" style="{{ $indexNowState !== 'ok' ? 'background: var(--color-text-disabled);' : '' }}"></span>
-                    <span>
-                        <span style="display: block; font-weight: 600;">IndexNow Activity</span>
-                        <span class="op-widget-title" style="text-transform: none; font-weight: 400; opacity: 1; letter-spacing: normal;">{{ $indexNow['lastLabel'] }}</span>
-                    </span>
-                </span>
-                <span class="op-status-pill op-status-pill-{{ $indexNowState }}">
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">IndexNow Activity</div>
+                    <div class="oc-subtext">{{ $indexNow['lastLabel'] }}</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $indexNowHealthState }}">
                     {{ $indexNow['enabled'] ? ($indexNow['recentFailures'] > 0 ? $indexNow['recentFailures'].' failure(s)' : 'Healthy') : 'Disabled' }}
                 </span>
-                <span style="color: var(--text-secondary); font-size: 0.8rem;">Last 7 days</span>
-                <span></span>
-                <span style="text-align: right;"></span>
+                <div class="oc-detail">Last 7 days</div>
             </div>
         </div>
 
         {{-- ── External Connections ─────────────────────────────────────── --}}
-        <div class="op-card overflow-hidden" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
-            <div class="px-6 py-4 flex items-center gap-3" style="border-bottom: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);">
-                <div class="p-1.5 rounded-lg" style="background: var(--color-bg-surface); color: var(--color-text-muted);">
-                    <x-heroicon-o-globe-alt class="w-4 h-4" />
+        <div class="oc-ext-grid">
+            {{-- Google Search Console --}}
+            <div class="oc-card">
+                <div class="oc-ext-top">
+                    <span class="oc-ext-name">Google Search Console</span>
+                    @if (! $gsc['configured'])
+                        <span class="oc-badge oc-badge-off">Not Connected</span>
+                    @elseif (isset($gsc['error']))
+                        <span class="oc-badge oc-badge-down">Connection Error</span>
+                    @else
+                        <span class="oc-badge oc-badge-{{ $gsc['errors'] > 0 ? 'down' : ($gsc['warnings'] > 0 ? 'warn' : 'ok') }}">{{ $gsc['errors'] }} error(s) / {{ $gsc['warnings'] }} warning(s)</span>
+                    @endif
                 </div>
-                <h3 class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">
-                    External Connections
-                </h3>
+
+                @if (! $gsc['configured'])
+                    <p class="oc-ext-desc">See indexed-vs-submitted counts and crawl errors once connected.</p>
+                    <a href="{{ \App\Filament\Pages\Settings\SeoControlCenter::getUrl() }}" class="oc-ext-link">Configure in Control Center &rarr;</a>
+                @elseif (isset($gsc['error']))
+                    <p class="oc-ext-desc" style="color: #dc2626;">{{ $gsc['error'] }}</p>
+                @else
+                    <div class="oc-ext-stats">
+                        <div>
+                            <div class="oc-ext-stat-label">Indexed vs Submitted</div>
+                            <div class="oc-ext-stat-value">{{ number_format($gsc['indexed']) }} / {{ number_format($gsc['submitted']) }}</div>
+                        </div>
+                        <div>
+                            <div class="oc-ext-stat-label">Sitemap Errors / Warnings</div>
+                            <div class="oc-ext-stat-value">{{ $gsc['errors'] }} / {{ $gsc['warnings'] }}</div>
+                        </div>
+                    </div>
+                @endif
             </div>
 
-            <div class="p-6 space-y-5">
-                {{-- Google Search Console --}}
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span style="font-weight: 600; font-size: 0.875rem;">Google Search Console</span>
-                        @if (! $gsc['configured'])
-                            <span class="op-status-pill op-status-pill-muted">Not Connected</span>
-                        @elseif (isset($gsc['error']))
-                            <span class="op-status-pill op-status-pill-down">Connection Error</span>
-                        @else
-                            <span class="op-status-pill {{ $gsc['errors'] > 0 ? 'op-status-pill-down' : ($gsc['warnings'] > 0 ? 'op-status-pill-warn' : 'op-status-pill-ok') }}">
-                                {{ $gsc['errors'] }} error(s) / {{ $gsc['warnings'] }} warning(s)
-                            </span>
-                        @endif
-                    </div>
-
-                    @if (! $gsc['configured'])
-                        <p class="op-widget-title" style="text-transform: none; opacity: 1; letter-spacing: normal; font-size: 0.8rem;">
-                            Add OAuth credentials on the Control Center's Structured Data tab to see indexed/submitted counts here.
-                        </p>
-                    @elseif (isset($gsc['error']))
-                        <p style="color: var(--danger-600, #dc2626); font-size: 0.8rem;">{{ $gsc['error'] }}</p>
-                    @else
-                        <div class="op-tile-grid" style="grid-template-columns: repeat(2, minmax(0,1fr));">
-                            <div class="op-tile" style="padding: 0.75rem 1rem;">
-                                <div class="op-tile-label">Indexed vs Submitted</div>
-                                <div class="op-tile-value" style="font-size: 1.15rem;">{{ number_format($gsc['indexed']) }} / {{ number_format($gsc['submitted']) }}</div>
-                            </div>
-                            <div class="op-tile" style="padding: 0.75rem 1rem;">
-                                <div class="op-tile-label">Sitemap Errors / Warnings</div>
-                                <div class="op-tile-value" style="font-size: 1.15rem;">{{ $gsc['errors'] }} / {{ $gsc['warnings'] }}</div>
-                            </div>
-                        </div>
-                    @endif
-                </div>
-
-                <div style="border-top: 1px solid var(--color-border-subtle);"></div>
-
-                {{-- Core Web Vitals --}}
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <span style="font-weight: 600; font-size: 0.875rem;">Core Web Vitals</span>
-                        @if (! $cwv['configured'])
-                            <span class="op-status-pill op-status-pill-muted">Not Connected</span>
-                        @elseif (isset($cwv['insufficientData']))
-                            <span class="op-status-pill op-status-pill-muted">Insufficient Data</span>
-                        @elseif (isset($cwv['error']))
-                            <span class="op-status-pill op-status-pill-down">Connection Error</span>
-                        @endif
-                    </div>
-
+            {{-- Core Web Vitals --}}
+            <div class="oc-card">
+                <div class="oc-ext-top">
+                    <span class="oc-ext-name">Core Web Vitals</span>
                     @if (! $cwv['configured'])
-                        <p class="op-widget-title" style="text-transform: none; opacity: 1; letter-spacing: normal; font-size: 0.8rem;">
-                            Add a CrUX API key on the Control Center's Structured Data tab to see real-user LCP/CLS/INP here.
-                        </p>
+                        <span class="oc-badge oc-badge-off">Not Connected</span>
                     @elseif (isset($cwv['insufficientData']))
-                        <p class="op-widget-title" style="text-transform: none; opacity: 1; letter-spacing: normal; font-size: 0.8rem;">
-                            CrUX has no real-user data yet for this origin — needs enough Chrome traffic, not a bug in this integration.
-                        </p>
+                        <span class="oc-badge oc-badge-off">Insufficient Data</span>
                     @elseif (isset($cwv['error']))
-                        <p style="color: var(--danger-600, #dc2626); font-size: 0.8rem;">{{ $cwv['error'] }}</p>
-                    @else
-                        <div class="op-tile-grid" style="grid-template-columns: repeat(3, minmax(0,1fr));">
-                            @foreach ([['LCP (p75)', $cwv['lcp']], ['CLS (p75)', $cwv['cls']], ['INP (p75)', $cwv['inp']]] as [$label, $metric])
-                                @php
-                                    $val = $metric['value'];
-                                    $display = $val === null ? '—' : (is_float($val) ? number_format($val, 2) : number_format($val)) . $metric['unit'];
-                                    $tone = $this->ratingTone($metric['rating']);
-                                @endphp
-                                <div class="op-tile" style="padding: 0.75rem 1rem;">
-                                    <div class="op-tile-label">{{ $label }}</div>
-                                    <div class="op-tile-value" style="font-size: 1.15rem;">{{ $display }}</div>
-                                    <span class="op-status-pill op-status-pill-{{ $tone }} op-tile-meta-pill">{{ $metric['rating'] ? ucwords(str_replace('-', ' ', $metric['rating'])) : 'No data' }}</span>
-                                </div>
-                            @endforeach
-                        </div>
+                        <span class="oc-badge oc-badge-down">Connection Error</span>
                     @endif
                 </div>
+
+                @if (! $cwv['configured'])
+                    <p class="oc-ext-desc">Real-user LCP, CLS and INP ratings via the CrUX API.</p>
+                    <a href="{{ \App\Filament\Pages\Settings\SeoControlCenter::getUrl() }}" class="oc-ext-link">Configure in Control Center &rarr;</a>
+                @elseif (isset($cwv['insufficientData']))
+                    <p class="oc-ext-desc">CrUX has no real-user data yet for this origin — needs enough Chrome traffic, not a bug in this integration.</p>
+                @elseif (isset($cwv['error']))
+                    <p class="oc-ext-desc" style="color: #dc2626;">{{ $cwv['error'] }}</p>
+                @else
+                    <div class="oc-ext-stats">
+                        @foreach ([['LCP (p75)', $cwv['lcp']], ['CLS (p75)', $cwv['cls']], ['INP (p75)', $cwv['inp']]] as [$label, $metric])
+                            @php
+                                $val = $metric['value'];
+                                $display = $val === null ? '—' : (is_float($val) ? number_format($val, 2) : number_format($val)) . $metric['unit'];
+                                $cwvTone = $this->ratingTone($metric['rating']) === 'muted' ? 'off' : $this->ratingTone($metric['rating']);
+                            @endphp
+                            <div>
+                                <div class="oc-ext-stat-label">{{ $label }}</div>
+                                <div class="oc-ext-stat-value">{{ $display }}</div>
+                                <span class="oc-badge oc-badge-{{ $cwvTone }}" style="margin-top: 0.35rem;">{{ $metric['rating'] ? ucwords(str_replace('-', ' ', $metric['rating'])) : 'No data' }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
     </div>
