@@ -4,13 +4,6 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\SeoHealthDashboard;
-use App\Filament\Widgets\Seo\ContentHealthWidget;
-use App\Filament\Widgets\Seo\CoreWebVitalsWidget;
-use App\Filament\Widgets\Seo\FeatureAdoptionWidget;
-use App\Filament\Widgets\Seo\GoogleSearchConsoleWidget;
-use App\Filament\Widgets\Seo\IndexNowActivityWidget;
-use App\Filament\Widgets\Seo\InternalSearchAnalyticsWidget;
-use App\Filament\Widgets\Seo\RedirectHealthWidget;
 use App\Models\Admin;
 use App\Models\FailedSearchLog;
 use App\Models\IndexNowPushLog;
@@ -29,6 +22,15 @@ use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
+/**
+ * SeoHealthDashboard used to be 7 separate StatsOverviewWidget classes,
+ * each @livewire-included as its own visually disjoint block — consolidated
+ * into one page with its own Blade view (op-tile-grid/op-card/op-status-pill/
+ * op-health-row, the same vocabulary BackupDashboard/HealthCheckStats
+ * already use) so this reads as one cohesive, modern dashboard instead.
+ * These tests assert against the single page's rendered output rather than
+ * per-widget Livewire components.
+ */
 class SeoHealthDashboardTest extends TestCase
 {
     use RefreshDatabase;
@@ -78,7 +80,7 @@ class SeoHealthDashboardTest extends TestCase
     }
 
     #[Test]
-    public function internal_search_analytics_widget_reports_the_match_type_ratio_and_zero_result_rate(): void
+    public function it_reports_the_match_type_ratio_and_zero_result_rate(): void
     {
         SearchLog::create(['search_query' => 'A1', 'normalized_query' => 'A1', 'result_count' => 1, 'match_type' => 'exact', 'lang' => 'en', 'ip_address' => '127.0.0.1']);
         SearchLog::create(['search_query' => 'A2', 'normalized_query' => 'A2', 'result_count' => 1, 'match_type' => 'cross_reference', 'lang' => 'en', 'ip_address' => '127.0.0.1']);
@@ -86,26 +88,27 @@ class SeoHealthDashboardTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(InternalSearchAnalyticsWidget::class)
+        Livewire::test(SeoHealthDashboard::class)
             ->assertSee('Searches (30d)')
-            ->assertSee('Zero-Result Rate');
+            ->assertSee('Zero-Result Rate')
+            ->assertSee('Exact 50% · Cross-ref 50% · Partial 0%', false);
     }
 
     #[Test]
-    public function content_health_widget_reports_translation_and_manual_description_coverage(): void
+    public function it_reports_translation_and_manual_description_coverage(): void
     {
         Product::factory()->withFullTranslations()->create();
         Product::factory()->create(); // en/de only — default ProductFactory shape
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(ContentHealthWidget::class)
+        Livewire::test(SeoHealthDashboard::class)
             ->assertSee('Translation Coverage')
             ->assertSee('Manual Descriptions');
     }
 
     #[Test]
-    public function feature_adoption_widget_reflects_the_detail_pages_toggle_and_own_image_percentage(): void
+    public function it_reflects_the_detail_pages_toggle_and_own_image_percentage(): void
     {
         Setting::where('group', 'seo')->where('key', 'detail_pages_enabled')->update(['value' => 'true']);
         Product::factory()->withImages()->create();
@@ -113,13 +116,13 @@ class SeoHealthDashboardTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(FeatureAdoptionWidget::class)
+        Livewire::test(SeoHealthDashboard::class)
             ->assertSee('Enabled')
             ->assertSee('Own Product Images');
     }
 
     #[Test]
-    public function index_now_activity_widget_reports_enabled_state_and_recent_failures(): void
+    public function it_reports_index_now_enabled_state_and_recent_failures(): void
     {
         Setting::where('group', 'seo')->where('key', 'indexnow_enabled')->update(['value' => 'true']);
         IndexNowPushLog::create(['url_count' => 3, 'status' => 'success']);
@@ -127,36 +130,40 @@ class SeoHealthDashboardTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(IndexNowActivityWidget::class)
-            ->assertSee('Enabled')
-            ->assertSee('Last Push');
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('IndexNow')
+            ->assertSee('1 failure(s)', false);
     }
 
     #[Test]
-    public function redirect_health_widget_flags_a_looping_chain_and_counts_unresolved_404s(): void
+    public function it_flags_a_looping_redirect_chain_and_counts_unresolved_404s(): void
     {
+        // A direct reverse pair is flagged from BOTH directions by
+        // RedirectLoopDetector::findAllLoops() (each redirect's own chain
+        // is walked independently) — 2 loop(s), not 1.
         Redirect::create(['from_url' => 'a', 'to_url' => 'b', 'type' => '301', 'is_active' => true]);
         Redirect::create(['from_url' => 'b', 'to_url' => 'a', 'type' => '301', 'is_active' => true]);
         NotFoundLog::recordHit('/dead-link', 'en', null, '127.0.0.1');
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(RedirectHealthWidget::class)
-            ->assertSee('loop back on themselves', false)
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('2 loop(s)', false)
             ->assertSee('Unresolved 404s');
     }
 
     #[Test]
-    public function google_search_console_widget_shows_not_connected_without_credentials(): void
+    public function google_search_console_section_shows_not_connected_without_credentials(): void
     {
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(GoogleSearchConsoleWidget::class)
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Google Search Console')
             ->assertSee('Not Connected');
     }
 
     #[Test]
-    public function google_search_console_widget_shows_indexed_and_submitted_counts_once_configured(): void
+    public function google_search_console_section_shows_indexed_and_submitted_counts_once_configured(): void
     {
         $service = app(SettingsService::class);
         $service->set('seo.gsc_client_id', 'client-123');
@@ -175,22 +182,23 @@ class SeoHealthDashboardTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(GoogleSearchConsoleWidget::class)
+        Livewire::test(SeoHealthDashboard::class)
             ->assertSee('Indexed vs Submitted')
             ->assertSee('8 / 10');
     }
 
     #[Test]
-    public function core_web_vitals_widget_shows_not_connected_without_an_api_key(): void
+    public function core_web_vitals_section_shows_not_connected_without_an_api_key(): void
     {
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(CoreWebVitalsWidget::class)
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Core Web Vitals')
             ->assertSee('Not Connected');
     }
 
     #[Test]
-    public function core_web_vitals_widget_shows_ratings_once_configured(): void
+    public function core_web_vitals_section_shows_ratings_once_configured(): void
     {
         app(SettingsService::class)->set('seo.crux_api_key', 'crux-key-123');
 
@@ -208,7 +216,7 @@ class SeoHealthDashboardTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(CoreWebVitalsWidget::class)
+        Livewire::test(SeoHealthDashboard::class)
             ->assertSee('LCP (p75)')
             ->assertSee('Good');
     }
