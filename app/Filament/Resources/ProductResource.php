@@ -116,6 +116,46 @@ class ProductResource extends Resource
                                         ]),
                                     ]),
 
+                                Section::make('Product Images')
+                                    ->description('Gallery shown on the storefront and used in Product structured data. The first (or explicitly featured) image is the main one; only one image can be featured at a time.')
+                                    ->icon('heroicon-o-photo')
+                                    ->schema([
+                                        Forms\Components\Repeater::make('images')
+                                            ->label('')
+                                            ->relationship('images')
+                                            ->schema([
+                                                Forms\Components\FileUpload::make('path')
+                                                    ->label('Image')
+                                                    ->image()
+                                                    ->disk('public')
+                                                    ->directory('product-images')
+                                                    ->maxSize(4096)
+                                                    ->required()
+                                                    ->columnSpan(1)
+                                                    ->helperText('Max 4MB. A thumbnail and medium-size version are generated automatically.'),
+                                                Forms\Components\Toggle::make('is_featured')
+                                                    ->label('Featured (main product image)')
+                                                    ->helperText('Only one image per product can be featured — setting this un-sets any other featured image.')
+                                                    ->columnSpan(1),
+                                                AdminUi::translatableTabs('Alt Text', [
+                                                    'alt_text' => [
+                                                        'label' => 'Alt Text',
+                                                        'required' => false,
+                                                        'helperText' => 'Describes the image for accessibility and image search — e.g. "Bosch brake pad, front, new".',
+                                                    ],
+                                                ]),
+                                            ])
+                                            ->columns(2)
+                                            ->orderColumn('sort_order')
+                                            ->reorderable()
+                                            ->collapsible()
+                                            ->collapsed(fn (?array $state): bool => filled($state) && count($state) > 1)
+                                            ->itemLabel(fn (array $state): ?string => $state['is_featured'] ?? false ? 'Featured image' : 'Gallery image')
+                                            ->defaultItems(0)
+                                            ->addActionLabel('Add Image')
+                                            ->columnSpanFull(),
+                                    ]),
+
                                 Section::make('Compatibility & Cross-References')
                                     ->description('Vehicles this part fits and equivalent OEM numbers for cross-referencing.')
                                     ->icon('heroicon-o-wrench-screwdriver')
@@ -593,7 +633,6 @@ class ProductResource extends Resource
         return [
             RelationManagers\CrossReferencesRelationManager::class,
             RelationManagers\CarModelsRelationManager::class,
-            RelationManagers\ProductImagesRelationManager::class,
         ];
     }
 
