@@ -499,6 +499,10 @@
             // to a hardcoded five-locale array), a second independent
             // mechanism that LanguageResource never touched at all.
             $mobileLanguages = \App\Support\LocaleRegistry::languages();
+            // Flag emoji don't render as pictorial flags on Windows (Segoe UI
+            // Emoji never added real flag glyphs) — same fix as the desktop
+            // <x-language-switcher>. public/flags/ has no en.svg; 'gb' stands in.
+            $mobileFlagAsset = fn (string $code): string => asset('flags/' . ($code === 'en' ? 'gb' : $code) . '.svg');
             $mobileLangUrl = function($newLocale) {
                 $current = request()->route();
                 if (!$current || !$current->getName()) { return "/{$newLocale}/"; }
@@ -528,7 +532,7 @@
                        aria-label="{{ $language['native_name'] }}"
                        class="flex flex-col items-center justify-center gap-1.5 py-3 transition-colors
                               {{ $isActive ? 'bg-amber text-ink' : 'bg-paper text-ink hover:bg-ivory-alt' }}">
-                        <span class="text-lg leading-none" aria-hidden="true">{{ $language['flag_emoji'] }}</span>
+                        <img src="{{ $mobileFlagAsset($language['code']) }}" alt="" width="22" height="16" class="rounded-xs" aria-hidden="true">
                         <span class="font-mono text-[10px] font-bold tracking-[0.18em] uppercase tabular-nums">
                             {{ strtoupper($language['code']) }}
                         </span>

@@ -307,7 +307,7 @@
         {{-- Description — this, not just the JSON-LD copy, is the actual
              thin-content mitigation: it must be real on-page content a
              visitor (and crawler) can read. --}}
-        <div class="md:col-span-3 border-t border-rule pt-6 mt-2">
+        <div class="order-4 md:col-span-3 border-t border-rule pt-6 mt-2">
             <p class="text-sm text-body leading-relaxed max-w-[68ch]">{{ $product->descriptionOrFallback($lang) }}</p>
         </div>
 
@@ -318,7 +318,7 @@
              parts UX research most consistently ties to fewer returns and
              lower cart abandonment. --}}
         @if($confirmedFitment->isNotEmpty())
-        <div class="md:col-span-3 border-t border-rule pt-6">
+        <div class="order-5 md:col-span-3 border-t border-rule pt-6">
             <p class="bp-spec text-amber-ink mb-1">{{ __('search.fitment_title') }}</p>
             <p class="text-xs text-ink-muted mb-3">{{ __('search.fitment_subtitle') }}</p>
             <div class="border border-rule overflow-x-auto">
@@ -347,7 +347,7 @@
         {{-- Cross-reference OEM numbers — same concept as the hub page's
              expandable panel, so the detail page's content isn't thinner. --}}
         @if($product->crossReferences->isNotEmpty())
-        <div class="md:col-span-3 border-t border-rule pt-6">
+        <div class="order-6 md:col-span-3 border-t border-rule pt-6">
             <p class="bp-spec text-amber-ink mb-3">{{ ui_copy('search_cross_refs_title', 'search.cross_refs_title') }}</p>
             <div class="flex flex-wrap gap-1.5">
                 @foreach($product->crossReferences as $cross)
@@ -363,7 +363,7 @@
 
         {{-- Fitment & shipping FAQ — real, visible content that mirrors
              the promises made in the trust badges/spec panel above. --}}
-        <div class="md:col-span-3 border-t border-rule pt-6">
+        <div class="order-7 md:col-span-3 border-t border-rule pt-6">
             <p class="bp-spec text-amber-ink mb-3">{{ __('search.faq_title') }}</p>
             <div class="border border-rule divide-y divide-rule">
                 <div class="p-4">

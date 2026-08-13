@@ -42,6 +42,13 @@
 
     $isDark = $theme === 'dark';
     $alignPosition = $align === 'right' ? 'right-0' : 'left-0';
+
+    // Flag *emoji* render as plain two-letter codes (or nothing at all) on
+    // Windows, which never got real pictorial flag glyphs added to Segoe UI
+    // Emoji — confirmed the same failure mode already fixed on the SEO
+    // Health Dashboard. public/flags/ has no en.svg (English isn't a
+    // country); 'gb' is the same stand-in used there.
+    $flagAsset = fn (string $code): string => asset('flags/' . ($code === 'en' ? 'gb' : $code) . '.svg');
 @endphp
 
 <div class="relative" x-data="{
@@ -89,7 +96,7 @@
         aria-haspopup="menu"
         :aria-expanded="open"
     >
-        <span class="text-base leading-none" aria-hidden="true">{{ $currentLanguage['flag_emoji'] }}</span>
+        <img src="{{ $flagAsset($currentLanguage['code']) }}" alt="" width="18" height="13" class="rounded-xs shrink-0" aria-hidden="true">
         <span class="tabular-nums">{{ strtoupper($currentLocale) }}</span>
         <svg class="w-3 h-3 transition-transform duration-200" :class="{ 'rotate-180': open }"
              fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -150,7 +157,7 @@
                                    {{ $isDark ? 'hover:bg-white/5' : 'hover:bg-ivory-alt' }}
                                @endif"
                     >
-                        <span class="text-lg leading-none" aria-hidden="true">{{ $lang['flag_emoji'] }}</span>
+                        <img src="{{ $flagAsset($lang['code']) }}" alt="" width="22" height="16" class="rounded-xs shrink-0" aria-hidden="true">
                         <div class="flex-1 min-w-0">
                             <p class="font-sans text-[13px] font-bold tracking-tight leading-tight
                                       @if(!$active) {{ $isDark ? 'text-ivory' : 'text-ink' }} @endif">
