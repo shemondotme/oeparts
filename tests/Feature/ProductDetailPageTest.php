@@ -118,6 +118,42 @@ class ProductDetailPageTest extends TestCase
     }
 
     #[Test]
+    public function detail_page_shows_confirmed_vehicle_fitment_when_car_models_are_linked(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+        $carManufacturer = Manufacturer::create([
+            'name' => ['en' => 'Audi', 'de' => 'Audi', 'lt' => 'Audi', 'fr' => 'Audi', 'es' => 'Audi'],
+            'slug' => 'audi', 'country_code' => 'DE', 'is_active' => true,
+        ]);
+        $carModel = \App\Models\CarModel::create([
+            'manufacturer_id' => $carManufacturer->id,
+            'name' => 'A4 (B9)', 'slug' => 'a4-b9',
+            'year_from' => 2016, 'year_to' => 2019, 'is_active' => true,
+        ]);
+        $product->carModels()->attach($carModel->id);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Confirmed Vehicle Fitment');
+        $response->assertSeeText('Audi A4 (B9)');
+        $response->assertSeeText('2016');
+    }
+
+    #[Test]
+    public function detail_page_omits_the_fitment_section_when_no_car_models_are_linked(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSeeText('Confirmed Vehicle Fitment');
+    }
+
+    #[Test]
     public function discontinued_product_redirects_to_hub(): void
     {
         $this->enableDetailPages();

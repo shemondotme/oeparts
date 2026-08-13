@@ -158,7 +158,7 @@ class SearchController extends Controller
         $id = (int) strtok($idSlug, '-');
 
         $product = Product::withTrashed()
-            ->with(['manufacturer.logo', 'crossReferences', 'condition', 'carModels', 'images'])
+            ->with(['manufacturer.logo', 'crossReferences', 'condition', 'carModels.manufacturer', 'images'])
             ->find($id);
 
         // Toggle check FIRST — this single check is what makes "toggle off
