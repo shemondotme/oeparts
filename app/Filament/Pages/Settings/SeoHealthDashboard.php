@@ -6,13 +6,16 @@ use App\Models\CoreWebVitalsSnapshot;
 use App\Models\FailedSearchLog;
 use App\Models\IndexNowPushLog;
 use App\Models\NotFoundLog;
+use App\Models\NotFoundLogSnapshot;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Redirect;
 use App\Models\SearchLog;
 use App\Models\SeoMeta;
 use App\Services\CoreWebVitalsService;
 use App\Services\GoogleSearchConsoleService;
 use App\Services\RedirectLoopDetector;
+use App\Services\SeoService;
 use App\Support\LocaleRegistry;
 use Carbon\Carbon;
 use Filament\Actions\Action;
@@ -179,7 +182,18 @@ class SeoHealthDashboard extends Page
      * search-result titles) and need no external tool to detect — it's a
      * GROUP BY over our own table.
      *
-     * @return array{total:int, customTitlePercent:int, customTitleCount:int, customDescriptionPercent:int, customDescriptionCount:int, duplicateTitleGroups:int, duplicateTitleProducts:int}
+     * Also covers three more free, our-own-data-only checks: image alt text
+     * (accessibility + image search, same jsonNotEmpty() pattern as
+     * Translation Coverage), structured-data itemCondition completeness
+     * (SeoService::conditionSchemaMap() — the only conditionally-omitted
+     * field in productJsonLd(), so it's the only one where "complete" is a
+     * meaningful signal), thin/orphan catalog entries (active, but with
+     * neither cross-references nor car-model fitment — almost no content
+     * for a crawler to index), and a canonical URL override that points
+     * off this domain entirely (near-always a misconfiguration, since
+     * `canonical_url` has no validation anywhere it's edited).
+     *
+     * @return array{total:int, customTitlePercent:int, customTitleCount:int, customDescriptionPercent:int, customDescriptionCount:int, duplicateTitleGroups:int, duplicateTitleProducts:int, altTextPercent:int, altTextCount:int, altTextTotal:int, conditionMappedPercent:int, conditionMappedCount:int, thinProductCount:int, offDomainCanonicalCount:int}
      */
     public function onPageAudit(): array
     {
@@ -191,6 +205,9 @@ class SeoHealthDashboard extends Page
                     'total' => 0, 'customTitlePercent' => 0, 'customTitleCount' => 0,
                     'customDescriptionPercent' => 0, 'customDescriptionCount' => 0,
                     'duplicateTitleGroups' => 0, 'duplicateTitleProducts' => 0,
+                    'altTextPercent' => 0, 'altTextCount' => 0, 'altTextTotal' => 0,
+                    'conditionMappedPercent' => 0, 'conditionMappedCount' => 0,
+                    'thinProductCount' => 0, 'offDomainCanonicalCount' => 0,
                 ];
             }
 
@@ -198,6 +215,7 @@ class SeoHealthDashboard extends Page
             // every active product ID into PHP just to hand it back to MySQL
             // as a giant IN() list is real, avoidable overhead.
             $activeProductIds = fn () => Product::query()->active()->select('id');
+            $default = LocaleRegistry::defaultCode();
 
             $customTitleCount = SeoMeta::query()
                 ->where('metable_type', Product::class)
@@ -223,6 +241,31 @@ class SeoHealthDashboard extends Page
                 ->having('cnt', '>', 1)
                 ->pluck('cnt');
 
+            $altTextTotal = ProductImage::query()->whereIn('product_id', $activeProductIds())->count();
+            $altTextCount = $altTextTotal > 0
+                ? ProductImage::query()->whereIn('product_id', $activeProductIds())
+                    ->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('alt_text', $default)))
+                    ->count()
+                : 0;
+
+            $conditionMappedCount = Product::query()->active()
+                ->whereHas('condition', fn ($q) => $q->whereIn('slug', array_keys(SeoService::conditionSchemaMap())))
+                ->count();
+
+            $thinProductCount = Product::query()->active()
+                ->whereDoesntHave('crossReferences')
+                ->whereDoesntHave('carModels')
+                ->count();
+
+            $canonicalHost = trim((string) settings('seo.canonical_host', ''));
+            $offDomainCanonicalCount = $canonicalHost === '' ? 0 : SeoMeta::query()
+                ->where('metable_type', Product::class)
+                ->whereIn('metable_id', $activeProductIds())
+                ->whereNotNull('canonical_url')
+                ->where('canonical_url', '!=', '')
+                ->where('canonical_url', 'not like', "%{$canonicalHost}%")
+                ->count();
+
             return [
                 'total' => $total,
                 'customTitlePercent' => (int) round(100 * $customTitleCount / $total),
@@ -231,6 +274,13 @@ class SeoHealthDashboard extends Page
                 'customDescriptionCount' => $customDescriptionCount,
                 'duplicateTitleGroups' => $duplicateGroupSizes->count(),
                 'duplicateTitleProducts' => (int) $duplicateGroupSizes->sum(),
+                'altTextPercent' => $altTextTotal > 0 ? (int) round(100 * $altTextCount / $altTextTotal) : 0,
+                'altTextCount' => $altTextCount,
+                'altTextTotal' => $altTextTotal,
+                'conditionMappedPercent' => (int) round(100 * $conditionMappedCount / $total),
+                'conditionMappedCount' => $conditionMappedCount,
+                'thinProductCount' => $thinProductCount,
+                'offDomainCanonicalCount' => $offDomainCanonicalCount,
             ];
         });
     }
@@ -276,7 +326,7 @@ class SeoHealthDashboard extends Page
     }
 
     /**
-     * @return array{activeRedirects:int, loopCount:int, unresolved404s:int}
+     * @return array{activeRedirects:int, loopCount:int, unresolved404s:int, brokenTargets:int}
      */
     public function redirectHealth(): array
     {
@@ -284,7 +334,63 @@ class SeoHealthDashboard extends Page
             'activeRedirects' => Redirect::query()->active()->count(),
             'loopCount' => count(app(RedirectLoopDetector::class)->findAllLoops()),
             'unresolved404s' => NotFoundLog::query()->where('resolved', false)->count(),
+            'brokenTargets' => $this->brokenRedirectTargets(),
         ];
+    }
+
+    /**
+     * Flags redirects whose target is itself a dead end — scoped to the one
+     * internal URL shape this catalog actually redirects to at volume (the
+     * OEM search-hub route, e.g. from OEM-normalization redirects): if the
+     * target's OEM segment matches no active product, following the
+     * redirect just lands on another zero-result page. A full link-checker
+     * would need to actually fetch every target (new infra, outbound HTTP
+     * calls); this catches the common, high-value case from data already
+     * on hand.
+     */
+    private function brokenRedirectTargets(): int
+    {
+        $pattern = '#^/(?:'.LocaleRegistry::routePattern().')/parts/([A-Za-z0-9\-\.\s]+)$#';
+        $broken = 0;
+
+        Redirect::query()->active()->select('to_url')->chunk(200, function ($redirects) use ($pattern, &$broken) {
+            foreach ($redirects as $redirect) {
+                $path = parse_url($redirect->to_url, PHP_URL_PATH) ?: $redirect->to_url;
+
+                if (! preg_match($pattern, $path, $m)) {
+                    continue;
+                }
+
+                $exists = Product::query()->active()
+                    ->where('normalized_oem', strtoupper(trim($m[1])))
+                    ->exists();
+
+                if (! $exists) {
+                    $broken++;
+                }
+            }
+        });
+
+        return $broken;
+    }
+
+    /**
+     * History for the 404-count trend bars — populated by the weekly
+     * notfound:snapshot command (routes/console.php). A single data point
+     * isn't a trend, so callers should treat fewer than 2 rows as "no
+     * history yet."
+     *
+     * @return array<int, int>
+     */
+    public function notFoundTrend(): array
+    {
+        return NotFoundLogSnapshot::query()
+            ->latest('recorded_at')
+            ->limit(12)
+            ->pluck('unresolved_count')
+            ->reverse()
+            ->values()
+            ->all();
     }
 
     /**
@@ -325,6 +431,47 @@ class SeoHealthDashboard extends Page
         }
 
         return array_merge(['configured' => true], $analytics);
+    }
+
+    /**
+     * One homepage URL per active locale — a small, fixed set chosen
+     * specifically to respect the URL Inspection API's low daily quota
+     * (never scaled to the catalog). Cached for an hour, longer than the
+     * other GSC data above, for the same quota reason.
+     *
+     * @return array{configured:bool, error?:string, results?:array<int, array{code:string, name:string, flag:string, url:string, verdict:string, coverageState:?string}>}
+     */
+    public function googleUrlInspection(): array
+    {
+        $service = app(GoogleSearchConsoleService::class);
+
+        if (! $service->isConfigured()) {
+            return ['configured' => false];
+        }
+
+        return Cache::remember('admin:seo-health:gsc-url-inspection', 3600, function () use ($service): array {
+            $results = [];
+
+            foreach (LocaleRegistry::languages() as $language) {
+                $url = rtrim(url('/'), '/').'/'.$language['code'];
+                $inspection = $service->inspectUrl($url);
+
+                if (isset($inspection['error'])) {
+                    return ['configured' => true, 'error' => $inspection['error']];
+                }
+
+                $results[] = [
+                    'code' => $language['code'],
+                    'name' => self::COUNTRY_NAMES[$language['code']] ?? $language['name'],
+                    'flag' => $language['flag_emoji'],
+                    'url' => $url,
+                    'verdict' => $inspection['verdict'],
+                    'coverageState' => $inspection['coverageState'],
+                ];
+            }
+
+            return ['configured' => true, 'results' => $results];
+        });
     }
 
     /**

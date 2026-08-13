@@ -144,6 +144,71 @@ class SeoHealthDashboardTest extends TestCase
     }
 
     #[Test]
+    public function on_page_audit_reports_image_alt_text_coverage(): void
+    {
+        $product = Product::factory()->create();
+        \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => 'product-images/a.jpg', 'is_featured' => true, 'alt_text' => ['en' => 'Bosch brake pad, front, new']]);
+        \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => 'product-images/b.jpg', 'alt_text' => null]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Image Alt Text')
+            ->assertSee('1 / 2 images', false);
+    }
+
+    #[Test]
+    public function on_page_audit_reports_structured_data_condition_mapping(): void
+    {
+        $unmapped = \App\Models\Condition::firstOrCreate(['slug' => 'salvage'], ['name' => 'Salvage', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        Product::factory()->create(['condition_id' => $unmapped->id]); // 'new' is the other, mapped, factory default
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Structured Data — Condition', false)
+            ->assertSee('0 / 1 products', false);
+    }
+
+    #[Test]
+    public function on_page_audit_flags_active_products_with_no_cross_references_or_car_models(): void
+    {
+        Product::factory()->create(); // thin — no relations attached
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Thin Catalog Entries')
+            ->assertSee('1 product(s)', false);
+    }
+
+    #[Test]
+    public function on_page_audit_does_not_flag_a_product_with_car_model_fitment_as_thin(): void
+    {
+        Product::factory()->withCarModels()->create();
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Thin Catalog Entries')
+            ->assertSee('None', false);
+    }
+
+    #[Test]
+    public function on_page_audit_flags_a_canonical_url_pointing_off_the_configured_domain(): void
+    {
+        Setting::updateOrCreate(['group' => 'seo', 'key' => 'canonical_host'], ['value' => 'oeparts.com', 'type' => 'string', 'is_encrypted' => false]);
+        $product = Product::factory()->create();
+        SeoMeta::create(['metable_type' => Product::class, 'metable_id' => $product->id, 'canonical_url' => 'https://some-other-site.example/page']);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Off-Domain Canonical URLs')
+            ->assertSee('1 product(s)', false);
+    }
+
+    #[Test]
     public function search_performance_section_shows_not_connected_without_credentials(): void
     {
         $this->actingAs($this->superAdmin(), 'admin');
@@ -260,6 +325,52 @@ class SeoHealthDashboardTest extends TestCase
     }
 
     #[Test]
+    public function redirect_health_flags_a_target_pointing_at_a_nonexistent_oem(): void
+    {
+        Redirect::create(['from_url' => '/en/parts/oldnumber', 'to_url' => '/en/parts/DOESNOTEXIST', 'type' => '301', 'is_active' => true]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Broken Redirect Targets')
+            ->assertSee('1 redirect(s)', false);
+    }
+
+    #[Test]
+    public function redirect_health_does_not_flag_a_target_pointing_at_a_real_oem(): void
+    {
+        $product = Product::factory()->create(['oem_number' => '06L906036L', 'normalized_oem' => '06L906036L']);
+        Redirect::create(['from_url' => '/en/parts/old-alias', 'to_url' => '/en/parts/'.$product->normalized_oem, 'type' => '301', 'is_active' => true]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Broken Redirect Targets')
+            ->assertSee('None', false);
+    }
+
+    #[Test]
+    public function not_found_trend_is_hidden_with_fewer_than_two_snapshots(): void
+    {
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertDontSee('Week Unresolved-404 Trend', false);
+    }
+
+    #[Test]
+    public function not_found_trend_shows_once_at_least_two_snapshots_exist(): void
+    {
+        \App\Models\NotFoundLogSnapshot::create(['unresolved_count' => 2, 'recorded_at' => now()->subWeek()]);
+        \App\Models\NotFoundLogSnapshot::create(['unresolved_count' => 5, 'recorded_at' => now()]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Week Unresolved-404 Trend', false);
+    }
+
+    #[Test]
     public function google_search_console_section_shows_not_connected_without_credentials(): void
     {
         $this->actingAs($this->superAdmin(), 'admin');
@@ -326,5 +437,39 @@ class SeoHealthDashboardTest extends TestCase
         Livewire::test(SeoHealthDashboard::class)
             ->assertSee('LCP (p75)')
             ->assertSee('Good');
+    }
+
+    #[Test]
+    public function google_indexing_check_shows_not_connected_without_credentials(): void
+    {
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Google Indexing Check')
+            ->assertSee('Connect Google Search Console');
+    }
+
+    #[Test]
+    public function google_indexing_check_reports_a_verdict_per_locale_once_configured(): void
+    {
+        $service = app(SettingsService::class);
+        $service->set('seo.gsc_client_id', 'client-123');
+        $service->set('seo.gsc_client_secret', 'secret-abc');
+        $service->set('seo.gsc_refresh_token', 'refresh-xyz');
+        $service->set('seo.gsc_property_url', 'https://oeparts.test/');
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            '*urlInspection/index:inspect*' => Http::response([
+                'inspectionResult' => ['indexStatusResult' => ['verdict' => 'PASS', 'coverageState' => 'Submitted and indexed']],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Google Indexing Check')
+            ->assertSee('Submitted and indexed')
+            ->assertSee('Pass');
     }
 }

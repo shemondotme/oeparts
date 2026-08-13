@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * NotFoundLog — one row per distinct 404 path (SEO Module), deduplicated by
@@ -65,5 +66,22 @@ class NotFoundLog extends Model
             // Race: a concurrent request inserted this path_hash first.
             static::query()->where('path_hash', $hash)->increment('hit_count', 1, ['last_seen_at' => now()]);
         }
+    }
+
+    /**
+     * Records an unresolved-404-count snapshot for trend tracking on the SEO
+     * Health Dashboard — same throttle-lock pattern as CacheMetricsService::
+     * snapshot() / CoreWebVitalsService::snapshot(), so a manual run right
+     * after the scheduled one is a no-op rather than a duplicate row.
+     */
+    public static function snapshot(): int
+    {
+        $count = static::query()->where('resolved', false)->count();
+
+        if (Cache::add('notfound:snapshot_lock', 1, 3600)) {
+            NotFoundLogSnapshot::create(['unresolved_count' => $count, 'recorded_at' => now()]);
+        }
+
+        return $count;
     }
 }

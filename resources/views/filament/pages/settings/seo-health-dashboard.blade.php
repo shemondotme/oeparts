@@ -83,8 +83,13 @@
             $adoption = $this->featureAdoption();
             $indexNow = $this->indexNowActivity();
             $redirects = $this->redirectHealth();
+            $notFoundTrend = $this->notFoundTrend();
             $gsc = $this->googleSearchConsole();
             $gscAnalytics = $this->googleSearchAnalytics();
+            $urlInspection = $this->googleUrlInspection();
+            $verdictTone = fn (string $v) => match ($v) {
+                'PASS' => 'ok', 'PARTIAL' => 'warn', 'FAIL' => 'down', default => 'off',
+            };
             $cwv = $this->coreWebVitals();
             $cwvHistory = $this->coreWebVitalsHistory();
 
@@ -196,6 +201,33 @@
             @endif
         </div>
 
+        {{-- ── Google Indexing Check ────────────────────────────────────── --}}
+        <div class="oc-section">
+            <div class="oc-section-head">
+                <x-heroicon-o-magnifying-glass-circle />
+                Google Indexing Check — Homepage per Locale
+            </div>
+            @if (! $urlInspection['configured'])
+                <div class="oc-empty">
+                    Connect Google Search Console to see whether Google can actually index each locale's homepage right now.
+                    <a href="{{ \App\Filament\Pages\Settings\SeoControlCenter::getUrl() }}" class="oc-ext-link" style="display: block; margin-top: 0.4rem;">Configure in Control Center &rarr;</a>
+                </div>
+            @elseif (isset($urlInspection['error']))
+                <div class="oc-empty" style="color: #dc2626;">{{ $urlInspection['error'] }}</div>
+            @else
+                @foreach ($urlInspection['results'] as $r)
+                    <div class="oc-row" style="grid-template-columns: 1.4fr 0.8fr 1.8fr;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <img src="{{ asset('flags/' . $r['code'] . '.svg') }}" alt="" width="18" height="13" style="border-radius: 2px; box-shadow: 0 0 0 1px var(--color-border-subtle); flex: none;">
+                            <span class="oc-name">{{ $r['name'] }}</span>
+                        </div>
+                        <span class="oc-badge oc-badge-{{ $verdictTone($r['verdict']) }}">{{ ucfirst(strtolower($r['verdict'])) }}</span>
+                        <div class="oc-detail">{{ $r['coverageState'] ?? 'No coverage data' }}</div>
+                    </div>
+                @endforeach
+            @endif
+        </div>
+
         {{-- ── Feature Adoption ─────────────────────────────────────────── --}}
         @php
             $detailPagesState = $adoption['detailPagesEnabled'] ? 'ok' : 'off';
@@ -238,6 +270,7 @@
             $redirectState = $redirects['loopCount'] > 0 ? 'down' : 'ok';
             $notFoundState = $redirects['unresolved404s'] > 0 ? 'warn' : 'ok';
             $indexNowHealthState = ! $indexNow['enabled'] ? 'off' : ($indexNow['recentFailures'] > 0 ? 'warn' : 'ok');
+            $brokenTargetState = $redirects['brokenTargets'] > 0 ? 'down' : 'ok';
         @endphp
         <div class="oc-section">
             <div class="oc-section-head">
@@ -262,6 +295,14 @@
             </div>
             <div class="oc-row">
                 <div>
+                    <div class="oc-name">Broken Redirect Targets</div>
+                    <div class="oc-subtext">Redirects pointing at an OEM that no longer exists</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $brokenTargetState }}">{{ $redirects['brokenTargets'] > 0 ? number_format($redirects['brokenTargets']).' redirect(s)' : 'None' }}</span>
+                <div class="oc-detail">{{ $redirects['brokenTargets'] > 0 ? 'Following the redirect lands on a dead end' : 'Every checked target resolves' }}</div>
+            </div>
+            <div class="oc-row">
+                <div>
                     <div class="oc-name">IndexNow Activity</div>
                     <div class="oc-subtext">{{ $indexNow['lastLabel'] }}</div>
                 </div>
@@ -270,6 +311,20 @@
                 </span>
                 <div class="oc-detail">Last 7 days</div>
             </div>
+
+            @if (count($notFoundTrend) >= 2)
+                <div style="padding: 0.75rem 1.25rem; border-top: 1px solid var(--color-border-subtle);">
+                    <div class="oc-ext-stat-label" style="margin-bottom: 0.5rem;">{{ count($notFoundTrend) }}-Week Unresolved-404 Trend</div>
+                    <div class="oc-trend">
+                        <span class="oc-trend-label">Count</span>
+                        <span class="op-spark-bars">
+                            @foreach ($notFoundTrend as $count)
+                                <span class="op-spark-bar op-spark-bar-{{ $count === 0 ? 'ok' : ($count <= 5 ? 'warn' : 'down') }}"></span>
+                            @endforeach
+                        </span>
+                    </div>
+                </div>
+            @endif
         </div>
 
         {{-- ── On-Page SEO Audit ────────────────────────────────────────── --}}
@@ -277,6 +332,10 @@
             $customTitleState = $onPage['customTitlePercent'] < 20 ? 'warn' : 'ok';
             $customDescState = $onPage['customDescriptionPercent'] < 20 ? 'warn' : 'ok';
             $dupTitleState = $onPage['duplicateTitleProducts'] > 0 ? 'warn' : 'ok';
+            $altTextState = $onPage['altTextPercent'] < 50 ? 'warn' : 'ok';
+            $conditionState = $onPage['conditionMappedPercent'] < 50 ? 'warn' : 'ok';
+            $thinState = $onPage['thinProductCount'] > 0 ? 'warn' : 'ok';
+            $offDomainState = $onPage['offDomainCanonicalCount'] > 0 ? 'down' : 'ok';
         @endphp
         <div class="oc-section">
             <div class="oc-section-head">
@@ -306,6 +365,38 @@
                 </div>
                 <span class="oc-badge oc-badge-{{ $dupTitleState }}">{{ $onPage['duplicateTitleProducts'] > 0 ? number_format($onPage['duplicateTitleProducts']).' product(s)' : 'None' }}</span>
                 <div class="oc-detail">{{ $onPage['duplicateTitleGroups'] > 0 ? 'Across '.number_format($onPage['duplicateTitleGroups']).' duplicate title(s)' : 'Every custom title is unique' }}</div>
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Image Alt Text</div>
+                    <div class="oc-subtext">Product images with real alt text — accessibility + image search</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $altTextState }}">{{ $onPage['altTextPercent'] }}%</span>
+                <div class="oc-detail">{{ number_format($onPage['altTextCount']) }} / {{ number_format($onPage['altTextTotal']) }} images</div>
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Structured Data — Condition</div>
+                    <div class="oc-subtext">Products with a condition mapped for Product JSON-LD's itemCondition</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $conditionState }}">{{ $onPage['conditionMappedPercent'] }}%</span>
+                <div class="oc-detail">{{ number_format($onPage['conditionMappedCount']) }} / {{ number_format($onPage['total']) }} products</div>
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Thin Catalog Entries</div>
+                    <div class="oc-subtext">Active products with no cross-references and no car-model fitment</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $thinState }}">{{ $onPage['thinProductCount'] > 0 ? number_format($onPage['thinProductCount']).' product(s)' : 'None' }}</span>
+                <div class="oc-detail">{{ $onPage['thinProductCount'] > 0 ? 'Little content for a crawler to index' : 'Every product has real content' }}</div>
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Off-Domain Canonical URLs</div>
+                    <div class="oc-subtext">Manual canonical override pointing outside this domain</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $offDomainState }}">{{ $onPage['offDomainCanonicalCount'] > 0 ? number_format($onPage['offDomainCanonicalCount']).' product(s)' : 'None' }}</span>
+                <div class="oc-detail">{{ $onPage['offDomainCanonicalCount'] > 0 ? 'Likely a misconfiguration — check the SEO & Meta tab' : 'No off-domain canonicals found' }}</div>
             </div>
         </div>
 

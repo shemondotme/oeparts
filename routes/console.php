@@ -93,6 +93,11 @@ Schedule::command('cache:snapshot')->everyFiveMinutes();
 // tighter cadence would just record near-duplicate rows.
 Schedule::command('cwv:snapshot')->weekly();
 
+// Unresolved-404 count history — weekly, matching the CWV cadence above;
+// a dead-link count doesn't need every-five-minutes resolution to show a
+// meaningful trend.
+Schedule::command('notfound:snapshot')->weekly();
+
 // Purge customer refund evidence photos long after the refund was resolved —
 // GDPR data minimization (default 180 days after processed_at).
 Schedule::command('oeparts:refunds:clean-images')->dailyAt('04:15');

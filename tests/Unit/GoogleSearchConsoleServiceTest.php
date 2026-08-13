@@ -177,4 +177,48 @@ class GoogleSearchConsoleServiceTest extends TestCase
 
         $this->assertArrayHasKey('error', $result);
     }
+
+    #[Test]
+    public function it_inspects_a_url_and_reports_the_index_verdict(): void
+    {
+        $this->configure();
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            '*urlInspection/index:inspect*' => Http::response([
+                'inspectionResult' => [
+                    'indexStatusResult' => [
+                        'verdict' => 'PASS',
+                        'coverageState' => 'Submitted and indexed',
+                        'robotsTxtState' => 'ALLOWED',
+                        'indexingState' => 'INDEXING_ALLOWED',
+                        'lastCrawlTime' => '2026-08-01T00:00:00Z',
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $result = app(GoogleSearchConsoleService::class)->inspectUrl('https://oeparts.test/en');
+
+        $this->assertSame('PASS', $result['verdict']);
+        $this->assertSame('Submitted and indexed', $result['coverageState']);
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'urlInspection/index:inspect')
+            && $request['inspectionUrl'] === 'https://oeparts.test/en');
+    }
+
+    #[Test]
+    public function a_failed_url_inspection_call_returns_an_error_instead_of_throwing(): void
+    {
+        $this->configure();
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            '*urlInspection/index:inspect*' => Http::response([], 403),
+        ]);
+
+        $result = app(GoogleSearchConsoleService::class)->inspectUrl('https://oeparts.test/en');
+
+        $this->assertArrayHasKey('error', $result);
+    }
 }

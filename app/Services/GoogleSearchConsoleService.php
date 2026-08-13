@@ -140,6 +140,46 @@ class GoogleSearchConsoleService
         return $response->successful() ? $response->json('rows', []) : [];
     }
 
+    /**
+     * URL Inspection — the closest live equivalent to the old "Fetch as
+     * Google" tool, reporting whether Google can actually index a specific
+     * URL right now (verdict/coverage/robots.txt state), not just the
+     * sitemap-level aggregate counts above. The API is quota-limited (a low
+     * daily cap per property), so this is deliberately never called per
+     * product — callers should inspect a small, fixed set of important URLs
+     * (e.g. one homepage per active locale), not the whole catalog.
+     *
+     * @return array{verdict:string, coverageState:?string, robotsTxtState:?string, indexingState:?string, lastCrawlTime:?string}|array{error:string}
+     */
+    public function inspectUrl(string $url): array
+    {
+        try {
+            $accessToken = $this->refreshAccessToken();
+            $siteUrl = trim((string) settings('seo.gsc_property_url', ''));
+
+            $response = Http::withToken($accessToken)->timeout(15)->post(
+                'https://searchconsole.googleapis.com/v1/urlInspection/index:inspect',
+                ['inspectionUrl' => $url, 'siteUrl' => $siteUrl]
+            );
+
+            if (! $response->successful()) {
+                return ['error' => "Search Console API returned HTTP {$response->status()}"];
+            }
+
+            $result = $response->json('inspectionResult.indexStatusResult', []);
+
+            return [
+                'verdict' => $result['verdict'] ?? 'UNKNOWN',
+                'coverageState' => $result['coverageState'] ?? null,
+                'robotsTxtState' => $result['robotsTxtState'] ?? null,
+                'indexingState' => $result['indexingState'] ?? null,
+                'lastCrawlTime' => $result['lastCrawlTime'] ?? null,
+            ];
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
     private function refreshAccessToken(): string
     {
         $response = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [
