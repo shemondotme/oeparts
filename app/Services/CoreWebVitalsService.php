@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\CoreWebVitalsSnapshot;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -68,6 +70,41 @@ class CoreWebVitalsService
         } catch (\Throwable $e) {
             return ['error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Records a snapshot row for trend tracking — CrUX's own 28-day rolling
+     * window barely moves day to day, so this is meant to be scheduled
+     * weekly (routes/console.php), not on every dashboard view. Throttled
+     * the same way CacheMetricsService::snapshot() is, so a manual run
+     * (`php artisan cwv:snapshot`) right after the scheduled one is a no-op
+     * rather than a duplicate row. Silently skips storing anything when
+     * unconfigured, erroring, or CrUX has no data yet — a trend chart
+     * should never plot a gap as a data point.
+     */
+    public function snapshot(): array
+    {
+        $metrics = $this->getMetrics();
+
+        if (isset($metrics['error']) || isset($metrics['insufficientData']) || ! $this->isConfigured()) {
+            return $metrics;
+        }
+
+        if (! Cache::add('cwv:snapshot_lock', 1, 3600)) {
+            return $metrics;
+        }
+
+        CoreWebVitalsSnapshot::create([
+            'lcp_ms' => $metrics['lcp_ms'],
+            'cls' => $metrics['cls'],
+            'inp_ms' => $metrics['inp_ms'],
+            'lcp_rating' => $this->lcpRating($metrics['lcp_ms']),
+            'cls_rating' => $this->clsRating($metrics['cls']),
+            'inp_rating' => $this->inpRating($metrics['inp_ms']),
+            'recorded_at' => now(),
+        ]);
+
+        return $metrics;
     }
 
     public function lcpRating(?int $ms): ?string

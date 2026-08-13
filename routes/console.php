@@ -88,6 +88,11 @@ Schedule::command('health:snapshot')->everyFiveMinutes();
 // snapshot() on a shorter throttle while being watched.
 Schedule::command('cache:snapshot')->everyFiveMinutes();
 
+// Core Web Vitals history — weekly, not every-five-minutes like the two
+// above: CrUX's own 28-day rolling window barely moves day to day, so a
+// tighter cadence would just record near-duplicate rows.
+Schedule::command('cwv:snapshot')->weekly();
+
 // Purge customer refund evidence photos long after the refund was resolved —
 // GDPR data minimization (default 180 days after processed_at).
 Schedule::command('oeparts:refunds:clean-images')->dailyAt('04:15');

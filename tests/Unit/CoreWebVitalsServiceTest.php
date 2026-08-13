@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\CoreWebVitalsSnapshot;
 use App\Services\CoreWebVitalsService;
 use App\Services\SettingsService;
 use Database\Seeders\SettingsSeeder;
@@ -105,5 +106,67 @@ class CoreWebVitalsServiceTest extends TestCase
 
         $this->assertSame('good', $service->inpRating(150));
         $this->assertSame('poor', $service->inpRating(600));
+    }
+
+    #[Test]
+    public function snapshot_records_a_row_with_ratings_when_configured_and_data_exists(): void
+    {
+        $this->configure();
+
+        Http::fake([
+            'chromeuxreport.googleapis.com/*' => Http::response([
+                'record' => [
+                    'metrics' => [
+                        'largest_contentful_paint' => ['percentiles' => ['p75' => 1800]],
+                        'cumulative_layout_shift' => ['percentiles' => ['p75' => '0.05']],
+                        'interaction_to_next_paint' => ['percentiles' => ['p75' => 150]],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        app(CoreWebVitalsService::class)->snapshot();
+
+        $this->assertSame(1, CoreWebVitalsSnapshot::count());
+        $snapshot = CoreWebVitalsSnapshot::first();
+        $this->assertSame(1800, $snapshot->lcp_ms);
+        $this->assertSame('good', $snapshot->lcp_rating);
+    }
+
+    #[Test]
+    public function snapshot_does_not_record_a_row_when_unconfigured(): void
+    {
+        app(CoreWebVitalsService::class)->snapshot();
+
+        $this->assertSame(0, CoreWebVitalsSnapshot::count());
+    }
+
+    #[Test]
+    public function snapshot_does_not_record_a_row_on_insufficient_data(): void
+    {
+        $this->configure();
+
+        Http::fake(['chromeuxreport.googleapis.com/*' => Http::response([], 404)]);
+
+        app(CoreWebVitalsService::class)->snapshot();
+
+        $this->assertSame(0, CoreWebVitalsSnapshot::count());
+    }
+
+    #[Test]
+    public function a_second_snapshot_within_the_throttle_window_does_not_duplicate(): void
+    {
+        $this->configure();
+
+        Http::fake([
+            'chromeuxreport.googleapis.com/*' => Http::response([
+                'record' => ['metrics' => ['largest_contentful_paint' => ['percentiles' => ['p75' => 1800]]]],
+            ], 200),
+        ]);
+
+        app(CoreWebVitalsService::class)->snapshot();
+        app(CoreWebVitalsService::class)->snapshot();
+
+        $this->assertSame(1, CoreWebVitalsSnapshot::count());
     }
 }

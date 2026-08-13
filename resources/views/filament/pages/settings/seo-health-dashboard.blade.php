@@ -55,8 +55,20 @@
     .op-clarity .oc-ext-stat-label { font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-muted); margin-bottom: 0.3rem; }
     .op-clarity .oc-ext-stat-value { font-size: 1rem; font-weight: 700; color: var(--color-text-primary); }
 
+    .op-clarity .oc-lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--color-border-subtle); border-top: 1px solid var(--color-border-subtle); }
+    .op-clarity .oc-list-card { background: var(--color-bg-surface); }
+    .op-clarity .oc-list-head { padding: 0.7rem 1.25rem; font-size: 0.68rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid var(--color-border-subtle); }
+    .op-clarity .oc-list-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.5rem 1.25rem; border-bottom: 1px solid var(--color-border-subtle); font-size: 0.78rem; }
+    .op-clarity .oc-list-row:last-child { border-bottom: none; }
+    .op-clarity .oc-list-row .oc-list-label { color: var(--color-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
+    .op-clarity .oc-list-row .oc-list-meta { color: var(--color-text-muted); font-variant-numeric: tabular-nums; flex: none; white-space: nowrap; font-size: 0.72rem; }
+    .op-clarity .oc-empty { padding: 0.9rem 1.25rem; font-size: 0.78rem; color: var(--color-text-disabled); }
+
+    .op-clarity .oc-trend { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.5rem; }
+    .op-clarity .oc-trend-label { font-size: 0.66rem; color: var(--color-text-muted); flex: none; }
+
     @media (max-width: 860px) {
-        .op-clarity .oc-kpis, .op-clarity .oc-ext-grid { grid-template-columns: 1fr; }
+        .op-clarity .oc-kpis, .op-clarity .oc-ext-grid, .op-clarity .oc-lists { grid-template-columns: 1fr; }
         .op-clarity .oc-row { grid-template-columns: 1fr; row-gap: 0.3rem; }
         .op-clarity .oc-row .oc-detail { text-align: left; }
     }
@@ -67,11 +79,14 @@
         @php
             $search = $this->searchAnalytics();
             $content = $this->contentHealth();
+            $onPage = $this->onPageAudit();
             $adoption = $this->featureAdoption();
             $indexNow = $this->indexNowActivity();
             $redirects = $this->redirectHealth();
             $gsc = $this->googleSearchConsole();
+            $gscAnalytics = $this->googleSearchAnalytics();
             $cwv = $this->coreWebVitals();
+            $cwvHistory = $this->coreWebVitalsHistory();
 
             $zrTone = $search['zeroResultRate'] > 20 ? 'down' : ($search['zeroResultRate'] > 5 ? 'warn' : 'ok');
             $mdTone = $content['manualPercent'] < 20 ? 'warn' : 'ok';
@@ -118,6 +133,66 @@
                     @endforeach
                 </div>
                 <div class="oc-kpi-meta" style="margin-top: 0.6rem;">Genuine (non-fallback) name per locale</div>
+            @endif
+        </div>
+
+        {{-- ── Search Performance (Google Search Console) ──────────────────── --}}
+        <div class="oc-section">
+            <div class="oc-section-head">
+                <x-heroicon-o-chart-bar-square />
+                Search Performance — Google Search Console (28d)
+            </div>
+            @if (! $gscAnalytics['configured'])
+                <div class="oc-empty">
+                    Connect Google Search Console to see real Google search clicks, impressions, and top-performing queries/pages here.
+                    <a href="{{ \App\Filament\Pages\Settings\SeoControlCenter::getUrl() }}" class="oc-ext-link" style="display: block; margin-top: 0.4rem;">Configure in Control Center &rarr;</a>
+                </div>
+            @elseif (isset($gscAnalytics['error']))
+                <div class="oc-empty" style="color: #dc2626;">{{ $gscAnalytics['error'] }}</div>
+            @else
+                <div class="oc-ext-stats" style="padding: 1rem 1.25rem;">
+                    <div>
+                        <div class="oc-ext-stat-label">Clicks</div>
+                        <div class="oc-ext-stat-value">{{ number_format($gscAnalytics['totalClicks']) }}</div>
+                    </div>
+                    <div>
+                        <div class="oc-ext-stat-label">Impressions</div>
+                        <div class="oc-ext-stat-value">{{ number_format($gscAnalytics['totalImpressions']) }}</div>
+                    </div>
+                    <div>
+                        <div class="oc-ext-stat-label">Avg CTR</div>
+                        <div class="oc-ext-stat-value">{{ number_format($gscAnalytics['avgCtr'] * 100, 1) }}%</div>
+                    </div>
+                    <div>
+                        <div class="oc-ext-stat-label">Avg Position</div>
+                        <div class="oc-ext-stat-value">{{ number_format($gscAnalytics['avgPosition'], 1) }}</div>
+                    </div>
+                </div>
+
+                <div class="oc-lists">
+                    <div class="oc-list-card">
+                        <div class="oc-list-head">Top Queries</div>
+                        @forelse (array_slice($gscAnalytics['topQueries'], 0, 6) as $row)
+                            <div class="oc-list-row">
+                                <span class="oc-list-label" title="{{ $row['query'] }}">{{ $row['query'] }}</span>
+                                <span class="oc-list-meta">{{ number_format($row['clicks']) }} clicks · pos {{ number_format($row['position'], 1) }}</span>
+                            </div>
+                        @empty
+                            <div class="oc-empty">No query data for this period yet.</div>
+                        @endforelse
+                    </div>
+                    <div class="oc-list-card">
+                        <div class="oc-list-head">Top Pages</div>
+                        @forelse (array_slice($gscAnalytics['topPages'], 0, 6) as $row)
+                            <div class="oc-list-row">
+                                <span class="oc-list-label" title="{{ $row['page'] }}">{{ \Illuminate\Support\Str::after($row['page'], '://') }}</span>
+                                <span class="oc-list-meta">{{ number_format($row['clicks']) }} clicks</span>
+                            </div>
+                        @empty
+                            <div class="oc-empty">No page data for this period yet.</div>
+                        @endforelse
+                    </div>
+                </div>
             @endif
         </div>
 
@@ -197,6 +272,43 @@
             </div>
         </div>
 
+        {{-- ── On-Page SEO Audit ────────────────────────────────────────── --}}
+        @php
+            $customTitleState = $onPage['customTitlePercent'] < 20 ? 'warn' : 'ok';
+            $customDescState = $onPage['customDescriptionPercent'] < 20 ? 'warn' : 'ok';
+            $dupTitleState = $onPage['duplicateTitleProducts'] > 0 ? 'warn' : 'ok';
+        @endphp
+        <div class="oc-section">
+            <div class="oc-section-head">
+                <x-heroicon-o-document-magnifying-glass />
+                On-Page SEO Audit
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Custom Meta Titles</div>
+                    <div class="oc-subtext">Products overriding the auto-generated search-result title</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $customTitleState }}">{{ $onPage['customTitlePercent'] }}%</span>
+                <div class="oc-detail">{{ number_format($onPage['customTitleCount']) }} / {{ number_format($onPage['total']) }} products</div>
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Custom Meta Descriptions</div>
+                    <div class="oc-subtext">Products overriding the auto-generated search-result snippet</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $customDescState }}">{{ $onPage['customDescriptionPercent'] }}%</span>
+                <div class="oc-detail">{{ number_format($onPage['customDescriptionCount']) }} / {{ number_format($onPage['total']) }} products</div>
+            </div>
+            <div class="oc-row">
+                <div>
+                    <div class="oc-name">Duplicate Meta Titles</div>
+                    <div class="oc-subtext">Products competing with an identical search-result title</div>
+                </div>
+                <span class="oc-badge oc-badge-{{ $dupTitleState }}">{{ $onPage['duplicateTitleProducts'] > 0 ? number_format($onPage['duplicateTitleProducts']).' product(s)' : 'None' }}</span>
+                <div class="oc-detail">{{ $onPage['duplicateTitleGroups'] > 0 ? 'Across '.number_format($onPage['duplicateTitleGroups']).' duplicate title(s)' : 'Every custom title is unique' }}</div>
+            </div>
+        </div>
+
         {{-- ── External Connections ─────────────────────────────────────── --}}
         <div class="oc-ext-grid">
             {{-- Google Search Console --}}
@@ -266,6 +378,22 @@
                             </div>
                         @endforeach
                     </div>
+
+                    @if (count($cwvHistory['lcp']) >= 2)
+                        <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--color-border-subtle);">
+                            <div class="oc-ext-stat-label" style="margin-bottom: 0.5rem;">{{ count($cwvHistory['lcp']) }}-Week Trend</div>
+                            @foreach (['LCP' => 'lcp', 'CLS' => 'cls', 'INP' => 'inp'] as $label => $key)
+                                <div class="oc-trend">
+                                    <span class="oc-trend-label">{{ $label }}</span>
+                                    <span class="op-spark-bars">
+                                        @foreach ($cwvHistory[$key] as $rating)
+                                            <span class="op-spark-bar op-spark-bar-{{ $this->ratingTone($rating) }}"></span>
+                                        @endforeach
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>

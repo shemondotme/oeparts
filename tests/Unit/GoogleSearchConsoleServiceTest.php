@@ -112,4 +112,69 @@ class GoogleSearchConsoleServiceTest extends TestCase
 
         $this->assertArrayHasKey('error', $summary);
     }
+
+    #[Test]
+    public function it_reports_totals_and_top_queries_and_pages(): void
+    {
+        $this->configure();
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            '*searchAnalytics/query*' => Http::sequence()
+                ->push(['rows' => [['clicks' => 42, 'impressions' => 1000, 'ctr' => 0.042, 'position' => 8.3]]], 200)
+                ->push(['rows' => [
+                    ['keys' => ['bosch brake pad'], 'clicks' => 20, 'impressions' => 400, 'ctr' => 0.05, 'position' => 5.1],
+                    ['keys' => ['06l906036l'], 'clicks' => 15, 'impressions' => 300, 'ctr' => 0.05, 'position' => 3.2],
+                ]], 200)
+                ->push(['rows' => [
+                    ['keys' => ['https://oeparts.test/en/parts/06L906036L'], 'clicks' => 15, 'impressions' => 300],
+                ]], 200),
+        ]);
+
+        $result = app(GoogleSearchConsoleService::class)->getSearchAnalytics();
+
+        $this->assertSame(42, $result['totalClicks']);
+        $this->assertSame(1000, $result['totalImpressions']);
+        $this->assertEqualsWithDelta(0.042, $result['avgCtr'], 0.0001);
+        $this->assertSame(8.3, $result['avgPosition']);
+        $this->assertCount(2, $result['topQueries']);
+        $this->assertSame('bosch brake pad', $result['topQueries'][0]['query']);
+        $this->assertCount(1, $result['topPages']);
+        $this->assertSame('https://oeparts.test/en/parts/06L906036L', $result['topPages'][0]['page']);
+    }
+
+    #[Test]
+    public function it_still_reports_totals_when_the_query_breakdown_call_fails(): void
+    {
+        $this->configure();
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            '*searchAnalytics/query*' => Http::sequence()
+                ->push(['rows' => [['clicks' => 42, 'impressions' => 1000, 'ctr' => 0.042, 'position' => 8.3]]], 200)
+                ->push([], 500)
+                ->push([], 500),
+        ]);
+
+        $result = app(GoogleSearchConsoleService::class)->getSearchAnalytics();
+
+        $this->assertSame(42, $result['totalClicks']);
+        $this->assertSame([], $result['topQueries']);
+        $this->assertSame([], $result['topPages']);
+    }
+
+    #[Test]
+    public function a_failed_totals_call_returns_an_error_instead_of_throwing(): void
+    {
+        $this->configure();
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            '*searchAnalytics/query*' => Http::response([], 403),
+        ]);
+
+        $result = app(GoogleSearchConsoleService::class)->getSearchAnalytics();
+
+        $this->assertArrayHasKey('error', $result);
+    }
 }

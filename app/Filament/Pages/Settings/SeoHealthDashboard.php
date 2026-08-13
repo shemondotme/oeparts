@@ -2,12 +2,14 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Models\CoreWebVitalsSnapshot;
 use App\Models\FailedSearchLog;
 use App\Models\IndexNowPushLog;
 use App\Models\NotFoundLog;
 use App\Models\Product;
 use App\Models\Redirect;
 use App\Models\SearchLog;
+use App\Models\SeoMeta;
 use App\Services\CoreWebVitalsService;
 use App\Services\GoogleSearchConsoleService;
 use App\Services\RedirectLoopDetector;
@@ -168,6 +170,72 @@ class SeoHealthDashboard extends Page
     }
 
     /**
+     * "Manual Descriptions" (contentHealth() above) tracks the product's own
+     * on-page `description` field — this tracks a different, SEO-specific
+     * pair: the `seo_meta` overrides that control the search-result snippet
+     * itself (meta title/description), which a product can lack even when
+     * its on-page description is fully written. Duplicate titles are a
+     * classic on-page SEO defect (two products competing with identical
+     * search-result titles) and need no external tool to detect — it's a
+     * GROUP BY over our own table.
+     *
+     * @return array{total:int, customTitlePercent:int, customTitleCount:int, customDescriptionPercent:int, customDescriptionCount:int, duplicateTitleGroups:int, duplicateTitleProducts:int}
+     */
+    public function onPageAudit(): array
+    {
+        return Cache::remember('admin:seo-health:onpage', 300, function (): array {
+            $total = Product::query()->active()->count();
+
+            if ($total === 0) {
+                return [
+                    'total' => 0, 'customTitlePercent' => 0, 'customTitleCount' => 0,
+                    'customDescriptionPercent' => 0, 'customDescriptionCount' => 0,
+                    'duplicateTitleGroups' => 0, 'duplicateTitleProducts' => 0,
+                ];
+            }
+
+            // A subquery (not ->pluck()->all()) — at catalog scale, pulling
+            // every active product ID into PHP just to hand it back to MySQL
+            // as a giant IN() list is real, avoidable overhead.
+            $activeProductIds = fn () => Product::query()->active()->select('id');
+
+            $customTitleCount = SeoMeta::query()
+                ->where('metable_type', Product::class)
+                ->whereIn('metable_id', $activeProductIds())
+                ->whereNotNull('meta_title')
+                ->where('meta_title', '!=', '')
+                ->count();
+
+            $customDescriptionCount = SeoMeta::query()
+                ->where('metable_type', Product::class)
+                ->whereIn('metable_id', $activeProductIds())
+                ->whereNotNull('meta_description')
+                ->where('meta_description', '!=', '')
+                ->count();
+
+            $duplicateGroupSizes = SeoMeta::query()
+                ->where('metable_type', Product::class)
+                ->whereIn('metable_id', $activeProductIds())
+                ->whereNotNull('meta_title')
+                ->where('meta_title', '!=', '')
+                ->select('meta_title', DB::raw('COUNT(*) as cnt'))
+                ->groupBy('meta_title')
+                ->having('cnt', '>', 1)
+                ->pluck('cnt');
+
+            return [
+                'total' => $total,
+                'customTitlePercent' => (int) round(100 * $customTitleCount / $total),
+                'customTitleCount' => $customTitleCount,
+                'customDescriptionPercent' => (int) round(100 * $customDescriptionCount / $total),
+                'customDescriptionCount' => $customDescriptionCount,
+                'duplicateTitleGroups' => $duplicateGroupSizes->count(),
+                'duplicateTitleProducts' => (int) $duplicateGroupSizes->sum(),
+            ];
+        });
+    }
+
+    /**
      * @return array{detailPagesEnabled:bool, indexNowEnabled:bool, ownImagePercent:int, withOwnImage:int, total:int}
      */
     public function featureAdoption(): array
@@ -240,6 +308,26 @@ class SeoHealthDashboard extends Page
     }
 
     /**
+     * @return array{configured:bool, error?:string, totalClicks?:int, totalImpressions?:int, avgCtr?:float, avgPosition?:float, topQueries?:array, topPages?:array}
+     */
+    public function googleSearchAnalytics(): array
+    {
+        $service = app(GoogleSearchConsoleService::class);
+
+        if (! $service->isConfigured()) {
+            return ['configured' => false];
+        }
+
+        $analytics = Cache::remember('admin:seo-health:gsc-analytics', 300, fn () => $service->getSearchAnalytics());
+
+        if (isset($analytics['error'])) {
+            return ['configured' => true, 'error' => $analytics['error']];
+        }
+
+        return array_merge(['configured' => true], $analytics);
+    }
+
+    /**
      * @return array{configured:bool, insufficientData?:bool, error?:string, lcp?:array, cls?:array, inp?:array}
      */
     public function coreWebVitals(): array
@@ -265,6 +353,31 @@ class SeoHealthDashboard extends Page
             'lcp' => ['value' => $metrics['lcp_ms'], 'unit' => 'ms', 'rating' => $service->lcpRating($metrics['lcp_ms'])],
             'cls' => ['value' => $metrics['cls'], 'unit' => '', 'rating' => $service->clsRating($metrics['cls'])],
             'inp' => ['value' => $metrics['inp_ms'], 'unit' => 'ms', 'rating' => $service->inpRating($metrics['inp_ms'])],
+        ];
+    }
+
+    /**
+     * Rating history for the trend bars — populated by the weekly
+     * cwv:snapshot command (routes/console.php), not this page itself, so
+     * this is purely a read of whatever has accumulated so far. A single
+     * data point isn't a trend, so callers should treat fewer than 2 rows
+     * as "no history yet" rather than rendering a one-bar chart.
+     *
+     * @return array{lcp: array<int, ?string>, cls: array<int, ?string>, inp: array<int, ?string>}
+     */
+    public function coreWebVitalsHistory(): array
+    {
+        $snapshots = CoreWebVitalsSnapshot::query()
+            ->latest('recorded_at')
+            ->limit(12)
+            ->get(['lcp_rating', 'cls_rating', 'inp_rating'])
+            ->reverse()
+            ->values();
+
+        return [
+            'lcp' => $snapshots->pluck('lcp_rating')->all(),
+            'cls' => $snapshots->pluck('cls_rating')->all(),
+            'inp' => $snapshots->pluck('inp_rating')->all(),
         ];
     }
 

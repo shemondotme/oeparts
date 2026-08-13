@@ -66,6 +66,80 @@ class GoogleSearchConsoleService
         }
     }
 
+    /**
+     * Search Analytics data lags 2-3 days behind real-time in GSC itself, so
+     * the window ends 3 days ago rather than today — querying all the way to
+     * "today" would just return zero rows for the most recent days rather
+     * than an error, silently making the totals look artificially low.
+     *
+     * @return array{totalClicks:int, totalImpressions:int, avgCtr:float, avgPosition:float, topQueries:array<int,array{query:string,clicks:int,impressions:int,ctr:float,position:float}>, topPages:array<int,array{page:string,clicks:int,impressions:int}>}|array{error:string}
+     */
+    public function getSearchAnalytics(int $days = 28): array
+    {
+        try {
+            $accessToken = $this->refreshAccessToken();
+            $siteUrl = rawurlencode(trim((string) settings('seo.gsc_property_url', '')));
+            $endpoint = "https://searchconsole.googleapis.com/webmasters/v3/sites/{$siteUrl}/searchAnalytics/query";
+
+            $startDate = now()->subDays($days)->toDateString();
+            $endDate = now()->subDays(3)->toDateString();
+
+            $totalsResponse = Http::withToken($accessToken)->timeout(15)->post($endpoint, [
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+            ]);
+
+            if (! $totalsResponse->successful()) {
+                return ['error' => "Search Console API returned HTTP {$totalsResponse->status()}"];
+            }
+
+            $totals = $totalsResponse->json('rows.0', []);
+
+            $queryRows = $this->queryRows($accessToken, $endpoint, $startDate, $endDate, 'query');
+            $pageRows = $this->queryRows($accessToken, $endpoint, $startDate, $endDate, 'page');
+
+            return [
+                'totalClicks' => (int) ($totals['clicks'] ?? 0),
+                'totalImpressions' => (int) ($totals['impressions'] ?? 0),
+                'avgCtr' => (float) ($totals['ctr'] ?? 0),
+                'avgPosition' => round((float) ($totals['position'] ?? 0), 1),
+                'topQueries' => array_map(fn (array $r): array => [
+                    'query' => $r['keys'][0] ?? '',
+                    'clicks' => (int) ($r['clicks'] ?? 0),
+                    'impressions' => (int) ($r['impressions'] ?? 0),
+                    'ctr' => (float) ($r['ctr'] ?? 0),
+                    'position' => round((float) ($r['position'] ?? 0), 1),
+                ], $queryRows),
+                'topPages' => array_map(fn (array $r): array => [
+                    'page' => $r['keys'][0] ?? '',
+                    'clicks' => (int) ($r['clicks'] ?? 0),
+                    'impressions' => (int) ($r['impressions'] ?? 0),
+                ], $pageRows),
+            ];
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * The query/page breakdown is secondary to the headline totals above —
+     * if this call fails (rate limit, transient error) the dashboard still
+     * shows real totals rather than the whole section erroring out.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function queryRows(string $accessToken, string $endpoint, string $startDate, string $endDate, string $dimension): array
+    {
+        $response = Http::withToken($accessToken)->timeout(15)->post($endpoint, [
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'dimensions' => [$dimension],
+            'rowLimit' => 10,
+        ]);
+
+        return $response->successful() ? $response->json('rows', []) : [];
+    }
+
     private function refreshAccessToken(): string
     {
         $response = Http::asForm()->timeout(15)->post('https://oauth2.googleapis.com/token', [

@@ -11,6 +11,7 @@ use App\Models\NotFoundLog;
 use App\Models\Product;
 use App\Models\Redirect;
 use App\Models\SearchLog;
+use App\Models\SeoMeta;
 use App\Models\Setting;
 use App\Services\SettingsService;
 use Database\Seeders\RolesSeeder;
@@ -110,6 +111,107 @@ class SeoHealthDashboardTest extends TestCase
             // Windows 10, defeating the point) + full country name.
             ->assertSee('Germany')
             ->assertSee('flags/de.svg', false);
+    }
+
+    #[Test]
+    public function on_page_audit_reports_custom_title_and_description_coverage(): void
+    {
+        $withBoth = Product::factory()->create();
+        SeoMeta::create(['metable_type' => Product::class, 'metable_id' => $withBoth->id, 'meta_title' => 'Custom Title', 'meta_description' => 'Custom description.']);
+        Product::factory()->create(); // no seo_meta row at all
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('On-Page SEO Audit')
+            ->assertSee('Custom Meta Titles')
+            ->assertSee('1 / 2 products', false);
+    }
+
+    #[Test]
+    public function on_page_audit_flags_products_sharing_an_identical_meta_title(): void
+    {
+        $a = Product::factory()->create();
+        $b = Product::factory()->create();
+        SeoMeta::create(['metable_type' => Product::class, 'metable_id' => $a->id, 'meta_title' => 'Same Title']);
+        SeoMeta::create(['metable_type' => Product::class, 'metable_id' => $b->id, 'meta_title' => 'Same Title']);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Duplicate Meta Titles')
+            ->assertSee('2 product(s)', false);
+    }
+
+    #[Test]
+    public function search_performance_section_shows_not_connected_without_credentials(): void
+    {
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Search Performance')
+            ->assertSee('Connect Google Search Console');
+    }
+
+    #[Test]
+    public function search_performance_section_shows_totals_and_top_queries_once_configured(): void
+    {
+        $service = app(SettingsService::class);
+        $service->set('seo.gsc_client_id', 'client-123');
+        $service->set('seo.gsc_client_secret', 'secret-abc');
+        $service->set('seo.gsc_refresh_token', 'refresh-xyz');
+        $service->set('seo.gsc_property_url', 'https://oeparts.test/');
+
+        Http::fake([
+            'oauth2.googleapis.com/*' => Http::response(['access_token' => 'token-1'], 200),
+            '*searchAnalytics/query*' => Http::sequence()
+                ->push(['rows' => [['clicks' => 42, 'impressions' => 1000, 'ctr' => 0.042, 'position' => 8.3]]], 200)
+                ->push(['rows' => [['keys' => ['bosch brake pad'], 'clicks' => 20, 'impressions' => 400, 'ctr' => 0.05, 'position' => 5.1]]], 200)
+                ->push(['rows' => [['keys' => ['https://oeparts.test/en/parts/06L906036L'], 'clicks' => 20, 'impressions' => 400]]], 200),
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Top Queries')
+            ->assertSee('bosch brake pad');
+    }
+
+    #[Test]
+    public function core_web_vitals_trend_is_hidden_with_fewer_than_two_snapshots(): void
+    {
+        app(SettingsService::class)->set('seo.crux_api_key', 'crux-key-123');
+
+        Http::fake([
+            'chromeuxreport.googleapis.com/*' => Http::response([
+                'record' => ['metrics' => ['largest_contentful_paint' => ['percentiles' => ['p75' => 1800]]]],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertDontSee('Week Trend', false);
+    }
+
+    #[Test]
+    public function core_web_vitals_trend_shows_once_at_least_two_snapshots_exist(): void
+    {
+        app(SettingsService::class)->set('seo.crux_api_key', 'crux-key-123');
+
+        \App\Models\CoreWebVitalsSnapshot::create(['lcp_ms' => 1800, 'lcp_rating' => 'good', 'recorded_at' => now()->subWeek()]);
+        \App\Models\CoreWebVitalsSnapshot::create(['lcp_ms' => 2500, 'lcp_rating' => 'needs-improvement', 'recorded_at' => now()]);
+
+        Http::fake([
+            'chromeuxreport.googleapis.com/*' => Http::response([
+                'record' => ['metrics' => ['largest_contentful_paint' => ['percentiles' => ['p75' => 1800]]]],
+            ], 200),
+        ]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Week Trend', false);
     }
 
     #[Test]
