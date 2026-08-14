@@ -66,6 +66,20 @@ class ProductDetailPageTest extends TestCase
         return "/{$lang}/parts/{$product->normalized_oem}/{$idSlug}";
     }
 
+    /**
+     * Same raw-write + SettingsService::forget() pattern as enableDetailPages()
+     * above, generalized to any group/key — a raw Eloquent write never busts
+     * SettingsService::getGroup()'s 5-minute per-group cache on its own.
+     */
+    private function setSetting(string $group, string $key, string $value, string $type = 'boolean'): void
+    {
+        Setting::updateOrCreate(
+            ['group' => $group, 'key' => $key],
+            ['value' => $value, 'type' => $type, 'is_encrypted' => false]
+        );
+        app(\App\Services\SettingsService::class)->forget($group);
+    }
+
     #[Test]
     public function hub_only_mode_redirects_detail_url_to_hub_regardless_of_product_existing(): void
     {
@@ -304,5 +318,231 @@ class ProductDetailPageTest extends TestCase
 
         $response->assertStatus(301);
         $response->assertRedirect($this->detailUrl($product));
+    }
+
+    #[Test]
+    public function detail_page_shows_vat_inclusive_price_when_configured(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('tax', 'price_display', 'inc_vat', 'string');
+        $this->setSetting('tax', 'default_vat_rate', '20', 'integer');
+        $product = $this->makeProduct(['price' => '100.00']);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('incl. VAT');
+    }
+
+    #[Test]
+    public function detail_page_shows_vat_exclusive_price_when_configured(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('tax', 'price_display', 'exc_vat', 'string');
+        $product = $this->makeProduct(['price' => '100.00']);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('excl. VAT');
+    }
+
+    #[Test]
+    public function manufacturer_trust_block_shows_verified_oem_badge(): void
+    {
+        $this->enableDetailPages();
+        $this->manufacturer->update(['is_verified_oem' => true]);
+        $product = $this->makeProduct();
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Verified OEM Manufacturer');
+    }
+
+    #[Test]
+    public function specifications_table_shown_when_present_and_toggle_on(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct(['specifications' => ['Weight' => '2.4 kg']]);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Weight');
+        $response->assertSeeText('2.4 kg');
+    }
+
+    #[Test]
+    public function specifications_table_hidden_when_empty(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSeeText('Specifications');
+    }
+
+    #[Test]
+    public function specifications_table_hidden_when_toggle_off(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('pdp', 'show_specifications', '0');
+        $product = $this->makeProduct(['specifications' => ['Weight' => '2.4 kg']]);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSeeText('2.4 kg');
+    }
+
+    #[Test]
+    public function warranty_block_shown_when_warranty_months_set(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct(['warranty_months' => 12]);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('12 months warranty');
+    }
+
+    #[Test]
+    public function warranty_block_hidden_without_warranty_months(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSeeText('Warranty');
+    }
+
+    #[Test]
+    public function video_section_shown_when_video_url_set_and_toggle_on(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct(['video_url' => 'https://example.com/video.mp4']);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSee('https://example.com/video.mp4', false);
+    }
+
+    #[Test]
+    public function video_section_respects_toggle(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('pdp', 'show_video', '0');
+        $product = $this->makeProduct(['video_url' => 'https://example.com/video.mp4']);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('https://example.com/video.mp4', false);
+    }
+
+    #[Test]
+    public function related_products_excludes_self_and_shows_same_manufacturer_match(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct(['oem_number' => 'AAA111', 'normalized_oem' => 'AAA111']);
+        $related = $this->makeProduct(['oem_number' => 'BBB222', 'normalized_oem' => 'BBB222', 'name' => ['en' => 'Brake Pad Rear']]);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Related Products');
+        $response->assertSeeText('BBB222');
+        $response->assertSeeTextInOrder(['Related Products', 'BBB222']);
+    }
+
+    #[Test]
+    public function related_products_section_respects_toggle(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('pdp', 'show_related_products', '0');
+        $product = $this->makeProduct(['oem_number' => 'AAA111', 'normalized_oem' => 'AAA111']);
+        $this->makeProduct(['oem_number' => 'BBB222', 'normalized_oem' => 'BBB222']);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSeeText('Related Products');
+    }
+
+    #[Test]
+    public function only_approved_reviews_render_on_detail_page(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+        $product->reviews()->create(['reviewer_name' => 'Pending Pete', 'comment' => 'pending review text', 'rating' => 4, 'status' => 'pending']);
+        $product->reviews()->create(['reviewer_name' => 'Rejected Rita', 'comment' => 'rejected review text', 'rating' => 2, 'status' => 'rejected']);
+        $product->reviews()->create(['reviewer_name' => 'Approved Alex', 'comment' => 'approved review text', 'rating' => 5, 'status' => 'approved']);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSeeText('Approved Alex');
+        $response->assertDontSeeText('Pending Pete');
+        $response->assertDontSeeText('Rejected Rita');
+    }
+
+    #[Test]
+    public function reviews_section_respects_toggle(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('pdp', 'show_reviews', '0');
+        $product = $this->makeProduct();
+        $product->reviews()->create(['reviewer_name' => 'Approved Alex', 'comment' => 'approved review text', 'rating' => 5, 'status' => 'approved']);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSeeText('Approved Alex');
+        $response->assertDontSeeText('Customer Reviews');
+    }
+
+    #[Test]
+    public function buy_now_button_hidden_when_toggle_off(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('product-buy-now', false);
+    }
+
+    #[Test]
+    public function buy_now_button_shown_when_toggle_on_and_in_stock(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('pdp', 'buy_now_enabled', '1');
+        $product = $this->makeProduct(['is_in_stock' => true]);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertSee('product-buy-now', false);
+    }
+
+    #[Test]
+    public function buy_now_button_hidden_when_out_of_stock_even_if_toggle_on(): void
+    {
+        $this->enableDetailPages();
+        $this->setSetting('pdp', 'buy_now_enabled', '1');
+        $product = $this->makeProduct(['is_in_stock' => false]);
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('product-buy-now', false);
     }
 }

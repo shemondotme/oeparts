@@ -159,6 +159,8 @@ class SearchController extends Controller
 
         $product = Product::withTrashed()
             ->with(['manufacturer.logo', 'crossReferences', 'condition', 'carModels.manufacturer', 'images'])
+            ->withCount(['reviews as approved_reviews_count' => fn ($q) => $q->where('status', 'approved')])
+            ->withAvg(['reviews as approved_reviews_avg_rating' => fn ($q) => $q->where('status', 'approved')], 'rating')
             ->find($id);
 
         // Toggle check FIRST — this single check is what makes "toggle off
@@ -190,10 +192,66 @@ class SearchController extends Controller
             ], 301);
         }
 
+        $showReviews = filter_var(settings('pdp.show_reviews', true), FILTER_VALIDATE_BOOLEAN);
+        $approvedReviews = $showReviews
+            ? $product->approvedReviews()->latest()->limit(20)->get()
+            : collect();
+
+        $showRelated = filter_var(settings('pdp.show_related_products', true), FILTER_VALIDATE_BOOLEAN);
+        $relatedProducts = $showRelated ? $this->buildRelatedProducts($product) : collect();
+
         return view('frontend.search.detail', [
             'product' => $product,
             'breadcrumbs' => $this->buildProductBreadcrumbs($product, $lang),
+            // Matches buildResultsViewData()'s own vat_rate exactly, so the
+            // detail page's price display can follow the same inc/exc-VAT
+            // logic as the hub instead of always printing the raw net price.
+            'vat_rate' => (int) settings('tax.default_vat_rate', 21),
+            'approvedReviews' => $approvedReviews,
+            'relatedProducts' => $relatedProducts,
         ]);
+    }
+
+    /**
+     * Products sharing this manufacturer or at least one confirmed vehicle
+     * fitment, self excluded. Same-fitment matches are considered more
+     * relevant than manufacturer-only matches, so they're filled first
+     * rather than ranked via a hand-written SQL relevance expression — at
+     * this result size (<= $limit) a second, smaller top-up query is both
+     * simpler and cheap enough not to matter.
+     */
+    private function buildRelatedProducts(Product $product, int $limit = 8): \Illuminate\Support\Collection
+    {
+        $carModelIds = $product->carModels->pluck('id');
+
+        $base = Product::query()
+            ->where('id', '!=', $product->id)
+            ->where('is_active', true)
+            ->with(['manufacturer.logo', 'condition']);
+
+        $related = collect();
+
+        if ($carModelIds->isNotEmpty()) {
+            $related = (clone $base)
+                ->whereHas('carModels', fn ($q) => $q->whereIn('car_models.id', $carModelIds))
+                ->limit($limit)
+                ->get();
+        }
+
+        if ($related->count() < $limit && $product->manufacturer_id) {
+            $remaining = $limit - $related->count();
+            $excludeIds = $related->pluck('id')->push($product->id);
+
+            $topUp = (clone $base)
+                ->where('manufacturer_id', $product->manufacturer_id)
+                ->whereNotIn('id', $excludeIds)
+                ->limit($remaining)
+                ->get();
+
+            $related = $related->concat($topUp);
+        }
+
+        return $related;
     }
 
     /**

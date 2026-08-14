@@ -11,6 +11,7 @@ use App\Services\TaxRateService;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
+use App\Models\Cart;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -56,18 +57,29 @@ class CheckoutController extends Controller
         $guestToken = $request->cookie('guest_token');
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
 
-        if (!$cart || $cart->items->isEmpty()) {
+        $checkoutId = Session::get('active_checkout_id');
+        $checkout = $checkoutId ? $this->checkoutService->get($checkoutId) : null;
+
+        // Buy Now (CartController::buyNow()) points active_checkout_id at
+        // an ISOLATED, throwaway Cart — deliberately separate from the
+        // customer's real cart resolved above via getOrCreateCart(), so an
+        // empty real cart must not block it here. Once that session
+        // expires ($checkout goes null on a stale/expired pointer, exactly
+        // like any other checkout session), the fallback further below
+        // correctly restarts from the real cart, same as it always did.
+        $isBuyNowCheckout = $checkout && Cart::where('id', $checkout['cart_id'])->where('is_buy_now', true)->exists();
+
+        if ((!$cart || $cart->items->isEmpty()) && !$isBuyNowCheckout) {
             return redirect()->route('frontend.cart.index', compact('lang'))
                 ->with('error', __('Your cart is empty.'));
         }
 
-        $checkoutId = Session::get('active_checkout_id');
         if (!$checkoutId) {
             $checkoutId = $this->checkoutService->start($cart);
             Session::put('active_checkout_id', $checkoutId);
+            $checkout = $this->checkoutService->get($checkoutId);
         }
 
-        $checkout = $this->checkoutService->get($checkoutId);
         if (!$checkout) {
             $checkoutId = $this->checkoutService->start($cart);
             Session::put('active_checkout_id', $checkoutId);

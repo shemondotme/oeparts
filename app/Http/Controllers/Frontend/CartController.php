@@ -6,14 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\SearchLog;
 use App\Services\CartService;
+use App\Services\CheckoutService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
     public function __construct(
-        private CartService $cartService
+        private CartService $cartService,
+        private CheckoutService $checkoutService
     ) {}
 
     /**
@@ -85,6 +88,55 @@ class CartController extends Controller
                 'message' => $e->getMessage(),
             ], 422, $guestToken);
         }
+    }
+
+    /**
+     * "Buy Now" — skips the cart page entirely. Creates an ISOLATED,
+     * throwaway Cart (own guest_token, never written to the guest_token
+     * cookie, is_buy_now=true) containing just this one item, then feeds
+     * it through the exact same CheckoutService::start()/CheckoutController
+     * flow a normal cart would use — CheckoutService::createOrder() already
+     * deletes whatever cart it completes, buy-now or not, so no special-
+     * casing is needed there. The customer's real cart (their own
+     * guest_token cookie or user-bound Cart row) is never read or written
+     * here, so it stays completely untouched.
+     *
+     * POST /{lang}/cart/buy-now
+     */
+    public function buyNow(Request $request, string $lang)
+    {
+        if (! filter_var(settings('pdp.buy_now_enabled', false), FILTER_VALIDATE_BOOLEAN)) {
+            abort(404);
+        }
+
+        $request->validate([
+            'product_id' => 'required|integer|exists:products,id',
+            'quantity' => 'required|integer|min:1|max:' . settings('cart.max_quantity', 999),
+        ]);
+
+        $buyNowCart = Cart::create([
+            'user_id' => null,
+            'guest_token' => Str::random(32),
+            'is_buy_now' => true,
+            // checkout.timeout_minutes, NOT the longer cart.expiry_days — a
+            // buy-now cart is short-lived by design, and this window means
+            // the existing daily cart:clean sweep garbage-collects an
+            // abandoned one with zero new cleanup code.
+            'expires_at' => now()->addMinutes((int) settings('checkout.timeout_minutes', 30)),
+        ]);
+
+        try {
+            $this->cartService->addItem($buyNowCart, (int) $request->product_id, (int) $request->quantity);
+        } catch (\Exception $e) {
+            $buyNowCart->delete();
+
+            return back()->with('error', $e->getMessage());
+        }
+
+        $checkoutId = $this->checkoutService->start($buyNowCart);
+        $request->session()->put('active_checkout_id', $checkoutId);
+
+        return redirect()->route('frontend.checkout', ['lang' => $lang]);
     }
 
     /**

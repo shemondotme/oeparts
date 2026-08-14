@@ -623,6 +623,16 @@ class SettingsSeeder extends Seeder
             // the fallback default for installs that predate this seeder row) ──
             ['group' => 'updates', 'key' => 'channel',             'value' => 'stable', 'type' => $s],
             ['group' => 'updates', 'key' => 'auto_apply_security', 'value' => '0',      'type' => $b],
+
+            // ── PDP (product detail page — every content block admin-toggleable) ──
+            ['group' => 'pdp', 'key' => 'show_specifications',        'value' => '1', 'type' => $b],
+            ['group' => 'pdp', 'key' => 'show_warranty',               'value' => '1', 'type' => $b],
+            ['group' => 'pdp', 'key' => 'show_video',                  'value' => '1', 'type' => $b],
+            ['group' => 'pdp', 'key' => 'show_reviews',                'value' => '1', 'type' => $b],
+            ['group' => 'pdp', 'key' => 'show_related_products',       'value' => '1', 'type' => $b],
+            ['group' => 'pdp', 'key' => 'sticky_add_to_cart',          'value' => '1', 'type' => $b],
+            ['group' => 'pdp', 'key' => 'buy_now_enabled',             'value' => '0', 'type' => $b],
+            ['group' => 'pdp', 'key' => 'review_rate_limit_per_hour',  'value' => '5', 'type' => $i],
         ];
     }
 }

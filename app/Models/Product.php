@@ -19,6 +19,7 @@ class Product extends Model
         'manufacturer_id', 'oem_number', 'normalized_oem', 'slug',
         'name', 'description', 'condition_id', 'price',
         'delivery_time', 'moq', 'is_in_stock', 'is_active',
+        'specifications', 'warranty_months', 'video_url',
     ];
 
     protected $casts = [
@@ -27,6 +28,7 @@ class Product extends Model
         'price' => 'decimal:2',
         'is_in_stock' => 'boolean',
         'is_active' => 'boolean',
+        'specifications' => 'array',
     ];
 
     protected static function booted(): void
@@ -183,6 +185,16 @@ class Product extends Model
     public function seoMeta(): MorphOne
     {
         return $this->morphOne(SeoMeta::class, 'metable');
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->reviews()->where('status', 'approved');
     }
 
     public function scopeActive($q)

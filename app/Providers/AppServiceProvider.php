@@ -207,6 +207,11 @@ class AppServiceProvider extends ServiceProvider
                 ->by($request->user()?->id ?: $request->ip());
         });
 
+        RateLimiter::for('product-review', function (Request $request) {
+            return Limit::perMinutes(60, (int) settings('pdp.review_rate_limit_per_hour', 5))
+                ->by($request->ip());
+        });
+
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));
     }
 }

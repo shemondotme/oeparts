@@ -28,6 +28,7 @@ use App\Http\Controllers\Frontend\ImpressumController;
 use App\Http\Controllers\Frontend\ManufacturerController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\PartInquiryController;
+use App\Http\Controllers\Frontend\ProductReviewController;
 use App\Http\Controllers\Frontend\ResetPasswordController;
 use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Frontend\SitemapController;
@@ -208,6 +209,16 @@ Route::prefix('{lang}')
             ->middleware(['normalize.oem', 'cache.guest:60'])
             ->name('frontend.search.detail');
 
+        // Public review submission from the product detail page — no
+        // normalize.oem/cache.guest here (both are GET-redirect/caching
+        // concerns that don't apply to a POST, and normalize.oem's 301
+        // would silently drop the submitted form data if it ever fired).
+        Route::post('/parts/{oem}/{idSlug}/review', [ProductReviewController::class, 'store'])
+            ->where('oem', '[A-Za-z0-9\-\.\s]+')
+            ->where('idSlug', '[0-9]+-[a-z0-9\-]+')
+            ->middleware(['honeypot', 'throttle:product-review'])
+            ->name('frontend.search.review.store');
+
         // Autocomplete endpoint
         Route::get('/search/autocomplete', [SearchController::class, 'autocomplete'])
             ->middleware('throttle:' . settings('search.autocomplete_rate_limit', 60) . ',1')
@@ -249,6 +260,9 @@ Route::prefix('{lang}')
         Route::post('/cart/add', [CartController::class, 'add'])
             ->middleware('throttle:30,1')
             ->name('frontend.cart.add');
+        Route::post('/cart/buy-now', [CartController::class, 'buyNow'])
+            ->middleware('throttle:30,1')
+            ->name('frontend.cart.buy-now');
         Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('frontend.cart.remove');
         Route::put('/cart/update/{item}', [CartController::class, 'update'])->name('frontend.cart.update');
         Route::post('/cart/merge', [CartController::class, 'merge'])->name('frontend.cart.merge');

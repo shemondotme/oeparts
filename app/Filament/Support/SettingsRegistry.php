@@ -24,6 +24,7 @@ use App\Filament\Pages\Settings\NewsletterSettings;
 use App\Filament\Pages\Settings\OrdersSettings;
 use App\Filament\Pages\Settings\PartInquirySettings;
 use App\Filament\Pages\Settings\PaymentSettings;
+use App\Filament\Pages\Settings\PdpSettings;
 use App\Filament\Pages\Settings\PerformanceSettings;
 use App\Filament\Pages\Settings\PreloaderSettings;
 use App\Filament\Pages\Settings\SearchSettings;
@@ -296,6 +297,15 @@ final class SettingsRegistry
             'description' => 'Hero banner, spec table, and footer pill copy',
             'icon' => 'heroicon-o-paint-brush',
             'sort' => 80,
+        ],
+        'pdp-settings' => [
+            'class' => PdpSettings::class,
+            'section' => 'SEO & Marketing',
+            'title' => 'Product Page Sections',
+            'url' => '/admin/settings/pdp-settings',
+            'description' => 'Specifications, warranty, video, reviews, related products, Buy Now',
+            'icon' => 'heroicon-o-document-text',
+            'sort' => 90,
         ],
         'auth-security-settings' => [
             'class' => AuthSettings::class,

@@ -276,4 +276,51 @@ return [
     'faq_a_condition' => 'The condition shown above (New, Used, Remanufactured, etc.) reflects this specific unit\'s state — see the spec panel for this listing\'s exact condition.',
     'faq_q_delivery' => 'How is this shipped?',
     'faq_a_delivery' => 'Dispatched EU-wide via DHL, DPD, or GLS, with the estimated delivery window shown in the spec panel above.',
+
+    // In-page section nav (PDP overhaul)
+    'nav_section_label' => 'Jump to section',
+    'nav_fitment' => 'Fitment',
+    'nav_specs' => 'Specs',
+    'nav_warranty' => 'Warranty',
+    'nav_video' => 'Video',
+    'nav_related' => 'Related',
+    'nav_reviews' => 'Reviews',
+    'nav_faq' => 'FAQ',
+
+    // Manufacturer trust block
+    'trust_verified_oem' => 'Verified OEM Manufacturer',
+    'trust_country_of_origin' => 'Country of Origin',
+
+    // Specifications
+    'specs_title' => 'Specifications',
+
+    // Warranty
+    'warranty_title' => 'Warranty',
+    'warranty_months' => ':count month warranty|:count months warranty',
+
+    // Product video
+    'video_title' => 'Product Video',
+
+    // Related products
+    'related_title' => 'Related Products',
+    'related_subtitle' => 'Other parts from this manufacturer or fitting the same vehicle.',
+
+    // Reviews
+    'reviews_title' => 'Customer Reviews',
+    'reviews_no_reviews_yet' => 'No reviews yet — be the first to review this part.',
+    'reviews_average_of' => 'average of :count review|average of :count reviews',
+    'reviews_write_a_review' => 'Write a Review',
+    'reviews_form_name' => 'Your Name',
+    'reviews_form_title' => 'Review Title (optional)',
+    'reviews_form_rating' => 'Rating',
+    'reviews_form_comment' => 'Your Review',
+    'reviews_form_submit' => 'Submit Review',
+    'review_submitted_pending' => 'Thanks — your review has been submitted and will appear once approved.',
+    'review_validation_name_required' => 'Please enter your name.',
+    'review_validation_comment_required' => 'Please write a short review.',
+    'review_validation_rating_required' => 'Please select a star rating.',
+
+    // Buy Now
+    'btn_buy_now' => 'Buy Now',
+    'buy_now_helper' => 'Skip the cart — go straight to checkout with just this item.',
 ];

@@ -210,6 +210,34 @@ class ProductResource extends Resource
                                             ->columnSpanFull(),
                                     ]),
 
+                                Section::make('Specifications & Media')
+                                    ->description('Optional detail-page content — specs table, warranty period, and product video each only render on the storefront when set.')
+                                    ->icon('heroicon-o-clipboard-document-list')
+                                    ->collapsible()
+                                    ->schema([
+                                        Forms\Components\KeyValue::make('specifications')
+                                            ->label('Specifications')
+                                            ->keyLabel('Spec name')
+                                            ->valueLabel('Value')
+                                            ->addActionLabel('Add Specification')
+                                            ->helperText('e.g. "Weight" → "2.4 kg", "Material" → "Cast aluminium". Shown as a table on the product page.')
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('warranty_months')
+                                            ->label('Warranty (Months)')
+                                            ->numeric()
+                                            ->minValue(1)
+                                            ->maxValue(360)
+                                            ->placeholder('e.g. 12')
+                                            ->helperText('Leave blank to hide the warranty block on this product.'),
+                                        Forms\Components\TextInput::make('video_url')
+                                            ->label('Product Video URL')
+                                            ->url()
+                                            ->maxLength(500)
+                                            ->placeholder('https://example.com/videos/install-guide.mp4')
+                                            ->helperText('Direct link to a video file, embedded on the product page.'),
+                                    ])
+                                    ->columns(2),
+
                                 Section::make('SEO & Meta')
                                     ->description('How this product appears in search engines and when shared on social media.')
                                     ->icon('heroicon-o-magnifying-glass')
