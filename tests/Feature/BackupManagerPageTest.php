@@ -333,13 +333,29 @@ class BackupManagerPageTest extends TestCase
             ->set('settingsRetentionWeekly', 8)
             ->set('settingsRetentionMonthly', 12)
             ->set('settingsScheduleTime', '03:30')
+            ->set('settingsScheduleEnabled', false)
             ->set('settingsStaleAfterMinutes', 90)
             ->call('saveBackupSettings')
             ->assertHasNoErrors();
 
         $this->assertSame('14', Setting::where('group', 'backup')->where('key', 'retention_daily')->first()?->value);
         $this->assertSame('03:30', settings('backup.schedule_time'));
+        $this->assertSame('0', Setting::where('group', 'backup')->where('key', 'schedule_enabled')->first()?->value);
+        $this->assertFalse(filter_var(settings('backup.schedule_enabled'), FILTER_VALIDATE_BOOLEAN));
         $this->assertSame(90 * 60, (int) settings('backup.stale_after_seconds'));
+    }
+
+    #[Test]
+    public function mount_reads_schedule_enabled_from_settings_falling_back_to_config(): void
+    {
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+
+        Setting::where('group', 'backup')->where('key', 'schedule_enabled')->delete();
+        config(['backup.schedule.enabled' => false]);
+
+        $component = Livewire::test(BackupDashboard::class);
+
+        $component->assertSet('settingsScheduleEnabled', false);
     }
 
     #[Test]
@@ -358,4 +374,29 @@ class BackupManagerPageTest extends TestCase
     // note; same page-level canAccess() gate, same Livewire test-harness
     // snapshot quirk when a plain method aborts mid-request on a
     // HasTable-backed page, same reasoning for not separately testing it here.
+
+    private function scheduledBackupEvent(): \Illuminate\Console\Scheduling\Event
+    {
+        $events = app(\Illuminate\Console\Scheduling\Schedule::class)->events();
+
+        foreach ($events as $event) {
+            if (str_contains($event->command, 'oeparts:backup') && str_contains($event->command, '--trigger=scheduled')) {
+                return $event;
+            }
+        }
+
+        $this->fail('Could not find the scheduled oeparts:backup event in routes/console.php.');
+    }
+
+    #[Test]
+    public function the_scheduled_backup_command_is_gated_by_backup_schedule_enabled(): void
+    {
+        $settingsService = app(\App\Services\SettingsService::class);
+
+        $settingsService->set('backup.schedule_enabled', '1');
+        $this->assertTrue($this->scheduledBackupEvent()->filtersPass($this->app));
+
+        $settingsService->set('backup.schedule_enabled', '0');
+        $this->assertFalse($this->scheduledBackupEvent()->filtersPass($this->app));
+    }
 }

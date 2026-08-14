@@ -351,6 +351,12 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         ->middleware('auth.admin');
     Route::redirect('/settings/security-settings', '/admin/settings/security-access-settings', 301)
         ->middleware('auth.admin');
+    Route::redirect('/settings/maintenance-settings', '/admin/settings/system-maintenance-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/about-license-settings', '/admin/settings/system-maintenance-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/database-settings', '/admin/settings/system-maintenance-settings', 301)
+        ->middleware('auth.admin');
 
     // ── WYSIWYG Editor (Feature 2) ───────────────────────────────────────
     Route::prefix('editor')->name('editor.')->middleware('auth.admin')->group(function () {

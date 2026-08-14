@@ -507,6 +507,50 @@ class SettingsSeeder extends Seeder
             ['group' => 'maintenance', 'key' => 'contact_email',       'value' => '',                         'type' => $s],
             ['group' => 'maintenance', 'key' => 'retry_after',         'value' => '3600',                     'type' => $i],
 
+            // ── NAVBAR ────────────────────────────────────────────────────────────
+            // Gap fix: NavbarSettings.php's fields had zero seed rows — every
+            // field was optional/placeholder-only with no ->default(), so
+            // "Reset to Defaults" silently did nothing. Seeded empty so the
+            // built-in lang-file text (the placeholder shown when blank)
+            // keeps winning until an admin explicitly overrides it.
+            ['group' => 'navbar', 'key' => 'account_label',            'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'my_account_label',         'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'sign_in_label',            'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'sign_in_register_label',   'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'cart_label',               'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'cart_title',               'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'subtotal_label',           'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'view_cart_label',          'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'checkout_label',           'value' => '', 'type' => $s],
+            ['group' => 'navbar', 'key' => 'remove_label',             'value' => '', 'type' => $s],
+
+            // ── FOOTER ────────────────────────────────────────────────────────────
+            // Same gap fix as NAVBAR above — FooterSettings.php's fields also
+            // had zero seed rows.
+            ['group' => 'footer', 'key' => 'oem_badge_text',           'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'oem_badge_subtext',        'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'shipping_badge_text',      'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'shipping_badge_subtext',   'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'returns_badge_text',       'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'returns_badge_subtext',    'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'security_badge_text',      'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'security_badge_subtext',   'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'stat_parts_label',         'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'stat_parts',               'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'stat_countries_label',     'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'stat_countries',           'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'stat_languages_label',     'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'stat_languages',           'value' => '', 'type' => $s],
+            ['group' => 'footer', 'key' => 'payment_methods',          'value' => '', 'type' => $j],
+
+            // ── CUSTOMERS ─────────────────────────────────────────────────────────
+            // Same gap fix — CustomersSettings.php's ->default() values were
+            // never mirrored into the seeder, so "Reset to Defaults" reset to
+            // nothing rather than back to these values.
+            ['group' => 'customers', 'key' => 'vip_min_orders',        'value' => '10',   'type' => $i],
+            ['group' => 'customers', 'key' => 'vip_min_spent',         'value' => '1000', 'type' => $i],
+            ['group' => 'customers', 'key' => 'repeat_min_orders',     'value' => '3',    'type' => $i],
+
             // ── STORE ─────────────────────────────────────────────────────────────
             // currency / currency_symbol retired — StoreSettings.php's own
             // "Store Currency" field is a read-only reference to
@@ -616,6 +660,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'backup', 'key' => 'retention_weekly',    'value' => '4',     'type' => $i],
             ['group' => 'backup', 'key' => 'retention_monthly',   'value' => '6',     'type' => $i],
             ['group' => 'backup', 'key' => 'schedule_time',       'value' => '01:00', 'type' => $s],
+            ['group' => 'backup', 'key' => 'schedule_enabled',    'value' => '1',     'type' => $b],
             ['group' => 'backup', 'key' => 'stale_after_seconds', 'value' => '3600',  'type' => $i],
 
             // ── UPDATES (Module 21 — release channel / auto-apply, DB-editable

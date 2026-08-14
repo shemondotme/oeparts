@@ -61,6 +61,7 @@ class BackupDashboard extends Page implements HasTable
     public int $settingsRetentionWeekly = 4;
     public int $settingsRetentionMonthly = 6;
     public string $settingsScheduleTime = '01:00';
+    public bool $settingsScheduleEnabled = true;
     /** Stored as backup.stale_after_seconds; shown/edited here in MINUTES. */
     public int $settingsStaleAfterMinutes = 60;
 
@@ -89,6 +90,10 @@ class BackupDashboard extends Page implements HasTable
         $this->settingsRetentionWeekly = (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4));
         $this->settingsRetentionMonthly = (int) settings('backup.retention_monthly', config('backup.retention.monthly', 6));
         $this->settingsScheduleTime = (string) settings('backup.schedule_time', config('backup.schedule.time', '01:00'));
+        $this->settingsScheduleEnabled = filter_var(
+            settings('backup.schedule_enabled', config('backup.schedule.enabled', true)),
+            FILTER_VALIDATE_BOOLEAN
+        );
         $this->settingsStaleAfterMinutes = (int) round(
             ((int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600))) / 60
         );
@@ -193,6 +198,7 @@ class BackupDashboard extends Page implements HasTable
             'settingsRetentionWeekly'   => ['required', 'integer', 'min:0', 'max:104'],
             'settingsRetentionMonthly'  => ['required', 'integer', 'min:0', 'max:120'],
             'settingsScheduleTime'      => ['required', 'date_format:H:i'],
+            'settingsScheduleEnabled'   => ['required', 'boolean'],
             'settingsStaleAfterMinutes' => ['required', 'integer', 'min:1', 'max:1440'],
         ]);
 
@@ -201,6 +207,7 @@ class BackupDashboard extends Page implements HasTable
         $s->set('backup.retention_weekly', (string) $data['settingsRetentionWeekly']);
         $s->set('backup.retention_monthly', (string) $data['settingsRetentionMonthly']);
         $s->set('backup.schedule_time', $data['settingsScheduleTime']);
+        $s->set('backup.schedule_enabled', $data['settingsScheduleEnabled'] ? '1' : '0');
         $s->set('backup.stale_after_seconds', (string) ($data['settingsStaleAfterMinutes'] * 60));
 
         Notification::make()->title('Backup settings saved')->success()->send();

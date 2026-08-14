@@ -131,6 +131,14 @@
                             style="background: var(--color-bg-inset, #f3f4f6); border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);" />
                     </div>
                     <div>
+                        <label class="text-xs font-bold uppercase tracking-widest font-mono mb-2 block" style="color: var(--color-text-muted, #6b7280);">Scheduled backups</label>
+                        <label class="flex items-center gap-2 px-3 py-2 text-sm rounded-xl cursor-pointer"
+                            style="background: var(--color-bg-inset, #f3f4f6); border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
+                            <input type="checkbox" wire:model="settingsScheduleEnabled" class="rounded" />
+                            Enabled
+                        </label>
+                    </div>
+                    <div>
                         <label class="text-xs font-bold uppercase tracking-widest font-mono mb-2 block" style="color: var(--color-text-muted, #6b7280);">Scheduled backup time</label>
                         <input type="time" wire:model="settingsScheduleTime"
                             class="px-3 py-2 text-sm rounded-xl"

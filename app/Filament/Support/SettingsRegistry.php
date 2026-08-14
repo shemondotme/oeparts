@@ -2,22 +2,20 @@
 
 namespace App\Filament\Support;
 
-use App\Filament\Pages\Settings\AboutLicenseSettings;
 use App\Filament\Pages\Settings\AnnouncementSettings;
 use App\Filament\Pages\Settings\AppearanceSettings;
 use App\Filament\Pages\Settings\CartSettings;
 use App\Filament\Pages\Settings\CheckoutSettings;
 use App\Filament\Pages\Settings\CustomersSettings;
 use App\Filament\Pages\Settings\FooterSettings;
+use App\Filament\Pages\Settings\LocalizationSettings;
 use App\Filament\Pages\Settings\NavbarSettings;
 use App\Filament\Pages\Settings\CompanySettings;
 use App\Filament\Pages\Settings\ContactSettings;
 use App\Filament\Pages\Settings\DashboardSettings;
-use App\Filament\Pages\Settings\DatabaseSettings;
 use App\Filament\Pages\Settings\EmailSettings;
 use App\Filament\Pages\Settings\GeneralSettings;
 use App\Filament\Pages\Settings\IntegrationsSettings;
-use App\Filament\Pages\Settings\MaintenanceSettings;
 use App\Filament\Pages\Settings\MenuSettings;
 use App\Filament\Pages\Settings\NewsletterSettings;
 use App\Filament\Pages\Settings\OrdersSettings;
@@ -34,8 +32,22 @@ use App\Filament\Pages\Settings\ShippingSettings;
 use App\Filament\Pages\Settings\SocialLinkSettings;
 use App\Filament\Pages\Settings\StatsCounterSettings;
 use App\Filament\Pages\Settings\StoreSettings;
+use App\Filament\Pages\Settings\SystemMaintenanceSettings;
 use App\Filament\Pages\Settings\TaxSettings;
 use App\Filament\Pages\Settings\UiSettings;
+use App\Filament\Pages\System\BackupDashboard;
+use App\Filament\Pages\System\CacheDashboard;
+use App\Filament\Pages\System\ErrorMonitor;
+use App\Filament\Pages\System\FailedJobsPage;
+use App\Filament\Pages\System\HealthCheckDashboard;
+use App\Filament\Pages\System\HelpPage;
+use App\Filament\Pages\System\LogViewerPage;
+use App\Filament\Pages\System\PermissionMatrix;
+use App\Filament\Pages\System\QueueMonitor;
+use App\Filament\Pages\System\ScheduledTasksPage;
+use App\Filament\Pages\System\ServerMonitor;
+use App\Filament\Pages\System\SystemUpdates;
+use App\Filament\Pages\System\UpdateHistoryPage;
 
 /**
  * Declarative source of truth for which settings pages/tools are reachable
@@ -480,35 +492,155 @@ final class SettingsRegistry
             'icon' => 'heroicon-o-lock-closed',
             'sort' => 10,
         ],
-        'maintenance-settings' => [
-            'class' => MaintenanceSettings::class,
+        'localization-settings' => [
+            'class' => LocalizationSettings::class,
+            'type' => 'page',
+            'section' => 'localization',
+            'title' => 'Localization',
+            'url' => '/admin/settings/localization-settings',
+            'description' => 'Languages and translation strings (cross-links)',
+            'icon' => 'heroicon-o-language',
+            'sort' => 10,
+        ],
+        'system-maintenance-settings' => [
+            'class' => SystemMaintenanceSettings::class,
             'type' => 'page',
             'section' => 'system-maintenance',
-            'title' => 'Maintenance & Backups',
-            'url' => '/admin/settings/maintenance-settings',
-            'description' => 'Maintenance display, backup triggers',
+            'title' => 'Maintenance Mode',
+            'url' => '/admin/settings/system-maintenance-settings',
+            'description' => 'Storefront maintenance mode, platform/database info',
             'icon' => 'heroicon-o-wrench-screwdriver',
             'sort' => 10,
         ],
-        'about-license-settings' => [
-            'class' => AboutLicenseSettings::class,
-            'type' => 'page',
+        'backup-dashboard' => [
+            'class' => BackupDashboard::class,
+            'type' => 'tool',
             'section' => 'system-maintenance',
-            'title' => 'About & License',
-            'url' => '/admin/settings/about-license-settings',
-            'description' => 'Platform version, PHP/MySQL info, MIT license',
-            'icon' => 'heroicon-o-information-circle',
+            'title' => 'Backup Management',
+            'url' => '/admin/system/backup-dashboard',
+            'description' => 'Encrypted database + file backups, restore, retention',
+            'icon' => 'heroicon-o-archive-box',
             'sort' => 20,
         ],
-        'database-settings' => [
-            'class' => DatabaseSettings::class,
-            'type' => 'page',
+        'system-updates' => [
+            'class' => SystemUpdates::class,
+            'type' => 'tool',
             'section' => 'system-maintenance',
-            'title' => 'Database Info',
-            'url' => '/admin/settings/database-settings',
-            'description' => 'Connection status, table summary, maintenance',
-            'icon' => 'heroicon-o-server-stack',
+            'title' => 'System Updates',
+            'url' => '/admin/system/system-updates',
+            'description' => 'Release channel, apply/rollback updates',
+            'icon' => 'heroicon-o-arrow-up-circle',
             'sort' => 30,
+        ],
+        'update-history-page' => [
+            'class' => UpdateHistoryPage::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Update History',
+            'url' => '/admin/system/update-history-page',
+            'description' => 'Past update runs and their outcomes',
+            'icon' => 'heroicon-o-clock',
+            'sort' => 40,
+        ],
+        'health-check-dashboard' => [
+            'class' => HealthCheckDashboard::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Health Check',
+            'url' => '/admin/system/health-check-dashboard',
+            'description' => 'Live system health status snapshot',
+            'icon' => 'heroicon-o-heart',
+            'sort' => 50,
+        ],
+        'cache-dashboard' => [
+            'class' => CacheDashboard::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Cache Dashboard',
+            'url' => '/admin/system/cache-dashboard',
+            'description' => 'Cache driver status and metrics',
+            'icon' => 'heroicon-o-server-stack',
+            'sort' => 60,
+        ],
+        'queue-monitor' => [
+            'class' => QueueMonitor::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Queue Monitor',
+            'url' => '/admin/system/queue-monitor',
+            'description' => 'Queued and processing job status',
+            'icon' => 'heroicon-o-server-stack',
+            'sort' => 70,
+        ],
+        'failed-jobs-page' => [
+            'class' => FailedJobsPage::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Failed Jobs',
+            'url' => '/admin/system/failed-jobs-page',
+            'description' => 'Failed queue jobs — retry or delete',
+            'icon' => 'heroicon-o-x-circle',
+            'sort' => 80,
+        ],
+        'scheduled-tasks-page' => [
+            'class' => ScheduledTasksPage::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Scheduled Tasks',
+            'url' => '/admin/system/scheduled-tasks-page',
+            'description' => 'Cron schedule and last-run status',
+            'icon' => 'heroicon-o-clock',
+            'sort' => 90,
+        ],
+        'error-monitor' => [
+            'class' => ErrorMonitor::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Error Monitor',
+            'url' => '/admin/system/error-monitor',
+            'description' => 'Recent application errors and exceptions',
+            'icon' => 'heroicon-o-exclamation-triangle',
+            'sort' => 100,
+        ],
+        'log-viewer-page' => [
+            'class' => LogViewerPage::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Log Viewer',
+            'url' => '/admin/system/log-viewer-page',
+            'description' => 'Browse application log files',
+            'icon' => 'heroicon-o-document-text',
+            'sort' => 110,
+        ],
+        'server-monitor' => [
+            'class' => ServerMonitor::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Server Monitor',
+            'url' => '/admin/system/server-monitor',
+            'description' => 'CPU, memory, disk, and PHP process status',
+            'icon' => 'heroicon-o-cpu-chip',
+            'sort' => 120,
+        ],
+        'permission-matrix' => [
+            'class' => PermissionMatrix::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Permission Matrix',
+            'url' => '/admin/system/permission-matrix',
+            'description' => 'Role-to-permission grants across the panel',
+            'icon' => 'heroicon-o-key',
+            'sort' => 130,
+        ],
+        'help-page' => [
+            'class' => HelpPage::class,
+            'type' => 'tool',
+            'section' => 'system-maintenance',
+            'title' => 'Help & Documentation',
+            'url' => '/admin/system/help-page',
+            'description' => 'Admin panel usage documentation',
+            'icon' => 'heroicon-o-question-mark-circle',
+            'sort' => 140,
         ],
     ];
 

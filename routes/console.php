@@ -55,7 +55,8 @@ Schedule::command('oeparts:orders:auto-complete')->dailyAt('02:30');
 // Supersedes the old db:backup / mysqldump command (kept for now, no longer scheduled).
 Schedule::command('oeparts:backup --trigger=scheduled')
     ->dailyAt(settings('backup.schedule_time', config('backup.schedule.time', '01:00')))
-    ->when(fn () => (bool) config('backup.schedule.enabled', true) && (bool) config('backup.enabled', true));
+    ->when(fn () => filter_var(settings('backup.schedule_enabled', config('backup.schedule.enabled', true)), FILTER_VALIDATE_BOOLEAN)
+        && (bool) config('backup.enabled', true));
 
 // Reclaim backup runs abandoned mid-progress (e.g. an admin navigates away
 // while "Run backup now" is still polling) and release the stale shared

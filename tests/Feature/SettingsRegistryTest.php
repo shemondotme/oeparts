@@ -91,10 +91,13 @@ class SettingsRegistryTest extends TestCase
                 // 'tool' entries (Backup, Updates, read-only system monitors,
                 // the Site Copy Library, ...) are not SettingsPage subclasses
                 // and are not required to live under /admin/settings — just
-                // required to resolve to their own declared URL.
+                // required to resolve to their own declared URL. getUrl()
+                // returns an absolute URL (scheme+host); the registry stores
+                // a host-agnostic path (what the cluster grid's url($item[1])
+                // call expects), so compare path components only.
                 $this->assertSame(
                     $page['url'],
-                    $page['class']::getUrl(),
+                    parse_url($page['class']::getUrl(), PHP_URL_PATH),
                     "SettingsRegistry::PAGES['{$key}']['url'] does not match {$page['class']}::getUrl()."
                 );
             }
