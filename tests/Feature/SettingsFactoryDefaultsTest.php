@@ -148,7 +148,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function auth_factory_defaults_matches_seeded_values_not_stale_hardcoded_ones(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\AuthSettings::class);
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\SecurityAccessSettings::class);
 
         $this->assertSame(3, $defaults['otp_max_attempts']);
         $this->assertSame(60, $defaults['otp_resend_cooldown']);

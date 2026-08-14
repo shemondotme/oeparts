@@ -343,6 +343,15 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         return response()->download($path, $filename)->deleteFileAfterSend(true);
     })->name('export.download')->where('filename', '[a-zA-Z0-9_\-]+\.csv$')->middleware('auth.admin');
 
+    // ── Settings reorg redirect shims (old slug -> new merged page) ────
+    // Deleted SettingsPage classes leave Filament with no route for their
+    // old slug, so these keep old bookmarks/links working instead of a
+    // bare 404. Add one entry per settings page merged/renamed away.
+    Route::redirect('/settings/auth-security-settings', '/admin/settings/security-access-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/security-settings', '/admin/settings/security-access-settings', 301)
+        ->middleware('auth.admin');
+
     // ── WYSIWYG Editor (Feature 2) ───────────────────────────────────────
     Route::prefix('editor')->name('editor.')->middleware('auth.admin')->group(function () {
         Route::post('/upload-image', [\App\Http\Controllers\Admin\EditorController::class, 'uploadImage'])

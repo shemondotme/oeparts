@@ -209,7 +209,7 @@ class AdminSmokeTest extends TestCase
         $pages = [
             '/admin/settings/general-settings',
             '/admin/settings/payment-settings',
-            '/admin/settings/security-settings',
+            '/admin/settings/security-access-settings',
         ];
 
         foreach (['manager', 'catalog_admin', 'support'] as $role) {

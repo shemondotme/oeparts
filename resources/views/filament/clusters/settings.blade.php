@@ -23,71 +23,92 @@
         @include('filament.components.cluster-search', ['placeholder' => 'Search settings... (e.g. SMTP, payment, cache)'])
 
         @php
-            $sections = \App\Filament\Support\SettingsRegistry::sections();
+            $superGroups = \App\Filament\Support\SettingsRegistry::sections();
             // Sanitize keyword haystacks to bare [a-z0-9 ] before interpolating
             // into the Alpine x-show expressions. Quotes/apostrophes/entities in
             // labels would otherwise survive HTML parsing and break the inline
             // JS string (this is what threw "Unexpected identifier" x6 before).
             $kw = fn (string $s): string => trim(preg_replace('/[^a-z0-9 ]+/', ' ', strtolower($s)));
+            $sectionHaystack = fn (string $sectionKey, array $sectionData): string => $sectionKey . ' ' . $sectionData['label'] . ' ' . $sectionData['keywords'] . ' ' . collect($sectionData['items'])->map(fn ($i) => $i[0] . ' ' . $i[2])->implode(' ');
+            $superGroupHaystack = fn (array $superGroupData): string => $superGroupData['label'] . ' ' . $superGroupData['description'] . ' ' . collect($superGroupData['sections'])->map(fn ($s, $k) => $sectionHaystack($k, $s))->implode(' ');
         @endphp
 
-        @foreach ($sections as $heading => $sectionData)
+        @foreach ($superGroups as $superGroupKey => $superGroupData)
             <div
-                x-show="search === '' || '{{ $kw($heading . ' ' . $sectionData['keywords'] . ' ' . collect($sectionData['items'])->map(fn ($i) => $i[0] . ' ' . $i[2])->implode(' ')) }}'.includes(search.toLowerCase())"
+                x-show="search === '' || '{{ $kw($superGroupHaystack($superGroupData)) }}'.includes(search.toLowerCase())"
                 x-transition:enter="transition ease-out duration-200"
                 x-transition:enter-start="opacity-0 translate-y-2"
                 x-transition:enter-end="opacity-100 translate-y-0"
-                class="op-card overflow-hidden"
-                style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);"
+                class="space-y-3"
             >
-                {{-- Group Header --}}
-                <div class="px-6 py-4 flex items-center gap-3" style="border-bottom: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);">
-                    <div class="p-1.5 rounded-lg" style="background: var(--color-bg-surface); color: var(--color-text-muted);">
-                        @svg($sectionData['icon'], 'w-4 h-4')
+                {{-- Super-Group Header --}}
+                <div class="flex items-center gap-3 px-1">
+                    <div class="p-2 rounded-lg" style="background: var(--color-bg-inset); color: var(--warning-600);">
+                        @svg($superGroupData['icon'], 'w-5 h-5')
                     </div>
-                    <h3 class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">
-                        {{ $heading }}
-                    </h3>
+                    <div>
+                        <h2 class="text-base font-bold tracking-tight" style="font-family: var(--font-display); color: var(--color-text-primary);">
+                            {{ $superGroupData['label'] }}
+                        </h2>
+                        <p class="text-xs" style="color: var(--color-text-muted);">{{ $superGroupData['description'] }}</p>
+                    </div>
                 </div>
-                {{-- Group Content --}}
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @foreach ($sectionData['items'] as $item)
-                            <a href="{{ url($item[1]) }}"
-                               x-show="search === '' || '{{ $kw($item[0] . ' ' . $item[2]) }}'.includes(search.toLowerCase())"
-                               class="settings-link op-focus-ring op-press flex items-start gap-4 p-4 rounded-md transition-all duration-200 no-underline group"
-                               style="border: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);"
-                            >
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110"
-                                    style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
-                                    @svg($item[3], 'w-5 h-5 transition-colors duration-200', ['style' => 'color: var(--warning-600);'])
+
+                <div class="space-y-6">
+                    @foreach ($superGroupData['sections'] as $sectionKey => $sectionData)
+                        <div
+                            x-show="search === '' || '{{ $kw($sectionHaystack($sectionKey, $sectionData)) }}'.includes(search.toLowerCase())"
+                            class="op-card overflow-hidden"
+                            style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);"
+                        >
+                            {{-- Section Header --}}
+                            <div class="px-6 py-4 flex items-center gap-3" style="border-bottom: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);">
+                                <div class="p-1.5 rounded-lg" style="background: var(--color-bg-surface); color: var(--color-text-muted);">
+                                    @svg($sectionData['icon'], 'w-4 h-4')
                                 </div>
-                                <div class="min-w-0 flex-1">
-                                    <div class="text-sm font-semibold transition-colors duration-200" style="color: var(--color-text-primary); font-family: var(--font-display);">
-                                        {{ $item[0] }}
-                                    </div>
-                                    <div class="mt-1 text-xs leading-normal" style="color: var(--color-text-muted);">
-                                        {{ $item[2] }}
-                                    </div>
+                                <h3 class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">
+                                    {{ $sectionData['label'] }}
+                                </h3>
+                            </div>
+                            {{-- Section Content --}}
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    @foreach ($sectionData['items'] as $item)
+                                        <a href="{{ url($item[1]) }}"
+                                           x-show="search === '' || '{{ $kw($item[0] . ' ' . $item[2]) }}'.includes(search.toLowerCase())"
+                                           class="settings-link op-focus-ring op-press flex items-start gap-4 p-4 rounded-md transition-all duration-200 no-underline group"
+                                           style="border: 1px solid var(--color-border-subtle); background: var(--color-bg-inset);"
+                                        >
+                                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110"
+                                                style="background: var(--color-bg-surface); border: 1px solid var(--color-border-default);">
+                                                @svg($item[3], 'w-5 h-5 transition-colors duration-200', ['style' => 'color: var(--warning-600);'])
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="text-sm font-semibold transition-colors duration-200" style="color: var(--color-text-primary); font-family: var(--font-display);">
+                                                    {{ $item[0] }}
+                                                </div>
+                                                <div class="mt-1 text-xs leading-normal" style="color: var(--color-text-muted);">
+                                                    {{ $item[2] }}
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center self-center opacity-0 group-hover:opacity-100 translate-x-[-4px] group-hover:translate-x-0 transition-all duration-300">
+                                                <x-heroicon-o-arrow-right class="w-4 h-4" style="color: var(--warning-500);" />
+                                            </div>
+                                        </a>
+                                    @endforeach
                                 </div>
-                                <div class="flex items-center self-center opacity-0 group-hover:opacity-100 translate-x-[-4px] group-hover:translate-x-0 transition-all duration-300">
-                                    <x-heroicon-o-arrow-right class="w-4 h-4" style="color: var(--warning-500);" />
-                                </div>
-                            </a>
-                        @endforeach
-                    </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             </div>
         @endforeach
 
         {{-- No Results --}}
         @php
-            $allItemKeywords = $kw(collect($sections)->flatMap(function ($section) {
-                return collect($section['items'])->map(fn ($item) => $item[0] . ' ' . $item[2]);
-            })->implode(' '));
-            $sectionKeywords = $kw(collect($sections)->map(fn ($s, $k) => $k . ' ' . $s['keywords'])->implode(' '));
+            $allHaystack = $kw(collect($superGroups)->map(fn ($sg) => $superGroupHaystack($sg))->implode(' '));
         @endphp
-        <div x-show="search.length > 0 && !'{{ $sectionKeywords }}'.includes(search.toLowerCase()) && !'{{ $allItemKeywords }}'.includes(search.toLowerCase())"
+        <div x-show="search.length > 0 && !'{{ $allHaystack }}'.includes(search.toLowerCase())"
             class="op-card p-8 text-center" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <p class="text-sm font-medium" style="color: var(--color-text-muted);">No settings match your search.</p>
         </div>
