@@ -207,7 +207,7 @@ class AdminSmokeTest extends TestCase
         // directly by URL despite the Settings cluster itself being gated to
         // super_admin/admin. Confirm every non-admin role is now rejected.
         $pages = [
-            '/admin/settings/general-settings',
+            '/admin/settings/general-brand-settings',
             '/admin/settings/payment-settings',
             '/admin/settings/security-access-settings',
         ];

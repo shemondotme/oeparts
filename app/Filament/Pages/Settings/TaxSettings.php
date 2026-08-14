@@ -26,8 +26,8 @@ class TaxSettings extends SettingsPage
                             ->columnSpanFull()
                             ->content(new \Illuminate\Support\HtmlString(
                                 'Your own company VAT registration number (printed on generated customer invoices) is set on the <a href="'
-                                . CompanySettings::getUrl()
-                                . '" class="fi-link text-primary-600">Company Settings</a> page, alongside your registered address and contact details.'
+                                . GeneralBrandSettings::getUrl()
+                                . '" class="fi-link text-primary-600">General & Brand</a> page\'s Company & Legal tab, alongside your registered address and contact details.'
                             )),
 
                         Forms\Components\TextInput::make('default_vat_rate')

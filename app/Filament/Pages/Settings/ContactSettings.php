@@ -98,8 +98,8 @@ class ContactSettings extends SettingsPage
                             ->label('')
                             ->content(new \Illuminate\Support\HtmlString(
                                 'Social profile links (Facebook, LinkedIn, and 4 more platforms), footer display, and icon style are managed on the <a href="'
-                                . SocialLinkSettings::getUrl()
-                                . '" class="fi-link text-primary-600">Social Links</a> page.'
+                                . CustomizationSettings::getUrl()
+                                . '" class="fi-link text-primary-600">Customization</a> page\'s Menus & Social tab.'
                             )),
                     ]),
 

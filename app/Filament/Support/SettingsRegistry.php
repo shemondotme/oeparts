@@ -2,39 +2,29 @@
 
 namespace App\Filament\Support;
 
-use App\Filament\Pages\Settings\AnnouncementSettings;
 use App\Filament\Pages\Settings\AppearanceSettings;
 use App\Filament\Pages\Settings\CartSettings;
 use App\Filament\Pages\Settings\CheckoutSettings;
 use App\Filament\Pages\Settings\CustomersSettings;
-use App\Filament\Pages\Settings\FooterSettings;
-use App\Filament\Pages\Settings\LocalizationSettings;
-use App\Filament\Pages\Settings\NavbarSettings;
-use App\Filament\Pages\Settings\CompanySettings;
+use App\Filament\Pages\Settings\CustomizationSettings;
 use App\Filament\Pages\Settings\ContactSettings;
 use App\Filament\Pages\Settings\DashboardSettings;
 use App\Filament\Pages\Settings\EmailSettings;
-use App\Filament\Pages\Settings\GeneralSettings;
+use App\Filament\Pages\Settings\GeneralBrandSettings;
 use App\Filament\Pages\Settings\IntegrationsSettings;
-use App\Filament\Pages\Settings\MenuSettings;
+use App\Filament\Pages\Settings\LocalizationSettings;
 use App\Filament\Pages\Settings\NewsletterSettings;
 use App\Filament\Pages\Settings\OrdersSettings;
 use App\Filament\Pages\Settings\PartInquirySettings;
 use App\Filament\Pages\Settings\PaymentSettings;
 use App\Filament\Pages\Settings\PdpSettings;
 use App\Filament\Pages\Settings\PerformanceSettings;
-use App\Filament\Pages\Settings\PreloaderSettings;
 use App\Filament\Pages\Settings\SearchSettings;
-use App\Filament\Pages\Settings\SectionsSettings;
 use App\Filament\Pages\Settings\SecurityAccessSettings;
 use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\ShippingSettings;
-use App\Filament\Pages\Settings\SocialLinkSettings;
-use App\Filament\Pages\Settings\StatsCounterSettings;
-use App\Filament\Pages\Settings\StoreSettings;
 use App\Filament\Pages\Settings\SystemMaintenanceSettings;
 use App\Filament\Pages\Settings\TaxSettings;
-use App\Filament\Pages\Settings\UiSettings;
 use App\Filament\Pages\System\BackupDashboard;
 use App\Filament\Pages\System\CacheDashboard;
 use App\Filament\Pages\System\ErrorMonitor;
@@ -182,35 +172,15 @@ final class SettingsRegistry
     ];
 
     public const PAGES = [
-        'general-settings' => [
-            'class' => GeneralSettings::class,
+        'general-brand-settings' => [
+            'class' => GeneralBrandSettings::class,
             'type' => 'page',
             'section' => 'general-brand',
-            'title' => 'General Settings',
-            'url' => '/admin/settings/general-settings',
-            'description' => 'Store name, logo, basic details',
-            'icon' => 'heroicon-o-cog-6-tooth',
+            'title' => 'General & Brand',
+            'url' => '/admin/settings/general-brand-settings',
+            'description' => 'Site identity, company/legal info, regional defaults, script injection',
+            'icon' => 'heroicon-o-identification',
             'sort' => 10,
-        ],
-        'company-settings' => [
-            'class' => CompanySettings::class,
-            'type' => 'page',
-            'section' => 'general-brand',
-            'title' => 'Company Info',
-            'url' => '/admin/settings/company-settings',
-            'description' => 'Company details for invoices, legal, and emails',
-            'icon' => 'heroicon-o-building-office-2',
-            'sort' => 20,
-        ],
-        'store-settings' => [
-            'class' => StoreSettings::class,
-            'type' => 'page',
-            'section' => 'general-brand',
-            'title' => 'Store Currency',
-            'url' => '/admin/settings/store-settings',
-            'description' => 'Currency, symbol, locale formatting',
-            'icon' => 'heroicon-o-banknotes',
-            'sort' => 30,
         ],
         'contact-settings' => [
             'class' => ContactSettings::class,
@@ -228,99 +198,19 @@ final class SettingsRegistry
             'section' => 'appearance',
             'title' => 'Appearance',
             'url' => '/admin/settings/appearance-settings',
-            'description' => 'Custom colors, theme styling',
+            'description' => 'Colors, custom CSS, preloader, stats counter',
             'icon' => 'heroicon-o-paint-brush',
             'sort' => 10,
         ],
-        'stats-counter-settings' => [
-            'class' => StatsCounterSettings::class,
-            'type' => 'page',
-            'section' => 'appearance',
-            'title' => 'Stats Counter',
-            'url' => '/admin/settings/stats-counter-settings',
-            'description' => 'Fake frontend counters (parts, clients)',
-            'icon' => 'heroicon-o-presentation-chart-line',
-            'sort' => 20,
-        ],
-        'preloader-settings' => [
-            'class' => PreloaderSettings::class,
-            'type' => 'page',
-            'section' => 'appearance',
-            'title' => 'Preloader',
-            'url' => '/admin/settings/preloader-settings',
-            'description' => 'Full-screen loading animation settings',
-            'icon' => 'heroicon-o-arrow-path',
-            'sort' => 30,
-        ],
-        'ui-settings' => [
-            'class' => UiSettings::class,
+        'customization-settings' => [
+            'class' => CustomizationSettings::class,
             'type' => 'page',
             'section' => 'customization',
-            'title' => 'Homepage Hero & UI Text',
-            'url' => '/admin/settings/ui-settings',
-            'description' => 'Hero banner, spec table, and footer pill copy',
-            'icon' => 'heroicon-o-paint-brush',
-            'sort' => 10,
-        ],
-        'navbar-settings' => [
-            'class' => NavbarSettings::class,
-            'type' => 'page',
-            'section' => 'customization',
-            'title' => 'Navbar & Mini-Cart',
-            'url' => '/admin/settings/navbar-settings',
-            'description' => 'Navigation and mini-cart labels',
-            'icon' => 'heroicon-o-bars-3-bottom-left',
-            'sort' => 20,
-        ],
-        'footer-settings' => [
-            'class' => FooterSettings::class,
-            'type' => 'page',
-            'section' => 'customization',
-            'title' => 'Footer Badges',
-            'url' => '/admin/settings/footer-settings',
-            'description' => 'Trust badges, stats, payment labels',
+            'title' => 'Customization',
+            'url' => '/admin/settings/customization-settings',
+            'description' => 'Hero/UI copy, navbar, footer, announcement bar, section limits, menus & social',
             'icon' => 'heroicon-o-rectangle-group',
-            'sort' => 30,
-        ],
-        'announcement-settings' => [
-            'class' => AnnouncementSettings::class,
-            'type' => 'page',
-            'section' => 'customization',
-            'title' => 'Announcement',
-            'url' => '/admin/settings/announcement-settings',
-            'description' => 'Site-wide marquee promo bar',
-            'icon' => 'heroicon-o-megaphone',
-            'sort' => 40,
-        ],
-        'sections-settings' => [
-            'class' => SectionsSettings::class,
-            'type' => 'page',
-            'section' => 'customization',
-            'title' => 'Sections',
-            'url' => '/admin/settings/sections-settings',
-            'description' => 'Homepage content section display limits',
-            'icon' => 'heroicon-o-squares-2x2',
-            'sort' => 50,
-        ],
-        'menu-settings' => [
-            'class' => MenuSettings::class,
-            'type' => 'page',
-            'section' => 'customization',
-            'title' => 'Menu Settings',
-            'url' => '/admin/settings/menu-settings',
-            'description' => 'Configure storefront header and footer navigation',
-            'icon' => 'heroicon-o-bars-3',
-            'sort' => 60,
-        ],
-        'social-link-settings' => [
-            'class' => SocialLinkSettings::class,
-            'type' => 'page',
-            'section' => 'customization',
-            'title' => 'Social Links',
-            'url' => '/admin/settings/social-link-settings',
-            'description' => 'Social media profile URLs for footer and sharing',
-            'icon' => 'heroicon-o-globe-alt',
-            'sort' => 70,
+            'sort' => 10,
         ],
         'orders-settings' => [
             'class' => OrdersSettings::class,

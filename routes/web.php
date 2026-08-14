@@ -357,6 +357,30 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         ->middleware('auth.admin');
     Route::redirect('/settings/database-settings', '/admin/settings/system-maintenance-settings', 301)
         ->middleware('auth.admin');
+    Route::redirect('/settings/general-settings', '/admin/settings/general-brand-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/company-settings', '/admin/settings/general-brand-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/store-settings', '/admin/settings/general-brand-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/preloader-settings', '/admin/settings/appearance-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/stats-counter-settings', '/admin/settings/appearance-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/ui-settings', '/admin/settings/customization-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/navbar-settings', '/admin/settings/customization-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/footer-settings', '/admin/settings/customization-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/announcement-settings', '/admin/settings/customization-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/sections-settings', '/admin/settings/customization-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/menu-settings', '/admin/settings/customization-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/social-link-settings', '/admin/settings/customization-settings', 301)
+        ->middleware('auth.admin');
 
     // ── WYSIWYG Editor (Feature 2) ───────────────────────────────────────
     Route::prefix('editor')->name('editor.')->middleware('auth.admin')->group(function () {

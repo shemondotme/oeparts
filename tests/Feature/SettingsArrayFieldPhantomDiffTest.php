@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Filament\Pages\Settings\GeneralSettings;
+use App\Filament\Pages\Settings\GeneralBrandSettings;
 use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Models\Admin;
 use App\Models\Setting;
@@ -52,7 +52,7 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(GeneralSettings::class)
+        Livewire::test(GeneralBrandSettings::class)
             ->call('save')
             ->assertSet('pendingChanges', null);
     }
@@ -78,9 +78,10 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(GeneralSettings::class)
+        Livewire::test(GeneralBrandSettings::class)
             ->set('data.site_name', 'OeParts Renamed')
-            ->call('save');
+            ->call('save')
+            ->assertHasNoErrors();
 
         $this->assertSame('OeParts Renamed', Setting::where('group', 'general')->where('key', 'site_name')->value('value'));
         // The untouched array field must be saved back as "" — never the

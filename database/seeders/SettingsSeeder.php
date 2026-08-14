@@ -556,7 +556,15 @@ class SettingsSeeder extends Seeder
             // "Store Currency" field is a read-only reference to
             // general.currency(_symbol); see the retire-dead-store-currency
             // migration. Every real reader points at general.* now.
-            ['group' => 'store', 'key' => 'currency_position',  'value' => 'left', 'type' => $s],
+            // Gap fix: seeded as 'left' but StoreSettings'/GeneralBrandSettings'
+            // Select field only ever declared 'before'/'after' options (this
+            // setting has no other reader anywhere in the app, confirmed via
+            // grep — 'left' was stale/dead data, never functionally wrong
+            // until Phase 3's merge exposed it as a real Select validation
+            // failure the first time this field's Select got re-validated
+            // alongside another field's edit). 'after' matches the field's
+            // own ->default('after').
+            ['group' => 'store', 'key' => 'currency_position',  'value' => 'after', 'type' => $s],
             ['group' => 'store', 'key' => 'decimal_separator',  'value' => '.',    'type' => $s],
             ['group' => 'store', 'key' => 'thousand_separator', 'value' => ',',    'type' => $s],
 

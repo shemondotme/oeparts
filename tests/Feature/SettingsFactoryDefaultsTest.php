@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Settings\SettingsPage;
-use App\Filament\Pages\Settings\UiSettings;
 use App\Models\Admin;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -107,20 +106,26 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function ui_settings_factory_defaults_includes_all_22_hero_keys(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\UiSettings::class);
+        // CustomizationSettings spans 7 groups (ui/navbar/footer/announcement/
+        // sections/menu/social_links) so its defaults are the union of all of
+        // them now — filter to the hero_* prefix to isolate what was
+        // previously UiSettings' entire (single-group) default set.
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\CustomizationSettings::class);
+        $heroKeys = collect($defaults)->keys()->filter(fn (string $k) => str_starts_with($k, 'hero_'));
 
-        $this->assertCount(22, $defaults);
+        $this->assertCount(22, $heroKeys);
         $this->assertArrayHasKey('hero_spec_r5_value', $defaults);
     }
 
     #[Test]
     public function menu_settings_factory_defaults_uses_the_real_footer_toggle_keys(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\MenuSettings::class);
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\CustomizationSettings::class);
+        $footerToggleKeys = collect(array_keys($defaults))->filter(fn (string $k) => str_starts_with($k, 'footer_show_'));
 
         $this->assertSame(
             ['footer_show_about', 'footer_show_blog', 'footer_show_contact', 'footer_show_faq'],
-            collect(array_keys($defaults))->sort()->values()->all()
+            $footerToggleKeys->sort()->values()->all()
         );
         $this->assertIsBool($defaults['footer_show_about']);
     }
@@ -128,11 +133,15 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function stats_counter_factory_defaults_uses_the_real_keys(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\StatsCounterSettings::class);
+        // StatsCounterSettings merged into AppearanceSettings (appearance/
+        // preloader/stats_counter groups) — intersect down to just the
+        // stats-counter keys rather than asserting the full combined set.
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\AppearanceSettings::class);
+        $statsCounterKeys = ['countries_count', 'customers_count', 'orders_count', 'parts_count', 'rating', 'show_section'];
 
         $this->assertSame(
-            ['countries_count', 'customers_count', 'orders_count', 'parts_count', 'rating', 'show_section'],
-            collect(array_keys($defaults))->sort()->values()->all()
+            $statsCounterKeys,
+            collect(array_keys($defaults))->intersect($statsCounterKeys)->sort()->values()->all()
         );
     }
 
