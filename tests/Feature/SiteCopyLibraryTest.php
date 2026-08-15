@@ -13,8 +13,10 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * Phase 7.2 — browsable/editable tool for the ~344 ui.* cart_/search_/nav_
- * text-override rows that previously had zero admin UI. See
+ * Phase 7.2 — browsable/editable tool for the ui.* text-override rows
+ * that previously had zero admin UI: cart_/search_/nav_ shipped first
+ * (~344 rows), checkout_/account_/footer_ (~512 more rows) followed as
+ * the deliberately-deferred fast-follow. See
  * memory/project_ui_copy_text_override_gap.md for the full history.
  */
 class SiteCopyLibraryTest extends TestCase
@@ -77,30 +79,33 @@ class SiteCopyLibraryTest extends TestCase
     }
 
     #[Test]
-    public function only_cart_search_and_nav_prefixed_rows_appear_defensively_excluding_every_other_prefix(): void
+    public function all_six_covered_prefixes_appear_defensively_excluding_every_other_prefix(): void
     {
-        // Defensive per the plan: even though nothing seeds these other
-        // prefixes today, the query must not accidentally widen to them —
-        // hero_* stays on CustomizationSettings' own tab, and
-        // checkout_/account_/footer_ are an explicit, unbuilt backlog item.
+        // Defensive per the plan: the query must not accidentally widen
+        // beyond the 6 prefixes UiCopyInstaller actually seeds — hero_*
+        // stays on CustomizationSettings' own tab, and anything else
+        // (a made-up prefix here stands in for "whatever gets seeded
+        // under ui.* next that this Page was never updated for") must
+        // stay excluded rather than silently start appearing.
         $cart = $this->makeUiRow('cart_empty_message');
         $search = $this->makeUiRow('search_no_results');
         $nav = $this->makeUiRow('nav_cart_label');
+        $checkout = $this->makeUiRow('checkout_urgent_processing_eyebrow');
+        $account = $this->makeUiRow('account_welcome_back');
+        $footer = $this->makeUiRow('footer_oem_badge_text');
         $hero = $this->makeUiRow('hero_title');
-        $checkout = $this->makeUiRow('checkout_thank_you');
-        $account = $this->makeUiRow('account_welcome');
-        $footer = $this->makeUiRow('footer_copyright');
+        $unrelated = $this->makeUiRow('misc_totally_unrelated_key');
 
         $this->actingAs($this->superAdmin(), 'admin');
 
-        // The real ui.* table already has 344 cart_/search_/nav_ rows
-        // (seeded by the install_ui_copy_for_search_cart_nav migration) —
-        // bump the page size so these specific fixture rows aren't pushed
-        // past the default 10-per-page cut by alphabetical sort.
+        // The real ui.* table already has ~900 rows across all 6 prefixes
+        // (seeded by the two install_ui_copy_for_* migrations) — bump the
+        // page size so these specific fixture rows aren't pushed past the
+        // default 10-per-page cut by alphabetical sort.
         Livewire::test(SiteCopyLibrary::class)
-            ->set('tableRecordsPerPage', 500)
-            ->assertCanSeeTableRecords([$cart, $search, $nav])
-            ->assertCanNotSeeTableRecords([$hero, $checkout, $account, $footer]);
+            ->set('tableRecordsPerPage', 1000)
+            ->assertCanSeeTableRecords([$cart, $search, $nav, $checkout, $account, $footer])
+            ->assertCanNotSeeTableRecords([$hero, $unrelated]);
     }
 
     #[Test]
@@ -117,6 +122,22 @@ class SiteCopyLibraryTest extends TestCase
             ->filterTable('prefix', 'cart_')
             ->assertCanSeeTableRecords([$cart])
             ->assertCanNotSeeTableRecords([$search, $nav]);
+    }
+
+    #[Test]
+    public function the_category_filter_narrows_to_a_newly_added_prefix_too(): void
+    {
+        $checkout = $this->makeUiRow('checkout_urgent_processing_eyebrow');
+        $account = $this->makeUiRow('account_welcome_back');
+        $footer = $this->makeUiRow('footer_oem_badge_text');
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SiteCopyLibrary::class)
+            ->set('tableRecordsPerPage', 1000)
+            ->filterTable('prefix', 'account_')
+            ->assertCanSeeTableRecords([$account])
+            ->assertCanNotSeeTableRecords([$checkout, $footer]);
     }
 
     #[Test]

@@ -26,8 +26,12 @@ class TranslationResource extends Resource
      * basename Laravel's translator loads it under — confirmed directly via
      * DatabaseTranslationLoader::load()'s $group param) to the ui.* prefix
      * UiCopyInstaller seeded that same source file's strings under. Only
-     * these 3 groups can ever be shadowed — UiCopyInstaller never seeded
-     * anything else.
+     * these 6 groups can ever be shadowed — UiCopyInstaller never seeded
+     * anything else. checkout/account/footer were added alongside
+     * SiteCopyLibrary's expansion to those prefixes (see
+     * memory/project_ui_copy_text_override_gap.md) — no language_strings
+     * rows exist for these groups yet, but TranslationResource's group
+     * field is free text, so an admin could create one at any time.
      *
      * @var array<string, string>
      */
@@ -35,6 +39,9 @@ class TranslationResource extends Resource
         'search' => 'search_',
         'cart' => 'cart_',
         'navbar' => 'nav_',
+        'checkout' => 'checkout_',
+        'account' => 'account_',
+        'footer' => 'footer_',
     ];
 
     /**

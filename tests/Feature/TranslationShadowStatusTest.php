@@ -89,6 +89,27 @@ class TranslationShadowStatusTest extends TestCase
     }
 
     #[Test]
+    public function the_checkout_account_and_footer_groups_shadow_correctly_too(): void
+    {
+        // The fast-follow expansion (checkout_/account_/footer_) extended
+        // SHADOWING_PREFIX_MAP alongside SiteCopyLibrary's new prefixes —
+        // no language_strings rows exist for these groups today (the
+        // group field is free text), but an admin could create one at
+        // any time, so this must work identically to search/cart/navbar.
+        $this->setUiOverride('checkout_urgent_processing_eyebrow', ['en' => 'Fast shipping available']);
+        $this->setUiOverride('account_welcome_back', ['en' => 'Hey there']);
+        $this->setUiOverride('footer_oem_badge_text', ['en' => '100% Genuine']);
+
+        $checkout = LanguageString::create(['lang_code' => 'en', 'group' => 'checkout', 'key' => 'urgent_processing_eyebrow', 'value' => 'Fast shipping']);
+        $account = LanguageString::create(['lang_code' => 'en', 'group' => 'account', 'key' => 'welcome_back', 'value' => 'Welcome back']);
+        $footer = LanguageString::create(['lang_code' => 'en', 'group' => 'footer', 'key' => 'oem_badge_text', 'value' => 'Genuine Parts']);
+
+        $this->assertTrue(TranslationResource::isShadowed($checkout));
+        $this->assertTrue(TranslationResource::isShadowed($account));
+        $this->assertTrue(TranslationResource::isShadowed($footer));
+    }
+
+    #[Test]
     public function a_group_outside_the_shadowing_prefix_map_is_never_shadowed(): void
     {
         // 'auth' has no ui.* prefix mapping at all — UiCopyInstaller never

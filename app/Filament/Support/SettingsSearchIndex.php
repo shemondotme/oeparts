@@ -222,10 +222,13 @@ final class SettingsSearchIndex
         $url = '/admin/settings/site-copy-library';
 
         return [
-            self::row($section, $page, null, 'Site Copy Library', 'cart search navbar text overrides ui copy translation browsable', $url),
+            self::row($section, $page, null, 'Site Copy Library', 'cart search navbar checkout account footer text overrides ui copy translation browsable', $url),
             self::row($section, $page, null, 'Cart Text Overrides', 'ui copy translation', $url),
             self::row($section, $page, null, 'Search Text Overrides', 'ui copy translation', $url),
             self::row($section, $page, null, 'Navbar Text Overrides', 'ui copy translation', $url),
+            self::row($section, $page, null, 'Checkout Text Overrides', 'ui copy translation', $url),
+            self::row($section, $page, null, 'Account Text Overrides', 'ui copy translation', $url),
+            self::row($section, $page, null, 'Footer Text Overrides', 'ui copy translation', $url),
         ];
     }
 

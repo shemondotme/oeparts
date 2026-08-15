@@ -15,14 +15,15 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Browsable/searchable editor for the ~344 `ui.*` text-override rows that
- * UiCopyInstaller seeded from lang/en/{search,cart,navbar}.php but which
- * never got any admin UI — see memory/project_ui_copy_text_override_gap.md
- * for the full history. Deliberately scoped to just the search_/cart_/
- * nav_ prefixes UiCopyInstaller actually seeded; checkout_/account_/
- * footer_ (~382 more ui_copy() call sites) are an explicit backlog item,
- * not built here — the query below excludes them defensively even though
- * nothing seeds them today. The 22 curated hero_* rows stay on
+ * Browsable/searchable editor for the `ui.*` text-override rows that
+ * UiCopyInstaller seeds from lang/en/{search,cart,navbar,checkout,account,
+ * footer}.php but which never got any admin UI — see
+ * memory/project_ui_copy_text_override_gap.md for the full history.
+ * search_/cart_/nav_ shipped first (Phase 7, ~344 rows); checkout_/
+ * account_/footer_ (~512 more rows) followed as the deliberately-deferred
+ * fast-follow once that surface proved out. The query below still
+ * excludes every OTHER prefix defensively (e.g. hero_) even though
+ * nothing seeds them under this Page. The 22 curated hero_* rows stay on
  * CustomizationSettings' own "Hero & UI Copy" tab, unchanged — this is an
  * ADDITIONAL browser for everything else, not a replacement.
  *
@@ -47,9 +48,9 @@ class SiteCopyLibrary extends Page implements HasTable
 
     protected string $view = 'filament.pages.settings.site-copy-library';
 
-    protected ?string $subheading = 'Browse and edit the storefront cart/search/navbar text overrides that have no dedicated settings field.';
+    protected ?string $subheading = 'Browse and edit storefront text overrides (cart, search, navbar, checkout, account, footer) that have no dedicated settings field.';
 
-    private const PREFIXES = ['cart_', 'search_', 'nav_'];
+    private const PREFIXES = ['cart_', 'search_', 'nav_', 'checkout_', 'account_', 'footer_'];
 
     private const LOCALES = ['en', 'de', 'lt', 'fr', 'es'];
 
@@ -92,6 +93,9 @@ class SiteCopyLibrary extends Page implements HasTable
                         'Cart' => 'info',
                         'Search' => 'warning',
                         'Navbar' => 'success',
+                        'Checkout' => 'danger',
+                        'Account' => 'primary',
+                        'Footer' => 'gray',
                         default => 'gray',
                     }),
 
@@ -108,6 +112,9 @@ class SiteCopyLibrary extends Page implements HasTable
                         'cart_' => 'Cart',
                         'search_' => 'Search',
                         'nav_' => 'Navbar',
+                        'checkout_' => 'Checkout',
+                        'account_' => 'Account',
+                        'footer_' => 'Footer',
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         if (filled($data['value'] ?? null)) {
@@ -164,6 +171,9 @@ class SiteCopyLibrary extends Page implements HasTable
             str_starts_with($key, 'cart_') => 'Cart',
             str_starts_with($key, 'search_') => 'Search',
             str_starts_with($key, 'nav_') => 'Navbar',
+            str_starts_with($key, 'checkout_') => 'Checkout',
+            str_starts_with($key, 'account_') => 'Account',
+            str_starts_with($key, 'footer_') => 'Footer',
             default => 'Other',
         };
     }
