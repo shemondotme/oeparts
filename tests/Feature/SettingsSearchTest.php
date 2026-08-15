@@ -102,6 +102,26 @@ class SettingsSearchTest extends TestCase
     }
 
     #[Test]
+    public function the_palette_partial_carries_its_accessibility_markup(): void
+    {
+        // Phase 8 hardening pass: keyboard-only nav (focus returns to
+        // wherever it was before Ctrl+K was pressed, since the palette
+        // opens over arbitrary page content) and screen-reader support
+        // (a polite live region announcing result-count changes, since
+        // role="listbox" content changing isn't announced on its own).
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        $response = $this->get('/admin');
+
+        $response->assertStatus(200);
+        $response->assertSee('lastFocusedElement', false);
+        $response->assertSee('aria-live="polite"', false);
+        $response->assertSee('role="combobox"', false);
+        $response->assertSee('role="listbox"', false);
+        $response->assertSee('aria-modal="true"', false);
+    }
+
+    #[Test]
     public function endpoint_returns_matches_for_a_known_query(): void
     {
         $this->actingAs($this->superAdmin(), 'admin');

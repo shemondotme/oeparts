@@ -26,6 +26,7 @@
         debounceTimer: null,
         abortController: null,
         requestSeq: 0,
+        lastFocusedElement: null,
         endpoint: @js($endpoint),
 
         init() {
@@ -41,6 +42,11 @@
         },
 
         openPalette() {
+            // Remember whatever had focus (the topbar button, or wherever
+            // the keyboard shortcut was pressed from) so close() can put
+            // focus back — otherwise a keyboard user loses their place
+            // every time they dismiss the palette.
+            this.lastFocusedElement = document.activeElement;
             this.open = true;
             this.$nextTick(() => this.$refs.input?.focus());
         },
@@ -51,6 +57,7 @@
             this.results = [];
             this.highlightedIndex = -1;
             this.abortController?.abort();
+            this.$nextTick(() => this.lastFocusedElement?.focus?.());
         },
 
         onInput() {
@@ -181,6 +188,17 @@
                 />
                 <kbd class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle); color: var(--color-text-muted);">Esc</kbd>
             </div>
+
+            {{-- Screen-reader-only announcement of result-count/loading changes —
+                 the visible list below is a role="listbox", but its content
+                 changing doesn't get spoken on its own without this. --}}
+            <div class="sr-only" aria-live="polite" aria-atomic="true" x-text="
+                loading
+                    ? 'Searching…'
+                    : (query.trim().length >= 2
+                        ? results.length + (results.length === 1 ? ' result found' : ' results found')
+                        : '')
+            "></div>
 
             {{-- Results --}}
             <div

@@ -106,6 +106,10 @@ class CustomizationSettingsTest extends TestCase
     {
         Setting::updateOrCreate(['group' => 'sections', 'key' => 'testimonials_limit'], ['value' => '99', 'type' => 'integer']);
         Setting::updateOrCreate(['group' => 'navbar', 'key' => 'cart_label'], ['value' => 'Something Else', 'type' => 'string']);
+        // footer was one of the 3 real seed-row gaps closed in Phase 2
+        // (had fields but zero SettingsSeeder rows, so Reset silently
+        // no-op'd) — re-verified live here as part of Phase 8 hardening.
+        Setting::updateOrCreate(['group' => 'footer', 'key' => 'oem_badge_text'], ['value' => 'Something Else', 'type' => 'string']);
 
         $this->actingAs($this->superAdmin(), 'admin');
 
@@ -121,6 +125,10 @@ class CustomizationSettingsTest extends TestCase
         $this->assertSame(
             (string) collect(SettingsSeeder::definitions())->where('group', 'navbar')->firstWhere('key', 'cart_label')['value'],
             Setting::where('group', 'navbar')->where('key', 'cart_label')->value('value')
+        );
+        $this->assertSame(
+            (string) collect(SettingsSeeder::definitions())->where('group', 'footer')->firstWhere('key', 'oem_badge_text')['value'],
+            Setting::where('group', 'footer')->where('key', 'oem_badge_text')->value('value')
         );
     }
 }
