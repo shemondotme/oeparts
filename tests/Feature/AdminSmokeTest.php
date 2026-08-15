@@ -208,7 +208,7 @@ class AdminSmokeTest extends TestCase
         // super_admin/admin. Confirm every non-admin role is now rejected.
         $pages = [
             '/admin/settings/general-brand-settings',
-            '/admin/settings/payment-settings',
+            '/admin/settings/store-operations-settings',
             '/admin/settings/security-access-settings',
         ];
 

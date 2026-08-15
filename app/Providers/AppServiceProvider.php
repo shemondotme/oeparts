@@ -199,7 +199,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('contact', function (Request $request) {
-            return Limit::perMinute((int) settings('contact.rate_limit_per_minute', 5))->by($request->ip());
+            return Limit::perMinute((int) settings('contact.form_rate_limit_per_minute', 5))->by($request->ip());
         });
 
         RateLimiter::for('refund-request', function (Request $request) {

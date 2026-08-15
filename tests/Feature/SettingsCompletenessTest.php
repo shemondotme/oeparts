@@ -40,6 +40,7 @@ class SettingsCompletenessTest extends TestCase
             'checkout.guest_password_length'  => ['checkout.guest_password_length', 12],
             'dashboard.orders_threshold'        => ['dashboard.orders_threshold', 50],
             'dashboard.pending_delayed_minutes' => ['dashboard.pending_delayed_minutes', 120],
+            'invoice.payment_terms_days'        => ['invoice.payment_terms_days', 30],
         ];
     }
 
@@ -140,7 +141,77 @@ class SettingsCompletenessTest extends TestCase
     }
 
     #[Test]
-    public function new_dashboard_settings_page_loads_with_seeded_defaults(): void
+    public function invoice_thank_you_text_is_seeded_as_multilingual_json(): void
+    {
+        $raw = settings('invoice.thank_you_text', 'SENTINEL');
+        $this->assertNotSame('SENTINEL', $raw);
+
+        $decoded = json_decode($raw, true);
+        $this->assertSame(['en', 'de', 'lt', 'fr', 'es'], array_keys($decoded));
+        $this->assertSame('Thank you for your business!', $decoded['en']);
+
+        app()->setLocale('de');
+        $this->assertSame($decoded['de'], settings_trans('invoice.thank_you_text'));
+        app()->setLocale('en');
+    }
+
+    #[Test]
+    public function invoice_pdf_renders_seeded_values_not_hardcoded_fallbacks(): void
+    {
+        \App\Models\Setting::updateOrCreate(
+            ['group' => 'invoice', 'key' => 'payment_terms_days'],
+            ['value' => '45', 'type' => \App\Enums\SettingType::Integer->value]
+        );
+        \App\Models\Setting::updateOrCreate(
+            ['group' => 'invoice', 'key' => 'thank_you_text'],
+            ['value' => json_encode(['en' => 'Custom thank-you copy for this test', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']), 'type' => \App\Enums\SettingType::Json->value]
+        );
+        app(SettingsService::class)->forget('invoice');
+
+        $user = \App\Models\User::factory()->create();
+        $order = \App\Models\Order::factory()->create([
+            'user_id' => $user->id,
+            'order_number' => 'ORD-INV-TEST-001',
+            'invoice_number' => 'INV-TEST-001',
+            'shipping_name' => 'Jane Doe',
+            'shipping_address_line1' => '123 Main St',
+            'shipping_city' => 'Berlin',
+            'shipping_postal_code' => '10115',
+            'shipping_country_code' => 'DE',
+            'created_at' => \Illuminate\Support\Carbon::parse('2026-01-01'),
+        ]);
+        $address = (object) [
+            'first_name' => 'Jane', 'last_name' => 'Doe', 'company' => null,
+            'address_line_1' => '123 Main St', 'address_line_2' => null,
+            'city' => 'Berlin', 'state' => '', 'postal_code' => '10115',
+            'country_code' => 'DE', 'phone' => null,
+        ];
+
+        $html = view('pdf.invoice', [
+            'order' => $order,
+            'user' => $order->user,
+            'items' => $order->items,
+            'billingAddress' => $address,
+            'shippingAddress' => $address,
+            'settings' => [
+                'company_name' => 'Test Co',
+                'company_address' => '',
+                'company_vat' => '',
+                'company_registration' => '',
+                'company_email' => 'test@example.com',
+                'company_phone' => '',
+            ],
+        ])->render();
+
+        // Due date = order date (2026-01-01) + the seeded 45-day term, not
+        // the blade's own hardcoded 30-day fallback (would render 31/01/2026).
+        $this->assertStringContainsString('15/02/2026', $html);
+        $this->assertStringContainsString('Custom thank-you copy for this test', $html);
+        $this->assertStringNotContainsString('Thank you for your business!', $html);
+    }
+
+    #[Test]
+    public function dashboard_alert_thresholds_tab_loads_with_seeded_defaults(): void
     {
         $this->seed([
             \Database\Seeders\RolesSeeder::class,
@@ -148,9 +219,9 @@ class SettingsCompletenessTest extends TestCase
         ]);
         $admin = \App\Models\Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
 
-        $response = $this->actingAs($admin, 'admin')->get('/admin/settings/dashboard-settings');
+        $response = $this->actingAs($admin, 'admin')->get('/admin/settings/store-operations-settings');
 
         $response->assertStatus(200);
-        $response->assertSee('Dashboard Thresholds');
+        $response->assertSee('Dashboard Alert Thresholds');
     }
 }

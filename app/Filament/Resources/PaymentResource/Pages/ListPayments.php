@@ -16,7 +16,7 @@ class ListPayments extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            \App\Filament\Support\AdminUi::settingsLinkAction(\App\Filament\Pages\Settings\PaymentSettings::class),
+            \App\Filament\Support\AdminUi::settingsLinkAction(\App\Filament\Pages\Settings\StoreOperationsSettings::class),
             ...$this->getSavedViewHeaderActions(),
         ];
     }

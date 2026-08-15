@@ -130,8 +130,11 @@ class SettingsSeeder extends Seeder
             ['group' => 'orders', 'key' => 'bank_transfer_expiry_hours',    'value' => '48',  'type' => $i],
             ['group' => 'orders', 'key' => 'customer_cancel_window_hours',  'value' => '2',   'type' => $i],
             ['group' => 'orders', 'key' => 'refund_window_days',            'value' => '14',  'type' => $i],
-            ['group' => 'orders', 'key' => 'urgent_processing_enabled',     'value' => '0',   'type' => $b],
-            ['group' => 'orders', 'key' => 'urgent_processing_fee',         'value' => '5.00', 'type' => $s],
+            // urgent_processing_enabled/fee retired — superseded by
+            // checkout.urgent_processing_* (see the 2026_08_15 migration
+            // that drops any already-seeded rows; these two never had a
+            // form field on OrdersSettings to begin with in this codebase
+            // state, so there's nothing here for firstOrCreate to backfill).
             ['group' => 'orders', 'key' => 'minimum_order_amount',          'value' => '0',   'type' => $s],
             ['group' => 'orders', 'key' => 'order_number_prefix',           'value' => 'ORD', 'type' => $s],
             ['group' => 'orders', 'key' => 'invoice_number_prefix',         'value' => 'INV', 'type' => $s],
@@ -149,6 +152,16 @@ class SettingsSeeder extends Seeder
             ['group' => 'payment', 'key' => 'airwallex_api_key',     'value' => '',        'type' => $e, 'encrypted' => true],
             ['group' => 'payment', 'key' => 'airwallex_client_id',   'value' => '',        'type' => $e, 'encrypted' => true],
             ['group' => 'payment', 'key' => 'airwallex_webhook_secret', 'value' => '',     'type' => $e, 'encrypted' => true],
+            // Gap fix: these 6 PaymentSettings.php fields had zero seed
+            // rows (found while merging 'payment' into StoreOperationsSettings
+            // in the settings reorg) — "Reset to Defaults" silently did
+            // nothing for any of them.
+            ['group' => 'payment', 'key' => 'airwallex_merchant_country_code',   'value' => 'LT',      'type' => $s],
+            ['group' => 'payment', 'key' => 'airwallex_manual_capture_enabled',  'value' => '0',       'type' => $b],
+            ['group' => 'payment', 'key' => 'paysera_environment',    'value' => 'sandbox', 'type' => $s],
+            ['group' => 'payment', 'key' => 'paysera_client_id',      'value' => '',        'type' => $s],
+            ['group' => 'payment', 'key' => 'paysera_client_secret',  'value' => '',        'type' => $e, 'encrypted' => true],
+            ['group' => 'payment', 'key' => 'paysera_webhook_secret', 'value' => '',        'type' => $e, 'encrypted' => true],
 
             // ── AUTH ─────────────────────────────────────────────────────────────
             ['group' => 'auth', 'key' => 'otp_length',                'value' => '6',   'type' => $i],
@@ -182,6 +195,10 @@ class SettingsSeeder extends Seeder
             ['group' => 'search', 'key' => 'min_chars',            'value' => '3',  'type' => $i],
             ['group' => 'search', 'key' => 'autocomplete_count',   'value' => '5',  'type' => $i],
             ['group' => 'search', 'key' => 'rate_limit_per_minute', 'value' => '30', 'type' => $i],
+            // Gap fix: SearchSettings.php's max_results field had zero seed
+            // row (found while merging 'search' into SearchCatalogSettings
+            // in the settings reorg).
+            ['group' => 'search', 'key' => 'max_results',          'value' => '50', 'type' => $i],
             ['group' => 'search', 'key' => 'log_searches',         'value' => '1',  'type' => $b],
             ['group' => 'search', 'key' => 'cross_ref_enabled',    'value' => '1',  'type' => $b],
             ['group' => 'search', 'key' => 'partial_match_enabled', 'value' => '1',  'type' => $b],
@@ -575,6 +592,11 @@ class SettingsSeeder extends Seeder
             ['group' => 'checkout', 'key' => 'payment_success_message',   'value' => $ml('Payment received. Thank you!'), 'type' => $j],
             ['group' => 'checkout', 'key' => 'payment_error_message',     'value' => $ml('Payment failed. Please try again.'), 'type' => $j],
             ['group' => 'checkout', 'key' => 'max_note_length',           'value' => '500',           'type' => $i],
+            // Gap fix: CheckoutSettings.php's Apple/Google Pay toggles had
+            // zero seed rows (found while merging 'checkout' into
+            // StoreOperationsSettings in the settings reorg).
+            ['group' => 'checkout', 'key' => 'enable_apple_pay',          'value' => '1',             'type' => $b],
+            ['group' => 'checkout', 'key' => 'enable_google_pay',         'value' => '1',             'type' => $b],
 
             // ── SECTIONS ──────────────────────────────────────────────────────────
             ['group' => 'sections', 'key' => 'testimonials_limit',   'value' => '6',  'type' => $i],
@@ -651,7 +673,10 @@ class SettingsSeeder extends Seeder
                 'fr' => 'Expédition prioritaire le jour même pour les commandes passées avant 14h un jour ouvré.',
                 'es' => 'Envío prioritario el mismo día para pedidos realizados antes de las 14:00 en un día laborable.',
             ], JSON_UNESCAPED_UNICODE), 'type' => $j],
-            ['group' => 'contact', 'key' => 'rate_limit_per_minute', 'value' => '5', 'type' => $i],
+            // Renamed from rate_limit_per_minute — collided with cart's own
+            // key of the same name once both groups merged onto one
+            // settings page (see 2026_08_15_000002 migration).
+            ['group' => 'contact', 'key' => 'form_rate_limit_per_minute', 'value' => '5', 'type' => $i],
 
             // ── DASHBOARD (widget thresholds — defaults mirrored in code) ─────────
             ['group' => 'dashboard', 'key' => 'cart_abandoned_hours',     'value' => '2',  'type' => $i],
@@ -686,6 +711,13 @@ class SettingsSeeder extends Seeder
             ['group' => 'pdp', 'key' => 'sticky_add_to_cart',          'value' => '1', 'type' => $b],
             ['group' => 'pdp', 'key' => 'buy_now_enabled',             'value' => '0', 'type' => $b],
             ['group' => 'pdp', 'key' => 'review_rate_limit_per_hour',  'value' => '5', 'type' => $i],
+
+            // ── INVOICE — gap fix: resources/views/pdf/invoice.blade.php reads
+            // both of these via settings()/settings_trans() with a hardcoded
+            // fallback and no seed row or admin UI ever existed for either
+            // (found during the Store & Commerce settings reorg audit) ──
+            ['group' => 'invoice', 'key' => 'payment_terms_days', 'value' => '30', 'type' => $i],
+            ['group' => 'invoice', 'key' => 'thank_you_text', 'value' => $ml('Thank you for your business!'), 'type' => $j],
         ];
     }
 }

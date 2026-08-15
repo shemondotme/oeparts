@@ -381,6 +381,32 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         ->middleware('auth.admin');
     Route::redirect('/settings/social-link-settings', '/admin/settings/customization-settings', 301)
         ->middleware('auth.admin');
+    Route::redirect('/settings/orders-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/customers-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/cart-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/dashboard-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/shipping-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/tax-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/checkout-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/payment-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/email-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/contact-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/part-inquiry-settings', '/admin/settings/store-operations-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/search-settings', '/admin/settings/search-catalog-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/pdp-settings', '/admin/settings/search-catalog-settings', 301)
+        ->middleware('auth.admin');
 
     // ── WYSIWYG Editor (Feature 2) ───────────────────────────────────────
     Route::prefix('editor')->name('editor.')->middleware('auth.admin')->group(function () {

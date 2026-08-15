@@ -116,7 +116,7 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
         $this->actingAs($this->superAdmin(), 'admin');
 
         $newHours = ['en' => 'Mon–Fri 8:00–17:00', 'de' => '', 'lt' => '', 'fr' => '', 'es' => ''];
-        Livewire::test(\App\Filament\Pages\Settings\ContactSettings::class)
+        Livewire::test(\App\Filament\Pages\Settings\StoreOperationsSettings::class)
             ->set('data.hours', $newHours)
             ->call('save');
 

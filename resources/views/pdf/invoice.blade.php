@@ -355,7 +355,7 @@
     </div>
 
     <div class="footer">
-        <div>{{ settings('invoice.thank_you_text', 'Thank you for your business!') }}</div>
+        <div>{{ settings_trans('invoice.thank_you_text', 'Thank you for your business!') }}</div>
         <div>If you have any questions about this invoice, please contact {{ $settings['company_email'] }}</div>
         <div class="mono">Invoice generated on {{ now()->format('d/m/Y H:i') }}</div>
     </div>

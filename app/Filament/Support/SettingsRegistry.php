@@ -3,28 +3,17 @@
 namespace App\Filament\Support;
 
 use App\Filament\Pages\Settings\AppearanceSettings;
-use App\Filament\Pages\Settings\CartSettings;
-use App\Filament\Pages\Settings\CheckoutSettings;
-use App\Filament\Pages\Settings\CustomersSettings;
 use App\Filament\Pages\Settings\CustomizationSettings;
-use App\Filament\Pages\Settings\ContactSettings;
-use App\Filament\Pages\Settings\DashboardSettings;
-use App\Filament\Pages\Settings\EmailSettings;
 use App\Filament\Pages\Settings\GeneralBrandSettings;
 use App\Filament\Pages\Settings\IntegrationsSettings;
 use App\Filament\Pages\Settings\LocalizationSettings;
 use App\Filament\Pages\Settings\NewsletterSettings;
-use App\Filament\Pages\Settings\OrdersSettings;
-use App\Filament\Pages\Settings\PartInquirySettings;
-use App\Filament\Pages\Settings\PaymentSettings;
-use App\Filament\Pages\Settings\PdpSettings;
 use App\Filament\Pages\Settings\PerformanceSettings;
-use App\Filament\Pages\Settings\SearchSettings;
+use App\Filament\Pages\Settings\SearchCatalogSettings;
 use App\Filament\Pages\Settings\SecurityAccessSettings;
 use App\Filament\Pages\Settings\SeoControlCenter;
-use App\Filament\Pages\Settings\ShippingSettings;
+use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Filament\Pages\Settings\SystemMaintenanceSettings;
-use App\Filament\Pages\Settings\TaxSettings;
 use App\Filament\Pages\System\BackupDashboard;
 use App\Filament\Pages\System\CacheDashboard;
 use App\Filament\Pages\System\ErrorMonitor;
@@ -182,16 +171,6 @@ final class SettingsRegistry
             'icon' => 'heroicon-o-identification',
             'sort' => 10,
         ],
-        'contact-settings' => [
-            'class' => ContactSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Contact Info',
-            'url' => '/admin/settings/contact-settings',
-            'description' => 'Store location, support email, phone',
-            'icon' => 'heroicon-o-phone',
-            'sort' => 100,
-        ],
         'appearance-settings' => [
             'class' => AppearanceSettings::class,
             'type' => 'page',
@@ -212,125 +191,25 @@ final class SettingsRegistry
             'icon' => 'heroicon-o-rectangle-group',
             'sort' => 10,
         ],
-        'orders-settings' => [
-            'class' => OrdersSettings::class,
+        'store-operations-settings' => [
+            'class' => StoreOperationsSettings::class,
             'type' => 'page',
             'section' => 'store-operations',
-            'title' => 'Orders Policy',
-            'url' => '/admin/settings/orders-settings',
-            'description' => 'Order expiry, prefix formats, status defaults',
+            'title' => 'Store Operations',
+            'url' => '/admin/settings/store-operations-settings',
+            'description' => 'Orders, customers, cart, dashboard alerts, shipping, tax, checkout & payments, email, customer service, invoice',
             'icon' => 'heroicon-o-shopping-bag',
             'sort' => 10,
         ],
-        'customers-settings' => [
-            'class' => CustomersSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Customers',
-            'url' => '/admin/settings/customers-settings',
-            'description' => 'VIP and repeat segment thresholds',
-            'icon' => 'heroicon-o-users',
-            'sort' => 20,
-        ],
-        'cart-settings' => [
-            'class' => CartSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Cart Rules',
-            'url' => '/admin/settings/cart-settings',
-            'description' => 'Cart duration, timeout limits',
-            'icon' => 'heroicon-o-shopping-cart',
-            'sort' => 30,
-        ],
-        'dashboard-settings' => [
-            'class' => DashboardSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Dashboard Thresholds',
-            'url' => '/admin/settings/dashboard-settings',
-            'description' => 'Pending order and cart abandonment alert thresholds',
-            'icon' => 'heroicon-o-presentation-chart-line',
-            'sort' => 40,
-        ],
-        'shipping-settings' => [
-            'class' => ShippingSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Shipping Engine',
-            'url' => '/admin/settings/shipping-settings',
-            'description' => 'Delivery zones, flat rates, thresholds',
-            'icon' => 'heroicon-o-truck',
-            'sort' => 50,
-        ],
-        'tax-settings' => [
-            'class' => TaxSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Tax Configurations',
-            'url' => '/admin/settings/tax-settings',
-            'description' => 'EU VAT rates, company VAT verification',
-            'icon' => 'heroicon-o-calculator',
-            'sort' => 60,
-        ],
-        'checkout-settings' => [
-            'class' => CheckoutSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Checkout',
-            'url' => '/admin/settings/checkout-settings',
-            'description' => 'Payment methods, timeouts, customer messages',
-            'icon' => 'heroicon-o-credit-card',
-            'sort' => 70,
-        ],
-        'payment-settings' => [
-            'class' => PaymentSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Payment Gateways',
-            'url' => '/admin/settings/payment-settings',
-            'description' => 'Airwallex / Paysera card processing, B2B bank details',
-            'icon' => 'heroicon-o-credit-card',
-            'sort' => 80,
-        ],
-        'email-settings' => [
-            'class' => EmailSettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Email Setup',
-            'url' => '/admin/settings/email-settings',
-            'description' => 'SMTP servers, from headers, admin alerts',
-            'icon' => 'heroicon-o-envelope',
-            'sort' => 90,
-        ],
-        'part-inquiry-settings' => [
-            'class' => PartInquirySettings::class,
-            'type' => 'page',
-            'section' => 'store-operations',
-            'title' => 'Part Inquiry',
-            'url' => '/admin/settings/part-inquiry-settings',
-            'description' => 'Response time SLA, guest inquiry limits',
-            'icon' => 'heroicon-o-chat-bubble-left-ellipsis',
-            'sort' => 110,
-        ],
-        'search-settings' => [
-            'class' => SearchSettings::class,
+        'search-catalog-settings' => [
+            'class' => SearchCatalogSettings::class,
             'type' => 'page',
             'section' => 'search-catalog',
-            'title' => 'Search Engine',
-            'url' => '/admin/settings/search-settings',
-            'description' => 'OEM normalized search query controls',
+            'title' => 'Search & Catalog',
+            'url' => '/admin/settings/search-catalog-settings',
+            'description' => 'Internal search behavior and product detail page sections',
             'icon' => 'heroicon-o-magnifying-glass',
             'sort' => 10,
-        ],
-        'pdp-settings' => [
-            'class' => PdpSettings::class,
-            'type' => 'page',
-            'section' => 'search-catalog',
-            'title' => 'Product Page Sections',
-            'url' => '/admin/settings/pdp-settings',
-            'description' => 'Specifications, warranty, video, reviews, related products, Buy Now',
-            'icon' => 'heroicon-o-document-text',
-            'sort' => 20,
         ],
         'seo-settings' => [
             'class' => SeoControlCenter::class,

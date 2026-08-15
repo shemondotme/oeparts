@@ -148,7 +148,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function checkout_factory_defaults_decodes_json_array_correctly(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\CheckoutSettings::class);
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\StoreOperationsSettings::class);
 
         $this->assertSame(['card', 'bank_transfer'], $defaults['allowed_payment_methods']);
         $this->assertIsArray($defaults['allowed_payment_methods']);
@@ -175,7 +175,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function dashboard_factory_defaults_excludes_removed_dead_keys(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\DashboardSettings::class);
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\StoreOperationsSettings::class);
 
         $this->assertArrayNotHasKey('pending_orders_attention', $defaults);
         $this->assertArrayNotHasKey('pending_orders_warning', $defaults);
@@ -187,7 +187,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function dashboard_factory_defaults_includes_health_check_thresholds(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\DashboardSettings::class);
+        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\StoreOperationsSettings::class);
 
         // backup_stale_hours used to be a phantom setting — read via
         // settings() with a code-only fallback, but never seeded/editable.
