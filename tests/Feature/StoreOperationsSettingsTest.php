@@ -125,19 +125,13 @@ class StoreOperationsSettingsTest extends TestCase
     }
 
     #[Test]
-    public function the_dead_orders_urgent_processing_rows_no_longer_exist_and_do_not_shadow_checkout(): void
+    public function the_dead_orders_urgent_processing_rows_no_longer_exist(): void
     {
+        // Rush Processing Upsell itself moved to MarketingSettings in Phase 5
+        // (group 'checkout' -> 'rush_upsell') — see MarketingSettingsTest for
+        // its save-routing coverage. This just confirms the Phase 4 dead-row
+        // retirement migration still holds after that move.
         $this->assertDatabaseMissing('settings', ['group' => 'orders', 'key' => 'urgent_processing_enabled']);
         $this->assertDatabaseMissing('settings', ['group' => 'orders', 'key' => 'urgent_processing_fee']);
-
-        $this->actingAs($this->superAdmin(), 'admin');
-
-        Livewire::test(StoreOperationsSettings::class)
-            ->set('data.urgent_processing_enabled', true)
-            ->set('data.urgent_processing_fee', 15.5)
-            ->call('save');
-
-        $this->assertSame('true', Setting::where('group', 'checkout')->where('key', 'urgent_processing_enabled')->value('value'));
-        $this->assertSame('15.5', Setting::where('group', 'checkout')->where('key', 'urgent_processing_fee')->value('value'));
     }
 }

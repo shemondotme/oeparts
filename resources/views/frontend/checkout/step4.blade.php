@@ -146,7 +146,7 @@
         <div class="flex items-center justify-between px-4 py-3.5">
             <span class="inline-flex items-center gap-2 font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-amber-ink">
                 <x-heroicon-s-bolt class="w-4 h-4" />
-                {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+                {{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}
             </span>
             <span class="font-mono text-base font-bold tabular-nums text-ink">{{ format_price($urgentProcessingFee) }}</span>
         </div>
@@ -176,7 +176,7 @@
             </div>
             @if($urgentProcessing)
             <div class="flex items-baseline justify-between gap-3 py-2.5">
-                <dt class="bp-spec-mono">{{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}</dt>
+                <dt class="bp-spec-mono">{{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}</dt>
                 <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($urgentProcessingFee) }}</dd>
             </div>

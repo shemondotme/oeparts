@@ -319,8 +319,8 @@ class CheckoutController extends Controller
         return $this->renderCheckoutStep('frontend.checkout.step3', $checkoutId, $checkout, $lang, [
             'selectedId' => $data['shipping_method_id'] ?? null,
             'shippingOptions' => $this->buildShippingOptions($data['shipping_address']['country_code'] ?? null),
-            'urgentProcessingEnabled' => (bool) settings('checkout.urgent_processing_enabled', false),
-            'urgentProcessingFee' => (string) settings('checkout.urgent_processing_fee', '0.00'),
+            'urgentProcessingEnabled' => (bool) settings('rush_upsell.urgent_processing_enabled', false),
+            'urgentProcessingFee' => (string) settings('rush_upsell.urgent_processing_fee', '0.00'),
             'urgentProcessingSelected' => (bool) ($data['urgent_processing'] ?? false),
             'handlingFee' => (string) settings('shipping.handling_fee', '0.00'),
         ]);
@@ -393,7 +393,7 @@ class CheckoutController extends Controller
             'shipping_method_id' => (int) $request->input('shipping_method_id'),
             // Re-checked against the merchant toggle again at order creation —
             // this is just what the customer opted into this session.
-            'urgent_processing' => settings('checkout.urgent_processing_enabled', false) && $request->boolean('urgent_processing'),
+            'urgent_processing' => settings('rush_upsell.urgent_processing_enabled', false) && $request->boolean('urgent_processing'),
         ]);
 
         $this->checkoutService->advance($checkoutId);
@@ -553,8 +553,8 @@ class CheckoutController extends Controller
         $vatRate = $this->taxRateService->resolve($checkoutData['shipping_address']['country_code'] ?? null);
         $shipping = $shippingCost ?? '0.00';
 
-        $urgentProcessing = (bool) ($checkoutData['urgent_processing'] ?? false) && (bool) settings('checkout.urgent_processing_enabled', false);
-        $urgentFee = $urgentProcessing ? bcadd((string) settings('checkout.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
+        $urgentProcessing = (bool) ($checkoutData['urgent_processing'] ?? false) && (bool) settings('rush_upsell.urgent_processing_enabled', false);
+        $urgentFee = $urgentProcessing ? bcadd((string) settings('rush_upsell.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
         $handlingFee = bcadd((string) settings('shipping.handling_fee', '0.00'), '0', 2);
         $fees = bcadd($urgentFee, $handlingFee, 2);
 

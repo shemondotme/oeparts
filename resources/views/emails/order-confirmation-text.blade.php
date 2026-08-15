@@ -34,7 +34,7 @@
 @endif
 {{ trans('emails.order_confirmation.shipping', [], $locale) }}: {{ number_format($order->shipping_cost, 2) }} €
 @if($order->urgent_processing && bccomp((string) $order->urgent_processing_fee, '0', 2) > 0)
-{{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}: {{ number_format((float) $order->urgent_processing_fee, 2) }} €
+{{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}: {{ number_format((float) $order->urgent_processing_fee, 2) }} €
 @endif
 @if(bccomp((string) $order->handling_fee, '0', 2) > 0)
 {{ trans('emails.order_confirmation.handling_fee', [], $locale) }}: {{ number_format((float) $order->handling_fee, 2) }} €

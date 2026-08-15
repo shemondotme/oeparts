@@ -317,7 +317,7 @@
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono inline-flex items-center gap-1.5 text-amber-ink">
                             <x-heroicon-s-bolt class="w-3 h-3" />
-                            {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+                            {{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}
                         </dt>
                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->urgent_processing_fee) }}</dd>

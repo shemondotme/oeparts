@@ -407,6 +407,10 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         ->middleware('auth.admin');
     Route::redirect('/settings/pdp-settings', '/admin/settings/search-catalog-settings', 301)
         ->middleware('auth.admin');
+    Route::redirect('/settings/integrations-settings', '/admin/settings/marketing-settings', 301)
+        ->middleware('auth.admin');
+    Route::redirect('/settings/newsletter-settings', '/admin/settings/marketing-settings', 301)
+        ->middleware('auth.admin');
 
     // ── WYSIWYG Editor (Feature 2) ───────────────────────────────────────
     Route::prefix('editor')->name('editor.')->middleware('auth.admin')->group(function () {

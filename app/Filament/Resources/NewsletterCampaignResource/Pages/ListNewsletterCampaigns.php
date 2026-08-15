@@ -17,7 +17,7 @@ class ListNewsletterCampaigns extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            \App\Filament\Support\AdminUi::settingsLinkAction(\App\Filament\Pages\Settings\NewsletterSettings::class),
+            \App\Filament\Support\AdminUi::settingsLinkAction(\App\Filament\Pages\Settings\MarketingSettings::class),
             ...$this->getSavedViewHeaderActions(),
             Actions\CreateAction::make(),
         ];

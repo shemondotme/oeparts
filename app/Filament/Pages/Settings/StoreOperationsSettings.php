@@ -31,10 +31,10 @@ use Illuminate\Support\HtmlString;
  * $settingsGroups multi-group override pattern as SeoControlCenter /
  * SecurityAccessSettings. Checkout+Payment share one tab (both edit the
  * checkout experience); Contact+Part Inquiry share one tab (both are
- * customer-facing support channels). Rush Processing Upsell stays on the
- * Checkout & Payments tab, group 'checkout', unchanged here — its
- * extraction to a new 'rush_upsell' group under Marketing is Phase 5's
- * job, not this one's.
+ * customer-facing support channels). Rush Processing Upsell (originally
+ * checkout.urgent_processing_*) moved to its own 'rush_upsell' group on
+ * the Marketing settings page in Phase 5 — the Checkout & Payments tab
+ * here only carries a cross-link note forward, not the fields themselves.
  *
  * Header actions (Test Airwallex / Test Paysera / Send Test Email) are
  * carried forward from PaymentSettings/EmailSettings verbatim — Filament
@@ -676,38 +676,14 @@ class StoreOperationsSettings extends SettingsPage
                 Section::make('Rush Processing Upsell')
                     ->description('Customer-facing paid fast-track option offered at checkout, alongside shipping method selection.')
                     ->schema([
-                        Forms\Components\Toggle::make('urgent_processing_enabled')
-                            ->label('Offer Rush Processing at Checkout')
-                            ->helperText('When on, customers can pay an extra fee to have their order flagged Urgent (same-day dispatch priority) — the same flag operators already set manually from the order view.')
-                            ->live()
-                            ->default(false),
-
-                        Forms\Components\TextInput::make('urgent_processing_fee')
-                            ->label('Rush Processing Fee')
-                            ->numeric()->prefix('€')->minValue(0)->step(0.01)->required()
-                            ->visible(fn (Get $get) => $get('urgent_processing_enabled'))
-                            ->default(9.99),
-                    ])->columns(2),
-
-                Section::make('Rush Processing — Customer-Facing Copy')
-                    ->description('Shown at checkout in the customer\'s own language. Leave a locale blank to fall back to English.')
-                    ->visible(fn (Get $get) => $get('urgent_processing_enabled'))
-                    ->schema([
-                        AdminUi::translatableTabs('Rush Processing Copy', [
-                            'urgent_processing_label' => [
-                                'label' => 'Checkout Option Label',
-                                'required' => true,
-                                'maxLength' => 100,
-                                'placeholder' => 'Rush processing',
-                            ],
-                            'urgent_processing_description' => [
-                                'label' => 'Checkout Option Description',
-                                'type' => 'textarea',
-                                'rows' => 2,
-                                'maxLength' => 300,
-                                'placeholder' => 'Priority same-day dispatch for orders placed before 2pm on a business day.',
-                            ],
-                        ]),
+                        Forms\Components\Placeholder::make('rush_upsell_moved_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new HtmlString(
+                                'Rush Processing Upsell (enable/fee/customer-facing copy) moved to the <a href="'
+                                . MarketingSettings::getUrl()
+                                . '" class="fi-link text-primary-600">Marketing</a> page\'s own tab — it\'s an upsell lever, not a checkout mechanic.'
+                            )),
                     ]),
 
                 Section::make('Customer Messages')

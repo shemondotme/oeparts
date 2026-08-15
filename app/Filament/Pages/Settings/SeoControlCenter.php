@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\HtmlString;
 
 /**
  * Yoast/Rank Math-style consolidated SEO settings — absorbs the old
@@ -378,6 +379,28 @@ class SeoControlCenter extends SettingsPage
                             ->placeholder('oeparts.com')
                             ->maxLength(255)
                             ->default(null),
+                    ]),
+
+                Section::make('Related Tools')
+                    ->description('Per-URL SEO overrides and 301 redirects are managed as data, not settings.')
+                    ->schema([
+                        Forms\Components\Placeholder::make('redirects_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new HtmlString(
+                                '301 redirects for retired/moved URLs are managed on the <a href="'
+                                . \App\Filament\Resources\RedirectResource::getUrl()
+                                . '" class="fi-link text-primary-600">Redirects</a> page.'
+                            )),
+
+                        Forms\Components\Placeholder::make('seo_meta_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new HtmlString(
+                                'Per-page title/description overrides for individual products, categories, and manufacturers are managed on the <a href="'
+                                . \App\Filament\Resources\SeoMetaResource::getUrl()
+                                . '" class="fi-link text-primary-600">SEO Meta</a> page.'
+                            )),
                     ]),
             ]);
     }

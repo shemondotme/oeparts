@@ -295,8 +295,8 @@ class CheckoutService
             // Rush-processing upsell: re-check the merchant toggle at charge
             // time, not just the session flag — a customer's session could
             // predate an operator disabling the feature mid-checkout.
-            $urgentProcessing = (bool) ($data['urgent_processing'] ?? false) && (bool) settings('checkout.urgent_processing_enabled', false);
-            $urgentProcessingFee = $urgentProcessing ? bcadd((string) settings('checkout.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
+            $urgentProcessing = (bool) ($data['urgent_processing'] ?? false) && (bool) settings('rush_upsell.urgent_processing_enabled', false);
+            $urgentProcessingFee = $urgentProcessing ? bcadd((string) settings('rush_upsell.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
             $handlingFee = bcadd((string) settings('shipping.handling_fee', '0.00'), '0', 2);
 
             $taxableBase = bcadd(bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);

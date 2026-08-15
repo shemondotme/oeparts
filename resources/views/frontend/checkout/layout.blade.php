@@ -299,7 +299,7 @@
                                     <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
                                         <dt class="inline-flex items-center gap-1.5 font-mono text-[10px] tracking-[0.22em] uppercase text-amber-ink">
                                             <x-heroicon-s-bolt class="w-3 h-3" />
-                                            {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+                                            {{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}
                                         </dt>
                                         <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">

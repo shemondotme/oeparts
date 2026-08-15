@@ -5,9 +5,8 @@ namespace App\Filament\Support;
 use App\Filament\Pages\Settings\AppearanceSettings;
 use App\Filament\Pages\Settings\CustomizationSettings;
 use App\Filament\Pages\Settings\GeneralBrandSettings;
-use App\Filament\Pages\Settings\IntegrationsSettings;
 use App\Filament\Pages\Settings\LocalizationSettings;
-use App\Filament\Pages\Settings\NewsletterSettings;
+use App\Filament\Pages\Settings\MarketingSettings;
 use App\Filament\Pages\Settings\PerformanceSettings;
 use App\Filament\Pages\Settings\SearchCatalogSettings;
 use App\Filament\Pages\Settings\SecurityAccessSettings;
@@ -221,25 +220,15 @@ final class SettingsRegistry
             'icon' => 'heroicon-o-globe-alt',
             'sort' => 10,
         ],
-        'integrations-settings' => [
-            'class' => IntegrationsSettings::class,
+        'marketing-settings' => [
+            'class' => MarketingSettings::class,
             'type' => 'page',
             'section' => 'marketing',
-            'title' => 'Third-party APIs',
-            'url' => '/admin/settings/integrations-settings',
-            'description' => 'GTM, Google Search Console trackers',
-            'icon' => 'heroicon-o-puzzle-piece',
+            'title' => 'Marketing',
+            'url' => '/admin/settings/marketing-settings',
+            'description' => 'GTM/GA4/pixels, newsletter, rush processing upsell',
+            'icon' => 'heroicon-o-megaphone',
             'sort' => 10,
-        ],
-        'newsletter-settings' => [
-            'class' => NewsletterSettings::class,
-            'type' => 'page',
-            'section' => 'marketing',
-            'title' => 'Newsletter',
-            'url' => '/admin/settings/newsletter-settings',
-            'description' => 'Subscription rate limits and opt-in settings',
-            'icon' => 'heroicon-o-envelope',
-            'sort' => 20,
         ],
         'performance-settings' => [
             'class' => PerformanceSettings::class,

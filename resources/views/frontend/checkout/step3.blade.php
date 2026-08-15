@@ -130,10 +130,10 @@
             <div class="flex-1 min-w-0">
                 <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-amber-ink">{{ ui_copy('checkout_urgent_processing_eyebrow', 'checkout.urgent_processing_eyebrow') }}</p>
                 <p class="mt-0.5 font-display text-base font-bold text-ink tracking-[-0.01em]">
-                    {{ settings_trans('checkout.urgent_processing_label', 'Rush processing') }}
+                    {{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}
                 </p>
                 <p class="mt-0.5 text-xs text-body">
-                    {{ settings_trans('checkout.urgent_processing_description', '') }}
+                    {{ settings_trans('rush_upsell.urgent_processing_description', '') }}
                 </p>
             </div>
 

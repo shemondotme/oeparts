@@ -657,16 +657,20 @@ class SettingsSeeder extends Seeder
             ['group' => 'checkout', 'key' => 'allowed_payment_methods', 'value' => json_encode(['card', 'bank_transfer']), 'type' => $j],
             ['group' => 'checkout', 'key' => 'proof_max_size_kb',      'value' => '5120', 'type' => $i],
             ['group' => 'checkout', 'key' => 'guest_password_length',  'value' => '12',   'type' => $i],
-            ['group' => 'checkout', 'key' => 'urgent_processing_enabled',    'value' => '0',    'type' => $b],
-            ['group' => 'checkout', 'key' => 'urgent_processing_fee',        'value' => '9.99', 'type' => $s],
-            ['group' => 'checkout', 'key' => 'urgent_processing_label', 'value' => json_encode([
+            // Rush Processing Upsell — moved to its own 'rush_upsell' group
+            // (was 'checkout') so it can live on the Marketing settings page
+            // instead of Store Operations; see the 2026_08_15_000003
+            // migration that moves any already-seeded rows the same way.
+            ['group' => 'rush_upsell', 'key' => 'urgent_processing_enabled',    'value' => '0',    'type' => $b],
+            ['group' => 'rush_upsell', 'key' => 'urgent_processing_fee',        'value' => '9.99', 'type' => $s],
+            ['group' => 'rush_upsell', 'key' => 'urgent_processing_label', 'value' => json_encode([
                 'en' => 'Rush processing',
                 'de' => 'Express-Bearbeitung',
                 'lt' => 'Skubus apdorojimas',
                 'fr' => 'Traitement express',
                 'es' => 'Procesamiento urgente',
             ], JSON_UNESCAPED_UNICODE), 'type' => $j],
-            ['group' => 'checkout', 'key' => 'urgent_processing_description', 'value' => json_encode([
+            ['group' => 'rush_upsell', 'key' => 'urgent_processing_description', 'value' => json_encode([
                 'en' => 'Priority same-day dispatch for orders placed before 2pm on a business day.',
                 'de' => 'Bevorzugter Versand am selben Tag für Bestellungen, die vor 14 Uhr an einem Werktag aufgegeben werden.',
                 'lt' => 'Prioritetinis išsiuntimas tą pačią dieną užsakymams, pateiktiems iki 14 val. darbo dieną.',
