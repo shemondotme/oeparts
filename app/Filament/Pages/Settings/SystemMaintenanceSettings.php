@@ -51,6 +51,7 @@ class SystemMaintenanceSettings extends SettingsPage
             ->components([
                 Tabs::make('System & Maintenance')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->maintenanceModeTab(),
                         $this->aboutDatabaseTab(),

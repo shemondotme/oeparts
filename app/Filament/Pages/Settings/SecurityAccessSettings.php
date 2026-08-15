@@ -50,6 +50,7 @@ class SecurityAccessSettings extends SettingsPage
             ->components([
                 Tabs::make('Security & Access')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->authenticationTab(),
                         $this->firewallSessionsTab(),

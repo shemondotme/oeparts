@@ -343,6 +343,11 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         return response()->download($path, $filename)->deleteFileAfterSend(true);
     })->name('export.download')->where('filename', '[a-zA-Z0-9_\-]+\.csv$')->middleware('auth.admin');
 
+    // ── Ctrl+K settings command palette (Phase 6 of the settings reorg) ──
+    Route::get('/settings-search', [\App\Http\Controllers\Admin\SettingsSearchController::class, 'index'])
+        ->name('settings-search')
+        ->middleware('auth.admin');
+
     // ── Settings reorg redirect shims (old slug -> new merged page) ────
     // Deleted SettingsPage classes leave Filament with no route for their
     // old slug, so these keep old bookmarks/links working instead of a

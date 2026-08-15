@@ -52,6 +52,7 @@ class GeneralBrandSettings extends SettingsPage
             ->components([
                 Tabs::make('General & Brand')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->siteIdentityTab(),
                         $this->companyLegalTab(),

@@ -104,6 +104,7 @@ class SeoControlCenter extends SettingsPage
             ->components([
                 Tabs::make('SEO Control Center')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->generalTab(),
                         $this->searchResultsTab(),

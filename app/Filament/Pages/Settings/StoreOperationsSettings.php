@@ -220,6 +220,7 @@ class StoreOperationsSettings extends SettingsPage
             ->components([
                 Tabs::make('Store Operations')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->ordersPolicyTab(),
                         $this->customersTab(),

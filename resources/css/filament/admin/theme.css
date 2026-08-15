@@ -128,6 +128,16 @@
     border-radius: var(--radius-sm);
 }
 
+/* Alpine's x-cloak directive removes this attribute once it processes an
+ * element, but does nothing on its own before then — this rule is what
+ * actually prevents a flash of unstyled/un-hidden content. Not present
+ * anywhere in this bundle previously (confirmed via a grep of the
+ * compiled output), added for filament.topbar.settings-search's modal
+ * overlay specifically, but applies panel-wide to any future x-cloak use. */
+[x-cloak] {
+    display: none !important;
+}
+
 .op-table-row {
     transition: background-color 150ms ease;
 }

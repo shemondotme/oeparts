@@ -43,6 +43,7 @@ class SearchCatalogSettings extends SettingsPage
             ->components([
                 Tabs::make('Search & Catalog')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->internalSearchTab(),
                         $this->productPageSectionsTab(),

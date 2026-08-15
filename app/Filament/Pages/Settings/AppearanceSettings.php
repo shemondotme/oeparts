@@ -47,6 +47,7 @@ class AppearanceSettings extends SettingsPage
             ->components([
                 Tabs::make('Appearance')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->colorsCssTab(),
                         $this->preloaderTab(),

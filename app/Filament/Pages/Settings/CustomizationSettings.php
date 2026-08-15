@@ -53,6 +53,7 @@ class CustomizationSettings extends SettingsPage
             ->components([
                 Tabs::make('Customization')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->heroUiCopyTab(),
                         $this->navbarCopyTab(),

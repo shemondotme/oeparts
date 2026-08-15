@@ -51,6 +51,7 @@ class MarketingSettings extends SettingsPage
             ->components([
                 Tabs::make('Marketing')
                     ->columnSpanFull()
+                    ->activeTab(fn (): int => (int) request()->query('tab', 1))
                     ->tabs([
                         $this->integrationsTab(),
                         $this->newsletterTab(),
