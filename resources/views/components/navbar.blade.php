@@ -231,7 +231,7 @@
                     >
                         <x-heroicon-o-shopping-cart class="w-5 h-5" aria-hidden="true" />
                         <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase hidden sm:inline">
-                            {{ ui_copy('navbar_cart_label', 'navbar.cart_label') }}
+                            {{ ui_copy('nav_cart_label', 'navbar.cart_label') }}
                         </span>
                         <span
                             x-show="count > 0"
@@ -259,7 +259,7 @@
                         {{-- Spec header --}}
                         <div class="flex items-center justify-between px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                {{ ui_copy('navbar_cart_title', 'navbar.cart_title') }} <span class="text-amber" x-text="('0' + count).slice(-2)"></span>
+                                {{ ui_copy('nav_cart_title', 'navbar.cart_title') }} <span class="text-amber" x-text="('0' + count).slice(-2)"></span>
                             </p>
                             <p class="font-mono text-[10px] tracking-[0.18em] uppercase text-ivory/70">
                                 <span x-text="count + ' LINE' + (count !== 1 ? 'S' : '')"></span>
@@ -303,7 +303,7 @@
                                                 <button @click.stop="removeItem(item.id)"
                                                         aria-label="Remove"
                                                         class="text-[9px] font-mono font-bold uppercase tracking-[0.2em] text-ink-muted hover:text-red-700 border-b border-transparent hover:border-red-700">
-                                                    {{ ui_copy('navbar_remove_label', 'navbar.remove_label') }}
+                                                    {{ ui_copy('nav_remove_label', 'navbar.remove_label') }}
                                                 </button>
                                             </div>
                                         </div>
@@ -319,7 +319,7 @@
                         {{-- Footer: total + CTAs --}}
                         <div class="border-t border-ink px-5 py-4 space-y-3 bg-ivory">
                             <div class="bp-leader">
-                                <span class="bp-spec">{{ ui_copy('navbar_subtotal_label', 'navbar.subtotal_label') }}</span>
+                                <span class="bp-spec">{{ ui_copy('nav_subtotal_label', 'navbar.subtotal_label') }}</span>
                                 {{-- Plain <span>s here (no dt/dd — this isn't a definition
                                      list), so the dotted-line divider is a real standalone
                                      element again, unlike the .bp-leader dt::after fix
@@ -330,10 +330,10 @@
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <a href="{{ $cartUrl }}" class="bp-btn-outline text-[11px] py-2.5">
-                                    {{ ui_copy('navbar_view_cart_label', 'navbar.view_cart_label') }}
+                                    {{ ui_copy('nav_view_cart_label', 'navbar.view_cart_label') }}
                                 </a>
                                 <a href="{{ url("/{$lang}/checkout") }}" class="bp-btn-amber text-[11px] py-2.5">
-                                    {{ ui_copy('navbar_checkout_label', 'navbar.checkout_label') }}
+                                    {{ ui_copy('nav_checkout_label', 'navbar.checkout_label') }}
                                     <x-heroicon-s-arrow-long-right class="w-4 h-4" />
                                 </a>
                             </div>
@@ -351,7 +351,7 @@
                     >
                         <div class="px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                {{ ui_copy('navbar_cart_title', 'navbar.cart_title') }} 00
+                                {{ ui_copy('nav_cart_title', 'navbar.cart_title') }} 00
                             </p>
                         </div>
                         <div class="px-5 py-6 text-center">
@@ -387,7 +387,7 @@
                                focus-visible:outline-none focus-visible:bg-ink focus-visible:text-ivory"
                     >
                         <x-heroicon-o-user-circle class="w-5 h-5" aria-hidden="true" />
-                        <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase">{{ ui_copy('navbar_account_label', 'navbar.account_label') }}</span>
+                        <span class="font-sans text-[11px] font-bold tracking-[0.14em] uppercase">{{ ui_copy('nav_account_label', 'navbar.account_label') }}</span>
                     </a>
 
                     {{-- Account dropdown --}}
@@ -404,7 +404,7 @@
                     >
                         <div class="px-5 py-3 bg-ink text-ivory">
                             <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase">
-                                {{ ui_copy('navbar_account_title', 'navbar.account_title') }}
+                                {{ ui_copy('nav_account_title', 'navbar.account_title') }}
                             </p>
                         </div>
                         <ul class="divide-y divide-rule">
@@ -427,7 +427,7 @@
                             @csrf
                             <button type="submit"
                                     class="w-full flex items-center justify-between px-5 py-3 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-ink-muted hover:text-red-700 hover:bg-ivory transition-colors">
-                                {{ ui_copy('navbar_sign_out_label', 'navbar.sign_out_label') }}
+                                {{ ui_copy('nav_sign_out_label', 'navbar.sign_out_label') }}
                                 <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
                             </button>
                         </form>
@@ -442,7 +442,7 @@
                            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:ring-offset-0"
                 >
                     <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" aria-hidden="true" />
-                    <span class="font-sans text-[11px] font-bold tracking-[0.16em] uppercase">{{ ui_copy('navbar_sign_in_label', 'navbar.sign_in_label') }}</span>
+                    <span class="font-sans text-[11px] font-bold tracking-[0.16em] uppercase">{{ ui_copy('nav_sign_in_label', 'navbar.sign_in_label') }}</span>
                 </button>
                 @endauth
 
@@ -548,13 +548,13 @@
                 class="w-full bp-btn-primary"
             >
                 <x-heroicon-o-arrow-right-on-rectangle class="w-4 h-4" />
-                {{ ui_copy('navbar_sign_in_register_label', 'navbar.sign_in_register_label') }}
+                {{ ui_copy('nav_sign_in_register_label', 'navbar.sign_in_register_label') }}
             </button>
             @endguest
             @auth
             <a href="{{ url('/'.$lang.'/account/dashboard') }}" class="w-full bp-btn-outline">
                 <x-heroicon-o-user-circle class="w-5 h-5" />
-                {{ ui_copy('navbar_my_account_label', 'navbar.my_account_label') }}
+                {{ ui_copy('nav_my_account_label', 'navbar.my_account_label') }}
             </a>
             @endauth
         </div>

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TranslationResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\LanguageString;
+use App\Models\Setting;
 use Filament\Forms;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -19,6 +20,53 @@ use Filament\Support\Enums\FontWeight;
 class TranslationResource extends Resource
 {
     protected static ?string $model = LanguageString::class;
+
+    /**
+     * Maps a LanguageString.group value (matches the lang/{locale}/{group}.php
+     * basename Laravel's translator loads it under — confirmed directly via
+     * DatabaseTranslationLoader::load()'s $group param) to the ui.* prefix
+     * UiCopyInstaller seeded that same source file's strings under. Only
+     * these 3 groups can ever be shadowed — UiCopyInstaller never seeded
+     * anything else.
+     *
+     * @var array<string, string>
+     */
+    public const SHADOWING_PREFIX_MAP = [
+        'search' => 'search_',
+        'cart' => 'cart_',
+        'navbar' => 'nav_',
+    ];
+
+    /**
+     * True iff editing this row would have NO visible effect on the
+     * storefront — ui_copy() checks settings_trans('ui.'.$key) BEFORE ever
+     * falling back to __() (which is what reads language_strings), so a
+     * non-empty ui.* override for the same locale silently wins every
+     * time. See memory/project_ui_copy_text_override_gap.md's "shadow
+     * trap" finding — this is the fix.
+     */
+    public static function isShadowed(LanguageString $record): bool
+    {
+        $prefix = self::SHADOWING_PREFIX_MAP[$record->group] ?? null;
+
+        if ($prefix === null) {
+            return false;
+        }
+
+        $uiValue = Setting::where('group', 'ui')->where('key', $prefix . $record->key)->value('value');
+
+        if (blank($uiValue)) {
+            return false;
+        }
+
+        $decoded = json_decode((string) $uiValue, true);
+
+        if (! is_array($decoded)) {
+            return false;
+        }
+
+        return filled($decoded[$record->lang_code] ?? null);
+    }
 
     public static function getNavigationIcon(): string|\BackedEnum|null
     {
@@ -95,6 +143,14 @@ class TranslationResource extends Resource
                     ->label(__('admin.translation_value'))
                     ->limit(60)
                     ->searchable(),
+                Tables\Columns\IconColumn::make('shadowed')
+                    ->label('')
+                    ->state(fn (LanguageString $record): bool => self::isShadowed($record))
+                    ->icon(fn (bool $state): ?string => $state ? 'heroicon-o-exclamation-triangle' : null)
+                    ->color('warning')
+                    ->tooltip(fn (bool $state): ?string => $state
+                        ? 'A Site Copy Library text override exists for this key/locale and takes precedence — editing this row has no visible effect on the storefront until that override is cleared.'
+                        : null),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label(__('admin.updated'))
                     ->dateTime('M j, Y H:i')

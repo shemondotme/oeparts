@@ -37,6 +37,7 @@ final class SettingsSearchIndex
             ...self::generalBrand(),
             ...self::appearance(),
             ...self::customization(),
+            ...self::siteCopyLibrary(),
             ...self::storeOperations(),
             ...self::searchCatalog(),
             ...self::seo(),
@@ -211,6 +212,20 @@ final class SettingsSearchIndex
             self::row($section, $page, 'Menus & Social', 'TikTok URL', 'social media', "$base?tab=6"),
             self::row($section, $page, 'Menus & Social', 'Show Social Icons in Footer', 'social display', "$base?tab=6"),
             self::row($section, $page, 'Menus & Social', 'Icon Style', 'social filled outlined', "$base?tab=6"),
+        ];
+    }
+
+    private static function siteCopyLibrary(): array
+    {
+        $page = 'Site Copy Library';
+        $section = 'Brand & Storefront';
+        $url = '/admin/settings/site-copy-library';
+
+        return [
+            self::row($section, $page, null, 'Site Copy Library', 'cart search navbar text overrides ui copy translation browsable', $url),
+            self::row($section, $page, null, 'Cart Text Overrides', 'ui copy translation', $url),
+            self::row($section, $page, null, 'Search Text Overrides', 'ui copy translation', $url),
+            self::row($section, $page, null, 'Navbar Text Overrides', 'ui copy translation', $url),
         ];
     }
 

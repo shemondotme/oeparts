@@ -11,6 +11,7 @@ use App\Filament\Pages\Settings\PerformanceSettings;
 use App\Filament\Pages\Settings\SearchCatalogSettings;
 use App\Filament\Pages\Settings\SecurityAccessSettings;
 use App\Filament\Pages\Settings\SeoControlCenter;
+use App\Filament\Pages\Settings\SiteCopyLibrary;
 use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Filament\Pages\Settings\SystemMaintenanceSettings;
 use App\Filament\Pages\System\BackupDashboard;
@@ -189,6 +190,16 @@ final class SettingsRegistry
             'description' => 'Hero/UI copy, navbar, footer, announcement bar, section limits, menus & social',
             'icon' => 'heroicon-o-rectangle-group',
             'sort' => 10,
+        ],
+        'site-copy-library' => [
+            'class' => SiteCopyLibrary::class,
+            'type' => 'tool',
+            'section' => 'customization',
+            'title' => 'Site Copy Library',
+            'url' => '/admin/settings/site-copy-library',
+            'description' => 'Browse and edit cart/search/navbar text overrides with no dedicated field',
+            'icon' => 'heroicon-o-document-text',
+            'sort' => 20,
         ],
         'store-operations-settings' => [
             'class' => StoreOperationsSettings::class,
