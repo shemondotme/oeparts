@@ -61,7 +61,13 @@ class AdminNotificationService
             ->where('type', AdminDashboardNotification::class)
             ->whereNull('read_at')
             ->where('created_at', '>=', $window)
-            ->whereRaw("JSON_UNQUOTE(JSON_EXTRACT(data, '$.category')) = ?", [$category->value])
+            // Laravel's JSON arrow syntax compiles to the correct driver-
+            // specific function (JSON_EXTRACT+JSON_UNQUOTE on MySQL, ->> on
+            // SQLite/Postgres) — a raw JSON_UNQUOTE/JSON_EXTRACT call here
+            // fatals on SQLite (the test suite's driver), so this path had
+            // zero test coverage until it broke the first real test that
+            // exercised it.
+            ->where('data->category', $category->value)
             ->get();
 
         if ($recent->count() < 5) {

@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\ContactStatus;
+use App\Enums\ContactSubjectType;
 use App\Enums\DiscountType;
 use App\Enums\OrderStatus;
 use App\Enums\PartInquiryStatus;
@@ -315,7 +316,7 @@ class DashboardDemoSeeder extends Seeder
             ContactMessage::create([
                 'name' => fake()->name(),
                 'email' => fake()->safeEmail(),
-                'subject' => 'Parts inquiry / wholesale: ' . fake()->word(),
+                'subject_type' => fake()->randomElement(ContactSubjectType::cases()),
                 'message' => fake()->paragraph(),
                 'status' => fake()->randomElement([ContactStatus::Unread, ContactStatus::Read, ContactStatus::Resolved]),
                 'ip_address' => fake()->ipv4(),

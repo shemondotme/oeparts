@@ -8,9 +8,10 @@ use App\Models\RefundRequest;
 use App\Services\CacheService;
 use App\Services\WidgetPreferenceService;
 use App\Support\AdminNotifier;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RefundRequestObserver
 {
@@ -62,7 +63,13 @@ class RefundRequestObserver
                     ]),
             );
         } catch (\Throwable $e) {
-            // A bell notification must never break the refund flow.
+            // A bell notification must never break the refund flow — but see
+            // OrderObserver::notifyNewOrder's comment: silently swallowing
+            // this is exactly how the wrong Action import went unnoticed.
+            Log::error('RefundRequestObserver::notifyRefundRequested failed', [
+                'refund_request_id' => $refundRequest->id,
+                'exception' => $e,
+            ]);
         }
     }
 

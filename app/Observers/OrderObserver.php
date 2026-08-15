@@ -8,9 +8,10 @@ use App\Models\Order;
 use App\Services\CacheService;
 use App\Services\WidgetPreferenceService;
 use App\Support\AdminNotifier;
-use Filament\Notifications\Actions\Action;
+use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class OrderObserver
 {
@@ -60,7 +61,16 @@ class OrderObserver
                     ]),
             );
         } catch (\Throwable $e) {
-            // A bell notification must never break checkout / order creation.
+            // A bell notification must never break checkout / order creation
+            // — but silently swallowing it entirely is how the wrong
+            // Filament\Notifications\Actions\Action namespace (should have
+            // been Filament\Actions\Action) went undetected: every single
+            // "New order placed" notification has been failing since this
+            // was written, with zero visible trace anywhere. Log it instead.
+            Log::error('OrderObserver::notifyNewOrder failed', [
+                'order_id' => $order->id,
+                'exception' => $e,
+            ]);
         }
     }
 
