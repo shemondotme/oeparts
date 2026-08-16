@@ -182,7 +182,17 @@ class SettingsSeeder extends Seeder
             ['group' => 'email', 'key' => 'from_name',      'value' => 'OeParts',          'type' => $s],
             ['group' => 'email', 'key' => 'from_address',   'value' => 'no-reply@oeparts.lt', 'type' => $s],
             ['group' => 'email', 'key' => 'reply_to',       'value' => 'info@oeparts.lt',  'type' => $s],
-            ['group' => 'email', 'key' => 'smtp_host',      'value' => 'smtp.mailtrap.io', 'type' => $s],
+            // Empty by default, matching the field's own ->default(null) in
+            // StoreOperationsSettings — RuntimeSettingsSyncService only
+            // overrides mail.mailers.smtp.host when this is non-empty
+            // (`if ($smtpHost)`), so leaving it blank correctly lets .env's
+            // MAIL_HOST (mailpit for local dev) take effect until an admin
+            // configures real SMTP. A prior placeholder value here
+            // ('smtp.mailtrap.io', a fake host with no credentials) was
+            // silently overriding .env on every fresh seed, breaking all
+            // outgoing mail in local dev with zero visible error — nothing
+            // ever reached Mailpit, and no job or log entry pointed at why.
+            ['group' => 'email', 'key' => 'smtp_host',      'value' => '',                 'type' => $s],
             ['group' => 'email', 'key' => 'smtp_port',      'value' => '587',             'type' => $i],
             ['group' => 'email', 'key' => 'smtp_encryption', 'value' => 'tls',             'type' => $s],
             ['group' => 'email', 'key' => 'smtp_username',  'value' => '',                'type' => $e, 'encrypted' => true],
