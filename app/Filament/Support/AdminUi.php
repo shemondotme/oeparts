@@ -269,7 +269,24 @@ final class AdminUi
                                             : 'Leave blank to fall back to the English value.');
 
                                     if ($syncsSlug) {
-                                        $field->live(onBlur: true);
+                                        // Not onBlur: the field that loses
+                                        // focus is usually blurred BY the
+                                        // click on the Create/Save button
+                                        // itself, so an onBlur round trip
+                                        // races that same click's native
+                                        // form submission — the required
+                                        // slug input is still empty at the
+                                        // instant the browser validates it
+                                        // synchronously, silently blocking
+                                        // submission with no visible error
+                                        // (confirmed live: Category/
+                                        // Manufacturer/BlogPost/Page all
+                                        // share this helper and all hit it).
+                                        // A debounce firing while the name
+                                        // is still being typed clears the
+                                        // slug well before Create is ever
+                                        // clicked.
+                                        $field->live(debounce: 500);
 
                                         $field->afterStateUpdated($slugSyncMode === 'create-only'
                                             ? function ($state, callable $set, ?string $operation) use ($slugSyncTarget): void {
