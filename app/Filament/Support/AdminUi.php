@@ -467,7 +467,13 @@ final class AdminUi
 
                 $csv = collect($headers)->implode(',') . "\n";
                 $rows->each(function ($row) use (&$csv) {
-                    $csv .= collect($row)->map(fn ($cell) => '"' . str_replace('"', '""', (string) $cell) . '"')->implode(',') . "\n";
+                    // A column accessor like 'manufacturer.name' can resolve
+                    // to a translatable array-cast attribute (Product/
+                    // Manufacturer names are all {locale => value} JSON, not
+                    // plain strings) — (string) $cell on an array crashed
+                    // every export whose columns touched one, confirmed live
+                    // via a real "Export Products" click 500ing outright.
+                    $csv .= collect($row)->map(fn ($cell) => '"' . str_replace('"', '""', is_array($cell) ? static::localizedName($cell) : (string) $cell) . '"')->implode(',') . "\n";
                 });
 
                 return Response::streamDownload(fn () => print($csv), 'export-' . now()->format('Y-m-d-His') . '.csv');

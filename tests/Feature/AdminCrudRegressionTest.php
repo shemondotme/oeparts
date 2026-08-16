@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use App\Filament\Resources\CategoryResource\Pages\CreateCategory;
 use App\Filament\Resources\CustomerResource\Pages\CreateCustomer;
 use App\Filament\Resources\ManufacturerResource\Pages\CreateManufacturer;
+use App\Filament\Resources\ProductResource\Pages\ListProducts;
 use App\Models\Admin;
 use App\Models\Category;
+use App\Models\Condition;
 use App\Models\Manufacturer;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -40,6 +43,16 @@ use Tests\TestCase;
  *    manufacturer name and clicking Create did *nothing*, over and over,
  *    with a 200 Livewire response and zero DB row, until the trigger was
  *    changed to a plain debounce that fires while still typing.
+ *
+ * 3. AdminUi::exportCsvBulkAction() cast every cell to (string) $cell
+ *    before writing it into the CSV. A column accessor like
+ *    'manufacturer.name' resolves through data_get() to a translatable
+ *    array-cast attribute (Product/Manufacturer names are {locale =>
+ *    value} JSON, never a plain string) — (string) on an array throws
+ *    "Array to string conversion", which this app's local-env error
+ *    reporting escalates to a fatal ErrorException. Every "Export
+ *    Products" click 500'd outright, confirmed live via a real bulk
+ *    export attempt on the Products table.
  */
 class AdminCrudRegressionTest extends TestCase
 {
@@ -106,5 +119,18 @@ class AdminCrudRegressionTest extends TestCase
             ->assertHasNoFormErrors();
 
         $this->assertTrue(Manufacturer::where('slug', 'continental-ag')->exists());
+    }
+
+    #[Test]
+    public function exporting_products_to_csv_does_not_crash_on_translatable_relationship_columns(): void
+    {
+        $manufacturer = Manufacturer::factory()->create(['name' => ['en' => 'Bosch', 'de' => 'Bosch']]);
+        $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id, 'condition_id' => $condition->id]);
+
+        Livewire::test(ListProducts::class)
+            ->loadTable()
+            ->callTableBulkAction('exportCsv', [$product])
+            ->assertOk();
     }
 }
