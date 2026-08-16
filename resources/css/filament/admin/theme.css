@@ -130,10 +130,8 @@
 
 /* Alpine's x-cloak directive removes this attribute once it processes an
  * element, but does nothing on its own before then — this rule is what
- * actually prevents a flash of unstyled/un-hidden content. Not present
- * anywhere in this bundle previously (confirmed via a grep of the
- * compiled output), added for filament.topbar.settings-search's modal
- * overlay specifically, but applies panel-wide to any future x-cloak use. */
+ * actually prevents a flash of unstyled/un-hidden content. Applies
+ * panel-wide to any x-cloak use (navbar, checkout, cart, modals, etc.). */
 [x-cloak] {
     display: none !important;
 }

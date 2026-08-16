@@ -88,20 +88,12 @@ class AdminPanelProvider extends PanelProvider
                     ->visible(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false),
             ])
             // Topbar layout (native components via render hooks):
-            //   [logo] [env badge] … [search] [settings search] [+ New] [bell] [avatar]
-            // Env badge sits right after the brand logo; the Ctrl+K settings
-            // palette and quick-create button both sit after global search,
-            // before the bell — renderHook() appends per-slot (confirmed via
-            // Filament\Panel\Concerns\HasRenderHooks — each call pushes onto
-            // an array, it doesn't replace), so both partials render in the
-            // order registered here.
+            //   [logo] [env badge] … [search] [+ New] [bell] [avatar]
+            // Env badge sits right after the brand logo; quick-create sits
+            // after global search, before the bell.
             ->renderHook(
                 PanelsRenderHook::TOPBAR_LOGO_AFTER,
                 fn (): string => Blade::render('@include(\'filament.topbar.env-badge\')'),
-            )
-            ->renderHook(
-                PanelsRenderHook::GLOBAL_SEARCH_AFTER,
-                fn (): string => Blade::render('@include(\'filament.topbar.settings-search\')'),
             )
             ->renderHook(
                 PanelsRenderHook::GLOBAL_SEARCH_AFTER,

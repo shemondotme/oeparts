@@ -33,7 +33,7 @@ class SiteCopyLibraryTest extends TestCase
     private function superAdmin(): Admin
     {
         // is_active must be explicit — Admin::canAccessPanel() 403s real
-        // HTTP requests otherwise. See SettingsSearchTest for the full note.
+        // HTTP requests otherwise.
         $admin = Admin::factory()->create(['is_active' => true]);
         $admin->assignRole('super_admin');
 

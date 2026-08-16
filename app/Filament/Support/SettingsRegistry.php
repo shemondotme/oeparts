@@ -30,8 +30,7 @@ use App\Filament\Pages\System\UpdateHistoryPage;
 
 /**
  * Declarative source of truth for which settings pages/tools are reachable
- * from the Settings cluster grid (resources/views/filament/clusters/settings.blade.php)
- * and the Ctrl+K settings search index.
+ * from the Settings cluster grid (resources/views/filament/clusters/settings.blade.php).
  *
  * Three-level schema: SUPER_GROUPS (4 top-level groupings) -> SECTIONS (11
  * categories, each tagged with its super_group) -> PAGES (individual tiles,
