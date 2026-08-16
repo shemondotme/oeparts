@@ -14,6 +14,7 @@ use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -36,12 +37,14 @@ use Illuminate\Support\HtmlString;
  * the Marketing settings page in Phase 5 — the Checkout & Payments tab
  * here only carries a cross-link note forward, not the fields themselves.
  *
- * Header actions (Test Airwallex / Test Paysera / Send Test Email) are
- * carried forward from PaymentSettings/EmailSettings verbatim — Filament
- * header actions are page-level, not tab-level, so all three now render
- * regardless of which tab is active (an accepted UX tradeoff of the merge,
- * matching how SeoControlCenter's regenerate-sitemap action already works
- * the same way).
+ * Test Airwallex / Test Paysera / Send Test Email started as PAGE-level
+ * header actions carried forward from PaymentSettings/EmailSettings
+ * verbatim — Filament header actions render regardless of which tab is
+ * active, so all three used to show even on unrelated tabs like Dashboard
+ * Alert Thresholds. Moved inline into their own tabs (Checkout & Payments,
+ * Email Setup) via Schemas\Components\Actions so each only appears next to
+ * the fields it actually tests. SeoControlCenter's regenerate-sitemap
+ * action had the exact same problem — fixed the same way there too.
  */
 class StoreOperationsSettings extends SettingsPage
 {
@@ -62,156 +65,165 @@ class StoreOperationsSettings extends SettingsPage
         return 'heroicon-o-shopping-bag';
     }
 
-    protected function getHeaderActions(): array
+    // No getHeaderActions() override — testAirwallexAction()/testPayseraAction()/
+    // testEmailAction() below render inline inside their own tabs instead (see
+    // class docblock). Falls back to the base "Back to Settings" action only.
+
+    public function testAirwallexAction(): Action
     {
-        return [
-            ...parent::getHeaderActions(),
-            Action::make('testAirwallex')
-                ->label('Test Airwallex Connection')
-                ->icon('heroicon-o-signal')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('Test Airwallex Gateway')
-                ->modalDescription('Pings the Airwallex API to verify your Client ID and API key are valid. No charges are made.')
-                ->modalSubmitActionLabel('Test Now')
-                ->action(function () {
-                    $clientId = $this->data['airwallex_client_id'] ?? null;
-                    $apiKey = $this->data['airwallex_api_key'] ?? null;
-                    $env = $this->data['airwallex_environment'] ?? 'sandbox';
+        return Action::make('testAirwallex')
+            ->label('Test Airwallex Connection')
+            ->icon('heroicon-o-signal')
+            ->color('warning')
+            ->requiresConfirmation()
+            ->modalHeading('Test Airwallex Gateway')
+            ->modalDescription('Pings the Airwallex API to verify your Client ID and API key are valid. No charges are made.')
+            ->modalSubmitActionLabel('Test Now')
+            ->action(function () {
+                $clientId = $this->data['airwallex_client_id'] ?? null;
+                $apiKey = $this->data['airwallex_api_key'] ?? null;
+                $env = $this->data['airwallex_environment'] ?? 'sandbox';
 
-                    if (! $clientId || ! $apiKey) {
+                if (! $clientId || ! $apiKey) {
+                    Notification::make()
+                        ->title('Missing credentials')
+                        ->body('Please fill in both Client ID and API Private Key before testing.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                $baseUrl = $env === 'live'
+                    ? 'https://api.airwallex.com'
+                    : 'https://api-demo.airwallex.com';
+
+                try {
+                    $response = Http::withHeaders([
+                        'x-client-id' => $clientId,
+                        'x-api-key' => $apiKey,
+                        'Content-Type' => 'application/json',
+                    ])->timeout(10)->post("{$baseUrl}/api/v1/authentication/login", (object) []);
+
+                    if ($response->successful()) {
                         Notification::make()
-                            ->title('Missing credentials')
-                            ->body('Please fill in both Client ID and API Private Key before testing.')
-                            ->warning()
-                            ->send();
-
-                        return;
-                    }
-
-                    $baseUrl = $env === 'live'
-                        ? 'https://api.airwallex.com'
-                        : 'https://api-demo.airwallex.com';
-
-                    try {
-                        $response = Http::withHeaders([
-                            'x-client-id' => $clientId,
-                            'x-api-key' => $apiKey,
-                            'Content-Type' => 'application/json',
-                        ])->timeout(10)->post("{$baseUrl}/api/v1/authentication/login", (object) []);
-
-                        if ($response->successful()) {
-                            Notification::make()
-                                ->title('Connection successful')
-                                ->body("Airwallex {$env} API responded OK.")
-                                ->success()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Connection failed')
-                                ->body("API returned HTTP {$response->status()}: " . $response->body())
-                                ->danger()
-                                ->send();
-                        }
-                    } catch (\Exception $e) {
-                        Notification::make()
-                            ->title('Connection error')
-                            ->body($e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
-            Action::make('testPaysera')
-                ->label('Test Paysera Connection')
-                ->icon('heroicon-o-signal')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('Test Paysera Gateway')
-                ->modalDescription('Requests an OAuth2 token from Paysera to verify your Client ID and Client Secret are valid. No charges are made.')
-                ->modalSubmitActionLabel('Test Now')
-                ->action(function () {
-                    $clientId = $this->data['paysera_client_id'] ?? null;
-                    $clientSecret = $this->data['paysera_client_secret'] ?? null;
-
-                    if (! $clientId || ! $clientSecret) {
-                        Notification::make()
-                            ->title('Missing credentials')
-                            ->body('Please fill in both Client ID and Client Secret before testing.')
-                            ->warning()
-                            ->send();
-
-                        return;
-                    }
-
-                    try {
-                        $response = Http::asForm()->timeout(10)->post(
-                            'https://api.paysera.com/auth/realms/Paysera/protocol/openid-connect/token',
-                            [
-                                'grant_type' => 'client_credentials',
-                                'client_id' => $clientId,
-                                'client_secret' => $clientSecret,
-                            ]
-                        );
-
-                        if ($response->successful() && $response->json('access_token')) {
-                            Notification::make()
-                                ->title('Connection successful')
-                                ->body('Paysera API responded OK with a valid access token.')
-                                ->success()
-                                ->send();
-                        } else {
-                            Notification::make()
-                                ->title('Connection failed')
-                                ->body("API returned HTTP {$response->status()}: " . $response->body())
-                                ->danger()
-                                ->send();
-                        }
-                    } catch (\Exception $e) {
-                        Notification::make()
-                            ->title('Connection error')
-                            ->body($e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
-            Action::make('testEmail')
-                ->label('Send Test Email')
-                ->icon('heroicon-o-paper-airplane')
-                ->color('warning')
-                ->requiresConfirmation()
-                ->modalHeading('Send Test Email')
-                ->modalDescription('This will send a test email to the admin recipient using your current SMTP settings.')
-                ->modalSubmitActionLabel('Send Now')
-                ->action(function () {
-                    $adminEmail = $this->data['admin_notify_email'] ?? $this->data['from_address'] ?? null;
-
-                    if (! $adminEmail) {
-                        Notification::make()
-                            ->title('No recipient')
-                            ->body('Please set an admin notification email or sender email first.')
-                            ->warning()
-                            ->send();
-
-                        return;
-                    }
-
-                    try {
-                        SendTestEmailJob::dispatch($adminEmail);
-
-                        Notification::make()
-                            ->title('Test email queued')
-                            ->body("Queued for {$adminEmail}. Check your inbox shortly.")
+                            ->title('Connection successful')
+                            ->body("Airwallex {$env} API responded OK.")
                             ->success()
                             ->send();
-                    } catch (\Exception $e) {
+                    } else {
                         Notification::make()
-                            ->title('Email failed')
-                            ->body($e->getMessage())
+                            ->title('Connection failed')
+                            ->body("API returned HTTP {$response->status()}: " . $response->body())
                             ->danger()
                             ->send();
                     }
-                }),
-        ];
+                } catch (\Exception $e) {
+                    Notification::make()
+                        ->title('Connection error')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    public function testPayseraAction(): Action
+    {
+        return Action::make('testPaysera')
+            ->label('Test Paysera Connection')
+            ->icon('heroicon-o-signal')
+            ->color('warning')
+            ->requiresConfirmation()
+            ->modalHeading('Test Paysera Gateway')
+            ->modalDescription('Requests an OAuth2 token from Paysera to verify your Client ID and Client Secret are valid. No charges are made.')
+            ->modalSubmitActionLabel('Test Now')
+            ->action(function () {
+                $clientId = $this->data['paysera_client_id'] ?? null;
+                $clientSecret = $this->data['paysera_client_secret'] ?? null;
+
+                if (! $clientId || ! $clientSecret) {
+                    Notification::make()
+                        ->title('Missing credentials')
+                        ->body('Please fill in both Client ID and Client Secret before testing.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                try {
+                    $response = Http::asForm()->timeout(10)->post(
+                        'https://api.paysera.com/auth/realms/Paysera/protocol/openid-connect/token',
+                        [
+                            'grant_type' => 'client_credentials',
+                            'client_id' => $clientId,
+                            'client_secret' => $clientSecret,
+                        ]
+                    );
+
+                    if ($response->successful() && $response->json('access_token')) {
+                        Notification::make()
+                            ->title('Connection successful')
+                            ->body('Paysera API responded OK with a valid access token.')
+                            ->success()
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->title('Connection failed')
+                            ->body("API returned HTTP {$response->status()}: " . $response->body())
+                            ->danger()
+                            ->send();
+                    }
+                } catch (\Exception $e) {
+                    Notification::make()
+                        ->title('Connection error')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
+    }
+
+    public function testEmailAction(): Action
+    {
+        return Action::make('testEmail')
+            ->label('Send Test Email')
+            ->icon('heroicon-o-paper-airplane')
+            ->color('warning')
+            ->requiresConfirmation()
+            ->modalHeading('Send Test Email')
+            ->modalDescription('This will send a test email to the admin recipient using your current SMTP settings.')
+            ->modalSubmitActionLabel('Send Now')
+            ->action(function () {
+                $adminEmail = $this->data['admin_notify_email'] ?? $this->data['from_address'] ?? null;
+
+                if (! $adminEmail) {
+                    Notification::make()
+                        ->title('No recipient')
+                        ->body('Please set an admin notification email or sender email first.')
+                        ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                try {
+                    SendTestEmailJob::dispatch($adminEmail);
+
+                    Notification::make()
+                        ->title('Test email queued')
+                        ->body("Queued for {$adminEmail}. Check your inbox shortly.")
+                        ->success()
+                        ->send();
+                } catch (\Exception $e) {
+                    Notification::make()
+                        ->title('Email failed')
+                        ->body($e->getMessage())
+                        ->danger()
+                        ->send();
+                }
+            });
     }
 
     public function form(Schema $schema): Schema
@@ -754,6 +766,9 @@ class StoreOperationsSettings extends SettingsPage
                             ->label('Hold Funds Until Shipment (Manual Capture)')
                             ->helperText('When on, card payments are authorized (held) at checkout but not charged. The customer\'s card is only actually charged once the order is marked Shipped — or earlier via "Capture Payment" on the order. Authorizations expire after ~7 days if never captured, so don\'t leave orders unshipped indefinitely. Off by default: card payments are charged immediately at checkout, as before.')
                             ->columnSpanFull()->default(false),
+
+                        Actions::make([$this->testAirwallexAction()])
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Section::make('Paysera Payment Gateway')
@@ -782,6 +797,9 @@ class StoreOperationsSettings extends SettingsPage
                             ->password()->revealable()
                             ->helperText('Saved encrypted in database. Best-effort HMAC verification — confirm the exact scheme against Paysera\'s real callback delivery once available.')
                             ->default(null),
+
+                        Actions::make([$this->testPayseraAction()])
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Section::make('B2B Offline Bank Transfer')
@@ -876,6 +894,9 @@ class StoreOperationsSettings extends SettingsPage
                             ->email()->maxLength(255)->placeholder('admin@oeparts.lt')
                             ->helperText('Defaults to Site Email if left blank')
                             ->columnSpanFull()->default(null),
+
+                        Actions::make([$this->testEmailAction()])
+                            ->columnSpanFull(),
                     ])->columns(2),
             ]);
     }

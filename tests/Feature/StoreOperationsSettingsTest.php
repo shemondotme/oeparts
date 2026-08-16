@@ -18,9 +18,14 @@ use Tests\TestCase;
  * email/contact/part_inquiry/invoice) behind one page. This confirms a
  * single save() call correctly routes fields from DIFFERENT original
  * groups to their own Setting rows, that none of the 12 groups collide on
- * a key name, and that the 3 header actions carried forward from
+ * a key name, and that the 3 test actions carried forward from
  * PaymentSettings/EmailSettings (Test Airwallex / Test Paysera / Send Test
- * Email) survived the merge into one combined getHeaderActions() override.
+ * Email) still resolve correctly. They started as page-level
+ * getHeaderActions() (rendering on every tab regardless of relevance) but
+ * were later moved inline into their own tabs (Checkout & Payments, Email
+ * Setup) via Schemas\Components\Actions — each is now a public
+ * "{name}Action(): Action" method that Filament's own resolveAction()
+ * fallback convention discovers by name, same mechanism page actions use.
  */
 class StoreOperationsSettingsTest extends TestCase
 {
@@ -122,7 +127,7 @@ class StoreOperationsSettingsTest extends TestCase
     }
 
     #[Test]
-    public function the_three_merged_header_actions_survived_the_merge(): void
+    public function the_three_merged_test_actions_still_resolve(): void
     {
         $this->actingAs($this->superAdmin(), 'admin');
 

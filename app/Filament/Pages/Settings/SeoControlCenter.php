@@ -13,6 +13,7 @@ use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -61,30 +62,38 @@ class SeoControlCenter extends SettingsPage
                 ->color('gray')
                 ->outlined()
                 ->url(SeoHealthDashboard::getUrl()),
-
-            Action::make('regenerateSitemap')
-                ->label('Regenerate sitemap now')
-                ->icon('heroicon-o-arrow-path')
-                ->color('gray')
-                ->authorize(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false)
-                ->requiresConfirmation()
-                ->modalDescription('Rebuilds sitemap.xml and every sub-sitemap (parts, cross-references, brands, models, pages, blog) from current data. This can take a moment on a large catalog.')
-                ->action(function (): void {
-                    try {
-                        RegenerateSitemap::dispatch(auth('admin')->user()?->name ?? 'An admin');
-                    } catch (\Throwable $e) {
-                        Notification::make()->title('Sitemap regeneration failed')->body($e->getMessage())->danger()->send();
-
-                        return;
-                    }
-
-                    Notification::make()
-                        ->title('Sitemap regeneration requested')
-                        ->body("You'll get a notification here (the bell icon) once it finishes.")
-                        ->success()
-                        ->send();
-                }),
         ];
+    }
+
+    // regenerateSitemap moved inline into sitemapTab()'s "Search Engine
+    // Pings" section — it was a page-level header action (rendering on
+    // every SEO tab, not just Sitemap & Indexing) despite being sitemap-
+    // specific. viewHealthDashboard above stays in the header: it links to
+    // a dashboard aggregating every SEO tab, not just one.
+    public function regenerateSitemapAction(): Action
+    {
+        return Action::make('regenerateSitemap')
+            ->label('Regenerate sitemap now')
+            ->icon('heroicon-o-arrow-path')
+            ->color('gray')
+            ->authorize(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false)
+            ->requiresConfirmation()
+            ->modalDescription('Rebuilds sitemap.xml and every sub-sitemap (parts, cross-references, brands, models, pages, blog) from current data. This can take a moment on a large catalog.')
+            ->action(function (): void {
+                try {
+                    RegenerateSitemap::dispatch(auth('admin')->user()?->name ?? 'An admin');
+                } catch (\Throwable $e) {
+                    Notification::make()->title('Sitemap regeneration failed')->body($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()
+                    ->title('Sitemap regeneration requested')
+                    ->body("You'll get a notification here (the bell icon) once it finishes.")
+                    ->success()
+                    ->send();
+            });
     }
 
     public function getSubheading(): ?string
@@ -362,7 +371,7 @@ class SeoControlCenter extends SettingsPage
             ->icon('heroicon-o-map')
             ->schema([
                 Section::make('Search Engine Pings')
-                    ->description('Automatically notify search engines when the sitemap regenerates (see the "Regenerate sitemap now" button above).')
+                    ->description('Automatically notify search engines when the sitemap regenerates.')
                     ->schema([
                         Forms\Components\Toggle::make('google_ping_enabled')
                             ->label('Ping Google on Sitemap Updates')
@@ -370,6 +379,9 @@ class SeoControlCenter extends SettingsPage
                         Forms\Components\Toggle::make('bing_ping_enabled')
                             ->label('Ping Bing on Sitemap Updates')
                             ->default(true),
+
+                        Actions::make([$this->regenerateSitemapAction()])
+                            ->columnSpanFull(),
                     ])->columns(2),
 
                 Section::make('Canonical Host')
