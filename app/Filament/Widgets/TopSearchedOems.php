@@ -59,6 +59,14 @@ class TopSearchedOems extends TableWidget
                     ->orderByDesc('search_count')
                     ->limit(10)
             )
+            // Filament's default pagination-stable "ORDER BY {table}.id" is
+            // invalid here — id isn't in the GROUP BY, only MIN(id) is
+            // selected — and hits a real 500 under MySQL's
+            // only_full_group_by (confirmed live). search_count DESC above
+            // is already the intended sort. Same fix as the sibling
+            // SearchTopSearches/SearchFailedQueries/SalesTopProducts report
+            // widgets, just missed on this dashboard widget.
+            ->defaultKeySort(false)
             ->columns([
                 TextColumn::make('rank')
                     ->label('#')

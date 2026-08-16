@@ -6,6 +6,7 @@ use App\Filament\Widgets\Reports\CustomersTop;
 use App\Filament\Widgets\Reports\SalesTopProducts;
 use App\Filament\Widgets\Reports\SearchFailedQueries;
 use App\Filament\Widgets\Reports\SearchTopSearches;
+use App\Filament\Widgets\TopSearchedOems;
 use App\Models\Admin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -44,7 +45,7 @@ class ReportsGroupByOrderSortTest extends TestCase
     #[Test]
     public function group_by_widgets_disable_the_default_id_order_that_mysql_would_reject(): void
     {
-        $widgets = [SalesTopProducts::class, SearchFailedQueries::class, SearchTopSearches::class];
+        $widgets = [SalesTopProducts::class, SearchFailedQueries::class, SearchTopSearches::class, TopSearchedOems::class];
         $failures = [];
 
         foreach ($widgets as $widget) {
