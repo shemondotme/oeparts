@@ -599,8 +599,26 @@ class SettingsSeeder extends Seeder
             ['group' => 'checkout', 'key' => 'default_payment_method',    'value' => 'bank_transfer', 'type' => $s],
             ['group' => 'checkout', 'key' => 'timeout_minutes',           'value' => '30',            'type' => $i],
             ['group' => 'checkout', 'key' => 'max_steps',                 'value' => '5',             'type' => $i],
-            ['group' => 'checkout', 'key' => 'payment_success_message',   'value' => $ml('Payment received. Thank you!'), 'type' => $j],
-            ['group' => 'checkout', 'key' => 'payment_error_message',     'value' => $ml('Payment failed. Please try again.'), 'type' => $j],
+            // Gap fix: these two used $ml() (identical English text duplicated
+            // into every locale) despite the field being genuinely
+            // translatable — real per-locale text carried forward from
+            // migration 2026_07_11_000002_fix_locale_blind_settings_copy,
+            // which fixed the same rows but only for already-seeded
+            // installs; a fresh seed still regressed to $ml() until now.
+            ['group' => 'checkout', 'key' => 'payment_success_message', 'value' => json_encode([
+                'en' => 'Payment received. Thank you!',
+                'de' => 'Zahlung erhalten. Vielen Dank!',
+                'lt' => 'Mokėjimas gautas. Dėkojame!',
+                'fr' => 'Paiement reçu. Merci !',
+                'es' => '¡Pago recibido. Gracias!',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
+            ['group' => 'checkout', 'key' => 'payment_error_message', 'value' => json_encode([
+                'en' => 'Payment failed. Please try again.',
+                'de' => 'Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.',
+                'lt' => 'Apmokėjimas nepavyko. Bandykite dar kartą.',
+                'fr' => 'Le paiement a échoué. Veuillez réessayer.',
+                'es' => 'El pago ha fallado. Inténtelo de nuevo.',
+            ], JSON_UNESCAPED_UNICODE), 'type' => $j],
             ['group' => 'checkout', 'key' => 'max_note_length',           'value' => '500',           'type' => $i],
             // Gap fix: CheckoutSettings.php's Apple/Google Pay toggles had
             // zero seed rows (found while merging 'checkout' into

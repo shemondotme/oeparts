@@ -700,16 +700,31 @@ class StoreOperationsSettings extends SettingsPage
                     ]),
 
                 Section::make('Customer Messages')
-                    ->description('Customize checkout feedback messages.')
+                    ->description('Customize checkout feedback messages, shown to the customer in their own language.')
                     ->schema([
-                        Forms\Components\Textarea::make('payment_success_message')
-                            ->label('Payment Success Message')->rows(2)
-                            ->default('Payment processing initiated. You will be redirected shortly.'),
-
-                        Forms\Components\Textarea::make('payment_error_message')
-                            ->label('Payment Error Message')->rows(2)
-                            ->default('Payment method is not supported. Please try another method.'),
-                    ])->columns(1),
+                        // Gap fix: these two are stored as translatable JSON
+                        // (read via settings_trans() in CheckoutController)
+                        // but rendered as plain single-locale Textareas —
+                        // Livewire/Alpine stringifying the raw {locale =>
+                        // text} object into a plain textarea produced the
+                        // literal text "[object Object]", confirmed live.
+                        AdminUi::translatableTabs('Customer Messages Locales', [
+                            'payment_success_message' => [
+                                'label' => 'Payment Success Message',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'required' => true,
+                                'helperText' => 'Shown immediately after a card payment is successfully initiated, before redirect.',
+                            ],
+                            'payment_error_message' => [
+                                'label' => 'Payment Error Message',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'required' => true,
+                                'helperText' => 'Shown when payment fails or the selected method is unsupported.',
+                            ],
+                        ]),
+                    ]),
 
                 Section::make('Order Limits')
                     ->description('Enforce minimum and maximum order thresholds.')

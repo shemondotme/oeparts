@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Filament\Resources\CategoryResource\Pages\CreateCategory;
 use App\Filament\Resources\CustomerResource\Pages\CreateCustomer;
 use App\Filament\Resources\ManufacturerResource\Pages\CreateManufacturer;
@@ -176,10 +177,65 @@ class AdminCrudRegressionTest extends TestCase
         $this->assertSame('OeParts Regression Test', settings('general.site_name'));
     }
 
+    /**
+     * checkout.payment_success_message/payment_error_message were seeded via
+     * $ml() (identical English text duplicated into every locale) despite
+     * being read through settings_trans() and rendered as a translatable
+     * field — the mismatch between JSON-shaped data and a plain
+     * single-locale Textarea made Alpine stringify the raw {locale => text}
+     * object into the literal text "[object Object]" in the admin UI,
+     * confirmed live. Migration 2026_07_11_000002 had already fixed this
+     * once for already-seeded installs, but SettingsSeeder.php was never
+     * updated to match, so any full reseed since then silently regressed
+     * both rows back to English-only — this new migration re-applies the
+     * same translations idempotently, and the seeder itself is now fixed.
+     */
+    #[Test]
+    public function the_checkout_message_translations_migration_normalizes_locale_blind_rows(): void
+    {
+        Setting::where('group', 'checkout')->whereIn('key', ['payment_success_message', 'payment_error_message'])->delete();
+        Setting::create([
+            'group' => 'checkout', 'key' => 'payment_success_message',
+            'value' => json_encode(array_fill_keys(['en', 'de', 'lt', 'fr', 'es'], 'Payment received. Thank you!')),
+            'type' => 'json',
+        ]);
+        Setting::create([
+            'group' => 'checkout', 'key' => 'payment_error_message',
+            'value' => json_encode(array_fill_keys(['en', 'de', 'lt', 'fr', 'es'], 'Payment failed. Please try again.')),
+            'type' => 'json',
+        ]);
+
+        $migration = require database_path('migrations/2026_08_16_000002_reapply_checkout_message_translations.php');
+        $migration->up();
+
+        $success = json_decode(Setting::where('group', 'checkout')->where('key', 'payment_success_message')->value('value'), true);
+        $error = json_decode(Setting::where('group', 'checkout')->where('key', 'payment_error_message')->value('value'), true);
+
+        $this->assertSame('Zahlung erhalten. Vielen Dank!', $success['de']);
+        $this->assertSame('Le paiement a échoué. Veuillez réessayer.', $error['fr']);
+        $this->assertNotSame($success['en'], $success['de'], 'locales must no longer be identical after the fix');
+    }
+
+    #[Test]
+    public function checkout_and_payments_tab_renders_and_saves_per_locale_customer_messages(): void
+    {
+        Livewire::test(StoreOperationsSettings::class)
+            ->assertSet('data.payment_success_message.en', 'Payment received. Thank you!')
+            ->assertSet('data.payment_success_message.de', 'Zahlung erhalten. Vielen Dank!')
+            ->set('data.payment_error_message.de', 'Regressionstest-Nachricht')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        Cache::forget('settings.checkout');
+        $saved = json_decode(settings('checkout.payment_error_message'), true);
+        $this->assertSame('Regressionstest-Nachricht', $saved['de']);
+    }
+
     protected function tearDown(): void
     {
         Cache::forget('settings.general');
         Cache::forget('settings.store');
+        Cache::forget('settings.checkout');
 
         parent::tearDown();
     }
