@@ -11,8 +11,10 @@ use App\Models\Category;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -53,6 +55,18 @@ use Tests\TestCase;
  *    reporting escalates to a fatal ErrorException. Every "Export
  *    Products" click 500'd outright, confirmed live via a real bulk
  *    export attempt on the Products table.
+ *
+ * 4. store.currency_position carried a legacy 'left' value (pre-dating a
+ *    fix to SettingsSeeder's default, already noted in the seeder's own
+ *    comment but never carried forward into a migration for installations
+ *    seeded before that fix — this demo database included). The Select
+ *    field only ever declared 'before'/'after' options, and
+ *    GeneralBrandSettings::save() validates its whole multi-tab form
+ *    together — so this one stale, unrelated value on the Regional
+ *    Defaults tab silently blocked saving *any* change anywhere on the
+ *    page, confirmed live: editing the Site Identity tab's Site Name and
+ *    clicking Save did nothing, jumping to Regional Defaults with "The
+ *    selected symbol Position is invalid."
  */
 class AdminCrudRegressionTest extends TestCase
 {
@@ -132,5 +146,41 @@ class AdminCrudRegressionTest extends TestCase
             ->loadTable()
             ->callTableBulkAction('exportCsv', [$product])
             ->assertOk();
+    }
+
+    #[Test]
+    public function the_legacy_currency_position_migration_normalizes_the_stale_value(): void
+    {
+        Setting::where('group', 'store')->where('key', 'currency_position')->delete();
+        Setting::create(['group' => 'store', 'key' => 'currency_position', 'value' => 'left', 'type' => 'string']);
+
+        $migration = require database_path('migrations/2026_08_16_000001_fix_legacy_store_currency_position_value.php');
+        $migration->up();
+
+        $this->assertSame('after', Setting::where('group', 'store')->where('key', 'currency_position')->value('value'));
+    }
+
+    #[Test]
+    public function general_brand_settings_saves_successfully_with_the_normalized_currency_position(): void
+    {
+        Setting::where('group', 'store')->where('key', 'currency_position')->update(['value' => 'after']);
+        Cache::forget('settings.general');
+        Cache::forget('settings.store');
+
+        Livewire::test(\App\Filament\Pages\Settings\GeneralBrandSettings::class)
+            ->set('data.site_name', 'OeParts Regression Test')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        Cache::forget('settings.general');
+        $this->assertSame('OeParts Regression Test', settings('general.site_name'));
+    }
+
+    protected function tearDown(): void
+    {
+        Cache::forget('settings.general');
+        Cache::forget('settings.store');
+
+        parent::tearDown();
     }
 }
