@@ -140,12 +140,33 @@ class AccountController extends Controller
             'address_line_1'   => 'required|string|max:200',
             'address_line_2'   => 'nullable|string|max:200',
             'city'             => 'required|string|max:100',
-            'state'            => 'required|string|max:100',
+            // nullable, not required: the user_addresses.state column itself
+            // is nullable, and checkout's own address step never collects a
+            // state/province at all (orders has no shipping_state column) —
+            // most European addresses don't use one. Requiring it here only
+            // in the account address book blocked saving an address that
+            // checkout had just accepted seconds earlier for the exact same
+            // customer.
+            'state'            => 'nullable|string|max:100',
             'postal_code'      => 'required|string|max:20',
             'country_code'     => 'required|string|size:2',
             'phone'            => 'nullable|string|max:30',
             'is_default'       => 'boolean',
         ]);
+
+        // The form/validation keys (address_line_1/address_line_2, matching
+        // every other address form in the app) don't match this table's
+        // actual columns (address_line1/address_line2, no underscore before
+        // the digit) — UserAddress::$fillable correctly lists the real
+        // column names, so passing $validated through unchanged silently
+        // dropped both fields on every mass-assignment (Eloquent ignores
+        // keys absent from $fillable rather than erroring), and since
+        // address_line1 is NOT NULL with no default, every create() failed
+        // outright. Remap here rather than renaming the form/columns, since
+        // this is the one place the two naming conventions meet.
+        $validated['address_line1'] = $validated['address_line_1'];
+        $validated['address_line2'] = $validated['address_line_2'] ?? null;
+        unset($validated['address_line_1'], $validated['address_line_2']);
 
         if (isset($validated['id'])) {
             $address = UserAddress::where('user_id', $user->id)->findOrFail($validated['id']);

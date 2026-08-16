@@ -174,9 +174,9 @@
                     </div>
                     <div>
                         <label for="state" class="bp-spec block mb-2 text-ink">
-                            {{ ui_copy('account_state_province', 'account.state_province') }} <span class="text-red-600">*</span>
+                            {{ ui_copy('account_state_province', 'account.state_province') }}
                         </label>
-                        <input type="text" id="state" name="state" required
+                        <input type="text" id="state" name="state"
                                value="{{ old('state', $address->state ?? '') }}"
                                placeholder="Berlin" autocomplete="address-level1"
                                @error('state') aria-invalid="true" aria-describedby="state-error" @enderror
