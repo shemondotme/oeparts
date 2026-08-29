@@ -42,6 +42,12 @@
     'name' => settings('general.site_name', 'OeParts'),
     'url' => settings('general.site_url', url('/')),
     'logo' => $homeLogoUrl,
+    // company.address is already collected (used on the Impressum page)
+    // but never reached this Organization schema — a free-text string,
+    // not a structured PostalAddress, since that's the only shape the
+    // data actually exists in (no separate street/city/postal fields to
+    // honestly build one from).
+    'address' => settings('company.address', '') ?: null,
     'sameAs' => array_values(array_filter([
         settings('social_links.facebook_url', ''),
         settings('social_links.instagram_url', ''),

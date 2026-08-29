@@ -47,6 +47,30 @@ class HomepageTest extends TestCase
         $this->get('/en/')->assertSeeText('OeParts');
     }
 
+    #[Test]
+    public function organization_json_ld_includes_the_company_address_when_configured(): void
+    {
+        // company.address is already collected (used on the Impressum
+        // page) but never reached the homepage's Organization JSON-LD.
+        \App\Models\Setting::updateOrCreate(
+            ['group' => 'company', 'key' => 'address'],
+            ['value' => 'Musterstrasse 1, 10115 Berlin, Germany', 'type' => 'string', 'is_encrypted' => false]
+        );
+
+        $response = $this->get('/en/');
+
+        // json_encode() here uses JSON_PRETTY_PRINT (space after the colon).
+        $response->assertSee('"address": "Musterstrasse 1, 10115 Berlin, Germany"', false);
+    }
+
+    #[Test]
+    public function organization_json_ld_omits_address_when_not_configured(): void
+    {
+        $response = $this->get('/en/');
+
+        $response->assertDontSee('"address"', false);
+    }
+
     // ── Sections rendering ────────────────────────────────────────────────────
 
     #[Test]

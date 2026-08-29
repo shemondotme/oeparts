@@ -186,6 +186,22 @@ class SeoService
             $data['itemCondition'] = self::CONDITION_SCHEMA_MAP[$product->condition->slug];
         }
 
+        // Admin-entered spec key/value pairs — same additionalProperty
+        // pattern already used for cross-reference OEM numbers above, just
+        // never extended to specifications. Only when the specs SECTION is
+        // actually visible (pdp.show_specifications): structured data must
+        // match what the page shows, same principle as the reviews gate
+        // below.
+        if (filter_var($this->settings->get('pdp.show_specifications', true), FILTER_VALIDATE_BOOLEAN) && ! empty($product->specifications)) {
+            foreach ($product->specifications as $specKey => $specValue) {
+                $data['additionalProperty'][] = [
+                    '@type' => 'PropertyValue',
+                    'name' => $specKey,
+                    'value' => $specValue,
+                ];
+            }
+        }
+
         // Gallery images (featured first) if any exist, else the same
         // fallback chain the visible page uses (manufacturer logo, then a
         // placeholder) — structured data should reflect what a visitor

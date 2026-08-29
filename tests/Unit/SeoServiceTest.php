@@ -168,6 +168,42 @@ class SeoServiceTest extends TestCase
     }
 
     #[Test]
+    public function json_ld_product_includes_specifications_as_additional_properties_when_specs_section_is_visible(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create([
+            'manufacturer_id' => $manufacturer->id,
+            'specifications' => ['Weight' => '1.2kg', 'Material' => 'Ceramic'],
+        ]);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringContainsString('"name":"Weight"', $output);
+        $this->assertStringContainsString('"value":"1.2kg"', $output);
+        $this->assertStringContainsString('"name":"Material"', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_omits_specifications_when_the_specs_section_is_toggled_off(): void
+    {
+        Setting::updateOrCreate(
+            ['group' => 'pdp', 'key' => 'show_specifications'],
+            ['value' => '0', 'type' => 'boolean', 'is_encrypted' => false]
+        );
+        app(SettingsService::class)->forget('pdp');
+
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create([
+            'manufacturer_id' => $manufacturer->id,
+            'specifications' => ['Weight' => '1.2kg'],
+        ]);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringNotContainsString('"name":"Weight"', $output);
+    }
+
+    #[Test]
     public function json_ld_product_additional_property_includes_primary_and_cross_reference_oems(): void
     {
         $manufacturer = $this->createManufacturer();
