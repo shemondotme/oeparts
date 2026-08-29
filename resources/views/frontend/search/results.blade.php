@@ -90,7 +90,13 @@
                 '@type' => 'Product',
                 'name' => $product->oem_number,
                 'sku' => $product->oem_number,
-                'url' => url('/'.app()->getLocale().'/parts/'.urlencode($product->oem_number)),
+                // normalized_oem, not oem_number — a real OEM routinely
+                // contains hyphens/spaces (OemNormalizerService's own
+                // docblock), so the raw number isn't the canonical URL and
+                // costs an avoidable extra 301 through NormalizeOemUrl.
+                // Matches this same file's cross-reference links below,
+                // which already prefer normalized_cross_oem.
+                'url' => url('/'.app()->getLocale().'/parts/'.urlencode($product->normalized_oem)),
                 'brand' => ['@type' => 'Brand', 'name' => $product->manufacturer ? trans_field($product->manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand')],
                 'offers' => [
                     '@type' => 'Offer',

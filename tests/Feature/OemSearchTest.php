@@ -233,6 +233,31 @@ class OemSearchTest extends TestCase
     }
 
     #[Test]
+    public function hub_page_item_list_json_ld_links_use_the_normalized_oem_not_the_raw_punctuated_number(): void
+    {
+        // A real OEM routinely contains hyphens/spaces
+        // (OemNormalizerService's own docblock) — the raw oem_number isn't
+        // the canonical URL and costs an avoidable extra 301 through
+        // NormalizeOemUrl. This file's cross-reference links already
+        // preferred normalized_cross_oem; the ItemList entry itself didn't.
+        Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => '06L-906-036-L',
+            'normalized_oem' => '06L906036L',
+            'name' => ['en' => 'Brake Pad Front'],
+            'condition_id' => $this->condition->id,
+            'price' => '100.00',
+            'is_in_stock' => true,
+            'is_active' => true,
+        ]);
+
+        $response = $this->get('/en/parts/06L906036L');
+
+        $response->assertSee('"url":"'.url('/en/parts/06L906036L').'"', false);
+        $response->assertDontSee(url('/en/parts/06L-906-036-L'), false);
+    }
+
+    #[Test]
     public function hub_page_omits_breadcrumb_list_when_no_filter_context_is_active(): void
     {
         Product::create([
