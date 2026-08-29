@@ -173,6 +173,52 @@ class NotFoundLogResource extends Resource
                         ->icon('heroicon-o-check-circle')
                         ->authorize('update')
                         ->action(fn ($records) => $records->each->update(['resolved' => true])),
+                    // Creating a redirect for several 404 rows at once used to mean
+                    // opening the single-row quick action N times — this sends every
+                    // selected 404 to the SAME destination in one pass (e.g. a batch
+                    // of dead links from a retired category, all pointed at its
+                    // replacement), running the exact same loop/duplicate validation
+                    // per row that the single-row action already enforces.
+                    Actions\BulkAction::make('bulkCreateRedirect')
+                        ->label('Create redirect for selected')
+                        ->icon('heroicon-o-arrow-turn-right-up')
+                        ->authorize('update')
+                        ->deselectRecordsAfterCompletion()
+                        ->form([
+                            Forms\Components\TextInput::make('to_url')
+                                ->label(__('admin.to_url'))
+                                ->required()
+                                ->helperText('Every selected 404 will redirect to this same destination.'),
+                            Forms\Components\Select::make('type')
+                                ->label(__('admin.redirect_type'))
+                                ->options([
+                                    RedirectType::Permanent->value => '301 — Permanent',
+                                    RedirectType::Temporary->value => '302 — Temporary',
+                                ])
+                                ->default(RedirectType::Permanent->value)
+                                ->required(),
+                        ])
+                        ->action(function (\Illuminate\Support\Collection $records, array $data): void {
+                            $created = 0;
+                            $skipped = 0;
+
+                            foreach ($records as $record) {
+                                if ($record->resolved) {
+                                    $skipped++;
+
+                                    continue;
+                                }
+
+                                $error = static::tryCreateRedirect($record, $data['to_url'], $data['type']);
+                                $error === null ? $created++ : $skipped++;
+                            }
+
+                            Notification::make()
+                                ->title("Created {$created} redirect(s), skipped {$skipped}")
+                                ->body($skipped > 0 ? 'Skipped rows were already resolved, duplicates, or would have formed a loop.' : null)
+                                ->success()
+                                ->send();
+                        }),
                     // No bulk delete: history is retention/logs:clean's job, not a
                     // manual admin action, consistent with FailedSearchLogResource.
                 ]),
@@ -211,77 +257,88 @@ class NotFoundLogResource extends Resource
             ])
             ->fillForm(fn (NotFoundLog $record): array => ['from_url' => $record->path])
             ->action(function (NotFoundLog $record, array $data): void {
-                $from = strtolower(trim($record->path, '/'));
-                $to = strtolower(trim((string) $data['to_url'], '/'));
+                $error = static::tryCreateRedirect($record, $data['to_url'], $data['type']);
 
-                // Redirect::from_url is unique — an admin could already have
-                // created a manual redirect for this exact path (e.g. from
-                // a different 404 log entry for the same URL), which used to
-                // crash this action with a raw duplicate-key QueryException
-                // instead of the friendly message below.
-                if (Redirect::where('from_url', $from)->exists()) {
-                    Notification::make()
-                        ->title('A redirect for this path already exists')
-                        ->body('Edit the existing redirect on the Redirects page instead.')
-                        ->warning()
-                        ->send();
+                if ($error !== null) {
+                    $notification = Notification::make()->title($error['title'])->body($error['body']);
+                    $error['severity'] === 'warning' ? $notification->warning() : $notification->danger();
+                    $notification->send();
 
                     return;
                 }
-
-                // RedirectResource's own form validates exactly this
-                // (self-redirect, reverse-pair, and full-chain loops via
-                // RedirectLoopDetector) — this quick action skipped all of
-                // it, so resolving a 404 here could silently wire up a live
-                // redirect loop with an existing redirect nobody's editing.
-                if ($from !== '' && $from === $to) {
-                    Notification::make()
-                        ->title('Cannot redirect a path to itself')
-                        ->body('The destination is the same as the source — this would loop forever.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
-
-                $reverseExists = Redirect::query()
-                    ->where('is_active', true)
-                    ->where('from_url', $to)
-                    ->where('to_url', $from)
-                    ->exists();
-
-                if ($reverseExists) {
-                    Notification::make()
-                        ->title('This would create a redirect loop')
-                        ->body('An active redirect already sends this destination back to the source.')
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
-
-                $loopNode = app(RedirectLoopDetector::class)->findLoop($from, $to);
-
-                if ($loopNode !== null) {
-                    Notification::make()
-                        ->title('This would create a redirect loop')
-                        ->body("The chain eventually comes back to \"{$loopNode}\".")
-                        ->danger()
-                        ->send();
-
-                    return;
-                }
-
-                Redirect::create([
-                    'from_url' => $record->path,
-                    'to_url' => $data['to_url'],
-                    'type' => $data['type'],
-                    'is_active' => true,
-                ]);
-                $record->update(['resolved' => true]);
 
                 Notification::make()->title('Redirect created')->success()->send();
             });
+    }
+
+    /**
+     * Shared by the single-row "Create redirect" action and the bulk
+     * "Create redirect for selected" action — RedirectResource's own form
+     * validates self-redirects/reverse-pairs/full-chain loops
+     * (RedirectLoopDetector), but this 404-log path is a second, separate
+     * write path to the same table that used to skip all of it.
+     *
+     * @return array{title: string, body: string, severity: 'warning'|'danger'}|null null on success
+     */
+    private static function tryCreateRedirect(NotFoundLog $record, string $toUrl, string $type): ?array
+    {
+        $from = strtolower(trim($record->path, '/'));
+        $to = strtolower(trim($toUrl, '/'));
+
+        // Redirect::from_url is unique — an admin could already have
+        // created a manual redirect for this exact path (e.g. from a
+        // different 404 log entry for the same URL), which used to crash
+        // this action with a raw duplicate-key QueryException instead of
+        // the friendly message below.
+        if (Redirect::where('from_url', $from)->exists()) {
+            return [
+                'title' => 'A redirect for this path already exists',
+                'body' => 'Edit the existing redirect on the Redirects page instead.',
+                'severity' => 'warning',
+            ];
+        }
+
+        if ($from !== '' && $from === $to) {
+            return [
+                'title' => 'Cannot redirect a path to itself',
+                'body' => 'The destination is the same as the source — this would loop forever.',
+                'severity' => 'danger',
+            ];
+        }
+
+        $reverseExists = Redirect::query()
+            ->where('is_active', true)
+            ->where('from_url', $to)
+            ->where('to_url', $from)
+            ->exists();
+
+        if ($reverseExists) {
+            return [
+                'title' => 'This would create a redirect loop',
+                'body' => 'An active redirect already sends this destination back to the source.',
+                'severity' => 'danger',
+            ];
+        }
+
+        $loopNode = app(RedirectLoopDetector::class)->findLoop($from, $to);
+
+        if ($loopNode !== null) {
+            return [
+                'title' => 'This would create a redirect loop',
+                'body' => "The chain eventually comes back to \"{$loopNode}\".",
+                'severity' => 'danger',
+            ];
+        }
+
+        Redirect::create([
+            'from_url' => $record->path,
+            'to_url' => $toUrl,
+            'type' => $type,
+            'is_active' => true,
+        ]);
+        $record->update(['resolved' => true]);
+
+        return null;
     }
 
     public static function getRelations(): array

@@ -166,6 +166,54 @@ class RedirectResourceTest extends TestCase
     }
 
     #[Test]
+    public function bulk_creating_redirects_sends_every_selected_404_to_the_same_destination(): void
+    {
+        $logA = NotFoundLog::create([
+            'path' => 'old-category-a', 'path_hash' => hash('sha256', 'old-category-a'),
+            'lang' => 'en', 'hit_count' => 1, 'resolved' => false,
+            'first_seen_at' => now(), 'last_seen_at' => now(),
+        ]);
+        $logB = NotFoundLog::create([
+            'path' => 'old-category-b', 'path_hash' => hash('sha256', 'old-category-b'),
+            'lang' => 'en', 'hit_count' => 1, 'resolved' => false,
+            'first_seen_at' => now(), 'last_seen_at' => now(),
+        ]);
+
+        Livewire::test(ListNotFoundLogs::class)
+            ->callTableBulkAction('bulkCreateRedirect', [$logA, $logB], data: ['to_url' => '/en/new-category', 'type' => RedirectType::Permanent->value])
+            ->assertNotified('Created 2 redirect(s), skipped 0');
+
+        $this->assertDatabaseHas('redirects', ['from_url' => 'old-category-a', 'to_url' => '/en/new-category']);
+        $this->assertDatabaseHas('redirects', ['from_url' => 'old-category-b', 'to_url' => '/en/new-category']);
+        $this->assertTrue($logA->fresh()->resolved);
+        $this->assertTrue($logB->fresh()->resolved);
+    }
+
+    #[Test]
+    public function bulk_creating_redirects_skips_rows_that_would_form_a_loop_but_still_creates_the_rest(): void
+    {
+        Redirect::create(['from_url' => 'shared-dest', 'to_url' => 'old-category-a', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        $logA = NotFoundLog::create([
+            // Would form a 2-hop loop with the redirect above.
+            'path' => 'old-category-a', 'path_hash' => hash('sha256', 'old-category-a'),
+            'lang' => 'en', 'hit_count' => 1, 'resolved' => false,
+            'first_seen_at' => now(), 'last_seen_at' => now(),
+        ]);
+        $logB = NotFoundLog::create([
+            'path' => 'old-category-b', 'path_hash' => hash('sha256', 'old-category-b'),
+            'lang' => 'en', 'hit_count' => 1, 'resolved' => false,
+            'first_seen_at' => now(), 'last_seen_at' => now(),
+        ]);
+
+        Livewire::test(ListNotFoundLogs::class)
+            ->callTableBulkAction('bulkCreateRedirect', [$logA, $logB], data: ['to_url' => 'shared-dest', 'type' => RedirectType::Permanent->value])
+            ->assertNotified('Created 1 redirect(s), skipped 1');
+
+        $this->assertDatabaseMissing('redirects', ['from_url' => 'old-category-a']);
+        $this->assertDatabaseHas('redirects', ['from_url' => 'old-category-b', 'to_url' => 'shared-dest']);
+    }
+
+    #[Test]
     public function testing_a_healthy_redirect_shows_a_success_notification(): void
     {
         $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/en/new-page', 'type' => RedirectType::Permanent, 'is_active' => true]);
