@@ -2,17 +2,23 @@
 
 namespace App\Observers;
 
+use App\Enums\ContentStatus;
 use App\Models\ActivityLog;
 use App\Models\BlogPost;
+use App\Observers\Concerns\PushesToIndexNow;
 use App\Services\CacheService;
+use App\Support\LocaleRegistry;
 use Illuminate\Support\Facades\Auth;
 
 class BlogPostObserver
 {
+    use PushesToIndexNow;
+
     public function created(BlogPost $blogPost): void
     {
         $this->log($blogPost, 'created', [], $blogPost->getAttributes());
         $this->invalidateCache($blogPost);
+        $this->pushIfPublished($blogPost);
     }
 
     public function updated(BlogPost $blogPost): void
@@ -28,12 +34,32 @@ class BlogPostObserver
         }
 
         $this->invalidateCache($blogPost);
+        $this->pushIfPublished($blogPost);
     }
 
     public function deleted(BlogPost $blogPost): void
     {
         $this->log($blogPost, 'deleted', $blogPost->getAttributes(), []);
         $this->invalidateCache($blogPost);
+    }
+
+    /**
+     * Only products got a proactive IndexNow push — blog posts relied
+     * purely on the once-daily sitemap regeneration + organic crawl. Only
+     * pushes when the post is actually publicly live (matches
+     * SitemapService::generateBlogSitemap()'s own visibility condition) —
+     * a draft or future-scheduled post has no reachable URL to announce.
+     */
+    protected function pushIfPublished(BlogPost $blogPost): void
+    {
+        if ($blogPost->status !== ContentStatus::Published || $blogPost->published_at?->isFuture()) {
+            return;
+        }
+
+        $this->pushToIndexNow(array_map(
+            fn (string $locale) => route('frontend.blog.show', ['lang' => $locale, 'slug' => $blogPost->slug]),
+            LocaleRegistry::codes()
+        ));
     }
 
     protected function invalidateCache(BlogPost $blogPost): void

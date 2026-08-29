@@ -3,10 +3,10 @@
 namespace App\Observers;
 
 use App\Enums\RedirectType;
-use App\Jobs\PushIndexNow;
 use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Models\Redirect;
+use App\Observers\Concerns\PushesToIndexNow;
 use App\Services\CacheService;
 use App\Services\ProductSlugService;
 use App\Services\SearchService;
@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Log;
 
 class ProductObserver
 {
+    use PushesToIndexNow;
+
     public function created(Product $product): void
     {
         $this->log($product, 'created', [], $product->getAttributes());
@@ -188,30 +190,10 @@ class ProductObserver
         // cache-store failure, and keeping them independent means one
         // failing never masks whether the other also failed — both stay
         // individually non-fatal to the CRUD operation that triggered them.
-        $this->pushToIndexNow($product);
-    }
-
-    /**
-     * PushIndexNow itself no-ops when disabled/unkeyed — this check is
-     * just to avoid building URLs and dispatching a job for nothing on
-     * every single product write when the feature isn't in use at all.
-     */
-    protected function pushToIndexNow(Product $product): void
-    {
-        try {
-            if (! filter_var(settings('seo.indexnow_enabled', false), FILTER_VALIDATE_BOOLEAN)) {
-                return;
-            }
-
-            $urls = array_map(
-                fn (string $locale) => route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]),
-                LocaleRegistry::codes()
-            );
-
-            PushIndexNow::dispatch($urls);
-        } catch (\Throwable $e) {
-            // Must not break the product save that triggered this.
-        }
+        $this->pushToIndexNow(array_map(
+            fn (string $locale) => route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]),
+            LocaleRegistry::codes()
+        ));
     }
 
     protected function log(Product $product, string $action, array $old, array $new): void
