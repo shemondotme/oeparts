@@ -5,8 +5,10 @@ namespace Tests\Unit;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Services\SitemapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -86,5 +88,60 @@ class SitemapProductsTest extends TestCase
         // was writing one entry per DUPLICATE PRODUCT ROW on top of that —
         // count just the English URL, which must appear exactly once.
         $this->assertSame(1, substr_count($xml, '/en/parts/DUP123'));
+    }
+
+    #[Test]
+    public function the_urlset_declares_the_image_sitemap_namespace(): void
+    {
+        $xml = $this->generateProductsSitemap();
+
+        $this->assertStringContainsString('xmlns:image="http://www.sitemaps.org/schemas/sitemap-image/1.1"', $xml);
+    }
+
+    #[Test]
+    public function a_products_images_are_written_as_image_sitemap_entries(): void
+    {
+        // ProductImage already has everything an <image:image> entry
+        // needs (a URL + translatable alt_text) — without this, every
+        // product photo was invisible to Google Images' strongest
+        // discovery signal, found only incidentally via crawled <img>
+        // tags, if at all.
+        Storage::fake('public');
+        $manufacturer = Manufacturer::create(['name' => ['en' => 'Mfr'], 'slug' => 'mfr', 'country_code' => 'DE', 'is_active' => true]);
+        $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+
+        $product = Product::create([
+            'manufacturer_id' => $manufacturer->id, 'oem_number' => 'IMG123', 'normalized_oem' => 'IMG123',
+            'name' => ['en' => 'Part with photos'], 'description' => ['en' => 'x'],
+            'price' => 10, 'condition_id' => $condition->id, 'is_active' => true, 'is_in_stock' => true,
+        ]);
+        ProductImage::create([
+            'product_id' => $product->id, 'path' => 'product-images/img123.jpg', 'medium_path' => 'product-images/img123-medium.jpg',
+            'alt_text' => ['en' => 'Front view of part IMG123', 'de' => 'Vorderansicht von Teil IMG123'],
+            'is_featured' => true, 'sort_order' => 0,
+        ]);
+
+        $xml = $this->generateProductsSitemap();
+
+        $this->assertStringContainsString('<image:image>', $xml);
+        $this->assertStringContainsString('<image:loc>'.Storage::disk('public')->url('product-images/img123-medium.jpg').'</image:loc>', $xml);
+        $this->assertStringContainsString('<image:caption>Front view of part IMG123</image:caption>', $xml);
+    }
+
+    #[Test]
+    public function a_product_with_no_images_writes_no_image_entries(): void
+    {
+        $manufacturer = Manufacturer::create(['name' => ['en' => 'Mfr'], 'slug' => 'mfr', 'country_code' => 'DE', 'is_active' => true]);
+        $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+
+        Product::create([
+            'manufacturer_id' => $manufacturer->id, 'oem_number' => 'NOIMG123', 'normalized_oem' => 'NOIMG123',
+            'name' => ['en' => 'Part with no photos'], 'description' => ['en' => 'x'],
+            'price' => 10, 'condition_id' => $condition->id, 'is_active' => true, 'is_in_stock' => true,
+        ]);
+
+        $xml = $this->generateProductsSitemap();
+
+        $this->assertStringNotContainsString('<image:image>', $xml);
     }
 }

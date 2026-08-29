@@ -9,6 +9,7 @@ use App\Models\Manufacturer;
 use App\Models\Page;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
+use App\Models\ProductImage;
 use App\Support\LocaleRegistry;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -136,12 +137,22 @@ class SitemapService
         // page only gates visibility on is_active; in_stock is an optional
         // filter a visitor can apply, not a 404. Filtering on it here
         // dropped otherwise-reachable, indexable pages from the sitemap.
+        //
+        // MAX(id) picks one representative product per OEM group to hang
+        // <image:image> entries off — the group itself has no single real
+        // product row (it's an aggregate), so an arbitrary-but-deterministic
+        // member's own gallery stands in for the whole OEM's images.
         Product::where('is_active', true)
-            ->selectRaw('normalized_oem, MAX(updated_at) as updated_at')
+            ->selectRaw('normalized_oem, MAX(updated_at) as updated_at, MAX(id) as id')
             ->groupBy('normalized_oem')
             ->orderByDesc('updated_at')
             ->cursor()
             ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod) {
+                // One extra query per DISTINCT oem (not per row) — the same
+                // accepted trade-off generateCrossReferencesSitemap() already
+                // makes for its own per-group lookup.
+                $images = $this->sitemapImages((int) $product->id);
+
                 foreach ($this->supportedLocales as $locale) {
                     if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
                         if ($writer !== null) {
@@ -159,6 +170,10 @@ class SitemapService
                         'lastmod' => $lastmod,
                         'changefreq' => 'weekly',
                         'priority' => '0.8',
+                        'images' => $images->map(fn (ProductImage $image) => [
+                            'loc' => $image->medium_url,
+                            'caption' => trans_field($image->alt_text, $locale),
+                        ])->all(),
                     ]);
                     $count++;
                     $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
@@ -170,6 +185,22 @@ class SitemapService
         }
 
         return $written ?: [$this->emptyFile('sitemap-parts-1.xml')];
+    }
+
+    /**
+     * Featured first, capped well under Google's 1,000-per-URL limit — a
+     * handful of real photos is worth more discovery signal per byte than
+     * an exhaustive gallery dump.
+     *
+     * @return \Illuminate\Support\Collection<int, ProductImage>
+     */
+    private function sitemapImages(int $productId): \Illuminate\Support\Collection
+    {
+        return ProductImage::where('product_id', $productId)
+            ->orderByDesc('is_featured')
+            ->orderBy('sort_order')
+            ->limit(5)
+            ->get();
     }
 
     /**
@@ -490,10 +521,17 @@ class SitemapService
         $writer->startDocument('1.0', 'UTF-8');
         $writer->startElement('urlset');
         $writer->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+        // Declared on every sitemap (harmless when unused) rather than
+        // conditionally per file — only generateProductsSitemap() actually
+        // writes <image:image> entries today.
+        $writer->writeAttribute('xmlns:image', 'http://www.sitemaps.org/schemas/sitemap-image/1.1');
 
         return $writer;
     }
 
+    /**
+     * @param  array{loc: string, lastmod: string, changefreq: string, priority: string, images?: array<int, array{loc: string, caption: string}>}  $url
+     */
     private function writeUrl(XMLWriter $writer, array $url): void
     {
         $writer->startElement('url');
@@ -501,6 +539,20 @@ class SitemapService
         $writer->writeElement('lastmod', $url['lastmod']);
         $writer->writeElement('changefreq', $url['changefreq']);
         $writer->writeElement('priority', $url['priority']);
+
+        // ProductImage already has everything this needs (medium_url +
+        // translatable alt_text) — without it, every product photo was
+        // invisible to Google Images' strongest discovery signal, found
+        // only incidentally via crawled <img> tags, if at all.
+        foreach ($url['images'] ?? [] as $image) {
+            $writer->startElement('image:image');
+            $writer->writeElement('image:loc', $image['loc']);
+            if ($image['caption'] !== '') {
+                $writer->writeElement('image:caption', $image['caption']);
+            }
+            $writer->endElement();
+        }
+
         $writer->endElement();
 
         // Flush buffered output to a temp file every 500 URLs to keep memory low
