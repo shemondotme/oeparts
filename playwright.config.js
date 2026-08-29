@@ -1,9 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Tests run against the real local dev server (XAMPP/Apache vhost), not a
- * Node dev server — there is no webServer entry here. Start the app
- * yourself (the vhost at APP_URL) before running `npm run test:e2e`.
+ * Tests run against the real local dev server, not a Node dev server —
+ * there is no webServer entry here. Start the app yourself before running
+ * `npm run test:e2e` (this environment runs it via Docker Sail —
+ * `docker compose up` — serving oeparts.test; an XAMPP/Apache vhost also
+ * works as long as it serves the same host). Fixture-seeding specs use
+ * the `artisan()` helper (tests/e2e/helpers.js), which shells out through
+ * `docker compose exec laravel.test` rather than a bare `php` on PATH.
  *
  * Auth is handled once by the `setup` project (tests/e2e/auth.setup.js),
  * which logs in via the real UI and saves the session to

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { execSync } from 'node:child_process';
+import { artisan } from '../helpers.js';
 
 /**
  * Anonymous-visitor storefront flows: hub search -> single-match
@@ -17,9 +17,9 @@ import { execSync } from 'node:child_process';
  * creates/removes (a uniquely-named manufacturer/product/images/
  * cross-references, idempotent, with its own PHPUnit coverage).
  *
- * Requires `php` on PATH pointing at the same app/DB this suite's
- * baseURL serves — same assumption as the rest of this e2e config
- * ("start the app yourself").
+ * Fixture is seeded via the `artisan()` helper (helpers.js), which runs
+ * through `docker compose exec laravel.test` — this dev environment has
+ * no host PHP on PATH, only the Docker Sail containers.
  */
 
 const FIXTURE_OEM = 'E2EGUEST001';
@@ -27,11 +27,11 @@ const CROSS_OEM = 'E2EGUESTX1';
 
 test.describe('Guest storefront: search -> detail -> gallery -> cross-reference', () => {
     test.beforeAll(() => {
-        execSync('php artisan oeparts:e2e:seed-guest-fixture', { stdio: 'inherit' });
+        artisan('oeparts:e2e:seed-guest-fixture');
     });
 
     test.afterAll(() => {
-        execSync('php artisan oeparts:e2e:seed-guest-fixture --cleanup', { stdio: 'inherit' });
+        artisan('oeparts:e2e:seed-guest-fixture --cleanup');
     });
 
     test('searching the homepage hero for the fixture OEM auto-redirects to its detail page', async ({ page }) => {
