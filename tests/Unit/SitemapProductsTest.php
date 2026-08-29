@@ -91,6 +91,23 @@ class SitemapProductsTest extends TestCase
     }
 
     #[Test]
+    public function generating_still_works_when_the_sitemaps_directory_does_not_exist_yet(): void
+    {
+        // generateAll() calls ensureDirectory() up front, but this test
+        // (like several others in this file) reflection-invokes a single
+        // generate*Sitemap() method directly, bypassing that — a fresh
+        // install, or any process that deleted public/sitemaps/ (e.g. a
+        // test in a completely different file cleaning up after itself),
+        // must not leave sitemap generation permanently broken with a
+        // raw "Failed to open stream: No such file or directory".
+        \Illuminate\Support\Facades\File::deleteDirectory(public_path('sitemaps'));
+
+        $xml = $this->generateProductsSitemap();
+
+        $this->assertStringContainsString('<urlset', $xml);
+    }
+
+    #[Test]
     public function the_urlset_declares_the_image_sitemap_namespace(): void
     {
         $xml = $this->generateProductsSitemap();

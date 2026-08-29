@@ -573,6 +573,15 @@ class SitemapService
         $filename = $batch === 1 ? "{$base}.xml" : "{$base}-{$batch}.xml";
         $path = public_path("{$this->sitemapDirectory}/{$filename}");
 
+        // generateAll() calls ensureDirectory() up front, but several unit
+        // tests reflection-invoke a single generate*Sitemap() method
+        // directly, bypassing that — this is the one chokepoint every
+        // sitemap-writing path actually goes through, so it's the right
+        // place to guarantee the directory exists rather than relying on
+        // every caller to have created it first (or, worse, on it simply
+        // having been left over from some earlier unrelated run).
+        $this->ensureDirectory();
+
         $bytes = file_put_contents($path, $writer->outputMemory(true));
         if ($bytes === false) {
             throw new \RuntimeException("Failed to write sitemap file: {$path}");
