@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { uniqueSuffix, uniqueCode2, fillText, selectOption, submitCreate } from './helpers.js';
 
 /**
  * Real create-flow tests for every Filament resource that has a Create
@@ -11,85 +12,14 @@ import { test, expect } from '@playwright/test';
  * likely to break silently (a missing enum case, a relationship with no
  * seeded rows, a field id that changed).
  *
- * Selectors are taken from live-rendered HTML, not guessed:
- *   - A plain/translatable field's real DOM id is `form.{key}` (or
- *     `form.{key}.{locale}` for a translatable one inside
- *     AdminUi::translatableTabs) — confirmed by dumping several Create
- *     pages' raw HTML.
- *   - EVERY Select in this app (even a 2-option enum one) renders as
- *     Filament's custom searchable combobox, never a plain <select> —
- *     confirmed live (Coupon's 2-option discount_type still uses the
- *     custom widget). The real interaction is: click the field's
- *     `.fi-select-input-btn` (scoped via its `wire:partial` attribute,
- *     which is unique per field and stable), then click the matching
- *     `[data-value="..."]` option inside whichever dropdown panel is
- *     currently `:visible` (only one is open at a time). `data-value`
- *     is the field's real submitted value — an enum's backing string,
- *     or a relationship's raw foreign-key id.
- *   - Submitting: the Create button's accessible name is always exactly
- *     "Create" (every Create page in this app uses
- *     `DisablesCreateAnother`, so there's only ever one submit button).
- *     A successful create redirects away from the `/create` URL —
- *     confirmed live (a real Carrier row was created and the app
- *     redirected, just slower than an early fixed-delay check assumed).
+ * Selectors are taken from live-rendered HTML, not guessed — see
+ * helpers.js for the full writeup of how the field/select/submit
+ * conventions were derived (dumping real Create/Edit page HTML).
  *
  * Real record ids referenced below (Manufacturer 19, Condition 2,
  * ShippingZone 1, Role "support" 5) were queried live from this dev DB
  * and are stable, long-lived seed/demo rows — not e2e fixture data.
  */
-
-function uniqueSuffix() {
-    return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
-}
-
-/** A safe 2-letter uppercase code, different enough run-to-run to avoid unique-constraint collisions. */
-function uniqueCode2() {
-    const a = 65 + (Date.now() % 26);
-    const b = 65 + (Math.floor(Date.now() / 7) % 26);
-    return String.fromCharCode(a, b);
-}
-
-async function fillText(page, key, value) {
-    await page.locator(`[id="form.${key}"]`).fill(value);
-}
-
-/**
- * Not every Select in this app uses the custom searchable combobox —
- * confirmed live: Coupon's 2-option discount_type does, but Order's
- * payment_method (also a small fixed enum) renders as a genuinely
- * native `<select id="form.payment_method">`. Filament only swaps to
- * the custom widget for searchable/multiple/HTML-option selects, so
- * whether a given field gets one is a per-field authoring choice, not
- * something to assume from field type alone — check for the native
- * element first and fall back to the combobox interaction.
- */
-async function selectOption(page, key, value) {
-    const native = page.locator(`select[id="form.${key}"]`);
-    if ((await native.count()) > 0) {
-        await native.selectOption(value);
-        return;
-    }
-
-    const container = page.locator(`[wire\\:partial="schema-component::form.${key}"]`);
-    await container.locator('.fi-select-input-btn').click();
-    const openListbox = page.locator('.fi-dropdown-panel[role="listbox"]:visible');
-    await openListbox.locator(`[data-value="${value}"]`).first().click();
-}
-
-async function submitCreate(page) {
-    // getByRole('button', { name: 'Create' }) is ambiguous on several
-    // pages: "Create & create another" also substring-matches "Create"
-    // (NewsletterCampaign/PartInquiry don't use DisablesCreateAnother),
-    // and BlogPost has an unrelated inline "Create" icon button for
-    // adding a new tag option. Plain `button[type="submit"]` is ALSO
-    // ambiguous — every admin page globally renders a hidden "Sign out"
-    // form whose button is `type="submit"` too. `wire:target="create"`
-    // is unique to the real primary action (it names the Livewire method
-    // the button triggers), on every resource, regardless of any other
-    // submit-type button on the page.
-    await page.locator('button[type="submit"][wire\\:target="create"]').click();
-    await page.waitForURL((url) => !url.pathname.endsWith('/create'), { timeout: 20000 });
-}
 
 const MANUFACTURER_ID = 19;
 const CONDITION_ID = 2;
