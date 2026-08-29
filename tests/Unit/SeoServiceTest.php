@@ -204,6 +204,54 @@ class SeoServiceTest extends TestCase
     }
 
     #[Test]
+    public function json_ld_product_includes_a_video_object_when_a_video_url_is_set(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create([
+            'manufacturer_id' => $manufacturer->id,
+            'video_url' => 'https://example.com/brake-pad-install.mp4',
+        ]);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringContainsString('"@type":"VideoObject"', $output);
+        $this->assertStringContainsString('"contentUrl":"https://example.com/brake-pad-install.mp4"', $output);
+        $this->assertStringContainsString('"thumbnailUrl"', $output);
+        $this->assertStringContainsString('"uploadDate"', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_omits_video_when_no_video_url_is_set(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id, 'video_url' => null]);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringNotContainsString('"VideoObject"', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_omits_video_when_the_video_section_is_toggled_off(): void
+    {
+        Setting::updateOrCreate(
+            ['group' => 'pdp', 'key' => 'show_video'],
+            ['value' => '0', 'type' => 'boolean', 'is_encrypted' => false]
+        );
+        app(SettingsService::class)->forget('pdp');
+
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create([
+            'manufacturer_id' => $manufacturer->id,
+            'video_url' => 'https://example.com/brake-pad-install.mp4',
+        ]);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringNotContainsString('"VideoObject"', $output);
+    }
+
+    #[Test]
     public function json_ld_product_additional_property_includes_primary_and_cross_reference_oems(): void
     {
         $manufacturer = $this->createManufacturer();

@@ -257,6 +257,25 @@ class SeoService
             }
         }
 
+        // Product.video — only when the video SECTION is actually visible
+        // (pdp.show_video, which already requires video_url to be set).
+        // No dedicated video metadata (thumbnail/duration/upload date) is
+        // captured anywhere at entry time, so this uses the same
+        // fallbacks the visible page itself relies on elsewhere: the
+        // product's own name/description and resolved image as a
+        // thumbnail, and the product row's own created_at as the closest
+        // available proxy for when this video became part of the listing.
+        if (filter_var($this->settings->get('pdp.show_video', true), FILTER_VALIDATE_BOOLEAN) && $product->video_url) {
+            $data['video'] = [
+                '@type' => 'VideoObject',
+                'name' => $data['name'],
+                'description' => $data['description'],
+                'thumbnailUrl' => $product->resolvedImageUrl('medium'),
+                'uploadDate' => $product->created_at?->toIso8601String(),
+                'contentUrl' => $product->video_url,
+            ];
+        }
+
         return $data;
     }
 
