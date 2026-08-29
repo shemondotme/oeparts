@@ -169,6 +169,12 @@ final class SettingsRegistry
             'description' => 'Site identity, company/legal info, regional defaults, script injection',
             'icon' => 'heroicon-o-identification',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Site Identity', 'description' => 'Site name, URL, logo, favicon, contact email & phone'],
+                ['label' => 'Company & Legal', 'description' => 'Registered company/legal entity details for invoices'],
+                ['label' => 'Regional Defaults', 'description' => 'Default currency, locale, timezone, date format'],
+                ['label' => 'Script Injection', 'description' => 'Custom header/footer scripts (analytics, tracking)'],
+            ],
         ],
         'appearance-settings' => [
             'class' => AppearanceSettings::class,
@@ -179,6 +185,11 @@ final class SettingsRegistry
             'description' => 'Colors, custom CSS, preloader, stats counter',
             'icon' => 'heroicon-o-paint-brush',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Colors & CSS', 'description' => 'Brand colors and custom CSS injection'],
+                ['label' => 'Preloader', 'description' => 'Full-screen loading animation on page navigation'],
+                ['label' => 'Stats Counter', 'description' => 'Homepage animated stats/counter section'],
+            ],
         ],
         'customization-settings' => [
             'class' => CustomizationSettings::class,
@@ -189,6 +200,14 @@ final class SettingsRegistry
             'description' => 'Hero/UI copy, navbar, footer, announcement bar, section limits, menus & social',
             'icon' => 'heroicon-o-rectangle-group',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Hero & UI Copy', 'description' => 'Homepage hero text and spec-table headline copy'],
+                ['label' => 'Navbar Copy', 'description' => 'Navigation and mini-cart label text'],
+                ['label' => 'Footer Badges & Stats', 'description' => 'Trust badges and footer stats/payment icons'],
+                ['label' => 'Announcement Bar', 'description' => 'Site-wide top announcement banner'],
+                ['label' => 'Homepage Section Limits', 'description' => 'How many items each homepage section shows'],
+                ['label' => 'Menus & Social', 'description' => 'Navigation menus, footer links, social profiles'],
+            ],
         ],
         'site-copy-library' => [
             'class' => SiteCopyLibrary::class,
@@ -209,6 +228,18 @@ final class SettingsRegistry
             'description' => 'Orders, customers, cart, dashboard alerts, shipping, tax, checkout & payments, email, customer service, invoice',
             'icon' => 'heroicon-o-shopping-bag',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Orders Policy', 'description' => 'Order number format, cancellation/refund windows'],
+                ['label' => 'Customers', 'description' => 'Customer segmentation thresholds (VIP, repeat)'],
+                ['label' => 'Cart Rules', 'description' => 'Cart quantity limits and free-shipping nudge'],
+                ['label' => 'Dashboard Alert Thresholds', 'description' => 'Admin dashboard warning thresholds'],
+                ['label' => 'Shipping', 'description' => 'Shipping zones/methods cross-links and nudge text'],
+                ['label' => 'Tax', 'description' => 'Tax rate cross-links and VAT validation'],
+                ['label' => 'Checkout & Payments', 'description' => 'Checkout flow, Airwallex/Paysera, bank transfer'],
+                ['label' => 'Email Setup', 'description' => 'SMTP server, sender identity, admin alerts'],
+                ['label' => 'Customer Service', 'description' => 'Contact form and part-inquiry settings'],
+                ['label' => 'Invoice', 'description' => 'PDF invoice payment terms and thank-you text'],
+            ],
         ],
         'search-catalog-settings' => [
             'class' => SearchCatalogSettings::class,
@@ -219,6 +250,10 @@ final class SettingsRegistry
             'description' => 'Internal search behavior and product detail page sections',
             'icon' => 'heroicon-o-magnifying-glass',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Internal Search', 'description' => 'Search matching, logging, and popular-results behavior'],
+                ['label' => 'Product Page Sections', 'description' => 'Which sections render on the product detail page'],
+            ],
         ],
         'seo-settings' => [
             'class' => SeoControlCenter::class,
@@ -229,6 +264,14 @@ final class SettingsRegistry
             'description' => 'Detail pages, structured data, crawlers/AI, sitemap, IndexNow, OpenGraph',
             'icon' => 'heroicon-o-globe-alt',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'General', 'description' => 'Homepage/brand meta titles and detail-page toggle'],
+                ['label' => 'Search Results', 'description' => 'Search-results page meta title templates'],
+                ['label' => 'Structured Data', 'description' => 'JSON-LD schema for products and organization'],
+                ['label' => 'Crawlers & AI', 'description' => 'Per-bot crawler rules and llms.txt'],
+                ['label' => 'Sitemap & Indexing', 'description' => 'Sitemap regeneration and search-engine pings'],
+                ['label' => 'Social', 'description' => 'OpenGraph/Twitter card defaults'],
+            ],
         ],
         'marketing-settings' => [
             'class' => MarketingSettings::class,
@@ -239,6 +282,11 @@ final class SettingsRegistry
             'description' => 'GTM/GA4/pixels, newsletter, rush processing upsell',
             'icon' => 'heroicon-o-megaphone',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Integrations', 'description' => 'Google Tag Manager, GA4, marketing pixels'],
+                ['label' => 'Newsletter', 'description' => 'Newsletter signup configuration'],
+                ['label' => 'Rush Processing Upsell', 'description' => 'Paid fast-track checkout upsell'],
+            ],
         ],
         'performance-settings' => [
             'class' => PerformanceSettings::class,
@@ -259,6 +307,10 @@ final class SettingsRegistry
             'description' => 'OTP login rules, password policy, rate limiting, session lifetime',
             'icon' => 'heroicon-o-lock-closed',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Authentication', 'description' => 'OTP, password policy, registration, social login'],
+                ['label' => 'Firewall & Sessions', 'description' => 'Rate limiting, IP blocklist, sessions, audit log'],
+            ],
         ],
         'localization-settings' => [
             'class' => LocalizationSettings::class,
@@ -279,6 +331,10 @@ final class SettingsRegistry
             'description' => 'Storefront maintenance mode, platform/database info',
             'icon' => 'heroicon-o-wrench-screwdriver',
             'sort' => 10,
+            'tabs' => [
+                ['label' => 'Maintenance Mode', 'description' => 'Storefront maintenance-mode toggle and message'],
+                ['label' => 'About & Database', 'description' => 'Platform version, license, database connection'],
+            ],
         ],
         'backup-dashboard' => [
             'class' => BackupDashboard::class,
@@ -419,6 +475,15 @@ final class SettingsRegistry
      * Sections with zero registered items are omitted entirely — a category
      * with nothing in it yet (e.g. Localization until a later phase seeds it)
      * has nothing useful to render.
+     *
+     * A PAGES entry with a 'tabs' list (ordered to match that page's own
+     * ->tabs([...]) array 1:1) expands into one hub-grid item PER TAB instead
+     * of one item for the whole page — e.g. General & Brand's 4 tabs each
+     * get their own tile, linking straight to "{page url}?tab={1-based
+     * index}" (every tabbed SettingsPage reads this exact query param via
+     * ->activeTab(fn (): int => (int) request()->query('tab', 1))). Entries
+     * without 'tabs' (tools, and the 2 flat non-tabbed settings pages) keep
+     * the single-tile-per-page behavior unchanged.
      */
     public static function sections(): array
     {
@@ -447,6 +512,20 @@ final class SettingsRegistry
 
         foreach ($pages as $page) {
             $superGroupKey = self::SECTIONS[$page['section']]['super_group'];
+
+            if (! empty($page['tabs'])) {
+                foreach ($page['tabs'] as $tabIndex => $tab) {
+                    $superGroups[$superGroupKey]['sections'][$page['section']]['items'][] = [
+                        $tab['label'],
+                        $page['url'] . '?tab=' . ($tabIndex + 1),
+                        $tab['description'],
+                        $page['icon'],
+                    ];
+                }
+
+                continue;
+            }
+
             $superGroups[$superGroupKey]['sections'][$page['section']]['items'][] = [
                 $page['title'],
                 $page['url'],

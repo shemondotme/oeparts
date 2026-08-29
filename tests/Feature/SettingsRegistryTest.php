@@ -4,6 +4,11 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\Settings\SettingsPage;
 use App\Filament\Support\SettingsRegistry;
+use App\Models\Admin;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
@@ -17,6 +22,8 @@ use PHPUnit\Framework\Attributes\Test;
  */
 class SettingsRegistryTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * @return array<class-string>
      */
@@ -116,9 +123,36 @@ class SettingsRegistryTest extends TestCase
             ->all();
 
         sort($urls);
-        $expected = collect(SettingsRegistry::PAGES)->pluck('url')->sort()->values()->all();
+
+        // A page with a 'tabs' list expands into one hub-grid item PER TAB
+        // (each linking to "{url}?tab={1-based index}"), not one item for
+        // the whole page — so the expected URL set must expand the same way,
+        // not assume a strict 1:1 page-to-URL match.
+        $expected = collect(SettingsRegistry::PAGES)
+            ->flatMap(fn (array $page) => empty($page['tabs'])
+                ? [$page['url']]
+                : collect($page['tabs'])->keys()->map(fn (int $i) => $page['url'] . '?tab=' . ($i + 1)))
+            ->sort()
+            ->values()
+            ->all();
 
         $this->assertSame($expected, $urls);
+    }
+
+    #[Test]
+    public function every_tab_entry_declares_a_label_and_description(): void
+    {
+        foreach (SettingsRegistry::PAGES as $key => $page) {
+            if (empty($page['tabs'])) {
+                continue;
+            }
+
+            foreach ($page['tabs'] as $tabIndex => $tab) {
+                $this->assertArrayHasKey('label', $tab, "SettingsRegistry::PAGES['{$key}']['tabs'][{$tabIndex}] is missing 'label'.");
+                $this->assertArrayHasKey('description', $tab, "SettingsRegistry::PAGES['{$key}']['tabs'][{$tabIndex}] is missing 'description'.");
+                $this->assertNotSame('', trim($tab['label']), "SettingsRegistry::PAGES['{$key}']['tabs'][{$tabIndex}]['label'] is blank.");
+            }
+        }
     }
 
     #[Test]
@@ -148,6 +182,47 @@ class SettingsRegistryTest extends TestCase
                 ['page', 'tool'],
                 "SettingsRegistry::PAGES['{$key}']['type'] must be 'page' or 'tool'."
             );
+        }
+    }
+
+    /**
+     * A page's 'tabs' list is a hand-maintained mirror of that page's own
+     * ->tabs([...]) array (label + order, since deep links use the
+     * 1-based position as ?tab={N}). If a tab is later renamed or removed
+     * in the real page without updating the registry, a hub-grid tile
+     * would silently deep-link to the wrong tab (or a label matching
+     * nothing) with no error — the exact class of bug this whole registry
+     * exists to prevent, just one level deeper than page-level this time.
+     * Renders each real tabbed page and confirms every registry-declared
+     * label is actually present in its output.
+     */
+    #[Test]
+    public function every_declared_tab_label_actually_renders_on_its_real_page(): void
+    {
+        $this->seed([RolesSeeder::class, SettingsSeeder::class]);
+
+        $admin = Admin::factory()->create();
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        foreach (SettingsRegistry::PAGES as $key => $page) {
+            if (empty($page['tabs'])) {
+                continue;
+            }
+
+            $html = Livewire::test($page['class'])->html();
+
+            foreach ($page['tabs'] as $tabIndex => $tab) {
+                // Blade HTML-escapes tab labels when rendering (e.g. "Company
+                // & Legal" -> "Company &amp; Legal"), so the expected label
+                // must be encoded the same way before comparing against the
+                // rendered markup.
+                $this->assertStringContainsString(
+                    e($tab['label']),
+                    $html,
+                    "SettingsRegistry::PAGES['{$key}']['tabs'][{$tabIndex}]['label'] ('{$tab['label']}') was not found rendered on {$page['class']} — the tab may have been renamed, removed, or reordered without updating the registry."
+                );
+            }
         }
     }
 }
