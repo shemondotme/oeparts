@@ -240,9 +240,14 @@ final class AdminUi
                                     $maxLength = $config['maxLength'] ?? 255;
                                     $rows = $config['rows'] ?? null;
                                     $syncsSlug = $slugSyncTarget !== null && $code === 'en' && ($config['slugSync'] ?? false);
+                                    // Opt-in only (default false) — existing callers are
+                                    // completely unaffected. A caller that also wants a
+                                    // live-updating preview alongside this field (e.g. a
+                                    // template with placeholders) sets this per-field.
+                                    $wantsLive = $config['live'] ?? false;
 
                                     if (($config['type'] ?? 'text') === 'textarea') {
-                                        return \Filament\Forms\Components\Textarea::make("{$fieldName}.{$code}")
+                                        $field = \Filament\Forms\Components\Textarea::make("{$fieldName}.{$code}")
                                             ->label($config['label'])
                                             ->required($required)
                                             ->rows($rows ?? 5)
@@ -250,6 +255,12 @@ final class AdminUi
                                             ->helperText($code === 'en'
                                                 ? ($config['helperText'] ?? null)
                                                 : 'Leave blank to fall back to the English value.');
+
+                                        if ($wantsLive) {
+                                            $field->live(debounce: 500);
+                                        }
+
+                                        return $field;
                                     }
 
                                     if (($config['type'] ?? 'text') === 'richeditor') {
@@ -267,6 +278,10 @@ final class AdminUi
                                         ->helperText($code === 'en'
                                             ? ($config['helperText'] ?? 'English value is required and used as the default fallback.')
                                             : 'Leave blank to fall back to the English value.');
+
+                                    if ($wantsLive && ! $syncsSlug) {
+                                        $field->live(debounce: 500);
+                                    }
 
                                     if ($syncsSlug) {
                                         // Not onBlur: the field that loses

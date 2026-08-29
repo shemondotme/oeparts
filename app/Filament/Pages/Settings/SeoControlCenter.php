@@ -163,6 +163,73 @@ class SeoControlCenter extends SettingsPage
             .' &middot; <a href="'.$sitemapUrl.'" target="_blank" rel="noopener" class="fi-link text-primary-600">View sitemap.xml &#8599;</a></div>';
     }
 
+    private ?\App\Models\Product $samplePreviewProductCache = null;
+
+    private bool $samplePreviewProductResolved = false;
+
+    /**
+     * The one real active product this Control Center previews templates
+     * against — save-and-check-the-live-page was the only feedback loop
+     * before this. Memoized on the instance (NOT a `static` local — a
+     * Livewire component instance is reconstructed fresh per request, but
+     * a `static` variable inside a method would persist for the whole PHP
+     * worker's lifetime, caching a product that's since changed or been
+     * deleted across totally unrelated requests). A fresh install/empty
+     * catalog falls back to illustrative dummy values rather than showing
+     * nothing.
+     */
+    private function samplePreviewProduct(): ?\App\Models\Product
+    {
+        if (! $this->samplePreviewProductResolved) {
+            $this->samplePreviewProductCache = \App\Models\Product::query()->with('manufacturer')->where('is_active', true)->first();
+            $this->samplePreviewProductResolved = true;
+        }
+
+        return $this->samplePreviewProductCache;
+    }
+
+    /**
+     * Same {oem}/{count}/{site}/{min}/{max}/{manufacturer}/{brand}
+     * placeholder vocabulary already documented in this page's own helper
+     * text (and rendered for real in results.blade.php/manufacturer/show.
+     * blade.php) — kept self-contained here rather than extracted into a
+     * shared renderer, since this is read-only preview text, not the real
+     * rendering path those views own.
+     */
+    private function renderTemplatePreview(?string $template): string
+    {
+        $template = trim((string) $template);
+        if ($template === '') {
+            return '(nothing typed yet — falls back to the built-in default)';
+        }
+
+        $product = $this->samplePreviewProduct();
+        $manufacturerName = $product?->manufacturer ? trans_field($product->manufacturer->name) : 'Bosch';
+
+        return str_replace(
+            ['{oem}', '{count}', '{site}', '{min}', '{max}', '{manufacturer}', '{brand}'],
+            [
+                $product?->oem_number ?? 'ABC12345',
+                '3',
+                settings('general.site_name', 'OeParts'),
+                $product ? (string) $product->price : '49.99',
+                $product ? (string) $product->price : '89.99',
+                $manufacturerName,
+                $manufacturerName,
+            ],
+            $template
+        );
+    }
+
+    private function templatePreviewPlaceholder(string $key, string $fieldPath, string $label): Forms\Components\Placeholder
+    {
+        return Forms\Components\Placeholder::make($key)
+            ->label($label)
+            ->content(fn (\Filament\Schemas\Components\Utilities\Get $get) => new HtmlString(
+                '<span class="font-mono text-xs text-gray-600 dark:text-gray-400">'.e($this->renderTemplatePreview($get($fieldPath))).'</span>'
+            ));
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -195,6 +262,7 @@ class SeoControlCenter extends SettingsPage
                                 'required' => true,
                                 'maxLength' => 60,
                                 'helperText' => 'Ideal: 50-60 characters',
+                                'live' => true,
                             ],
                             'home_description' => [
                                 'label' => 'Homepage Meta Description',
@@ -202,13 +270,18 @@ class SeoControlCenter extends SettingsPage
                                 'rows' => 2,
                                 'maxLength' => 160,
                                 'helperText' => 'Ideal: 150-160 characters',
+                                'live' => true,
                             ],
                             'brand_title_template' => [
                                 'label' => 'Brand/Manufacturer Page Title Template',
                                 'maxLength' => 100,
                                 'helperText' => 'Available placeholders: {brand}',
+                                'live' => true,
                             ],
                         ]),
+                        $this->templatePreviewPlaceholder('home_title_preview', 'home_title.en', 'Homepage Title Preview (English)'),
+                        $this->templatePreviewPlaceholder('home_description_preview', 'home_description.en', 'Homepage Description Preview (English)'),
+                        $this->templatePreviewPlaceholder('brand_title_template_preview', 'brand_title_template.en', 'Brand Title Preview (English, sample brand)'),
                     ]),
 
                 Section::make('Per-Product Detail Pages')
@@ -235,6 +308,7 @@ class SeoControlCenter extends SettingsPage
                                 'label' => 'Search Results Title Template',
                                 'maxLength' => 100,
                                 'helperText' => 'Placeholders: {oem}, {count}, {site}, {min}, {max}, {manufacturer}, {brand}. e.g. "Buy OEM Part {oem} — From €{min} | {site}"',
+                                'live' => true,
                             ],
                             'search_results_meta_template' => [
                                 'label' => 'Search Results Meta Description Template',
@@ -242,8 +316,11 @@ class SeoControlCenter extends SettingsPage
                                 'rows' => 2,
                                 'maxLength' => 200,
                                 'helperText' => 'Placeholders: {oem}, {count}, {site}, {min}, {max}, {manufacturer}, {brand}. e.g. "Genuine OEM part {oem}, from €{min}, on {site}."',
+                                'live' => true,
                             ],
                         ]),
+                        $this->templatePreviewPlaceholder('search_results_title_template_preview', 'search_results_title_template.en', 'Title Preview (English, sample product)'),
+                        $this->templatePreviewPlaceholder('search_results_meta_template_preview', 'search_results_meta_template.en', 'Meta Description Preview (English, sample product)'),
                     ]),
 
                 Section::make('Parts Search Console Templates')
@@ -254,6 +331,7 @@ class SeoControlCenter extends SettingsPage
                                 'label' => 'Console Title Template',
                                 'maxLength' => 100,
                                 'helperText' => 'Placeholders: {site}. e.g. "Parts Search Console | {site}"',
+                                'live' => true,
                             ],
                             'console_meta_template' => [
                                 'label' => 'Console Meta Description Template',
@@ -261,8 +339,11 @@ class SeoControlCenter extends SettingsPage
                                 'rows' => 2,
                                 'maxLength' => 200,
                                 'helperText' => 'Placeholders: {site}.',
+                                'live' => true,
                             ],
                         ]),
+                        $this->templatePreviewPlaceholder('console_title_template_preview', 'console_title_template.en', 'Title Preview (English)'),
+                        $this->templatePreviewPlaceholder('console_meta_template_preview', 'console_meta_template.en', 'Meta Description Preview (English)'),
                     ]),
 
                 Section::make('Fallback Product Description')
