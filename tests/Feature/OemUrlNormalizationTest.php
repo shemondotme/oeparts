@@ -37,6 +37,39 @@ class OemUrlNormalizationTest extends TestCase
     }
 
     #[Test]
+    public function lowercase_oem_on_the_detail_route_preserves_the_idslug_instead_of_downgrading_to_the_hub_route(): void
+    {
+        // NormalizeOemUrl used to hardcode frontend.search.results as the
+        // redirect target regardless of which route actually matched —
+        // silently dropping idSlug and sending a wrong-case hit on the
+        // per-product detail page to the generic hub instead.
+        $response = $this->get('/en/parts/abc123/42-some-part');
+
+        $response->assertRedirect('/en/parts/ABC123/42-some-part');
+        $response->assertStatus(301);
+    }
+
+    #[Test]
+    public function lowercase_oem_on_the_results_route_preserves_the_query_string(): void
+    {
+        // route()/URL::route() only encodes named route parameters — a
+        // filtered link's manufacturer/condition/sort/etc. query string was
+        // silently dropped on this 301 otherwise. Symfony's
+        // Request::getQueryString() re-sorts params alphabetically by key
+        // (its own normalization, unrelated to this fix), so this asserts
+        // on the parsed query rather than an exact string.
+        $response = $this->get('/en/parts/abc123?manufacturer=5&condition=new');
+
+        $response->assertStatus(301);
+        $location = $response->headers->get('Location');
+        $this->assertStringStartsWith('http://localhost/en/parts/ABC123?', $location);
+
+        parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+        ksort($query);
+        $this->assertSame(['condition' => 'new', 'manufacturer' => '5'], $query);
+    }
+
+    #[Test]
     public function already_uppercase_oem_does_not_redirect(): void
     {
         $condition = Condition::firstOrCreate(
