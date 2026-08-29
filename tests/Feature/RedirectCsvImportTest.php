@@ -145,4 +145,19 @@ class RedirectCsvImportTest extends TestCase
 
         Bus::assertDispatched(ImportRedirectsFromCsv::class);
     }
+
+    #[Test]
+    public function the_template_download_action_streams_a_valid_starting_csv(): void
+    {
+        // A fresh install has no prior export to reverse-engineer the
+        // column shape from — this is the blank starting point instead.
+        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $admin = Admin::factory()->create();
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        Livewire::test(ListRedirects::class)
+            ->callTableAction('downloadRedirectTemplate')
+            ->assertFileDownloaded('redirect-import-template.csv');
+    }
 }

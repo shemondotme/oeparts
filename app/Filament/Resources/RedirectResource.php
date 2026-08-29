@@ -218,7 +218,7 @@ class RedirectResource extends Resource
                 Actions\DeleteBulkAction::make(),
             ]),
             ])
-            ->headerActions([static::importCsvAction()])
+            ->headerActions([static::downloadTemplateAction(), static::importCsvAction()])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-arrow-right-end-on-rectangle')
             ->emptyStateHeading('No redirect rules configured yet')
@@ -246,6 +246,24 @@ class RedirectResource extends Resource
      * per-row loop-detection queries is enough to risk a web request's
      * timeout.
      */
+    /**
+     * A blank starting point — the exact column shape importCsvAction()
+     * expects, with one example row — rather than making an admin
+     * reverse-engineer the format from the helper text or an existing
+     * export (which a fresh install has none of yet).
+     */
+    private static function downloadTemplateAction(): Actions\Action
+    {
+        return Actions\Action::make('downloadRedirectTemplate')
+            ->label('Download Template')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('gray')
+            ->action(fn () => \Illuminate\Support\Facades\Response::streamDownload(
+                fn () => print "from_url,to_url,type,is_active\nold-page,/new-page,301,1\n",
+                'redirect-import-template.csv',
+            ));
+    }
+
     private static function importCsvAction(): Actions\Action
     {
         return Actions\Action::make('importCsv')
