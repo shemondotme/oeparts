@@ -31,14 +31,26 @@ class SeoControlCenterSitemapStatsTest extends TestCase
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');
+
+        // This is a real Docker dev container, not an ephemeral CI
+        // filesystem — a genuine sitemap:generate run elsewhere in this
+        // same environment persists across test runs. Clear it BEFORE
+        // each test too, not just after, so "no sitemap" tests aren't at
+        // the mercy of whatever real files happen to already exist on disk.
+        $this->clearSitemapFiles();
     }
 
     protected function tearDown(): void
     {
-        File::deleteDirectory(public_path('sitemaps'));
-        @unlink(public_path('sitemap.xml'));
+        $this->clearSitemapFiles();
 
         parent::tearDown();
+    }
+
+    private function clearSitemapFiles(): void
+    {
+        File::deleteDirectory(public_path('sitemaps'));
+        @unlink(public_path('sitemap.xml'));
     }
 
     private function writeFixtureSitemap(int $partsUrls, int $brandUrls): void
@@ -73,5 +85,16 @@ class SeoControlCenterSitemapStatsTest extends TestCase
             ->assertSee('Brands')
             ->assertSee('9')
             ->assertSee('View sitemap.xml');
+    }
+
+    #[Test]
+    public function it_links_to_googles_rich_results_test_and_schema_validator(): void
+    {
+        // No in-admin JSON-LD preview exists yet — these are the fastest
+        // path to checking whether the structured data this same page
+        // generates (AggregateRating/FAQPage/etc.) actually validates.
+        Livewire::test(SeoControlCenter::class)
+            ->assertSee('https://search.google.com/test/rich-results?url='.urlencode(url('/')), false)
+            ->assertSee('https://validator.schema.org/#url='.urlencode(url('/')), false);
     }
 }

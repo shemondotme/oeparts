@@ -294,6 +294,20 @@ class SeoControlCenter extends SettingsPage
                             ->content(view('components.seo.condition-schema-map')),
                     ]),
 
+                Section::make('Structured Data Testing')
+                    ->description('No in-admin JSON-LD preview exists yet — these open Google\'s own validators pre-filled with the homepage. Paste any product/page URL once there to test it instead.')
+                    ->schema([
+                        Forms\Components\Placeholder::make('structured_data_test_links')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(fn () => new HtmlString(
+                                '<div class="flex flex-wrap gap-4 text-sm">'
+                                .'<a href="https://search.google.com/test/rich-results?url='.urlencode(url('/')).'" target="_blank" rel="noopener" class="fi-link text-primary-600">Google Rich Results Test &#8599;</a>'
+                                .'<a href="https://validator.schema.org/#url='.urlencode(url('/')).'" target="_blank" rel="noopener" class="fi-link text-primary-600">Schema.org Markup Validator &#8599;</a>'
+                                .'</div>'
+                            )),
+                    ]),
+
                 Section::make('Webmaster Verification Codes')
                     ->description('Verify website ownership with search console integrations.')
                     ->schema([
