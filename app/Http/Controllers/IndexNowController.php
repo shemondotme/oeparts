@@ -18,7 +18,7 @@ class IndexNowController extends Controller
     {
         $configuredKey = trim((string) settings('seo.indexnow_api_key', ''));
 
-        if ($configuredKey === '' || $key !== $configuredKey) {
+        if ($configuredKey === '' || ! hash_equals($configuredKey, $key)) {
             abort(404);
         }
 

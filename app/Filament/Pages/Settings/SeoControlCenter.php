@@ -344,7 +344,18 @@ class SeoControlCenter extends SettingsPage
                         Forms\Components\TextInput::make('indexnow_api_key')
                             ->label('IndexNow API Key')
                             ->maxLength(255)
-                            ->helperText('Generate one at indexnow.org — the key must be reachable at /{key}.txt on this domain (handled automatically once set here).')
+                            // The verification route (/{key}.txt) only
+                            // matches [a-zA-Z0-9]+ — a hyphenated key (a
+                            // very common shape for a generated key/GUID)
+                            // would save here without error but the
+                            // verification file could then never actually
+                            // be served, permanently and invisibly failing
+                            // Bing's key-verification crawl.
+                            ->regex('/^[a-zA-Z0-9]+$/')
+                            ->helperText('Generate one at indexnow.org — the key must be reachable at /{key}.txt on this domain (handled automatically once set here). Letters and digits only, no hyphens.')
+                            ->validationMessages([
+                                'regex' => 'The IndexNow key may only contain letters and digits (no hyphens or other characters) — the verification file can only be served at that shape of URL.',
+                            ])
                             ->password()
                             ->revealable(),
                     ])->columns(2),
