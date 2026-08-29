@@ -42,6 +42,21 @@
         $searchResultsMetaDescription = ui_copy('search_meta_description', 'search.meta_description', ['count' => $countForSeo, 'oem' => $oemForSeo]);
     }
     $searchResultsOgDescription = \Illuminate\Support\Str::limit(strip_tags($searchResultsMetaDescription), 300, '');
+
+    // Hoisted up from the @section('content') block below so it's available
+    // to the noindex check next — this hub page's canonical tag already
+    // points at the bare, unfiltered OEM URL (below), but noindex only ever
+    // fired for a 'partial' match. A manufacturer/condition/sort/in-stock/
+    // model-filtered exact or cross-reference match kept index,follow even
+    // though its own canonical says "index that other URL instead" — a
+    // crawler that judges the two non-duplicate can index the filtered
+    // URL directly, defeating robots.txt's own disallow rules for these
+    // exact query params.
+    $activeFilterCount = ($condition_filter ? 1 : 0)
+                       + ($in_stock_only ? 1 : 0)
+                       + ($sort !== 'default' ? 1 : 0)
+                       + ($manufacturer_filter ? 1 : 0)
+                       + (($car_model_filter ?? null) ? 1 : 0);
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
@@ -50,7 +65,7 @@
 @section('og_title'){{ $searchResultsPageTitle }}@endsection
 @section('og_description'){{ $searchResultsOgDescription }}@endsection
 
-@if(($search_type ?? '') === 'partial')
+@if(($search_type ?? '') === 'partial' || $activeFilterCount > 0)
 @section('meta_robots')
     <meta name="robots" content="noindex,follow">
 @endsection
@@ -141,11 +156,8 @@
     $vatMultiplier = bcadd('1', bcdiv((string) $vat_rate, '100', 4), 4);
     $showIncVatPrimary = settings('tax.price_display', 'inc_vat') === 'inc_vat';
 
-    $activeFilterCount = ($condition_filter ? 1 : 0)
-                       + ($in_stock_only ? 1 : 0)
-                       + ($sort !== 'default' ? 1 : 0)
-                       + ($manufacturer_filter ? 1 : 0)
-                       + ($car_model_filter ? 1 : 0);
+    // $activeFilterCount is already computed above (before @section('content'))
+    // so the noindex check near the top of this file can use it too.
 
     $conditionLabels = $conditions->mapWithKeys(fn ($c) => [$c->slug => condition_label($c)])->toArray();
 @endphp

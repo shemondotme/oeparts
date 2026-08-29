@@ -464,6 +464,43 @@ class OemSearchTest extends TestCase
     }
 
     #[Test]
+    public function a_manufacturer_filtered_hub_page_includes_noindex_robots_meta(): void
+    {
+        // The canonical tag already points at the bare, unfiltered OEM
+        // URL — but noindex only ever fired for a 'partial' search type,
+        // so an exact-match page with an active filter kept index,follow
+        // even though its own canonical says "index that other URL
+        // instead." A crawler that judges the two non-duplicate could
+        // index the filtered URL directly, undermining robots.txt's own
+        // disallow rules for these exact query params.
+        Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => '06L906036L', 'normalized_oem' => '06L906036L',
+            'condition_id' => $this->condition->id, 'price' => '100.00',
+            'is_in_stock' => true, 'is_active' => true,
+        ]);
+
+        $response = $this->get('/en/parts/06L906036L?manufacturer=' . $this->manufacturer->id);
+
+        $response->assertSee('<meta name="robots" content="noindex,follow">', false);
+    }
+
+    #[Test]
+    public function an_unfiltered_exact_match_hub_page_stays_indexable(): void
+    {
+        Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => '06L906036L', 'normalized_oem' => '06L906036L',
+            'condition_id' => $this->condition->id, 'price' => '100.00',
+            'is_in_stock' => true, 'is_active' => true,
+        ]);
+
+        $response = $this->get('/en/parts/06L906036L');
+
+        $response->assertDontSee('name="robots" content="noindex', false);
+    }
+
+    #[Test]
     public function filtered_empty_state_when_condition_excludes_all_results(): void
     {
         Product::create([
