@@ -55,7 +55,7 @@
     $pageTitleTag = trim($__env->yieldContent('title', settings('general.site_name', 'OeParts')));
     $pageMetaDescription = trim($__env->yieldContent('meta_description', settings('seo.default_description', '')));
     $pageOgTitle = trim($__env->yieldContent('og_title', settings('general.site_name', 'OeParts')));
-    $pageOgDescription = trim($__env->yieldContent('og_description', settings('seo.homepage_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.'));
+    $pageOgDescription = trim($__env->yieldContent('og_description', settings_trans('seo.home_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.'));
 @endphp
 
     {{-- Title --}}

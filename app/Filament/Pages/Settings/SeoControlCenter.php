@@ -310,6 +310,11 @@ class SeoControlCenter extends SettingsPage
                                 'noindex,nofollow' => 'No Index, No Follow',
                             ])
                             ->default('index,follow'),
+                        Forms\Components\Textarea::make('default_description')
+                            ->label('Default Meta Description')
+                            ->rows(2)
+                            ->maxLength(160)
+                            ->helperText('Fallback <meta name="description"> for any page with no page-specific description and no Advanced SEO override set (layouts/app.blade.php). Ideal: 150-160 characters.'),
                     ]),
 
                 Section::make('AI Crawler Policy')

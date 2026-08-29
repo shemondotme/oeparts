@@ -376,7 +376,12 @@ class SeoServiceTest extends TestCase
         $tag = $this->service->ogImageTag(999);
 
         $this->assertStringContainsString('og:image', $tag);
-        $this->assertStringContainsString('images/og-default.png', $tag);
+        // default_og_image is a path on the 'public' disk, served through
+        // the /storage symlink — asserting the full resolved URL (not just
+        // a substring the raw stored path also happens to match) catches a
+        // regression back to URL::asset(), which built a dead link
+        // straight off the web root instead.
+        $this->assertStringContainsString('content="'.\Illuminate\Support\Facades\Storage::disk('public')->url('images/og-default.png').'"', $tag);
     }
 
     /**
@@ -421,7 +426,7 @@ class SeoServiceTest extends TestCase
         $tag = $this->service->ogImageTag(null);
 
         $this->assertStringContainsString('og:image', $tag);
-        $this->assertStringContainsString('images/og-default.png', $tag);
+        $this->assertStringContainsString('content="'.\Illuminate\Support\Facades\Storage::disk('public')->url('images/og-default.png').'"', $tag);
     }
 
     #[Test]

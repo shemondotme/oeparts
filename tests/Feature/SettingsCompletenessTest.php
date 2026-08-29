@@ -122,6 +122,47 @@ class SettingsCompletenessTest extends TestCase
     }
 
     #[Test]
+    public function default_meta_description_is_seeded_and_used_as_the_sitewide_fallback(): void
+    {
+        // layouts/app.blade.php's <meta name="description"> fallback reads
+        // seo.default_description — previously unseeded and with no admin
+        // field, so any page with no page-specific description (and no
+        // per-entity SeoMeta override) rendered an empty description with
+        // no way to fix it short of tinker.
+        $seeded = settings('seo.default_description', 'SENTINEL');
+        $this->assertNotSame('SENTINEL', $seeded, 'seo.default_description has no seed row.');
+
+        \App\Models\Setting::updateOrCreate(
+            ['group' => 'seo', 'key' => 'default_description'],
+            ['value' => 'Custom sitewide fallback description for testing', 'type' => \App\Enums\SettingType::String->value]
+        );
+        app(SettingsService::class)->forget('seo');
+
+        $response = $this->get('/en/cart');
+
+        $response->assertSee('Custom sitewide fallback description for testing', false);
+    }
+
+    #[Test]
+    public function og_description_fallback_uses_the_correctly_named_home_description_setting(): void
+    {
+        // layouts/app.blade.php used to read the nonexistent
+        // seo.homepage_description (the real key is seo.home_description),
+        // so the og:description/twitter:description fallback on every
+        // non-home page always fell back to a hardcoded literal regardless
+        // of what an admin configured.
+        \App\Models\Setting::updateOrCreate(
+            ['group' => 'seo', 'key' => 'home_description'],
+            ['value' => json_encode(['en' => 'Custom OG description for testing', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']), 'type' => \App\Enums\SettingType::Json->value]
+        );
+        app(SettingsService::class)->forget('seo');
+
+        $response = $this->get('/en/cart');
+
+        $response->assertSee('Custom OG description for testing', false);
+    }
+
+    #[Test]
     public function announcement_banner_renders_localized_text_not_raw_json(): void
     {
         \App\Models\Setting::updateOrCreate(

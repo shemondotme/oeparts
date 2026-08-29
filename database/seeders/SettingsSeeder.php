@@ -357,6 +357,13 @@ class SettingsSeeder extends Seeder
             ['group' => 'seo', 'key' => 'indexnow_enabled',         'value' => '0',            'type' => $b],
             ['group' => 'seo', 'key' => 'indexnow_api_key',         'value' => '',             'type' => $e, 'encrypted' => true],
             ['group' => 'seo', 'key' => 'default_robots',           'value' => 'index,follow', 'type' => $s],
+            // Fallback <meta name="description"> for any page that yields
+            // no meta_description section of its own and has no per-entity
+            // SeoMeta override (layouts/app.blade.php). Read via
+            // SeoService::defaultMeta() too. Previously unreachable from
+            // the admin UI entirely — every such page rendered an empty
+            // description with no way to fix it short of tinker.
+            ['group' => 'seo', 'key' => 'default_description',      'value' => 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, and ship across the EU.', 'type' => $s],
             ['group' => 'seo', 'key' => 'default_og_image',         'value' => '',             'type' => $s],
             ['group' => 'seo', 'key' => 'twitter_handle',           'value' => '',             'type' => $s],
             // Ships disabled — per-product detail pages (/parts/{oem}/{id}-{slug})

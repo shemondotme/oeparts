@@ -428,7 +428,14 @@ class SeoService
 
         $defaultImage = $this->settings->get('seo.default_og_image');
         if ($defaultImage) {
-            return sprintf('<meta property="og:image" content="%s">', URL::asset($defaultImage));
+            // default_og_image is a path on the 'public' disk (uploaded via
+            // the SEO Control Center's FileUpload field, served through the
+            // /storage symlink) — URL::asset() instead built a dead link
+            // straight off the public web root, e.g. "/og-images/x.jpg"
+            // instead of "/storage/og-images/x.jpg". Every other consumer
+            // of this same setting (layouts/app.blade.php) already resolves
+            // it correctly this way.
+            return sprintf('<meta property="og:image" content="%s">', Storage::disk('public')->url($defaultImage));
         }
 
         return '';
