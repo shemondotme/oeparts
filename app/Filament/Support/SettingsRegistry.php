@@ -11,6 +11,7 @@ use App\Filament\Pages\Settings\PerformanceSettings;
 use App\Filament\Pages\Settings\SearchCatalogSettings;
 use App\Filament\Pages\Settings\SecurityAccessSettings;
 use App\Filament\Pages\Settings\SeoControlCenter;
+use App\Filament\Pages\Settings\SeoHealthDashboard;
 use App\Filament\Pages\Settings\SiteCopyLibrary;
 use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Filament\Pages\Settings\SystemMaintenanceSettings;
@@ -272,6 +273,16 @@ final class SettingsRegistry
                 ['label' => 'Sitemap & Indexing', 'description' => 'Sitemap regeneration and search-engine pings'],
                 ['label' => 'Social', 'description' => 'OpenGraph/Twitter card defaults'],
             ],
+        ],
+        'seo-health-dashboard' => [
+            'class' => SeoHealthDashboard::class,
+            'type' => 'tool',
+            'section' => 'seo',
+            'title' => 'SEO Health Dashboard',
+            'url' => '/admin/seo-settings/health',
+            'description' => 'Search analytics, content coverage, Core Web Vitals, and technical-SEO health',
+            'icon' => 'heroicon-o-presentation-chart-line',
+            'sort' => 20,
         ],
         'marketing-settings' => [
             'class' => MarketingSettings::class,
