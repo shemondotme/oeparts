@@ -218,6 +218,7 @@ class RedirectResource extends Resource
                 Actions\DeleteBulkAction::make(),
             ]),
             ])
+            ->headerActions([static::importCsvAction()])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-arrow-right-end-on-rectangle')
             ->emptyStateHeading('No redirect rules configured yet')
@@ -229,6 +230,47 @@ class RedirectResource extends Resource
                     ->icon('heroicon-o-plus')
                     ->button(),
             ]);
+    }
+
+    /**
+     * Export existed (from_url/to_url/type/hit_count/is_active) with no
+     * inverse — migrating a URL structure or restoring from a backup meant
+     * manual re-entry through the form, one redirect at a time. Accepts
+     * exactly what Export Redirects produces (case-insensitive header
+     * match, "From URL"/"from_url" etc. both work) so a round-tripped
+     * export file imports back in unmodified. The actual parsing/
+     * validation runs in a queued job (ImportRedirectsFromCsv) — the same
+     * "admin clicks a button, slow work happens off-request, bell
+     * notification on completion" pattern as sitemap regeneration/IndexNow
+     * pushes elsewhere in this admin, since a few thousand rows of
+     * per-row loop-detection queries is enough to risk a web request's
+     * timeout.
+     */
+    private static function importCsvAction(): Actions\Action
+    {
+        return Actions\Action::make('importCsv')
+            ->label('Import CSV')
+            ->icon('heroicon-o-arrow-up-tray')
+            ->color('gray')
+            ->authorize(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false)
+            ->form([
+                Forms\Components\FileUpload::make('csv_file')
+                    ->label('CSV File')
+                    ->disk((string) config('imports.disk', 'local'))
+                    ->directory(((string) config('imports.path', 'imports')).'/redirects')
+                    ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
+                    ->required()
+                    ->helperText('Columns: from_url, to_url, type (301 or 302), is_active (1/0). Header row required — matches what "Export Redirects" produces.'),
+            ])
+            ->action(function (array $data): void {
+                \App\Jobs\ImportRedirectsFromCsv::dispatch($data['csv_file'], auth('admin')->user()?->name ?? 'An admin');
+
+                Notification::make()
+                    ->title('Redirect import queued')
+                    ->body("You'll get a notification here (the bell icon) once it finishes.")
+                    ->success()
+                    ->send();
+            });
     }
 
     /**
