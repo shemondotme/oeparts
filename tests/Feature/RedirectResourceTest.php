@@ -6,10 +6,12 @@ use App\Enums\RedirectType;
 use App\Filament\Resources\NotFoundLogResource\Pages\ListNotFoundLogs;
 use App\Filament\Resources\RedirectResource\Pages\CreateRedirect;
 use App\Filament\Resources\RedirectResource\Pages\EditRedirect;
+use App\Filament\Resources\RedirectResource\Pages\ListRedirects;
 use App\Models\Admin;
 use App\Models\NotFoundLog;
 use App\Models\Redirect;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -161,5 +163,38 @@ class RedirectResourceTest extends TestCase
 
         $this->assertSame(0, Redirect::where('from_url', 'page-y')->count());
         $this->assertFalse($log->fresh()->resolved);
+    }
+
+    #[Test]
+    public function testing_a_healthy_redirect_shows_a_success_notification(): void
+    {
+        $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/en/new-page', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        Http::fake(['*' => Http::response('OK', 200)]);
+
+        Livewire::test(ListRedirects::class)
+            ->callTableAction('testRedirect', $redirect)
+            ->assertNotified('Destination responds 200 OK');
+    }
+
+    #[Test]
+    public function testing_a_redirect_whose_destination_itself_redirects_shows_a_warning(): void
+    {
+        $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/en/chained-page', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        Http::fake(['*' => Http::response('', 301, ['Location' => '/en/final-page'])]);
+
+        Livewire::test(ListRedirects::class)
+            ->callTableAction('testRedirect', $redirect)
+            ->assertNotified('Destination itself redirects (301)');
+    }
+
+    #[Test]
+    public function testing_a_redirect_whose_destination_is_unreachable_shows_a_danger_notification(): void
+    {
+        $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/en/new-page', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('down'));
+
+        Livewire::test(ListRedirects::class)
+            ->callTableAction('testRedirect', $redirect)
+            ->assertNotified('Could not reach the destination');
     }
 }

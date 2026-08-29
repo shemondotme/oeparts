@@ -205,7 +205,7 @@ class RedirectResource extends Resource
                     ->trueLabel('Active Only')
                     ->falseLabel('Inactive Only'),
             ])
-            ->actions(AdminUi::recordActionsWithoutView())
+            ->actions(AdminUi::recordActionsWithoutView([static::testRedirectAction()]))
             ->bulkActions([
             Actions\BulkActionGroup::make([
                 AdminUi::exportCsvBulkAction('Export Redirects', [
@@ -229,6 +229,45 @@ class RedirectResource extends Resource
                     ->icon('heroicon-o-plus')
                     ->button(),
             ]);
+    }
+
+    /**
+     * No way existed to check whether a redirect's own destination is
+     * actually healthy short of clicking through it manually (or waiting
+     * for the Health Dashboard's redirect-health widget, which only
+     * checks internal OEM hub targets against the products table, not an
+     * arbitrary to_url). Makes a real, non-redirect-following HTTP request
+     * so a chained/broken destination is caught immediately rather than
+     * discovered later via a visitor's 404.
+     */
+    private static function testRedirectAction(): Actions\Action
+    {
+        return Actions\Action::make('testRedirect')
+            ->label('Test')
+            ->icon('heroicon-o-signal')
+            ->color('gray')
+            ->action(function (Redirect $record): void {
+                $target = str_starts_with($record->to_url, 'http') ? $record->to_url : url($record->to_url);
+
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(5)->withoutRedirecting()->get($target);
+                    $status = $response->status();
+
+                    if ($status >= 200 && $status < 300) {
+                        Notification::make()->title("Destination responds {$status} OK")->success()->send();
+                    } elseif ($status >= 300 && $status < 400) {
+                        Notification::make()
+                            ->title("Destination itself redirects ({$status})")
+                            ->body('This redirect chains into another one — Location: '.($response->header('Location') ?: 'unknown'))
+                            ->warning()
+                            ->send();
+                    } else {
+                        Notification::make()->title("Destination responded with HTTP {$status}")->danger()->send();
+                    }
+                } catch (\Throwable $e) {
+                    Notification::make()->title('Could not reach the destination')->body($e->getMessage())->danger()->send();
+                }
+            });
     }
 
     public static function getRelations(): array
