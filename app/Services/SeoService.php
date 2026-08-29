@@ -6,6 +6,7 @@ use App\Models\BlogPost;
 use App\Models\MediaFile;
 use App\Models\Page;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\SeoMeta;
 use App\Support\LocaleRegistry;
 use Illuminate\Support\Facades\App;
@@ -193,6 +194,52 @@ class SeoService
             ? $product->images->sortByDesc('is_featured')->map(fn ($image) => $image->medium_url)->values()->all()
             : [$product->resolvedImageUrl('medium')];
         $data['image'] = $galleryUrls;
+
+        // AggregateRating/Review — only when the reviews SECTION is
+        // actually visible (pdp.show_reviews) and there's at least one
+        // approved review. Google explicitly disallows a fabricated
+        // AggregateRating with reviewCount 0, and emitting rating data the
+        // page itself doesn't display would be exactly the kind of
+        // structured-data/visible-content mismatch already fixed elsewhere
+        // in this service (see the breadcrumb fix). Falls back to a fresh
+        // count/avg query when the caller didn't preload
+        // approved_reviews_count/avg_rating via withCount()/withAvg()
+        // (SearchController::detail() always does).
+        if (filter_var($this->settings->get('pdp.show_reviews', true), FILTER_VALIDATE_BOOLEAN)) {
+            $reviewCount = (int) ($product->approved_reviews_count ?? $product->approvedReviews()->count());
+
+            if ($reviewCount > 0) {
+                $avgRating = $product->approved_reviews_avg_rating ?? $product->approvedReviews()->avg('rating');
+
+                $data['aggregateRating'] = [
+                    '@type' => 'AggregateRating',
+                    'ratingValue' => round((float) $avgRating, 1),
+                    'reviewCount' => $reviewCount,
+                    'bestRating' => 5,
+                    'worstRating' => 1,
+                ];
+
+                $data['review'] = $product->approvedReviews()
+                    ->latest()
+                    ->limit(5)
+                    ->get()
+                    ->map(fn (Review $review) => array_filter([
+                        '@type' => 'Review',
+                        'reviewRating' => [
+                            '@type' => 'Rating',
+                            'ratingValue' => $review->rating,
+                            'bestRating' => 5,
+                            'worstRating' => 1,
+                        ],
+                        'author' => ['@type' => 'Person', 'name' => $review->reviewer_name],
+                        'reviewBody' => $review->comment,
+                        'name' => $review->title,
+                        'datePublished' => $review->created_at?->toIso8601String(),
+                    ]))
+                    ->values()
+                    ->all();
+            }
+        }
 
         return $data;
     }

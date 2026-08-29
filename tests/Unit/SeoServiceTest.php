@@ -109,6 +109,65 @@ class SeoServiceTest extends TestCase
     }
 
     #[Test]
+    public function json_ld_product_includes_aggregate_rating_and_reviews_when_approved_reviews_exist(): void
+    {
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+        $product->reviews()->create(['reviewer_name' => 'Jane', 'title' => 'Great fit', 'comment' => 'Fit perfectly.', 'rating' => 5, 'status' => 'approved']);
+        $product->reviews()->create(['reviewer_name' => 'Tom', 'comment' => 'Decent.', 'rating' => 3, 'status' => 'approved']);
+        $product->reviews()->create(['reviewer_name' => 'Spam', 'comment' => 'Not moderated yet.', 'rating' => 1, 'status' => 'pending']);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringContainsString('"aggregateRating"', $output);
+        $this->assertStringContainsString('"ratingValue":4', $output);
+        $this->assertStringContainsString('"reviewCount":2', $output);
+        $this->assertStringContainsString('"reviewBody":"Fit perfectly."', $output);
+        $this->assertStringContainsString('"name":"Jane"', $output);
+        // The pending review must never leak into structured data.
+        $this->assertStringNotContainsString('Not moderated yet.', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_omits_aggregate_rating_when_no_approved_reviews_exist(): void
+    {
+        // Google explicitly disallows a fabricated AggregateRating with
+        // reviewCount 0 — omit the key entirely rather than emit a bogus
+        // 0.0/5 rating.
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+        $product->reviews()->create(['reviewer_name' => 'Spam', 'comment' => 'Not moderated yet.', 'rating' => 1, 'status' => 'pending']);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringNotContainsString('"aggregateRating"', $output);
+        $this->assertStringNotContainsString('"review"', $output);
+    }
+
+    #[Test]
+    public function json_ld_product_omits_reviews_when_the_reviews_section_is_toggled_off(): void
+    {
+        // Structured data must reflect what the page actually shows —
+        // emitting Review/AggregateRating while the visible section is
+        // hidden would be the exact kind of mismatch already fixed
+        // elsewhere in this service (breadcrumb consistency).
+        Setting::updateOrCreate(
+            ['group' => 'pdp', 'key' => 'show_reviews'],
+            ['value' => '0', 'type' => 'boolean', 'is_encrypted' => false]
+        );
+        app(SettingsService::class)->forget('pdp');
+
+        $manufacturer = $this->createManufacturer();
+        $product = Product::factory()->create(['manufacturer_id' => $manufacturer->id]);
+        $product->reviews()->create(['reviewer_name' => 'Jane', 'comment' => 'Great.', 'rating' => 5, 'status' => 'approved']);
+
+        $output = $this->service->jsonLd('product', $product->fresh());
+
+        $this->assertStringNotContainsString('"aggregateRating"', $output);
+        $this->assertStringNotContainsString('"review"', $output);
+    }
+
+    #[Test]
     public function json_ld_product_additional_property_includes_primary_and_cross_reference_oems(): void
     {
         $manufacturer = $this->createManufacturer();
