@@ -352,6 +352,22 @@ class ProductDetailPageTest extends TestCase
     }
 
     #[Test]
+    public function detail_page_preloads_and_prioritizes_its_own_main_image(): void
+    {
+        // The PDP's main product photo is the likely LCP element — no
+        // preload hint or fetchpriority existed anywhere in the codebase
+        // before this.
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+
+        $response = $this->get($this->detailUrl($product));
+
+        $imageUrl = $product->resolvedImageUrl('medium');
+        $response->assertSee('<link rel="preload" as="image" href="'.$imageUrl.'" fetchpriority="high">', false);
+        $response->assertSee('fetchpriority="high"', false);
+    }
+
+    #[Test]
     public function detail_page_emits_faqpage_json_ld_matching_the_always_visible_faq_block(): void
     {
         // The fitment/condition/delivery Q&A block (#faq) renders

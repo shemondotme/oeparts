@@ -20,7 +20,15 @@
     $pageDescription = $seoOverride['meta_description'] ?: \Illuminate\Support\Str::limit(strip_tags($product->descriptionOrFallback($lang)), 160, '');
 
     $canonicalUrl = $seoService->canonicalUrl($product);
+    // Same source the main image <img> below actually renders — the
+    // PDP's likely LCP element, with no preload hint anywhere in the
+    // codebase until now.
+    $mainImageUrl = $product->resolvedImageUrl('medium');
 @endphp
+
+@section('preload')
+    <link rel="preload" as="image" href="{{ $mainImageUrl }}" fetchpriority="high">
+@endsection
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
 @section('title'){{ $pageTitle }}@endsection
@@ -238,9 +246,10 @@
             <button type="button" @click="zoomOpen = true"
                     class="relative block w-full border border-rule bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-ink">
                 <img :src="mainImage"
-                     src="{{ $product->resolvedImageUrl('medium') }}"
+                     src="{{ $mainImageUrl }}"
                      alt="{{ $mainImageAlt }}"
                      width="800" height="800"
+                     fetchpriority="high"
                      class="w-full aspect-square object-contain"
                      data-testid="product-main-image">
                 @if($galleryImages->count() > 1)

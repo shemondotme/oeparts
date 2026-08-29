@@ -21,6 +21,13 @@
     <link rel="preconnect" href="https://client.crisp.chat">
     <link rel="dns-prefetch" href="https://client.crisp.chat">
     @endif
+
+    {{-- LCP image preload — a page whose largest-contentful-paint element
+         is a specific image (e.g. the PDP's main product photo) can hint
+         the browser to fetch it immediately, before it's discovered by
+         parsing the rest of the document. Kept this early for the same
+         reason as the preconnects above. --}}
+    @yield('preload')
 @php
     $preloaderService = app(\App\Services\PreloaderService::class);
     $showPreloader = $preloaderService->shouldRender();
