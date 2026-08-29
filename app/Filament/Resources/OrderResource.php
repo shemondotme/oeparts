@@ -67,7 +67,6 @@ class OrderResource extends Resource
                                 ->schema([
                                     Forms\Components\TextInput::make('order_number')
                                         ->label(__('admin.order_number'))
-                                        ->required()
                                         ->maxLength(30)
                                         ->unique(ignoreRecord: true)
                                         ->disabled()

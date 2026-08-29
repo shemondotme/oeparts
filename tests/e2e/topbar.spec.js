@@ -22,7 +22,7 @@ import { loginAsSuperAdmin } from './helpers.js';
 test.describe('Layout and spacing', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
     });
 
     for (const width of [1280, 1440, 1920]) {
@@ -68,7 +68,7 @@ test.describe('Layout and spacing', () => {
 test.describe('Logo and breadcrumb', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
     });
 
     test('logo is visible', async ({ page }) => {
@@ -102,7 +102,7 @@ test.describe('Logo and breadcrumb', () => {
         await expect(page.locator('.op-topbar-breadcrumb-page')).toHaveText(/Orders/i);
 
         await page.locator('.op-topbar-brand-link').click();
-        await page.waitForSelector('#dashboard-canvas', { timeout: 45000 });
+        await page.waitForSelector('nav.fi-topbar', { timeout: 45000 });
         await expect(page).toHaveURL(/\/admin$/);
     });
 });
@@ -110,7 +110,7 @@ test.describe('Logo and breadcrumb', () => {
 test.describe('Global search (Spotlight)', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
     });
 
     const spotlightModal = (page) => page.locator('[x-data*="LivewireUISpotlight"]');
@@ -168,7 +168,7 @@ test.describe('Global search (Spotlight)', () => {
 test.describe('New button (Quick-Create)', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
     });
 
     const newButton = (page) => page.locator('.op-quick-create-btn');
@@ -221,7 +221,7 @@ test.describe('New button (Quick-Create)', () => {
 test.describe('Environment badge', () => {
     test('shows LOCAL with a distinct color', async ({ page }) => {
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
 
         const badge = page.locator('.fi-env-indicator');
         await expect(badge).toBeVisible();
@@ -236,7 +236,7 @@ test.describe('Environment badge', () => {
 test.describe('Help / keyboard shortcuts', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
     });
 
     const helpButton = (page) => page.getByRole('button', { name: 'Show keyboard shortcuts' });
@@ -273,10 +273,10 @@ test.describe('Dark mode toggle', () => {
         // Force a known starting state — light mode — so each test is
         // independent of whatever a previous test/run left in localStorage.
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
         await page.evaluate(() => localStorage.setItem('theme', 'light'));
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
     });
 
     const themeToggle = (page) => page.getByRole('button', { name: 'Toggle theme' });
@@ -308,7 +308,7 @@ test.describe('Dark mode toggle', () => {
         await expect(page.locator('html')).toHaveClass(/dark/);
 
         await page.reload({ waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
         await expect(page.locator('html')).toHaveClass(/dark/);
     });
 
@@ -332,7 +332,7 @@ test.describe('Dark mode toggle', () => {
 test.describe('User avatar and account menu', () => {
     test.beforeEach(async ({ page }) => {
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
     });
 
     const avatarTrigger = (page) => page.locator('.fi-user-menu-trigger');
@@ -392,7 +392,7 @@ test.describe('Responsive behavior', () => {
     test('topbar does not overflow at 768px', async ({ page }) => {
         await page.setViewportSize({ width: 768, height: 1024 });
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
 
         const topbar = page.locator('nav.fi-topbar');
         await expect(topbar).toBeVisible();
@@ -409,7 +409,7 @@ test.describe('Responsive behavior', () => {
     test('no two topbar elements visually overlap at 768px', async ({ page }) => {
         await page.setViewportSize({ width: 768, height: 1024 });
         await page.goto('/admin', { waitUntil: 'domcontentloaded' });
-        await page.waitForSelector('#dashboard-canvas');
+        await page.waitForSelector('nav.fi-topbar');
 
         const leftBox = await page.locator('.op-topbar-left').boundingBox();
         const centerBox = await page.locator('.op-topbar-center').boundingBox();

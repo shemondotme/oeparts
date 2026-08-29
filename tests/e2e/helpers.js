@@ -1,7 +1,12 @@
 import { execSync } from 'node:child_process';
 
-const ADMIN_EMAIL = 'admin@oeparts.test';
-const ADMIN_PASSWORD = 'Admin@123456';
+// Matches database/seeders/AdminSeeder.php's super_admin row exactly —
+// confirmed live against this dev DB. The previous hardcoded credentials
+// here (admin@oeparts.test / Admin@123456) matched neither that email's
+// real password nor a super_admin role (that email seeds as plain
+// 'admin', a lower-privilege role) — login was silently broken.
+const ADMIN_EMAIL = 'superadmin@oeparts.test';
+const ADMIN_PASSWORD = 'superadmin@oeparts';
 
 /**
  * Runs an `artisan` command against the app this suite's baseURL actually
@@ -20,6 +25,13 @@ export function artisan(command) {
  * dashboard to render. Shared by auth.setup.js (the one-time shared
  * session) and any test that needs its own isolated, freshly-authenticated
  * session (e.g. the logout test — see topbar.spec.js for why).
+ *
+ * Waits on `nav.fi-topbar`, not a `#dashboard-canvas` id — that id doesn't
+ * exist anywhere in the current codebase (confirmed via grep), so every
+ * test relying on it was failing outright before this fix. The topbar
+ * also renders immediately as part of the page shell, unlike the
+ * dashboard's widgets (each runs its own DB queries on load), so this is
+ * both correct and faster.
  */
 export async function loginAsSuperAdmin(page) {
     await page.goto('/admin/login', { waitUntil: 'domcontentloaded' });
@@ -31,5 +43,5 @@ export async function loginAsSuperAdmin(page) {
     await page.locator('button[type="submit"]').click();
 
     await page.waitForURL(/\/admin$/, { waitUntil: 'domcontentloaded', timeout: 45000 });
-    await page.waitForSelector('#dashboard-canvas', { timeout: 45000 });
+    await page.waitForSelector('nav.fi-topbar', { timeout: 45000 });
 }
