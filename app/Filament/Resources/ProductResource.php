@@ -641,6 +641,51 @@ class ProductResource extends Resource
                                 ->send();
                         },
                     ),
+                    AdminUi::impactBulkAction(
+                        name: 'bulkGenerateSeoMeta',
+                        label: 'Bulk-generate SEO meta',
+                        color: 'gray',
+                        icon: 'heroicon-o-document-text',
+                        form: [
+                            Forms\Components\TextInput::make('title_template')
+                                ->label('Meta Title Template')
+                                ->maxLength(255)
+                                ->helperText('Placeholders: {oem}, {brand}, {manufacturer}, {name}, {min}, {max}, {site}. Leave blank to skip updating the title.'),
+                            Forms\Components\Textarea::make('description_template')
+                                ->label('Meta Description Template')
+                                ->rows(2)
+                                ->maxLength(500)
+                                ->helperText('Same placeholders as above. Leave blank to skip updating the description.'),
+                            Forms\Components\Toggle::make('overwrite_existing')
+                                ->label('Overwrite existing custom SEO meta')
+                                ->helperText('When off (default), a product that already has a manually-set title or description is skipped, not overwritten.')
+                                ->default(false),
+                        ],
+                        action: function ($records, array $data): void {
+                            $titleTemplate = trim((string) ($data['title_template'] ?? ''));
+                            $descriptionTemplate = trim((string) ($data['description_template'] ?? ''));
+
+                            if ($titleTemplate === '' && $descriptionTemplate === '') {
+                                Notification::make()->title('Enter at least a title or description template')->warning()->send();
+
+                                return;
+                            }
+
+                            \App\Jobs\BulkGenerateProductSeoMeta::dispatch(
+                                $records->pluck('id')->all(),
+                                $titleTemplate !== '' ? $titleTemplate : null,
+                                $descriptionTemplate !== '' ? $descriptionTemplate : null,
+                                (bool) ($data['overwrite_existing'] ?? false),
+                                auth('admin')->user()?->name ?? 'An admin'
+                            );
+
+                            Notification::make()
+                                ->title('SEO meta generation queued for '.$records->count().' product(s)')
+                                ->body("You'll get a notification here (the bell icon) once it finishes.")
+                                ->success()
+                                ->send();
+                        },
+                    ),
                     AdminUi::exportCsvBulkAction('Export Products', [
                         'oem_number' => 'OEM Number',
                         'manufacturer.name' => 'Manufacturer',
