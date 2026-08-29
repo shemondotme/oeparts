@@ -27,7 +27,8 @@ class SeoService
     private array $supportedLocales;
 
     public function __construct(
-        private SettingsService $settings
+        private SettingsService $settings,
+        private ProductSlugService $productSlugService,
     ) {
         $this->supportedLocales = LocaleRegistry::codes();
     }
@@ -304,7 +305,7 @@ class SeoService
                 continue;
             }
 
-            $url = $this->localizedUrl($locale);
+            $url = $this->localizedUrl($locale, $entity);
             if ($url) {
                 $tags[] = sprintf('<link rel="alternate" hreflang="%s" href="%s">', $locale, $url);
             }
@@ -320,11 +321,26 @@ class SeoService
     /**
      * Build a URL for the same route in a different locale.
      */
-    private function localizedUrl(string $locale): ?string
+    private function localizedUrl(string $locale, ?object $entity = null): ?string
     {
         $route = request()->route();
         $parameters = $route->parameters();
         $parameters['lang'] = $locale;
+
+        // The per-product detail route's idSlug is locale-dependent — its
+        // cosmetic slug text is derived from the product's name IN THE
+        // CURRENT locale (ProductSlugService::generate()). Reusing the
+        // current route's idSlug verbatim pointed the hreflang tag for
+        // every OTHER locale at a slug that still read in the current
+        // locale's language. Following it would 301 again
+        // (SearchController::detail()'s canonical-drift check) to the real
+        // per-locale slug — an hreflang link that redirects instead of
+        // resolving directly, a documented Google anti-pattern.
+        if ($route->getName() === 'frontend.search.detail' && $entity instanceof Product) {
+            $parameters['idSlug'] = $this->productSlugService->buildIdSlug($entity, $locale);
+
+            return URL::route($route->getName(), $parameters);
+        }
 
         // Special handling for OEM search route
         if ($route->getName() === 'frontend.search.results' && isset($parameters['oem'])) {

@@ -307,6 +307,24 @@ class ProductDetailPageTest extends TestCase
     }
 
     #[Test]
+    public function hreflang_for_another_locale_points_at_that_locales_own_slug_not_the_current_pages(): void
+    {
+        // The idSlug's cosmetic text is derived from the product's name IN
+        // THE CURRENT locale — reusing the current route's idSlug verbatim
+        // for every other locale's hreflang tag pointed "de" at a URL still
+        // carrying the ENGLISH slug text. Following it would 301 again
+        // (canonical-drift check below) to the real German-slugged URL —
+        // an hreflang link that redirects instead of resolving directly.
+        $this->enableDetailPages();
+        $product = $this->makeProduct(['name' => ['en' => 'Brake Pad Front', 'de' => 'Bremsbelag vorne']]);
+
+        $response = $this->get($this->detailUrl($product, 'en'));
+
+        $germanUrl = $this->detailUrl($product, 'de');
+        $response->assertSee('hreflang="de" href="'.url($germanUrl).'"', false);
+    }
+
+    #[Test]
     public function canonical_drift_redirects_to_the_current_correct_slug(): void
     {
         $this->enableDetailPages();
