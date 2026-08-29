@@ -585,6 +585,68 @@ class OemSearchTest extends TestCase
         $response->assertDontSee('rel="prev"', false);
         // Capped at search.results_limit (default 100) — the 101st+ rows
         // genuinely aren't rendered, but the page itself must not paginate
-        // to reach them; that cap is a separate, pre-existing concern.
+        // to reach them.
+        //
+        // The headline/hits total used to silently report the CAPPED count
+        // (100) instead of the true 105 matches — both the visible copy
+        // and the ItemList's numberOfItems inherited the wrong number, and
+        // nothing told a visitor or crawler that 5 more matches existed
+        // with no way to reach them.
+        $response->assertSeeText('105');
+        $response->assertSee(
+            'Showing the first 100 of 105 — narrow your search with a filter to see more.',
+            false
+        );
+        // Structured data must match what's actually listed (100 items),
+        // not the true-but-unlisted 105.
+        $response->assertSee('"numberOfItems":100', false);
+    }
+
+    #[Test]
+    public function partial_match_total_is_accurate_even_when_truncated(): void
+    {
+        // exactMatch()/crossReferenceMatch()/partialMatch() share the exact
+        // same total-counting logic — this exercises the LIKE-based
+        // partial-match path specifically, a different underlying query
+        // shape than the exact-match test above.
+        for ($i = 0; $i < 105; $i++) {
+            Product::create([
+                'manufacturer_id' => $this->manufacturer->id,
+                'oem_number' => 'ZZBIGPARTIAL'.$i.'FULL',
+                'normalized_oem' => 'ZZBIGPARTIAL'.$i.'FULL',
+                'condition_id' => $this->condition->id,
+                'price' => '50.00',
+                'is_in_stock' => true,
+                'is_active' => true,
+            ]);
+        }
+
+        $response = $this->get('/en/parts/BIGPARTIAL');
+
+        $response->assertStatus(200);
+        $response->assertSee('"numberOfItems":100', false);
+        $response->assertSee('Showing the first 100 of 105', false);
+    }
+
+    #[Test]
+    public function search_results_total_and_notice_are_accurate_when_not_truncated(): void
+    {
+        for ($i = 0; $i < 3; $i++) {
+            Product::create([
+                'manufacturer_id' => $this->manufacturer->id,
+                'oem_number' => 'SMALLSET01-' . $i,
+                'normalized_oem' => 'SMALLSET01',
+                'condition_id' => $this->condition->id,
+                'price' => '100.00',
+                'is_in_stock' => true,
+                'is_active' => true,
+            ]);
+        }
+
+        $response = $this->get('/en/parts/SMALLSET01');
+
+        $response->assertStatus(200);
+        $response->assertSee('"numberOfItems":3', false);
+        $response->assertDontSee('narrow your search', false);
     }
 }

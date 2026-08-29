@@ -39,6 +39,7 @@ return [
 
     'heading_results_for' => 'Ergebnisse für',
     'parts_found_sentence' => ':count :parts_word gefunden',
+    'truncated_notice' => 'Zeigt die ersten :shown von :total — grenzen Sie Ihre Suche mit einem Filter ein, um mehr zu sehen.',
     'part' => 'Teil',
     'parts' => 'Teile',
     'found' => 'gefunden',

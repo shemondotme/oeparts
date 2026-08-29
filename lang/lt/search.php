@@ -39,6 +39,7 @@ return [
 
     'heading_results_for' => 'Rezultatai pagal',
     'parts_found_sentence' => 'Rasta :count :parts_word',
+    'truncated_notice' => 'Rodomi pirmi :shown iš :total — susiaurinkite paiešką naudodami filtrą, kad pamatytumėte daugiau.',
     'part' => 'dalis',
     'parts' => 'dalys',
     'found' => 'rasta',

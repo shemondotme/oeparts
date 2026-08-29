@@ -380,9 +380,20 @@ class SearchService
             return ['products' => $paginator, 'total' => $paginator->total()];
         }
 
+        // 'total' used to be $collection->count() — the DISPLAYED count
+        // after the limit was already applied, not the true match count.
+        // A query matching more rows than $limit silently under-reported
+        // its own total (both in the "N parts found" copy and the
+        // ItemList's numberOfItems), with no way for a visitor or crawler
+        // to discover or reach the rest — no pagination exists by design,
+        // but the page still owes an honest count. Only pay for the extra
+        // COUNT query when the limit was actually hit (fewer rows than
+        // $limit already IS the true total, no ambiguity).
+        $countQuery = clone $query;
         $collection = $query->limit($limit)->get();
+        $total = $collection->count() < $limit ? $collection->count() : $countQuery->count();
 
-        return ['products' => $collection, 'total' => $collection->count()];
+        return ['products' => $collection, 'total' => $total];
     }
 
     /**
@@ -433,9 +444,20 @@ class SearchService
             return ['products' => $paginator, 'total' => $paginator->total()];
         }
 
+        // 'total' used to be $collection->count() — the DISPLAYED count
+        // after the limit was already applied, not the true match count.
+        // A query matching more rows than $limit silently under-reported
+        // its own total (both in the "N parts found" copy and the
+        // ItemList's numberOfItems), with no way for a visitor or crawler
+        // to discover or reach the rest — no pagination exists by design,
+        // but the page still owes an honest count. Only pay for the extra
+        // COUNT query when the limit was actually hit (fewer rows than
+        // $limit already IS the true total, no ambiguity).
+        $countQuery = clone $query;
         $collection = $query->limit($limit)->get();
+        $total = $collection->count() < $limit ? $collection->count() : $countQuery->count();
 
-        return ['products' => $collection, 'total' => $collection->count()];
+        return ['products' => $collection, 'total' => $total];
     }
 
     /**
@@ -478,9 +500,20 @@ class SearchService
             return ['products' => $paginator, 'total' => $paginator->total()];
         }
 
+        // 'total' used to be $collection->count() — the DISPLAYED count
+        // after the limit was already applied, not the true match count.
+        // A query matching more rows than $limit silently under-reported
+        // its own total (both in the "N parts found" copy and the
+        // ItemList's numberOfItems), with no way for a visitor or crawler
+        // to discover or reach the rest — no pagination exists by design,
+        // but the page still owes an honest count. Only pay for the extra
+        // COUNT query when the limit was actually hit (fewer rows than
+        // $limit already IS the true total, no ambiguity).
+        $countQuery = clone $query;
         $collection = $query->limit($limit)->get();
+        $total = $collection->count() < $limit ? $collection->count() : $countQuery->count();
 
-        return ['products' => $collection, 'total' => $collection->count()];
+        return ['products' => $collection, 'total' => $total];
     }
 
     /**

@@ -39,6 +39,7 @@ return [
 
     'heading_results_for' => 'Results for',
     'parts_found_sentence' => ':count :parts_word found',
+    'truncated_notice' => 'Showing the first :shown of :total — narrow your search with a filter to see more.',
     'part' => 'part',
     'parts' => 'parts',
     'found' => 'found',

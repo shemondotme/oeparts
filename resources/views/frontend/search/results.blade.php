@@ -125,7 +125,12 @@
     $jsonLdSchema = [
         '@@context' => 'https://schema.org',
         '@type' => 'ItemList',
-        'numberOfItems' => (int) ($total ?? count($jsonLdItems)),
+        // The actual number of itemListElement entries below, NOT $total
+        // (which can legitimately exceed this — a query matching more than
+        // results_limit still only ever lists the first 100). Structured
+        // data must reflect what's genuinely listed, not the full
+        // conceptual match count shown in the visible headline copy.
+        'numberOfItems' => count($jsonLdItems),
         'itemListElement' => $jsonLdItems,
     ];
 @endphp
@@ -213,6 +218,19 @@
                             'parts_word' => $total === 1 ? ui_copy('search_part', 'search.part') : ui_copy('search_parts', 'search.parts'),
                         ]) }}
                     </p>
+                    {{-- $total is the TRUE match count (fixed in SearchService — it used
+                         to silently report the capped/displayed count instead); no
+                         pagination exists by design, so a query matching more than the
+                         limit needs an honest "there's more, narrow your search" notice
+                         rather than presenting the first page as if it were everything. --}}
+                    @if($total > $products->count())
+                    <p class="mt-2 font-mono text-xs text-ink-muted">
+                        {{ ui_copy('search_truncated_notice', 'search.truncated_notice', [
+                            'shown' => number_format($products->count()),
+                            'total' => number_format($total),
+                        ]) }}
+                    </p>
+                    @endif
                 </div>
 
                 {{-- Spec Panel: match type + pagination + filters --}}
