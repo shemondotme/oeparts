@@ -38,6 +38,16 @@ class SitemapService
 
     private string $sitemapDirectory = 'sitemaps';
 
+    /**
+     * basename => the real max lastmod written into that file, tracked by
+     * closeWriter() and read back by generateIndex(). Every sub-sitemap's
+     * <loc> entries already carry real content dates (updated_at) — this
+     * just carries that same real signal up to the index's own <lastmod>
+     * per sub-sitemap, instead of hardcoding now() there regardless of
+     * whether that file's content actually changed since the last run.
+     */
+    private array $fileLastMods = [];
+
     public function __construct(
         private SettingsService $settings,
         private CloudflareService $cloudflare,
@@ -115,6 +125,7 @@ class SitemapService
         $batch = 1;
         $writer = null;
         $count = 0;
+        $maxLastmod = null;
 
         // Dedupe by normalized_oem: multiple Product rows can share the same
         // OEM (different sellers/conditions), but the storefront
@@ -130,29 +141,32 @@ class SitemapService
             ->groupBy('normalized_oem')
             ->orderByDesc('updated_at')
             ->cursor()
-            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count) {
+            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod) {
                 foreach ($this->supportedLocales as $locale) {
                     if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
                         if ($writer !== null) {
-                            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch);
+                            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch, $maxLastmod);
                             $batch++;
+                            $maxLastmod = null;
                         }
                         $writer = $this->openWriter();
                         $count = 0;
                     }
 
+                    $lastmod = $product->updated_at->toIso8601String();
                     $this->writeUrl($writer, [
                         'loc' => URL::route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]),
-                        'lastmod' => $product->updated_at->toIso8601String(),
+                        'lastmod' => $lastmod,
                         'changefreq' => 'weekly',
                         'priority' => '0.8',
                     ]);
                     $count++;
+                    $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
                 }
             });
 
         if ($writer !== null) {
-            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch);
+            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch, $maxLastmod);
         }
 
         return $written ?: [$this->emptyFile('sitemap-parts-1.xml')];
@@ -180,6 +194,7 @@ class SitemapService
         $batch = 1;
         $writer = null;
         $count = 0;
+        $maxLastmod = null;
         $detailPagesEnabled = filter_var($this->settings->get('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN);
 
         // A product can legitimately carry many distinct cross-OEM numbers
@@ -198,7 +213,7 @@ class SitemapService
             ->groupBy('product_cross_references.normalized_cross_oem')
             ->orderByDesc('updated_at')
             ->cursor()
-            ->each(function ($row) use (&$written, &$batch, &$writer, &$count, $detailPagesEnabled, &$emittedDetailUrls) {
+            ->each(function ($row) use (&$written, &$batch, &$writer, &$count, &$maxLastmod, $detailPagesEnabled, &$emittedDetailUrls) {
                 $crossOem = $row->normalized_cross_oem;
                 $lastmod = $row->updated_at ? \Illuminate\Support\Carbon::parse($row->updated_at)->toIso8601String() : now()->toIso8601String();
 
@@ -224,8 +239,9 @@ class SitemapService
 
                     if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
                         if ($writer !== null) {
-                            $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch);
+                            $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch, $maxLastmod);
                             $batch++;
+                            $maxLastmod = null;
                         }
                         $writer = $this->openWriter();
                         $count = 0;
@@ -246,11 +262,12 @@ class SitemapService
                         'priority' => '0.5',
                     ]);
                     $count++;
+                    $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
                 }
             });
 
         if ($writer !== null) {
-            $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch);
+            $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch, $maxLastmod);
         }
 
         return $written ?: [$this->emptyFile('sitemap-crossrefs-1.xml')];
@@ -262,30 +279,34 @@ class SitemapService
         $batch = 1;
         $count = 0;
         $written = [];
+        $maxLastmod = null;
 
         Manufacturer::where('is_active', true)
             ->orderBy('updated_at', 'desc')
             ->cursor()
-            ->each(function (Manufacturer $manufacturer) use (&$writer, &$batch, &$count, &$written) {
+            ->each(function (Manufacturer $manufacturer) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
-                        $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch);
+                        $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch, $maxLastmod);
                         $batch++;
+                        $maxLastmod = null;
                         $writer = $this->openWriter();
                         $count = 0;
                     }
 
+                    $lastmod = $manufacturer->updated_at->toIso8601String();
                     $this->writeUrl($writer, [
                         'loc' => URL::route('frontend.manufacturer.show', ['lang' => $locale, 'manufacturer' => $manufacturer->slug]),
-                        'lastmod' => $manufacturer->updated_at->toIso8601String(),
+                        'lastmod' => $lastmod,
                         'changefreq' => 'monthly',
                         'priority' => '0.6',
                     ]);
                     $count++;
+                    $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
                 }
             });
 
-        $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch);
+        $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch, $maxLastmod);
 
         return $written;
     }
@@ -296,6 +317,7 @@ class SitemapService
         $batch = 1;
         $count = 0;
         $written = [];
+        $maxLastmod = null;
 
         // CarModelController::show() 404s unless BOTH the manufacturer and
         // the car model are active — this used to only check the model,
@@ -308,34 +330,37 @@ class SitemapService
             ->with('manufacturer')
             ->orderBy('updated_at', 'desc')
             ->cursor()
-            ->each(function (CarModel $model) use (&$writer, &$batch, &$count, &$written) {
+            ->each(function (CarModel $model) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
                 if (! $model->manufacturer) {
                     return;
                 }
 
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
-                        $written[] = $this->closeWriter($writer, 'sitemap-models', $batch);
+                        $written[] = $this->closeWriter($writer, 'sitemap-models', $batch, $maxLastmod);
                         $batch++;
+                        $maxLastmod = null;
                         $writer = $this->openWriter();
                         $count = 0;
                     }
 
+                    $lastmod = $model->updated_at->toIso8601String();
                     $this->writeUrl($writer, [
                         'loc' => URL::route('frontend.car-model.show', [
                             'lang' => $locale,
                             'manufacturer' => $model->manufacturer->slug,
                             'model' => $model->slug,
                         ]),
-                        'lastmod' => $model->updated_at->toIso8601String(),
+                        'lastmod' => $lastmod,
                         'changefreq' => 'monthly',
                         'priority' => '0.5',
                     ]);
                     $count++;
+                    $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
                 }
             });
 
-        $written[] = $this->closeWriter($writer, 'sitemap-models', $batch);
+        $written[] = $this->closeWriter($writer, 'sitemap-models', $batch, $maxLastmod);
 
         return $written;
     }
@@ -346,16 +371,30 @@ class SitemapService
         $batch = 1;
         $count = 0;
         $written = [];
+        $maxLastmod = null;
 
-        // Homepages for each locale
+        // Homepages for each locale. lastmod used to be a hardcoded now()
+        // on every single regeneration regardless of whether the homepage
+        // actually changed — the exact "always-fresh" pattern Google's own
+        // guidance says it will start discounting, and the worst place for
+        // it since these are the highest-priority (1.0) URLs in the whole
+        // sitemap. Uses the most recently changed active product instead —
+        // a real signal for "content this page surfaces changed as of X",
+        // not a fabricated one.
+        $latestProductChange = Product::where('is_active', true)->max('updated_at');
+        $homepageLastmod = $latestProductChange
+            ? \Illuminate\Support\Carbon::parse($latestProductChange)->toIso8601String()
+            : now()->toIso8601String();
+
         foreach ($this->supportedLocales as $locale) {
             $this->writeUrl($writer, [
                 'loc' => URL::to("/{$locale}/"),
-                'lastmod' => now()->toIso8601String(),
+                'lastmod' => $homepageLastmod,
                 'changefreq' => 'daily',
                 'priority' => '1.0',
             ]);
             $count++;
+            $maxLastmod = $this->laterLastmod($maxLastmod, $homepageLastmod);
         }
 
         // is_homepage pages are excluded — they're already covered by the
@@ -368,26 +407,29 @@ class SitemapService
             ->where('is_homepage', false)
             ->orderBy('updated_at', 'desc')
             ->cursor()
-            ->each(function (Page $page) use (&$writer, &$batch, &$count, &$written) {
+            ->each(function (Page $page) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
-                        $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch);
+                        $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch, $maxLastmod);
                         $batch++;
+                        $maxLastmod = null;
                         $writer = $this->openWriter();
                         $count = 0;
                     }
 
+                    $lastmod = $page->updated_at->toIso8601String();
                     $this->writeUrl($writer, [
                         'loc' => URL::to("/{$locale}/{$page->slug}"),
-                        'lastmod' => $page->updated_at->toIso8601String(),
+                        'lastmod' => $lastmod,
                         'changefreq' => 'monthly',
                         'priority' => '0.4',
                     ]);
                     $count++;
+                    $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
                 }
             });
 
-        $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch);
+        $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch, $maxLastmod);
 
         return $written;
     }
@@ -398,31 +440,39 @@ class SitemapService
         $batch = 1;
         $count = 0;
         $written = [];
+        $maxLastmod = null;
 
         BlogPost::where('status', ContentStatus::Published->value)
             ->where('published_at', '<=', now())
             ->orderByDesc('published_at')
             ->cursor()
-            ->each(function (BlogPost $post) use (&$writer, &$batch, &$count, &$written) {
+            ->each(function (BlogPost $post) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
-                        $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch);
+                        $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch, $maxLastmod);
                         $batch++;
+                        $maxLastmod = null;
                         $writer = $this->openWriter();
                         $count = 0;
                     }
 
+                    // Sorted by published_at, not updated_at — an earlier
+                    // post edited more recently than a later one is common
+                    // enough that the first row processed isn't reliably
+                    // this file's max lastmod; tracked explicitly instead.
+                    $lastmod = $post->updated_at->toIso8601String();
                     $this->writeUrl($writer, [
                         'loc' => URL::to("/{$locale}/blog/{$post->slug}"),
-                        'lastmod' => $post->updated_at->toIso8601String(),
+                        'lastmod' => $lastmod,
                         'changefreq' => 'weekly',
                         'priority' => '0.7',
                     ]);
                     $count++;
+                    $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
                 }
             });
 
-        $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch);
+        $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch, $maxLastmod);
 
         return $written;
     }
@@ -459,8 +509,11 @@ class SitemapService
 
     /**
      * Finalise a sitemap XMLWriter, flush to disk and return the filename.
+     * $maxLastmod (the real max lastmod among this file's own entries) is
+     * recorded so generateIndex() can use it instead of now() — null only
+     * for a genuinely empty file, where there's no real content to date.
      */
-    private function closeWriter(XMLWriter $writer, string $base, int $batch): string
+    private function closeWriter(XMLWriter $writer, string $base, int $batch, ?string $maxLastmod = null): string
     {
         $writer->endElement(); // </urlset>
         $writer->endDocument();
@@ -473,7 +526,22 @@ class SitemapService
             throw new \RuntimeException("Failed to write sitemap file: {$path}");
         }
 
+        $this->fileLastMods[$filename] = $maxLastmod ?? now()->toIso8601String();
+
         return $filename;
+    }
+
+    /**
+     * Later of two ISO 8601 lastmod strings, treating a null accumulator as
+     * "no entries seen yet."
+     */
+    private function laterLastmod(?string $a, string $b): string
+    {
+        if ($a === null) {
+            return $b;
+        }
+
+        return \Illuminate\Support\Carbon::parse($a)->greaterThan(\Illuminate\Support\Carbon::parse($b)) ? $a : $b;
     }
 
     /**
@@ -504,7 +572,11 @@ class SitemapService
         foreach ($sitemapFiles as $file) {
             $writer->startElement('sitemap');
             $writer->writeElement('loc', URL::asset("{$this->sitemapDirectory}/{$file}"));
-            $writer->writeElement('lastmod', now()->toIso8601String());
+            // The real max lastmod among that file's own entries — tracked
+            // by closeWriter() — not a blanket now() that claimed every
+            // sub-sitemap "just changed" on every single regeneration
+            // regardless of whether its content actually did.
+            $writer->writeElement('lastmod', $this->fileLastMods[$file] ?? now()->toIso8601String());
             $writer->endElement();
         }
 
