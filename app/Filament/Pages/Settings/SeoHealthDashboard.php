@@ -28,9 +28,10 @@ use Illuminate\Support\Facades\DB;
  * SeoControlCenter's settings-form lifecycle — Filament's own idiomatic
  * building block for live/polling stats is a plain widget-composed Page,
  * not a form page. Reached only via the Control Center's header action
- * (never in the sidebar nav, and not part of SettingsRegistry — it holds
- * no settings of its own, so SettingsRegistryTest's one-entry-per-page
- * rule does not apply to it).
+ * (never in the sidebar nav). It does have a PAGES['seo-health-dashboard']
+ * entry in SettingsRegistry (type=>'tool'), but holds no settings of its
+ * own, so SettingsRegistryTest's one-entry-per-page rule does not apply
+ * to it.
  *
  * Originally 7 separate StatsOverviewWidget classes (one @livewire include
  * each) — consolidated into one page with its own Blade view (the same
