@@ -352,6 +352,23 @@ class ProductDetailPageTest extends TestCase
     }
 
     #[Test]
+    public function detail_page_emits_faqpage_json_ld_matching_the_always_visible_faq_block(): void
+    {
+        // The fitment/condition/delivery Q&A block (#faq) renders
+        // unconditionally on every product page — the same pattern already
+        // used for page-builder FAQ sections just wasn't ported here, so
+        // every product page forfeited FAQ rich-result eligibility.
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+
+        $response = $this->get($this->detailUrl($product));
+
+        $response->assertSee('"@type":"FAQPage"', false);
+        $response->assertSee('"name":"Will this fit my exact vehicle?"', false);
+        $response->assertSee('"@type":"Answer"', false);
+    }
+
+    #[Test]
     public function canonical_drift_redirects_to_the_current_correct_slug(): void
     {
         $this->enableDetailPages();

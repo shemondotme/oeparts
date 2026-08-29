@@ -69,6 +69,34 @@
     'itemListElement' => $breadcrumbListItems,
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
+{{-- FAQPage — mirrors the always-visible fitment/condition/delivery Q&A
+     block further down this same page (#faq). Same pattern already used
+     for page-builder FAQ sections (components/sections/faqs.blade.php),
+     just never ported onto the product detail page, so every product
+     page forfeited FAQ rich-result eligibility for no reason. --}}
+<script type="application/ld+json">
+{!! json_encode([
+    '@@context' => 'https://schema.org',
+    '@type' => 'FAQPage',
+    'mainEntity' => [
+        [
+            '@type' => 'Question',
+            'name' => __('search.faq_q_fit'),
+            'acceptedAnswer' => ['@type' => 'Answer', 'text' => __('search.faq_a_fit')],
+        ],
+        [
+            '@type' => 'Question',
+            'name' => __('search.faq_q_condition'),
+            'acceptedAnswer' => ['@type' => 'Answer', 'text' => __('search.faq_a_condition')],
+        ],
+        [
+            '@type' => 'Question',
+            'name' => __('search.faq_q_delivery'),
+            'acceptedAnswer' => ['@type' => 'Answer', 'text' => __('search.faq_a_delivery')],
+        ],
+    ],
+], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
 @endsection
 
 @section('og_type', 'product')
