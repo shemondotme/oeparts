@@ -180,12 +180,39 @@ class ProductDetailPageTest extends TestCase
     }
 
     #[Test]
-    public function soft_deleted_product_redirects_to_hub(): void
+    public function soft_deleted_product_redirects_to_the_manufacturer_page_via_its_own_fallback_redirect(): void
     {
+        // ProductObserver::createFallbackRedirects() now proactively creates
+        // a stored Redirect the moment a product is deleted, and
+        // HandleRedirects intercepts the request before it ever reaches
+        // this controller's own redirectToHub() fallback below. This is a
+        // deliberate improvement over redirecting to the OEM hub page,
+        // which can itself 404 when the deleted product was the last
+        // active one for that OEM — exactly the case here (this test's
+        // product is the only one with this OEM).
         $this->enableDetailPages();
         $product = $this->makeProduct();
         $url = $this->detailUrl($product);
         $product->delete();
+
+        $response = $this->get($url);
+
+        $response->assertStatus(301);
+        $response->assertRedirect(route('frontend.manufacturer.show', ['lang' => 'en', 'manufacturer' => $this->manufacturer->slug]));
+    }
+
+    #[Test]
+    public function a_hard_deleted_product_with_no_stored_fallback_redirect_still_falls_back_to_the_hub_via_the_controller(): void
+    {
+        // Defense in depth: if the observer's redirect creation never ran
+        // (e.g. bypassed a save entirely) or was itself deleted, the
+        // controller's own is_active/trashed check still 301s to the hub
+        // rather than ever rendering a gone product.
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+        $url = $this->detailUrl($product);
+        $product->delete();
+        \App\Models\Redirect::where('from_url', 'like', '%'.$product->normalized_oem.'%')->delete();
 
         $response = $this->get($url);
 
