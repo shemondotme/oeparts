@@ -139,4 +139,27 @@ class RedirectResourceTest extends TestCase
         $this->assertSame(1, Redirect::where('from_url', 'dead-link')->count());
         $this->assertFalse($log->fresh()->resolved);
     }
+
+    #[Test]
+    public function creating_a_redirect_from_a_404_log_that_would_form_a_loop_is_rejected(): void
+    {
+        // RedirectResource's own form validates self-redirects and chain
+        // loops, but this 404-log quick action is a second, separate write
+        // path to the same table — it used to skip that validation
+        // entirely. An existing "x -> y" redirect plus resolving a 404
+        // logged for "y" with to_url "x" wires up a live two-hop loop with
+        // no warning.
+        Redirect::create(['from_url' => 'page-x', 'to_url' => 'page-y', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        $log = NotFoundLog::create([
+            'path' => 'page-y', 'path_hash' => hash('sha256', 'page-y'),
+            'lang' => 'en', 'hit_count' => 1, 'resolved' => false,
+            'first_seen_at' => now(), 'last_seen_at' => now(),
+        ]);
+
+        Livewire::test(ListNotFoundLogs::class)
+            ->callTableAction('createRedirect', $log, data: ['to_url' => 'page-x', 'type' => RedirectType::Permanent->value]);
+
+        $this->assertSame(0, Redirect::where('from_url', 'page-y')->count());
+        $this->assertFalse($log->fresh()->resolved);
+    }
 }

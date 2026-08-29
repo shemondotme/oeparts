@@ -7,6 +7,7 @@ use App\Filament\Resources\NotFoundLogResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\NotFoundLog;
 use App\Models\Redirect;
+use App\Services\RedirectLoopDetector;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -210,16 +211,62 @@ class NotFoundLogResource extends Resource
             ])
             ->fillForm(fn (NotFoundLog $record): array => ['from_url' => $record->path])
             ->action(function (NotFoundLog $record, array $data): void {
+                $from = strtolower(trim($record->path, '/'));
+                $to = strtolower(trim((string) $data['to_url'], '/'));
+
                 // Redirect::from_url is unique — an admin could already have
                 // created a manual redirect for this exact path (e.g. from
                 // a different 404 log entry for the same URL), which used to
                 // crash this action with a raw duplicate-key QueryException
                 // instead of the friendly message below.
-                if (Redirect::where('from_url', strtolower(trim($record->path, '/')))->exists()) {
+                if (Redirect::where('from_url', $from)->exists()) {
                     Notification::make()
                         ->title('A redirect for this path already exists')
                         ->body('Edit the existing redirect on the Redirects page instead.')
                         ->warning()
+                        ->send();
+
+                    return;
+                }
+
+                // RedirectResource's own form validates exactly this
+                // (self-redirect, reverse-pair, and full-chain loops via
+                // RedirectLoopDetector) — this quick action skipped all of
+                // it, so resolving a 404 here could silently wire up a live
+                // redirect loop with an existing redirect nobody's editing.
+                if ($from !== '' && $from === $to) {
+                    Notification::make()
+                        ->title('Cannot redirect a path to itself')
+                        ->body('The destination is the same as the source — this would loop forever.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                $reverseExists = Redirect::query()
+                    ->where('is_active', true)
+                    ->where('from_url', $to)
+                    ->where('to_url', $from)
+                    ->exists();
+
+                if ($reverseExists) {
+                    Notification::make()
+                        ->title('This would create a redirect loop')
+                        ->body('An active redirect already sends this destination back to the source.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                $loopNode = app(RedirectLoopDetector::class)->findLoop($from, $to);
+
+                if ($loopNode !== null) {
+                    Notification::make()
+                        ->title('This would create a redirect loop')
+                        ->body("The chain eventually comes back to \"{$loopNode}\".")
+                        ->danger()
                         ->send();
 
                     return;

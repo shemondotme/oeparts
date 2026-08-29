@@ -6,6 +6,7 @@ use App\Models\Redirect as RedirectModel;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 class HandleRedirects
@@ -13,6 +14,17 @@ class HandleRedirects
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->is('admin/*') || $request->is('api/*')) {
+            return $next($request);
+        }
+
+        // Unlike EnforceCanonicalHost (which explicitly gates its own
+        // slash-strip to GET/HEAD), this ran for every method. It's wired
+        // onto the entire {lang} route group, including POST routes like
+        // login/checkout/contact-submit — an admin-created redirect whose
+        // from_url happens to collide with one of those paths would
+        // silently 301/302 a real form submission instead of letting it
+        // process.
+        if (! $request->isMethod('GET') && ! $request->isMethod('HEAD')) {
             return $next($request);
         }
 
@@ -36,8 +48,13 @@ class HandleRedirects
         if ($cached) {
             try {
                 $cached->increment('hit_count');
-            } catch (\Exception) {
-                // Continue even if increment fails
+            } catch (\Exception $e) {
+                // Must never block the redirect itself — but a swallowed
+                // failure here previously left no trace at all.
+                Log::warning('Redirect hit_count increment failed', [
+                    'redirect_id' => $cached->id,
+                    'error' => $e->getMessage(),
+                ]);
             }
 
             // ->type is cast to the RedirectType enum, not a scalar —

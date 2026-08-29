@@ -78,4 +78,70 @@ class RedirectMiddlewareTest extends TestCase
         $this->assertTrue(Cache::has('redirect.en/no-such-path'));
         $this->assertFalse(Cache::get('redirect.en/no-such-path'));
     }
+
+    #[Test]
+    public function editing_a_redirects_destination_takes_effect_immediately_not_after_the_cache_ttl(): void
+    {
+        $redirect = Redirect::create([
+            'from_url' => 'en/old-page', 'to_url' => '/en/first-target',
+            'type' => RedirectType::Permanent, 'is_active' => true, 'hit_count' => 0,
+        ]);
+
+        $this->get('/en/old-page')->assertRedirect('/en/first-target');
+
+        $redirect->update(['to_url' => '/en/second-target']);
+
+        $this->get('/en/old-page')->assertRedirect('/en/second-target');
+    }
+
+    #[Test]
+    public function a_path_cached_as_a_miss_starts_redirecting_immediately_once_a_redirect_is_created_for_it(): void
+    {
+        $this->get('/en/brand-new-path')->assertStatus(404);
+
+        Redirect::create([
+            'from_url' => 'en/brand-new-path', 'to_url' => '/en/target',
+            'type' => RedirectType::Permanent, 'is_active' => true, 'hit_count' => 0,
+        ]);
+
+        $this->get('/en/brand-new-path')->assertRedirect('/en/target');
+    }
+
+    #[Test]
+    public function deleting_a_redirect_stops_it_from_firing_immediately(): void
+    {
+        $redirect = Redirect::create([
+            'from_url' => 'en/old-page', 'to_url' => '/en/new-page',
+            'type' => RedirectType::Permanent, 'is_active' => true, 'hit_count' => 0,
+        ]);
+
+        $this->get('/en/old-page')->assertRedirect('/en/new-page');
+
+        $redirect->delete();
+
+        $this->get('/en/old-page')->assertStatus(404);
+    }
+
+    #[Test]
+    public function a_redirect_matching_a_post_route_path_does_not_hijack_the_post_request(): void
+    {
+        // Wired onto the whole {lang} group, this middleware used to run for
+        // every HTTP method — an admin-created redirect colliding with a
+        // real POST route's path would silently 301 the submission instead
+        // of letting the actual controller handle it. Exercised directly
+        // against the middleware (bypassing the HTTP kernel/CSRF) to
+        // isolate the method gate itself.
+        Redirect::create([
+            'from_url' => 'en/contact', 'to_url' => '/en/somewhere-else',
+            'type' => RedirectType::Permanent, 'is_active' => true, 'hit_count' => 0,
+        ]);
+
+        $request = \Illuminate\Http\Request::create('/en/contact', 'POST');
+        $middleware = app(\App\Http\Middleware\HandleRedirects::class);
+
+        $response = $middleware->handle($request, fn ($req) => new \Illuminate\Http\Response('handled', 200));
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('handled', $response->getContent());
+    }
 }
