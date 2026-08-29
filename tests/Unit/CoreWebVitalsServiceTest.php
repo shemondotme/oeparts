@@ -86,6 +86,44 @@ class CoreWebVitalsServiceTest extends TestCase
     }
 
     #[Test]
+    public function a_connection_failure_message_has_the_api_key_redacted(): void
+    {
+        $this->configure();
+
+        // A genuine connection-level failure (timeout/DNS/TLS) gets wrapped
+        // with the FULL request URI — including the ?key= query param —
+        // baked into the exception message by Guzzle/Laravel, unlike an
+        // HTTP error response. Without redaction this leaks the raw API
+        // key in plaintext onto the Health Dashboard.
+        Http::fake(function () {
+            throw new \Illuminate\Http\Client\ConnectionException(
+                'cURL error 28: Connection timed out for URL https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=crux-key-123'
+            );
+        });
+
+        $metrics = app(CoreWebVitalsService::class)->getMetrics();
+
+        $this->assertArrayHasKey('error', $metrics);
+        $this->assertStringNotContainsString('crux-key-123', $metrics['error']);
+        $this->assertStringContainsString('[REDACTED]', $metrics['error']);
+    }
+
+    #[Test]
+    public function a_canonical_host_setting_that_accidentally_includes_a_scheme_still_produces_a_valid_origin(): void
+    {
+        $this->configure();
+        app(SettingsService::class)->set('seo.canonical_host', 'https://oeparts.example');
+
+        Http::fake([
+            'chromeuxreport.googleapis.com/*' => Http::response(['record' => ['metrics' => []]], 200),
+        ]);
+
+        app(CoreWebVitalsService::class)->getMetrics();
+
+        Http::assertSent(fn ($request) => $request['origin'] === 'https://oeparts.example');
+    }
+
+    #[Test]
     public function lcp_rating_reflects_the_2026_tightened_2_second_good_threshold(): void
     {
         $service = app(CoreWebVitalsService::class);

@@ -68,8 +68,22 @@ class CoreWebVitalsService
                 'inp_ms' => $inp === null ? null : (int) $inp,
             ];
         } catch (\Throwable $e) {
-            return ['error' => $e->getMessage()];
+            return ['error' => $this->redactApiKey($e->getMessage(), $key ?? '')];
         }
+    }
+
+    /**
+     * The CrUX request embeds the API key in its query string (Google's
+     * documented auth method for this API). A connection-level failure
+     * (timeout/DNS/TLS) gets wrapped by Guzzle/Laravel with the FULL
+     * request URI baked into the exception message — unlike an HTTP error
+     * response, nothing redacts that. Without this, a one-off network
+     * hiccup would render the raw API key in plaintext on the Health
+     * Dashboard to any admin-role user.
+     */
+    private function redactApiKey(string $message, string $key): string
+    {
+        return $key !== '' ? str_replace($key, '[REDACTED]', $message) : $message;
     }
 
     /**
@@ -145,6 +159,15 @@ class CoreWebVitalsService
     private function resolveOrigin(): string
     {
         $host = trim((string) settings('seo.canonical_host', ''));
+
+        // canonical_host is documented/placeholder-guided as a bare domain
+        // (EnforceCanonicalHost relies on the same assumption) — but
+        // nothing enforces that at save time. An admin who pastes a full
+        // URL here would otherwise get a malformed double-scheme origin
+        // like "https://https://example.com", silently breaking every CrUX
+        // call with a confusing error that looks like a CWV problem rather
+        // than a settings one.
+        $host = preg_replace('#^https?://#i', '', $host);
 
         return $host !== '' ? "https://{$host}" : rtrim(url('/'), '/');
     }
