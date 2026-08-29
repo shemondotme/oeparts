@@ -39,6 +39,14 @@
     // in Advanced SEO (which itself falls back to the site-wide default).
     $ogImage = $post->featuredImage?->file_url ?: null;
     $ogImageOverrideTag = $seoOverride['og_image_id'] ? $seoService->ogImageTag($seoOverride['og_image_id']) : null;
+
+    // Same resolution the site-wide default already uses (layouts/app.blade.php,
+    // home.blade.php) — the JSON-LD publisher.logo below was hardcoded to a
+    // literal "/logo.svg" that was never guaranteed to actually exist.
+    $blogLogoPath = settings('general.logo_id', '');
+    $blogLogoUrl = $blogLogoPath
+        ? \Illuminate\Support\Facades\Storage::disk('public')->url($blogLogoPath)
+        : url('/favicon.svg');
 @endphp
 @if($ogImageOverrideTag)
 @section('og_image'){!! $ogImageOverrideTag !!}@endsection
@@ -69,7 +77,16 @@
     '@type'         => 'BlogPosting',
     'headline'      => $metaTitle,
     'description'   => $metaDescr,
-    'image'         => $ogImage ?: null,
+    // Sized ImageObject, not a flat URL — same 1200x630 this same file
+    // already assumes for the og:image:width/height meta tags above, so
+    // this isn't a new assumption, just reused for Google's Article
+    // rich-result image requirements.
+    'image'         => $ogImage ? [
+        '@type' => 'ImageObject',
+        'url' => $ogImage,
+        'width' => 1200,
+        'height' => 630,
+    ] : null,
     'author'        => [
         '@type' => 'Person',
         'name'  => $post->author->name ?? trans('blog.anonymous'),
@@ -79,7 +96,7 @@
         'name'  => $siteName,
         'logo'  => [
             '@type' => 'ImageObject',
-            'url'   => settings('general.site_url', url('/')) . '/logo.svg',
+            'url'   => $blogLogoUrl,
         ],
     ],
     'datePublished' => $publishedAt->toIso8601String(),
@@ -88,6 +105,8 @@
         '@type' => 'WebPage',
         '@id'   => $postUrl,
     ],
+    'articleSection' => $post->category ? trans_field($post->category->name) : null,
+    'keywords'      => $post->tags->isNotEmpty() ? $post->tags->map(fn ($tag) => trans_field($tag->name))->implode(', ') : null,
     'inLanguage'    => $lang,
     'wordCount'     => $wordCount,
 ]), JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
