@@ -44,6 +44,14 @@ class SiteCopyLibrary extends Page implements HasTable
 
     protected static ?string $slug = 'settings/site-copy-library';
 
+    // Only reachable via the Settings hub (Brand & Storefront →
+    // Customization) — every real SettingsPage already hides itself the
+    // same way (SettingsPage::$shouldRegisterNavigation = false); this
+    // page just never matched that convention despite living in the same
+    // family, so it showed up twice: once correctly in the hub grid, once
+    // more as an ungrouped, floating top-level sidebar item.
+    protected static bool $shouldRegisterNavigation = false;
+
     protected static ?string $title = 'Site Copy Library';
 
     protected string $view = 'filament.pages.settings.site-copy-library';
@@ -77,7 +85,29 @@ class SiteCopyLibrary extends Page implements HasTable
                     })
             )
             ->defaultSort('key')
-            ->searchable(false)
+            ->groups([
+                // No SQL GROUP BY here — Filament's table grouping only
+                // collapses *adjacent* rows sharing a computed key into a
+                // visual section, it never aggregates rows away (confirmed
+                // against the one other ->groups() precedent in this
+                // codebase, FailedJobsPage). ->column('key') exists purely
+                // so orderQuery() has a real column to ORDER BY — sorting
+                // by the raw key alphabetically already clusters same-
+                // prefix rows adjacently on its own (no two of the six
+                // prefixes share a common first character), which is what
+                // actually keeps each category's rows together; the group
+                // key/title themselves come from the closures below, not
+                // from that column's raw value.
+                Tables\Grouping\Group::make('category')
+                    ->label('Category')
+                    ->collapsible()
+                    ->titlePrefixedWithLabel(false)
+                    ->column('key')
+                    ->getKeyFromRecordUsing(fn (Setting $record): string => self::categoryFor($record->key))
+                    ->getTitleFromRecordUsing(fn (Setting $record): string => self::categoryFor($record->key)),
+            ])
+            ->defaultGroup('category')
+            ->groupingSettingsHidden()
             ->columns([
                 Tables\Columns\TextColumn::make('key')
                     ->label('Key')
@@ -85,25 +115,19 @@ class SiteCopyLibrary extends Page implements HasTable
                     ->sortable()
                     ->fontFamily('mono'),
 
-                Tables\Columns\TextColumn::make('category')
-                    ->label('Category')
-                    ->state(fn (Setting $record): string => self::categoryFor($record->key))
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Cart' => 'info',
-                        'Search' => 'warning',
-                        'Navbar' => 'success',
-                        'Checkout' => 'danger',
-                        'Account' => 'primary',
-                        'Footer' => 'gray',
-                        default => 'gray',
-                    }),
-
                 Tables\Columns\TextColumn::make('english_preview')
                     ->label('English Value')
                     ->state(fn (Setting $record): string => self::englishPreview($record->value))
                     ->limit(60)
-                    ->wrap(),
+                    ->wrap()
+                    // 'value' is a raw 5-locale JSON blob, not a plain
+                    // column — LIKE against the raw text still matches
+                    // correctly since the searched string is a literal
+                    // substring of the JSON either way, and it happens to
+                    // also match non-English locales, which is a bonus not
+                    // a problem for finding a row by its visible content.
+                    ->searchable(query: fn (Builder $query, string $search): Builder => $query
+                        ->orWhere('value', 'like', "%{$search}%")),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('prefix')
