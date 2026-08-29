@@ -212,6 +212,27 @@ class OemSearchTest extends TestCase
     }
 
     #[Test]
+    public function hub_page_visible_breadcrumb_shows_the_active_manufacturer_filter_matching_the_json_ld(): void
+    {
+        // buildResultsViewData() adds the manufacturer to $breadcrumbs for
+        // the JSON-LD BreadcrumbList when this filter is active, but the
+        // visible nav used to hardcode "Home / Catalogue / Search Results"
+        // regardless — the structured data claimed a hierarchy level the
+        // visible page never showed any trace of.
+        Product::create([
+            'manufacturer_id' => $this->manufacturer->id,
+            'oem_number' => '06L906036L', 'normalized_oem' => '06L906036L',
+            'condition_id' => $this->condition->id, 'price' => '100.00',
+            'is_in_stock' => true, 'is_active' => true,
+        ]);
+
+        $response = $this->get('/en/parts/06L906036L?manufacturer=' . $this->manufacturer->id);
+
+        $response->assertSee('aria-label="Breadcrumbs"', false);
+        $response->assertSeeInOrder(['Catalogue', 'Test Manufacturer', 'Results']);
+    }
+
+    #[Test]
     public function hub_page_hreflang_omits_locales_without_a_genuine_translation(): void
     {
         // Was: unconditionally emitting all 5 locales regardless of the

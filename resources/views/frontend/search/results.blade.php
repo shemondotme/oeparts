@@ -159,10 +159,20 @@
 
             {{-- ── Document header ─────────────────────────────────────── --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-rule">
+                {{-- Mirrors the JSON-LD BreadcrumbList below: when a
+                     manufacturer/car-model filter is active, buildResultsViewData()
+                     adds it to $breadcrumbs for structured data — this used to be
+                     invisible here, so the page's structured data claimed a
+                     hierarchy level (e.g. "Home > Bosch") the visible nav never
+                     showed a trace of. --}}
                 <nav class="flex items-center gap-2 bp-spec-mono" aria-label="Breadcrumbs">
                     <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('search_breadcrumb_home', 'search.breadcrumb_home') }}</a>
                     <span class="text-rule-strong">/</span>
                     <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('search_catalogue_label', 'search.catalogue_label') }}</a>
+                    @foreach($breadcrumbs as $crumb)
+                        <span class="text-rule-strong">/</span>
+                        <a href="{{ $crumb['url'] }}" class="hover:text-amber-ink transition-colors">{{ $crumb['label'] }}</a>
+                    @endforeach
                     <span class="text-rule-strong">/</span>
                     <span class="text-ink">{{ ui_copy('search_breadcrumb_results', 'search.breadcrumb_results') }}</span>
                 </nav>
