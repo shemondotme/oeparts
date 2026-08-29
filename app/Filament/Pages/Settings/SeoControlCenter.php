@@ -104,7 +104,63 @@ class SeoControlCenter extends SettingsPage
             return 'Sitemap has not been generated yet.';
         }
 
-        return 'Sitemap last generated '.\Illuminate\Support\Carbon::createFromTimestamp(filemtime($path))->diffForHumans().'.';
+        $total = array_sum($this->sitemapUrlCounts());
+
+        return 'Sitemap last generated '.\Illuminate\Support\Carbon::createFromTimestamp(filemtime($path))->diffForHumans()
+            ." — {$total} URLs across ".count($this->sitemapUrlCounts()).' files.';
+    }
+
+    /**
+     * A silently truncated or empty regeneration was previously
+     * unnoticeable without opening the raw XML — an admin had only a
+     * last-generated timestamp to go on. base name => <loc> count, one
+     * entry per sub-sitemap that actually exists on disk (batched files
+     * like sitemap-parts-2.xml are summed into their base's count).
+     *
+     * @return array<string, int>
+     */
+    private function sitemapUrlCounts(): array
+    {
+        $bases = ['sitemap-parts', 'sitemap-crossrefs', 'sitemap-brands', 'sitemap-models', 'sitemap-pages', 'sitemap-blog'];
+        $counts = [];
+
+        foreach ($bases as $base) {
+            $files = glob(public_path("sitemaps/{$base}*.xml")) ?: [];
+            $count = 0;
+            foreach ($files as $file) {
+                $contents = @file_get_contents($file);
+                $count += $contents ? substr_count($contents, '<loc>') : 0;
+            }
+            if ($files !== []) {
+                $counts[$base] = $count;
+            }
+        }
+
+        return $counts;
+    }
+
+    private function sitemapUrlCountsHtml(): string
+    {
+        $counts = $this->sitemapUrlCounts();
+
+        if ($counts === []) {
+            return '<p class="text-sm text-gray-500">No sitemap files found yet — regenerate above.</p>';
+        }
+
+        $labels = [
+            'sitemap-parts' => 'Parts', 'sitemap-crossrefs' => 'Cross-references', 'sitemap-brands' => 'Brands',
+            'sitemap-models' => 'Car models', 'sitemap-pages' => 'Pages', 'sitemap-blog' => 'Blog posts',
+        ];
+
+        $items = [];
+        foreach ($counts as $base => $count) {
+            $items[] = '<span class="text-gray-600 dark:text-gray-400">'.e($labels[$base] ?? $base).': <strong>'.number_format($count).'</strong></span>';
+        }
+
+        $sitemapUrl = e(url('sitemap.xml'));
+
+        return '<div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">'.implode('', $items)
+            .' &middot; <a href="'.$sitemapUrl.'" target="_blank" rel="noopener" class="fi-link text-primary-600">View sitemap.xml &#8599;</a></div>';
     }
 
     public function form(Schema $schema): Schema
@@ -398,6 +454,11 @@ class SeoControlCenter extends SettingsPage
 
                         Actions::make([$this->regenerateSitemapAction()])
                             ->columnSpanFull(),
+
+                        Forms\Components\Placeholder::make('sitemap_url_counts')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(fn () => new HtmlString($this->sitemapUrlCountsHtml())),
                     ])->columns(2),
 
                 Section::make('Canonical Host')
