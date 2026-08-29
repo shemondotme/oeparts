@@ -350,6 +350,25 @@ class SeoHealthDashboardTest extends TestCase
     }
 
     #[Test]
+    public function redirect_health_does_not_flag_a_target_using_the_real_oems_human_formatted_dashed_style(): void
+    {
+        // The live route (NormalizeOemUrl/OemNormalizerService) strips ALL
+        // non-alphanumerics before matching normalized_oem — a redirect
+        // target in the human-formatted style visitors and admins actually
+        // type (e.g. resolving a 404 via NotFoundLogResource) works fine
+        // for real traffic but a bare strtoupper(trim()) comparison here
+        // never matched, permanently miscounting it as broken.
+        $product = Product::factory()->create(['oem_number' => '06L-906-036-L', 'normalized_oem' => '06L906036L']);
+        Redirect::create(['from_url' => '/en/parts/old-alias', 'to_url' => '/en/parts/06L-906-036-L', 'type' => '301', 'is_active' => true]);
+
+        $this->actingAs($this->superAdmin(), 'admin');
+
+        Livewire::test(SeoHealthDashboard::class)
+            ->assertSee('Broken Redirect Targets')
+            ->assertSee('None', false);
+    }
+
+    #[Test]
     public function not_found_trend_is_hidden_with_fewer_than_two_snapshots(): void
     {
         $this->actingAs($this->superAdmin(), 'admin');

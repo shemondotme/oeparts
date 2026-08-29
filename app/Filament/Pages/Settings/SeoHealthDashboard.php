@@ -352,8 +352,9 @@ class SeoHealthDashboard extends Page
     {
         $pattern = '#^/(?:'.LocaleRegistry::routePattern().')/parts/([A-Za-z0-9\-\.\s]+)$#';
         $broken = 0;
+        $normalizer = app(\App\Services\OemNormalizerService::class);
 
-        Redirect::query()->active()->select('to_url')->chunk(200, function ($redirects) use ($pattern, &$broken) {
+        Redirect::query()->active()->select('to_url')->chunk(200, function ($redirects) use ($pattern, $normalizer, &$broken) {
             foreach ($redirects as $redirect) {
                 $path = parse_url($redirect->to_url, PHP_URL_PATH) ?: $redirect->to_url;
 
@@ -361,8 +362,15 @@ class SeoHealthDashboard extends Page
                     continue;
                 }
 
+                // The live route strips ALL non-alphanumerics
+                // (OemNormalizerService::normalize(), also what
+                // NormalizeOemUrl 301s any non-canonical segment to) — a
+                // human-formatted target like "06L-906-036-L" resolves
+                // fine for real visitors but a bare strtoupper(trim())
+                // here never matched normalized_oem, permanently
+                // miscounting it as broken.
                 $exists = Product::query()->active()
-                    ->where('normalized_oem', strtoupper(trim($m[1])))
+                    ->where('normalized_oem', $normalizer->normalize($m[1]))
                     ->exists();
 
                 if (! $exists) {
