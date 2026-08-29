@@ -56,24 +56,40 @@
 ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @php
+    // normalized_oem (not oem_number): a real OEM routinely contains
+    // hyphens/spaces, so the raw number isn't the canonical URL and costs
+    // an avoidable extra 301 through NormalizeOemUrl — matches the hub
+    // page's own ItemList, fixed the same way.
     $manufacturerJsonLdItems = [];
     foreach ($products->items() as $index => $product) {
+        $item = [
+            '@type' => 'Product',
+            'name' => $product->oem_number,
+            'sku' => $product->oem_number,
+            'mpn' => $product->oem_number,
+            // featuredImage is eager-loaded on the products query above;
+            // $manufacturer (singular, already known) stands in for
+            // Product::resolvedImageUrl()'s own manufacturer-logo fallback
+            // rather than re-resolving the same manufacturer per row.
+            'image' => $product->featuredImage?->medium_url ?: ($manufacturer->logo?->file_url ?: asset('images/product-placeholder.svg')),
+            'url' => url('/'.$lang.'/parts/'.urlencode($product->normalized_oem)),
+            'brand' => ['@type' => 'Brand', 'name' => $brandName],
+            'offers' => [
+                '@type' => 'Offer',
+                'price' => (string) $product->price,
+                'priceCurrency' => settings('general.currency', 'EUR'),
+                'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            ],
+        ];
+
+        if ($product->condition && isset(\App\Services\SeoService::conditionSchemaMap()[$product->condition->slug])) {
+            $item['itemCondition'] = \App\Services\SeoService::conditionSchemaMap()[$product->condition->slug];
+        }
+
         $manufacturerJsonLdItems[] = [
             '@type' => 'ListItem',
             'position' => $index + 1,
-            'item' => [
-                '@type' => 'Product',
-                'name' => $product->oem_number,
-                'sku' => $product->oem_number,
-                'url' => url('/'.$lang.'/parts/'.urlencode($product->oem_number)),
-                'brand' => ['@type' => 'Brand', 'name' => $brandName],
-                'offers' => [
-                    '@type' => 'Offer',
-                    'price' => (string) $product->price,
-                    'priceCurrency' => settings('general.currency', 'EUR'),
-                    'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-                ],
-            ],
+            'item' => $item,
         ];
     }
 @endphp

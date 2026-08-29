@@ -27,13 +27,14 @@ class ManufacturerController extends Controller
             ->with('logo')
             ->firstOrFail();
 
-        // Eager-load only what the view uses per row — the condition badge.
+        // Eager-load only what the view uses per row — the condition badge
+        // and (for the ItemList JSON-LD's image field) the featured image.
         // (The manufacturer is already known, and carModels is not
         // referenced in the parts ledger.)
         $products = Product::query()
             ->where('manufacturer_id', $manufacturer->id)
             ->where('is_active', true)
-            ->with('condition')
+            ->with(['condition', 'featuredImage'])
             ->orderBy('oem_number')
             ->paginate(settings('general.pagination_per_page', 20));
 
