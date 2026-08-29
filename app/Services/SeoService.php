@@ -90,7 +90,15 @@ class SeoService
             'url' => $siteUrl,
             'potentialAction' => [
                 '@type' => 'SearchAction',
-                'target' => $siteUrl.'/{lang}/parts/{search_term_string}',
+                // Google's Sitelinks Search Box spec allows exactly ONE
+                // templated variable in the target URL: {search_term_string}
+                // (declared by query-input below). An earlier version left
+                // an unresolved {lang} placeholder in the same string, which
+                // Google would never substitute — producing a literal,
+                // broken "/{lang}/parts/..." URL. Resolve it to the
+                // request's actual locale instead, same as every other
+                // locale-aware URL this service builds.
+                'target' => $siteUrl.'/'.App::getLocale().'/parts/{search_term_string}',
                 'query-input' => 'required name=search_term_string',
             ],
         ];

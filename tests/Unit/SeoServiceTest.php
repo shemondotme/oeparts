@@ -76,6 +76,20 @@ class SeoServiceTest extends TestCase
     }
 
     #[Test]
+    public function json_ld_website_search_action_target_has_no_unresolved_placeholder(): void
+    {
+        app()->setLocale('de');
+
+        $output = $this->service->jsonLd('website');
+
+        // query-input only declares {search_term_string} as a substitutable
+        // variable — a leftover {lang} placeholder in the target URL would
+        // never be resolved by Google, breaking the Sitelinks Search Box.
+        $this->assertStringNotContainsString('{lang}', $output);
+        $this->assertStringContainsString('/de/parts/{search_term_string}', $output);
+    }
+
+    #[Test]
     public function json_ld_product_returns_product_schema(): void
     {
         $manufacturer = $this->createManufacturer();
