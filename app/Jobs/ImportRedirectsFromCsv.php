@@ -40,6 +40,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
     public function __construct(
         public string $storedPath,
         public string $triggeredBy,
+        public bool $overwriteExisting = false,
     ) {
         $this->onQueue('default');
     }
@@ -47,13 +48,14 @@ class ImportRedirectsFromCsv implements ShouldQueue
     public function handle(RedirectLoopDetector $loopDetector): void
     {
         $created = 0;
+        $updated = 0;
         $skipped = 0;
         $skipReasons = [];
 
         $stream = Storage::disk('local')->readStream($this->storedPath);
 
         if ($stream === null || $stream === false) {
-            $this->notifyResult(0, 0, ['Could not read the uploaded file.']);
+            $this->notifyResult(0, 0, 0, ['Could not read the uploaded file.']);
 
             return;
         }
@@ -61,7 +63,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
         try {
             $header = fgetcsv($stream);
             if ($header === false) {
-                $this->notifyResult(0, 0, ['The file is empty.']);
+                $this->notifyResult(0, 0, 0, ['The file is empty.']);
 
                 return;
             }
@@ -80,7 +82,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
             $activeIdx = $columnIndex['is_active'] ?? $columnIndex['active'] ?? null;
 
             if ($fromIdx === null || $toIdx === null) {
-                $this->notifyResult(0, 0, ['Missing required columns: from_url and to_url.']);
+                $this->notifyResult(0, 0, 0, ['Missing required columns: from_url and to_url.']);
 
                 return;
             }
@@ -103,16 +105,16 @@ class ImportRedirectsFromCsv implements ShouldQueue
                 $type = RedirectType::tryFrom($typeRaw) ?? RedirectType::Permanent;
                 $isActive = $activeIdx === null || in_array(strtolower(trim((string) ($row[$activeIdx] ?? '1'))), ['1', 'true', 'yes'], true);
 
-                $error = $this->tryCreateRedirect($fromRaw, $toRaw, $type, $isActive, $loopDetector);
+                $result = $this->tryImportRow($fromRaw, $toRaw, $type, $isActive, $loopDetector);
 
-                if ($error !== null) {
+                if ($result['action'] === 'skipped') {
                     $skipped++;
-                    $skipReasons[] = "row {$rowNumber} ({$fromRaw}): {$error}";
+                    $skipReasons[] = "row {$rowNumber} ({$fromRaw}): {$result['reason']}";
 
                     continue;
                 }
 
-                $created++;
+                $result['action'] === 'updated' ? $updated++ : $created++;
             }
         } finally {
             if (is_resource($stream)) {
@@ -121,7 +123,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
             Storage::disk('local')->delete($this->storedPath);
         }
 
-        $this->notifyResult($created, $skipped, $skipReasons);
+        $this->notifyResult($created, $updated, $skipped, $skipReasons);
     }
 
     /**
@@ -131,35 +133,53 @@ class ImportRedirectsFromCsv implements ShouldQueue
      * into a shared service) rather than risk refactoring two already-
      * shipped, individually-tested call sites under this change.
      *
-     * @return string|null null on success, else a skip reason
+     * When a row's from_url already exists: overwriteExisting off (the
+     * default) skips it, same as before this option existed — untouched
+     * data is the safe default. On, it updates that existing redirect's
+     * to_url/type/is_active in place instead of leaving it alone, the
+     * same "create vs update on a matching row" choice the bulk Product
+     * importer already offers. Either way, the existing row itself is
+     * excluded from its own loop/reverse-pair check (editing a redirect
+     * without changing it must never flag itself as looping into itself).
+     *
+     * @return array{action: 'created'|'updated'|'skipped', reason?: string}
      */
-    private function tryCreateRedirect(string $fromRaw, string $toRaw, RedirectType $type, bool $isActive, RedirectLoopDetector $loopDetector): ?string
+    private function tryImportRow(string $fromRaw, string $toRaw, RedirectType $type, bool $isActive, RedirectLoopDetector $loopDetector): array
     {
         $from = strtolower(trim($fromRaw, '/'));
         $to = strtolower(trim($toRaw, '/'));
 
-        if (Redirect::where('from_url', $from)->exists()) {
-            return 'a redirect for this path already exists';
+        $existing = Redirect::where('from_url', $from)->first();
+
+        if ($existing && ! $this->overwriteExisting) {
+            return ['action' => 'skipped', 'reason' => 'a redirect for this path already exists'];
         }
 
         if ($from !== '' && $from === $to) {
-            return 'destination is the same as the source';
+            return ['action' => 'skipped', 'reason' => 'destination is the same as the source'];
         }
 
         $reverseExists = Redirect::query()
             ->where('is_active', true)
             ->where('from_url', $to)
             ->where('to_url', $from)
+            ->when($existing, fn ($q) => $q->whereKeyNot($existing->id))
             ->exists();
 
         if ($reverseExists) {
-            return 'an active redirect already sends this destination back to the source';
+            return ['action' => 'skipped', 'reason' => 'an active redirect already sends this destination back to the source'];
         }
 
-        $loopNode = $loopDetector->findLoop($from, $to);
+        $loopNode = $loopDetector->findLoop($from, $to, $existing?->id);
 
         if ($loopNode !== null) {
-            return "the chain eventually comes back to \"{$loopNode}\"";
+            return ['action' => 'skipped', 'reason' => "the chain eventually comes back to \"{$loopNode}\""];
+        }
+
+        if ($existing) {
+            $existing->update(['to_url' => $toRaw, 'type' => $type, 'is_active' => $isActive]);
+
+            return ['action' => 'updated'];
         }
 
         Redirect::create([
@@ -169,13 +189,13 @@ class ImportRedirectsFromCsv implements ShouldQueue
             'is_active' => $isActive,
         ]);
 
-        return null;
+        return ['action' => 'created'];
     }
 
-    private function notifyResult(int $created, int $skipped, array $skipReasons): void
+    private function notifyResult(int $created, int $updated, int $skipped, array $skipReasons): void
     {
         try {
-            $body = "Created {$created} redirect(s), skipped {$skipped}, requested by {$this->triggeredBy}.";
+            $body = "Created {$created}, updated {$updated}, skipped {$skipped} redirect(s), requested by {$this->triggeredBy}.";
             if ($skipReasons !== []) {
                 // Capped so a huge bad file doesn't produce an unreadable wall of text.
                 $body .= "\n".implode("\n", array_slice($skipReasons, 0, 10));
@@ -190,7 +210,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
                     ->title('Redirect CSV import finished')
                     ->body($body)
                     ->icon('heroicon-o-arrow-up-tray')
-                    ->iconColor($skipped > 0 && $created === 0 ? 'danger' : 'success')
+                    ->iconColor($skipped > 0 && $created === 0 && $updated === 0 ? 'danger' : 'success')
             );
         } catch (Throwable $e) {
             // A bell notification must never fail a job that otherwise succeeded.

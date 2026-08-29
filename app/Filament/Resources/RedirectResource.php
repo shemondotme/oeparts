@@ -279,9 +279,17 @@ class RedirectResource extends Resource
                     ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
                     ->required()
                     ->helperText('Columns: from_url, to_url, type (301 or 302), is_active (1/0). Header row required — matches what "Export Redirects" produces.'),
+                Forms\Components\Toggle::make('overwrite_existing')
+                    ->label('Update existing redirects')
+                    ->helperText('When off (default), a row whose from_url already exists is skipped, leaving that redirect untouched. When on, its to_url/type/active state is updated instead — useful for restoring from a backup or bulk-correcting a URL migration.')
+                    ->default(false),
             ])
             ->action(function (array $data): void {
-                \App\Jobs\ImportRedirectsFromCsv::dispatch($data['csv_file'], auth('admin')->user()?->name ?? 'An admin');
+                \App\Jobs\ImportRedirectsFromCsv::dispatch(
+                    $data['csv_file'],
+                    auth('admin')->user()?->name ?? 'An admin',
+                    (bool) ($data['overwrite_existing'] ?? false)
+                );
 
                 Notification::make()
                     ->title('Redirect import queued')

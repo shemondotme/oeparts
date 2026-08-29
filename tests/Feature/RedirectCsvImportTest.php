@@ -118,6 +118,67 @@ class RedirectCsvImportTest extends TestCase
     }
 
     #[Test]
+    public function overwrite_existing_off_by_default_still_skips_a_duplicate_from_url(): void
+    {
+        Redirect::create(['from_url' => 'already-exists', 'to_url' => '/original-target', 'type' => RedirectType::Permanent, 'is_active' => true]);
+
+        $path = $this->writeCsv("from_url,to_url\nalready-exists,/attempted-new-target\n");
+
+        (new ImportRedirectsFromCsv($path, 'Test Admin', overwriteExisting: false))->handle(new RedirectLoopDetector);
+
+        $this->assertDatabaseHas('redirects', ['from_url' => 'already-exists', 'to_url' => '/original-target']);
+    }
+
+    #[Test]
+    public function overwrite_existing_on_updates_an_existing_redirects_destination(): void
+    {
+        // A backup restore or bulk URL-migration re-import both need this —
+        // matches the "create vs update on a matching row" option the bulk
+        // Product importer already offers.
+        $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/stale-target', 'type' => RedirectType::Permanent, 'is_active' => true]);
+
+        $path = $this->writeCsv("from_url,to_url,type,is_active\nold-page,/corrected-target,302,0\n");
+
+        (new ImportRedirectsFromCsv($path, 'Test Admin', overwriteExisting: true))->handle(new RedirectLoopDetector);
+
+        $this->assertSame(1, Redirect::where('from_url', 'old-page')->count());
+        $this->assertDatabaseHas('redirects', [
+            'id' => $redirect->id, 'from_url' => 'old-page', 'to_url' => '/corrected-target',
+            'type' => RedirectType::Temporary->value, 'is_active' => false,
+        ]);
+    }
+
+    #[Test]
+    public function overwrite_existing_on_still_skips_a_row_that_would_form_a_loop(): void
+    {
+        Redirect::create(['from_url' => 'shared-dest', 'to_url' => 'old-page', 'type' => RedirectType::Permanent, 'is_active' => true]);
+        $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/somewhere', 'type' => RedirectType::Permanent, 'is_active' => true]);
+
+        // Would form a direct reverse-pair loop with the "shared-dest"
+        // redirect above if applied.
+        $path = $this->writeCsv("from_url,to_url\nold-page,shared-dest\n");
+
+        (new ImportRedirectsFromCsv($path, 'Test Admin', overwriteExisting: true))->handle(new RedirectLoopDetector);
+
+        $this->assertDatabaseHas('redirects', ['id' => $redirect->id, 'from_url' => 'old-page', 'to_url' => '/somewhere']);
+    }
+
+    #[Test]
+    public function overwrite_existing_on_does_not_flag_an_unchanged_row_as_looping_into_itself(): void
+    {
+        $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/somewhere', 'type' => RedirectType::Permanent, 'is_active' => true]);
+
+        // Re-importing the exact same row unchanged must not have the
+        // existing record's own reverse-pair excluded incorrectly.
+        $path = $this->writeCsv("from_url,to_url,type,is_active\nold-page,/somewhere,301,1\n");
+
+        (new ImportRedirectsFromCsv($path, 'Test Admin', overwriteExisting: true))->handle(new RedirectLoopDetector);
+
+        $this->assertSame(1, Redirect::where('from_url', 'old-page')->count());
+        $this->assertDatabaseHas('redirects', ['id' => $redirect->id, 'from_url' => 'old-page', 'to_url' => '/somewhere']);
+    }
+
+    #[Test]
     public function it_deletes_the_uploaded_file_after_processing(): void
     {
         $path = $this->writeCsv("from_url,to_url\nold-page,/new-page\n");
@@ -143,7 +204,27 @@ class RedirectCsvImportTest extends TestCase
                 'csv_file' => UploadedFile::fake()->createWithContent('redirects.csv', "from_url,to_url\nold-page,/new-page\n"),
             ]);
 
-        Bus::assertDispatched(ImportRedirectsFromCsv::class);
+        Bus::assertDispatched(ImportRedirectsFromCsv::class, fn ($job) => $job->overwriteExisting === false);
+    }
+
+    #[Test]
+    public function the_import_action_passes_the_overwrite_toggle_through_to_the_job(): void
+    {
+        Storage::fake('local');
+        Bus::fake();
+        $this->seed(\Database\Seeders\RolesSeeder::class);
+
+        $admin = Admin::factory()->create();
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        Livewire::test(ListRedirects::class)
+            ->callTableAction('importCsv', data: [
+                'csv_file' => UploadedFile::fake()->createWithContent('redirects.csv', "from_url,to_url\nold-page,/new-page\n"),
+                'overwrite_existing' => true,
+            ]);
+
+        Bus::assertDispatched(ImportRedirectsFromCsv::class, fn ($job) => $job->overwriteExisting === true);
     }
 
     #[Test]
