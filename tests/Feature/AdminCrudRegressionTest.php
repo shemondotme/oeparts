@@ -2,16 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RedirectType;
 use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Filament\Resources\CategoryResource\Pages\CreateCategory;
 use App\Filament\Resources\CustomerResource\Pages\CreateCustomer;
 use App\Filament\Resources\ManufacturerResource\Pages\CreateManufacturer;
 use App\Filament\Resources\ProductResource\Pages\ListProducts;
+use App\Filament\Resources\RedirectResource\Pages\ListRedirects;
 use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use App\Models\Redirect;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,6 +71,11 @@ use Tests\TestCase;
  *    page, confirmed live: editing the Site Identity tab's Site Name and
  *    clicking Save did nothing, jumping to Regional Defaults with "The
  *    selected symbol Position is invalid."
+ *
+ * 5. The same exportCsvBulkAction() (string) $cell cast as #3, a different
+ *    trigger: a backed enum (Redirect::type, RedirectType) doesn't
+ *    implement Stringable either, found while building the Redirects CSV
+ *    importer — every "Export Redirects" click 500'd the same way.
  */
 class AdminCrudRegressionTest extends TestCase
 {
@@ -146,6 +154,23 @@ class AdminCrudRegressionTest extends TestCase
         Livewire::test(ListProducts::class)
             ->loadTable()
             ->callTableBulkAction('exportCsv', [$product])
+            ->assertOk();
+    }
+
+    #[Test]
+    public function exporting_redirects_to_csv_does_not_crash_on_the_backed_enum_type_column(): void
+    {
+        // A backed enum (RedirectType) doesn't implement Stringable — the
+        // SAME (string) $cell cast bug as translatable-array columns
+        // above, just triggered by a different cast type. Confirmed live:
+        // (string) RedirectType::Permanent throws "Object of class
+        // App\Enums\RedirectType could not be converted to string",
+        // crashing every "Export Redirects" click outright.
+        $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/new-page', 'type' => RedirectType::Permanent, 'is_active' => true]);
+
+        Livewire::test(ListRedirects::class)
+            ->loadTable()
+            ->callTableBulkAction('exportCsv', [$redirect])
             ->assertOk();
     }
 

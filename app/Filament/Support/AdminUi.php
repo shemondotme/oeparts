@@ -488,7 +488,21 @@ final class AdminUi
                     // plain strings) — (string) $cell on an array crashed
                     // every export whose columns touched one, confirmed live
                     // via a real "Export Products" click 500ing outright.
-                    $csv .= collect($row)->map(fn ($cell) => '"' . str_replace('"', '""', is_array($cell) ? static::localizedName($cell) : (string) $cell) . '"')->implode(',') . "\n";
+                    //
+                    // A backed enum (e.g. Redirect::type) crashed the SAME
+                    // way — PHP backed enums don't implement Stringable, so
+                    // (string) $cell threw "could not be converted to
+                    // string" on every "Export Redirects" click, confirmed
+                    // live via a real RedirectType-cast column.
+                    $csv .= collect($row)->map(function ($cell) {
+                        $value = match (true) {
+                            $cell instanceof \BackedEnum => (string) $cell->value,
+                            is_array($cell) => static::localizedName($cell),
+                            default => (string) $cell,
+                        };
+
+                        return '"' . str_replace('"', '""', $value) . '"';
+                    })->implode(',') . "\n";
                 });
 
                 return Response::streamDownload(fn () => print($csv), 'export-' . now()->format('Y-m-d-His') . '.csv');
