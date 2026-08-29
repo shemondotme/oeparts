@@ -12,16 +12,18 @@ class CrawlerVerificationServiceTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * PHPUnit can't mock PHP's built-in gethostbyaddr()/gethostbyname()
+     * PHPUnit can't mock PHP's built-in gethostbyaddr()/dns_get_record()
      * directly — the service wraps them in protected methods specifically
      * so a test double can stub them instead.
+     *
+     * @param  array<int, string>  $forwardResults
      */
-    private function serviceStubbingDns(string $reverseResult, string $forwardResult): CrawlerVerificationService
+    private function serviceStubbingDns(string $reverseResult, array $forwardResults): CrawlerVerificationService
     {
-        return new class ($reverseResult, $forwardResult) extends CrawlerVerificationService {
+        return new class ($reverseResult, $forwardResults) extends CrawlerVerificationService {
             public function __construct(
                 private string $reverseResult,
-                private string $forwardResult,
+                private array $forwardResults,
             ) {}
 
             protected function reverseLookup(string $ip): string
@@ -29,9 +31,9 @@ class CrawlerVerificationServiceTest extends TestCase
                 return $this->reverseResult;
             }
 
-            protected function forwardLookup(string $hostname): string
+            protected function forwardLookup(string $hostname): array
             {
-                return $this->forwardResult;
+                return $this->forwardResults;
             }
         };
     }
@@ -39,9 +41,21 @@ class CrawlerVerificationServiceTest extends TestCase
     #[Test]
     public function verified_googlebot_hostname_that_forward_resolves_back_returns_true(): void
     {
-        $service = $this->serviceStubbingDns('crawl-66-249-66-1.googlebot.com', '66.249.66.1');
+        $service = $this->serviceStubbingDns('crawl-66-249-66-1.googlebot.com', ['66.249.66.1']);
 
         $this->assertTrue($service->isVerifiedCrawler('66.249.66.1'));
+    }
+
+    #[Test]
+    public function verified_googlebot_hostname_over_ipv6_forward_resolves_back_returns_true(): void
+    {
+        // gethostbyname() (an obvious but wrong choice here) can only ever
+        // resolve IPv4 A records — a real crawler request arriving over
+        // IPv6 could never forward-confirm against that, permanently
+        // failing verification on that protocol alone.
+        $service = $this->serviceStubbingDns('crawl-2001-db8--1.googlebot.com', ['2001:db8::1']);
+
+        $this->assertTrue($service->isVerifiedCrawler('2001:db8::1'));
     }
 
     #[Test]
@@ -52,7 +66,7 @@ class CrawlerVerificationServiceTest extends TestCase
         // is exactly the spoofing scenario the forward-confirm step exists
         // to catch (an attacker can fake their own PTR record, but can't
         // make Google's real DNS forward-resolve it back to their own IP).
-        $service = $this->serviceStubbingDns('fake.googlebot.com', '203.0.113.9');
+        $service = $this->serviceStubbingDns('fake.googlebot.com', ['203.0.113.9']);
 
         $this->assertFalse($service->isVerifiedCrawler('198.51.100.5'));
     }
@@ -60,7 +74,7 @@ class CrawlerVerificationServiceTest extends TestCase
     #[Test]
     public function non_crawler_hostname_returns_false(): void
     {
-        $service = $this->serviceStubbingDns('some-residential-isp.example.net', '198.51.100.5');
+        $service = $this->serviceStubbingDns('some-residential-isp.example.net', ['198.51.100.5']);
 
         $this->assertFalse($service->isVerifiedCrawler('198.51.100.5'));
     }
@@ -69,7 +83,7 @@ class CrawlerVerificationServiceTest extends TestCase
     public function unresolvable_reverse_lookup_returns_false(): void
     {
         // gethostbyaddr() returns the IP unchanged when it can't resolve.
-        $service = $this->serviceStubbingDns('198.51.100.5', '');
+        $service = $this->serviceStubbingDns('198.51.100.5', []);
 
         $this->assertFalse($service->isVerifiedCrawler('198.51.100.5'));
     }
@@ -77,7 +91,7 @@ class CrawlerVerificationServiceTest extends TestCase
     #[Test]
     public function verified_bingbot_hostname_returns_true(): void
     {
-        $service = $this->serviceStubbingDns('msnbot-40-77-167-1.search.msn.com', '40.77.167.1');
+        $service = $this->serviceStubbingDns('msnbot-40-77-167-1.search.msn.com', ['40.77.167.1']);
 
         $this->assertTrue($service->isVerifiedCrawler('40.77.167.1'));
     }
@@ -96,9 +110,33 @@ class CrawlerVerificationServiceTest extends TestCase
     }
 
     #[Test]
+    public function a_transient_dns_exception_is_not_cached_for_the_full_confirmed_negative_ttl(): void
+    {
+        // A resolver timeout is a different signal than "genuinely not a
+        // crawler" — caching it for the same 12h TTL as a confirmed
+        // negative would lock a real crawler's IP out of the bypass for
+        // half a day over a one-off blip.
+        $failingService = new class extends CrawlerVerificationService {
+            protected function reverseLookup(string $ip): string
+            {
+                throw new \RuntimeException('DNS resolver unreachable');
+            }
+        };
+        $this->assertFalse($failingService->isVerifiedCrawler('198.51.100.5'));
+
+        $this->travel(6)->minutes();
+
+        // If the exception path had cached its false for the full 12h like
+        // a confirmed negative, this would still read that stale value
+        // instead of re-resolving.
+        $recoveredService = $this->serviceStubbingDns('crawl-1.googlebot.com', ['198.51.100.5']);
+        $this->assertTrue($recoveredService->isVerifiedCrawler('198.51.100.5'));
+    }
+
+    #[Test]
     public function empty_ip_returns_false(): void
     {
-        $service = $this->serviceStubbingDns('crawl.googlebot.com', '');
+        $service = $this->serviceStubbingDns('crawl.googlebot.com', []);
 
         $this->assertFalse($service->isVerifiedCrawler(''));
     }
@@ -106,14 +144,14 @@ class CrawlerVerificationServiceTest extends TestCase
     #[Test]
     public function result_is_cached_per_ip(): void
     {
-        $service = $this->serviceStubbingDns('crawl-1.googlebot.com', '198.51.100.5');
+        $service = $this->serviceStubbingDns('crawl-1.googlebot.com', ['198.51.100.5']);
 
         $first = $service->isVerifiedCrawler('198.51.100.5');
 
         // A second service instance with DIFFERENT (wrong) stubbed DNS
         // results should still read the cached true from the first call —
         // proving the result is genuinely cached per-IP, not re-resolved.
-        $secondService = $this->serviceStubbingDns('not-a-crawler.example.net', '203.0.113.1');
+        $secondService = $this->serviceStubbingDns('not-a-crawler.example.net', ['203.0.113.1']);
         $second = $secondService->isVerifiedCrawler('198.51.100.5');
 
         $this->assertTrue($first);

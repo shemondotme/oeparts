@@ -23,6 +23,14 @@ class CrawlerVerificationService
     private const CACHE_TTL_HOURS = 12;
 
     /**
+     * A transient DNS failure (resolver timeout/unreachable) is a different
+     * signal than a confirmed "not a crawler" — caching it for the full
+     * CACHE_TTL_HOURS would lock a real Googlebot/Bingbot IP out of the
+     * rate-limit bypass for 12h over a one-off blip. Retry much sooner.
+     */
+    private const EXCEPTION_CACHE_TTL_MINUTES = 5;
+
+    /**
      * Hostname suffixes belonging to search engines whose crawlers this
      * codebase currently exempts from the storefront search rate limiter.
      */
@@ -47,17 +55,24 @@ class CrawlerVerificationService
             return false;
         }
 
-        return Cache::remember(
-            "crawler_verified:{$ip}",
-            now()->addHours(self::CACHE_TTL_HOURS),
-            function () use ($ip): bool {
-                try {
-                    return $this->verify($ip);
-                } catch (\Throwable $e) {
-                    return false;
-                }
-            }
-        );
+        $key = "crawler_verified:{$ip}";
+
+        $cached = Cache::get($key);
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        try {
+            $result = $this->verify($ip);
+            $ttl = now()->addHours(self::CACHE_TTL_HOURS);
+        } catch (\Throwable $e) {
+            $result = false;
+            $ttl = now()->addMinutes(self::EXCEPTION_CACHE_TTL_MINUTES);
+        }
+
+        Cache::put($key, $result, $ttl);
+
+        return $result;
     }
 
     private function verify(string $ip): bool
@@ -82,13 +97,13 @@ class CrawlerVerificationService
             return false;
         }
 
-        return $this->forwardLookup($hostname) === $ip;
+        return in_array($ip, $this->forwardLookup($hostname), true);
     }
 
     /**
-     * Wrapped in a protected method (rather than called directly) so a test
+     * Wrapped in protected methods (rather than called directly) so a test
      * double can stub DNS resolution — PHPUnit cannot mock PHP's built-in
-     * gethostbyaddr()/gethostbyname() functions directly.
+     * gethostbyaddr()/dns_get_record() functions directly.
      */
     protected function reverseLookup(string $ip): string
     {
@@ -97,10 +112,26 @@ class CrawlerVerificationService
         return is_string($result) ? $result : '';
     }
 
-    protected function forwardLookup(string $hostname): string
+    /**
+     * Every IPv4/IPv6 address this hostname resolves to. gethostbyname()
+     * (the obvious PHP built-in for this) only ever resolves A records —
+     * a real crawler request arriving over IPv6 could never forward-confirm
+     * against that result, permanently failing verification on that
+     * protocol alone. dns_get_record() covers both address families.
+     *
+     * @return array<int, string>
+     */
+    protected function forwardLookup(string $hostname): array
     {
-        $result = @gethostbyname($hostname);
+        $records = @dns_get_record($hostname, DNS_A + DNS_AAAA);
 
-        return is_string($result) ? $result : '';
+        if (! is_array($records)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            static fn (array $record): ?string => $record['ip'] ?? $record['ipv6'] ?? null,
+            $records
+        )));
     }
 }
