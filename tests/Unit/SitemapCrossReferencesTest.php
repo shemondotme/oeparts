@@ -120,6 +120,20 @@ class SitemapCrossReferencesTest extends TestCase
     }
 
     #[Test]
+    public function a_product_with_multiple_distinct_cross_oems_gets_one_detail_url_entry_per_locale_not_one_per_cross_oem(): void
+    {
+        Setting::updateOrCreate(['group' => 'seo', 'key' => 'detail_pages_enabled'], ['value' => '1', 'type' => 'boolean', 'is_encrypted' => false]);
+
+        $product = $this->makeProduct(['normalized_oem' => 'PRIM008']);
+        $product->crossReferences()->create(['cross_oem_number' => 'XREF008A', 'normalized_cross_oem' => 'XREF008A']);
+        $product->crossReferences()->create(['cross_oem_number' => 'XREF008B', 'normalized_cross_oem' => 'XREF008B']);
+
+        $xml = $this->generateCrossReferencesSitemap();
+
+        $this->assertSame(1, substr_count($xml, "/en/parts/PRIM008/{$product->id}-"));
+    }
+
+    #[Test]
     public function cross_ref_belonging_only_to_an_inactive_product_is_excluded(): void
     {
         $product = $this->makeProduct(['normalized_oem' => 'PRIM006', 'is_active' => false]);

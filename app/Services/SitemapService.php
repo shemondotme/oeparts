@@ -182,6 +182,15 @@ class SitemapService
         $count = 0;
         $detailPagesEnabled = filter_var($this->settings->get('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN);
 
+        // A product can legitimately carry many distinct cross-OEM numbers
+        // (that's the whole point of cross-referencing), each of which
+        // independently resolves to the SAME singleProduct detail URL below.
+        // Without tracking what's already been written per locale, a
+        // product with N cross-refs produced N identical duplicate <loc>
+        // entries instead of one — bounded by distinct-product × locale
+        // count, not total cross-reference rows.
+        $emittedDetailUrls = [];
+
         ProductCrossReference::query()
             ->join('products', 'products.id', '=', 'product_cross_references.product_id')
             ->where('products.is_active', true)
@@ -189,7 +198,7 @@ class SitemapService
             ->groupBy('product_cross_references.normalized_cross_oem')
             ->orderByDesc('updated_at')
             ->cursor()
-            ->each(function ($row) use (&$written, &$batch, &$writer, &$count, $detailPagesEnabled) {
+            ->each(function ($row) use (&$written, &$batch, &$writer, &$count, $detailPagesEnabled, &$emittedDetailUrls) {
                 $crossOem = $row->normalized_cross_oem;
                 $lastmod = $row->updated_at ? \Illuminate\Support\Carbon::parse($row->updated_at)->toIso8601String() : now()->toIso8601String();
 
@@ -205,6 +214,14 @@ class SitemapService
                 $singleProduct = ($detailPagesEnabled && $activeProducts->count() === 1) ? $activeProducts->first() : null;
 
                 foreach ($this->supportedLocales as $locale) {
+                    if ($singleProduct) {
+                        $dedupeKey = $singleProduct->id.':'.$locale;
+                        if (isset($emittedDetailUrls[$dedupeKey])) {
+                            continue;
+                        }
+                        $emittedDetailUrls[$dedupeKey] = true;
+                    }
+
                     if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
                         if ($writer !== null) {
                             $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch);
