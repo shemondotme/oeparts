@@ -14,6 +14,18 @@ services:
         environment:
             WWWUSER: '${WWWUSER:-1000}'
             LARAVEL_SAIL: 1
+            # PHP's built-in server (see SUPERVISOR_PHP_COMMAND below) handles one
+            # request at a time by default — a real browser loading a page fires
+            # a burst of concurrent requests (HTML, CSS, JS, fonts, images, plus
+            # any XHR/fetch calls), and every request past the first queues behind
+            # whichever one the server is currently serving. Confirmed empirically:
+            # this alone stalled the OEM-autocomplete fetch on /parts for ~22s
+            # during Playwright testing even though the endpoint itself resolves
+            # in well under a second in isolation (bare curl). pcntl is present in
+            # this image, so this env var alone (no command change) is enough for
+            # `php -S` to fork a small worker pool and actually serve requests
+            # concurrently, matching real request-level concurrency in prod.
+            PHP_CLI_SERVER_WORKERS: 4
             XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
             XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
