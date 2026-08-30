@@ -98,8 +98,16 @@
                 <x-brand-icon tone="light" size="sm" />
                 <div class="leading-none">
                     <x-brand-wordmark tone="light" size="sm" />
-                    <p class="mt-1.5 font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">
-                        {!! str_replace(' ', '&#160;', e(ui_copy('nav_logo_subline', 'navbar.logo_subline'))) !!}
+                    {{-- Forcing the whole subline onto one unbreakable line
+                         (non-breaking spaces) reads fine for English's 20
+                         characters, but German/Lithuanian/French/Spanish
+                         translations run up to 25 — confirmed live this
+                         pushed the mobile topbar's cart/menu buttons past
+                         the viewport edge, since the parent link is
+                         shrink-0. Cap the width to roughly the wordmark's
+                         own and let it wrap normally instead. --}}
+                    <p class="mt-1.5 max-w-[112px] font-mono text-[9px] tracking-[0.24em] uppercase text-ink-muted">
+                        {{ ui_copy('nav_logo_subline', 'navbar.logo_subline') }}
                     </p>
                 </div>
             </a>
