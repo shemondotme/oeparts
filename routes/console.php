@@ -105,3 +105,11 @@ Schedule::command('oeparts:refunds:clean-images')->dailyAt('04:15');
 
 // Purge the (disposable, regenerate-on-demand) invoice PDF cache — default 30 days.
 Schedule::command('oeparts:invoices:clean-cache')->dailyAt('04:20');
+
+// Resync the products FULLTEXT (ngram) search index — InnoDB buffers
+// FULLTEXT updates internally, so the on-disk index can silently drift
+// out of sync with real product data (existing products become
+// unfindable by OEM number, on both the admin panel and the storefront)
+// until something forces a flush. withoutOverlapping(): OPTIMIZE TABLE
+// rebuilds the whole table, which can run long on a large catalog.
+Schedule::command('oeparts:products:optimize-search-index')->dailyAt('03:45')->withoutOverlapping();
