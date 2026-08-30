@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { artisan } from '../helpers.js';
 
 /**
  * Order-specific header actions — the highest-business-value custom
@@ -27,8 +28,13 @@ import { test, expect } from '@playwright/test';
  */
 
 test('order: changeStatus transitions a pending order to processing', async ({ page }) => {
-    // Order 12 confirmed pending in this dev DB; OrderService's
-    // transition map allows Pending -> Processing.
+    // Order 12's status is a one-time "pending" fixture state this test
+    // itself consumes (pending -> processing) — a full-suite re-run
+    // against the same DB found it already "processing" from the FIRST
+    // run and failed outright. Force it back before every run instead of
+    // assuming a fresh seed.
+    artisan(`tinker --execute="App\\Models\\Order::find(12)->update(['status'=>'pending']);"`);
+
     await page.goto('/admin/orders/12', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('nav.fi-topbar');
     await page.waitForTimeout(1000);
@@ -54,6 +60,13 @@ test('order: confirmPayment marks a pending bank-transfer order as paid', async 
     // (Order 5, tried first, turned out to be bank_transfer + payment
     // pending but status refund_requested — a real seeded edge case, now
     // covered by the regression test below instead.)
+    //
+    // Same one-time-fixture problem as the changeStatus test above: this
+    // test's own success consumes order 28's "pending payment" state
+    // (confirmPayment's own visible() gate requires payment_status ===
+    // Pending), so it can't naturally pass on a second run. Force it back.
+    artisan(`tinker --execute="App\\Models\\Order::find(28)->update(['status'=>'pending','payment_status'=>'pending']);"`);
+
     await page.goto('/admin/orders/28', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('nav.fi-topbar');
     await page.waitForTimeout(1000);
