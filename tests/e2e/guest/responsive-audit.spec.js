@@ -105,9 +105,7 @@ test.describe('Responsive layout audit', () => {
                     expect(scrollWidth, `${pg.label} @ ${vp.width}px: scrollWidth ${scrollWidth} vs viewport ${clientWidth}`)
                         .toBeLessThanOrEqual(clientWidth + 1);
 
-                    if (vp.name === 'mobile' || vp.name === 'tablet') {
-                        await page.screenshot({ path: `${SCREENS_DIR}/${pg.label}--${vp.name}.png`, fullPage: true });
-                    }
+                    await page.screenshot({ path: `${SCREENS_DIR}/${pg.label}--${vp.name}.png`, fullPage: true });
                 });
             }
         });
