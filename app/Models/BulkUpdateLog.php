@@ -23,6 +23,7 @@ class BulkUpdateLog extends Model
         'updates',
         'ip_address',
         'user_agent',
+        'created_at',
     ];
 
     protected $casts = [
