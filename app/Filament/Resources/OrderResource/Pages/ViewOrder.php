@@ -147,7 +147,7 @@ class ViewOrder extends ViewRecord
                             ->send();
 
                         $this->dispatch('$refresh');
-                    } catch (\RuntimeException $e) {
+                    } catch (\RuntimeException | \InvalidArgumentException $e) {
                         Notification::make()
                             ->title('Confirmation failed')
                             ->body($e->getMessage())
