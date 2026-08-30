@@ -10,7 +10,16 @@ test.beforeEach(() => {
     // longer pending from the FIRST run). Force each fixture record back
     // to its required starting state before every run instead of assuming
     // a fresh seed.
-    artisan(`tinker --execute="App\\Models\\Review::where('reviewer_name','E2E Playwright Reviewer')->update(['status'=>'pending']);"`);
+    //
+    // The review fixture in particular used to be an UPDATE-only reset
+    // (assumed the row already existed) — confirmed live during a
+    // frontend/UX audit that this shared dev DB's "E2E Playwright
+    // Reviewer" row didn't exist at all (product_reviews was completely
+    // empty), so the update was a silent no-op and the test then timed
+    // out searching for a table row that was never there. updateOrCreate
+    // makes the fixture self-healing regardless of whether a prior run
+    // (or something else entirely) ever created it.
+    artisan(`tinker --execute="App\\Models\\Review::updateOrCreate(['reviewer_name'=>'E2E Playwright Reviewer'],['product_id'=>App\\Models\\Product::query()->value('id'),'title'=>'E2E test review','comment'=>'Seeded by custom-actions.spec.js beforeEach.','rating'=>5,'status'=>'pending']);"`);
     artisan(`tinker --execute="App\\Models\\RefundRequest::find(1)->update(['status'=>'pending','admin_note'=>null,'processed_at'=>null]);"`);
     artisan(`tinker --execute="App\\Models\\RefundRequest::find(2)->update(['status'=>'pending','admin_note'=>null,'processed_at'=>null]);"`);
 });

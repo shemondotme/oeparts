@@ -2,24 +2,38 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ActivityLog;
 use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\CarModel;
 use App\Models\Carrier;
 use App\Models\Category;
 use App\Models\Condition;
+use App\Models\ContactMessage;
 use App\Models\Coupon;
+use App\Models\EmailLog;
 use App\Models\Faq;
+use App\Models\FailedSearchLog;
 use App\Models\IpBlocklist;
 use App\Models\Language;
 use App\Models\LanguageString;
+use App\Models\LoginLog;
 use App\Models\Manufacturer;
 use App\Models\Menu;
 use App\Models\NewsletterCampaign;
+use App\Models\NewsletterSubscriber;
+use App\Models\NotFoundLog;
+use App\Models\Order;
 use App\Models\Page;
+use App\Models\PartInquiry;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Redirect;
+use App\Models\RefundRequest;
+use App\Models\Review;
+use App\Models\SearchLog;
 use App\Models\Section;
+use App\Models\SeoMeta;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\TaxRate;
@@ -30,48 +44,65 @@ use Spatie\Permission\Models\Role;
 
 /**
  * Outputs the lowest (oldest, presumably-real-seed-data) existing id for
- * each resource crud-edit.spec.js exercises, as JSON.
+ * each resource the admin e2e suite exercises (crud-edit.spec.js,
+ * smoke-sweep.spec.js), as JSON.
  *
- * That file used to hardcode a specific numeric id per resource ("queried
+ * Both files used to hardcode a specific numeric id per resource ("queried
  * fresh via tinker right before writing this file") on the theory that
  * these ids were "real rows this dev DB already has" and therefore stable.
  * Confirmed live during a frontend/UX audit that theory was wrong for
- * nearly half of them (CarModel, Category, Language, Manufacturer,
- * BlogPost, Faq, Page, Section, Testimonial, Product all pointed at rows
- * that no longer existed) — ids drift the moment ANY other test deletes a
- * row or an admin cleans up test data, which is exactly what happened
- * here. Resolving the lowest current id at run time instead means the
- * test always targets a real row without needing to hardcode which one.
+ * roughly half of crud-edit's resources (CarModel, Category, Language,
+ * Manufacturer, BlogPost, Faq, Page, Section, Testimonial, Product all
+ * pointed at rows that no longer existed) and then again for smoke-sweep
+ * (CarModel, Coupon, Manufacturer's View/Edit pages failing the same way)
+ * — ids drift the moment ANY other test deletes a row or an admin cleans
+ * up test data, which is exactly what happened here, twice. Resolving the
+ * lowest current id at run time instead means both suites always target a
+ * real row without needing to hardcode which one.
  */
 class ResolveE2eEditTargets extends Command
 {
     protected $signature = 'oeparts:e2e:resolve-edit-targets';
 
-    protected $description = 'Output the lowest existing id per resource used by crud-edit.spec.js, as JSON';
+    protected $description = 'Output the lowest existing id per resource used by the admin e2e suite, as JSON';
 
     public function handle(): int
     {
         $models = [
+            'ActivityLog' => ActivityLog::class,
             'Admin' => Admin::class,
             'CarModel' => CarModel::class,
             'Carrier' => Carrier::class,
             'Category' => Category::class,
             'Condition' => Condition::class,
+            'ContactMessage' => ContactMessage::class,
             'Coupon' => Coupon::class,
             'Customer' => User::class,
+            'EmailLog' => EmailLog::class,
+            'FailedSearchLog' => FailedSearchLog::class,
             'IpBlocklist' => IpBlocklist::class,
             'Language' => Language::class,
+            'LoginLog' => LoginLog::class,
             'Manufacturer' => Manufacturer::class,
             'BlogPost' => BlogPost::class,
             'Faq' => Faq::class,
             'Menu' => Menu::class,
+            'NewsletterSubscriber' => NewsletterSubscriber::class,
+            'NotFoundLog' => NotFoundLog::class,
+            'Order' => Order::class,
             'Page' => Page::class,
+            'PartInquiry' => PartInquiry::class,
+            'Payment' => Payment::class,
             'Section' => Section::class,
             'Testimonial' => Testimonial::class,
             'NewsletterCampaign' => NewsletterCampaign::class,
             'Redirect' => Redirect::class,
+            'RefundRequest' => RefundRequest::class,
+            'Review' => Review::class,
             'Role' => Role::class,
             'Product' => Product::class,
+            'SearchLog' => SearchLog::class,
+            'SeoMeta' => SeoMeta::class,
             'ShippingMethod' => ShippingMethod::class,
             'ShippingZone' => ShippingZone::class,
             'TaxRate' => TaxRate::class,

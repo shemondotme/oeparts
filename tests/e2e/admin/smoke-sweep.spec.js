@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { artisanOutput } from '../helpers.js';
 
 /**
  * Comprehensive admin-panel smoke sweep: visits every Filament resource's
@@ -13,54 +14,62 @@ import { test, expect } from '@playwright/test';
  * spec files alongside this one. Runs in the `chromium` project (already
  * authenticated as super_admin via auth.setup.js's storageState).
  *
- * Record ids below are real rows queried live from this dev DB
- * (`php artisan tinker`) — a resource with no existing rows has its
- * View/Edit entries omitted (`id: null`) since there is nothing to load;
- * its List/Create pages are still exercised.
+ * Record ids used to be hardcoded here ("real rows queried live from this
+ * dev DB via tinker"). Confirmed live during a frontend/UX audit that
+ * doesn't stay true: CarModel/Coupon/Manufacturer's View/Edit pages all
+ * started failing once those specific ids stopped existing (another
+ * test's delete-flow coverage, or cleanup of unrelated leaked test data,
+ * is enough to do it — same root cause already found and fixed for
+ * crud-edit.spec.js's own hardcoded ids). ResolveE2eEditTargets resolves
+ * the lowest currently-existing id per resource at run time instead, so a
+ * resource with no rows right now is correctly skipped (same as this file
+ * always intended `id: null` to mean) without that judgment going stale.
  */
+
+const resolvedIds = JSON.parse(artisanOutput('oeparts:e2e:resolve-edit-targets'));
 
 const RESOURCES = [
     { name: 'AbandonedCart', slug: 'abandoned-carts', id: null, create: false, view: true, edit: false },
-    { name: 'ActivityLog', slug: 'activity-logs', id: 614, create: false, view: true, edit: false },
-    { name: 'Admin', slug: 'admins', id: 5, create: true, view: true, edit: true },
-    { name: 'BlogPost', slug: 'content/blog-posts', id: 10, create: true, view: true, edit: true },
-    { name: 'CarModel', slug: 'car-models', id: 3, create: true, view: true, edit: true },
-    { name: 'Carrier', slug: 'carriers', id: 8, create: true, view: true, edit: true },
-    { name: 'Category', slug: 'content/categories', id: 6, create: true, view: true, edit: true },
-    { name: 'Condition', slug: 'conditions', id: 2, create: true, view: true, edit: true },
-    { name: 'ContactMessage', slug: 'contact-messages', id: 14, create: false, view: true, edit: false },
-    { name: 'Coupon', slug: 'coupons', id: 5, create: true, view: true, edit: true },
+    { name: 'ActivityLog', slug: 'activity-logs', id: resolvedIds.ActivityLog, create: false, view: true, edit: false },
+    { name: 'Admin', slug: 'admins', id: resolvedIds.Admin, create: true, view: true, edit: true },
+    { name: 'BlogPost', slug: 'content/blog-posts', id: resolvedIds.BlogPost, create: true, view: true, edit: true },
+    { name: 'CarModel', slug: 'car-models', id: resolvedIds.CarModel, create: true, view: true, edit: true },
+    { name: 'Carrier', slug: 'carriers', id: resolvedIds.Carrier, create: true, view: true, edit: true },
+    { name: 'Category', slug: 'content/categories', id: resolvedIds.Category, create: true, view: true, edit: true },
+    { name: 'Condition', slug: 'conditions', id: resolvedIds.Condition, create: true, view: true, edit: true },
+    { name: 'ContactMessage', slug: 'contact-messages', id: resolvedIds.ContactMessage, create: false, view: true, edit: false },
+    { name: 'Coupon', slug: 'coupons', id: resolvedIds.Coupon, create: true, view: true, edit: true },
     { name: 'CronLog', slug: 'cron-logs', id: null, create: false, view: true, edit: false },
-    { name: 'Customer', slug: 'customers', id: 60, create: true, view: true, edit: true },
-    { name: 'EmailLog', slug: 'email-logs', id: 82, create: false, view: true, edit: false },
-    { name: 'FailedSearchLog', slug: 'failed-search-logs', id: 28, create: false, view: true, edit: false },
-    { name: 'Faq', slug: 'content/faqs', id: 5, create: true, view: true, edit: true },
-    { name: 'IpBlocklist', slug: 'ip-blocklists', id: null, create: true, view: true, edit: true },
-    { name: 'Language', slug: 'languages', id: 5, create: true, view: true, edit: true },
-    { name: 'LoginLog', slug: 'login-logs', id: 40, create: false, view: true, edit: false },
-    { name: 'Manufacturer', slug: 'manufacturers', id: 19, create: true, view: true, edit: true },
+    { name: 'Customer', slug: 'customers', id: resolvedIds.Customer, create: true, view: true, edit: true },
+    { name: 'EmailLog', slug: 'email-logs', id: resolvedIds.EmailLog, create: false, view: true, edit: false },
+    { name: 'FailedSearchLog', slug: 'failed-search-logs', id: resolvedIds.FailedSearchLog, create: false, view: true, edit: false },
+    { name: 'Faq', slug: 'content/faqs', id: resolvedIds.Faq, create: true, view: true, edit: true },
+    { name: 'IpBlocklist', slug: 'ip-blocklists', id: resolvedIds.IpBlocklist, create: true, view: true, edit: true },
+    { name: 'Language', slug: 'languages', id: resolvedIds.Language, create: true, view: true, edit: true },
+    { name: 'LoginLog', slug: 'login-logs', id: resolvedIds.LoginLog, create: false, view: true, edit: false },
+    { name: 'Manufacturer', slug: 'manufacturers', id: resolvedIds.Manufacturer, create: true, view: true, edit: true },
     { name: 'MediaFile', slug: 'content/media-files', id: null, create: false, view: false, edit: true },
-    { name: 'Menu', slug: 'content/menus', id: null, create: true, view: true, edit: true },
-    { name: 'NewsletterCampaign', slug: 'newsletter-campaigns', id: null, create: true, view: true, edit: true },
-    { name: 'NewsletterSubscriber', slug: 'newsletter-subscribers', id: 4, create: true, view: true, edit: true },
-    { name: 'NotFoundLog', slug: 'not-found-logs', id: 14, create: false, view: true, edit: false },
-    { name: 'Order', slug: 'orders', id: 82, create: true, view: true, edit: true },
-    { name: 'Page', slug: 'content/pages', id: 6, create: true, view: true, edit: true },
-    { name: 'PartInquiry', slug: 'part-inquiries', id: 14, create: true, view: true, edit: false },
-    { name: 'Payment', slug: 'payments', id: 5, create: false, view: true, edit: false },
-    { name: 'Product', slug: 'products', id: 106, create: true, view: true, edit: true },
-    { name: 'Redirect', slug: 'redirects', id: 36, create: true, view: true, edit: true },
-    { name: 'RefundRequest', slug: 'refund-requests', id: 15, create: false, view: true, edit: true },
-    { name: 'Review', slug: 'content/reviews', id: 4, create: false, view: true, edit: true },
-    { name: 'Role', slug: 'roles', id: 5, create: true, view: true, edit: true },
-    { name: 'SearchLog', slug: 'search-logs', id: 153, create: false, view: true, edit: false },
-    { name: 'Section', slug: 'content/sections', id: 14, create: true, view: true, edit: true },
-    { name: 'SeoMeta', slug: 'seo-metas', id: 1, create: false, view: false, edit: true },
-    { name: 'ShippingMethod', slug: 'shipping-methods', id: 3, create: true, view: true, edit: true },
-    { name: 'ShippingZone', slug: 'shipping-zones', id: 1, create: true, view: true, edit: true },
-    { name: 'TaxRate', slug: 'tax-rates', id: null, create: true, view: true, edit: true },
-    { name: 'Testimonial', slug: 'content/testimonials', id: 6, create: true, view: true, edit: true },
-    { name: 'Translation', slug: 'translations', id: null, create: true, view: true, edit: true },
+    { name: 'Menu', slug: 'content/menus', id: resolvedIds.Menu, create: true, view: true, edit: true },
+    { name: 'NewsletterCampaign', slug: 'newsletter-campaigns', id: resolvedIds.NewsletterCampaign, create: true, view: true, edit: true },
+    { name: 'NewsletterSubscriber', slug: 'newsletter-subscribers', id: resolvedIds.NewsletterSubscriber, create: true, view: true, edit: true },
+    { name: 'NotFoundLog', slug: 'not-found-logs', id: resolvedIds.NotFoundLog, create: false, view: true, edit: false },
+    { name: 'Order', slug: 'orders', id: resolvedIds.Order, create: true, view: true, edit: true },
+    { name: 'Page', slug: 'content/pages', id: resolvedIds.Page, create: true, view: true, edit: true },
+    { name: 'PartInquiry', slug: 'part-inquiries', id: resolvedIds.PartInquiry, create: true, view: true, edit: false },
+    { name: 'Payment', slug: 'payments', id: resolvedIds.Payment, create: false, view: true, edit: false },
+    { name: 'Product', slug: 'products', id: resolvedIds.Product, create: true, view: true, edit: true },
+    { name: 'Redirect', slug: 'redirects', id: resolvedIds.Redirect, create: true, view: true, edit: true },
+    { name: 'RefundRequest', slug: 'refund-requests', id: resolvedIds.RefundRequest, create: false, view: true, edit: true },
+    { name: 'Review', slug: 'content/reviews', id: resolvedIds.Review, create: false, view: true, edit: true },
+    { name: 'Role', slug: 'roles', id: resolvedIds.Role, create: true, view: true, edit: true },
+    { name: 'SearchLog', slug: 'search-logs', id: resolvedIds.SearchLog, create: false, view: true, edit: false },
+    { name: 'Section', slug: 'content/sections', id: resolvedIds.Section, create: true, view: true, edit: true },
+    { name: 'SeoMeta', slug: 'seo-metas', id: resolvedIds.SeoMeta, create: false, view: false, edit: true },
+    { name: 'ShippingMethod', slug: 'shipping-methods', id: resolvedIds.ShippingMethod, create: true, view: true, edit: true },
+    { name: 'ShippingZone', slug: 'shipping-zones', id: resolvedIds.ShippingZone, create: true, view: true, edit: true },
+    { name: 'TaxRate', slug: 'tax-rates', id: resolvedIds.TaxRate, create: true, view: true, edit: true },
+    { name: 'Testimonial', slug: 'content/testimonials', id: resolvedIds.Testimonial, create: true, view: true, edit: true },
+    { name: 'Translation', slug: 'translations', id: resolvedIds.Translation, create: true, view: true, edit: true },
 ];
 
 const CUSTOM_PAGES = [
