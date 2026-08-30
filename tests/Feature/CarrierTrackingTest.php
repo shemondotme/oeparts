@@ -17,7 +17,7 @@ class CarrierTrackingTest extends TestCase
     {
         return Carrier::create(array_merge([
             'name'         => 'DHL',
-            'tracking_url' => 'https://www.dhl.com/track?trackingNo={tracking_no}',
+            'tracking_url' => 'https://www.dhl.com/track?trackingNo={tracking_number}',
             'is_active'    => true,
             'sort_order'   => 0,
         ], $attrs));

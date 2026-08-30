@@ -81,7 +81,17 @@ class Order extends Model
 
     /**
      * Customer-facing tracking link, built from the carrier's URL template
-     * ({tracking_no} placeholder). Null unless both parts are present.
+     * ({tracking_number} placeholder). Null unless both parts are present.
+     *
+     * Was substituting the stale `{tracking_no}` token — confirmed live
+     * during a frontend/UX audit that every real seeded carrier (DHL, DPD,
+     * GLS, FedEx, UPS, Omniva, LP Express, Venipak — see
+     * database/seeders/CarriersSeeder.php, the actual maintained source of
+     * truth for this data) has always used `{tracking_number}` in its
+     * template. `{tracking_no}` never matched, so this attribute silently
+     * returned the template with the placeholder still literally in it —
+     * a broken "track your package" link — for every real order, on every
+     * carrier, since the carriers were seeded.
      */
     public function getTrackingUrlAttribute(): ?string
     {
@@ -91,7 +101,7 @@ class Order extends Model
             return null;
         }
 
-        return str_replace('{tracking_no}', rawurlencode($this->tracking_number), $template);
+        return str_replace('{tracking_number}', rawurlencode($this->tracking_number), $template);
     }
 
     public function items(): HasMany

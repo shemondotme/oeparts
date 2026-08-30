@@ -46,9 +46,33 @@ class CarrierResource extends Resource
                             ->helperText('Display name shown to admins and customers.'),
                         Forms\Components\TextInput::make('tracking_url')
                             ->label(__('admin.tracking_url_template'))
-                            ->placeholder('e.g. https://www.dhl.com/track?trackingNo={tracking_no}')
-                            ->helperText('Use {tracking_no} as a placeholder for the actual tracking number. The customer\'s tracking link is built from this template.')
-                            ->url()
+                            ->placeholder('e.g. https://www.dhl.com/track?trackingNo={tracking_number}')
+                            ->helperText('Use {tracking_number} as a placeholder for the actual tracking number. The customer\'s tracking link is built from this template.')
+                            // ->url() alone rejects every real carrier's saved
+                            // value outright: filter_var(..., FILTER_VALIDATE_URL)
+                            // (what Filament's url() rule uses under the hood)
+                            // treats the literal `{`/`}` in the {tracking_number}
+                            // placeholder this field's own helper text asks for
+                            // as invalid — confirmed live, this silently blocked
+                            // saving *any* field on all 8 real carriers (DHL,
+                            // DPD, GLS, FedEx, UPS, Omniva, LP Express, Venipak),
+                            // since Filament validates the whole form on submit,
+                            // not just the field being changed. Validate the
+                            // template with the placeholder substituted for a
+                            // real value instead of the literal token.
+                            ->rules([
+                                function () {
+                                    return function (string $attribute, $value, \Closure $fail) {
+                                        if (blank($value)) {
+                                            return;
+                                        }
+                                        $probe = str_replace('{tracking_number}', '123', $value);
+                                        if (! filter_var($probe, FILTER_VALIDATE_URL)) {
+                                            $fail('The tracking URL template must be a valid URL.');
+                                        }
+                                    };
+                                },
+                            ])
                             ->maxLength(500)
                             // The column is NOT NULL (migration
                             // 2026_03_26_100006, string('tracking_url', 500)
