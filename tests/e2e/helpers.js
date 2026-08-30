@@ -21,6 +21,15 @@ export function artisan(command) {
 }
 
 /**
+ * Same as artisan(), but returns stdout instead of inheriting it — for
+ * commands a test needs a value back from (e.g. resolving a currently-real
+ * record id), not just a fire-and-forget side effect.
+ */
+export function artisanOutput(command) {
+    return execSync(`docker compose exec -T laravel.test php artisan ${command}`, { encoding: 'utf8' });
+}
+
+/**
  * Logs in via the real login UI on the given page and waits for the
  * dashboard to render. Shared by auth.setup.js (the one-time shared
  * session) and any test that needs its own isolated, freshly-authenticated

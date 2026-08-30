@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { uniqueSuffix, uniqueCode2, fillText, selectOption, submitCreate } from './helpers.js';
+import { uniqueSuffix, uniqueCode2, fillText, selectOption, selectOptionByText, submitCreate } from './helpers.js';
+import { artisan } from '../helpers.js';
 
 /**
  * Real create-flow tests for every Filament resource that has a Create
@@ -16,12 +17,21 @@ import { uniqueSuffix, uniqueCode2, fillText, selectOption, submitCreate } from 
  * helpers.js for the full writeup of how the field/select/submit
  * conventions were derived (dumping real Create/Edit page HTML).
  *
- * Real record ids referenced below (Manufacturer 19, Condition 2,
- * ShippingZone 1, Role "support" 5) were queried live from this dev DB
- * and are stable, long-lived seed/demo rows — not e2e fixture data.
+ * Real record ids referenced below (Condition 2, ShippingZone 1, Role
+ * "support" 5) were queried live from this dev DB and are stable,
+ * long-lived seed/demo rows — not e2e fixture data.
+ *
+ * Manufacturer is the one relationship picked by NAME, not id, on
+ * purpose — confirmed live: "Manufacturer 19" (this comment's own prior
+ * claim) had silently stopped existing, most likely deleted by
+ * delete-flows.spec.js's own delete-flow coverage running against this
+ * same shared dev DB at some point. An id can go stale that way even for
+ * a "stable" seed row; a real demo brand's name doesn't. See
+ * `selectOptionByText` in helpers.js — Manufacturer's Select is also a
+ * searchable/lazy-loaded combobox (no options render until you type),
+ * which plain `selectOption()` can't drive at all regardless of id.
  */
-
-const MANUFACTURER_ID = 19;
+const MANUFACTURER_NAME = 'Alfa Romeo';
 const CONDITION_ID = 2;
 const SHIPPING_ZONE_ID = 1;
 const SUPPORT_ROLE_ID = 5;
@@ -42,7 +52,7 @@ const RESOURCES = [
         name: 'CarModel',
         createUrl: '/admin/car-models/create',
         fill: async (page, u) => {
-            await selectOption(page, 'manufacturer_id', String(MANUFACTURER_ID));
+            await selectOptionByText(page, 'manufacturer_id', MANUFACTURER_NAME);
             await fillText(page, 'name', `E2E Car Model ${u}`);
             await fillText(page, 'slug', `e2e-car-model-${u}`);
         },
@@ -205,7 +215,7 @@ const RESOURCES = [
         createUrl: '/admin/products/create',
         fill: async (page, u) => {
             await fillText(page, 'oem_number', `E2EPROD${u}`);
-            await selectOption(page, 'manufacturer_id', String(MANUFACTURER_ID));
+            await selectOptionByText(page, 'manufacturer_id', MANUFACTURER_NAME);
             await fillText(page, 'name.en', `E2E Product ${u}`);
             await fillText(page, 'price', '49.99');
             await selectOption(page, 'condition_id', String(CONDITION_ID));
@@ -276,6 +286,21 @@ const RESOURCES = [
 ];
 
 test.describe('Admin CRUD: create flow for every resource', () => {
+    // This loop creates a real "E2E ..." row for every resource above and
+    // never deletes any of them via the UI — confirmed live: this shared
+    // dev DB had 34 such rows built up across prior runs, visibly polluting
+    // customer-facing pages (/brands, /blog, the language switcher, the
+    // homepage testimonials/FAQ sections) with garbage content. Sweeping by
+    // the "E2E " naming convention after the whole suite finishes is far
+    // simpler and more reliable than deleting via the UI per-resource here
+    // — Filament's post-create redirect target (index vs view vs edit)
+    // isn't consistent across resources, so there's no one delete-button
+    // flow to reuse. See CleanupAdminE2eTestData for the customer-facing
+    // subset of resources this covers.
+    test.afterAll(() => {
+        artisan('oeparts:e2e:cleanup-crud-leftovers');
+    });
+
     for (const r of RESOURCES) {
         test(`${r.name}: create form submits successfully`, async ({ page }) => {
             const u = uniqueSuffix();

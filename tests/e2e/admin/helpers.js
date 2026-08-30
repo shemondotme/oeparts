@@ -48,6 +48,34 @@ export async function selectOption(page, key, value) {
 }
 
 /**
+ * Selects an option from a large/relationship Select (e.g. Manufacturer)
+ * by its visible text instead of a numeric id. These render as searchable,
+ * lazy-loaded comboboxes — confirmed live: opening one shows zero options
+ * in the DOM until a search term is typed, unlike the small fixed-enum
+ * Selects `selectOption()` handles fine. Two things any caller here needs
+ * that a naive attempt gets wrong:
+ *   1. The search box needs real per-character key events — `.fill()` sets
+ *      the value but doesn't reliably trigger the search (confirmed empirically:
+ *      it left the results list empty), so this uses `pressSequentially`.
+ *   2. Matching by id is fragile in a shared dev database: a specific
+ *      row's id can silently stop existing (another suite's delete-flow
+ *      test, manual admin cleanup, a reseed) even when the row itself
+ *      ("Alfa Romeo", say) is a real, intentionally-stable demo record.
+ *      Its name isn't going anywhere; its id might.
+ */
+export async function selectOptionByText(page, key, searchTerm) {
+    const container = page.locator(`[wire\\:partial="schema-component::form.${key}"]`);
+    await container.locator('.fi-select-input-btn').click();
+    const openListbox = page.locator('.fi-dropdown-panel[role="listbox"]:visible');
+
+    const searchInput = openListbox.locator('input[type="text"], input[type="search"]').first();
+    if ((await searchInput.count()) > 0) {
+        await searchInput.pressSequentially(searchTerm, { delay: 50 });
+    }
+    await openListbox.locator('[data-value]', { hasText: searchTerm }).first().click({ timeout: 10000 });
+}
+
+/**
  * Submits a Create form. `button[type="submit"]` alone is ambiguous —
  * every admin page also renders a hidden global "Sign out" form whose
  * button is `type="submit"` too — so scope by `wire:target`, which names
@@ -67,8 +95,17 @@ export async function submitCreate(page) {
  * stay on the same URL) — callers should assert on the resulting UI
  * state (e.g. the field's new value, or the absence of a validation
  * error), not a URL change.
+ *
+ * Waits for network idle rather than a fixed delay — confirmed live
+ * during a frontend/UX audit that a fixed ~1.5s wait is genuinely too
+ * short on this dev environment's PHP built-in server often enough to
+ * matter: a caller reloading right after can catch the save's own
+ * Livewire round-trip still in flight and read back the pre-save value,
+ * which looks exactly like "the edit didn't persist" (it did — the
+ * assertion just ran before it landed).
  */
 export async function submitSave(page) {
     await page.locator('button[type="submit"][wire\\:target="save"]').click();
-    await page.waitForTimeout(1500);
+    await page.waitForLoadState('networkidle', { timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(300);
 }
