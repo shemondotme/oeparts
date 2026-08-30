@@ -78,7 +78,7 @@
                 $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
             @endphp
 
-            <div class="relative p-6 sm:p-8 lg:p-10
+            <div class="relative min-w-0 p-6 sm:p-8 lg:p-10
                         {{ $index !== count($items) - 1 ? 'border-r border-rule' : '' }}
                         {{ $index < count($items) - 2 ? 'border-b border-rule lg:border-b-0' : '' }}
                         {{ $index % 2 === 1 ? 'border-r-0 lg:border-r' : '' }}"
@@ -105,13 +105,13 @@
                 </div>
 
                 {{-- Massive mono number --}}
-                <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight
+                <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight break-words
                           text-5xl sm:text-6xl lg:text-[5rem]">
                     {{ $displayValue }}
                 </p>
 
                 {{-- Label --}}
-                <p class="mt-4 bp-spec text-ink-muted">
+                <p class="mt-4 bp-spec text-ink-muted break-words">
                     {{ trans_field($item['label'] ?? null) }}
                 </p>
 

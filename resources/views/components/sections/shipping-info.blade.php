@@ -44,7 +44,7 @@
                 $num = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
             @endphp
 
-            <div class="relative p-6 sm:p-8
+            <div class="relative min-w-0 p-6 sm:p-8
                         {{ !$loop->last ? 'border-r border-rule' : '' }}
                         {{ $index < count($features) - 2 ? 'border-b border-rule lg:border-b-0' : '' }}
                         {{ $index % 2 === 1 ? 'border-r-0 lg:border-r' : '' }}">
@@ -71,7 +71,7 @@
 
                 {{-- Value --}}
                 @if($value)
-                <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight
+                <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight break-words
                           text-4xl sm:text-5xl">
                     {{ $value }}
                 </p>
@@ -79,7 +79,7 @@
 
                 {{-- Label --}}
                 @if($label)
-                <p class="mt-4 bp-spec text-ink-muted">{{ $label }}</p>
+                <p class="mt-4 bp-spec text-ink-muted break-words">{{ $label }}</p>
                 @endif
 
                 {{-- Amber underscore --}}
@@ -103,14 +103,21 @@
             </div>
 
             {{-- Carrier row --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 divide-x divide-rule">
+            {{-- Border logic is nth-child-based (not index-based) so it self-corrects at every
+                 breakpoint's column count (2/3/5) and any number of carriers, instead of assuming
+                 one fixed column count — a fixed-index approach mismatches columns on resize and
+                 draws a stray left border on row-start cells, doubling up with the card's edge. --}}
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                 @foreach($carriers as $index => $carrier)
                 @php
                     $carrierKey = strtolower(preg_replace('/[^a-z0-9]/i', '', $carrier));
                     $carrierColor = $carrierColors[$carrierKey] ?? null;
                 @endphp
-                <div class="p-6 flex flex-col items-center justify-center gap-3 text-center
-                            {{ ($index >= 3 && count($carriers) > 3) ? 'md:border-t-0 border-t sm:border-t-0 border-rule' : '' }}">
+                <div class="p-6 flex flex-col items-center justify-center gap-3 text-center border-t border-l border-rule
+                            [&:nth-child(-n+2)]:border-t-0 sm:[&:nth-child(-n+3)]:border-t-0 md:[&:nth-child(-n+5)]:border-t-0
+                            [&:nth-child(2n+1)]:border-l-0
+                            sm:[&:nth-child(3n+1)]:border-l-0 sm:[&:not(:nth-child(3n+1))]:border-l
+                            md:[&:nth-child(5n+1)]:border-l-0 md:[&:not(:nth-child(5n+1))]:border-l">
                     <div class="w-10 h-10 border flex items-center justify-center {{ $carrierColor ? '' : 'border-rule' }}"
                          @if($carrierColor) style="border-color: {{ $carrierColor }}" @endif>
                         <x-heroicon-o-truck class="w-5 h-5 {{ $carrierColor ? '' : 'text-ink' }}"

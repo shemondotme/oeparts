@@ -493,7 +493,7 @@
                         <div class="mt-6 pt-5 border-t-2 border-ink">
                             <div class="flex items-baseline justify-between gap-3 mb-2">
                                 <span class="font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-ink">{{ ui_copy('cart_total_currency_label', 'cart.total_currency_label', ['currency' => settings('general.currency', 'EUR')]) }}</span>
-                                <p class="font-mono text-4xl sm:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
+                                <p class="min-w-0 break-words font-mono text-4xl sm:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
                                     {{ settings('general.currency_symbol', '€') }}<span x-text="summary.grand_total.toFixed(2)"></span>
                                 </p>
                             </div>

@@ -7,43 +7,43 @@
 
     {{-- Error Stats --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="op-card p-5 min-w-0" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(239,68,68,0.1); color: var(--danger-500);">
                     <x-heroicon-o-exclamation-triangle class="w-5 h-5" />
                 </div>
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Exceptions (24h)</span>
             </div>
-            <p class="text-3xl font-bold tabular-nums" style="color: var(--color-text-primary); font-family: var(--font-mono);">
+            <p class="text-3xl font-bold tabular-nums break-words" style="color: var(--color-text-primary); font-family: var(--font-mono);">
                 {{ number_format($stats['total_exceptions_24h']) }}
             </p>
         </div>
 
-        <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="op-card p-5 min-w-0" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(245,158,11,0.1); color: var(--warning-500);">
                     <x-heroicon-o-x-circle class="w-5 h-5" />
                 </div>
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Failed Jobs (24h)</span>
             </div>
-            <p class="text-3xl font-bold tabular-nums" style="color: var(--color-text-primary); font-family: var(--font-mono);">
+            <p class="text-3xl font-bold tabular-nums break-words" style="color: var(--color-text-primary); font-family: var(--font-mono);">
                 {{ number_format($stats['total_failed_jobs_24h']) }}
             </p>
         </div>
 
-        <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="op-card p-5 min-w-0" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(59,130,246,0.1); color: var(--info-500);">
                     <x-heroicon-o-tag class="w-5 h-5" />
                 </div>
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Unique Types</span>
             </div>
-            <p class="text-3xl font-bold tabular-nums" style="color: var(--color-text-primary); font-family: var(--font-mono);">
+            <p class="text-3xl font-bold tabular-nums break-words" style="color: var(--color-text-primary); font-family: var(--font-mono);">
                 {{ number_format($stats['unique_exceptions']) }}
             </p>
         </div>
 
-        <div class="op-card p-5" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
+        <div class="op-card p-5 min-w-0" style="background: var(--color-bg-surface); border: 1px solid var(--color-border-subtle);">
             <div class="flex items-center gap-3 mb-2">
                 <div class="w-10 h-10 flex items-center justify-center rounded-lg" style="background: rgba(16,185,129,0.1); color: var(--success-500);">
                     <x-heroicon-o-clock class="w-5 h-5" />

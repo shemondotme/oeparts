@@ -49,8 +49,8 @@
     <div class="absolute inset-0 bg-grid-ivory bg-grid-md opacity-70 pointer-events-none" aria-hidden="true"></div>
 
     {{-- Corner register marks --}}
-    <div class="absolute top-6 left-6 w-4 h-4 border-l-2 border-t-2 border-ink/40 pointer-events-none" aria-hidden="true"></div>
-    <div class="absolute top-6 right-6 w-4 h-4 border-r-2 border-t-2 border-ink/40 pointer-events-none" aria-hidden="true"></div>
+    <div class="absolute top-3 left-3 w-3 h-3 border-l-2 border-t-2 border-ink/40 pointer-events-none" aria-hidden="true"></div>
+    <div class="absolute top-3 right-3 w-3 h-3 border-r-2 border-t-2 border-ink/40 pointer-events-none" aria-hidden="true"></div>
 
     <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 md:pt-10 lg:pt-14 pb-16 md:pb-24 lg:pb-32">
 

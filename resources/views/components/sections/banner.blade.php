@@ -50,7 +50,7 @@
                 @if($headline)
                 @php $headlineClean = rtrim($headline, '.'); @endphp
                 <h2 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em]
-                           text-4xl sm:text-5xl lg:text-6xl max-w-[20ch]">
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[20ch] break-words">
                     {{ $headlineClean }}<span class="text-amber">.</span>
                 </h2>
                 @endif

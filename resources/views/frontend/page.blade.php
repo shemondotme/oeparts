@@ -141,7 +141,8 @@
             </div>
 
             {{-- Meta ledger --}}
-            <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl">
+            <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl
+           [&>*:nth-child(2n+1)]:border-l-0 sm:[&>*:nth-child(4n+1)]:border-l-0 sm:[&>*:not(:nth-child(4n+1))]:border-l">
                 <div class="px-4 py-3">
                     <dt class="bp-spec text-ink-muted">{{ __('pages.meta_document') }}</dt>
                     <dd class="mt-1 font-mono text-sm font-bold text-ink uppercase tracking-[0.12em] truncate leading-tight">{{ $page->slug }}</dd>

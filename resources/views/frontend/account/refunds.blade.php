@@ -55,7 +55,8 @@
         @endphp
 
         {{-- ── Summary strip ──────────────────────────────────────────── --}}
-        <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule bp-shadow-sm">
+        <div class="mb-6 border border-ink bg-paper grid grid-cols-2 sm:grid-cols-4 divide-x divide-rule bp-shadow-sm
+            [&>*:nth-child(2n+1)]:border-l-0 sm:[&>*:nth-child(4n+1)]:border-l-0 sm:[&>*:not(:nth-child(4n+1))]:border-l">
             <div class="px-5 py-4">
                 <p class="bp-spec-mono">{{ ui_copy('account_total', 'account.total') }}</p>
                 <p class="mt-1 font-display text-2xl font-extrabold text-ink tabular-nums tracking-[-0.02em]">

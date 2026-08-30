@@ -383,7 +383,7 @@
 
         .bp-pre-foot {
             position: absolute;
-            left: 24px; right: 24px; bottom: 24px;
+            left: 60px; right: 60px; bottom: 24px;
             display: flex;
             justify-content: space-between;
             font-size: 9px;
@@ -415,7 +415,7 @@
             .bp-pre-corner--bl, .bp-pre-corner--br { bottom: 16px; }
             .bp-pre-corner--tl, .bp-pre-corner--bl { left: 16px; }
             .bp-pre-corner--tr, .bp-pre-corner--br { right: 16px; }
-            .bp-pre-foot { left: 16px; right: 16px; bottom: 12px; font-size: 8px; }
+            .bp-pre-foot { left: 44px; right: 44px; bottom: 12px; font-size: 8px; }
         }
     </style>
     <noscript><style>#bp-preloader{display:none!important;}html.bp-preloading,html.bp-preloading body{overflow:auto!important;}</style></noscript>

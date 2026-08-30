@@ -341,7 +341,7 @@
                         <p class="font-mono text-[10px] font-bold tracking-[0.22em] uppercase text-ink">{{ ui_copy('account_grand_total', 'account.grand_total') }}</p>
                         <p class="font-mono text-[9px] tracking-[0.2em] uppercase text-ink-muted mt-1">{{ settings('general.currency', 'EUR') }} · {{ ui_copy('account_incl_vat_short', 'account.incl_vat_short') }}</p>
                     </div>
-                    <p class="font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
+                    <p class="min-w-0 break-words font-mono text-3xl font-medium text-ink tabular-nums leading-none tracking-tight">
                         {{ format_price($order->grand_total) }}
                     </p>
                 </div>

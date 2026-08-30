@@ -165,7 +165,7 @@
             </div>
 
             <h1 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
-                       text-4xl sm:text-5xl lg:text-6xl max-w-[22ch]">
+                       text-4xl sm:text-5xl lg:text-6xl max-w-[22ch] break-words">
                 {{ trans_field($post->title) }}<span class="text-amber">.</span>
             </h1>
 
@@ -174,7 +174,8 @@
             </div>
 
             {{-- Spec-sheet metadata ledger --}}
-            <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl">
+            <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl
+           [&>*:nth-child(2n+1)]:border-l-0 sm:[&>*:nth-child(4n+1)]:border-l-0 sm:[&>*:not(:nth-child(4n+1))]:border-l">
                 <div class="px-4 py-3">
                     <dt class="bp-spec text-ink-muted">{{ trans('blog.author_label') }}</dt>
                     <dd class="mt-1 font-display text-sm font-bold text-ink leading-tight truncate">

@@ -302,9 +302,9 @@
                     ['label' => ui_copy('search_price_avg', 'search.price_avg'),  'value' => $priceMinMaxSame ? $displayStats['min'] : $displayStats['avg'], 'em' => true],
                     ['label' => ui_copy('search_price_to', 'search.price_to'),   'value' => $displayStats['max'], 'em' => false],
                 ] as $idx => $stat)
-                <div class="p-5 sm:p-6 {{ !$loop->last ? 'border-b sm:border-b-0 sm:border-r border-rule' : '' }}">
-                    <p class="bp-spec text-ink-muted mb-3">{{ $stat['label'] }}</p>
-                    <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight
+                <div class="min-w-0 p-5 sm:p-6 {{ !$loop->last ? 'border-b sm:border-b-0 sm:border-r border-rule' : '' }}">
+                    <p class="bp-spec text-ink-muted mb-3 break-words">{{ $stat['label'] }}</p>
+                    <p class="font-mono font-medium text-ink tabular-nums leading-none tracking-tight break-words
                               text-3xl sm:text-4xl lg:text-5xl
                               {{ $stat['em'] ? 'text-amber-ink' : '' }}">
                         {{ format_price($stat['value']) }}

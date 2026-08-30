@@ -58,10 +58,10 @@
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {{-- Total Orders --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
+            <div class="border border-ink bg-paper p-5 relative min-w-0 overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-amber"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_total_orders', 'account.total_orders') }}</p>
-                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
+                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none break-words">
                     {{ str_pad((string) $totalOrders, 2, '0', STR_PAD_LEFT) }}
                 </p>
                 <div class="mt-3 flex items-center gap-1.5">
@@ -71,10 +71,10 @@
             </div>
 
             {{-- Total Spent --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
+            <div class="border border-ink bg-paper p-5 relative min-w-0 overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-emerald-600"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_total_spent', 'account.total_spent') }}</p>
-                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
+                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none break-words">
                     {{ format_price($totalSpent) }}
                 </p>
                 <div class="mt-3 flex items-center gap-1.5">
@@ -84,10 +84,10 @@
             </div>
 
             {{-- In Flight --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
+            <div class="border border-ink bg-paper p-5 relative min-w-0 overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-ink"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_in_flight', 'account.in_flight') }}</p>
-                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
+                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none break-words">
                     {{ str_pad((string) $pendingOrders, 2, '0', STR_PAD_LEFT) }}
                 </p>
                 <div class="mt-3 flex items-center gap-1.5">
@@ -97,10 +97,10 @@
             </div>
 
             {{-- Saved Addresses --}}
-            <div class="border border-ink bg-paper p-5 relative overflow-hidden bp-shadow-sm">
+            <div class="border border-ink bg-paper p-5 relative min-w-0 overflow-hidden bp-shadow-sm">
                 <span class="absolute top-0 left-0 right-0 h-[3px] bg-blue-600"></span>
                 <p class="bp-spec-mono">{{ ui_copy('account_addresses_on_file', 'account.addresses_on_file') }}</p>
-                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none">
+                <p class="mt-2 font-display text-4xl font-extrabold text-ink tabular-nums tracking-[-0.03em] leading-none break-words">
                     {{ str_pad((string) $savedAddresses, 2, '0', STR_PAD_LEFT) }}
                 </p>
                 <div class="mt-3 flex items-center gap-1.5">
@@ -126,7 +126,8 @@
             </a>
         </header>
 
-        <dl class="grid sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-rule">
+        <dl class="grid sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-rule
+           sm:[&>*:nth-child(2n+1)]:border-l-0 lg:[&>*:nth-child(4n+1)]:border-l-0 lg:[&>*:not(:nth-child(4n+1))]:border-l">
             <div class="px-5 py-4">
                 <dt class="bp-spec-mono">{{ ui_copy('account_full_name', 'account.full_name') }}</dt>
                 <dd class="mt-1.5 font-display text-base font-bold text-ink tracking-[-0.01em]">

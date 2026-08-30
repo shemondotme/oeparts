@@ -181,7 +181,8 @@
                 </p>
 
                 {{-- Spec ledger --}}
-                <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl">
+                <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl
+           [&>*:nth-child(2n+1)]:border-l-0 sm:[&>*:nth-child(4n+1)]:border-l-0 sm:[&>*:not(:nth-child(4n+1))]:border-l">
                     <div class="px-4 py-3">
                         <dt class="bp-spec text-ink-muted">{{ __('manufacturer.stat_parts') }}</dt>
                         <dd class="mt-1 font-mono text-xl font-bold text-ink tabular-nums leading-none">{{ number_format($totalParts) }}</dd>

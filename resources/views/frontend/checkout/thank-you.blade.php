@@ -136,7 +136,7 @@
                         <p class="bp-spec text-ink mb-1">{{ ui_copy('checkout_order_total_currency_label', 'checkout.order_total_currency_label', ['currency' => settings('general.currency', 'EUR')]) }}</p>
                         <p class="font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">{{ ui_copy('checkout_including_all_taxes', 'checkout.including_all_taxes') }}</p>
                     </div>
-                    <p class="font-mono text-4xl md:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
+                    <p class="min-w-0 break-words font-mono text-4xl md:text-5xl font-medium text-ink tabular-nums leading-none tracking-tight">
                         {{ format_price($orderData['grand_total']) }}
                     </p>
                 </div>

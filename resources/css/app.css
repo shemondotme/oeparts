@@ -26,7 +26,15 @@
     display: none;
 }
 
-/* bp-rise — entrance animation for staggered heading characters */
+/* bp-rise — entrance animation for staggered heading characters.
+   The "to" state must resolve to the literal `none` transform, not
+   `translateY(0)` — any non-`none` transform (even a zero-offset one)
+   makes the element establish its own stacking context per spec, and
+   with `animation-fill-mode: forwards` that context outlives the
+   animation. That trapped every z-indexed overlay (e.g. the OEM
+   autocomplete dropdown) inside its own .bp-rise section, unable to
+   paint above a later .bp-rise sibling section no matter how high its
+   z-index was set. */
 @keyframes bp-rise {
     from {
         opacity: 0;
@@ -34,7 +42,7 @@
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: none;
     }
 }
 

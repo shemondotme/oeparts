@@ -29,7 +29,7 @@
                 @endif
                 @if($headline)
                 <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em]
-                           text-4xl sm:text-5xl lg:text-6xl max-w-[14ch]">
+                           text-4xl sm:text-5xl lg:text-6xl max-w-[14ch] break-words">
                     {{ $headline }}<span class="text-amber">.</span>
                 </h2>
                 @endif

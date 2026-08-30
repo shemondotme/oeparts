@@ -39,7 +39,7 @@
         </div>
         @endif
         @if($headline)
-        <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em] text-4xl sm:text-5xl lg:text-6xl {{ $headlineMax }}">
+        <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em] text-4xl sm:text-5xl lg:text-6xl break-words {{ $headlineMax }}">
             {{ $headline }}<span class="text-amber">.</span>
         </h2>
         @endif
@@ -66,7 +66,7 @@
     </div>
     @endif
     @if($headline)
-    <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em] text-4xl sm:text-5xl lg:text-6xl max-w-[24ch]">
+    <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em] text-4xl sm:text-5xl lg:text-6xl max-w-[24ch] break-words">
         {{ $headline }}<span class="text-amber">.</span>
     </h2>
     @endif
@@ -89,7 +89,7 @@
     </div>
     @endif
     @if($headline)
-    <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em] text-4xl sm:text-5xl lg:text-6xl mx-auto max-w-[22ch]">
+    <h2 class="font-display font-extrabold text-ink leading-[0.95] tracking-[-0.03em] text-4xl sm:text-5xl lg:text-6xl mx-auto max-w-[22ch] break-words">
         {{ $headline }}<span class="text-amber">.</span>
     </h2>
     @endif
