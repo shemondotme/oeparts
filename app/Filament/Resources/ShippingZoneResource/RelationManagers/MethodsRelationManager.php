@@ -15,8 +15,6 @@ class MethodsRelationManager extends RelationManager
 {
     protected static string $relationship = 'methods';
 
-    protected static ?string $recordTitleAttribute = 'name';
-
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -74,7 +72,12 @@ class MethodsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return AdminUi::configureTable($table)
-            ->recordTitleAttribute('name')
+            // ->recordTitleAttribute('name') crashed with a TypeError the
+            // moment any action needing a record title resolved — 'name'
+            // is a translatable/array-cast column here, not a plain
+            // string (Table::getRecordTitle() declares : string). Same
+            // bug and fix as MenuItemRelationManager.
+            ->recordTitle(fn ($record): string => AdminUi::localizedName($record->name))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Method')

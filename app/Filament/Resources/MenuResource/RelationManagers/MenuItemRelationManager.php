@@ -18,8 +18,6 @@ class MenuItemRelationManager extends RelationManager
 {
     protected static string $relationship = 'items';
 
-    protected static ?string $recordTitleAttribute = 'label';
-
     public function form(Schema $schema): Schema
     {
         return $schema
@@ -98,7 +96,13 @@ class MenuItemRelationManager extends RelationManager
         // every other resource/relation manager uses.
         return $table
             ->modifyQueryUsing(fn ($query) => $query->with('parent'))
-            ->recordTitleAttribute('label')
+            // ->recordTitleAttribute('label') crashed with a TypeError
+            // (Table::getRecordTitle() declares : string, but 'label' is a
+            // translatable/array-cast column) the moment any action needing
+            // a record title resolved — confirmed live via the Edit action,
+            // a real 500 on every attempt. label is a JSON column, not a
+            // plain string, so it needs the closure form + localization.
+            ->recordTitle(fn ($record): string => AdminUi::localizedName($record->label))
             ->columns([
                 Tables\Columns\TextColumn::make('label')
                     ->label('Label')
