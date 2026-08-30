@@ -1,0 +1,2 @@
+from_url,to_url,type,is_active
+e2e-admin-fixture-redirect-import,/e2e-admin-fixture-redirect-import-target,301,1
