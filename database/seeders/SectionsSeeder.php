@@ -40,7 +40,7 @@ class SectionsSeeder extends Seeder
             // 1 — Hero: full-width OEM search bar with headline
             [
                 'type' => 'hero',
-                'title' => 'Hero',
+                'title' => ['en' => 'Hero', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 10,
                 'content' => [
                     'headline' => $this->ml(
@@ -72,7 +72,7 @@ class SectionsSeeder extends Seeder
             // 2 — Trust bar: 4 trust signals below hero
             [
                 'type' => 'trust_bar',
-                'title' => 'Trust Bar',
+                'title' => ['en' => 'Trust Bar', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 20,
                 'content' => [
                     'items' => [
@@ -99,7 +99,7 @@ class SectionsSeeder extends Seeder
             // 3 — Stats counter: animated numbers from settings group stats_counter
             [
                 'type' => 'stats_counter',
-                'title' => 'Stats Counter',
+                'title' => ['en' => 'Stats Counter', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 30,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -131,7 +131,7 @@ class SectionsSeeder extends Seeder
             // 4 — How it works: 3-step process
             [
                 'type' => 'how_it_works',
-                'title' => 'How It Works',
+                'title' => ['en' => 'How It Works', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 50,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -189,7 +189,7 @@ class SectionsSeeder extends Seeder
             // 6 — Featured brands: top manufacturer grid
             [
                 'type' => 'featured_brands',
-                'title' => 'Featured Brands',
+                'title' => ['en' => 'Featured Brands', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 60,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -214,7 +214,7 @@ class SectionsSeeder extends Seeder
             // 7 — Popular searches: most-searched OEM numbers
             [
                 'type' => 'popular_searches',
-                'title' => 'Popular Searches',
+                'title' => ['en' => 'Popular Searches', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 70,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -239,7 +239,7 @@ class SectionsSeeder extends Seeder
             // 9 — Testimonials: customer reviews from DB
             [
                 'type' => 'testimonials',
-                'title' => 'Testimonials',
+                'title' => ['en' => 'Testimonials', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 90,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -266,7 +266,7 @@ class SectionsSeeder extends Seeder
             // 11 — FAQs: accordion from DB
             [
                 'type' => 'faqs',
-                'title' => 'FAQs',
+                'title' => ['en' => 'FAQs', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 110,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -292,7 +292,7 @@ class SectionsSeeder extends Seeder
             // 13 — Newsletter: email subscribe form
             [
                 'type' => 'newsletter',
-                'title' => 'Newsletter',
+                'title' => ['en' => 'Newsletter', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 130,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -322,7 +322,7 @@ class SectionsSeeder extends Seeder
             // 14 — Blog preview: latest 3 posts from DB
             [
                 'type' => 'blog_preview',
-                'title' => 'Blog Preview',
+                'title' => ['en' => 'Blog Preview', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 140,
                 'is_active' => true,
                 'content' => [
@@ -340,7 +340,7 @@ class SectionsSeeder extends Seeder
             // 4 — Part inquiry CTA: quick find-my-part form
             [
                 'type' => 'part_inquiry',
-                'title' => 'Part Inquiry',
+                'title' => ['en' => 'Part Inquiry', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 40,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -368,7 +368,7 @@ class SectionsSeeder extends Seeder
             // 12 — Contact CTA: simple banner linking to /contact
             [
                 'type' => 'contact_cta',
-                'title' => 'Contact CTA',
+                'title' => ['en' => 'Contact CTA', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 120,
                 'content' => [
                     'eyebrow' => $this->ml(
@@ -397,7 +397,7 @@ class SectionsSeeder extends Seeder
             // Promotional banner: configurable banner with CTA
             [
                 'type' => 'banner',
-                'title' => 'Promo Banner',
+                'title' => ['en' => 'Promo Banner', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 80,
                 'is_active' => true,
                 'content' => [
@@ -426,7 +426,7 @@ class SectionsSeeder extends Seeder
             // Shipping info: EU coverage & carriers
             [
                 'type' => 'shipping_info',
-                'title' => 'Shipping Info',
+                'title' => ['en' => 'Shipping Info', 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
                 'sort_order' => 100,
                 'content' => [
                     'eyebrow' => $this->ml(
