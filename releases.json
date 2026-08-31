@@ -31,9 +31,9 @@
             "min_mysql": "8.0.16",
             "min_version_to_update_from": "1.0.15",
             "migration_count": 9,
-            "sha256": "64cf39c93411561b1da8a04808ba1830e6f3d3a3cfb22cea86bdccd627d2d94e",
-            "size_bytes": 30579524,
-            "signature": "NxY2q/hCwx2wRdLExX7ZmyYCGxwWDnRyw7iA0r+nNPW9Ga5nMefIlsx1/WZnEd8lj/2w3uhFi4kv2f/k5gTlBDpxW6z0vQXco8T/dfEkZvUWh8Dp+plqsgWP2zSbXM7FGcofIUv/kHDMK7ohNSTD1FG+sUjSjosoyA14ZRyR7rtSntBBpXlM7LnUbx37JadOCuH0U1YNiH/pYzhO3yinO8xMuliOWYJUaIV7Q0fCACfng5yrFWqOsZL6nFDSi9hSsg+JsX+xG5+7RFYEPsHUYFuNfIAs9TaWy2geMOZKNkbb2A8Gm9XxGOYqjgZQEGofEzzqGeAvYEJrb0HYqOgp/fMUf7T+kqURlLsBsGGvXdQUgIEEajaPUobX0f6P/glb8AUz0/OSn7bYC3vrQpzYKimpV0r2CMq7hgm5ecF5B3EWWFm69DVaKp+kHKTogLHffzMIEsD9d1JWAQnlqhQI+2eweJz2QB0bnOt119auDWSTzt3QR+1wpDOHK6Aza3ukYtXtjlVJluf2u79MFWMJmOOzO/fFWWhmQzB/X58yEicc+VOnsFaQN51rRFm0T2rJHe0/5WEWveokMP7fJpBERg+c7wHiD20l7oekXpYO1yMLxof+zt/w8Z6Me+0sQNkT/zYUjOKgfkNnsdVpVcs4i+M1Ij2rSuDB1oJjfLhUWE4=",
+            "sha256": "9f1f558e7f7b6398a5090ecbe0bd2867252bc676d610e70ad45c62e4ccc173f9",
+            "size_bytes": 30563308,
+            "signature": "TurC8R6LUPI3GLf8wY6lVkQXvWVIdnjKRgk7rHkWgJVfC5BHVcQlKJf8uSmZ/sJ7vzicBXwtl892nVus+AHsVLmsa153169diUIvy38Dxy6vSJIbaRlwwP0rLlZwtAkBnjzJtqa1BjxrQTZrMD2JxttIOfxavzSvpNEfweGM3Auu2hOUbLrRvaZl4jPCE3MXLzZCvaAr9YtJupJGEN84eii6lepPzZC2cVZhFq5smXp4tm5GAdatvls+xKy7XZIQ0RCzjhmLz/rfcx5EDxxFaisVhcjx9SnKQcvgNF+5+5tQEvmoDSOWg/ZR7TjQhE12yGpoQPaPE8p+q4bFHaPnxPoRnWfwv5nX7AA8I2aIka79pia8HBYvc9UZdAJjhR9gZDUC2/ZqC43+xEUkfrRWfLBBNRKAhwzQQ6cR8EaBVpsNOWndDPR5kIB76m7BcGJZ2ASupjr3aKBMeMp4E7rQ7U3ceDzcur/c6KfK75JG6o+9gWvBze29AoUef15YRqrIagpOlBffXxmqc6mfC2YS/tlek4i4z1HYWrFX3VPnlssfdnMmMTN47I7UsRiN8KrIDd3bjDKT27mzWrNCHxh/MQKItzhEU9UkTVUgCZlAz9abf6zxRPMTO/TB25lWJgK2wz65EtmDUlPI461z/lUfsID3Fk6bf5w+OjpkYhbYeQ4=",
             "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
             "download_url": "https://github.com/shemondotme/oeparts/releases/download/v1.0.16/oeparts-1.0.16.zip"
         },

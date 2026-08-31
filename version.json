@@ -25,14 +25,14 @@
     "post_update_notes": "A large batch: a redesigned product detail page (new gallery, spec ledger, vehicle-fitment table, customer reviews, optional Buy Now flow), a modernized SEO Health Dashboard with several new reports (Search Console analytics, on-page audit, Core Web Vitals trend), an extensive SEO/structured-data/redirects/sitemap pass, an 8-phase reorganization of the entire admin Settings area (including a new searchable Site Copy Library for editing storefront text), and a comprehensive end-to-end test suite that found and fixed several real bugs along the way — most importantly, customer order-tracking links have been broken for every order on every carrier since the carriers were first configured (now fixed), admin bell notifications for new orders/refunds were completely silent, the address book and Create Customer/Create Order admin forms were unusable, and the mobile site overflowed off-screen on every page in German/Lithuanian/French/Spanish (not English). Every migration applies automatically; every new behavior defaults to matching what the site already did. See CHANGELOG.md for the full list.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": "04e43ee96671e437f6f0dc1465ce7d7ed54577e272dd4da5a7c3f5750795a597",
-    "size_bytes": 30864667,
-    "signature": "jclL+BPcu9HS/gosX2GEhON54UmyB7sn9jop9DsuqZoHImM6YWcJbQdgsYVqOW2Gjc0hHFaMwD4Q9d0Wqtarz8SZ1GO1/9dITaAS4cM+Ou9PTjl0kzt6Ydi1usNGVWT2hPLbf6Fac0xTNzQ+5KrfrcXAhDUa1SC9UOWMaY2C5ZiUpJc3ovgQJB8LrCjDryTPUeBmjiAqiGURNDVfk9h5UtM6KE2IPf7xsKm30EzT4bTpEH+mkrwH+7T5CS2tOcTJOWRUhf57IYx18Icteh/LrCa+Q9ayy7l+Th3EmCt2jeZEhyhWr9KEgEin3dA/ksfShcpt53XW2Ue/c8AAgg4k8TVRRpNzEShTqzkLYiEziTT5qVFemeV76JCI6eqm7xgKjun1Tjsj7tPTTTotsNqdEA1vWJEQno185iMtsrr/njbSNFB8fxXExwknD6m/zjN4JEEEBjgfB/9edUBV1Dziw2FsvjIe0iqxOjtte+rxpOxSZtaWLtxLQL0xv5VAT7c/RVw2tRqtWZ70R0LUfq16XaLkWg2VYRz30OscujCFDT4Owzw3HFRhqF1O9ZkENjdlbsYflLDV37AnKZRlVj6NfncvPBV5vhvtltwvUKWpoWtGOwV5Q89tI/tM+RXoiu0z3Mre9lpjD9uWtEcDr984t6/1ViRdAM8qkf/j4qiWRKg=",
+    "sha256": "d141d34671c36516bc12c589a71d5e1cbfe6940cb4be7fe4d178a7008aed5e8f",
+    "size_bytes": 30962095,
+    "signature": null,
     "download_url": "https://github.com/shemondotme/oeparts/releases/download/v1.0.18/oeparts-1.0.18.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "26e725983d903d1570225207e9875f4a255501ad",
-    "git_signature": "fk/P61K/VEzig8jKnU/TYXKaTEawsexKtRXkM0DnhnnA/YLpfZZ8SmTOL6Su3WYrePLFd7SR58DIWYRYLpR0mjYEOru3IykTr8maCQOaJbXB4/g8EHe0zXTeI/i05Z5W66eXm30/r2vIsmarWNxjYzthndXnCq0x9jjlCCpkisHg+/N0uOaJ1SnBjnogcrnfBZbpqBBSOLg/X6jWv2srl6ujcpyQNU1dP6+2snDYriKmhPn2roWWVbPL+HUDbco2QwkMjwef0f+aCu8hDHL87zy9Zt3D2Q8qVQD2JnYZsGDTQGGjQDNAqHdLJivUFootmmulf+yMaDlc7EqHqM04tNmR2+P3oT0Vsa6j15RKPNNL+DwCOdHviHHA9/8QF0nZ6G+BufZb36iwo2UQDKO+QshdZ0ZTQLyDrcW7obqLN1BjDST1biX3cuZeJ0+36uIAb+HGtnTRtfFc4pzvEgipNj/HH1TMXGwoJ4IAMpbvJ+HTIJfqe/v6xygzmmeri9xmDGHzZ9eRxx1g1slSco1dd6v41vESIAHLSnnsvJFq5Or75hNNCUqXbCwRlW4MVSGT89uvpzpaQMGfsO99K7OAxkM6VWr9MTcuQNAmFXuLKTaSWCP7H/XtiJ3xChQ8zr/auWdclG9K4/PxEUziWLAYTNhhUziYBve0SJe08crfwuE="
+    "git_commit_sha": null,
+    "git_signature": null
 }
