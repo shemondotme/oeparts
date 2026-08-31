@@ -2,6 +2,67 @@
 
 All notable changes to this project are documented here.
 
+## 1.0.18 — 2026-08-31
+
+A large batch: a redesigned product detail page with admin-toggleable content sections and a Buy Now flow, a modernized SEO Health Dashboard with several new reports, an extensive SEO/structured-data/redirects/sitemap pass, an 8-phase reorganization of the entire admin Settings area, a comprehensive Playwright end-to-end test suite covering the full storefront and admin panel, and a sitewide responsive/multi-locale audit that found and fixed several real mobile layout bugs. Several critical admin-panel bugs (broken notifications, address book, customer creation, CSV export, a broken order tracking link) were found and fixed along the way. Every migration applies automatically; every new toggleable feature ships off/disabled by default — review and opt in at your own pace after updating.
+
+### Added — Product detail page redesign
+- Rebuilt around a refined "Blueprint Pro" direction: a vertical thumbnail gallery with a full-screen zoom lightbox, a bordered spec ledger (availability/price/delivery/MOQ) with a real add-to-cart widget, trust badges matching the site footer, a Compatible Vehicle Fitment table, and a Fitment & Shipping FAQ.
+- New, individually toggleable sections (Settings → Product Page Sections, all off by default unless noted): specifications table, warranty block, product video, related products, and open customer reviews (admin-moderated — approve/reject from a new Reviews resource; only approved reviews render publicly). The manufacturer trust block (logo/verified-OEM badge/country) is always on.
+- **Buy Now** (off by default): skips the cart page entirely for a single-product purchase, reusing the existing checkout flow unmodified.
+- "Ask About Fitment" now opens the existing part-inquiry modal pre-filled with the product's OEM number.
+- VAT-inclusive/exclusive price display now matches the search page's own toggle — the detail page previously always showed the raw net price.
+
+### Added — SEO Health Dashboard & SEO program
+- Consolidated 7 disjoint stat widgets into one cohesive dashboard (Clarity design), with real Google Search Console Search Analytics (clicks/impressions/CTR/position, top queries/pages), an On-Page SEO Audit (meta-title/description coverage, duplicate titles, alt-text coverage, structured-data completeness, thin catalog entries, off-domain canonicals), a Core Web Vitals trend (new weekly snapshot), a 404-count trend, broken-redirect-target detection, and a Google Indexing Check for each active locale's homepage.
+- Product structured data (JSON-LD) now includes star ratings (AggregateRating/Review, once real reviews exist), FAQPage content, admin-entered specifications, and VideoObject metadata — each only emitted when its corresponding page section is actually visible, never claiming content the page has toggled off. Blog posts, the manufacturer page, and the homepage's Organization schema also gained several structured-data completeness fixes.
+- New image sitemap extension for product photos; blog posts, CMS pages, manufacturer pages, and car-model pages now push to IndexNow (previously products only) via a shared trait.
+- Redirects: CSV import (with an "update existing" toggle and a downloadable template) alongside the existing export, a bulk action to create redirects from multiple 404 rows at once, and a per-redirect destination-health "Test" action — all sharing the same loop-validation logic as the single-row form so none of these paths can create a redirect loop the form itself would have blocked.
+- Bulk-generate SEO meta titles/descriptions for products from a template (placeholder-based, skips products with hand-written meta by default) — built for the real 1M+-product catalog scale, not just a small dev seed.
+- A live, interpolated preview for every title/description template in the SEO Control Center, so a template mistake is visible before it goes live across every search page (or the whole homepage) at once.
+- Numerous smaller correctness fixes: sitemap `lastmod` no longer claims daily changes it didn't make; hreflang alternate links now carry the correct locale's own URL slug instead of one that immediately redirects; a filtered (not just partial-match) search-results page now correctly `noindex`es in favor of its own canonical; a discontinued/deactivated product now automatically gets a fallback redirect to its manufacturer's page instead of silently 404ing; the visible search-results breadcrumb now matches its own structured data; crawler verification (Googlebot/Bingbot bypass) now handles IPv6 and transient DNS failures instead of caching a false negative for 12 hours; an API key could leak into a logged error message on a network hiccup — now redacted.
+
+### Added — Admin Settings reorganization (8 phases)
+- Consolidated roughly 40 scattered settings pages down to about a dozen tabbed pages, organized into a clearer hub structure (Security & Access, Platform, Brand & Storefront, Store & Commerce, Growth), with every tab directly reachable (not hidden an extra click deep) and deep-linkable.
+- New **Site Copy Library**: browse, search, and edit ~850 storefront text-override strings (cart/search/navbar/checkout/account/footer copy) without touching a translation file, grouped by category, with a warning shown on the Translations page when a language-file edit would have no visible effect because a Site Copy override already takes precedence.
+- Every old settings page URL still works — it 301s straight to the right tab on its new consolidated page, so an existing bookmark or link never breaks.
+- Fixed several settings-data bugs uncovered while merging pages onto shared multi-tab forms (where previously-independent pages now validate together, so one page's stale/invalid data could silently block saving an unrelated field): a legacy `currency_position` value, two field-name collisions between merged groups, and customer-facing checkout success/error messages that had regressed from real per-locale translations back to English-only in every locale.
+
+### Added — End-to-end test coverage (Playwright)
+- New comprehensive Playwright suites covering the full guest storefront journey (search, product detail, cart, a real 5-step checkout, account lifecycle, contact form — 50 tests) and the full admin panel (a smoke sweep across every resource and settings/system page, real create/edit/delete flows, custom actions like review/refund approval, relation managers, bulk actions, CSV import/export, and more — 300+ tests), plus a sitewide responsive/overflow audit across 4 viewports and all 5 locales.
+- This work is what found and fixed several of the bugs listed under Fixed below — most of them, including two admin panel pages that were completely unusable to a real browser user, had no prior end-to-end coverage at all.
+
+### Fixed — Admin panel (critical)
+- **Admin bell notifications were completely non-functional for new orders and refund requests** — a wrong class import made every such notification silently throw and die inside an empty catch block; no admin has ever seen one. A second, independent bug made job-failure/health-check alerts invisible to the same bell for an unrelated reason. Both fixed; a failure in this system now at least gets logged instead of vanishing.
+- **Customer address book (create/edit) was completely broken** for every customer — a required-but-never-collected field plus a form/database column name mismatch made every save fail.
+- **Creating a Customer from the admin always crashed** (no password field, but the column had no default) — now generates one automatically, the same way social-login signups already do.
+- **The admin "Create Order" form was completely unusable** — its order-number field was simultaneously required and disabled, so a real admin could never satisfy validation to submit it at all. (Existing automated tests never caught this because they can bypass the disabled-field restriction a real browser can't.)
+- **Exporting Products (or any resource with a translatable-text or status column) to CSV always crashed.**
+- Category/Manufacturer/Blog/Page slug auto-fill silently stopped working the moment a real admin actually used it — clicking Create raced the async slug-fill against native browser validation on the still-empty required field.
+- A seeded-but-uncredentialed SMTP host silently overrode a correctly-configured `.env` mail setup on every fresh seed, breaking all outgoing email.
+- The Top Searched OEMs dashboard widget 500'd for any non-super-admin role under strict SQL mode.
+- Two relation managers (Menu Items, Shipping Methods) 500'd on Edit for any translatable record title.
+- Adding a cross-reference OEM number through the admin always 500'd.
+
+### Fixed — Storefront responsive/visual bugs
+- A decorative corner-bracket border overlapped adjacent text at mobile widths on the preloader and homepage hero.
+- Several stat/spec grids (shipping carriers, homepage stats counter, search results price range, account dashboard KPI cards, checkout/cart order totals, CMS section headlines) could bleed a long word or value past their own cell/card border instead of wrapping — fixed sitewide, not just where first noticed.
+- The "Trusted Carriers" grid drew a stray double border on mobile because its divider logic only worked correctly at one specific column count.
+- A CSS animation side-effect on every homepage/page section could trap the OEM search's live-suggestion dropdown (and similar overlays) permanently underneath the next section on the page, regardless of its own stacking order — fixed at the animation's root cause, sitewide.
+- **The mobile navbar overflowed off-screen, pushing the cart and menu buttons past the edge of the viewport, on every single page in German, Lithuanian, French, and Spanish** (though not English) — the logo's tagline was forced onto one unbreakable line, and the longer non-English translations simply didn't fit. Only found via a genuine multi-locale audit; the site had never been checked in anything but English at mobile width before.
+
+### Fixed — Orders & carriers
+- **Customer order-tracking links have been broken for every order, on every carrier, since the carriers were first configured** — the link-building code substituted the wrong placeholder token, so the tracking URL sent to customers always contained the raw, unsubstituted placeholder text instead of their real tracking number.
+- As a related fix, the admin could never save *any* change to a real carrier (DHL, DPD, GLS, FedEx, UPS, Omniva, LP Express, Venipak) — the tracking-URL field's validation rejected its own documented placeholder syntax.
+- A confirm-payment action on an order in certain states (e.g. already refund-requested) crashed instead of showing the same graceful "Confirmation failed" message other invalid-transition attempts already get.
+
+### Fixed — Data integrity
+- Every one of the 14 seeded homepage sections stored its admin-facing title in a format the admin Edit form couldn't read — opening any section to edit it showed a blank title field, and saving without noticing would have silently erased the real one. Fixed for fresh installs and existing data alike.
+- A bulk-catalog-update log's timestamp was silently dropped on every insert, making the log's own date sort/filter meaningless.
+
+### Fixed — Local dev environment
+- The local PHP development server handled only one request at a time by default, which could stall an otherwise-fast page (e.g. the live OEM search suggestions) for 20+ seconds under ordinary page-load request bursts. Now handles a small pool of requests concurrently.
+
 ## 1.0.17 — 2026-08-12
 
 A full SEO program aimed at getting every OEM part page indexed fast at 100k+-product scale, plus a same-scope fix to a settings-staleness issue found while evaluating (not adopting) Laravel Octane. Every migration applies automatically; every new behavior defaults to matching what the site already did — the new detail pages, IndexNow, and Bing ping all ship off/disabled until you opt in from the new SEO Control Center.
