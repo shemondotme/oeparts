@@ -8,3 +8,14 @@ parameters:
         - app
 
     tmpDir: storage/framework/phpstan
+
+    # The baseline is generated locally (Docker); CI runs on a different PHP
+    # build (GitHub Actions' ubuntu-latest via shivammathur/setup-php) —
+    # confirmed live that a handful of baselined error occurrence counts can
+    # drift by one between the two (same locked composer.lock versions, but a
+    # different PHP patch build). Without this, that drift is a hard CI
+    # failure ("expected to occur N times, but occurred only N-1 times") on
+    # an otherwise-clean run. Trade-off: a baselined error that later
+    # disappears entirely no longer gets flagged as stale — acceptable, since
+    # portability across environments matters more here than that signal.
+    reportUnmatchedIgnoredErrors: false

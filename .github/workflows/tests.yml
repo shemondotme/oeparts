@@ -174,6 +174,20 @@ jobs:
           key: composer-8.4-${{ hashFiles('composer.lock') }}
           restore-keys: composer-8.4-
 
+      # Must run before `composer install` — same reason as the `test` job's
+      # "Copy test environment" step: its post-autoload-dump hook boots the
+      # framework (artisan package:discover), and this app's boot path hits
+      # the database (app/Support/LocaleRegistry.php) — confirmed live via a
+      # QueryException connecting to 127.0.0.1:3306 (config/database.php's
+      # bare fallback default) when no .env exists yet at this point. Use
+      # .env.testing (sqlite, no external service needed) purely to survive
+      # this HOST-side install cleanly — this step only needs vendor/laravel/sail
+      # on disk for the Docker build context below, nothing about the app's
+      # real runtime config. The real .env (MySQL/Redis-backed, for the
+      # actual containers) is prepared after, overwriting this one.
+      - name: Copy test environment (survives composer's post-install app boot only)
+        run: cp .env.testing .env
+
       - name: Install dependencies (host, for the Sail build context)
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
@@ -182,7 +196,8 @@ jobs:
       # array-driver setup the PHPUnit suite uses. .env.docker.overrides (env_file
       # in compose.yaml) supplies DB_HOST/REDIS_HOST/CACHE/SESSION/QUEUE/MAIL —
       # everything else (DB_DATABASE, APP_KEY, OE_BACKUP_KEY) comes from this base
-      # .env, same division of concerns local dev relies on.
+      # .env, same division of concerns local dev relies on. Overwrites the
+      # .env.testing copy above now that the host-side install is done.
       - name: Prepare environment file
         run: |
           cp .env.example .env
