@@ -43,7 +43,7 @@
         ['@type' => 'ListItem', 'position' => 1, 'name' => __('search.console_breadcrumb_home'), 'item' => url('/'.$lang.'/')],
         ['@type' => 'ListItem', 'position' => 2, 'name' => __('search.console_breadcrumb_current'), 'item' => route('frontend.search.console', ['lang' => $lang])],
     ],
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endsection
 

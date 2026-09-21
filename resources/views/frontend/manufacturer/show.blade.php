@@ -42,7 +42,7 @@
         'name'  => $brandName,
     ],
     'description' => $brandMetaDescription,
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
 </script>
 <script type="application/ld+json">
 {!! json_encode([
@@ -53,7 +53,7 @@
         ['@type' => 'ListItem', 'position' => 2, 'name' => __('manufacturer.breadcrumb_brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
         ['@type' => 'ListItem', 'position' => 3, 'name' => $brandName,   'item' => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
     ],
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @php
     // normalized_oem (not oem_number): a real OEM routinely contains
@@ -100,7 +100,7 @@
     '@type' => 'ItemList',
     'numberOfItems' => $products->total(),
     'itemListElement' => $manufacturerJsonLdItems,
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endif
 @endsection

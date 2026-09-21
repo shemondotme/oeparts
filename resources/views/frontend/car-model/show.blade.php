@@ -37,7 +37,7 @@
         ['@type' => 'ListItem', 'position' => 4, 'name' => __('car_model.breadcrumb_models'),  'item' => route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
         ['@type' => 'ListItem', 'position' => 5, 'name' => $modelName,   'item' => route('frontend.car-model.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug])],
     ],
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @php
     $carModelJsonLdItems = [];
@@ -68,7 +68,7 @@
     '@type' => 'ItemList',
     'numberOfItems' => $products->total(),
     'itemListElement' => $carModelJsonLdItems,
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endif
 @endsection

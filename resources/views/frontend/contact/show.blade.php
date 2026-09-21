@@ -50,7 +50,7 @@
             'areaServed' => 'EU',
         ]),
     ]),
-]), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+]), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 <script type="application/ld+json">
 {!! json_encode([
@@ -60,7 +60,7 @@
         ['@type' => 'ListItem', 'position' => 1, 'name' => __('contact.breadcrumb_home'), 'item' => url('/'.$lang.'/')],
         ['@type' => 'ListItem', 'position' => 2, 'name' => __('contact.breadcrumb_contact_us'), 'item' => url('/'.$lang.'/contact')],
     ],
-], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
 @endsection
 
