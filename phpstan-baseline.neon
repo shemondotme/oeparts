@@ -1999,12 +1999,6 @@ parameters:
 			path: app/Filament/Resources/TranslationResource/Pages/ListTranslations.php
 
 		-
-			message: '#^Anonymous function has an unused use \$label\.$#'
-			identifier: closure.unusedUse
-			count: 1
-			path: app/Filament/Support/AdminUi.php
-
-		-
 			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
 			identifier: method.notFound
 			count: 2
@@ -2285,12 +2279,6 @@ parameters:
 			identifier: booleanNot.alwaysFalse
 			count: 1
 			path: app/Http/Controllers/Frontend/CheckoutController.php
-
-		-
-			message: '#^Deprecated in PHP 8\.4\: Parameter \#3 \$token \(string\) is implicitly nullable via default value null\.$#'
-			identifier: parameter.implicitlyNullable
-			count: 1
-			path: app/Http/Controllers/Frontend/ResetPasswordController.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
@@ -2783,7 +2771,7 @@ parameters:
 				#^PHPDoc tag @includeIf has invalid value \(\('components\.sections\.' \. str_replace\('_', '\-', \$type\)\),
 				which silently skips unknown types — so the admin MUST offer exactly
 				these values\. A test asserts every DB type and every blade component
-				stays in sync\.\)\: Unexpected token "'components\.sections\.'", expected TOKEN_DOUBLE_QUOTED_STRING at offset 319 on line 6$#
+				stays in sync\.\)\: Unexpected token "'components\.sections\.'", expected TOKEN_DOUBLE_QUOTED_STRING at offset 326 on line 7$#
 			'''
 			identifier: phpDoc.parseError
 			count: 1
@@ -3261,12 +3249,6 @@ parameters:
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 3
-			path: app/Services/PaymentService.php
-
-		-
-			message: '#^Anonymous function has an unused use \$paymentIntentId\.$#'
-			identifier: closure.unusedUse
-			count: 1
 			path: app/Services/PaymentService.php
 
 		-
