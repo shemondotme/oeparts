@@ -12,6 +12,7 @@ use App\Models\ContactMessage;
 use App\Models\Order;
 use App\Models\RefundRequest;
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Livewire\Livewire;
@@ -81,7 +82,7 @@ class SupportMediumFixesTest extends TestCase
     #[Test]
     public function refund_amount_requested_is_capped_at_the_currently_selected_orders_total(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');
@@ -102,7 +103,7 @@ class SupportMediumFixesTest extends TestCase
     #[Test]
     public function refund_amount_requested_within_the_order_total_saves_fine(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');

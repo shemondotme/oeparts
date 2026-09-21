@@ -24,7 +24,7 @@ class ReleaseSignatureTest extends TestCase
     {
         return array_merge([
             'version' => '1.1.0',
-            'sha256'  => hash('sha256', 'release-zip-bytes'),
+            'sha256' => hash('sha256', 'release-zip-bytes'),
         ], $overrides);
     }
 

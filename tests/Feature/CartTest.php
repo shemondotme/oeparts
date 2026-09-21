@@ -3,14 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Cart;
-use App\Models\CartItem;
 use App\Models\Condition;
+use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\SearchLog;
+use App\Models\ShippingMethod;
 use App\Models\User;
-use App\Models\Manufacturer;
-use App\Models\Setting;
-use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
@@ -21,9 +19,13 @@ class CartTest extends TestCase
     use RefreshDatabase;
 
     private Product $product1;
+
     private Product $product2;
+
     private User $user;
+
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -265,7 +267,7 @@ class CartTest extends TestCase
         $data = $response->json();
         $this->assertArrayHasKey('summary', $data);
         $this->assertArrayHasKey('price_changes', $data['summary']);
-        
+
         // Price change should be detected (30% > 20% threshold)
         $priceChanges = $data['summary']['price_changes'];
         $this->assertNotEmpty($priceChanges);
@@ -280,7 +282,7 @@ class CartTest extends TestCase
         // The cart-stage nudge threshold is the lowest active per-method
         // free_shipping_threshold (the customer's shipping country/zone
         // isn't known yet at this stage) — not a settings key.
-        \App\Models\ShippingMethod::factory()->create(['free_shipping_threshold' => '500.00']);
+        ShippingMethod::factory()->create(['free_shipping_threshold' => '500.00']);
 
         // Add item with price 100
         $response = $this->postJson('/en/cart/add', [
@@ -340,7 +342,7 @@ class CartTest extends TestCase
     public function empty_cart_shows_popular_oems_from_search_logs(): void
     {
         // Create search logs to seed popular OEMs
-        $log = new SearchLog();
+        $log = new SearchLog;
         $log->search_query = '06L906036L';
         $log->normalized_query = '06L906036L';
         $log->result_count = 5;
@@ -349,7 +351,7 @@ class CartTest extends TestCase
         $log->created_at = now();
         $log->save();
 
-        $log = new SearchLog();
+        $log = new SearchLog;
         $log->search_query = '06L906036M';
         $log->normalized_query = '06L906036M';
         $log->result_count = 3;

@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Review;
 use App\Models\Setting;
 use App\Services\ProductSlugService;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -17,7 +18,9 @@ class ReviewSubmissionTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
+
     private Product $product;
 
     protected function setUp(): void
@@ -59,7 +62,7 @@ class ReviewSubmissionTest extends TestCase
             ['group' => 'pdp', 'key' => 'review_rate_limit_per_hour'],
             ['value' => (string) $perHour, 'type' => 'integer', 'is_encrypted' => false]
         );
-        app(\App\Services\SettingsService::class)->forget('pdp');
+        app(SettingsService::class)->forget('pdp');
     }
 
     #[Test]
@@ -136,7 +139,7 @@ class ReviewSubmissionTest extends TestCase
             ['group' => 'pdp', 'key' => 'show_reviews'],
             ['value' => '0', 'type' => 'boolean', 'is_encrypted' => false]
         );
-        app(\App\Services\SettingsService::class)->forget('pdp');
+        app(SettingsService::class)->forget('pdp');
 
         $response = $this->post($this->reviewStoreUrl(), [
             'reviewer_name' => 'Jane Doe',

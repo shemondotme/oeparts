@@ -2,17 +2,17 @@
 
 namespace App\Filament\Resources\MenuResource\RelationManagers;
 
+use App\Enums\ContentStatus;
 use App\Enums\MenuTarget;
+use App\Filament\Support\AdminUi;
 use App\Models\MenuItem;
 use App\Models\Page;
-use App\Filament\Support\AdminUi;
 use Filament\Forms;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Support\Enums\FontWeight;
 
 class MenuItemRelationManager extends RelationManager
 {
@@ -30,7 +30,7 @@ class MenuItemRelationManager extends RelationManager
                 ]),
                 Forms\Components\Select::make('type')
                     ->options([
-                        'url'  => 'Custom URL',
+                        'url' => 'Custom URL',
                         'page' => 'CMS Page',
                     ])
                     ->default('url')
@@ -46,7 +46,7 @@ class MenuItemRelationManager extends RelationManager
                     ->label('CMS Page')
                     ->options(function () {
                         return Page::query()
-                            ->where('status', \App\Enums\ContentStatus::Published)
+                            ->where('status', ContentStatus::Published)
                             ->get()
                             ->mapWithKeys(fn (Page $page): array => [
                                 $page->id => AdminUi::localizedName($page->title),
@@ -62,6 +62,7 @@ class MenuItemRelationManager extends RelationManager
                     // parent, creating an immediate self-reference cycle.
                     ->options(function (RelationManager $livewire, ?MenuItem $record): array {
                         $menu = $livewire->getOwnerRecord();
+
                         return $menu->items()
                             ->whereNull('parent_id')
                             ->when($record, fn ($q) => $q->whereKeyNot($record->getKey()))
@@ -146,4 +147,3 @@ class MenuItemRelationManager extends RelationManager
             ->paginated(false);
     }
 }
-

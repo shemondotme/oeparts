@@ -80,11 +80,11 @@ class AdminNotificationService
             ->delete();
 
         $admin->notify(new AdminDashboardNotification(
-            category:  $category,
-            title:     $recent->count() . ' ' . $category->label() . ' alerts',
-            detail:    'Multiple ' . strtolower($category->label()) . ' events occurred in the last minute.',
+            category: $category,
+            title: $recent->count().' '.$category->label().' alerts',
+            detail: 'Multiple '.strtolower($category->label()).' events occurred in the last minute.',
             actionUrl: null,
-            extra:     ['batched' => true, 'count' => $recent->count()],
+            extra: ['batched' => true, 'count' => $recent->count()],
         ));
     }
 
@@ -130,14 +130,15 @@ class AdminNotificationService
 
         return $query->get()->map(function ($row) {
             $data = json_decode($row->data, true);
+
             return (object) [
-                'id'         => $row->id,
-                'category'   => AdminNotificationCategory::tryFrom($data['category'] ?? '') ?? AdminNotificationCategory::System,
-                'title'      => $data['title'] ?? '',
-                'detail'     => $data['detail'] ?? '',
+                'id' => $row->id,
+                'category' => AdminNotificationCategory::tryFrom($data['category'] ?? '') ?? AdminNotificationCategory::System,
+                'title' => $data['title'] ?? '',
+                'detail' => $data['detail'] ?? '',
                 'action_url' => $data['action_url'] ?? null,
-                'batched'    => $data['batched'] ?? false,
-                'read_at'    => $row->read_at,
+                'batched' => $data['batched'] ?? false,
+                'read_at' => $row->read_at,
                 'created_at' => $row->created_at,
             ];
         });
@@ -171,7 +172,7 @@ class AdminNotificationService
                 ]);
             }
             fclose($handle);
-        }, 'notifications-' . date('Y-m-d') . '.csv');
+        }, 'notifications-'.date('Y-m-d').'.csv');
     }
 
     public function exportJson(int $adminId): StreamedResponse
@@ -180,6 +181,6 @@ class AdminNotificationService
 
         return response()->streamDownload(function () use ($notifications) {
             echo json_encode($notifications, JSON_PRETTY_PRINT);
-        }, 'notifications-' . date('Y-m-d') . '.json');
+        }, 'notifications-'.date('Y-m-d').'.json');
     }
 }

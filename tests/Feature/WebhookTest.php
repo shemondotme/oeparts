@@ -5,12 +5,12 @@ namespace Tests\Feature;
 use App\Jobs\ProcessAirwallexWebhook;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\User;
 use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
-use PHPUnit\Framework\Attributes\Before;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -19,7 +19,9 @@ class WebhookTest extends TestCase
     use RefreshDatabase;
 
     private PaymentService $paymentService;
+
     private Order $order;
+
     private Payment $payment;
 
     protected function setUp(): void
@@ -27,7 +29,7 @@ class WebhookTest extends TestCase
         parent::setUp();
 
         // Create the required Airwallex webhook secret setting
-        \App\Models\Setting::create([
+        Setting::create([
             'group' => 'payment',
             'key' => 'airwallex_webhook_secret',
             'value' => 'test_secret',
@@ -125,7 +127,7 @@ class WebhookTest extends TestCase
         $payloadString = json_encode($payload);
         $timestamp = $payload['created'];
         $secret = config('services.airwallex.webhook_secret', 'test_secret');
-        $signature = hash_hmac('sha256', $timestamp . '.' . $payloadString, $secret);
+        $signature = hash_hmac('sha256', $timestamp.'.'.$payloadString, $secret);
 
         $response = $this->postJson('/webhooks/airwallex', $payload, [
             'X-Signature' => $signature,
@@ -173,7 +175,7 @@ class WebhookTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertContent('Invalid signature');
-        
+
         Queue::assertNotPushed(ProcessAirwallexWebhook::class);
     }
 
@@ -202,7 +204,7 @@ class WebhookTest extends TestCase
         $payloadString = json_encode($payload);
         $timestamp = $payload['created'];
         $secret = config('services.airwallex.webhook_secret', 'test_secret');
-        $signature = hash_hmac('sha256', $timestamp . '.' . $payloadString, $secret);
+        $signature = hash_hmac('sha256', $timestamp.'.'.$payloadString, $secret);
 
         $response = $this->postJson('/webhooks/airwallex', $payload, [
             'X-Signature' => $signature,
@@ -211,7 +213,7 @@ class WebhookTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertContent('Invalid signature');
-        
+
         Queue::assertNotPushed(ProcessAirwallexWebhook::class);
     }
 
@@ -240,7 +242,7 @@ class WebhookTest extends TestCase
         $payloadString = json_encode($payload);
         $timestamp = $payload['created'];
         $secret = config('services.airwallex.webhook_secret', 'test_secret');
-        $signature = hash_hmac('sha256', $timestamp . '.' . $payloadString, $secret);
+        $signature = hash_hmac('sha256', $timestamp.'.'.$payloadString, $secret);
 
         // First request should succeed
         $response1 = $this->postJson('/webhooks/airwallex', $payload, [
@@ -290,7 +292,7 @@ class WebhookTest extends TestCase
         $payloadString = json_encode($payload);
         $timestamp = $payload['created'];
         $secret = config('services.airwallex.webhook_secret', 'test_secret');
-        $signature = hash_hmac('sha256', $timestamp . '.' . $payloadString, $secret);
+        $signature = hash_hmac('sha256', $timestamp.'.'.$payloadString, $secret);
 
         $response = $this->postJson('/webhooks/airwallex', $payload, [
             'X-Signature' => $signature,
@@ -299,8 +301,8 @@ class WebhookTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertContent('Webhook accepted');
-        
-        Queue::assertPushed(ProcessAirwallexWebhook::class, function ($job) use ($payload) {
+
+        Queue::assertPushed(ProcessAirwallexWebhook::class, function ($job) {
             return $job->getWebhookData()['type'] === 'payment_intent.succeeded'
                 && $job->queue === 'critical';
         });
@@ -331,7 +333,7 @@ class WebhookTest extends TestCase
         $payloadString = json_encode($payload);
         $timestamp = $payload['created'];
         $secret = config('services.airwallex.webhook_secret', 'test_secret');
-        $signature = hash_hmac('sha256', $timestamp . '.' . $payloadString, $secret);
+        $signature = hash_hmac('sha256', $timestamp.'.'.$payloadString, $secret);
 
         $response = $this->postJson('/webhooks/airwallex', $payload, [
             'X-Signature' => $signature,
@@ -340,8 +342,8 @@ class WebhookTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertContent('Webhook accepted');
-        
-        Queue::assertPushed(ProcessAirwallexWebhook::class, function ($job) use ($payload) {
+
+        Queue::assertPushed(ProcessAirwallexWebhook::class, function ($job) {
             return $job->getWebhookData()['type'] === 'payment_intent.failed'
                 && $job->queue === 'critical';
         });

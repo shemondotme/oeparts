@@ -5,9 +5,10 @@ namespace App\Filament\Resources;
 use App\Enums\PartInquiryStatus;
 use App\Filament\Resources\PartInquiryResource\Pages;
 use App\Filament\Support\AdminUi;
+use App\Jobs\SendPartInquiryStatusEmail;
 use App\Models\PartInquiry;
+use App\Support\NavBadge;
 use Filament\Actions;
-use Filament\Actions\BulkAction;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -15,7 +16,6 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -169,15 +169,15 @@ class PartInquiryResource extends Resource
                     ->label(__('admin.status'))
                     ->badge()
                     ->color(fn (PartInquiryStatus $state): string => match ($state) {
-                        PartInquiryStatus::New        => 'gray',
-                        PartInquiryStatus::Reviewing  => 'warning',
-                        PartInquiryStatus::Sourced    => 'success',
+                        PartInquiryStatus::New => 'gray',
+                        PartInquiryStatus::Reviewing => 'warning',
+                        PartInquiryStatus::Sourced => 'success',
                         PartInquiryStatus::Unavailable => 'danger',
                     })
                     ->icon(fn (PartInquiryStatus $state): string => match ($state) {
-                        PartInquiryStatus::New        => 'heroicon-o-clock',
-                        PartInquiryStatus::Reviewing  => 'heroicon-o-eye',
-                        PartInquiryStatus::Sourced    => 'heroicon-o-check-circle',
+                        PartInquiryStatus::New => 'heroicon-o-clock',
+                        PartInquiryStatus::Reviewing => 'heroicon-o-eye',
+                        PartInquiryStatus::Sourced => 'heroicon-o-check-circle',
                         PartInquiryStatus::Unavailable => 'heroicon-o-x-circle',
                     })
                     ->sortable(),
@@ -267,7 +267,7 @@ class PartInquiryResource extends Resource
                             });
 
                             Notification::make()
-                                ->title("{$count} " . str('inquiry')->plural($count) . ' marked as sourced')
+                                ->title("{$count} ".str('inquiry')->plural($count).' marked as sourced')
                                 ->body('Customers with an email on file have been notified.')
                                 ->success()
                                 ->send();
@@ -295,7 +295,7 @@ class PartInquiryResource extends Resource
                             });
 
                             Notification::make()
-                                ->title("{$count} " . str('inquiry')->plural($count) . ' marked as unavailable')
+                                ->title("{$count} ".str('inquiry')->plural($count).' marked as unavailable')
                                 ->body('Customers with an email on file have been notified.')
                                 ->success()
                                 ->send();
@@ -335,7 +335,7 @@ class PartInquiryResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('inquiries_new', fn () => static::getModel()::where('status', PartInquiryStatus::New)->count());
+        return NavBadge::count('inquiries_new', fn () => static::getModel()::where('status', PartInquiryStatus::New)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -363,7 +363,7 @@ class PartInquiryResource extends Resource
         $record->update(['status' => $status]);
 
         if (filled($record->email)) {
-            dispatch(new \App\Jobs\SendPartInquiryStatusEmail($record, $status));
+            dispatch(new SendPartInquiryStatusEmail($record, $status));
         }
     }
 

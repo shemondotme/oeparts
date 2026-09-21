@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Resources\CarrierResource\Pages\CreateCarrier;
 use App\Filament\Resources\CouponResource\Pages\CreateCoupon;
 use App\Filament\Resources\OrderResource\Pages\CreateOrder;
+use App\Filament\Resources\SeoMetaResource;
 use App\Filament\Resources\SeoMetaResource\Pages\ListSeoMetas;
 use App\Filament\Resources\ShippingZoneResource\Pages\CreateShippingZone;
 use App\Models\Admin;
@@ -165,6 +166,6 @@ class CommerceModuleCrudTest extends TestCase
     {
         Livewire::test(ListSeoMetas::class)->assertActionDoesNotExist('create');
 
-        $this->assertArrayNotHasKey('create', \App\Filament\Resources\SeoMetaResource::getPages());
+        $this->assertArrayNotHasKey('create', SeoMetaResource::getPages());
     }
 }

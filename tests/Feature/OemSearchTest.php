@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\CarModel;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
-use App\Models\CarModel;
-use App\Models\SearchLog;
-use App\Models\FailedSearchLog;
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -18,8 +17,11 @@ class OemSearchTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private CarModel $carModel;
+
     private Condition $condition;
+
     private Condition $conditionUsed;
 
     protected function setUp(): void
@@ -199,7 +201,7 @@ class OemSearchTest extends TestCase
         $response->assertSeeText('Other Manufacturer');
 
         // Search with manufacturer filter — result rows are only for that brand; filter chips still list other brands for switching
-        $response = $this->get('/en/parts/06L906036L?manufacturer=' . $this->manufacturer->id);
+        $response = $this->get('/en/parts/06L906036L?manufacturer='.$this->manufacturer->id);
         $response->assertSeeText('Test Manufacturer');
         $response->assertSeeText('€100.00');
         $response->assertDontSee('€150.00');
@@ -226,7 +228,7 @@ class OemSearchTest extends TestCase
             'is_in_stock' => true, 'is_active' => true,
         ]);
 
-        $response = $this->get('/en/parts/06L906036L?manufacturer=' . $this->manufacturer->id);
+        $response = $this->get('/en/parts/06L906036L?manufacturer='.$this->manufacturer->id);
 
         $response->assertSee('aria-label="Breadcrumbs"', false);
         $response->assertSeeInOrder(['Catalogue', 'Test Manufacturer', 'Results']);
@@ -314,7 +316,7 @@ class OemSearchTest extends TestCase
         // Attach car model to product
         $product->carModels()->attach($this->carModel->id);
 
-        $response = $this->get('/en/parts/06L906036L?model=' . $this->carModel->id);
+        $response = $this->get('/en/parts/06L906036L?model='.$this->carModel->id);
         $response->assertStatus(200);
         $response->assertSeeText('06L906036L');
         $response->assertSee(__('search.model_chip', ['name' => 'Test Model']), false);
@@ -394,7 +396,7 @@ class OemSearchTest extends TestCase
             'normalized_cross_oem' => 'MATCH001ALT',
         ]);
 
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'search', 'key' => 'autocomplete_count'],
             ['value' => '1', 'type' => 'string', 'is_encrypted' => false]
         );
@@ -480,7 +482,7 @@ class OemSearchTest extends TestCase
             'is_in_stock' => true, 'is_active' => true,
         ]);
 
-        $response = $this->get('/en/parts/06L906036L?manufacturer=' . $this->manufacturer->id);
+        $response = $this->get('/en/parts/06L906036L?manufacturer='.$this->manufacturer->id);
 
         $response->assertSee('<meta name="robots" content="noindex,follow">', false);
     }
@@ -547,7 +549,7 @@ class OemSearchTest extends TestCase
         for ($i = 0; $i < 21; $i++) {
             Product::create([
                 'manufacturer_id' => $this->manufacturer->id,
-                'oem_number' => 'PAGETEST01-' . $i,
+                'oem_number' => 'PAGETEST01-'.$i,
                 'normalized_oem' => 'PAGETEST01',
                 'condition_id' => $this->condition->id,
                 'price' => '100.00',
@@ -569,7 +571,7 @@ class OemSearchTest extends TestCase
         for ($i = 0; $i < 105; $i++) {
             Product::create([
                 'manufacturer_id' => $this->manufacturer->id,
-                'oem_number' => 'BIGSET01-' . $i,
+                'oem_number' => 'BIGSET01-'.$i,
                 'normalized_oem' => 'BIGSET01',
                 'condition_id' => $this->condition->id,
                 'price' => '100.00',
@@ -634,7 +636,7 @@ class OemSearchTest extends TestCase
         for ($i = 0; $i < 3; $i++) {
             Product::create([
                 'manufacturer_id' => $this->manufacturer->id,
-                'oem_number' => 'SMALLSET01-' . $i,
+                'oem_number' => 'SMALLSET01-'.$i,
                 'normalized_oem' => 'SMALLSET01',
                 'condition_id' => $this->condition->id,
                 'price' => '100.00',

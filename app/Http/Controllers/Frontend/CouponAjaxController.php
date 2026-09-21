@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Services\CouponService;
+use App\Models\Cart;
 use App\Services\CartService;
+use App\Services\CouponService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -25,7 +26,7 @@ class CouponAjaxController extends Controller
         $request->validate(['code' => 'required|string|max:50']);
 
         $checkoutId = Session::get('active_checkout_id');
-        if (!$checkoutId) {
+        if (! $checkoutId) {
             return response()->json([
                 'success' => false,
                 'message' => 'No active checkout session.',
@@ -34,7 +35,7 @@ class CouponAjaxController extends Controller
 
         $cartId = Session::get("checkout.{$checkoutId}.cart_id");
 
-        if (!$cartId) {
+        if (! $cartId) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cart not found.',
@@ -42,8 +43,8 @@ class CouponAjaxController extends Controller
         }
 
         // Get cart and subtotal
-        $cart = \App\Models\Cart::find($cartId);
-        if (!$cart) {
+        $cart = Cart::find($cartId);
+        if (! $cart) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cart not found.',
@@ -56,7 +57,7 @@ class CouponAjaxController extends Controller
 
         $result = app(CouponService::class)->validate($request->code, $subtotal, $userId);
 
-        if (!$result['valid']) {
+        if (! $result['valid']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
@@ -68,10 +69,10 @@ class CouponAjaxController extends Controller
         Session::put("checkout.{$checkoutId}.data.discount_amount", $result['discount']);
 
         return response()->json([
-            'success'   => true,
-            'code'      => $request->code,
-            'discount'  => $result['discount'],
-            'message'   => null,
+            'success' => true,
+            'code' => $request->code,
+            'discount' => $result['discount'],
+            'message' => null,
         ]);
     }
 
@@ -81,7 +82,7 @@ class CouponAjaxController extends Controller
     public function remove(Request $request, string $lang)
     {
         $checkoutId = Session::get('active_checkout_id');
-        if (!$checkoutId) {
+        if (! $checkoutId) {
             return response()->json([
                 'success' => false,
                 'message' => 'No active checkout session.',

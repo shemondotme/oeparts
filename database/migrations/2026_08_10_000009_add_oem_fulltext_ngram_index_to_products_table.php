@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\SafeSchema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -43,7 +44,10 @@ return new class extends Migration
             return;
         }
 
-        DB::statement('ALTER TABLE products ADD FULLTEXT INDEX products_normalized_oem_ngram_fulltext (normalized_oem) WITH PARSER ngram');
+        SafeSchema::statement(
+            'add_oem_fulltext_ngram_index_to_products_table',
+            'ALTER TABLE products ADD FULLTEXT INDEX products_normalized_oem_ngram_fulltext (normalized_oem) WITH PARSER ngram'
+        );
     }
 
     public function down(): void

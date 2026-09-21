@@ -5,16 +5,20 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MediaFileResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\MediaFile;
-use Filament\Forms;
+use App\Services\ImageOptimizationService;
+use App\Services\UploadedImageSanitizer;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
+use Illuminate\Support\Facades\Storage;
 
 class MediaFileResource extends Resource
 {
@@ -103,7 +107,7 @@ class MediaFileResource extends Resource
                                             ->label(__('admin.file_size'))
                                             ->disabled()
                                             ->dehydrated(false)
-                                            ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1) . ' KB' : '—')
+                                            ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1).' KB' : '—')
                                             ->helperText('File size in kilobytes.'),
                                     ]),
                             ]),
@@ -134,7 +138,7 @@ class MediaFileResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('size')
                     ->label(__('admin.size'))
-                    ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1) . ' KB' : '—')
+                    ->formatStateUsing(fn (?int $state): string => $state ? number_format($state / 1024, 1).' KB' : '—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('alt_text')
                     ->label(__('admin.alt_text'))
@@ -155,9 +159,9 @@ class MediaFileResource extends Resource
                 Tables\Filters\SelectFilter::make('mime_type')
                     ->label(__('admin.file_type'))
                     ->options([
-                        'image'  => 'Images',
+                        'image' => 'Images',
                         'application' => 'Documents',
-                        'video'  => 'Video',
+                        'video' => 'Video',
                     ])
                     ->query(fn ($query, $data): mixed => ($data['value'] ?? null) ? $query->where('mime_type', 'like', "{$data['value']}/%") : $query)
                     ->helperText('Filter by image, document, or video files.'),
@@ -197,8 +201,8 @@ class MediaFileResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListMediaFiles::route('/'),
-            'edit'   => Pages\EditMediaFile::route('/{record}/edit'),
+            'index' => Pages\ListMediaFiles::route('/'),
+            'edit' => Pages\EditMediaFile::route('/{record}/edit'),
         ];
     }
 
@@ -224,7 +228,7 @@ class MediaFileResource extends Resource
                 Forms\Components\FileUpload::make('file')
                     ->label(__('admin.image'))
                     ->disk('public')
-                    ->directory(fn (): string => 'media/' . now()->format('Y/m'))
+                    ->directory(fn (): string => 'media/'.now()->format('Y/m'))
                     ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp'])
                     ->maxSize(5120)
                     ->required()
@@ -234,7 +238,7 @@ class MediaFileResource extends Resource
                         function () {
                             return function (string $attribute, $value, \Closure $fail) {
                                 try {
-                                    app(\App\Services\UploadedImageSanitizer::class)->assertSafe($value);
+                                    app(UploadedImageSanitizer::class)->assertSafe($value);
                                 } catch (\InvalidArgumentException $e) {
                                     $fail($e->getMessage());
                                 }
@@ -254,9 +258,9 @@ class MediaFileResource extends Resource
 
                         if ($path) {
                             $mime = $component->getDisk()->mimeType($path) ?: null;
-                            app(\App\Services\UploadedImageSanitizer::class)
+                            app(UploadedImageSanitizer::class)
                                 ->sanitize('public', $path, $mime);
-                            $path = app(\App\Services\ImageOptimizationService::class)
+                            $path = app(ImageOptimizationService::class)
                                 ->optimize('public', $path, $mime)['path'];
                         }
 
@@ -270,23 +274,23 @@ class MediaFileResource extends Resource
             ])
             ->action(function (array $data): void {
                 $path = $data['file'];
-                $disk = \Illuminate\Support\Facades\Storage::disk('public');
+                $disk = Storage::disk('public');
 
                 MediaFile::create([
                     'uploaded_by' => auth('admin')->id(),
-                    'file_name'   => $data['original_name'] ?? basename($path),
-                    'file_path'   => $path,
+                    'file_name' => $data['original_name'] ?? basename($path),
+                    'file_path' => $path,
                     // $disk (public), not the bare Storage::url() facade call —
                     // that resolves against config('filesystems.default'), which
                     // is 'local' here (a private disk with no url mapping), not
                     // the public disk this file actually lives on.
-                    'file_url'    => $disk->url($path),
-                    'mime_type'   => $disk->mimeType($path) ?: 'application/octet-stream',
-                    'size'        => $disk->size($path) ?: null,
-                    'alt_text'    => $data['alt_text'] ?? null,
+                    'file_url' => $disk->url($path),
+                    'mime_type' => $disk->mimeType($path) ?: 'application/octet-stream',
+                    'size' => $disk->size($path) ?: null,
+                    'alt_text' => $data['alt_text'] ?? null,
                 ]);
 
-                \Filament\Notifications\Notification::make()
+                Notification::make()
                     ->title('File uploaded')
                     ->body('The file is now available in the media library.')
                     ->success()
@@ -304,4 +308,3 @@ class MediaFileResource extends Resource
         return ['file_name', 'alt_text'];
     }
 }
-

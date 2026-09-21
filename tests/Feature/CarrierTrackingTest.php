@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Mail\OrderShipped;
 use App\Models\Carrier;
 use App\Models\Order;
+use App\Models\Product;
 use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,10 +17,10 @@ class CarrierTrackingTest extends TestCase
     private function makeCarrier(array $attrs = []): Carrier
     {
         return Carrier::create(array_merge([
-            'name'         => 'DHL',
+            'name' => 'DHL',
             'tracking_url' => 'https://www.dhl.com/track?trackingNo={tracking_number}',
-            'is_active'    => true,
-            'sort_order'   => 0,
+            'is_active' => true,
+            'sort_order' => 0,
         ], $attrs));
     }
 
@@ -27,7 +28,7 @@ class CarrierTrackingTest extends TestCase
     {
         $carrier = $this->makeCarrier();
         $order = Order::factory()->create([
-            'carrier_id'      => $carrier->id,
+            'carrier_id' => $carrier->id,
             'tracking_number' => 'JD014600003RF',
         ]);
 
@@ -44,7 +45,7 @@ class CarrierTrackingTest extends TestCase
         $noCarrier = Order::factory()->create(['tracking_number' => 'X1']);
         $noNumber = Order::factory()->create(['carrier_id' => $carrier->id, 'tracking_number' => null]);
         $noTemplate = Order::factory()->create([
-            'carrier_id'      => $this->makeCarrier(['name' => 'Pickup', 'tracking_url' => ''])->id,
+            'carrier_id' => $this->makeCarrier(['name' => 'Pickup', 'tracking_url' => ''])->id,
             'tracking_number' => 'X2',
         ]);
 
@@ -70,7 +71,7 @@ class CarrierTrackingTest extends TestCase
     {
         $carrier = $this->makeCarrier();
         $order = Order::factory()->create([
-            'carrier_id'      => $carrier->id,
+            'carrier_id' => $carrier->id,
             'tracking_number' => 'JD014600003RF',
         ]);
 
@@ -84,21 +85,21 @@ class CarrierTrackingTest extends TestCase
     public function test_order_totals_recalculate_from_items_with_bcmath(): void
     {
         $order = Order::factory()->create([
-            'subtotal'        => '100.00',
+            'subtotal' => '100.00',
             'discount_amount' => '10.00',
-            'shipping_cost'   => '15.00',
-            'vat_amount'      => '12.48',
-            'grand_total'     => '117.48',
+            'shipping_cost' => '15.00',
+            'vat_amount' => '12.48',
+            'grand_total' => '117.48',
         ]);
 
         $order->items()->create([
-            'product_id'            => \App\Models\Product::factory()->create()->id,
-            'oem_number_snapshot'   => 'OEM-1',
+            'product_id' => Product::factory()->create()->id,
+            'oem_number_snapshot' => 'OEM-1',
             'manufacturer_snapshot' => 'BMW',
-            'condition_snapshot'    => 'New',
-            'quantity'              => 2,
-            'unit_price'            => '36.62',
-            'total_price'           => '73.24',
+            'condition_snapshot' => 'New',
+            'quantity' => 2,
+            'unit_price' => '36.62',
+            'total_price' => '73.24',
         ]);
 
         app(OrderService::class)->recalculateTotals($order);

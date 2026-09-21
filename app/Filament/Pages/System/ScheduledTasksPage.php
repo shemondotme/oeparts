@@ -7,8 +7,10 @@ use App\Models\CronLog;
 use App\Support\ScheduleCommandName;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Illuminate\Support\Str;
 
 class ScheduledTasksPage extends Page
 {
@@ -25,7 +27,7 @@ class ScheduledTasksPage extends Page
 
     protected static ?string $pollingInterval = '60s';
 
-public static function getNavigationSort(): ?int
+    public static function getNavigationSort(): ?int
     {
         return 40;
     }
@@ -121,7 +123,7 @@ public static function getNavigationSort(): ?int
         return $frequencyMap[$frequency] ?? ucfirst(str_replace('_', ' ', $frequency));
     }
 
-    public function getRecentLogs(): \Illuminate\Support\Collection
+    public function getRecentLogs(): Collection
     {
         return CronLog::orderByDesc('ran_at')
             ->limit(20)
@@ -137,11 +139,11 @@ public static function getNavigationSort(): ?int
             $durationMs = (int) round((microtime(true) - $start) * 1000);
 
             CronLog::create([
-                'job_name'    => \Illuminate\Support\Str::limit($command, 100, ''),
-                'status'      => $exitCode === 0 ? LogStatus::Success : LogStatus::Failed,
+                'job_name' => Str::limit($command, 100, ''),
+                'status' => $exitCode === 0 ? LogStatus::Success : LogStatus::Failed,
                 'duration_ms' => $durationMs,
-                'output'      => \Illuminate\Support\Str::limit(trim(Artisan::output()), 2000),
-                'ran_at'      => now(),
+                'output' => Str::limit(trim(Artisan::output()), 2000),
+                'ran_at' => now(),
             ]);
 
             if ($exitCode === 0) {
@@ -159,11 +161,11 @@ public static function getNavigationSort(): ?int
             }
         } catch (\Exception $e) {
             CronLog::create([
-                'job_name'    => \Illuminate\Support\Str::limit($command, 100, ''),
-                'status'      => LogStatus::Failed,
+                'job_name' => Str::limit($command, 100, ''),
+                'status' => LogStatus::Failed,
                 'duration_ms' => (int) round((microtime(true) - $start) * 1000),
-                'output'      => \Illuminate\Support\Str::limit($e->getMessage(), 2000),
-                'ran_at'      => now(),
+                'output' => Str::limit($e->getMessage(), 2000),
+                'ran_at' => now(),
             ]);
 
             Notification::make()

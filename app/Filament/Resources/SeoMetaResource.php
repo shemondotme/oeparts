@@ -5,18 +5,16 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SeoMetaResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\SeoMeta;
-use Filament\Forms;
 use Filament\Actions;
-use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
+use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
 
 class SeoMetaResource extends Resource
 {
@@ -130,26 +128,26 @@ class SeoMetaResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('metable_type')
-                ->label(__('admin.type'))
-                ->badge()
-                ->color('gray')
-                ->searchable()
-                ->sortable()
-                ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('metable_id')
-                ->label(__('admin.id'))
-                ->alignCenter()
-                ->fontMono(),
-            Tables\Columns\TextColumn::make('meta_title')
-                ->label(__('admin.meta_title'))
-                ->limit(40)
-                ->searchable(),
-            Tables\Columns\TextColumn::make('robots')
-                ->label(__('admin.robots'))
-                ->badge()
-                ->color('primary')
-                ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('metable_type')
+                    ->label(__('admin.type'))
+                    ->badge()
+                    ->color('gray')
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('metable_id')
+                    ->label(__('admin.id'))
+                    ->alignCenter()
+                    ->fontMono(),
+                Tables\Columns\TextColumn::make('meta_title')
+                    ->label(__('admin.meta_title'))
+                    ->limit(40)
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('robots')
+                    ->label(__('admin.robots'))
+                    ->badge()
+                    ->color('primary')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('admin.created'))
                     ->dateTime('M j, Y H:i')
@@ -175,15 +173,15 @@ class SeoMetaResource extends Resource
             ])
             ->actions(AdminUi::recordActionsWithoutView())
             ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export SEO Meta', [
-                    'metable_type' => 'Type',
-                    'meta_title' => 'Title',
-                    'meta_description' => 'Description',
-                    'robots' => 'Robots',
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export SEO Meta', [
+                        'metable_type' => 'Type',
+                        'meta_title' => 'Title',
+                        'meta_description' => 'Description',
+                        'robots' => 'Robots',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-magnifying-glass-circle')
@@ -210,7 +208,7 @@ class SeoMetaResource extends Resource
         // guaranteed-to-crash even with its header button removed.
         return [
             'index' => Pages\ListSeoMetas::route('/'),
-            'edit'  => Pages\EditSeoMeta::route('/{record}/edit'),
+            'edit' => Pages\EditSeoMeta::route('/{record}/edit'),
         ];
     }
 
@@ -219,4 +217,3 @@ class SeoMetaResource extends Resource
         return ['meta_title', 'meta_description'];
     }
 }
-

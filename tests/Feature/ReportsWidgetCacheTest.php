@@ -10,6 +10,8 @@ use App\Filament\Widgets\Reports\SalesStats;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Services\AdminWidgetCacheService;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -29,7 +31,7 @@ class ReportsWidgetCacheTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\SettingsSeeder::class, \Database\Seeders\RolesSeeder::class]);
+        $this->seed([SettingsSeeder::class, RolesSeeder::class]);
 
         $admin = Admin::factory()->create(['is_active' => true]);
         $admin->assignRole('super_admin');

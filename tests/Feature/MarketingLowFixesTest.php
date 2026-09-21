@@ -14,6 +14,7 @@ use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\Testimonial;
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
@@ -84,7 +85,7 @@ class MarketingLowFixesTest extends TestCase
     #[Test]
     public function republishing_does_not_overwrite_a_future_scheduled_date(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');
@@ -101,7 +102,7 @@ class MarketingLowFixesTest extends TestCase
     #[Test]
     public function publishing_a_post_with_no_date_defaults_to_now(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');

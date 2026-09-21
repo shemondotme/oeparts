@@ -6,6 +6,7 @@ use App\Filament\Resources\PartInquiryResource\Pages\CreatePartInquiry;
 use App\Filament\Resources\PartInquiryResource\Pages\ViewPartInquiry;
 use App\Models\Admin;
 use App\Models\PartInquiry;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -28,7 +29,7 @@ class PartInquiryCreateTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         // RolesSeeder never seeds 'create inquiries' for any role (only
         // 'view'/'edit') — same latent gap as Redirects (see
         // RedirectResourceTest) — so the Create page is currently reachable

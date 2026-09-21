@@ -29,8 +29,8 @@ return new class extends Migration
         } else {
             Schema::table('settings', function (Blueprint $table) {
                 $table->enum('type', ['string', 'boolean', 'integer', 'decimal', 'json', 'encrypted'])
-                      ->default('string')
-                      ->change();
+                    ->default('string')
+                    ->change();
             });
         }
     }
@@ -55,8 +55,8 @@ return new class extends Migration
         } else {
             Schema::table('settings', function (Blueprint $table) {
                 $table->enum('type', ['string', 'boolean', 'integer', 'json', 'encrypted'])
-                      ->default('string')
-                      ->change();
+                    ->default('string')
+                    ->change();
             });
         }
     }

@@ -5,9 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\TestimonialResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Testimonial;
-use Filament\Forms;
 use Filament\Actions;
-use Filament\Actions\BulkAction;
+use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -17,7 +16,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class TestimonialResource extends Resource
 {
@@ -143,11 +141,11 @@ class TestimonialResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.client'))
-                ->searchable()
-                ->sortable()
-                ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.client'))
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('company')
                     ->label(__('admin.company'))
                     ->searchable()
@@ -163,7 +161,7 @@ class TestimonialResource extends Resource
                     ->limit(60),
                 Tables\Columns\TextColumn::make('rating')
                     ->label(__('admin.rating'))
-                    ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
+                    ->formatStateUsing(fn (int $state): string => str_repeat('★', $state).str_repeat('☆', 5 - $state))
                     ->color('warning')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('is_active')
@@ -212,7 +210,7 @@ class TestimonialResource extends Resource
                     ->color(fn (Testimonial $record): string => $record->is_active ? 'warning' : 'success')
                     ->authorize('update')
                     ->action(function (Testimonial $record) {
-                        $record->update(['is_active' => !$record->is_active]);
+                        $record->update(['is_active' => ! $record->is_active]);
 
                         Notification::make()
                             ->title($record->is_active ? 'Testimonial activated' : 'Testimonial deactivated')
@@ -220,40 +218,40 @@ class TestimonialResource extends Resource
                             ->send();
                     }),
             ]))
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::impactBulkAction(
-                    name: 'bulkToggleActive',
-                    label: 'Toggle Active',
-                    color: 'warning',
-                    icon: 'heroicon-o-arrow-path',
-                    action: function ($records) {
-                        $firstState = $records->first()->is_active;
-                        $allSame = $records->every(fn (Testimonial $record) => $record->is_active === $firstState);
-                        $newState = $allSame ? !$firstState : true;
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::impactBulkAction(
+                        name: 'bulkToggleActive',
+                        label: 'Toggle Active',
+                        color: 'warning',
+                        icon: 'heroicon-o-arrow-path',
+                        action: function ($records) {
+                            $firstState = $records->first()->is_active;
+                            $allSame = $records->every(fn (Testimonial $record) => $record->is_active === $firstState);
+                            $newState = $allSame ? ! $firstState : true;
 
-                        $records->each(function (Testimonial $record) use ($newState) {
-                            $record->update(['is_active' => $newState]);
-                        });
+                            $records->each(function (Testimonial $record) use ($newState) {
+                                $record->update(['is_active' => $newState]);
+                            });
 
-                        Notification::make()
-                            ->title($records->count() . ' testimonials ' . ($newState ? 'activated' : 'deactivated'))
-                            ->success()
-                            ->send();
-                    },
-                ),
-                AdminUi::exportCsvBulkAction('Export Testimonials', [
-                    'name' => 'Client',
-                    'company' => 'Company',
-                    'location' => 'Location',
-                    'quote' => 'Quote',
-                    'rating' => 'Rating',
-                    'is_active' => 'Active',
-                    'sort_order' => 'Sort Order',
+                            Notification::make()
+                                ->title($records->count().' testimonials '.($newState ? 'activated' : 'deactivated'))
+                                ->success()
+                                ->send();
+                        },
+                    ),
+                    AdminUi::exportCsvBulkAction('Export Testimonials', [
+                        'name' => 'Client',
+                        'company' => 'Company',
+                        'location' => 'Location',
+                        'quote' => 'Quote',
+                        'rating' => 'Rating',
+                        'is_active' => 'Active',
+                        'sort_order' => 'Sort Order',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ])
+            ])
             ->defaultSort('sort_order', 'asc')
             ->reorderable('sort_order')
             ->emptyStateIcon('heroicon-o-chat-bubble-left-right')
@@ -276,10 +274,10 @@ class TestimonialResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListTestimonials::route('/'),
+            'index' => Pages\ListTestimonials::route('/'),
             'create' => Pages\CreateTestimonial::route('/create'),
-            'view'   => Pages\ViewTestimonial::route('/{record}'),
-            'edit'   => Pages\EditTestimonial::route('/{record}/edit'),
+            'view' => Pages\ViewTestimonial::route('/{record}'),
+            'edit' => Pages\EditTestimonial::route('/{record}/edit'),
         ];
     }
 }

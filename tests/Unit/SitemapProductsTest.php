@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductImage;
 use App\Services\SitemapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -100,7 +101,7 @@ class SitemapProductsTest extends TestCase
         // test in a completely different file cleaning up after itself),
         // must not leave sitemap generation permanently broken with a
         // raw "Failed to open stream: No such file or directory".
-        \Illuminate\Support\Facades\File::deleteDirectory(public_path('sitemaps'));
+        File::deleteDirectory(public_path('sitemaps'));
 
         $xml = $this->generateProductsSitemap();
 

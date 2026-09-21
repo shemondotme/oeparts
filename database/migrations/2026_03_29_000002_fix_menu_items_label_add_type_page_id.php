@@ -12,7 +12,7 @@ return new class extends Migration
         // Migrate existing string labels to JSON format before changing column type
         DB::table('menu_items')->get()->each(function ($item) {
             $existing = $item->label;
-            if ($existing && !$this->isJson($existing)) {
+            if ($existing && ! $this->isJson($existing)) {
                 DB::table('menu_items')->where('id', $item->id)->update([
                     'label' => json_encode(['en' => $existing, 'de' => null, 'lt' => null, 'fr' => null, 'es' => null]),
                 ]);
@@ -38,6 +38,7 @@ return new class extends Migration
     private function isJson(string $str): bool
     {
         json_decode($str);
+
         return json_last_error() === JSON_ERROR_NONE;
     }
 };

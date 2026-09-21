@@ -24,8 +24,8 @@ class ImageOptimizationService
 {
     /**
      * @return array{path: string, mime: string, size: int|null} The final
-     *         stored path/mime/size — may differ from the input if WebP
-     *         conversion changed the file extension/format.
+     *                                                           stored path/mime/size — may differ from the input if WebP
+     *                                                           conversion changed the file extension/format.
      */
     public function optimize(string $disk, string $path, ?string $mime): array
     {
@@ -148,7 +148,7 @@ class ImageOptimizationService
         // No extension to replace (unlikely, upload validation requires one)
         // — fall back to appending rather than silently colliding with the original.
         if ($webpPath === $originalPath) {
-            $webpPath = $originalPath . '.webp';
+            $webpPath = $originalPath.'.webp';
         }
 
         $absoluteWebpPath = $store->path($webpPath);

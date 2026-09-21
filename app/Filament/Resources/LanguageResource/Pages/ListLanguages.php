@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\LanguageResource\Pages;
 
 use App\Filament\Resources\LanguageResource;
+use App\Filament\Support\HasDrilldownFilters;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-use App\Filament\Support\HasDrilldownFilters;
 
 class ListLanguages extends ListRecords
 {

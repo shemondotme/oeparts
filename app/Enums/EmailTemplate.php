@@ -6,20 +6,20 @@ use Filament\Support\Contracts\HasLabel;
 
 enum EmailTemplate: string implements HasLabel
 {
-    case OrderConfirmation  = 'order_confirmation';
-    case OrderStatus        = 'order_status';
-    case OrderShipped       = 'order_shipped';
-    case Welcome            = 'welcome';
-    case Otp                = 'otp';
-    case RefundProcessed    = 'refund_processed';
-    case AbandonedCart      = 'abandoned_cart';
-    case NewsletterConfirm  = 'newsletter_confirm';
-    case PasswordReset      = 'password_reset';
-    case ContactReply       = 'contact_reply';
-    case PartInquiryStatus  = 'part_inquiry_status';
+    case OrderConfirmation = 'order_confirmation';
+    case OrderStatus = 'order_status';
+    case OrderShipped = 'order_shipped';
+    case Welcome = 'welcome';
+    case Otp = 'otp';
+    case RefundProcessed = 'refund_processed';
+    case AbandonedCart = 'abandoned_cart';
+    case NewsletterConfirm = 'newsletter_confirm';
+    case PasswordReset = 'password_reset';
+    case ContactReply = 'contact_reply';
+    case PartInquiryStatus = 'part_inquiry_status';
     // Catch-all so unrecognized mailables are logged honestly instead of
     // being misfiled as order confirmations.
-    case Other              = 'other';
+    case Other = 'other';
 
     public function getLabel(): string
     {

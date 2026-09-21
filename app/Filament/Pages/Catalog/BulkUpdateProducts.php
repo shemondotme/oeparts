@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Bulk Update Products — filter-driven price/stock/detail changes across an
@@ -345,7 +346,7 @@ class BulkUpdateProducts extends Page
         return $increase ? bcadd($price, $delta, 2) : bcsub($price, $delta, 2);
     }
 
-    public function downloadCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadCsv(): StreamedResponse
     {
         abort_unless(auth('admin')->user()?->can($this->actionPermission($this->actionType)), 403);
 

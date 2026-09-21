@@ -9,16 +9,16 @@ use Illuminate\Support\Facades\Cache;
 
 class CacheStatusWidget extends BaseWidget
 {
+    use Concerns\HasMonitoringVisuals;
     use Concerns\HasWidgetRoles;
     use Concerns\InteractsWithDashboardCache;
-    use Concerns\HasMonitoringVisuals;
 
     protected static bool $isLazy = false;
 
     protected ?string $pollingInterval = '60s';
 
     // Full-width so the 3 stats lay out horizontally (System Health strip).
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = -28;
 
@@ -42,7 +42,7 @@ class CacheStatusWidget extends BaseWidget
                         $keys = (int) $store->connection()->dbsize();
                     } elseif ($driver === 'file') {
                         $path = config('cache.stores.file.path') ?? storage_path('framework/cache/data');
-                        $keys = count(glob($path . '/*/*/*')) ?: 0;
+                        $keys = count(glob($path.'/*/*/*')) ?: 0;
                     }
                 } catch (\Throwable $e) {
                     $keys = 0;

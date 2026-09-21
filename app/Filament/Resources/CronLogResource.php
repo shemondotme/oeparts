@@ -6,8 +6,9 @@ use App\Enums\LogStatus;
 use App\Filament\Resources\CronLogResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\CronLog;
-use Filament\Resources\Resource;
+use App\Support\NavBadge;
 use Filament\Actions;
+use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -22,7 +23,7 @@ class CronLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('crons_failed_today', fn () => CronLog::where('status', 'failed')->where('ran_at', '>=', now()->startOfDay())->count());
+        return NavBadge::count('crons_failed_today', fn () => CronLog::where('status', 'failed')->where('ran_at', '>=', now()->startOfDay())->count());
     }
 
     public static function getNavigationBadgeColor(): ?string

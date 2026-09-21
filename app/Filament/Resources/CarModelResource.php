@@ -9,6 +9,7 @@ use App\Models\CarModel;
 use App\Models\Manufacturer;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -244,7 +245,7 @@ class CarModelResource extends Resource
                                 $record->save();
                             }
 
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Models activated')
                                 ->success()
                                 ->send();
@@ -255,7 +256,7 @@ class CarModelResource extends Resource
                         label: 'Deactivate',
                         color: 'danger',
                         icon: 'heroicon-o-x-circle',
-                        summary: fn ($record): ?array => !$record->is_active
+                        summary: fn ($record): ?array => ! $record->is_active
                             ? null
                             : [
                                 'key' => $record->name,
@@ -268,7 +269,7 @@ class CarModelResource extends Resource
                                 $record->save();
                             }
 
-                            \Filament\Notifications\Notification::make()
+                            Notification::make()
                                 ->title('Models deactivated')
                                 ->success()
                                 ->send();
@@ -309,10 +310,10 @@ class CarModelResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListCarModels::route('/'),
+            'index' => Pages\ListCarModels::route('/'),
             'create' => Pages\CreateCarModel::route('/create'),
-            'view'   => Pages\ViewCarModel::route('/{record}'),
-            'edit'   => Pages\EditCarModel::route('/{record}/edit'),
+            'view' => Pages\ViewCarModel::route('/{record}'),
+            'edit' => Pages\EditCarModel::route('/{record}/edit'),
         ];
     }
 

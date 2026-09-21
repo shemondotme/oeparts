@@ -47,9 +47,9 @@ class RestoreBackupJob implements ShouldQueue
         ));
 
         Log::channel(config('updates.log_channel', 'stack'))->notice('Backup restore completed.', [
-            'run'          => $this->runId,
+            'run' => $this->runId,
             'requested_by' => $this->requestedBy,
-            'report'       => $report->toArray(),
+            'report' => $report->toArray(),
         ]);
     }
 }

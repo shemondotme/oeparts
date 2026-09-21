@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ManufacturerResource\Pages;
 
 use App\Filament\Resources\ManufacturerResource;
+use App\Filament\Support\AdminUi;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
@@ -21,7 +22,8 @@ class EditManufacturer extends EditRecord
     public function getHeading(): string
     {
         $record = $this->getRecord();
-        return 'Edit ' . \App\Filament\Support\AdminUi::localizedName($record->name);
+
+        return 'Edit '.AdminUi::localizedName($record->name);
     }
 
     public function getSubheading(): string

@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\ShippingMethodResource\Pages;
 
+use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Filament\Resources\ShippingMethodResource;
+use App\Filament\Support\AdminUi;
 use App\Filament\Support\HasDrilldownFilters;
 use App\Filament\Support\HasSavedViews;
 use Filament\Actions;
@@ -17,10 +19,9 @@ class ListShippingMethods extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            \App\Filament\Support\AdminUi::settingsLinkAction(\App\Filament\Pages\Settings\StoreOperationsSettings::class),
+            AdminUi::settingsLinkAction(StoreOperationsSettings::class),
             ...$this->getSavedViewHeaderActions(),
             Actions\CreateAction::make(),
         ];
     }
 }
-

@@ -5,13 +5,13 @@ namespace App\Filament\Resources\MenuResource\Pages;
 use App\Filament\Resources\MenuResource;
 use App\Filament\Support\AdminUi;
 use Filament\Actions;
-use Filament\Infolists;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 
 class ViewMenu extends ViewRecord
 {
@@ -41,13 +41,13 @@ class ViewMenu extends ViewRecord
                                     ->schema([
                                         TextEntry::make('name')
                                             ->label('Menu Name')
-                                            ->weight(\Filament\Support\Enums\FontWeight::Medium),
+                                            ->weight(FontWeight::Medium),
                                         TextEntry::make('location')
                                             ->badge()
                                             ->color(fn ($state): string => match ($state->value) {
                                                 'header' => 'info',
                                                 'footer' => 'gray',
-                                                default  => 'gray',
+                                                default => 'gray',
                                             })
                                             ->formatStateUsing(fn ($state): string => ucfirst($state->value)),
                                         TextEntry::make('lang')
@@ -88,4 +88,3 @@ class ViewMenu extends ViewRecord
             ]);
     }
 }
-

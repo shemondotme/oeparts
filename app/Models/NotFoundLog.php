@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -62,7 +63,7 @@ class NotFoundLog extends Model
                 'first_seen_at' => now(),
                 'last_seen_at' => now(),
             ]);
-        } catch (\Illuminate\Database\QueryException) {
+        } catch (QueryException) {
             // Race: a concurrent request inserted this path_hash first.
             static::query()->where('path_hash', $hash)->increment('hit_count', 1, ['last_seen_at' => now()]);
         }

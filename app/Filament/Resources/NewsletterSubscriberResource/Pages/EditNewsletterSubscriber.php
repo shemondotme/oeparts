@@ -20,7 +20,7 @@ class EditNewsletterSubscriber extends EditRecord
 
     public function getHeading(): string
     {
-        return 'Edit ' . ($this->record?->email ?? 'Subscriber');
+        return 'Edit '.($this->record?->email ?? 'Subscriber');
     }
 
     public function getSubheading(): ?string

@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Models\Admin;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 

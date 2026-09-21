@@ -20,6 +20,7 @@ class PreflightServiceTest extends TestCase
     use RefreshDatabase;
 
     private string $base;
+
     private string $root;
 
     protected function setUp(): void
@@ -77,13 +78,13 @@ class PreflightServiceTest extends TestCase
     private function cleanManifest(array $overrides = []): array
     {
         $manifest = array_merge([
-            'version'                     => '1.1.0',
-            'sha256'                      => hash('sha256', 'clean-manifest-fixture'),
-            'min_php'                     => '8.2',
-            'required_extensions'         => ['json'],
-            'min_version_to_update_from'  => '0.0.0',
-            'size_bytes'                  => 1024,
-            'new_env_keys'                => [],
+            'version' => '1.1.0',
+            'sha256' => hash('sha256', 'clean-manifest-fixture'),
+            'min_php' => '8.2',
+            'required_extensions' => ['json'],
+            'min_version_to_update_from' => '0.0.0',
+            'size_bytes' => 1024,
+            'new_env_keys' => [],
         ], $overrides);
 
         $signer = app(ReleaseSignature::class);
@@ -95,16 +96,16 @@ class PreflightServiceTest extends TestCase
     #[Test]
     public function signature_check_warns_unprovisioned_passes_valid_and_fails_invalid(): void
     {
-        $signer = app(\App\Services\Updates\ReleaseSignature::class);
+        $signer = app(ReleaseSignature::class);
 
         // No public key baked → warn (opt-in), never blocks.
         config(['updates.signing.public_key' => null]);
         $this->assertSame(PreflightCheck::WARN, $this->service()->checkSignature([])->status);
 
         // Provisioned + a correctly-signed manifest → pass.
-        config(['updates.signing.public_key' => \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY]);
+        config(['updates.signing.public_key' => ReleaseKeys::PUBLIC_KEY]);
         $manifest = ['version' => '1.1.0', 'sha256' => hash('sha256', 'z')];
-        $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), \Tests\Fixtures\ReleaseKeys::PRIVATE_KEY);
+        $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), ReleaseKeys::PRIVATE_KEY);
         $this->assertSame(PreflightCheck::PASS, $this->service()->checkSignature($manifest)->status);
 
         // Provisioned + unsigned manifest → fail (blocks the update).

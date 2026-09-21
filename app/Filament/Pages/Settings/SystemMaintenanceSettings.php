@@ -182,7 +182,7 @@ class SystemMaintenanceSettings extends SettingsPage
                             ->columnSpanFull()
                             ->default('MIT License
 
-Copyright (c) ' . date('Y') . ' OeParts
+Copyright (c) '.date('Y').' OeParts
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -216,13 +216,13 @@ SOFTWARE.'),
                             ->label('Database Name')
                             ->disabled()
                             ->dehydrated(false)
-                            ->default(config('database.connections.' . config('database.default') . '.database')),
+                            ->default(config('database.connections.'.config('database.default').'.database')),
 
                         Forms\Components\TextInput::make('host')
                             ->label('Host')
                             ->disabled()
                             ->dehydrated(false)
-                            ->default(config('database.connections.' . config('database.default') . '.host')),
+                            ->default(config('database.connections.'.config('database.default').'.host')),
                     ])->columns(3),
 
                 Section::make('Table Summary')
@@ -230,7 +230,7 @@ SOFTWARE.'),
                     ->schema([
                         Forms\Components\Placeholder::make('table_count')
                             ->label('Total Tables')
-                            ->content(fn () => count($tables) . ' tables'),
+                            ->content(fn () => count($tables).' tables'),
 
                         Forms\Components\Placeholder::make('total_rows')
                             ->label('Total Rows')
@@ -238,7 +238,7 @@ SOFTWARE.'),
 
                         Forms\Components\Placeholder::make('total_size')
                             ->label('Total Size')
-                            ->content(fn () => round(collect($tables)->sum('Data_length') / 1024 / 1024, 2) . ' MB'),
+                            ->content(fn () => round(collect($tables)->sum('Data_length') / 1024 / 1024, 2).' MB'),
                     ])->columns(3),
 
                 Section::make('Actions')
@@ -303,7 +303,7 @@ SOFTWARE.'),
                 try {
                     $value = Crypt::decryptString($value);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt setting {$setting->key}: " . $e->getMessage());
+                    Log::warning("Failed to decrypt setting {$setting->key}: ".$e->getMessage());
                 }
             }
 
@@ -337,7 +337,7 @@ SOFTWARE.'),
 
         Notification::make()
             ->title('Settings saved')
-            ->body('Cache cleared for: ' . implode(', ', static::$settingsGroups))
+            ->body('Cache cleared for: '.implode(', ', static::$settingsGroups))
             ->success()
             ->send();
     }
@@ -368,7 +368,7 @@ SOFTWARE.'),
                 $value = empty($value) ? '' : json_encode($value);
             }
 
-            $service->set($this->groupForKey($key) . '.' . $key, $value);
+            $service->set($this->groupForKey($key).'.'.$key, $value);
 
             if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $value) {
                 $oldValues[$key] = '***';

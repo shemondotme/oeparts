@@ -33,9 +33,9 @@ class RecoveryConsoleActionsTest extends TestCase
 
         require_once base_path('public/oe-recovery.php');
 
-        $this->base  = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-recov-act-'.getmypid();
+        $this->base = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-recov-act-'.getmypid();
         $this->state = $this->base.'/storage/app/updates';
-        $this->disk  = $this->base.'/backupdisk';
+        $this->disk = $this->base.'/backupdisk';
         @mkdir($this->state, 0775, true);
         @mkdir($this->disk, 0775, true);
     }
@@ -62,8 +62,8 @@ class RecoveryConsoleActionsTest extends TestCase
     #[Test]
     public function rollback_files_reverses_an_interrupted_swap(): void
     {
-        $root       = $this->base.'/root';
-        $backupDir  = $this->base.'/swap-backup';
+        $root = $this->base.'/root';
+        $backupDir = $this->base.'/swap-backup';
         $stagingDir = $this->base.'/staging';
 
         // Post-swap live state: NEW code is in root, the ORIGINAL is parked in swap-backup.
@@ -71,12 +71,12 @@ class RecoveryConsoleActionsTest extends TestCase
         $this->writeFile($backupDir.'/app/OldClass.php', '<?php // old');
 
         file_put_contents($this->state.'/last-swap.json', json_encode([
-            'version'     => '1.1.0',
-            'root'        => $root,
-            'backup_dir'  => $backupDir,
+            'version' => '1.1.0',
+            'root' => $root,
+            'backup_dir' => $backupDir,
             'staging_dir' => $stagingDir,
-            'completed'   => true,
-            'swapped'     => [['path' => 'app', 'had_original' => true]],
+            'completed' => true,
+            'swapped' => [['path' => 'app', 'had_original' => true]],
         ]));
 
         $result = $this->console()->rollbackFiles();
@@ -112,11 +112,11 @@ class RecoveryConsoleActionsTest extends TestCase
         DB::table('recovery_widgets')->insert(['id' => 1, 'name' => 'live-value']);
 
         $run = BackupRun::create([
-            'profile'    => BackupRun::PROFILE_UPDATE_SAFETY,
-            'status'     => BackupRun::STATUS_SUCCESS,
-            'trigger'    => BackupRun::TRIGGER_PRE_UPDATE,
-            'disk'       => 'local',
-            'encrypted'  => true,
+            'profile' => BackupRun::PROFILE_UPDATE_SAFETY,
+            'status' => BackupRun::STATUS_SUCCESS,
+            'trigger' => BackupRun::TRIGGER_PRE_UPDATE,
+            'disk' => 'local',
+            'encrypted' => true,
             'part_count' => 2,
         ]);
         $run->manifest_path = 'backups/'.$run->id.'/manifest.json';
@@ -128,7 +128,7 @@ class RecoveryConsoleActionsTest extends TestCase
         $dataSql = "INSERT INTO `recovery_widgets` (`id`,`name`) VALUES (1,'restored-value');\n";
 
         $schemaPart = $this->encryptPart($run->id, $schemaSql, 'recovery_widgets.schema.sql.gz.enc', 'recovery_widgets', 'schema');
-        $dataPart   = $this->encryptPart($run->id, $dataSql, 'recovery_widgets.data.0.sql.gz.enc', 'recovery_widgets', 'data');
+        $dataPart = $this->encryptPart($run->id, $dataSql, 'recovery_widgets.data.0.sql.gz.enc', 'recovery_widgets', 'data');
 
         // Manifest lists DATA before SCHEMA on purpose — the console must still run
         // schema first so the table exists before its rows.
@@ -235,16 +235,16 @@ class RecoveryConsoleActionsTest extends TestCase
         @unlink($plainTmp);
 
         return [
-            'type'   => 'db',
-            'name'   => $name,
-            'disk'   => 'local',
-            'path'   => $rel,
+            'type' => 'db',
+            'name' => $name,
+            'disk' => 'local',
+            'path' => $rel,
             'sha256' => $meta['enc_sha256'],
-            'meta'   => [
-                'kind'         => $kind,
-                'encrypted'    => true,
-                'cipher'       => $meta['cipher'],
-                'frames'       => $meta['frames'],
+            'meta' => [
+                'kind' => $kind,
+                'encrypted' => true,
+                'cipher' => $meta['cipher'],
+                'frames' => $meta['frames'],
                 'plain_sha256' => $meta['plain_sha256'],
             ],
         ];
@@ -255,10 +255,10 @@ class RecoveryConsoleActionsTest extends TestCase
         $path = $this->disk.'/backups/'.$runId.'/manifest.json';
         @mkdir(dirname($path), 0775, true);
         file_put_contents($path, json_encode([
-            'schema'  => 1,
-            'run_id'  => $runId,
+            'schema' => 1,
+            'run_id' => $runId,
             'profile' => 'update_safety',
-            'parts'   => $parts,
+            'parts' => $parts,
         ], JSON_PRETTY_PRINT));
     }
 

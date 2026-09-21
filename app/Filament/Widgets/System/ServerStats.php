@@ -26,7 +26,7 @@ class ServerStats extends BaseWidget
 
         $loadValue = $load ? round($load[0] ?? 0, 2) : '—';
         $loadDesc = $load
-            ? '5m ' . round($load[1] ?? 0, 2) . ' · 15m ' . round($load[2] ?? 0, 2)
+            ? '5m '.round($load[1] ?? 0, 2).' · 15m '.round($load[2] ?? 0, 2)
             : 'Not available on this host';
 
         return [
@@ -35,28 +35,28 @@ class ServerStats extends BaseWidget
                 ->descriptionIcon('heroicon-m-cpu-chip')
                 ->color('gray'),
 
-            Stat::make('Memory', $mem['usage_mb'] . ' / ' . $mem['limit_mb'] . ' MB')
-                ->description('Peak ' . $mem['peak_mb'] . ' MB · ' . $mem['usage_percent'] . '% of limit')
+            Stat::make('Memory', $mem['usage_mb'].' / '.$mem['limit_mb'].' MB')
+                ->description('Peak '.$mem['peak_mb'].' MB · '.$mem['usage_percent'].'% of limit')
                 ->descriptionIcon('heroicon-m-chart-bar')
                 ->color($mem['usage_percent'] >= 90 ? 'danger' : ($mem['usage_percent'] >= 70 ? 'warning' : 'success')),
 
-            Stat::make('Disk', $disk['used_gb'] . ' / ' . $disk['total_gb'] . ' GB')
-                ->description($disk['free_gb'] . ' GB free · ' . $disk['usage_percent'] . '% used')
+            Stat::make('Disk', $disk['used_gb'].' / '.$disk['total_gb'].' GB')
+                ->description($disk['free_gb'].' GB free · '.$disk['usage_percent'].'% used')
                 ->descriptionIcon('heroicon-m-circle-stack')
                 ->color($disk['usage_percent'] >= 90 ? 'danger' : ($disk['usage_percent'] >= 75 ? 'warning' : 'success')),
 
             Stat::make('PHP', PHP_VERSION)
-                ->description(php_sapi_name() . ' · memory_limit ' . ini_get('memory_limit'))
+                ->description(php_sapi_name().' · memory_limit '.ini_get('memory_limit'))
                 ->descriptionIcon('heroicon-m-code-bracket')
                 ->color('primary'),
 
             Stat::make('Laravel', app()->version())
-                ->description('Env: ' . config('app.env') . ' · Debug: ' . (config('app.debug') ? 'on' : 'off'))
+                ->description('Env: '.config('app.env').' · Debug: '.(config('app.debug') ? 'on' : 'off'))
                 ->descriptionIcon('heroicon-m-bolt')
                 ->color(config('app.env') === 'production' ? 'success' : 'warning'),
 
             Stat::make('Drivers', ucfirst((string) config('cache.default')))
-                ->description('Queue: ' . config('queue.default') . ' · Session: ' . config('session.driver'))
+                ->description('Queue: '.config('queue.default').' · Session: '.config('session.driver'))
                 ->descriptionIcon('heroicon-m-server-stack')
                 ->color('gray'),
         ];

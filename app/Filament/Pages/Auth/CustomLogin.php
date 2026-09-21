@@ -20,7 +20,7 @@ class CustomLogin extends BaseLogin
         return false;
     }
 
-    public function getHeading(): string | Htmlable | null
+    public function getHeading(): string|Htmlable|null
     {
         // HtmlString wrapping a pre-rendered string, not the View object
         // itself: returning the View directly rendered as literal escaped
@@ -34,7 +34,7 @@ class CustomLogin extends BaseLogin
         return new HtmlString(view('filament.pages.auth.login-heading')->render());
     }
 
-    public function getSubheading(): string | Htmlable
+    public function getSubheading(): string|Htmlable
     {
         return __('Authorized administrative personnel only.');
     }

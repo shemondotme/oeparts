@@ -20,7 +20,7 @@ class EditReview extends EditRecord
 
     public function getHeading(): string
     {
-        return 'Edit Review — ' . ($this->record?->reviewer_name ?? '');
+        return 'Edit Review — '.($this->record?->reviewer_name ?? '');
     }
 
     public function getSubheading(): ?string

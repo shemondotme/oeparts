@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupRetentionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -23,14 +24,14 @@ class BackupRetentionTest extends TestCase
         Storage::fake('local');
     }
 
-    private function makeRun(\Illuminate\Support\Carbon $finishedAt, string $profile = BackupRun::PROFILE_FULL): BackupRun
+    private function makeRun(Carbon $finishedAt, string $profile = BackupRun::PROFILE_FULL): BackupRun
     {
         $run = BackupRun::create([
-            'profile'     => $profile,
-            'status'      => BackupRun::STATUS_SUCCESS,
-            'trigger'     => BackupRun::TRIGGER_SCHEDULED,
-            'disk'        => 'local',
-            'started_at'  => $finishedAt,
+            'profile' => $profile,
+            'status' => BackupRun::STATUS_SUCCESS,
+            'trigger' => BackupRun::TRIGGER_SCHEDULED,
+            'disk' => 'local',
+            'started_at' => $finishedAt,
             'finished_at' => $finishedAt,
         ]);
 
@@ -77,7 +78,7 @@ class BackupRetentionTest extends TestCase
         config(['backup.retention' => ['daily' => 1, 'weekly' => 0, 'monthly' => 0]]);
 
         $newest = $this->makeRun(now()->setTime(15, 0));
-        $older  = $this->makeRun(now()->setTime(9, 0));
+        $older = $this->makeRun(now()->setTime(9, 0));
 
         $result = app(BackupRetentionService::class)->prune();
 

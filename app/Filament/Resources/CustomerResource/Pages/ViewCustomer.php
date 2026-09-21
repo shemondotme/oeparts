@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\CustomerResource\Pages;
 
+use App\Enums\OrderStatus;
 use App\Filament\Resources\CustomerResource;
 use Filament\Actions;
 use Filament\Infolists\Components\TextEntry;
@@ -23,10 +24,10 @@ class ViewCustomer extends ViewRecord
     private static function paidStatuses(): array
     {
         return [
-            \App\Enums\OrderStatus::Paid->value,
-            \App\Enums\OrderStatus::Processing->value,
-            \App\Enums\OrderStatus::Shipped->value,
-            \App\Enums\OrderStatus::Delivered->value,
+            OrderStatus::Paid->value,
+            OrderStatus::Processing->value,
+            OrderStatus::Shipped->value,
+            OrderStatus::Delivered->value,
         ];
     }
 

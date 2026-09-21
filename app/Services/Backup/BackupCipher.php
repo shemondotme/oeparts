@@ -22,11 +22,16 @@ use App\Services\Backup\Exceptions\BackupException;
  */
 class BackupCipher
 {
-    private const MAGIC   = 'OEENC1';
+    private const MAGIC = 'OEENC1';
+
     private const VERSION = 1;
-    private const CIPHER  = 'aes-256-gcm';
-    private const BLOCK   = 1048576; // 1 MB plaintext per frame
-    private const IV_LEN  = 12;
+
+    private const CIPHER = 'aes-256-gcm';
+
+    private const BLOCK = 1048576; // 1 MB plaintext per frame
+
+    private const IV_LEN = 12;
+
     private const TAG_LEN = 16;
 
     /** Is a backup key configured? Pre-flight / the engine block a backup without one. */
@@ -72,9 +77,9 @@ class BackupCipher
 
         fwrite($out, self::MAGIC.chr(self::VERSION));
 
-        $plainCtx   = hash_init('sha256');
+        $plainCtx = hash_init('sha256');
         $plainBytes = 0;
-        $frames     = 0;
+        $frames = 0;
 
         while (! feof($in)) {
             $block = fread($in, self::BLOCK);
@@ -85,9 +90,9 @@ class BackupCipher
             hash_update($plainCtx, $block);
             $plainBytes += strlen($block);
 
-            $iv  = random_bytes(self::IV_LEN);
+            $iv = random_bytes(self::IV_LEN);
             $tag = '';
-            $ct  = openssl_encrypt(
+            $ct = openssl_encrypt(
                 $block, self::CIPHER, $key, OPENSSL_RAW_DATA, $iv, $tag, pack('N', $frames), self::TAG_LEN
             );
 
@@ -105,19 +110,19 @@ class BackupCipher
         fclose($out);
 
         return [
-            'cipher'       => self::CIPHER,
-            'frames'       => $frames,
-            'plain_bytes'  => $plainBytes,
+            'cipher' => self::CIPHER,
+            'frames' => $frames,
+            'plain_bytes' => $plainBytes,
             'plain_sha256' => hash_final($plainCtx),
-            'enc_bytes'    => (int) filesize($dst),
-            'enc_sha256'   => hash_file('sha256', $dst),
+            'enc_bytes' => (int) filesize($dst),
+            'enc_sha256' => hash_file('sha256', $dst),
         ];
     }
 
     /** Decrypt $src → $dst (both absolute paths). Throws on any auth failure. */
     public function decryptFile(string $src, string $dst): void
     {
-        $in  = @fopen($src, 'rb');
+        $in = @fopen($src, 'rb');
         $out = @fopen($dst, 'wb');
         if ($in === false || $out === false) {
             throw new BackupException('Could not open files for decryption.');
@@ -153,7 +158,7 @@ class BackupCipher
 
     private function decryptStream($in, $out): void
     {
-        $key    = $this->key();
+        $key = $this->key();
         $header = $this->readExact($in, strlen(self::MAGIC) + 1, allowEof: true);
 
         if (substr($header, 0, strlen(self::MAGIC)) !== self::MAGIC) {
@@ -181,7 +186,7 @@ class BackupCipher
                 throw new BackupException('Corrupt encrypted backup stream (frame '.$frame.' declares an implausible length).');
             }
 
-            $ct  = $this->readExact($in, $len);
+            $ct = $this->readExact($in, $len);
 
             $pt = openssl_decrypt(
                 $ct, self::CIPHER, $key, OPENSSL_RAW_DATA, $iv, $tag, pack('N', $frame)

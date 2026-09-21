@@ -26,8 +26,10 @@ class ProductImportRun extends Model
     use HasFactory;
 
     public const STATUS_RUNNING = 'running';
+
     public const STATUS_SUCCESS = 'success';
-    public const STATUS_FAILED  = 'failed';
+
+    public const STATUS_FAILED = 'failed';
 
     /** Row-level errors beyond this count still increment error_count but aren't individually stored. */
     public const MAX_STORED_ERRORS = 500;
@@ -40,16 +42,16 @@ class ProductImportRun extends Model
 
     protected $casts = [
         'update_existing' => 'boolean',
-        'total_rows'       => 'integer',
-        'processed_rows'   => 'integer',
-        'created_count'    => 'integer',
-        'updated_count'    => 'integer',
-        'skipped_count'    => 'integer',
-        'error_count'      => 'integer',
-        'errors'           => 'array',
-        'started_at'       => 'datetime',
-        'finished_at'      => 'datetime',
-        'meta'             => 'array',
+        'total_rows' => 'integer',
+        'processed_rows' => 'integer',
+        'created_count' => 'integer',
+        'updated_count' => 'integer',
+        'skipped_count' => 'integer',
+        'error_count' => 'integer',
+        'errors' => 'array',
+        'started_at' => 'datetime',
+        'finished_at' => 'datetime',
+        'meta' => 'array',
     ];
 
     public function admin(): BelongsTo
@@ -111,7 +113,7 @@ class ProductImportRun extends Model
 
         $errors = $this->errors ?? [];
         if (count($errors) < self::MAX_STORED_ERRORS) {
-            $errors[]     = ['row' => $rowNumber, 'message' => $message];
+            $errors[] = ['row' => $rowNumber, 'message' => $message];
             $this->errors = $errors;
         }
     }

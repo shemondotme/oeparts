@@ -6,6 +6,8 @@ use App\Models\CarModel;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use App\Models\Setting;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -15,6 +17,7 @@ class ProductDescriptionFallbackTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -112,11 +115,11 @@ class ProductDescriptionFallbackTest extends TestCase
     #[Test]
     public function fallback_respects_an_admin_configured_template(): void
     {
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'seo', 'key' => 'auto_description_template'],
             ['value' => json_encode(['en' => 'Custom: {oem} by {manufacturer}, {condition}.']), 'type' => 'json', 'is_encrypted' => false]
         );
-        app(\App\Services\SettingsService::class)->forget('seo');
+        app(SettingsService::class)->forget('seo');
 
         $product = $this->makeProduct();
 

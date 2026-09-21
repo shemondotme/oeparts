@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\Frontend;
 
+use App\Enums\OrderStatus;
+use App\Enums\RefundStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Frontend\AccountPasswordRequest;
+use App\Http\Requests\Frontend\AccountSettingsRequest;
+use App\Jobs\SendRefundStatusEmail;
 use App\Models\Order;
+use App\Models\RefundRequest;
 use App\Models\UserAddress;
 use App\Services\InvoiceService;
-use App\Enums\OrderStatus;
-use App\Models\RefundRequest;
-use App\Jobs\SendRefundStatusEmail;
 use App\Services\OrderService;
+use App\Services\OtpService;
 use App\Services\UploadedImageSanitizer;
+use App\Support\LocaleRegistry;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -26,7 +31,7 @@ class AccountController extends Controller
         if ($order->user_id !== $user->id) {
             abort(404);
         }
-        if (!$order->status->canBeCancelled()) {
+        if (! $order->status->canBeCancelled()) {
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
                 ->with('error', __('account.cancel_order_not_cancellable'));
         }
@@ -133,13 +138,13 @@ class AccountController extends Controller
         $user = Auth::guard('web')->user();
 
         $validated = $request->validate([
-            'id'               => 'nullable|exists:user_addresses,id,user_id,' . $user->id,
-            'first_name'       => 'required|string|max:100',
-            'last_name'        => 'required|string|max:100',
-            'company'          => 'nullable|string|max:200',
-            'address_line_1'   => 'required|string|max:200',
-            'address_line_2'   => 'nullable|string|max:200',
-            'city'             => 'required|string|max:100',
+            'id' => 'nullable|exists:user_addresses,id,user_id,'.$user->id,
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'company' => 'nullable|string|max:200',
+            'address_line_1' => 'required|string|max:200',
+            'address_line_2' => 'nullable|string|max:200',
+            'city' => 'required|string|max:100',
             // nullable, not required: the user_addresses.state column itself
             // is nullable, and checkout's own address step never collects a
             // state/province at all (orders has no shipping_state column) —
@@ -147,11 +152,11 @@ class AccountController extends Controller
             // in the account address book blocked saving an address that
             // checkout had just accepted seconds earlier for the exact same
             // customer.
-            'state'            => 'nullable|string|max:100',
-            'postal_code'      => 'required|string|max:20',
-            'country_code'     => 'required|string|size:2',
-            'phone'            => 'nullable|string|max:30',
-            'is_default'       => 'boolean',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'required|string|max:20',
+            'country_code' => 'required|string|size:2',
+            'phone' => 'nullable|string|max:30',
+            'is_default' => 'boolean',
         ]);
 
         // The form/validation keys (address_line_1/address_line_2, matching
@@ -210,20 +215,21 @@ class AccountController extends Controller
     public function settings(Request $request, string $lang)
     {
         $user = Auth::guard('web')->user();
+
         return view('frontend.account.settings', compact('user'));
     }
 
     /**
      * Update account settings.
      */
-    public function updateSettings(\App\Http\Requests\Frontend\AccountSettingsRequest $request, string $lang)
+    public function updateSettings(AccountSettingsRequest $request, string $lang)
     {
         $user = Auth::guard('web')->user();
 
         $validated = $request->validated();
 
         // Update basic info
-        $user->name = trim($validated['first_name'] . ' ' . $validated['last_name']);
+        $user->name = trim($validated['first_name'].' '.$validated['last_name']);
         $user->phone = $validated['phone'];
 
         $emailChanged = $validated['email'] !== $user->email;
@@ -236,13 +242,13 @@ class AccountController extends Controller
             // they don't yet control) as "verified" just by typing it in
             // here. Re-run the same OTP-or-auto-verify decision registration
             // uses (App\Http\Controllers\Frontend\AuthController::register()).
-            $otpEnabled = app(\App\Services\OtpService::class)->enabled();
+            $otpEnabled = app(OtpService::class)->enabled();
             $user->forceFill(['email_verified_at' => $otpEnabled ? null : now()]);
         }
 
         $user->save();
 
-        if ($emailChanged && app(\App\Services\OtpService::class)->enabled()) {
+        if ($emailChanged && app(OtpService::class)->enabled()) {
             Auth::guard('web')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -259,7 +265,7 @@ class AccountController extends Controller
     /**
      * Update password only (separate form from profile fields).
      */
-    public function updatePassword(\App\Http\Requests\Frontend\AccountPasswordRequest $request, string $lang)
+    public function updatePassword(AccountPasswordRequest $request, string $lang)
     {
         $user = Auth::guard('web')->user();
 
@@ -304,7 +310,7 @@ class AccountController extends Controller
         $user = Auth::guard('web')->user();
 
         $validated = $request->validate([
-            'language' => ['required', 'string', Rule::in(\App\Support\LocaleRegistry::codes())],
+            'language' => ['required', 'string', Rule::in(LocaleRegistry::codes())],
             'timezone' => 'nullable|string|max:100',
         ]);
 
@@ -371,6 +377,7 @@ class AccountController extends Controller
             return redirect()->route('frontend.account.order.detail', ['lang' => $lang, 'order' => $order])
                 ->with('error', __('account.refund_already_submitted'));
         }
+
         return view('frontend.account.refund-form', compact('order'));
     }
 
@@ -397,10 +404,10 @@ class AccountController extends Controller
         }
 
         $validated = $request->validate([
-            'reason'        => 'required|string|min:20|max:2000',
+            'reason' => 'required|string|min:20|max:2000',
             'return_images' => 'nullable|array|max:5',
             'return_images.*' => 'image|mimes:jpeg,png|max:2048',
-            'website'       => 'size:0',  // honeypot
+            'website' => 'size:0',  // honeypot
         ]);
 
         // Store uploaded images — private disk, EXIF-stripped, with metadata
@@ -427,12 +434,12 @@ class AccountController extends Controller
         );
 
         $refund = RefundRequest::create([
-            'order_id'         => $order->id,
-            'user_id'          => $user->id,
-            'reason'           => $validated['reason'],
-            'return_images'    => $imagePaths ?: null,
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'reason' => $validated['reason'],
+            'return_images' => $imagePaths ?: null,
             'amount_requested' => $order->grand_total,
-            'status'           => \App\Enums\RefundStatus::Pending,
+            'status' => RefundStatus::Pending,
         ]);
 
         // dispatch() runs synchronously on the 'sync' queue connection (local
@@ -444,8 +451,8 @@ class AccountController extends Controller
         try {
             dispatch(new SendRefundStatusEmail(
                 $refund,
-                \App\Enums\RefundStatus::Pending,
-                \App\Enums\RefundStatus::Pending
+                RefundStatus::Pending,
+                RefundStatus::Pending
             ))->onQueue('critical');
         } catch (\Throwable $e) {
             report($e);
@@ -469,15 +476,15 @@ class AccountController extends Controller
         $sanitizer = app(UploadedImageSanitizer::class);
         $sanitizer->assertSafe($file);
 
-        $directory = 'refund-images/' . now()->format('Y/m');
+        $directory = 'refund-images/'.now()->format('Y/m');
         $path = $file->store($directory, 'local');
         $sanitizer->sanitize('local', $path, $file->getMimeType());
 
         return [
-            'path'          => $path,
+            'path' => $path,
             'original_name' => $file->getClientOriginalName(),
-            'size'          => Storage::disk('local')->size($path),
-            'uploaded_at'   => now()->toIso8601String(),
+            'size' => Storage::disk('local')->size($path),
+            'uploaded_at' => now()->toIso8601String(),
         ];
     }
 
@@ -495,10 +502,10 @@ class AccountController extends Controller
         // holds one page, so counting/summing against it would under-report and
         // shift as the user paginates.
         $totals = [
-            'all'       => (clone $baseQuery)->count(),
-            'pending'   => (clone $baseQuery)->where('status', \App\Enums\RefundStatus::Pending)->count(),
-            'processed' => (clone $baseQuery)->where('status', \App\Enums\RefundStatus::Processed)->count(),
-            'amount'    => (string) (clone $baseQuery)->sum('amount_requested'),
+            'all' => (clone $baseQuery)->count(),
+            'pending' => (clone $baseQuery)->where('status', RefundStatus::Pending)->count(),
+            'processed' => (clone $baseQuery)->where('status', RefundStatus::Processed)->count(),
+            'amount' => (string) (clone $baseQuery)->sum('amount_requested'),
         ];
 
         $refunds = $baseQuery->with('order')

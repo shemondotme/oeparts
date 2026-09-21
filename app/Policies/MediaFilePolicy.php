@@ -7,5 +7,6 @@ namespace App\Policies;
 class MediaFilePolicy extends BasePolicy
 {
     protected string $model = 'media_files';
+
     protected ?string $permissionKey = 'media';
 }

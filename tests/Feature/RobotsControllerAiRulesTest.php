@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Middleware\RedirectIfNotInstalled;
 use App\Models\Setting;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,7 +33,7 @@ class RobotsControllerAiRulesTest extends TestCase
         // — forcing 'production' here to exercise RobotsController's own
         // production check also defeats that OTHER middleware's testing
         // carve-out, so it needs its own explicit bypass.
-        $this->withoutMiddleware(\App\Http\Middleware\RedirectIfNotInstalled::class);
+        $this->withoutMiddleware(RedirectIfNotInstalled::class);
         $this->app['env'] = 'production';
 
         $response = $this->get('/robots.txt');
@@ -52,7 +53,7 @@ class RobotsControllerAiRulesTest extends TestCase
         // — forcing 'production' here to exercise RobotsController's own
         // production check also defeats that OTHER middleware's testing
         // carve-out, so it needs its own explicit bypass.
-        $this->withoutMiddleware(\App\Http\Middleware\RedirectIfNotInstalled::class);
+        $this->withoutMiddleware(RedirectIfNotInstalled::class);
         $this->app['env'] = 'production';
 
         $response = $this->get('/robots.txt');
@@ -61,8 +62,8 @@ class RobotsControllerAiRulesTest extends TestCase
         $response->assertSee("User-agent: SomeScraperBot\nDisallow: /", false);
         // The wildcard block (User-agent: *) must still say Allow: / —
         // blocking one specific bot must not affect the general rule.
-        $this->assertStringContainsString("User-agent: *", $body);
-        $this->assertStringContainsString("Allow: /", $body);
+        $this->assertStringContainsString('User-agent: *', $body);
+        $this->assertStringContainsString('Allow: /', $body);
     }
 
     #[Test]
@@ -71,7 +72,7 @@ class RobotsControllerAiRulesTest extends TestCase
         $this->setAiBotRules([
             ['user_agent' => 'GPTBot', 'action' => 'allow'],
         ]);
-        $this->withoutMiddleware(\App\Http\Middleware\RedirectIfNotInstalled::class);
+        $this->withoutMiddleware(RedirectIfNotInstalled::class);
         $this->app['env'] = 'staging';
 
         $response = $this->get('/robots.txt');
@@ -90,7 +91,7 @@ class RobotsControllerAiRulesTest extends TestCase
         // — forcing 'production' here to exercise RobotsController's own
         // production check also defeats that OTHER middleware's testing
         // carve-out, so it needs its own explicit bypass.
-        $this->withoutMiddleware(\App\Http\Middleware\RedirectIfNotInstalled::class);
+        $this->withoutMiddleware(RedirectIfNotInstalled::class);
         $this->app['env'] = 'production';
 
         $response = $this->get('/robots.txt');

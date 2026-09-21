@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NewsletterCampaignRecipient extends Model
 {
@@ -17,18 +18,18 @@ class NewsletterCampaignRecipient extends Model
     ];
 
     protected $casts = [
-        'status'     => 'string',
-        'sent_at'    => 'datetime',
-        'opened_at'  => 'datetime',
+        'status' => 'string',
+        'sent_at' => 'datetime',
+        'opened_at' => 'datetime',
         'clicked_at' => 'datetime',
     ];
 
-    public function campaign(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function campaign(): BelongsTo
     {
         return $this->belongsTo(NewsletterCampaign::class, 'campaign_id');
     }
 
-    public function subscriber(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function subscriber(): BelongsTo
     {
         return $this->belongsTo(NewsletterSubscriber::class, 'subscriber_id');
     }

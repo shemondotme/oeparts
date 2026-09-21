@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CustomerResource\Pages;
 
 use App\Filament\Concerns\DisablesCreateAnother;
-
 use App\Filament\Resources\CustomerResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Hash;

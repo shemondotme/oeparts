@@ -72,7 +72,7 @@ class RemoteImageDownloadService
 
         app(UploadedImageSanitizer::class)->assertSafeContents($body);
 
-        $path = 'product-images/' . Str::uuid() . '.' . self::ALLOWED_MIME_EXTENSIONS[$mime];
+        $path = 'product-images/'.Str::uuid().'.'.self::ALLOWED_MIME_EXTENSIONS[$mime];
 
         Storage::disk('public')->put($path, $body);
         app(UploadedImageSanitizer::class)->sanitize('public', $path, $mime);

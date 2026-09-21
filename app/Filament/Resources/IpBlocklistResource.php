@@ -5,17 +5,17 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\IpBlocklistResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\IpBlocklist;
-use Filament\Forms;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Support\Enums\FontWeight;
 
 class IpBlocklistResource extends Resource
 {
@@ -99,18 +99,18 @@ class IpBlocklistResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with('blocker'))
             ->columns([
-            Tables\Columns\TextColumn::make('ip_address')
-                ->label(__('admin.ip_address'))
-                ->searchable()
-                ->copyable()
-                ->copyMessage('IP address copied')
-                ->sortable()
-                ->fontMono()
-                ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('reason')
-                ->label(__('admin.reason'))
-                ->limit(40)
-                ->toggleable(),
+                Tables\Columns\TextColumn::make('ip_address')
+                    ->label(__('admin.ip_address'))
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('IP address copied')
+                    ->sortable()
+                    ->fontMono()
+                    ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('reason')
+                    ->label(__('admin.reason'))
+                    ->limit(40)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('blocker.name')
                     ->label(__('admin.blocked_by'))
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -137,18 +137,18 @@ class IpBlocklistResource extends Resource
                     ->helperText('Show only IP blocks that have expired.'),
             ])
             ->actions(AdminUi::recordActionsWithoutView())
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Blocked IPs', [
-                    'ip_address' => 'IP Address',
-                    'reason' => 'Reason',
-                    'blocker.name' => 'Blocked By',
-                    'is_active' => 'Active',
-                    'expires_at' => 'Expires',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Blocked IPs', [
+                        'ip_address' => 'IP Address',
+                        'reason' => 'Reason',
+                        'blocker.name' => 'Blocked By',
+                        'is_active' => 'Active',
+                        'expires_at' => 'Expires',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ])
+            ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-no-symbol')
             ->emptyStateHeading('No blocked IP addresses')
@@ -163,10 +163,10 @@ class IpBlocklistResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListIpBlocklists::route('/'),
+            'index' => Pages\ListIpBlocklists::route('/'),
             'create' => Pages\CreateIpBlocklist::route('/create'),
-            'view'   => Pages\ViewIpBlocklist::route('/{record}'),
-            'edit'   => Pages\EditIpBlocklist::route('/{record}/edit'),
+            'view' => Pages\ViewIpBlocklist::route('/{record}'),
+            'edit' => Pages\EditIpBlocklist::route('/{record}/edit'),
         ];
     }
 

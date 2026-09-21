@@ -41,13 +41,13 @@ class NotifyAdminsOnJobFailure
             }
 
             $this->notificationService->createForAll(
-                category:  AdminNotificationCategory::System,
-                title:     "Queue job failed: {$jobName}",
-                detail:    substr($event->exception->getMessage(), 0, 120),
+                category: AdminNotificationCategory::System,
+                title: "Queue job failed: {$jobName}",
+                detail: substr($event->exception->getMessage(), 0, 120),
                 actionUrl: '/admin/system/failed-jobs',
             );
         } catch (\Throwable $e) {
-            Log::error('NotifyAdminsOnJobFailure: ' . $e->getMessage());
+            Log::error('NotifyAdminsOnJobFailure: '.$e->getMessage());
         }
     }
 }

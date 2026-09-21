@@ -32,9 +32,10 @@ class SitemapController extends Controller
         $manufacturers = $rawManufacturers
             ->map(function (Manufacturer $m) use ($lang) {
                 $label = trans_field($m->name, $lang) ?: $m->slug;
+
                 return [
                     'label' => $label,
-                    'slug'  => $m->slug,
+                    'slug' => $m->slug,
                     'bucket' => strtoupper(mb_substr(preg_replace('/[^A-Za-z0-9]/u', '', $label) ?: '#', 0, 1)),
                 ];
             })
@@ -65,18 +66,18 @@ class SitemapController extends Controller
 
         // Split legal vs. general CMS pages for cleaner presentation.
         $legalSlugs = ['privacy-policy', 'privacy', 'terms-of-service', 'terms', 'cookie-policy', 'cookies', 'gdpr', 'imprint', 'impressum'];
-        $legalPages   = $cmsPages->whereIn('slug', $legalSlugs)->values();
+        $legalPages = $cmsPages->whereIn('slug', $legalSlugs)->values();
         $generalPages = $cmsPages->whereNotIn('slug', $legalSlugs)->values();
 
         return view('frontend.sitemap', [
-            'lang'                  => $lang,
+            'lang' => $lang,
             'manufacturersByLetter' => $manufacturersByLetter,
-            'manufacturerCount'     => $manufacturers->count(),
-            'blogPosts'             => $blogPosts,
-            'blogPostCount'         => $blogPostCount,
-            'legalPages'            => $legalPages,
-            'generalPages'          => $generalPages,
-            'generatedAt'           => now(),
+            'manufacturerCount' => $manufacturers->count(),
+            'blogPosts' => $blogPosts,
+            'blogPostCount' => $blogPostCount,
+            'legalPages' => $legalPages,
+            'generalPages' => $generalPages,
+            'generatedAt' => now(),
         ]);
     }
 }

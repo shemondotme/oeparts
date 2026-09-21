@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -77,7 +78,7 @@ class MenuRegistryTest extends TestCase
         $response = $this->get('/en/');
 
         $response->assertOk();
-        $response->assertSee('href="' . url('/en/warranty-info') . '"', false);
+        $response->assertSee('href="'.url('/en/warranty-info').'"', false);
     }
 
     #[Test]
@@ -102,12 +103,12 @@ class MenuRegistryTest extends TestCase
         // it up at all — confirms it's actually present before disabling it.
         $enabled = $this->get('/en/');
         $enabled->assertOk();
-        $enabled->assertSee('href="' . url('/en/faq') . '"', false);
+        $enabled->assertSee('href="'.url('/en/faq').'"', false);
 
-        app(\App\Services\SettingsService::class)->set('menu.footer_show_faq', '0');
+        app(SettingsService::class)->set('menu.footer_show_faq', '0');
 
         $disabled = $this->get('/en/');
         $disabled->assertOk();
-        $disabled->assertDontSee('href="' . url('/en/faq') . '"', false);
+        $disabled->assertDontSee('href="'.url('/en/faq').'"', false);
     }
 }

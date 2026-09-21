@@ -20,8 +20,8 @@ class LlmsTxtController extends Controller
         // database on installs that actually run it — this route must
         // still return something sensible on a fresh, unseeded database.
         $default = 'OeParts is an OEM auto-parts catalog searchable by manufacturer part number, '
-            . "including cross-reference numbers across manufacturers for the same physical part.\n\n"
-            . "Sitemap: {site_url}/sitemap.xml";
+            ."including cross-reference numbers across manufacturers for the same physical part.\n\n"
+            .'Sitemap: {site_url}/sitemap.xml';
 
         $body = settings_trans('crawlers.llms_txt_body', $default);
         $body = str_replace('{site_url}', rtrim(url('/'), '/'), $body);

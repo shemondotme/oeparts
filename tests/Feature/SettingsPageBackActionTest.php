@@ -49,7 +49,7 @@ class SettingsPageBackActionTest extends TestCase
         $classes = [];
 
         foreach (Finder::create()->files()->in(app_path('Filament/Pages/Settings'))->name('*.php') as $file) {
-            $class = 'App\\Filament\\Pages\\Settings\\' . $file->getBasename('.php');
+            $class = 'App\\Filament\\Pages\\Settings\\'.$file->getBasename('.php');
 
             if (! class_exists($class)) {
                 continue;
@@ -86,10 +86,10 @@ class SettingsPageBackActionTest extends TestCase
                         fn (Action $action): bool => $action->getUrl() === $expectedUrl
                     );
             } catch (\Throwable $e) {
-                $failures[] = $class . ': ' . $e->getMessage();
+                $failures[] = $class.': '.$e->getMessage();
             }
         }
 
-        $this->assertSame([], $failures, "These settings pages are missing a working backToSettings action:\n" . implode("\n", $failures));
+        $this->assertSame([], $failures, "These settings pages are missing a working backToSettings action:\n".implode("\n", $failures));
     }
 }

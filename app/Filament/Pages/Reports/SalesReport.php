@@ -2,12 +2,13 @@
 
 namespace App\Filament\Pages\Reports;
 
-use App\Models\Order;
 use App\Filament\Clusters\Reports;
+use App\Models\Order;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Response;
-use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SalesReport extends Page
 {
@@ -51,7 +52,7 @@ class SalesReport extends Page
         ];
     }
 
-    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportCsv(): StreamedResponse
     {
         $start = ($this->period === '1' ? Carbon::today() : Carbon::now()->subDays((int) $this->period));
 
@@ -69,7 +70,7 @@ class SalesReport extends Page
             ->orderBy('orders.created_at', 'desc')
             ->get();
 
-        $filename = 'sales-report-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'sales-report-'.now()->format('Y-m-d').'.csv';
 
         return Response::stream(function () use ($data) {
             $handle = fopen('php://output', 'w');

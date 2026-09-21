@@ -18,7 +18,7 @@ class MenuItem extends Model
     ];
 
     protected $casts = [
-        'label'  => 'array',
+        'label' => 'array',
         'target' => MenuTarget::class,
     ];
 

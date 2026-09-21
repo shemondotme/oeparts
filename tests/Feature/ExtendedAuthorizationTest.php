@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\ContactStatus;
 use App\Enums\PartInquiryStatus;
 use App\Enums\SectionStatus;
+use App\Filament\Resources\AbandonedCartResource;
 use App\Filament\Resources\AbandonedCartResource\Pages\ListAbandonedCarts;
 use App\Filament\Resources\AdminResource\Pages\ListAdmins;
 use App\Filament\Resources\BlogPostResource\Pages\ListBlogPosts;
@@ -32,14 +33,15 @@ use App\Models\Category;
 use App\Models\Condition;
 use App\Models\ContactMessage;
 use App\Models\EmailLog;
-use App\Models\Faq;
 use App\Models\FailedSearchLog;
+use App\Models\Faq;
 use App\Models\LanguageString;
 use App\Models\Manufacturer;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\NewsletterCampaign;
 use App\Models\NewsletterSubscriber;
+use App\Models\Page;
 use App\Models\PartInquiry;
 use App\Models\Product;
 use App\Models\SearchLog;
@@ -49,6 +51,7 @@ use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use App\Models\Testimonial;
 use App\Models\User;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -63,7 +66,7 @@ class ExtendedAuthorizationTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\RolesSeeder::class]);
+        $this->seed([RolesSeeder::class]);
     }
 
     private function adminWithRole(string $role): Admin
@@ -365,7 +368,7 @@ class ExtendedAuthorizationTest extends TestCase
         $manager = $this->adminWithRole('manager'); // has 'view abandoned carts'
 
         $this->actingAs($catalogAdmin, 'admin');
-        $this->get(\App\Filament\Resources\AbandonedCartResource::getUrl('index'))->assertForbidden();
+        $this->get(AbandonedCartResource::getUrl('index'))->assertForbidden();
 
         $this->actingAs($manager, 'admin');
         Livewire::test(ListAbandonedCarts::class)->assertTableActionVisible('sendRecovery', $cart);
@@ -461,8 +464,8 @@ class ExtendedAuthorizationTest extends TestCase
         // table's NOT NULL constraint — a pre-existing, unrelated factory
         // gap (nothing in the suite exercised Page::factory() bare before
         // this test). Not this chunk's concern; worked around directly.
-        $page = \App\Models\Page::factory()->create(['created_by' => $this->adminWithRole('super_admin')->id]);
-        $seoMeta = SeoMeta::factory()->create(['metable_type' => \App\Models\Page::class, 'metable_id' => $page->id]);
+        $page = Page::factory()->create(['created_by' => $this->adminWithRole('super_admin')->id]);
+        $seoMeta = SeoMeta::factory()->create(['metable_type' => Page::class, 'metable_id' => $page->id]);
         $editor = $this->adminWithPermissions('seo_meta_editor_test', ['view seo meta', 'create seo meta', 'edit seo meta', 'delete seo meta']);
 
         $this->assertTrue($editor->can('viewAny', SeoMeta::class));

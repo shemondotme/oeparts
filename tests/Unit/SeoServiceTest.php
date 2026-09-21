@@ -8,12 +8,14 @@ use App\Models\BlogPost;
 use App\Models\Category;
 use App\Models\Condition;
 use App\Models\Manufacturer;
+use App\Models\MediaFile;
 use App\Models\Product;
 use App\Models\SeoMeta;
 use App\Models\Setting;
 use App\Services\SeoService;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -264,7 +266,7 @@ class SeoServiceTest extends TestCase
         $output = $this->service->jsonLd('product', $product->fresh(['crossReferences']));
 
         $this->assertStringContainsString('"additionalProperty"', $output);
-        $this->assertStringContainsString('"value":"' . $product->oem_number . '"', $output);
+        $this->assertStringContainsString('"value":"'.$product->oem_number.'"', $output);
         $this->assertStringContainsString('"value":"XREF999"', $output);
         $this->assertStringContainsString('"name":"OEM Number"', $output);
     }
@@ -284,7 +286,7 @@ class SeoServiceTest extends TestCase
 
         $output = $this->service->jsonLd('product', $product->fresh(['crossReferences']));
 
-        $this->assertSame(1, substr_count($output, '"value":"' . $product->oem_number . '"'));
+        $this->assertSame(1, substr_count($output, '"value":"'.$product->oem_number.'"'));
     }
 
     #[Test]
@@ -362,8 +364,8 @@ class SeoServiceTest extends TestCase
 
         $output = $this->service->jsonLd('product', $product);
 
-        $this->assertStringContainsString('"sku":"' . $product->oem_number . '"', $output);
-        $this->assertStringContainsString('"mpn":"' . $product->oem_number . '"', $output);
+        $this->assertStringContainsString('"sku":"'.$product->oem_number.'"', $output);
+        $this->assertStringContainsString('"mpn":"'.$product->oem_number.'"', $output);
     }
 
     #[Test]
@@ -524,7 +526,7 @@ class SeoServiceTest extends TestCase
         // a substring the raw stored path also happens to match) catches a
         // regression back to URL::asset(), which built a dead link
         // straight off the web root instead.
-        $this->assertStringContainsString('content="'.\Illuminate\Support\Facades\Storage::disk('public')->url('images/og-default.png').'"', $tag);
+        $this->assertStringContainsString('content="'.Storage::disk('public')->url('images/og-default.png').'"', $tag);
     }
 
     /**
@@ -542,7 +544,7 @@ class SeoServiceTest extends TestCase
         app(SettingsService::class)->forget('seo');
 
         $admin = Admin::factory()->create();
-        $image = \App\Models\MediaFile::create([
+        $image = MediaFile::create([
             'uploaded_by' => $admin->id,
             'file_name' => 'custom-og.png',
             'file_path' => 'media/custom-og.png',
@@ -569,7 +571,7 @@ class SeoServiceTest extends TestCase
         $tag = $this->service->ogImageTag(null);
 
         $this->assertStringContainsString('og:image', $tag);
-        $this->assertStringContainsString('content="'.\Illuminate\Support\Facades\Storage::disk('public')->url('images/og-default.png').'"', $tag);
+        $this->assertStringContainsString('content="'.Storage::disk('public')->url('images/og-default.png').'"', $tag);
     }
 
     #[Test]

@@ -3,15 +3,17 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Services\CacheService;
-use App\Services\CrawlerVerificationService;
-use App\Services\ProductSlugService;
-use App\Services\SearchService;
 use App\Models\CarModel;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use App\Services\CacheService;
+use App\Services\CrawlerVerificationService;
+use App\Services\ProductSlugService;
+use App\Services\SearchService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -37,7 +39,7 @@ class SearchController extends Controller
         }
 
         $maxSearches = (int) settings('search.rate_limit_per_minute', 30);
-        if (!RateLimiter::attempt("search:{$request->ip()}", $maxSearches, function () {
+        if (! RateLimiter::attempt("search:{$request->ip()}", $maxSearches, function () {
             return true;
         })) {
             // No message here — bootstrap/app.php's TooManyRequestsHttpException
@@ -57,17 +59,17 @@ class SearchController extends Controller
     public function results(Request $request, string $lang, string $oem)
     {
         // Validate OEM format (should already be normalized via middleware)
-        if (!preg_match('/^[A-Z0-9]+$/', $oem)) {
+        if (! preg_match('/^[A-Z0-9]+$/', $oem)) {
             abort(404);
         }
 
         $this->enforceSearchRateLimit($request);
 
         $manufacturerId = $request->query('manufacturer');
-        $carModelId     = $request->query('model');
+        $carModelId = $request->query('model');
 
         // Sort + filter params
-        $sort      = in_array($request->query('sort'), ['price_asc', 'price_desc', 'default'], true)
+        $sort = in_array($request->query('sort'), ['price_asc', 'price_desc', 'default'], true)
                      ? $request->query('sort')
                      : 'default';
         $activeConditions = app(CacheService::class)->rememberActiveConditions(
@@ -91,11 +93,11 @@ class SearchController extends Controller
             manufacturerId: $manufacturerId ? (int) $manufacturerId : null,
             carModelId: $carModelId ? (int) $carModelId : null,
             options: [
-                'limit'        => settings('search.results_limit', 100),
-                'lang'         => $lang,
-                'paginate'     => false,
-                'sort'         => $sort,
-                'condition'    => $condition,
+                'limit' => settings('search.results_limit', 100),
+                'lang' => $lang,
+                'paginate' => false,
+                'sort' => $sort,
+                'condition' => $condition,
                 'in_stock_only' => $inStockOnly,
             ]
         );
@@ -114,11 +116,11 @@ class SearchController extends Controller
         // Content/copy is unchanged, only the status code.
         if ($result['total'] === 0) {
             return response()->view('frontend.search.zero-results', [
-                'normalized_query'     => $result['normalized_query'],
-                'search_type'          => $result['search_type'],
-                'popularOems'          => $this->getPopularOems(),
+                'normalized_query' => $result['normalized_query'],
+                'search_type' => $result['search_type'],
+                'popularOems' => $this->getPopularOems(),
                 'failed_search_log_id' => $result['search_log_id'],
-                'cross_ref_checked'    => $result['cross_ref_checked'] ?? true,
+                'cross_ref_checked' => $result['cross_ref_checked'] ?? true,
             ], 404);
         }
 
@@ -220,7 +222,7 @@ class SearchController extends Controller
      * this result size (<= $limit) a second, smaller top-up query is both
      * simpler and cheap enough not to matter.
      */
-    private function buildRelatedProducts(Product $product, int $limit = 8): \Illuminate\Support\Collection
+    private function buildRelatedProducts(Product $product, int $limit = 8): Collection
     {
         $carModelIds = $product->carModels->pluck('id');
 
@@ -318,24 +320,24 @@ class SearchController extends Controller
         // COUNT query on every console load), invalidated by ProductObserver/
         // ManufacturerObserver on every write.
         $stats = $this->cacheService->rememberSearchConsoleStats(fn () => [
-            'brands'   => Manufacturer::where('is_active', true)->count(),
+            'brands' => Manufacturer::where('is_active', true)->count(),
             'products' => Product::where('is_active', true)->count(),
         ]);
 
         return view('frontend.search.console', [
-            'lang'           => $lang,
-            'popularOems'    => $popularOems,
+            'lang' => $lang,
+            'popularOems' => $popularOems,
             'featuredBrands' => $featuredBrands,
-            'minChars'       => $minChars,
-            'brandCount'     => $stats['brands'],
-            'productCount'   => $stats['products'],
+            'minChars' => $minChars,
+            'brandCount' => $stats['brands'],
+            'productCount' => $stats['products'],
         ]);
     }
 
     /**
      * Build the shared data array for the results view.
      */
-    private function buildResultsViewData(array $result, string $lang, string $sort, ?string $condition, bool $inStockOnly, ?int $manufacturerId, ?int $carModelId, \Illuminate\Support\Collection $activeConditions): array
+    private function buildResultsViewData(array $result, string $lang, string $sort, ?string $condition, bool $inStockOnly, ?int $manufacturerId, ?int $carModelId, Collection $activeConditions): array
     {
         // Breadcrumbs + car model entity (single query for filter chip / Alpine)
         $breadcrumbs = [];
@@ -343,7 +345,7 @@ class SearchController extends Controller
         if ($manufacturerId && $manufacturer = Manufacturer::find($manufacturerId)) {
             $breadcrumbs[] = [
                 'label' => trans_field($manufacturer->name),
-                'url'   => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]),
+                'url' => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]),
             ];
         }
         if ($carModelId) {
@@ -351,7 +353,7 @@ class SearchController extends Controller
             if ($carModelEntity) {
                 $breadcrumbs[] = [
                     'label' => $carModelEntity->name,
-                    'url'   => route('frontend.car-model.show', [
+                    'url' => route('frontend.car-model.show', [
                         'lang' => $lang,
                         'manufacturer' => $carModelEntity->manufacturer->slug,
                         'model' => $carModelEntity->slug,
@@ -362,52 +364,53 @@ class SearchController extends Controller
 
         // Build manufacturer filter options from counts, load names
         $manufacturerFilterOptions = [];
-        if (!empty($result['manufacturer_counts'])) {
+        if (! empty($result['manufacturer_counts'])) {
             $mfrIds = array_keys($result['manufacturer_counts']);
             $manufacturers = Manufacturer::whereIn('id', $mfrIds)->get()->keyBy('id');
             foreach ($result['manufacturer_counts'] as $mfrId => $cnt) {
                 if ($mfr = $manufacturers->get($mfrId)) {
                     $manufacturerFilterOptions[] = [
-                        'id'    => $mfrId,
-                        'name'  => trans_field($mfr->name),
+                        'id' => $mfrId,
+                        'name' => trans_field($mfr->name),
                         'count' => $cnt,
                     ];
                 }
             }
-            usort($manufacturerFilterOptions, fn($a, $b) => $b['count'] - $a['count']);
+            usort($manufacturerFilterOptions, fn ($a, $b) => $b['count'] - $a['count']);
         }
 
         return [
-            'products'                   => $result['products'],
-            'total'                      => $result['total'],
-            'search_type'                => $result['search_type'],
-            'normalized_query'           => $result['normalized_query'],
-            'breadcrumbs'                => $breadcrumbs,
-            'sort'                       => $sort,
-            'condition_filter'           => $condition,
-            'in_stock_only'              => $inStockOnly,
-            'manufacturer_filter'        => $manufacturerId,
-            'car_model_filter'           => $carModelEntity ? $carModelId : null,
-            'car_model_filter_label'     => $carModelEntity?->name,
-            'condition_counts'           => $result['condition_counts'],
-            'conditions'                 => $activeConditions,
+            'products' => $result['products'],
+            'total' => $result['total'],
+            'search_type' => $result['search_type'],
+            'normalized_query' => $result['normalized_query'],
+            'breadcrumbs' => $breadcrumbs,
+            'sort' => $sort,
+            'condition_filter' => $condition,
+            'in_stock_only' => $inStockOnly,
+            'manufacturer_filter' => $manufacturerId,
+            'car_model_filter' => $carModelEntity ? $carModelId : null,
+            'car_model_filter_label' => $carModelEntity?->name,
+            'condition_counts' => $result['condition_counts'],
+            'conditions' => $activeConditions,
             'manufacturer_filter_options' => $manufacturerFilterOptions,
-            'price_stats'                => $result['price_stats'],
-            'vat_rate'                   => (int) settings('tax.default_vat_rate', 21),
-            'filtered_empty'             => false,
-            'unfiltered_total'           => 0,
+            'price_stats' => $result['price_stats'],
+            'vat_rate' => (int) settings('tax.default_vat_rate', 21),
+            'filtered_empty' => false,
+            'unfiltered_total' => 0,
         ];
     }
 
     /**
      * Fetch top 4 popular OEM numbers from the last 30 days (for zero-results suggestions).
      */
-    private function getPopularOems(): \Illuminate\Support\Collection
+    private function getPopularOems(): Collection
     {
         try {
             $lang = app()->getLocale();
-            $cacheKey = 'popular_oems_zero_results_norm_' . $lang;
-            return \Illuminate\Support\Facades\Cache::remember($cacheKey, now()->addHours((int) settings('search.cache_ttl_hours', 6)), function () {
+            $cacheKey = 'popular_oems_zero_results_norm_'.$lang;
+
+            return Cache::remember($cacheKey, now()->addHours((int) settings('search.cache_ttl_hours', 6)), function () {
                 return \DB::table('search_logs')
                     ->select('normalized_query', \DB::raw('COUNT(*) as hits'))
                     ->where('created_at', '>=', now()->subDays((int) settings('search.popular_days_window', 30)))
@@ -440,6 +443,7 @@ class SearchController extends Controller
 
         $limit = (int) settings('search.autocomplete_count', 5);
         $results = $this->searchService->autocomplete($query, $lang, $limit);
+
         return response()->json($results);
     }
 }

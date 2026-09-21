@@ -7,24 +7,22 @@ use App\Enums\SectionStatus;
 use App\Filament\Resources\SectionResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Section;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Forms\Components\Repeater;
 use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
-use Filament\Actions;
 use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Model;
-use Filament\Schemas\Components\Section as UiSection;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section as UiSection;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Filament\Support\Enums\FontWeight;
+use Illuminate\Database\Eloquent\Model;
 
 class SectionResource extends Resource
 {
@@ -52,11 +50,12 @@ class SectionResource extends Resource
         return null;
     }
 
-    public static function getRecordTitle(?Model $record): string|null
+    public static function getRecordTitle(?Model $record): ?string
     {
-        if (!$record instanceof Section) {
+        if (! $record instanceof Section) {
             return null;
         }
+
         return AdminUi::localizedName($record->title, 'Section');
     }
 
@@ -332,12 +331,12 @@ class SectionResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('title')
-                ->label(__('admin.title'))
-                ->getStateUsing(fn (Section $record): string => AdminUi::localizedName($record->title, 'Section'))
-                ->searchable()
-                ->weight(FontWeight::Medium)
-                ->limit(30),
+                Tables\Columns\TextColumn::make('title')
+                    ->label(__('admin.title'))
+                    ->getStateUsing(fn (Section $record): string => AdminUi::localizedName($record->title, 'Section'))
+                    ->searchable()
+                    ->weight(FontWeight::Medium)
+                    ->limit(30),
                 Tables\Columns\TextColumn::make('type')
                     ->label(__('admin.type'))
                     ->badge()
@@ -354,9 +353,9 @@ class SectionResource extends Resource
                     ->badge()
                     ->color(fn (SectionStatus $state): string => match ($state) {
                         SectionStatus::Published => 'success',
-                        SectionStatus::Draft     => 'gray',
+                        SectionStatus::Draft => 'gray',
                         SectionStatus::Scheduled => 'warning',
-                        SectionStatus::Archived  => 'danger',
+                        SectionStatus::Archived => 'danger',
                         default => 'gray',
                     })
                     ->sortable(),
@@ -435,16 +434,16 @@ class SectionResource extends Resource
                 ]),
             ])
             ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Sections', [
-                    'title' => 'Title',
-                    'type' => 'Type',
-                    'location' => 'Location',
-                    'status' => 'Status',
-                    'is_active' => 'Active',
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Sections', [
+                        'title' => 'Title',
+                        'type' => 'Type',
+                        'location' => 'Location',
+                        'status' => 'Status',
+                        'is_active' => 'Active',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
             ])
             ->defaultSort('sort_order', 'asc')
             ->emptyStateIcon('heroicon-o-squares-2x2')
@@ -460,10 +459,10 @@ class SectionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListSections::route('/'),
+            'index' => Pages\ListSections::route('/'),
             'create' => Pages\CreateSection::route('/create'),
-            'view'   => Pages\ViewSection::route('/{record}'),
-            'edit'   => Pages\EditSection::route('/{record}/edit'),
+            'view' => Pages\ViewSection::route('/{record}'),
+            'edit' => Pages\EditSection::route('/{record}/edit'),
         ];
     }
 
@@ -472,4 +471,3 @@ class SectionResource extends Resource
         return ['title'];
     }
 }
-

@@ -28,7 +28,7 @@ class RefundProcessed extends Mailable
             ], $this->locale),
             tags: ['refund-processed'],
             metadata: [
-                'refund_id'     => $this->refund->id,
+                'refund_id' => $this->refund->id,
                 'template_type' => 'refund_processed',
             ],
         );

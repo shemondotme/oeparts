@@ -12,16 +12,16 @@ class HealthController extends Controller
     {
         $checks = [
             'database' => $this->checkDatabase(),
-            'cache'    => $this->checkCache(),
+            'cache' => $this->checkCache(),
         ];
 
         $healthy = ! in_array('fail', $checks, true);
 
         return response()->json([
-            'status'    => $healthy ? 'ok' : 'degraded',
-            'version'   => $this->version(),
+            'status' => $healthy ? 'ok' : 'degraded',
+            'version' => $this->version(),
             'timestamp' => now()->toIso8601String(),
-            'checks'    => $checks,
+            'checks' => $checks,
         ], $healthy ? 200 : 503);
     }
 
@@ -29,6 +29,7 @@ class HealthController extends Controller
     {
         try {
             DB::connection()->getPdo();
+
             return 'ok';
         } catch (\Throwable) {
             return 'fail';
@@ -38,10 +39,11 @@ class HealthController extends Controller
     private function checkCache(): string
     {
         try {
-            $key = 'health_ping_' . uniqid();
+            $key = 'health_ping_'.uniqid();
             Cache::put($key, 'ok', 5);
             $result = Cache::get($key);
             Cache::forget($key);
+
             return $result === 'ok' ? 'ok' : 'fail';
         } catch (\Throwable) {
             return 'fail';
@@ -55,6 +57,7 @@ class HealthController extends Controller
             return 'unknown';
         }
         $data = json_decode(file_get_contents($path), true);
+
         return $data['version'] ?? 'unknown';
     }
 }

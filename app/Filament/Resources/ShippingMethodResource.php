@@ -8,17 +8,16 @@ use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Support\Enums\FontWeight;
 
 class ShippingMethodResource extends Resource
 {
@@ -44,9 +43,9 @@ class ShippingMethodResource extends Resource
         return null;
     }
 
-    public static function getRecordTitle(?Model $record): string|null
+    public static function getRecordTitle(?Model $record): ?string
     {
-        if (!$record instanceof ShippingMethod) {
+        if (! $record instanceof ShippingMethod) {
             return null;
         }
 
@@ -173,46 +172,46 @@ class ShippingMethodResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with('zone'))
             ->columns([
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.method'))
-                ->getStateUsing(fn (ShippingMethod $record): string => static::localizedName($record->name))
-                ->searchable(query: function (Builder $query, string $search) use ($locales): Builder {
-                    return $query->where(function (Builder $q) use ($search, $locales): void {
-                        foreach ($locales as $code) {
-                            $q->orWhere("name->$code", 'like', "%{$search}%");
-                        }
-                    });
-                })
-                ->sortable()
-                ->weight(FontWeight::Medium)
-                ->limit(28),
-            Tables\Columns\TextColumn::make('zone.name')
-                ->label(__('admin.zone'))
-                ->getStateUsing(fn (ShippingMethod $record): string => $record->zone?->name ?? '—')
-                ->searchable(query: function (Builder $query, string $search): Builder {
-                    return $query->whereHas('zone', fn ($q) => $q->where('name', 'like', "%{$search}%"));
-                })
-                ->toggleable(),
-            Tables\Columns\TextColumn::make('flat_rate')
-                ->label(__('admin.rate'))
-                ->getStateUsing(fn (ShippingMethod $record): string => format_money($record->flat_rate))
-                ->alignEnd()
-                ->fontMono()
-                ->sortable(),
-            Tables\Columns\TextColumn::make('free_shipping_threshold')
-                ->label(__('admin.free_threshold'))
-                ->getStateUsing(fn (ShippingMethod $record): string => filled($record->free_shipping_threshold) ? format_money($record->free_shipping_threshold) : '—')
-                ->alignEnd()
-                ->fontMono()
-                ->toggleable(isToggledHiddenByDefault: true),
-            Tables\Columns\TextColumn::make('estimated_days_min')
-                ->label(__('admin.delivery'))
-                ->getStateUsing(fn (ShippingMethod $record): string => $record->estimated_days_min && $record->estimated_days_max
-                    ? "{$record->estimated_days_min}–{$record->estimated_days_max} days"
-                    : '—')
-                ->badge()
-                ->color('gray')
-                ->alignCenter(),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.method'))
+                    ->getStateUsing(fn (ShippingMethod $record): string => static::localizedName($record->name))
+                    ->searchable(query: function (Builder $query, string $search) use ($locales): Builder {
+                        return $query->where(function (Builder $q) use ($search, $locales): void {
+                            foreach ($locales as $code) {
+                                $q->orWhere("name->$code", 'like', "%{$search}%");
+                            }
+                        });
+                    })
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->limit(28),
+                Tables\Columns\TextColumn::make('zone.name')
+                    ->label(__('admin.zone'))
+                    ->getStateUsing(fn (ShippingMethod $record): string => $record->zone?->name ?? '—')
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('zone', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('flat_rate')
+                    ->label(__('admin.rate'))
+                    ->getStateUsing(fn (ShippingMethod $record): string => format_money($record->flat_rate))
+                    ->alignEnd()
+                    ->fontMono()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('free_shipping_threshold')
+                    ->label(__('admin.free_threshold'))
+                    ->getStateUsing(fn (ShippingMethod $record): string => filled($record->free_shipping_threshold) ? format_money($record->free_shipping_threshold) : '—')
+                    ->alignEnd()
+                    ->fontMono()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('estimated_days_min')
+                    ->label(__('admin.delivery'))
+                    ->getStateUsing(fn (ShippingMethod $record): string => $record->estimated_days_min && $record->estimated_days_max
+                        ? "{$record->estimated_days_min}–{$record->estimated_days_max} days"
+                        : '—')
+                    ->badge()
+                    ->color('gray')
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('is_active')
                     ->label(__('admin.active'))
                     ->badge()
@@ -241,21 +240,21 @@ class ShippingMethodResource extends Resource
                     ->helperText('Filter methods by their assigned zone.'),
             ])
             ->actions(AdminUi::recordActions())
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Methods', [
-                    'name' => 'Method',
-                    'zone.name' => 'Zone',
-                    'flat_rate' => 'Rate',
-                    'free_shipping_threshold' => 'Free Threshold',
-                    'estimated_days_min' => 'Min Days',
-                    'estimated_days_max' => 'Max Days',
-                    'is_active' => 'Active',
-                    'sort_order' => 'Sort Order',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Methods', [
+                        'name' => 'Method',
+                        'zone.name' => 'Zone',
+                        'flat_rate' => 'Rate',
+                        'free_shipping_threshold' => 'Free Threshold',
+                        'estimated_days_min' => 'Min Days',
+                        'estimated_days_max' => 'Max Days',
+                        'is_active' => 'Active',
+                        'sort_order' => 'Sort Order',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ])
+            ])
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc')
             ->emptyStateIcon('heroicon-o-truck')
@@ -278,10 +277,10 @@ class ShippingMethodResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListShippingMethods::route('/'),
+            'index' => Pages\ListShippingMethods::route('/'),
             'create' => Pages\CreateShippingMethod::route('/create'),
-            'view'   => Pages\ViewShippingMethod::route('/{record}'),
-            'edit'   => Pages\EditShippingMethod::route('/{record}/edit'),
+            'view' => Pages\ViewShippingMethod::route('/{record}'),
+            'edit' => Pages\EditShippingMethod::route('/{record}/edit'),
         ];
     }
 
@@ -290,4 +289,3 @@ class ShippingMethodResource extends Resource
         return ['name'];
     }
 }
-

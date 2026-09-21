@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\Language;
 use App\Support\LocaleRegistry;
+use Database\Seeders\LanguagesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -22,7 +24,7 @@ class LocaleRegistryTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\LanguagesSeeder::class);
+        $this->seed(LanguagesSeeder::class);
     }
 
     #[Test]
@@ -78,7 +80,7 @@ class LocaleRegistryTest extends TestCase
     #[Test]
     public function registry_falls_back_to_the_default_five_when_the_table_is_unusable(): void
     {
-        \Illuminate\Support\Facades\Schema::drop('languages');
+        Schema::drop('languages');
         LocaleRegistry::forget();
 
         $this->assertSame(['en', 'de', 'lt', 'fr', 'es'], LocaleRegistry::codes());

@@ -6,22 +6,20 @@ use App\Enums\ContentStatus;
 use App\Filament\Resources\PageResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Page;
-use Filament\Forms;
 use Filament\Actions;
-use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
+use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Support\Enums\FontWeight;
 
 class PageResource extends Resource
 {
@@ -49,7 +47,7 @@ class PageResource extends Resource
         return null;
     }
 
-    public static function getRecordTitle(?Model $record): string|null
+    public static function getRecordTitle(?Model $record): ?string
     {
         return $record ? AdminUi::localizedName($record->title, 'Page') : null;
     }
@@ -229,33 +227,33 @@ class PageResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('title')
-                ->label(__('admin.title'))
-                ->getStateUsing(fn (Page $record): string => AdminUi::localizedName($record->title))
-                ->searchable(query: function (Builder $query, string $search): Builder {
-                    return $query->where(function ($q) use ($search) {
-                        foreach (array_keys(AdminUi::LOCALES) as $code) {
-                            $q->orWhere("title->{$code}", 'like', "%{$search}%");
-                        }
-                    });
-                })
-                ->sortable()
-                ->weight(FontWeight::Medium)
-                ->limit(30),
-            Tables\Columns\TextColumn::make('slug')
-                ->label(__('admin.slug'))
-                ->badge()
-                ->color('gray')
-                ->searchable(),
-            Tables\Columns\TextColumn::make('status')
-                ->label(__('admin.status'))
-                ->badge()
-                ->color(fn (ContentStatus $state): string => match ($state) {
-                    ContentStatus::Published => 'success',
-                    ContentStatus::Draft => 'warning',
-                    ContentStatus::Archived => 'danger',
-                    default => 'gray',
-                }),
+                Tables\Columns\TextColumn::make('title')
+                    ->label(__('admin.title'))
+                    ->getStateUsing(fn (Page $record): string => AdminUi::localizedName($record->title))
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function ($q) use ($search) {
+                            foreach (array_keys(AdminUi::LOCALES) as $code) {
+                                $q->orWhere("title->{$code}", 'like', "%{$search}%");
+                            }
+                        });
+                    })
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->limit(30),
+                Tables\Columns\TextColumn::make('slug')
+                    ->label(__('admin.slug'))
+                    ->badge()
+                    ->color('gray')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('admin.status'))
+                    ->badge()
+                    ->color(fn (ContentStatus $state): string => match ($state) {
+                        ContentStatus::Published => 'success',
+                        ContentStatus::Draft => 'warning',
+                        ContentStatus::Archived => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\IconColumn::make('is_homepage')
                     ->label(__('admin.home'))
                     ->boolean()
@@ -298,16 +296,16 @@ class PageResource extends Resource
             ])
             ->actions(AdminUi::recordActions())
             ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Pages', [
-                    'title' => 'Title',
-                    'slug' => 'Slug',
-                    'status' => 'Status',
-                    'is_homepage' => 'Homepage',
-                    'published_at' => 'Published',
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Pages', [
+                        'title' => 'Title',
+                        'slug' => 'Slug',
+                        'status' => 'Status',
+                        'is_homepage' => 'Homepage',
+                        'published_at' => 'Published',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-document-text')
@@ -323,10 +321,10 @@ class PageResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListPages::route('/'),
+            'index' => Pages\ListPages::route('/'),
             'create' => Pages\CreatePage::route('/create'),
-            'view'   => Pages\ViewPage::route('/{record}'),
-            'edit'   => Pages\EditPage::route('/{record}/edit'),
+            'view' => Pages\ViewPage::route('/{record}'),
+            'edit' => Pages\EditPage::route('/{record}/edit'),
         ];
     }
 
@@ -335,4 +333,3 @@ class PageResource extends Resource
         return ['title'];
     }
 }
-

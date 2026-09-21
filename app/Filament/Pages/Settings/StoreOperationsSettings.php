@@ -114,7 +114,7 @@ class StoreOperationsSettings extends SettingsPage
                     } else {
                         Notification::make()
                             ->title('Connection failed')
-                            ->body("API returned HTTP {$response->status()}: " . $response->body())
+                            ->body("API returned HTTP {$response->status()}: ".$response->body())
                             ->danger()
                             ->send();
                     }
@@ -171,7 +171,7 @@ class StoreOperationsSettings extends SettingsPage
                     } else {
                         Notification::make()
                             ->title('Connection failed')
-                            ->body("API returned HTTP {$response->status()}: " . $response->body())
+                            ->body("API returned HTTP {$response->status()}: ".$response->body())
                             ->danger()
                             ->send();
                     }
@@ -466,8 +466,8 @@ class StoreOperationsSettings extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Free shipping thresholds are set per shipping method, not globally — configure them on the <a href="'
-                                . ShippingZoneResource::getUrl()
-                                . '" class="fi-link text-primary-600">Shipping Zones</a> page (each method has its own "Free Shipping Threshold" field).'
+                                .ShippingZoneResource::getUrl()
+                                .'" class="fi-link text-primary-600">Shipping Zones</a> page (each method has its own "Free Shipping Threshold" field).'
                             )),
 
                         Forms\Components\TextInput::make('handling_fee')
@@ -587,8 +587,8 @@ class StoreOperationsSettings extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Your own company VAT registration number (printed on generated customer invoices) is set on the <a href="'
-                                . GeneralBrandSettings::getUrl()
-                                . '" class="fi-link text-primary-600">General & Brand</a> page\'s Company & Legal tab, alongside your registered address and contact details.'
+                                .GeneralBrandSettings::getUrl()
+                                .'" class="fi-link text-primary-600">General & Brand</a> page\'s Company & Legal tab, alongside your registered address and contact details.'
                             )),
 
                         Forms\Components\TextInput::make('default_vat_rate')
@@ -622,10 +622,10 @@ class StoreOperationsSettings extends SettingsPage
                             ->visible(fn (Get $get): bool => (bool) $get('country_based_vat_enabled'))
                             ->content(new HtmlString(
                                 'Manage per-country rates on the <a href="'
-                                . TaxRateResource::getUrl('index')
-                                . '" class="fi-link text-primary-600">Tax Rates</a> page. Seeded starting rates are provided — '
-                                . '<strong>verify every rate before relying on it</strong>, standard VAT rates change and the seeded '
-                                . 'values may be out of date. A country with no active rate configured falls back to the flat rate above.'
+                                .TaxRateResource::getUrl('index')
+                                .'" class="fi-link text-primary-600">Tax Rates</a> page. Seeded starting rates are provided — '
+                                .'<strong>verify every rate before relying on it</strong>, standard VAT rates change and the seeded '
+                                .'values may be out of date. A country with no active rate configured falls back to the flat rate above.'
                             )),
                     ])->columns(1),
 
@@ -694,8 +694,8 @@ class StoreOperationsSettings extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Rush Processing Upsell (enable/fee/customer-facing copy) moved to the <a href="'
-                                . MarketingSettings::getUrl()
-                                . '" class="fi-link text-primary-600">Marketing</a> page\'s own tab — it\'s an upsell lever, not a checkout mechanic.'
+                                .MarketingSettings::getUrl()
+                                .'" class="fi-link text-primary-600">Marketing</a> page\'s own tab — it\'s an upsell lever, not a checkout mechanic.'
                             )),
                     ]),
 
@@ -980,8 +980,8 @@ class StoreOperationsSettings extends SettingsPage
                             ->label('')
                             ->content(new HtmlString(
                                 'Social profile links (Facebook, LinkedIn, and 4 more platforms), footer display, and icon style are managed on the <a href="'
-                                . CustomizationSettings::getUrl()
-                                . '" class="fi-link text-primary-600">Customization</a> page\'s Menus & Social tab.'
+                                .CustomizationSettings::getUrl()
+                                .'" class="fi-link text-primary-600">Customization</a> page\'s Menus & Social tab.'
                             )),
                     ]),
 
@@ -1083,7 +1083,7 @@ class StoreOperationsSettings extends SettingsPage
                 try {
                     $value = Crypt::decryptString($value);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt setting {$setting->key}: " . $e->getMessage());
+                    Log::warning("Failed to decrypt setting {$setting->key}: ".$e->getMessage());
                 }
             }
 
@@ -1117,7 +1117,7 @@ class StoreOperationsSettings extends SettingsPage
 
         Notification::make()
             ->title('Settings saved')
-            ->body('Cache cleared for: ' . implode(', ', static::$settingsGroups))
+            ->body('Cache cleared for: '.implode(', ', static::$settingsGroups))
             ->success()
             ->send();
     }
@@ -1148,7 +1148,7 @@ class StoreOperationsSettings extends SettingsPage
                 $value = empty($value) ? '' : json_encode($value);
             }
 
-            $service->set($this->groupForKey($key) . '.' . $key, $value);
+            $service->set($this->groupForKey($key).'.'.$key, $value);
 
             if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $value) {
                 $oldValues[$key] = '***';

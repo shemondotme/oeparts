@@ -2,16 +2,17 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+use App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 use App\Models\User;
-use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
 
 class CustomersStats extends StatsOverviewWidget
 {
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-    use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
+    use HasReportPeriod;
+    use InteractsWithDashboardCache;
 
     protected function getStats(): array
     {

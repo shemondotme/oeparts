@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\Admin;
+use App\Models\User;
+
 return [
 
     /*
@@ -37,15 +40,15 @@ return [
 
     'guards' => [
         'web' => [                      // Customers
-            'driver'   => 'session',
+            'driver' => 'session',
             'provider' => 'users',
         ],
         'admin' => [                    // Admins
-            'driver'   => 'session',
+            'driver' => 'session',
             'provider' => 'admins',
         ],
         'sanctum' => [                  // API token auth
-            'driver'   => 'sanctum',
+            'driver' => 'sanctum',
             'provider' => 'admins',
         ],
     ],
@@ -70,11 +73,11 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model'  => App\Models\User::class,
+            'model' => User::class,
         ],
         'admins' => [
             'driver' => 'eloquent',
-            'model'  => App\Models\Admin::class,
+            'model' => Admin::class,
         ],
     ],
 

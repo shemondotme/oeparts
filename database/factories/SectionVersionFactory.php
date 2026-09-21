@@ -12,16 +12,16 @@ class SectionVersionFactory extends Factory
     public function definition(): array
     {
         return [
-            'section_id'     => null,
-            'created_by'     => null,
-            'action'         => 'updated',
-            'snapshot'       => [
-                'title'     => ['en' => $this->faker->sentence()],
-                'content'   => ['en' => ['headline' => $this->faker->sentence()]],
+            'section_id' => null,
+            'created_by' => null,
+            'action' => 'updated',
+            'snapshot' => [
+                'title' => ['en' => $this->faker->sentence()],
+                'content' => ['en' => ['headline' => $this->faker->sentence()]],
                 'is_active' => true,
             ],
             'change_summary' => $this->faker->sentence(),
-            'created_at'     => now(),
+            'created_at' => now(),
         ];
     }
 }

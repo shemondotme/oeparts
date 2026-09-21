@@ -4,7 +4,6 @@ namespace App\Filament\Resources\ShippingMethodResource\Pages;
 
 use App\Filament\Resources\ShippingMethodResource;
 use Filament\Actions;
-use Filament\Infolists;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
@@ -118,4 +117,3 @@ class ViewShippingMethod extends ViewRecord
             ]);
     }
 }
-

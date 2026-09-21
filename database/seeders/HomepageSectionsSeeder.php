@@ -30,7 +30,7 @@ class HomepageSectionsSeeder extends Seeder
 
         // ── HERO (sort_order=10) ──
         [
-            'type'  => 'hero',
+            'type' => 'hero',
             'title' => 'Hero',
             'content' => [
                 'headline' => [
@@ -63,12 +63,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 10,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── TRUST_BAR (sort_order=20) ──
         [
-            'type'  => 'trust_bar',
+            'type' => 'trust_bar',
             'title' => 'Trust Bar',
             'content' => [
                 'items' => [
@@ -115,12 +115,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 20,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── HOW_IT_WORKS (sort_order=30) ──
         [
-            'type'  => 'how_it_works',
+            'type' => 'how_it_works',
             'title' => 'How It Works',
             'content' => [
                 'eyebrow' => [
@@ -202,12 +202,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 30,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── STATS_COUNTER (sort_order=40) ──
         [
-            'type'  => 'stats_counter',
+            'type' => 'stats_counter',
             'title' => 'Stats Counter',
             'content' => [
                 'eyebrow' => [
@@ -279,12 +279,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 40,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── POPULAR_SEARCHES (sort_order=50) ──
         [
-            'type'  => 'popular_searches',
+            'type' => 'popular_searches',
             'title' => 'Popular Searches',
             'content' => [
                 'eyebrow' => [
@@ -317,12 +317,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 50,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── FEATURED_BRANDS (sort_order=60) ──
         [
-            'type'  => 'featured_brands',
+            'type' => 'featured_brands',
             'title' => 'Featured Brands',
             'content' => [
                 'eyebrow' => [
@@ -355,12 +355,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 60,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── PART_INQUIRY (sort_order=70) ──
         [
-            'type'  => 'part_inquiry',
+            'type' => 'part_inquiry',
             'title' => 'Part Inquiry',
             'content' => [
                 'eyebrow' => [
@@ -393,12 +393,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 70,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── TESTIMONIALS (sort_order=80) ──
         [
-            'type'  => 'testimonials',
+            'type' => 'testimonials',
             'title' => 'Testimonials',
             'content' => [
                 'eyebrow' => [
@@ -424,12 +424,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 80,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── SHIPPING_INFO (sort_order=90) ──
         [
-            'type'  => 'shipping_info',
+            'type' => 'shipping_info',
             'title' => 'Shipping Info',
             'content' => [
                 'eyebrow' => [
@@ -532,12 +532,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 90,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── BANNER (sort_order=100) ──
         [
-            'type'  => 'banner',
+            'type' => 'banner',
             'title' => 'Promo Banner',
             'content' => [
                 'eyebrow' => [
@@ -675,12 +675,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 100,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── FAQS (sort_order=110) ──
         [
-            'type'  => 'faqs',
+            'type' => 'faqs',
             'title' => 'FAQs',
             'content' => [
                 'eyebrow' => [
@@ -706,12 +706,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 110,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── CONTACT_CTA (sort_order=120) ──
         [
-            'type'  => 'contact_cta',
+            'type' => 'contact_cta',
             'title' => 'Contact CTA',
             'content' => [
                 'eyebrow' => [
@@ -744,12 +744,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 120,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── NEWSLETTER (sort_order=130) ──
         [
-            'type'  => 'newsletter',
+            'type' => 'newsletter',
             'title' => 'Newsletter',
             'content' => [
                 'eyebrow' => [
@@ -796,12 +796,12 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 130,
-            'is_active'  => true,
+            'is_active' => true,
         ],
 
         // ── BLOG_PREVIEW (sort_order=140) ──
         [
-            'type'  => 'blog_preview',
+            'type' => 'blog_preview',
             'title' => 'Blog Preview',
             'content' => [
                 'headline' => [
@@ -820,7 +820,7 @@ class HomepageSectionsSeeder extends Seeder
                 ],
             ],
             'sort_order' => 140,
-            'is_active'  => true,
+            'is_active' => true,
         ],
     ];
 
@@ -832,15 +832,15 @@ class HomepageSectionsSeeder extends Seeder
             Section::updateOrCreate(
                 ['type' => $sectionData['type'], 'location' => 'homepage'],
                 [
-                    'title'      => $sectionData['title'],
-                    'content'    => $sectionData['content'],
+                    'title' => $sectionData['title'],
+                    'content' => $sectionData['content'],
                     'sort_order' => $sectionData['sort_order'],
-                    'is_active'  => $sectionData['is_active'],
+                    'is_active' => $sectionData['is_active'],
                 ]
             );
             echo "  ✓ {$sectionData['type']}\n";
         }
 
-        echo "\n✅ Done — " . count(self::SECTIONS) . " sections seeded.\n";
+        echo "\n✅ Done — ".count(self::SECTIONS)." sections seeded.\n";
     }
 }

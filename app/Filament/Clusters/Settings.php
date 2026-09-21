@@ -33,7 +33,5 @@ class Settings extends Cluster
         return null;
     }
 
-    public function mount(): void
-    {
-    }
+    public function mount(): void {}
 }

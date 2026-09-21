@@ -7,15 +7,16 @@ use App\Enums\PaymentTransactionStatus;
 use App\Filament\Resources\PaymentResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Payment;
-use Filament\Schemas\Components\Section;
+use App\Support\NavBadge;
+use Filament\Forms\Components\Select;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Table;
 
 class PaymentResource extends Resource
@@ -54,79 +55,79 @@ class PaymentResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with('order'))
             ->columns([
-            Tables\Columns\TextColumn::make('id')
-                ->label(__('admin.id'))
-                ->sortable()
-                ->fontMono()
-                ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('id')
+                    ->label(__('admin.id'))
+                    ->sortable()
+                    ->fontMono()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
-            Tables\Columns\TextColumn::make('order.order_number')
-                ->label(__('admin.order_number'))
-                ->searchable()
-                ->sortable()
-                ->url(fn ($record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id]))
-                ->color('primary')
-                ->fontMono(),
+                Tables\Columns\TextColumn::make('order.order_number')
+                    ->label(__('admin.order_number'))
+                    ->searchable()
+                    ->sortable()
+                    ->url(fn ($record): string => OrderResource::getUrl('view', ['record' => $record->order_id]))
+                    ->color('primary')
+                    ->fontMono(),
 
-            Tables\Columns\TextColumn::make('gateway')
-                ->label(__('admin.payment_gateway'))
-                ->badge()
-                ->formatStateUsing(fn (PaymentGateway $state): string => match ($state) {
-                    PaymentGateway::Airwallex => 'Airwallex',
-                    PaymentGateway::Paysera => 'Paysera',
-                    PaymentGateway::BankTransfer => 'Bank Transfer',
-                })
-                ->color(fn (PaymentGateway $state): string => match ($state) {
-                    PaymentGateway::Airwallex => 'info',
-                    PaymentGateway::Paysera => 'success',
-                    PaymentGateway::BankTransfer => 'warning',
-                })
-                ->icon(fn (PaymentGateway $state): string => match ($state) {
-                    PaymentGateway::Airwallex => 'heroicon-o-globe-alt',
-                    PaymentGateway::Paysera => 'heroicon-o-credit-card',
-                    PaymentGateway::BankTransfer => 'heroicon-o-building-library',
-                })
-                ->sortable(),
+                Tables\Columns\TextColumn::make('gateway')
+                    ->label(__('admin.payment_gateway'))
+                    ->badge()
+                    ->formatStateUsing(fn (PaymentGateway $state): string => match ($state) {
+                        PaymentGateway::Airwallex => 'Airwallex',
+                        PaymentGateway::Paysera => 'Paysera',
+                        PaymentGateway::BankTransfer => 'Bank Transfer',
+                    })
+                    ->color(fn (PaymentGateway $state): string => match ($state) {
+                        PaymentGateway::Airwallex => 'info',
+                        PaymentGateway::Paysera => 'success',
+                        PaymentGateway::BankTransfer => 'warning',
+                    })
+                    ->icon(fn (PaymentGateway $state): string => match ($state) {
+                        PaymentGateway::Airwallex => 'heroicon-o-globe-alt',
+                        PaymentGateway::Paysera => 'heroicon-o-credit-card',
+                        PaymentGateway::BankTransfer => 'heroicon-o-building-library',
+                    })
+                    ->sortable(),
 
-            AdminUi::copyableColumn('transaction_id', 'Transaction ID', 'Transaction ID copied')
-                ->limit(30)
-                ->default('—')
-                ->toggleable(isToggledHiddenByDefault: true),
+                AdminUi::copyableColumn('transaction_id', 'Transaction ID', 'Transaction ID copied')
+                    ->limit(30)
+                    ->default('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
 
-            Tables\Columns\TextColumn::make('status')
-                ->label(__('admin.payment_status'))
-                ->badge()
-                ->formatStateUsing(fn (PaymentTransactionStatus $state): string => match ($state) {
-                    PaymentTransactionStatus::Pending => 'Pending',
-                    PaymentTransactionStatus::Authorized => 'Authorized',
-                    PaymentTransactionStatus::Captured => 'Captured',
-                    PaymentTransactionStatus::Failed => 'Failed',
-                    PaymentTransactionStatus::Refunded => 'Refunded',
-                })
-                ->color(fn (PaymentTransactionStatus $state): string => AdminUi::paymentStatusColor($state))
-                ->icon(fn (PaymentTransactionStatus $state): string => match ($state) {
-                    PaymentTransactionStatus::Pending => 'heroicon-o-clock',
-                    PaymentTransactionStatus::Authorized => 'heroicon-o-lock-closed',
-                    PaymentTransactionStatus::Captured => 'heroicon-o-check-circle',
-                    PaymentTransactionStatus::Failed => 'heroicon-o-x-circle',
-                    PaymentTransactionStatus::Refunded => 'heroicon-o-banknotes',
-                })
-                ->sortable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('admin.payment_status'))
+                    ->badge()
+                    ->formatStateUsing(fn (PaymentTransactionStatus $state): string => match ($state) {
+                        PaymentTransactionStatus::Pending => 'Pending',
+                        PaymentTransactionStatus::Authorized => 'Authorized',
+                        PaymentTransactionStatus::Captured => 'Captured',
+                        PaymentTransactionStatus::Failed => 'Failed',
+                        PaymentTransactionStatus::Refunded => 'Refunded',
+                    })
+                    ->color(fn (PaymentTransactionStatus $state): string => AdminUi::paymentStatusColor($state))
+                    ->icon(fn (PaymentTransactionStatus $state): string => match ($state) {
+                        PaymentTransactionStatus::Pending => 'heroicon-o-clock',
+                        PaymentTransactionStatus::Authorized => 'heroicon-o-lock-closed',
+                        PaymentTransactionStatus::Captured => 'heroicon-o-check-circle',
+                        PaymentTransactionStatus::Failed => 'heroicon-o-x-circle',
+                        PaymentTransactionStatus::Refunded => 'heroicon-o-banknotes',
+                    })
+                    ->sortable(),
 
-            Tables\Columns\TextColumn::make('amount')
-                ->label(__('admin.amount'))
-                ->formatStateUsing(fn ($state): string => format_money($state))
-                ->sortable()
-                ->fontMono()
-                ->weight('bold')
-                ->alignEnd()
-                ->extraAttributes(['class' => 'op-payment-amount']),
+                Tables\Columns\TextColumn::make('amount')
+                    ->label(__('admin.amount'))
+                    ->formatStateUsing(fn ($state): string => format_money($state))
+                    ->sortable()
+                    ->fontMono()
+                    ->weight('bold')
+                    ->alignEnd()
+                    ->extraAttributes(['class' => 'op-payment-amount']),
 
-            Tables\Columns\TextColumn::make('created_at')
-                ->label(__('admin.date'))
-                ->dateTime('d M Y H:i')
-                ->sortable()
-                ->fontMono(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('admin.date'))
+                    ->dateTime('d M Y H:i')
+                    ->sortable()
+                    ->fontMono(),
             ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-credit-card')
@@ -148,7 +149,7 @@ class PaymentResource extends Resource
                 Tables\Filters\Filter::make('created_at')
                     ->label(__('admin.payment_date'))
                     ->form([
-                        \Filament\Forms\Components\Select::make('created_at')
+                        Select::make('created_at')
                             ->options([
                                 'today' => 'Today',
                                 'yesterday' => 'Yesterday',
@@ -173,28 +174,28 @@ class PaymentResource extends Resource
                         };
                     }),
             ])
-        ->actions([
-            // Payments are financial records — read-only, never deletable.
-            ...AdminUi::recordActionsReadOnly(),
-        ])
-        ->bulkActions([
-            BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Payments', [
-                    'id' => 'ID',
-                    'order.order_number' => 'Order Number',
-                    'gateway' => 'Gateway',
-                    'transaction_id' => 'Transaction ID',
-                    'status' => 'Status',
-                    'amount' => 'Amount',
-                    'created_at' => 'Date',
+            ->actions([
+                // Payments are financial records — read-only, never deletable.
+                ...AdminUi::recordActionsReadOnly(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Payments', [
+                        'id' => 'ID',
+                        'order.order_number' => 'Order Number',
+                        'gateway' => 'Gateway',
+                        'transaction_id' => 'Transaction ID',
+                        'status' => 'Status',
+                        'amount' => 'Amount',
+                        'created_at' => 'Date',
+                    ]),
                 ]),
-            ]),
-        ]);
+            ]);
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('payments_failed', fn () => static::getModel()::where('status', 'failed')->count());
+        return NavBadge::count('payments_failed', fn () => static::getModel()::where('status', 'failed')->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -226,7 +227,7 @@ class PaymentResource extends Resource
                                     ->schema([
                                         TextEntry::make('order.order_number')
                                             ->label(__('admin.order_number'))
-                                            ->url(fn ($record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id]))
+                                            ->url(fn ($record): string => OrderResource::getUrl('view', ['record' => $record->order_id]))
                                             ->color('primary'),
                                         TextEntry::make('gateway')
                                             ->label(__('admin.payment_gateway'))

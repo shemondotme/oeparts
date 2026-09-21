@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ConditionResource\Pages;
 
 use App\Filament\Resources\ConditionResource;
 use Filament\Actions;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
 class EditCondition extends EditRecord
@@ -30,11 +31,12 @@ class EditCondition extends EditRecord
                 ->modalDescription('Are you sure? Conditions still in use by products cannot be deleted.')
                 ->action(function () {
                     if ($this->record->products()->count() > 0) {
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->danger()
                             ->title("Cannot delete \"{$this->record->name}\"")
                             ->body("{$this->record->products()->count()} product(s) still use this condition.")
                             ->send();
+
                         return;
                     }
                     $this->record->delete();

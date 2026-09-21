@@ -7,7 +7,9 @@ use App\Models\Admin;
 use App\Models\Section;
 use App\Models\SectionVersion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class CmsEditorFeaturesTest extends TestCase
@@ -20,8 +22,8 @@ class CmsEditorFeaturesTest extends TestCase
     {
         parent::setUp();
         $this->admin = Admin::factory()->create();
-        \Spatie\Permission\Models\Permission::findOrCreate('edit sections', 'admin');
-        \Spatie\Permission\Models\Permission::findOrCreate('delete media files', 'admin');
+        Permission::findOrCreate('edit sections', 'admin');
+        Permission::findOrCreate('delete media files', 'admin');
         $this->admin->givePermissionTo(['edit sections', 'delete media files']);
         $this->actingAs($this->admin, 'admin');
     }
@@ -34,7 +36,7 @@ class CmsEditorFeaturesTest extends TestCase
         $this->post(route('admin.editor.upload-image'), [
             'file' => $this->fakeImageFile('test.jpg'),
         ])->assertJsonPath('success', true)
-         ->assertJsonStructure(['success', 'location']);
+            ->assertJsonStructure(['success', 'location']);
     }
 
     #[Test]
@@ -102,9 +104,9 @@ class CmsEditorFeaturesTest extends TestCase
 
         $this->post(route('admin.cms.sections.preview', $section), [
             'content' => $section->content,
-            'lang'    => 'en',
+            'lang' => 'en',
         ])->assertJsonPath('success', true)
-         ->assertJsonStructure(['html']);
+            ->assertJsonStructure(['html']);
     }
 
     #[Test]
@@ -119,7 +121,7 @@ class CmsEditorFeaturesTest extends TestCase
 
         $response = $this->post(route('admin.cms.sections.preview', $section), [
             'content' => $section->content,
-            'lang'    => 'de',
+            'lang' => 'de',
         ])->assertJsonPath('success', true);
 
         $this->assertStringContainsString('German Title', $response->json('html'));
@@ -138,7 +140,7 @@ class CmsEditorFeaturesTest extends TestCase
 
         $this->assertDatabaseHas('section_versions', [
             'section_id' => $section->id,
-            'action'     => 'created',
+            'action' => 'created',
             'created_by' => $this->admin->id,
         ]);
     }
@@ -149,7 +151,7 @@ class CmsEditorFeaturesTest extends TestCase
         $section = Section::factory()->create();
         $originalTitle = $section->title;
 
-        $section->update(['title' => array_map(fn($v) => 'Updated', $section->title)]);
+        $section->update(['title' => array_map(fn ($v) => 'Updated', $section->title)]);
         $section->saveVersion('updated', $this->admin->id, 'Title updated');
 
         $this->assertEquals(1, $section->versions()->count());
@@ -177,11 +179,11 @@ class CmsEditorFeaturesTest extends TestCase
     public function feature_4_version_history_shows_all_changes()
     {
         $section = Section::factory()->create();
-        
+
         $section->saveVersion('created', $this->admin->id);
         $section->update(['is_active' => true]);
         $section->saveVersion('updated', $this->admin->id, 'Activated');
-        
+
         $section->archive();
         $section->saveVersion('archived', $this->admin->id);
 
@@ -193,9 +195,9 @@ class CmsEditorFeaturesTest extends TestCase
     public function feature_4_version_stores_complete_snapshot()
     {
         $data = [
-            'title'   => ['en' => 'Test Section'],
+            'title' => ['en' => 'Test Section'],
             'content' => ['en' => ['headline' => 'Headline']],
-            'status'  => SectionStatus::Published,
+            'status' => SectionStatus::Published,
         ];
 
         $section = Section::factory()->create($data);
@@ -223,12 +225,12 @@ class CmsEditorFeaturesTest extends TestCase
     public function feature_5_media_picker_lists_uploaded_files()
     {
         $this->post(route('admin.cms.media-picker.upload'), [
-            'file'     => $this->fakeImageFile('test1.jpg'),
+            'file' => $this->fakeImageFile('test1.jpg'),
             'alt_text' => 'Test Image',
         ])->assertJsonPath('success', true);
 
         $response = $this->get(route('admin.cms.media-picker.index'));
-        
+
         $this->assertTrue($response->json('success'));
         $this->assertGreaterThan(0, $response->json('total'));
     }
@@ -237,7 +239,7 @@ class CmsEditorFeaturesTest extends TestCase
     public function feature_5_media_upload_stores_file_metadata()
     {
         $response = $this->post(route('admin.cms.media-picker.upload'), [
-            'file'     => $this->fakeImageFile('test.jpg'),
+            'file' => $this->fakeImageFile('test.jpg'),
             'alt_text' => 'My Image',
         ])->assertJsonPath('success', true);
 
@@ -251,12 +253,12 @@ class CmsEditorFeaturesTest extends TestCase
     public function feature_5_media_picker_searches_files()
     {
         $this->post(route('admin.cms.media-picker.upload'), [
-            'file'     => $this->fakeImageFile('sunset.jpg'),
+            'file' => $this->fakeImageFile('sunset.jpg'),
             'alt_text' => 'Beautiful Sunset',
         ]);
 
         $response = $this->get(route('admin.cms.media-picker.index', ['search' => 'sunset']));
-        
+
         $this->assertTrue($response->json('success'));
         $this->assertGreaterThan(0, $response->json('total'));
     }
@@ -290,13 +292,13 @@ class CmsEditorFeaturesTest extends TestCase
 
         // 2. Update section with new content
         $this->put(route('admin.cms.sections.update', $section), [
-            'location'         => $section->location->value,
-            'title'            => ['en' => 'New Title'],
-            'content'          => ['en' => ['headline' => 'New Headline']],
-            'status'           => SectionStatus::Published->value,
-            'is_active'        => true,
-            'sort_order'       => 1,
-            'change_summary'   => 'Published with new content',
+            'location' => $section->location->value,
+            'title' => ['en' => 'New Title'],
+            'content' => ['en' => ['headline' => 'New Headline']],
+            'status' => SectionStatus::Published->value,
+            'is_active' => true,
+            'sort_order' => 1,
+            'change_summary' => 'Published with new content',
         ])->assertRedirect();
 
         // 3. Verify version was saved
@@ -305,7 +307,7 @@ class CmsEditorFeaturesTest extends TestCase
         // 4. Verify preview works
         $this->post(route('admin.cms.sections.preview', $section), [
             'content' => ['en' => ['headline' => 'Test']],
-            'lang'    => 'en',
+            'lang' => 'en',
         ])->assertJsonPath('success', true);
     }
 
@@ -323,6 +325,6 @@ class CmsEditorFeaturesTest extends TestCase
 
     private function fakeFileWithContent(string $name, string $mimeType, int $kilobytes = 100)
     {
-        return \Illuminate\Http\UploadedFile::fake()->create($name, $kilobytes, $mimeType);
+        return UploadedFile::fake()->create($name, $kilobytes, $mimeType);
     }
 }

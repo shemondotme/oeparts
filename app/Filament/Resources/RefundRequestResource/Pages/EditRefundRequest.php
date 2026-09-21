@@ -20,6 +20,7 @@ class EditRefundRequest extends EditRecord
         $record = $this->getRecord();
         $created = $record->created_at?->format('d M Y H:i');
         $updated = $record->updated_at?->diffForHumans() ?? 'recently';
+
         return "Submitted {$created} | Last updated {$updated}";
     }
 

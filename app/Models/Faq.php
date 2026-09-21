@@ -12,9 +12,9 @@ class Faq extends Model
     protected $fillable = ['category', 'question', 'answer', 'sort_order', 'is_active'];
 
     protected $casts = [
-        'category'  => 'string',
-        'question'  => 'array',
-        'answer'    => 'array',
+        'category' => 'string',
+        'question' => 'array',
+        'answer' => 'array',
         'is_active' => 'boolean',
     ];
 }

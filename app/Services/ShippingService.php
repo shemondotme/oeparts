@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\ShippingZone;
-use App\Models\ShippingMethod;
-use App\Models\ShippingCountry;
 use App\Models\Cart;
+use App\Models\ShippingCountry;
+use App\Models\ShippingMethod;
+use App\Models\ShippingZone;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
@@ -34,8 +34,7 @@ class ShippingService
     /**
      * Find the shipping zone for a given country code.
      *
-     * @param string $countryCode ISO 3166-1 alpha-2 (e.g. 'DE', 'FR')
-     * @return ShippingZone|null
+     * @param  string  $countryCode  ISO 3166-1 alpha-2 (e.g. 'DE', 'FR')
      */
     public function findZoneForCountry(string $countryCode): ?ShippingZone
     {
@@ -49,14 +48,13 @@ class ShippingService
     /**
      * Get available shipping methods for a given country.
      *
-     * @param string $countryCode
      * @return Collection<int, ShippingMethod>
      */
     public function getMethodsForCountry(string $countryCode): Collection
     {
         $zone = $this->findZoneForCountry($countryCode);
 
-        if (!$zone) {
+        if (! $zone) {
             return collect();
         }
 
@@ -69,17 +67,15 @@ class ShippingService
     /**
      * Calculate the shipping cost for a given method and cart.
      *
-     * @param Cart $cart
-     * @param int $methodId
-     * @param string|null $destinationCountryCode  When given, the method must
-     *   belong to a zone that actually serves this country — nothing else
-     *   validated that server-side (the Frontend checkout form's Rule::in()
-     *   only restricts the <select> options, not the raw submitted value;
-     *   the API checkout controller didn't restrict it at all), so a client
-     *   could otherwise request any active method — e.g. a cheap
-     *   single-country flat rate — while shipping to a country it was never
-     *   configured for.
-     * @return string  Flat rate cost as string (e.g. "15.00"), or "0.00" for free shipping
+     * @param  string|null  $destinationCountryCode  When given, the method must
+     *                                               belong to a zone that actually serves this country — nothing else
+     *                                               validated that server-side (the Frontend checkout form's Rule::in()
+     *                                               only restricts the <select> options, not the raw submitted value;
+     *                                               the API checkout controller didn't restrict it at all), so a client
+     *                                               could otherwise request any active method — e.g. a cheap
+     *                                               single-country flat rate — while shipping to a country it was never
+     *                                               configured for.
+     * @return string Flat rate cost as string (e.g. "15.00"), or "0.00" for free shipping
      *
      * @throws \RuntimeException if the method doesn't serve $destinationCountryCode
      */
@@ -87,7 +83,7 @@ class ShippingService
     {
         $method = ShippingMethod::find($methodId);
 
-        if (!$method || !$method->is_active) {
+        if (! $method || ! $method->is_active) {
             return '0.00';
         }
 
@@ -96,7 +92,7 @@ class ShippingService
                 ->where('country_code', strtoupper($destinationCountryCode))
                 ->exists();
 
-            if (!$servesDestination) {
+            if (! $servesDestination) {
                 throw new \RuntimeException('Selected shipping method is not available for the destination country.');
             }
         }
@@ -118,14 +114,12 @@ class ShippingService
      * Get the remaining amount needed for free shipping.
      * Returns null if no method has a free shipping threshold, or if already met.
      *
-     * @param Cart $cart
-     * @param string $countryCode
-     * @return array|null  ['method_name' => string, 'remaining' => string] or null
+     * @return array|null ['method_name' => string, 'remaining' => string] or null
      */
     public function getFreeShippingNudge(Cart $cart, string $countryCode): ?array
     {
         $zone = $this->findZoneForCountry($countryCode);
-        if (!$zone) {
+        if (! $zone) {
             return null;
         }
 
@@ -135,7 +129,7 @@ class ShippingService
             ->orderBy('sort_order')
             ->first();
 
-        if (!$method) {
+        if (! $method) {
             return null;
         }
 
@@ -150,22 +144,21 @@ class ShippingService
 
         return [
             'method_name' => trans_field($method->name),
-            'remaining'   => $remaining,
-            'threshold'   => (string) $method->free_shipping_threshold,
+            'remaining' => $remaining,
+            'threshold' => (string) $method->free_shipping_threshold,
         ];
     }
 
     /**
      * Get the estimated delivery range for a shipping method.
      *
-     * @param int $methodId
-     * @return array|null  ['min' => int, 'max' => int] or null
+     * @return array|null ['min' => int, 'max' => int] or null
      */
     public function getEstimatedDelivery(int $methodId): ?array
     {
         $method = ShippingMethod::find($methodId);
 
-        if (!$method) {
+        if (! $method) {
             return null;
         }
 
@@ -192,25 +185,22 @@ class ShippingService
 
     /**
      * Get the shipping details as an array for order creation.
-     *
-     * @param int $methodId
-     * @return array|null
      */
     public function getMethodSnapshot(int $methodId): ?array
     {
         $method = ShippingMethod::with('zone')->find($methodId);
 
-        if (!$method) {
+        if (! $method) {
             return null;
         }
 
         return [
-            'id'         => $method->id,
-            'name'       => trans_field($method->name),
-            'flat_rate'  => (string) $method->flat_rate,
-            'min_days'   => $method->estimated_days_min,
-            'max_days'   => $method->estimated_days_max,
-            'zone_name'  => $method->zone?->name,
+            'id' => $method->id,
+            'name' => trans_field($method->name),
+            'flat_rate' => (string) $method->flat_rate,
+            'min_days' => $method->estimated_days_min,
+            'max_days' => $method->estimated_days_max,
+            'zone_name' => $method->zone?->name,
         ];
     }
 

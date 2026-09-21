@@ -38,5 +38,4 @@ class HelpPage extends Page
     {
         return 99;
     }
-
 }

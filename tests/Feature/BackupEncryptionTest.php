@@ -28,6 +28,7 @@ class BackupEncryptionTest extends TestCase
     use RefreshDatabase;
 
     private string $statePath;
+
     private string $fixture;
 
     protected function setUp(): void
@@ -87,13 +88,13 @@ class BackupEncryptionTest extends TestCase
     public function the_cipher_round_trips_multi_frame_content(): void
     {
         $plain = random_bytes(2_500_000); // > 2 frames (1 MB each)
-        $src   = $this->statePath.'/plain.bin';
-        $enc   = $this->statePath.'/cipher.enc';
-        $out   = $this->statePath.'/restored.bin';
+        $src = $this->statePath.'/plain.bin';
+        $enc = $this->statePath.'/cipher.enc';
+        $out = $this->statePath.'/restored.bin';
         file_put_contents($src, $plain);
 
         $cipher = app(BackupCipher::class);
-        $meta   = $cipher->encryptFile($src, $enc);
+        $meta = $cipher->encryptFile($src, $enc);
         $cipher->decryptFile($enc, $out);
 
         $this->assertSame($plain, file_get_contents($out));
@@ -112,7 +113,7 @@ class BackupEncryptionTest extends TestCase
         $cipher = app(BackupCipher::class);
         $cipher->encryptFile($src, $enc);
 
-        $bytes            = file_get_contents($enc);
+        $bytes = file_get_contents($enc);
         $bytes[strlen($bytes) - 1] = chr(ord($bytes[strlen($bytes) - 1]) ^ 0xFF); // flip last byte
         file_put_contents($enc, $bytes);
 
@@ -248,7 +249,7 @@ class BackupEncryptionTest extends TestCase
         app(BackupManager::class)->run($second);
 
         // Decrypt the incremental run's own file manifest to read the diff.
-        $part     = $second->parts()->where('name', 'files-manifest')->firstOrFail();
+        $part = $second->parts()->where('name', 'files-manifest')->firstOrFail();
         $manifest = json_decode(gzdecode(app(BackupCipher::class)->decryptData(
             Storage::disk($part->disk)->get($part->path)
         )), true);

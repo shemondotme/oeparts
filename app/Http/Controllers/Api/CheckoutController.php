@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\OtpPurpose;
-use App\Services\CheckoutService;
 use App\Services\CartService;
+use App\Services\CheckoutService;
 use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,7 +34,7 @@ class CheckoutController extends BaseApiController
         $guestToken = $request->cookie('guest_token');
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
 
-        if (!$cart || $cart->items->isEmpty()) {
+        if (! $cart || $cart->items->isEmpty()) {
             return $this->errorResponse('Cart is empty.', null, 422);
         }
 
@@ -56,7 +56,7 @@ class CheckoutController extends BaseApiController
     {
         $checkout = $this->checkoutService->get($checkoutId);
 
-        if (!$checkout) {
+        if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
 
@@ -81,17 +81,17 @@ class CheckoutController extends BaseApiController
         ]);
 
         $checkout = $this->checkoutService->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
 
         $otpVerified = true;
-        if (!Auth::user() && empty($validated['otp'])) {
+        if (! Auth::user() && empty($validated['otp'])) {
             // Guest without OTP — auto-verify is handled by the frontend flow
             $otpVerified = false;
         }
 
-        if (!empty($validated['otp'])) {
+        if (! empty($validated['otp'])) {
             // verify() returns a RESULT_* status string, not a bool — was being
             // assigned straight into otp_verified, so it was always truthy
             // (even 'invalid'/'expired') and 'guest_checkout' was passed as a
@@ -107,7 +107,7 @@ class CheckoutController extends BaseApiController
         $this->checkoutService->update($checkoutId, [
             'contact_email' => $validated['email'],
             'contact_phone' => $validated['phone'] ?? null,
-            'guest_email' => !Auth::user() ? $validated['email'] : null,
+            'guest_email' => ! Auth::user() ? $validated['email'] : null,
             'otp_verified' => $otpVerified,
         ]);
 
@@ -144,7 +144,7 @@ class CheckoutController extends BaseApiController
         ]);
 
         $checkout = $this->checkoutService->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
 
@@ -179,7 +179,7 @@ class CheckoutController extends BaseApiController
         ]);
 
         $checkout = $this->checkoutService->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
 
@@ -205,7 +205,7 @@ class CheckoutController extends BaseApiController
         ]);
 
         $checkout = $this->checkoutService->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
 
@@ -229,7 +229,7 @@ class CheckoutController extends BaseApiController
         ]);
 
         $checkout = $this->checkoutService->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
 

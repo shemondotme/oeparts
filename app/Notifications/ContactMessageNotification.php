@@ -31,7 +31,7 @@ class ContactMessageNotification extends Notification implements ShouldQueue
             ->subject("New Contact Message: {$this->subject}")
             ->line("From: {$this->name} ({$this->email})")
             ->line("Subject: {$this->subject}")
-            ->line("Message:")
+            ->line('Message:')
             ->line($this->message);
     }
 

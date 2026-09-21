@@ -3,6 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\AbandonedCartResource;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\AbandonedCart;
 use App\Services\CartRecoveryService;
 use Filament\Notifications\Notification;
@@ -15,8 +17,8 @@ use Filament\Widgets\TableWidget;
 
 class AbandonedCartWidget extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -29,7 +31,7 @@ class AbandonedCartWidget extends TableWidget
             'count' => AbandonedCart::where('recovery_email_sent', false)->count(),
         ]);
 
-        return 'Abandoned Carts' . ($d['count'] > 0 ? " ({$d['count']})" : '');
+        return 'Abandoned Carts'.($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected ?string $pollingInterval = '60s';
@@ -70,8 +72,8 @@ class AbandonedCartWidget extends TableWidget
                         $items = count($record->cart_snapshot['items'] ?? []);
                         $total = $record->cart_snapshot['total'] ?? null;
 
-                        return $items . ' item' . ($items === 1 ? '' : 's')
-                            . ($total !== null ? ' · ' . format_money($total) : '');
+                        return $items.' item'.($items === 1 ? '' : 's')
+                            .($total !== null ? ' · '.format_money($total) : '');
                     }),
                 TextColumn::make('recovery_email_sent')
                     ->label('Recovery')

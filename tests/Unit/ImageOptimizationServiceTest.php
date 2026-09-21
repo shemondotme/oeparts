@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Models\Setting;
 use App\Services\ImageOptimizationService;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
@@ -54,9 +56,9 @@ class ImageOptimizationServiceTest extends TestCase
     #[Test]
     public function it_downscales_an_oversized_image_preserving_aspect_ratio(): void
     {
-        \App\Models\Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_width'], ['value' => '100', 'type' => 'integer', 'is_encrypted' => false]);
-        \App\Models\Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_height'], ['value' => '100', 'type' => 'integer', 'is_encrypted' => false]);
-        app(\App\Services\SettingsService::class)->forget('performance');
+        Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_width'], ['value' => '100', 'type' => 'integer', 'is_encrypted' => false]);
+        Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_height'], ['value' => '100', 'type' => 'integer', 'is_encrypted' => false]);
+        app(SettingsService::class)->forget('performance');
 
         $this->putJpeg('media/wide.jpg', 400, 100); // 4:1 ratio, wider than tall
 
@@ -95,8 +97,8 @@ class ImageOptimizationServiceTest extends TestCase
     #[Test]
     public function disabling_webp_conversion_keeps_the_original_format(): void
     {
-        \App\Models\Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_convert_webp'], ['value' => 'false', 'type' => 'boolean', 'is_encrypted' => false]);
-        app(\App\Services\SettingsService::class)->forget('performance');
+        Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_convert_webp'], ['value' => 'false', 'type' => 'boolean', 'is_encrypted' => false]);
+        app(SettingsService::class)->forget('performance');
 
         $this->putJpeg('media/photo.jpg', 60, 60);
 
@@ -110,8 +112,8 @@ class ImageOptimizationServiceTest extends TestCase
     #[Test]
     public function disabling_optimization_entirely_leaves_the_file_untouched(): void
     {
-        \App\Models\Setting::updateOrCreate(['group' => 'performance', 'key' => 'optimize_images'], ['value' => 'false', 'type' => 'boolean', 'is_encrypted' => false]);
-        app(\App\Services\SettingsService::class)->forget('performance');
+        Setting::updateOrCreate(['group' => 'performance', 'key' => 'optimize_images'], ['value' => 'false', 'type' => 'boolean', 'is_encrypted' => false]);
+        app(SettingsService::class)->forget('performance');
 
         $this->putJpeg('media/photo.jpg', 5000, 5000);
 

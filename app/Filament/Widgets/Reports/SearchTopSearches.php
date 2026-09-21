@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 use App\Models\SearchLog;
-use Carbon\Carbon;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class SearchTopSearches extends TableWidget
 {
-    use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
+    use HasReportPeriod;
 
     protected static ?string $heading = 'Top Searches';
 
@@ -49,7 +49,7 @@ class SearchTopSearches extends TableWidget
                     ->label('Searches')
                     ->badge()
                     ->color('primary')
-                    ->formatStateUsing(fn ($state): string => number_format((int) $state) . '×')
+                    ->formatStateUsing(fn ($state): string => number_format((int) $state).'×')
                     ->alignEnd(),
             ])
             ->paginated(false)

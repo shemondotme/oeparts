@@ -30,7 +30,7 @@ class MigrateLegacyUploadsTest extends TestCase
         return MediaFile::create(array_merge([
             'uploaded_by' => $this->adminId,
             'file_name' => 'test.png',
-            'file_url' => 'http://example.test/storage/' . ($attrs['file_path'] ?? 'test.png'),
+            'file_url' => 'http://example.test/storage/'.($attrs['file_path'] ?? 'test.png'),
             'mime_type' => 'image/png',
             'size' => 5,
         ], $attrs));

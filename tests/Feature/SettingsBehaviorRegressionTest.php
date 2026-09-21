@@ -6,6 +6,10 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\User;
+use Carbon\CarbonInterface;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -23,9 +27,9 @@ class SettingsBehaviorRegressionTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
     }
 
@@ -35,7 +39,7 @@ class SettingsBehaviorRegressionTest extends TestCase
         Cache::forget("settings.{$group}");
     }
 
-    private function shipHistory(Order $order, \Carbon\CarbonInterface $shippedAt): void
+    private function shipHistory(Order $order, CarbonInterface $shippedAt): void
     {
         $history = $order->statusHistory()->create([
             'old_status' => OrderStatus::Processing->value,

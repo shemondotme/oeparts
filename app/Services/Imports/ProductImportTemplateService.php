@@ -53,11 +53,11 @@ class ProductImportTemplateService
     private function exampleRow(array $headers): array
     {
         $samples = [
-            'oem_number'        => '0242229799',
+            'oem_number' => '0242229799',
             'manufacturer_slug' => 'bmw',
-            'condition_slug'    => 'new',
-            'price'             => '49.99',
-            'is_in_stock'       => '1',
+            'condition_slug' => 'new',
+            'price' => '49.99',
+            'is_in_stock' => '1',
         ];
 
         return array_map(fn (string $col) => $samples[$col] ?? '', $headers);

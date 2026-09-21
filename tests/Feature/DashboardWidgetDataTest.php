@@ -8,6 +8,11 @@ use App\Models\Manufacturer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use Carbon\Carbon;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,10 +29,10 @@ class DashboardWidgetDataTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
@@ -39,8 +44,8 @@ class DashboardWidgetDataTest extends TestCase
     #[Test]
     public function top_manufacturers_revenue_attributes_via_product_id_not_snapshot_string(): void
     {
-        $mfrA = Manufacturer::factory()->create(['slug' => 'brand-alpha-' . uniqid()]);
-        $mfrB = Manufacturer::factory()->create(['slug' => 'brand-beta-' . uniqid()]);
+        $mfrA = Manufacturer::factory()->create(['slug' => 'brand-alpha-'.uniqid()]);
+        $mfrB = Manufacturer::factory()->create(['slug' => 'brand-beta-'.uniqid()]);
 
         $productA = Product::factory()->create(['manufacturer_id' => $mfrA->id]);
 
@@ -87,7 +92,7 @@ class DashboardWidgetDataTest extends TestCase
     #[Test]
     public function top_manufacturers_excludes_items_whose_product_was_deleted(): void
     {
-        $mfr = Manufacturer::factory()->create(['slug' => 'mfr-deleted-' . uniqid()]);
+        $mfr = Manufacturer::factory()->create(['slug' => 'mfr-deleted-'.uniqid()]);
         $product = Product::factory()->create(['manufacturer_id' => $mfr->id]);
 
         $order = Order::factory()->create([
@@ -153,7 +158,7 @@ class DashboardWidgetDataTest extends TestCase
 
         $this->assertNotNull($lastBackup);
 
-        $lastBackupCarbon = \Carbon\Carbon::parse($lastBackup);
+        $lastBackupCarbon = Carbon::parse($lastBackup);
         $this->assertTrue(
             $lastBackupCarbon->isBefore(now()->subHours($threshold)),
             "Backup at {$lastBackupCarbon} must be older than threshold ({$threshold}h ago)",
@@ -179,7 +184,7 @@ class DashboardWidgetDataTest extends TestCase
             ->orderByDesc('ran_at')
             ->value('ran_at');
 
-        $lastBackupCarbon = \Carbon\Carbon::parse($lastBackup);
+        $lastBackupCarbon = Carbon::parse($lastBackup);
         $this->assertFalse(
             $lastBackupCarbon->isBefore(now()->subHours($threshold)),
             'A 1h-old backup must NOT be flagged as stale against a threshold of {$threshold}h',

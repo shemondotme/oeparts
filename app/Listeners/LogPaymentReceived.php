@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Events\PaymentReceived;
 use App\Models\ActivityLog;
+use App\Models\Order;
 use Illuminate\Support\Facades\Log;
 
 class LogPaymentReceived
@@ -12,17 +13,17 @@ class LogPaymentReceived
     {
         try {
             ActivityLog::create([
-                'admin_id'    => auth('admin')->id() ?? null,
-                'action'      => 'payment_received',
-                'model_type'  => \App\Models\Order::class,
-                'model_id'    => $event->order->id,
-                'old_values'  => ['payment_status' => $event->order->getOriginal('payment_status')],
-                'new_values'  => [
-                    'payment_status'    => $event->payment->status->value,
+                'admin_id' => auth('admin')->id() ?? null,
+                'action' => 'payment_received',
+                'model_type' => Order::class,
+                'model_id' => $event->order->id,
+                'old_values' => ['payment_status' => $event->order->getOriginal('payment_status')],
+                'new_values' => [
+                    'payment_status' => $event->payment->status->value,
                     'payment_reference' => $event->payment->transaction_id,
-                    'amount'            => $event->payment->amount,
+                    'amount' => $event->payment->amount,
                 ],
-                'ip_address'  => request()->ip(),
+                'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to log payment received', [

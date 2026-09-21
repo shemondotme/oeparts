@@ -46,30 +46,30 @@ class RestoreManager
         }
 
         $run = BackupRun::create([
-            'profile'       => $toc['profile'] ?? BackupRun::PROFILE_FULL,
-            'status'        => BackupRun::STATUS_SUCCESS,
-            'trigger'       => BackupRun::TRIGGER_MANUAL,
-            'disk'          => $disk,
-            'app_version'   => $toc['app_version'] ?? null,
-            'php_version'   => $toc['php_version'] ?? null,
-            'db_version'    => $toc['db_version'] ?? null,
-            'part_count'    => (int) ($toc['part_count'] ?? count($toc['parts'])),
-            'total_bytes'   => (int) ($toc['total_bytes'] ?? 0),
+            'profile' => $toc['profile'] ?? BackupRun::PROFILE_FULL,
+            'status' => BackupRun::STATUS_SUCCESS,
+            'trigger' => BackupRun::TRIGGER_MANUAL,
+            'disk' => $disk,
+            'app_version' => $toc['app_version'] ?? null,
+            'php_version' => $toc['php_version'] ?? null,
+            'db_version' => $toc['db_version'] ?? null,
+            'part_count' => (int) ($toc['part_count'] ?? count($toc['parts'])),
+            'total_bytes' => (int) ($toc['total_bytes'] ?? 0),
             'manifest_path' => $manifestPath,
-            'meta'          => ['imported' => true],
+            'meta' => ['imported' => true],
         ]);
 
         foreach ($toc['parts'] as $p) {
             $run->parts()->create([
-                'type'     => $p['type'] ?? 'other',
+                'type' => $p['type'] ?? 'other',
                 'sequence' => (int) ($p['sequence'] ?? 0),
-                'name'     => $p['name'] ?? null,
-                'disk'     => $p['disk'] ?? $disk,
-                'path'     => (string) ($p['path'] ?? ''),
-                'sha256'   => $p['sha256'] ?? null,
-                'bytes'    => (int) ($p['bytes'] ?? 0),
-                'rows'     => $p['rows'] ?? null,
-                'meta'     => $p['meta'] ?? null,
+                'name' => $p['name'] ?? null,
+                'disk' => $p['disk'] ?? $disk,
+                'path' => (string) ($p['path'] ?? ''),
+                'sha256' => $p['sha256'] ?? null,
+                'bytes' => (int) ($p['bytes'] ?? 0),
+                'rows' => $p['rows'] ?? null,
+                'meta' => $p['meta'] ?? null,
             ]);
         }
 
@@ -107,7 +107,7 @@ class RestoreManager
     /** Backup app version vs this server. Newer-onto-older is risky (cross-server). */
     public function validateVersion(BackupRun $run, bool $strict): array
     {
-        $backup  = (string) $run->app_version;
+        $backup = (string) $run->app_version;
         $current = app(UpdateChecker::class)->currentVersion();
 
         if ($backup !== '' && $current !== 'unknown' && version_compare($backup, $current, '>')) {
@@ -208,7 +208,7 @@ class RestoreManager
             return;
         }
 
-        $targetRoot = rtrim($targetRoot, "/\\");
+        $targetRoot = rtrim($targetRoot, '/\\');
 
         foreach ((array) ($fileManifest['files'] ?? []) as $entry) {
             if (! empty($entry['deleted']) || empty($entry['path'])) {
@@ -229,7 +229,7 @@ class RestoreManager
             }
 
             $target = $targetRoot.'/'.$safePath;
-            $dir    = dirname($target);
+            $dir = dirname($target);
             if (! is_dir($dir)) {
                 @mkdir($dir, 0775, true);
             }
@@ -285,9 +285,9 @@ class RestoreManager
     private function writeFileFromVolume(BackupRun $run, array $entry, string $target): void
     {
         $sourceRun = (int) ($entry['source_run'] ?? $run->getKey());
-        $volume    = $this->decryptedVolume($sourceRun, (int) $entry['vol']);
+        $volume = $this->decryptedVolume($sourceRun, (int) $entry['vol']);
 
-        $in  = fopen($volume, 'rb');
+        $in = fopen($volume, 'rb');
         $out = fopen($target, 'wb');
 
         if ($in === false || $out === false) {
@@ -381,7 +381,7 @@ class RestoreManager
             @mkdir($dir, 0775, true);
         }
 
-        $in  = Storage::disk($part->disk)->readStream($part->path);
+        $in = Storage::disk($part->disk)->readStream($part->path);
         $out = fopen($destAbs, 'wb');
         if ($in === false || $out === false) {
             throw new RestoreException('Could not open backup part for restore: '.$part->name);

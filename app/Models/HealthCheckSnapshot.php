@@ -19,7 +19,7 @@ class HealthCheckSnapshot extends Model
     ];
 
     protected $casts = [
-        'checked_at'       => 'datetime',
+        'checked_at' => 'datetime',
         'response_time_ms' => 'integer',
     ];
 

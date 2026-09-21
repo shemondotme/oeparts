@@ -14,23 +14,23 @@ class SectionFactory extends Factory
     public function definition(): array
     {
         return [
-            'type'      => $this->faker->word(),
-            'location'  => $this->faker->randomElement(SectionLocation::cases())->value,
-            'title'     => [
+            'type' => $this->faker->word(),
+            'location' => $this->faker->randomElement(SectionLocation::cases())->value,
+            'title' => [
                 'en' => $this->faker->sentence(),
                 'de' => $this->faker->sentence(),
                 'lt' => $this->faker->sentence(),
                 'fr' => $this->faker->sentence(),
                 'es' => $this->faker->sentence(),
             ],
-            'content'   => [
+            'content' => [
                 'en' => ['headline' => $this->faker->sentence(), 'description' => $this->faker->paragraph()],
                 'de' => ['headline' => $this->faker->sentence(), 'description' => $this->faker->paragraph()],
                 'lt' => ['headline' => $this->faker->sentence(), 'description' => $this->faker->paragraph()],
                 'fr' => ['headline' => $this->faker->sentence(), 'description' => $this->faker->paragraph()],
                 'es' => ['headline' => $this->faker->sentence(), 'description' => $this->faker->paragraph()],
             ],
-            'status'    => SectionStatus::Published,
+            'status' => SectionStatus::Published,
             'is_active' => true,
             'sort_order' => 0,
         ];

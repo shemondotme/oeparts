@@ -6,8 +6,8 @@ use Filament\Support\Contracts\HasLabel;
 
 enum ContactStatus: string implements HasLabel
 {
-    case Unread   = 'unread';
-    case Read     = 'read';
+    case Unread = 'unread';
+    case Read = 'read';
     case Resolved = 'resolved';
 
     public function getLabel(): string

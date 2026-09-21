@@ -3,21 +3,21 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\ProductResource;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\Product;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\Size;
 use Filament\Tables;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class StockAlertWidget extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -28,7 +28,7 @@ class StockAlertWidget extends TableWidget
     {
         $count = Product::where('is_in_stock', false)->where('is_active', true)->count();
 
-        return 'Out of Stock' . ($count > 0 ? " ({$count})" : '');
+        return 'Out of Stock'.($count > 0 ? " ({$count})" : '');
     }
 
     protected ?string $pollingInterval = '60s';
@@ -95,12 +95,12 @@ class StockAlertWidget extends TableWidget
                     ->label('Restock')
                     ->icon('heroicon-o-pencil-square')
                     ->color('warning')
-                    ->size(\Filament\Support\Enums\Size::Small)
+                    ->size(Size::Small)
                     ->iconButton()
                     ->url(fn (Product $record): string => ProductResource::getUrl('edit', ['record' => $record])),
                 Tables\Actions\ViewAction::make()
                     ->url(fn (Product $record): string => ProductResource::getUrl('view', ['record' => $record]))
-                    ->size(\Filament\Support\Enums\Size::Small)
+                    ->size(Size::Small)
                     ->iconButton()
                     ->icon('heroicon-m-eye'),
             ])

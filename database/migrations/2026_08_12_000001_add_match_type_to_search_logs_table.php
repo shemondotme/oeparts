@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\SafeSchema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -12,13 +13,15 @@ use Illuminate\Support\Facades\Schema;
  * path served it. The SEO Health Dashboard's internal-search-analytics
  * widget needs this breakdown and has no other source for it.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible (rule #42) — via SafeSchema (see
+ * add_slug_to_products_table for why a bare hasColumn() pre-check isn't
+ * enough on its own for a table that real live upgrades pass through).
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('search_logs', function (Blueprint $table) {
+        SafeSchema::table('add_match_type_to_search_logs_table', 'search_logs', function (Blueprint $table) {
             if (! Schema::hasColumn('search_logs', 'match_type')) {
                 $table->string('match_type', 20)->nullable()->after('result_count');
             }

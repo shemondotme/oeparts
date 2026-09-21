@@ -19,12 +19,12 @@ class CarModelFactory extends Factory
 
         return [
             'manufacturer_id' => Manufacturer::factory(),
-            'name'            => $name,
-            'slug'            => fake()->unique()->slug(),
-            'year_from'       => fake()->numberBetween(2000, 2020),
-            'year_to'         => fake()->numberBetween(2021, 2025),
-            'is_active'       => true,
-            'sort_order'      => fake()->numberBetween(0, 100),
+            'name' => $name,
+            'slug' => fake()->unique()->slug(),
+            'year_from' => fake()->numberBetween(2000, 2020),
+            'year_to' => fake()->numberBetween(2021, 2025),
+            'is_active' => true,
+            'sort_order' => fake()->numberBetween(0, 100),
         ];
     }
 

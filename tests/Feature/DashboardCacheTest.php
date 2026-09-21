@@ -3,8 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Manufacturer;
+use App\Models\Product;
 use App\Services\AdminWidgetCacheService;
 use App\Services\WidgetPreferenceService;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,8 +30,8 @@ class DashboardCacheTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         $admin = Admin::factory()->create(['is_active' => true]);
@@ -262,7 +266,7 @@ class DashboardCacheTest extends TestCase
         AdminWidgetCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
         AdminWidgetCacheService::dashboard('new_products_added:p30', fn () => ['stale' => true]);
 
-        \App\Models\Product::factory()->create();
+        Product::factory()->create();
 
         $this->assertFalse(Cache::has('admin:dashboard:stock_alert:p-'));
         $this->assertFalse(Cache::has('admin:dashboard:manufacturing_stats:p30'));
@@ -278,7 +282,7 @@ class DashboardCacheTest extends TestCase
         AdminWidgetCacheService::dashboard('manufacturer_revenue:p30', fn () => ['stale' => true]);
         AdminWidgetCacheService::dashboard('manufacturing_stats:p30', fn () => ['stale' => true]);
 
-        $manufacturer = \App\Models\Manufacturer::factory()->create();
+        $manufacturer = Manufacturer::factory()->create();
         $manufacturer->update(['is_active' => false]);
 
         $this->assertFalse(Cache::has('manufacturers.active'));

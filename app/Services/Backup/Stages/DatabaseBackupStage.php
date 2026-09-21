@@ -62,13 +62,13 @@ class DatabaseBackupStage implements BackupStage
         }
 
         $deadline = microtime(true) + max(0.0, (float) config('backup.db.batch_seconds', 5));
-        $parts    = [];
-        $notes    = [];
+        $parts = [];
+        $notes = [];
 
         do {
             $index = (int) $state['ti'];
             $table = (string) $tables[$index];
-            $part  = null;
+            $part = null;
 
             if ($state['phase'] === 'schema') {
                 $part = $this->writeSchemaPart($run, $table);
@@ -77,10 +77,10 @@ class DatabaseBackupStage implements BackupStage
                 if ($this->isDataExcluded($table)) {
                     $state = $this->advanceTable($state); // structure-only table
                 } else {
-                    $state['phase']  = 'data';
+                    $state['phase'] = 'data';
                     $state['cursor'] = null;
-                    $state['chunk']  = 0;
-                    $state['key']    = $this->keyColumn($table); // null → OFFSET fallback
+                    $state['chunk'] = 0;
+                    $state['key'] = $this->keyColumn($table); // null → OFFSET fallback
                 }
             } else { // data
                 [$part, $advance, $cursor, $chunk, $rows] = $this->writeDataChunk($run, $table, $state);
@@ -90,7 +90,7 @@ class DatabaseBackupStage implements BackupStage
                     $state = $this->advanceTable($state);
                 } else {
                     $state['cursor'] = $cursor;
-                    $state['chunk']  = $chunk;
+                    $state['chunk'] = $chunk;
                 }
             }
 
@@ -119,19 +119,19 @@ class DatabaseBackupStage implements BackupStage
     {
         return [
             'tables' => $this->resolveTables(),
-            'ti'     => 0,
-            'phase'  => 'schema',
+            'ti' => 0,
+            'phase' => 'schema',
             'cursor' => null,
-            'chunk'  => 0,
+            'chunk' => 0,
         ];
     }
 
     private function advanceTable(array $state): array
     {
-        $state['ti']     = (int) $state['ti'] + 1;
-        $state['phase']  = 'schema';
+        $state['ti'] = (int) $state['ti'] + 1;
+        $state['phase'] = 'schema';
         $state['cursor'] = null;
-        $state['chunk']  = 0;
+        $state['chunk'] = 0;
         unset($state['key']);
 
         return $state;
@@ -141,7 +141,7 @@ class DatabaseBackupStage implements BackupStage
 
     private function writeSchemaPart(BackupRun $run, string $table): array
     {
-        $sql  = $this->createTableSql($table);
+        $sql = $this->createTableSql($table);
         $path = $this->partPath($run, $table, 'schema');
 
         return $this->writePart($run, $path, $sql, [
@@ -159,7 +159,7 @@ class DatabaseBackupStage implements BackupStage
         $header = "DROP TABLE IF EXISTS `{$table}`;\n";
 
         if (in_array($driver, ['mysql', 'mariadb'], true)) {
-            $row    = DB::selectOne("SHOW CREATE TABLE `{$table}`");
+            $row = DB::selectOne("SHOW CREATE TABLE `{$table}`");
             $create = (array) $row;
 
             return $header.((string) ($create['Create Table'] ?? $create['Create View'] ?? '')).";\n";
@@ -186,7 +186,7 @@ class DatabaseBackupStage implements BackupStage
     private function writeDataChunk(BackupRun $run, string $table, array $state): array
     {
         $limit = max(1, (int) config('backup.db.chunk_rows', 5000));
-        $key   = $state['key'] ?? null;
+        $key = $state['key'] ?? null;
         $chunk = (int) $state['chunk'];
 
         $query = DB::table($table);
@@ -211,17 +211,17 @@ class DatabaseBackupStage implements BackupStage
         }
 
         $columns = $this->columns($table);
-        $sql     = $this->insertSql($table, $columns, $rows);
-        $path    = $this->partPath($run, $table, 'data.'.$chunk);
+        $sql = $this->insertSql($table, $columns, $rows);
+        $path = $this->partPath($run, $table, 'data.'.$chunk);
 
         $part = $this->writePart($run, $path, $sql, [
             'type' => BackupChunk::TYPE_DB,
             'name' => $table,
             'rows' => $rows->count(),
             'meta' => [
-                'kind'       => 'data',
-                'chunk'      => $chunk,
-                'key'        => $key,
+                'kind' => 'data',
+                'chunk' => $chunk,
+                'key' => $key,
                 'consistent' => (bool) (((array) ($run->meta ?? []))['consistent']
                     ?? config('backup.db.consistent', false)),
             ],
@@ -242,7 +242,7 @@ class DatabaseBackupStage implements BackupStage
     private function insertSql(string $table, array $columns, $rows): string
     {
         $colList = '`'.implode('`,`', $columns).'`';
-        $tuples  = [];
+        $tuples = [];
 
         foreach ($rows as $row) {
             $values = [];
@@ -356,14 +356,14 @@ class DatabaseBackupStage implements BackupStage
     private function writePart(BackupRun $run, string $path, string $sql, array $attrs): array
     {
         $compressed = (string) gzencode($sql, 6);
-        $disk       = (string) config('backup.staging_disk', 'local');
+        $disk = (string) config('backup.staging_disk', 'local');
 
         Storage::disk($disk)->put($path, $compressed);
 
         return array_merge($attrs, [
-            'disk'   => $disk,
-            'path'   => $path,
-            'bytes'  => strlen($compressed),
+            'disk' => $disk,
+            'path' => $path,
+            'bytes' => strlen($compressed),
             'sha256' => hash('sha256', $compressed),
         ]);
     }

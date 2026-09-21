@@ -20,7 +20,7 @@ class EditTestimonial extends EditRecord
 
     public function getHeading(): string
     {
-        return 'Edit ' . ($this->record?->name ?? 'Testimonial');
+        return 'Edit '.($this->record?->name ?? 'Testimonial');
     }
 
     public function getSubheading(): ?string

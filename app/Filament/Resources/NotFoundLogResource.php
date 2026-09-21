@@ -8,6 +8,7 @@ use App\Filament\Support\AdminUi;
 use App\Models\NotFoundLog;
 use App\Models\Redirect;
 use App\Services\RedirectLoopDetector;
+use App\Support\NavBadge;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -16,6 +17,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 
 /**
  * SEO 404 monitor — deduplicated log of frontend 404s (recorded from
@@ -35,7 +37,7 @@ class NotFoundLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count(
+        return NavBadge::count(
             'not_found_logs_unresolved',
             fn () => static::getModel()::where('resolved', false)->count()
         );
@@ -198,7 +200,7 @@ class NotFoundLogResource extends Resource
                                 ->default(RedirectType::Permanent->value)
                                 ->required(),
                         ])
-                        ->action(function (\Illuminate\Support\Collection $records, array $data): void {
+                        ->action(function (Collection $records, array $data): void {
                             $created = 0;
                             $skipped = 0;
 

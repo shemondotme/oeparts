@@ -9,11 +9,11 @@ use App\Filament\Support\AdminUi;
 use App\Models\Coupon;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -134,82 +134,82 @@ class CouponResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->withCount('usages')->with('user'))
             ->columns([
-            Tables\Columns\TextColumn::make('code')
-                ->label(__('admin.coupon_code'))
-                ->searchable()
-                ->copyable()
-                ->copyMessage('Coupon code copied')
-                ->badge()
-                ->color('warning')
-                ->fontMono()
-                ->sortable()
-                ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.name'))
-                ->searchable()
-                ->limit(30)
-                ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('discount_type')
-                ->label(__('admin.type'))
-                ->badge()
-                ->color(fn (DiscountType $state): string => match ($state) {
-                    DiscountType::Percentage => 'warning',
-                    DiscountType::Fixed => 'info',
-                })
-                ->icon(fn (DiscountType $state): string => match ($state) {
-                    DiscountType::Percentage => 'heroicon-o-adjustments-horizontal',
-                    DiscountType::Fixed => 'heroicon-o-currency-euro',
-                }),
-            Tables\Columns\TextColumn::make('discount_value')
-                ->label(__('admin.value'))
-                // A 10% coupon rendered as "€10.00" with unconditional money().
-                ->getStateUsing(fn (Coupon $record): string => $record->discount_type === DiscountType::Percentage
-                    ? rtrim(rtrim((string) $record->discount_value, '0'), '.') . '%'
-                    : format_money($record->discount_value))
-                ->alignEnd()
-                ->fontMono()
-                ->weight('bold'),
+                Tables\Columns\TextColumn::make('code')
+                    ->label(__('admin.coupon_code'))
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Coupon code copied')
+                    ->badge()
+                    ->color('warning')
+                    ->fontMono()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.name'))
+                    ->searchable()
+                    ->limit(30)
+                    ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('discount_type')
+                    ->label(__('admin.type'))
+                    ->badge()
+                    ->color(fn (DiscountType $state): string => match ($state) {
+                        DiscountType::Percentage => 'warning',
+                        DiscountType::Fixed => 'info',
+                    })
+                    ->icon(fn (DiscountType $state): string => match ($state) {
+                        DiscountType::Percentage => 'heroicon-o-adjustments-horizontal',
+                        DiscountType::Fixed => 'heroicon-o-currency-euro',
+                    }),
+                Tables\Columns\TextColumn::make('discount_value')
+                    ->label(__('admin.value'))
+                    // A 10% coupon rendered as "€10.00" with unconditional money().
+                    ->getStateUsing(fn (Coupon $record): string => $record->discount_type === DiscountType::Percentage
+                        ? rtrim(rtrim((string) $record->discount_value, '0'), '.').'%'
+                        : format_money($record->discount_value))
+                    ->alignEnd()
+                    ->fontMono()
+                    ->weight('bold'),
                 Tables\Columns\TextColumn::make('usage_limit')
                     ->label(__('admin.max_uses'))
                     ->numeric()
                     ->fontMono()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
-            Tables\Columns\TextColumn::make('is_active')
-                ->label(__('admin.status'))
-                ->badge()
-                // Derived status: an expired coupon must not read "Active"
-                // (expires_at is a hidden-by-default column).
-                ->getStateUsing(fn (Coupon $record): string => match (true) {
-                    ! $record->is_active => 'Inactive',
-                    $record->expires_at !== null && $record->expires_at->isPast() => 'Expired',
-                    default => 'Active',
-                })
-                ->color(fn (string $state): string => match ($state) {
-                    'Active' => 'success',
-                    'Expired' => 'warning',
-                    default => 'gray',
-                })
-                ->icon(fn (string $state): string => match ($state) {
-                    'Active' => 'heroicon-o-check-circle',
-                    'Expired' => 'heroicon-o-clock',
-                    default => 'heroicon-o-x-circle',
-                })
-                ->alignCenter(),
-            Tables\Columns\TextColumn::make('user.name')
-                ->label(__('admin.restricted_to'))
-                ->placeholder('Anyone')
-                ->toggleable(),
-            Tables\Columns\TextColumn::make('expires_at')
-                ->label(__('admin.expires'))
-                ->dateTime()
-                ->sortable()
-                ->toggleable(isToggledHiddenByDefault: true),
-            Tables\Columns\TextColumn::make('created_at')
-                ->label(__('admin.created'))
-                ->dateTime()
-                ->sortable()
-                ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label(__('admin.status'))
+                    ->badge()
+                    // Derived status: an expired coupon must not read "Active"
+                    // (expires_at is a hidden-by-default column).
+                    ->getStateUsing(fn (Coupon $record): string => match (true) {
+                        ! $record->is_active => 'Inactive',
+                        $record->expires_at !== null && $record->expires_at->isPast() => 'Expired',
+                        default => 'Active',
+                    })
+                    ->color(fn (string $state): string => match ($state) {
+                        'Active' => 'success',
+                        'Expired' => 'warning',
+                        default => 'gray',
+                    })
+                    ->icon(fn (string $state): string => match ($state) {
+                        'Active' => 'heroicon-o-check-circle',
+                        'Expired' => 'heroicon-o-clock',
+                        default => 'heroicon-o-x-circle',
+                    })
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label(__('admin.restricted_to'))
+                    ->placeholder('Anyone')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('expires_at')
+                    ->label(__('admin.expires'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('admin.created'))
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('discount_type')
@@ -247,21 +247,21 @@ class CouponResource extends Resource
                     ->icon('heroicon-o-plus')
                     ->button(),
             ])
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Coupons', [
-                    'code' => 'Coupon Code',
-                    'name' => 'Name',
-                    'discount_type' => 'Type',
-                    'discount_value' => 'Value',
-                    'usage_limit' => 'Max Uses',
-                    'is_active' => 'Active',
-                    'expires_at' => 'Expires',
-                    'created_at' => 'Created',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Coupons', [
+                        'code' => 'Coupon Code',
+                        'name' => 'Name',
+                        'discount_type' => 'Type',
+                        'discount_value' => 'Value',
+                        'usage_limit' => 'Max Uses',
+                        'is_active' => 'Active',
+                        'expires_at' => 'Expires',
+                        'created_at' => 'Created',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
+            ]);
     }
 
     public static function getRelations(): array

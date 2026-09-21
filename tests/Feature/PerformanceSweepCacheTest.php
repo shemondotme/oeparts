@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -12,6 +13,7 @@ use App\Models\Product;
 use App\Models\Testimonial;
 use App\Services\CartService;
 use App\Services\CouponService;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +35,7 @@ class PerformanceSweepCacheTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\SettingsSeeder::class]);
+        $this->seed([SettingsSeeder::class]);
     }
 
     #[Test]
@@ -102,7 +104,7 @@ class PerformanceSweepCacheTest extends TestCase
             'usage_limit' => 1000,
             'usage_limit_per_user' => 1000,
             'expires_at' => null,
-            'created_by' => \App\Models\Admin::factory()->create()->id,
+            'created_by' => Admin::factory()->create()->id,
         ]);
 
         // First validate() call populates the cache for the original code.

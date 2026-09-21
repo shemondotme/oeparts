@@ -12,6 +12,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\EncodedImageInterface;
+use Intervention\Image\Interfaces\ImageInterface;
 use Throwable;
 
 /**
@@ -110,7 +112,7 @@ class ProcessProductImage implements ShouldQueue
      * Intervention v3 has no extension-sniffing save(), only format-
      * specific to*() methods that each return an EncodedImage.
      */
-    private function encodeFor(\Intervention\Image\Interfaces\ImageInterface $image, string $path): \Intervention\Image\Interfaces\EncodedImageInterface
+    private function encodeFor(ImageInterface $image, string $path): EncodedImageInterface
     {
         return match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
             'png' => $image->toPng(),

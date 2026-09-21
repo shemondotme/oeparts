@@ -20,7 +20,7 @@ class CmsSectionController extends Controller
         // call it. Low impact (it renders into an auto-escaped view and
         // never touches the DB) but inconsistent with its siblings.
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->cannot('edit sections')) {
+        if (! $admin || $admin->cannot('edit sections')) {
             abort(403, 'Unauthorized.');
         }
 
@@ -42,7 +42,7 @@ class CmsSectionController extends Controller
     public function update(Request $request, Section $section): RedirectResponse
     {
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->cannot('edit sections')) {
+        if (! $admin || $admin->cannot('edit sections')) {
             abort(403, 'Unauthorized.');
         }
 
@@ -70,7 +70,7 @@ class CmsSectionController extends Controller
     public function restoreVersion(Section $section, SectionVersion $version): RedirectResponse
     {
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->cannot('edit sections')) {
+        if (! $admin || $admin->cannot('edit sections')) {
             abort(403, 'Unauthorized.');
         }
 

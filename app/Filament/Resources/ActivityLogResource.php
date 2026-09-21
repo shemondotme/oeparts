@@ -2,15 +2,17 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Pages\System\HealthCheckDashboard;
+use App\Filament\Pages\System\SetupAssistant;
 use App\Filament\Resources\ActivityLogResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\ActivityLog;
 use Filament\Actions;
-use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 // TextEntry lives in Infolists, not Schemas — the wrong import 500'd every
 // activity-detail view (the audit trail itself was unopenable).
 use Filament\Infolists\Components\TextEntry;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
@@ -89,8 +91,8 @@ class ActivityLogResource extends Resource
         }
 
         return match ($record->model_type) {
-            \App\Filament\Pages\System\SetupAssistant::class => \App\Filament\Pages\System\SetupAssistant::getUrl(),
-            \App\Filament\Pages\System\HealthCheckDashboard::class => \App\Filament\Pages\System\HealthCheckDashboard::getUrl(),
+            SetupAssistant::class => SetupAssistant::getUrl(),
+            HealthCheckDashboard::class => HealthCheckDashboard::getUrl(),
             default => null,
         };
     }
@@ -107,8 +109,8 @@ class ActivityLogResource extends Resource
 
         $lines = [];
         foreach ($values as $key => $value) {
-            $lines[] = '<span class="font-mono text-xs">' . e((string) $key) . ':</span> '
-                . e(is_array($value) ? json_encode($value) : (string) $value);
+            $lines[] = '<span class="font-mono text-xs">'.e((string) $key).':</span> '
+                .e(is_array($value) ? json_encode($value) : (string) $value);
         }
 
         return $lines === [] ? '—' : implode('<br>', $lines);

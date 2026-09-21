@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Filament\Resources\ProductResource\Pages\ListProducts;
 use App\Models\Admin;
 use App\Models\Product;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -24,7 +25,7 @@ class ProductOemSearchTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\RolesSeeder::class]);
+        $this->seed([RolesSeeder::class]);
 
         $admin = Admin::factory()->create(['is_active' => true]);
         $admin->assignRole('super_admin');

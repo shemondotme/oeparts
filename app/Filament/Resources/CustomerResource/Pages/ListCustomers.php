@@ -10,6 +10,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListCustomers extends ListRecords
 {
     use HasDrilldownFilters, HasSavedViews;
+
     protected static string $resource = CustomerResource::class;
 
     protected function getHeaderActions(): array

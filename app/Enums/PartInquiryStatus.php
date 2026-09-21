@@ -6,9 +6,9 @@ use Filament\Support\Contracts\HasLabel;
 
 enum PartInquiryStatus: string implements HasLabel
 {
-    case New        = 'new';
-    case Reviewing  = 'reviewing';
-    case Sourced    = 'sourced';
+    case New = 'new';
+    case Reviewing = 'reviewing';
+    case Sourced = 'sourced';
     case Unavailable = 'unavailable';
 
     public function getLabel(): string

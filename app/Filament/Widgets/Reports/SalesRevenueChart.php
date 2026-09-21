@@ -2,8 +2,9 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+use App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 use App\Models\Order;
-use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
@@ -13,8 +14,8 @@ use Illuminate\Support\Facades\DB;
  */
 class SalesRevenueChart extends ChartWidget
 {
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-    use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
+    use HasReportPeriod;
+    use InteractsWithDashboardCache;
 
     protected ?string $heading = 'Revenue Trend';
 

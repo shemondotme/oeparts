@@ -5,8 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\FailedSearchLogResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\FailedSearchLog;
-use Filament\Forms;
+use App\Support\NavBadge;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -24,7 +25,7 @@ class FailedSearchLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('failed_searches_today', fn () => static::getModel()::where('created_at', '>=', now()->startOfDay())->count());
+        return NavBadge::count('failed_searches_today', fn () => static::getModel()::where('created_at', '>=', now()->startOfDay())->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -175,7 +176,7 @@ class FailedSearchLogResource extends Resource
     {
         return [
             'index' => Pages\ListFailedSearchLogs::route('/'),
-            'view'  => Pages\ViewFailedSearchLog::route('/{record}'),
+            'view' => Pages\ViewFailedSearchLog::route('/{record}'),
         ];
     }
 

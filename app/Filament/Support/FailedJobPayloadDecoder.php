@@ -42,11 +42,11 @@ class FailedJobPayloadDecoder
     private static function extractMeta(array $payload): array
     {
         return array_filter([
-            'Job'             => $payload['displayName'] ?? $payload['job'] ?? null,
-            'Max tries'       => $payload['maxTries'] ?? null,
-            'Max exceptions'  => $payload['maxExceptions'] ?? null,
-            'Timeout'         => isset($payload['timeout']) ? "{$payload['timeout']}s" : null,
-            'Retry until'     => $payload['retryUntil'] ?? null,
+            'Job' => $payload['displayName'] ?? $payload['job'] ?? null,
+            'Max tries' => $payload['maxTries'] ?? null,
+            'Max exceptions' => $payload['maxExceptions'] ?? null,
+            'Timeout' => isset($payload['timeout']) ? "{$payload['timeout']}s" : null,
+            'Retry until' => $payload['retryUntil'] ?? null,
         ], fn ($value) => $value !== null);
     }
 
@@ -91,7 +91,7 @@ class FailedJobPayloadDecoder
 
             return ['arguments' => self::propertiesOf($decoded), 'argumentsError' => null];
         } catch (\Throwable $e) {
-            return ['arguments' => null, 'argumentsError' => 'Could not decode: ' . $e->getMessage()];
+            return ['arguments' => null, 'argumentsError' => 'Could not decode: '.$e->getMessage()];
         }
     }
 
@@ -122,7 +122,7 @@ class FailedJobPayloadDecoder
             $cleanKey = preg_replace('/^\0.*\0/', '', (string) $key);
 
             if (count($properties) >= self::MAX_ARGUMENTS) {
-                $properties['…'] = '+ ' . (count((array) $decoded) - self::MAX_ARGUMENTS) . ' more';
+                $properties['…'] = '+ '.(count((array) $decoded) - self::MAX_ARGUMENTS).' more';
                 break;
             }
 

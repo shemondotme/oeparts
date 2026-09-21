@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Jobs\ProcessPayseraWebhook;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Setting;
 use App\Models\User;
+use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
@@ -32,7 +34,7 @@ class PayseraWebhookTest extends TestCase
     {
         parent::setUp();
 
-        \App\Models\Setting::create([
+        Setting::create([
             'group' => 'payment',
             'key' => 'paysera_webhook_secret',
             'value' => 'test_secret',
@@ -192,7 +194,7 @@ class PayseraWebhookTest extends TestCase
     public function the_paid_status_job_marks_the_order_and_payment_paid(): void
     {
         $job = new ProcessPayseraWebhook(['order_id' => 'order-uuid-999', 'status' => 'paid']);
-        $job->handle(app(\App\Services\PaymentService::class));
+        $job->handle(app(PaymentService::class));
 
         $this->payment->refresh();
         $this->order->refresh();
@@ -205,7 +207,7 @@ class PayseraWebhookTest extends TestCase
     public function the_canceled_status_job_marks_the_payment_failed(): void
     {
         $job = new ProcessPayseraWebhook(['order_id' => 'order-uuid-999', 'status' => 'canceled']);
-        $job->handle(app(\App\Services\PaymentService::class));
+        $job->handle(app(PaymentService::class));
 
         $this->payment->refresh();
         $this->order->refresh();

@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\SafeSchema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ return new class extends Migration
     public function up(): void
     {
         if (! Schema::hasTable('product_reviews')) {
-            Schema::create('product_reviews', function (Blueprint $table) {
+            SafeSchema::create('create_product_reviews_table', 'product_reviews', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
                 $table->string('reviewer_name', 100);
@@ -36,7 +37,10 @@ return new class extends Migration
         }
 
         if (Schema::getConnection()->getDriverName() !== 'sqlite' && ! $this->constraintExists()) {
-            DB::statement('ALTER TABLE product_reviews ADD CONSTRAINT product_reviews_rating_range CHECK (rating BETWEEN 1 AND 5)');
+            SafeSchema::statement(
+                'create_product_reviews_table:rating_range_constraint',
+                'ALTER TABLE product_reviews ADD CONSTRAINT product_reviews_rating_range CHECK (rating BETWEEN 1 AND 5)'
+            );
         }
     }
 

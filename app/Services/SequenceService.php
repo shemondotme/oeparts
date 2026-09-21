@@ -52,8 +52,8 @@ class SequenceService
             Sequence::firstOrCreate(
                 ['type' => $type],
                 [
-                    'current_value'    => 0,
-                    'resets_monthly'   => $type !== SequenceType::Rma,
+                    'current_value' => 0,
+                    'resets_monthly' => $type !== SequenceType::Rma,
                     'last_reset_month' => null,
                 ]
             );
@@ -65,7 +65,7 @@ class SequenceService
 
             // Reset monthly if the month has rolled over
             if ($sequence->resets_monthly && $sequence->last_reset_month !== $currentMonth) {
-                $sequence->current_value   = 0;
+                $sequence->current_value = 0;
                 $sequence->last_reset_month = $currentMonth;
             }
 
@@ -81,12 +81,13 @@ class SequenceService
      */
     private function format(SequenceType $type, int $value, bool $hasMonth): string
     {
-        $prefix  = $this->prefix($type);
+        $prefix = $this->prefix($type);
         $padding = (int) settings('orders.order_number_padding', 6);
-        $padded  = str_pad((string) $value, $padding, '0', STR_PAD_LEFT);
+        $padded = str_pad((string) $value, $padding, '0', STR_PAD_LEFT);
 
         if ($hasMonth) {
             $month = now()->format('Ym');
+
             return "{$prefix}-{$month}-{$padded}";
         }
 
@@ -100,9 +101,9 @@ class SequenceService
     private function prefix(SequenceType $type): string
     {
         return match ($type) {
-            SequenceType::Order   => settings('orders.order_number_prefix', 'ORD'),
+            SequenceType::Order => settings('orders.order_number_prefix', 'ORD'),
             SequenceType::Invoice => settings('orders.invoice_number_prefix', 'INV'),
-            SequenceType::Rma     => settings('orders.rma_number_prefix', 'RMA'),
+            SequenceType::Rma => settings('orders.rma_number_prefix', 'RMA'),
         };
     }
 }

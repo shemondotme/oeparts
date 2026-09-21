@@ -31,7 +31,7 @@ class RefundStatusUpdate extends Mailable
             ], $this->locale),
             tags: ['refund-status'],
             metadata: [
-                'refund_id'     => $this->refund->id,
+                'refund_id' => $this->refund->id,
                 'template_type' => 'refund_status',
             ],
         );
@@ -43,10 +43,10 @@ class RefundStatusUpdate extends Mailable
             view: 'emails.refund-status-update',
             text: 'emails.refund-status-update-text',
             with: [
-                'refund'    => $this->refund,
+                'refund' => $this->refund,
                 'oldStatus' => $this->oldStatus,
                 'newStatus' => $this->newStatus,
-                'locale'    => $this->locale,
+                'locale' => $this->locale,
             ],
         );
     }

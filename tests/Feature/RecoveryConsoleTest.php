@@ -23,7 +23,7 @@ class RecoveryConsoleTest extends TestCase
 
         require_once base_path('public/oe-recovery.php');
 
-        $this->base  = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-recov-'.getmypid();
+        $this->base = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-recov-'.getmypid();
         $this->state = $this->base.'/storage/app/updates';
         @mkdir($this->state, 0775, true);
     }
@@ -117,8 +117,8 @@ class RecoveryConsoleTest extends TestCase
     {
         $this->arm();
         $console = $this->console([
-            'OE_RECOVERY_KEY'           => 'k',
-            'OE_RECOVERY_IP_ALLOWLIST'  => '10.0.0.1, 10.0.0.2',
+            'OE_RECOVERY_KEY' => 'k',
+            'OE_RECOVERY_IP_ALLOWLIST' => '10.0.0.1, 10.0.0.2',
         ]);
 
         [$status, $state] = $console->handle('k', '203.0.113.9');
@@ -135,10 +135,10 @@ class RecoveryConsoleTest extends TestCase
     {
         $this->arm(['from_version' => '2.0.0', 'to_version' => '2.1.0', 'history_id' => 9]);
         file_put_contents($this->state.'/last-swap.json', json_encode([
-            'version'   => '2.1.0',
+            'version' => '2.1.0',
             'completed' => false,
-            'root'      => '/var/www',
-            'swapped'   => [['path' => 'app', 'had_original' => true]],
+            'root' => '/var/www',
+            'swapped' => [['path' => 'app', 'had_original' => true]],
         ]));
 
         $console = $this->console(['OE_RECOVERY_KEY' => 'k']);

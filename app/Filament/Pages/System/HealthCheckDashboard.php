@@ -98,7 +98,7 @@ class HealthCheckDashboard extends Page
         // same as any other caller, so repeated clicks don't spam either).
         $results = app(HealthCheckService::class)->snapshot();
 
-        $this->logAction('health_check_run', 'Health check executed: ' . $results['status']);
+        $this->logAction('health_check_run', 'Health check executed: '.$results['status']);
 
         Notification::make()
             ->title($results['status'] === 'ok' ? 'All systems healthy' : 'Some checks need attention')

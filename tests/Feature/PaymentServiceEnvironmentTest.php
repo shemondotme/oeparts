@@ -37,8 +37,8 @@ class PaymentServiceEnvironmentTest extends TestCase
     {
         foreach ([
             'airwallex_environment' => $environment,
-            'airwallex_client_id'   => 'test_client_id',
-            'airwallex_api_key'     => 'test_api_key',
+            'airwallex_client_id' => 'test_client_id',
+            'airwallex_api_key' => 'test_api_key',
         ] as $key => $value) {
             Setting::updateOrCreate(
                 ['group' => 'payment', 'key' => $key],
@@ -134,7 +134,7 @@ class PaymentServiceEnvironmentTest extends TestCase
         // these tests populate, so the auth-token cache can't leak stale
         // fake tokens into a later, unrelated test.
         foreach (['api.airwallex.com', 'api-demo.airwallex.com'] as $host) {
-            Cache::forget('airwallex_auth_token:' . md5("https://{$host}/api/v1" . 'test_client_id'));
+            Cache::forget('airwallex_auth_token:'.md5("https://{$host}/api/v1".'test_client_id'));
         }
         parent::tearDown();
     }

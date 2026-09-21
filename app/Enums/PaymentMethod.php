@@ -6,8 +6,8 @@ use Filament\Support\Contracts\HasLabel;
 
 enum PaymentMethod: string implements HasLabel
 {
-    case Card         = 'card';
-    case Paysera      = 'paysera';
+    case Card = 'card';
+    case Paysera = 'paysera';
     case BankTransfer = 'bank_transfer';
 
     public function getLabel(): string
@@ -17,9 +17,9 @@ enum PaymentMethod: string implements HasLabel
 
     public function label(): string
     {
-        return match($this) {
-            self::Card         => 'Card',
-            self::Paysera      => 'Paysera',
+        return match ($this) {
+            self::Card => 'Card',
+            self::Paysera => 'Paysera',
             self::BankTransfer => 'Bank Transfer',
         };
     }

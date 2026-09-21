@@ -3,12 +3,16 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentGateway;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\PaymentTransactionStatus;
+use App\Events\OrderStatusChanged;
 use App\Jobs\SendOrderStatusEmail;
+use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
-use App\Models\Cart;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -45,12 +49,11 @@ class OrderService
     /**
      * Create an order from checkout data.
      *
-     * @param array $checkoutData  Full checkout data array
-     * @param Cart $cart           The validated cart with items loaded
-     * @param int|null $userId    Explicit user ID — null for guest checkout
-     * @param string|null $ipAddress Client IP — null uses request()->ip()
-     * @param array|null $utmParams  UTM tracking params — null reads from session
-     * @return Order
+     * @param  array  $checkoutData  Full checkout data array
+     * @param  Cart  $cart  The validated cart with items loaded
+     * @param  int|null  $userId  Explicit user ID — null for guest checkout
+     * @param  string|null  $ipAddress  Client IP — null uses request()->ip()
+     * @param  array|null  $utmParams  UTM tracking params — null reads from session
      *
      * @throws \RuntimeException on validation failure
      */
@@ -60,13 +63,12 @@ class OrderService
         ?int $userId = null,
         ?string $ipAddress = null,
         ?array $utmParams = null,
-    ): Order
-    {
+    ): Order {
         $data = $checkoutData['data'] ?? $checkoutData;
 
         $requiredKeys = ['shipping_method_id'];
         foreach ($requiredKeys as $key) {
-            if (!array_key_exists($key, $data)) {
+            if (! array_key_exists($key, $data)) {
                 throw new \InvalidArgumentException("Missing required checkout data key: {$key}");
             }
         }
@@ -92,11 +94,11 @@ class OrderService
                 $grandTotal = '0.00';
             }
 
-            $paymentMethod = match($data['payment_method'] ?? 'bank_transfer') {
-                'card'          => \App\Enums\PaymentMethod::Card,
-                'paysera'       => \App\Enums\PaymentMethod::Paysera,
-                'bank_transfer' => \App\Enums\PaymentMethod::BankTransfer,
-                default         => \App\Enums\PaymentMethod::BankTransfer,
+            $paymentMethod = match ($data['payment_method'] ?? 'bank_transfer') {
+                'card' => PaymentMethod::Card,
+                'paysera' => PaymentMethod::Paysera,
+                'bank_transfer' => PaymentMethod::BankTransfer,
+                default => PaymentMethod::BankTransfer,
             };
 
             $shippingAddress = $data['shipping_address'] ?? [];
@@ -109,44 +111,44 @@ class OrderService
             $resolvedUserId = $userId ?? auth()->id();
             $resolvedIp = $ipAddress ?? request()->ip();
             $utm = $utmParams ?? [
-                'source'   => session('utm_source'),
-                'medium'   => session('utm_medium'),
+                'source' => session('utm_source'),
+                'medium' => session('utm_medium'),
                 'campaign' => session('utm_campaign'),
-                'content'  => session('utm_content'),
+                'content' => session('utm_content'),
             ];
 
             $order = Order::create([
-                'order_number'                 => $this->sequenceService->nextOrderNumber(),
-                'user_id'                      => $resolvedUserId,
-                'guest_email'                  => $data['guest_email'] ?? null,
-                'status'                       => OrderStatus::Pending,
-                'payment_method'               => $paymentMethod,
-                'payment_status'               => PaymentStatus::Pending,
-                'subtotal'                     => $subtotal,
-                'shipping_cost'                => $shippingCost,
-                'vat_amount'                   => $vatAmount,
-                'grand_total'                  => $grandTotal,
-                'coupon_id'                    => $data['coupon_id'] ?? null,
-                'discount_amount'              => $discountAmount,
-                'shipping_method_id'           => $data['shipping_method_id'] ?? null,
+                'order_number' => $this->sequenceService->nextOrderNumber(),
+                'user_id' => $resolvedUserId,
+                'guest_email' => $data['guest_email'] ?? null,
+                'status' => OrderStatus::Pending,
+                'payment_method' => $paymentMethod,
+                'payment_status' => PaymentStatus::Pending,
+                'subtotal' => $subtotal,
+                'shipping_cost' => $shippingCost,
+                'vat_amount' => $vatAmount,
+                'grand_total' => $grandTotal,
+                'coupon_id' => $data['coupon_id'] ?? null,
+                'discount_amount' => $discountAmount,
+                'shipping_method_id' => $data['shipping_method_id'] ?? null,
                 'shipping_method_name_snapshot' => $data['shipping_method_name'] ?? null,
-                'shipping_estimated_days_min'  => $data['shipping_estimated_days_min'] ?? null,
-                'shipping_estimated_days_max'  => $data['shipping_estimated_days_max'] ?? null,
-                'shipping_name'                => $shippingName,
-                'shipping_address_line1'       => $shippingAddress['street'] ?? $shippingAddress['address_line1'] ?? null,
-                'shipping_city'                => $shippingAddress['city'] ?? null,
-                'shipping_postal_code'         => $shippingAddress['postal_code'] ?? null,
-                'shipping_country_code'        => $shippingAddress['country_code'] ?? null,
-                'company_name'                 => $data['company_name'] ?? null,
-                'vat_number'                   => $data['vat_number'] ?? null,
-                'vat_exempt'                   => $data['vat_exempt'] ?? false,
-                'is_b2b'                       => $data['is_b2b'] ?? !empty($data['vat_number']),
-                'customer_note'                => $data['customer_note'] ?? null,
-                'ip_address'                   => $resolvedIp,
-                'utm_source'                   => $utm['source'] ?? null,
-                'utm_medium'                   => $utm['medium'] ?? null,
-                'utm_campaign'                 => $utm['campaign'] ?? null,
-                'utm_content'                  => $utm['content'] ?? null,
+                'shipping_estimated_days_min' => $data['shipping_estimated_days_min'] ?? null,
+                'shipping_estimated_days_max' => $data['shipping_estimated_days_max'] ?? null,
+                'shipping_name' => $shippingName,
+                'shipping_address_line1' => $shippingAddress['street'] ?? $shippingAddress['address_line1'] ?? null,
+                'shipping_city' => $shippingAddress['city'] ?? null,
+                'shipping_postal_code' => $shippingAddress['postal_code'] ?? null,
+                'shipping_country_code' => $shippingAddress['country_code'] ?? null,
+                'company_name' => $data['company_name'] ?? null,
+                'vat_number' => $data['vat_number'] ?? null,
+                'vat_exempt' => $data['vat_exempt'] ?? false,
+                'is_b2b' => $data['is_b2b'] ?? ! empty($data['vat_number']),
+                'customer_note' => $data['customer_note'] ?? null,
+                'ip_address' => $resolvedIp,
+                'utm_source' => $utm['source'] ?? null,
+                'utm_medium' => $utm['medium'] ?? null,
+                'utm_campaign' => $utm['campaign'] ?? null,
+                'utm_content' => $utm['content'] ?? null,
             ]);
 
             // Create order items from cart items
@@ -159,14 +161,14 @@ class OrderService
                 $conditionSnapshot = $product?->condition?->slug ?? '';
 
                 OrderItem::create([
-                    'order_id'             => $order->id,
-                    'product_id'           => $item->product_id,
-                    'oem_number_snapshot'  => $product->oem_number ?? '',
+                    'order_id' => $order->id,
+                    'product_id' => $item->product_id,
+                    'oem_number_snapshot' => $product->oem_number ?? '',
                     'manufacturer_snapshot' => $manufacturerSnapshot,
-                    'condition_snapshot'   => $conditionSnapshot,
-                    'quantity'             => $item->quantity,
-                    'unit_price'           => $item->price_at_add,
-                    'total_price'          => bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
+                    'condition_snapshot' => $conditionSnapshot,
+                    'quantity' => $item->quantity,
+                    'unit_price' => $item->price_at_add,
+                    'total_price' => bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
                 ]);
             }
 
@@ -179,13 +181,9 @@ class OrderService
     /**
      * Transition an order to a new status with validation.
      *
-     * @param Order $order
-     * @param OrderStatus $newStatus
-     * @param string|null $note
-     * @param int|null $adminId
-     * @param bool $notifyCustomer  Set false when the caller already sends its own,
-     *                              more specific email for this exact transition.
-     * @return bool  True if transition was applied
+     * @param  bool  $notifyCustomer  Set false when the caller already sends its own,
+     *                                more specific email for this exact transition.
+     * @return bool True if transition was applied
      *
      * @throws \InvalidArgumentException if the transition is not allowed
      */
@@ -193,7 +191,7 @@ class OrderService
     {
         $oldStatus = $order->status;
 
-        if (!$this->isTransitionAllowed($oldStatus, $newStatus)) {
+        if (! $this->isTransitionAllowed($oldStatus, $newStatus)) {
             throw new \InvalidArgumentException(
                 "Status transition from {$oldStatus->value} to {$newStatus->value} is not allowed."
             );
@@ -204,7 +202,7 @@ class OrderService
 
             $this->logStatusChange($order, $oldStatus, $newStatus, $note, $adminId);
 
-            \App\Events\OrderStatusChanged::dispatch($order, $oldStatus, $newStatus);
+            OrderStatusChanged::dispatch($order, $oldStatus, $newStatus);
 
             if ($notifyCustomer) {
                 // dispatch() runs synchronously on the 'sync' queue connection
@@ -224,7 +222,7 @@ class OrderService
             }
 
             // Auto-generate invoice number when order becomes paid
-            if ($newStatus === OrderStatus::Paid && !$order->invoice_number) {
+            if ($newStatus === OrderStatus::Paid && ! $order->invoice_number) {
                 $order->update([
                     'invoice_number' => $this->sequenceService->nextInvoiceNumber(),
                 ]);
@@ -258,12 +256,12 @@ class OrderService
     private function captureAuthorizedAirwallexPaymentIfAny(Order $order): void
     {
         $payment = $order->payments()
-            ->where('gateway', \App\Enums\PaymentGateway::Airwallex)
-            ->where('status', \App\Enums\PaymentTransactionStatus::Authorized)
+            ->where('gateway', PaymentGateway::Airwallex)
+            ->where('status', PaymentTransactionStatus::Authorized)
             ->latest()
             ->first();
 
-        if (!$payment) {
+        if (! $payment) {
             return;
         }
 
@@ -293,12 +291,12 @@ class OrderService
             $order = Order::where('id', $order->id)->lockForUpdate()->first();
 
             $order->update([
-                'payment_status'     => PaymentStatus::Paid,
-                'payment_reference'  => $paymentReference,
-                'payment_method'     => match ($paymentMethod) {
-                    'card'    => \App\Enums\PaymentMethod::Card,
-                    'paysera' => \App\Enums\PaymentMethod::Paysera,
-                    default   => \App\Enums\PaymentMethod::BankTransfer,
+                'payment_status' => PaymentStatus::Paid,
+                'payment_reference' => $paymentReference,
+                'payment_method' => match ($paymentMethod) {
+                    'card' => PaymentMethod::Card,
+                    'paysera' => PaymentMethod::Paysera,
+                    default => PaymentMethod::BankTransfer,
                 },
             ]);
 
@@ -315,7 +313,7 @@ class OrderService
     {
         try {
             $order->update([
-                'payment_status'    => PaymentStatus::Failed,
+                'payment_status' => PaymentStatus::Failed,
                 'payment_reference' => $reference ?? $order->payment_reference,
             ]);
         } catch (\Exception $e) {
@@ -346,18 +344,18 @@ class OrderService
     public function isTransitionAllowed(OrderStatus $oldStatus, OrderStatus $newStatus): bool
     {
         $allowed = [
-            OrderStatus::Pending->value  => [
+            OrderStatus::Pending->value => [
                 OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped,
                 OrderStatus::Delivered, OrderStatus::Cancelled,
             ],
-            OrderStatus::Paid->value     => [
+            OrderStatus::Paid->value => [
                 OrderStatus::Processing, OrderStatus::Shipped,
                 OrderStatus::Delivered, OrderStatus::Cancelled,
             ],
             OrderStatus::Processing->value => [
                 OrderStatus::Shipped, OrderStatus::Delivered, OrderStatus::Cancelled,
             ],
-            OrderStatus::Shipped->value  => [OrderStatus::Delivered],
+            OrderStatus::Shipped->value => [OrderStatus::Delivered],
             OrderStatus::Delivered->value => [OrderStatus::RefundRequested],
             OrderStatus::RefundRequested->value => [OrderStatus::Refunded],
             OrderStatus::Refunded->value => [],
@@ -391,7 +389,7 @@ class OrderService
         }
 
         $order->forceFill([
-            'subtotal'    => $subtotal,
+            'subtotal' => $subtotal,
             'grand_total' => $grandTotal,
         ])->save();
     }
@@ -401,7 +399,7 @@ class OrderService
      */
     public function calculateShippingCost(Cart $cart, ?int $shippingMethodId, ?string $destinationCountryCode = null): string
     {
-        if (!$shippingMethodId) {
+        if (! $shippingMethodId) {
             return '0.00';
         }
 
@@ -414,6 +412,7 @@ class OrderService
     public function calculateVat(string $amount, ?string $countryCode = null): string
     {
         $vatRate = $this->taxRateService->resolve($countryCode);
+
         return bcmul($amount, bcdiv($vatRate, '100', 4), 2);
     }
 
@@ -423,11 +422,11 @@ class OrderService
     private function logStatusChange(Order $order, ?OrderStatus $oldStatus, OrderStatus $newStatus, ?string $note = null, ?int $adminId = null): void
     {
         OrderStatusHistory::create([
-            'order_id'   => $order->id,
-            'admin_id'   => $adminId,
+            'order_id' => $order->id,
+            'admin_id' => $adminId,
             'old_status' => $oldStatus,
             'new_status' => $newStatus,
-            'note'       => $note,
+            'note' => $note,
         ]);
     }
 }

@@ -88,7 +88,7 @@ class UpdateFinalizer
     private function runStep(FinalizeReport $report, array $step): void
     {
         try {
-            $code   = Artisan::call($step['command'], $step['params']);
+            $code = Artisan::call($step['command'], $step['params']);
             $output = trim(Artisan::output());
 
             if ($code === 0) {

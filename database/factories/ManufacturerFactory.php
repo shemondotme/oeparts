@@ -17,12 +17,12 @@ class ManufacturerFactory extends Factory
         $name = fake()->company();
 
         return [
-            'name'            => ['en' => $name, 'de' => $name],
-            'slug'            => fake()->slug(),
-            'country_code'    => fake()->randomElement(['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PL', 'CZ', 'SE']),
-            'is_active'       => true,
+            'name' => ['en' => $name, 'de' => $name],
+            'slug' => fake()->slug(),
+            'country_code' => fake()->randomElement(['DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PL', 'CZ', 'SE']),
+            'is_active' => true,
             'is_verified_oem' => fake()->boolean(80),
-            'sort_order'      => fake()->numberBetween(0, 100),
+            'sort_order' => fake()->numberBetween(0, 100),
         ];
     }
 

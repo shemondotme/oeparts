@@ -24,7 +24,7 @@ class NewsletterCampaignObserver
         unset($changes['updated_at']);
         unset($original['updated_at']);
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             $this->log($campaign, 'updated', $original, $changes);
         }
 

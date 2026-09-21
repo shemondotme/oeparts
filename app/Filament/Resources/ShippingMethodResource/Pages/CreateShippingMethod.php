@@ -22,4 +22,3 @@ class CreateShippingMethod extends CreateRecord
         return 'Configure a delivery option for a shipping zone.';
     }
 }
-

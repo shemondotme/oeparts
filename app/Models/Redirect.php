@@ -16,7 +16,7 @@ class Redirect extends Model
     ];
 
     protected $casts = [
-        'type'      => RedirectType::class,
+        'type' => RedirectType::class,
         'is_active' => 'boolean',
     ];
 

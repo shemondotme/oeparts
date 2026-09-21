@@ -21,7 +21,7 @@ class EditCoupon extends EditRecord
 
     public function getHeading(): string
     {
-        return 'Edit ' . ($this->record?->code ?? 'Coupon');
+        return 'Edit '.($this->record?->code ?? 'Coupon');
     }
 
     public function getSubheading(): ?string

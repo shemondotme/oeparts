@@ -1,5 +1,9 @@
 <?php
 
+use App\Services\Backup\Stages\DatabaseBackupStage;
+use App\Services\Backup\Stages\EncryptTransportStage;
+use App\Services\Backup\Stages\FileBackupStage;
+
 /*
 |--------------------------------------------------------------------------
 | Backup Engine (Module 14 / 21)
@@ -18,8 +22,8 @@ return [
     // encrypted backup — back it up somewhere safe.
     'encryption' => [
         'enabled' => true,
-        'key'     => env('OE_BACKUP_KEY'),
-        'cipher'  => 'aes-256-gcm',
+        'key' => env('OE_BACKUP_KEY'),
+        'cipher' => 'aes-256-gcm',
         // Soft wall-clock budget per EncryptTransportStage step: keep securing
         // whole parts (never a partial part) until this many seconds have
         // elapsed this step, then yield. Most parts (table schema, small data
@@ -125,14 +129,14 @@ return [
 
     // GFS retention — auto-prune (LOCKED DECISION #5).
     'retention' => [
-        'daily'   => (int) env('OE_BACKUP_KEEP_DAILY', 7),
-        'weekly'  => (int) env('OE_BACKUP_KEEP_WEEKLY', 4),
+        'daily' => (int) env('OE_BACKUP_KEEP_DAILY', 7),
+        'weekly' => (int) env('OE_BACKUP_KEEP_WEEKLY', 4),
         'monthly' => (int) env('OE_BACKUP_KEEP_MONTHLY', 6),
     ],
 
     'schedule' => [
         'enabled' => env('OE_BACKUP_SCHEDULE', true),
-        'time'    => env('OE_BACKUP_TIME', '01:00'), // supersedes the old db:backup command
+        'time' => env('OE_BACKUP_TIME', '01:00'), // supersedes the old db:backup command
     ],
 
     // A run still 'running' this many seconds after it started is presumed crashed;
@@ -144,21 +148,21 @@ return [
     // MUST be last — it encrypts + ships every part the earlier stages staged.
     'stages' => [
         'update_safety' => [
-            \App\Services\Backup\Stages\DatabaseBackupStage::class,
-            \App\Services\Backup\Stages\EncryptTransportStage::class,
+            DatabaseBackupStage::class,
+            EncryptTransportStage::class,
         ],
         'full' => [
-            \App\Services\Backup\Stages\DatabaseBackupStage::class,
-            \App\Services\Backup\Stages\FileBackupStage::class,
-            \App\Services\Backup\Stages\EncryptTransportStage::class,
+            DatabaseBackupStage::class,
+            FileBackupStage::class,
+            EncryptTransportStage::class,
         ],
         'database_only' => [
-            \App\Services\Backup\Stages\DatabaseBackupStage::class,
-            \App\Services\Backup\Stages\EncryptTransportStage::class,
+            DatabaseBackupStage::class,
+            EncryptTransportStage::class,
         ],
         'files_only' => [
-            \App\Services\Backup\Stages\FileBackupStage::class,
-            \App\Services\Backup\Stages\EncryptTransportStage::class,
+            FileBackupStage::class,
+            EncryptTransportStage::class,
         ],
     ],
 

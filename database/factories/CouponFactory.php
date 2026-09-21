@@ -17,23 +17,23 @@ class CouponFactory extends Factory
     public function definition(): array
     {
         return [
-            'code'                 => strtoupper(fake()->unique()->bothify('??####')),
-            'name'                 => fake()->words(3, true),
-            'discount_type'        => fake()->randomElement([DiscountType::Percentage, DiscountType::Fixed]),
-            'discount_value'       => fake()->numerify('##.##'),
-            'min_order_amount'     => fake()->numerify('###.##'),
-            'usage_limit'          => fake()->numberBetween(10, 1000),
+            'code' => strtoupper(fake()->unique()->bothify('??####')),
+            'name' => fake()->words(3, true),
+            'discount_type' => fake()->randomElement([DiscountType::Percentage, DiscountType::Fixed]),
+            'discount_value' => fake()->numerify('##.##'),
+            'min_order_amount' => fake()->numerify('###.##'),
+            'usage_limit' => fake()->numberBetween(10, 1000),
             'usage_limit_per_user' => 1,
-            'expires_at'           => fake()->dateTimeBetween('+1 week', '+1 year'),
-            'is_active'            => true,
-            'created_by'           => null,
+            'expires_at' => fake()->dateTimeBetween('+1 week', '+1 year'),
+            'is_active' => true,
+            'created_by' => null,
         ];
     }
 
     public function percentage(): static
     {
         return $this->state(fn (array $attributes) => [
-            'discount_type'  => DiscountType::Percentage,
+            'discount_type' => DiscountType::Percentage,
             'discount_value' => fake()->numberBetween(5, 50),
         ]);
     }
@@ -41,7 +41,7 @@ class CouponFactory extends Factory
     public function fixed(): static
     {
         return $this->state(fn (array $attributes) => [
-            'discount_type'  => DiscountType::Fixed,
+            'discount_type' => DiscountType::Fixed,
             'discount_value' => fake()->numerify('##.##'),
         ]);
     }

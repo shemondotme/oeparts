@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Models\ProductCrossReference;
 use App\Models\ProductImage;
 use App\Support\LocaleRegistry;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
@@ -98,7 +100,7 @@ class SitemapService
             try {
                 $this->cloudflare->purgeUrls(array_merge(
                     [url('sitemap.xml')],
-                    array_map(fn (string $file) => \Illuminate\Support\Facades\URL::asset("{$this->sitemapDirectory}/{$file}"), $files)
+                    array_map(fn (string $file) => URL::asset("{$this->sitemapDirectory}/{$file}"), $files)
                 ));
             } catch (\Throwable $e) {
                 Log::warning('Cloudflare sitemap purge failed', ['error' => $e->getMessage()]);
@@ -192,9 +194,9 @@ class SitemapService
      * handful of real photos is worth more discovery signal per byte than
      * an exhaustive gallery dump.
      *
-     * @return \Illuminate\Support\Collection<int, ProductImage>
+     * @return Collection<int, ProductImage>
      */
-    private function sitemapImages(int $productId): \Illuminate\Support\Collection
+    private function sitemapImages(int $productId): Collection
     {
         return ProductImage::where('product_id', $productId)
             ->orderByDesc('is_featured')
@@ -246,7 +248,7 @@ class SitemapService
             ->cursor()
             ->each(function ($row) use (&$written, &$batch, &$writer, &$count, &$maxLastmod, $detailPagesEnabled, &$emittedDetailUrls) {
                 $crossOem = $row->normalized_cross_oem;
-                $lastmod = $row->updated_at ? \Illuminate\Support\Carbon::parse($row->updated_at)->toIso8601String() : now()->toIso8601String();
+                $lastmod = $row->updated_at ? Carbon::parse($row->updated_at)->toIso8601String() : now()->toIso8601String();
 
                 // For a single-active-product match in Hub+Detail mode,
                 // point straight at the canonical detail URL — skips a
@@ -414,7 +416,7 @@ class SitemapService
         // not a fabricated one.
         $latestProductChange = Product::where('is_active', true)->max('updated_at');
         $homepageLastmod = $latestProductChange
-            ? \Illuminate\Support\Carbon::parse($latestProductChange)->toIso8601String()
+            ? Carbon::parse($latestProductChange)->toIso8601String()
             : now()->toIso8601String();
 
         foreach ($this->supportedLocales as $locale) {
@@ -602,7 +604,7 @@ class SitemapService
             return $b;
         }
 
-        return \Illuminate\Support\Carbon::parse($a)->greaterThan(\Illuminate\Support\Carbon::parse($b)) ? $a : $b;
+        return Carbon::parse($a)->greaterThan(Carbon::parse($b)) ? $a : $b;
     }
 
     /**
@@ -613,6 +615,7 @@ class SitemapService
         $writer = $this->openWriter();
 
         $base = preg_replace('/-\d+$/', '', str_replace('.xml', '', $filename));
+
         return $this->closeWriter($writer, $base, 1);
     }
 

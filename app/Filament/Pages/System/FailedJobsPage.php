@@ -4,6 +4,7 @@ namespace App\Filament\Pages\System;
 
 use App\Filament\Support\FailedJobPayloadDecoder;
 use App\Models\FailedJob;
+use Carbon\Carbon;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables;
@@ -103,7 +104,7 @@ class FailedJobsPage extends Page implements HasTable
                         $count = $counts[$record->jobClassFqcn()] ?? 1;
                         $badge = self::classificationBadgeHtml($record->exception ?? '');
 
-                        return new HtmlString(e($record->jobClassName()) . " ({$count})" . $badge);
+                        return new HtmlString(e($record->jobClassName())." ({$count})".$badge);
                     })
                     // Native Filament group-description slot (renders below
                     // the heading) — the queue this group's jobs run on.
@@ -144,7 +145,7 @@ class FailedJobsPage extends Page implements HasTable
                     ->label('Failed')
                     ->dateTime('M j, H:i')
                     ->since()
-                    ->tooltip(fn ($state): ?string => $state ? \Carbon\Carbon::parse($state)->toDayDateTimeString() : null)
+                    ->tooltip(fn ($state): ?string => $state ? Carbon::parse($state)->toDayDateTimeString() : null)
                     ->sortable()
                     ->fontMono()
                     ->size('sm'),
@@ -199,7 +200,7 @@ class FailedJobsPage extends Page implements HasTable
                             $records->each(fn (FailedJob $record) => Artisan::call('queue:retry', [
                                 'id' => [(string) $record->uuid ?: (string) $record->id],
                             ]));
-                            Notification::make()->title($records->count() . ' job(s) retried')->success()->send();
+                            Notification::make()->title($records->count().' job(s) retried')->success()->send();
                         }),
 
                     Tables\Actions\BulkAction::make('deleteSelected')
@@ -212,7 +213,7 @@ class FailedJobsPage extends Page implements HasTable
                             $records->each(fn (FailedJob $record) => Artisan::call('queue:forget', [
                                 'id' => (string) $record->uuid ?: (string) $record->id,
                             ]));
-                            Notification::make()->title($records->count() . ' job(s) deleted')->success()->send();
+                            Notification::make()->title($records->count().' job(s) deleted')->success()->send();
                         }),
                 ]),
             ])
@@ -222,8 +223,8 @@ class FailedJobsPage extends Page implements HasTable
                     ->icon('heroicon-o-arrow-path')
                     ->color('primary')
                     ->requiresConfirmation()
-                    ->modalDescription(fn (): string => 'This will push all ' . FailedJob::query()->count()
-                        . " failed jobs back onto their original queues. If the underlying bug hasn't been fixed, they'll likely fail again and reappear here.")
+                    ->modalDescription(fn (): string => 'This will push all '.FailedJob::query()->count()
+                        ." failed jobs back onto their original queues. If the underlying bug hasn't been fixed, they'll likely fail again and reappear here.")
                     ->visible(fn (): bool => FailedJob::query()->exists())
                     ->action(function (): void {
                         Artisan::call('queue:retry', ['id' => ['all']]);
@@ -305,9 +306,9 @@ class FailedJobsPage extends Page implements HasTable
         $hex = $classification['color'] === 'warning' ? '#f59e0b' : '#ef4444';
 
         return ' <span title="Best-effort guess based on the exception message — not a guarantee." '
-            . 'style="display:inline-block;font-size:0.65rem;font-weight:700;padding:0.05rem 0.45rem;'
-            . 'border-radius:999px;background:' . $hex . '29;color:' . $hex . ';">'
-            . e($classification['label']) . '</span>';
+            .'style="display:inline-block;font-size:0.65rem;font-weight:700;padding:0.05rem 0.45rem;'
+            .'border-radius:999px;background:'.$hex.'29;color:'.$hex.';">'
+            .e($classification['label']).'</span>';
     }
 
     /**
@@ -368,31 +369,31 @@ class FailedJobsPage extends Page implements HasTable
         $decoded = FailedJobPayloadDecoder::decode($record);
 
         $section = fn (string $title, string $innerHtml): string => '<div style="margin-bottom:1rem;">'
-            . '<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#71717a;margin-bottom:0.4rem;">'
-            . e($title) . '</div>' . $innerHtml . '</div>';
+            .'<div style="font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#71717a;margin-bottom:0.4rem;">'
+            .e($title).'</div>'.$innerHtml.'</div>';
 
         $row = fn (string $label, string $value): string => '<div style="display:flex;gap:0.6rem;font-size:0.8rem;padding:0.15rem 0;">'
-            . '<span style="color:#71717a;min-width:130px;flex-shrink:0;">' . e($label) . '</span>'
-            . '<span style="font-family:ui-monospace,monospace;word-break:break-word;">' . e($value) . '</span></div>';
+            .'<span style="color:#71717a;min-width:130px;flex-shrink:0;">'.e($label).'</span>'
+            .'<span style="font-family:ui-monospace,monospace;word-break:break-word;">'.e($value).'</span></div>';
 
         $metaHtml = collect($decoded['meta'])->map(fn ($value, $label) => $row($label, (string) $value))->implode('');
 
         if ($decoded['arguments'] !== null) {
             $argsHtml = collect($decoded['arguments'])->map(fn ($value, $key) => $row($key, $value))->implode('');
         } else {
-            $argsHtml = '<div style="font-size:0.8rem;color:#71717a;font-style:italic;">' . e($decoded['argumentsError']) . '</div>';
+            $argsHtml = '<div style="font-size:0.8rem;color:#71717a;font-style:italic;">'.e($decoded['argumentsError']).'</div>';
         }
 
         $exceptionHtml = '<pre style="white-space:pre-wrap;word-break:break-word;font-size:0.75rem;max-height:40vh;'
-            . 'overflow:auto;padding:1rem;border-radius:0.5rem;background:#0a0a0a;color:#f5f5f5;">'
-            . e($record->exception) . '</pre>';
+            .'overflow:auto;padding:1rem;border-radius:0.5rem;background:#0a0a0a;color:#f5f5f5;">'
+            .e($record->exception).'</pre>';
 
         return new HtmlString(
             '<div>'
-            . $section('Job', $metaHtml)
-            . $section('Arguments (best effort)', $argsHtml)
-            . $section('Exception', $exceptionHtml)
-            . '</div>'
+            .$section('Job', $metaHtml)
+            .$section('Arguments (best effort)', $argsHtml)
+            .$section('Exception', $exceptionHtml)
+            .'</div>'
         );
     }
 }

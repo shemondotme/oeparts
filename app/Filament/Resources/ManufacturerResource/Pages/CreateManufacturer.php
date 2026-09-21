@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\ManufacturerResource\Pages;
 
 use App\Filament\Concerns\DisablesCreateAnother;
-
 use App\Filament\Resources\ManufacturerResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Str;

@@ -6,22 +6,26 @@ use App\Filament\Pages\Catalog\ProductImport;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Filament\Support\AdminUi;
+use App\Jobs\BulkGenerateProductSeoMeta;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Services\OemNormalizerService;
+use App\Services\RemoteImageDownloadService;
+use App\Support\NavBadge;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
-use Filament\Actions;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Colors\Color;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class ProductResource extends Resource
 {
@@ -150,7 +154,7 @@ class ProductResource extends Resource
                                                         }
 
                                                         try {
-                                                            $path = app(\App\Services\RemoteImageDownloadService::class)->downloadToProductImages($state);
+                                                            $path = app(RemoteImageDownloadService::class)->downloadToProductImages($state);
                                                             $set('path', $path);
                                                             $set('image_url', null);
                                                         } catch (\InvalidArgumentException $e) {
@@ -266,9 +270,9 @@ class ProductResource extends Resource
                                         Forms\Components\Select::make('robots')
                                             ->label(__('admin.search_engine_indexing'))
                                             ->options([
-                                                'index,follow'     => 'Index & Follow (default)',
-                                                'noindex,follow'   => 'No Index, Follow Links',
-                                                'index,nofollow'   => 'Index, Do Not Follow Links',
+                                                'index,follow' => 'Index & Follow (default)',
+                                                'noindex,follow' => 'No Index, Follow Links',
+                                                'index,nofollow' => 'Index, Do Not Follow Links',
                                                 'noindex,nofollow' => 'No Index, No Follow',
                                             ])
                                             ->default('index,follow')
@@ -386,7 +390,7 @@ class ProductResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn ($state): string => static::localizedName($state))
                     ->color(fn (Product $record) => $record->condition?->bg_color
-                        ? \Filament\Support\Colors\Color::hex($record->condition->bg_color)
+                        ? Color::hex($record->condition->bg_color)
                         : 'gray')
                     ->sortable(),
                 Tables\Columns\TextInputColumn::make('price')
@@ -420,7 +424,7 @@ class ProductResource extends Resource
                     // columns) — same policy guard as the inline price column.
                     ->disabled(fn (Product $record): bool => ! auth('admin')->user()?->can('update', $record))
                     ->alignCenter()
-                    ->afterStateUpdated(function (\Filament\Tables\Table $table, $record, $state): void {
+                    ->afterStateUpdated(function (Table $table, $record, $state): void {
                         Notification::make()
                             ->title($state ? 'Marked as in stock' : 'Marked as out of stock')
                             ->success()
@@ -600,7 +604,7 @@ class ProductResource extends Resource
                         action: function ($records): void {
                             $count = 0;
                             foreach ($records as $record) {
-                                if (!$record->is_in_stock) {
+                                if (! $record->is_in_stock) {
                                     $record->is_in_stock = true;
                                     $record->save();
                                     $count++;
@@ -618,7 +622,7 @@ class ProductResource extends Resource
                         label: 'Mark Out of Stock',
                         color: 'danger',
                         icon: 'heroicon-o-x-circle',
-                        summary: fn ($record): ?array => !$record->is_in_stock
+                        summary: fn ($record): ?array => ! $record->is_in_stock
                             ? null
                             : [
                                 'key' => $record->oem_number,
@@ -671,7 +675,7 @@ class ProductResource extends Resource
                                 return;
                             }
 
-                            \App\Jobs\BulkGenerateProductSeoMeta::dispatch(
+                            BulkGenerateProductSeoMeta::dispatch(
                                 $records->pluck('id')->all(),
                                 $titleTemplate !== '' ? $titleTemplate : null,
                                 $descriptionTemplate !== '' ? $descriptionTemplate : null,
@@ -736,16 +740,16 @@ class ProductResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListProducts::route('/'),
+            'index' => Pages\ListProducts::route('/'),
             'create' => Pages\CreateProduct::route('/create'),
-            'view'   => Pages\ViewProduct::route('/{record}'),
-            'edit'   => Pages\EditProduct::route('/{record}/edit'),
+            'view' => Pages\ViewProduct::route('/{record}'),
+            'edit' => Pages\EditProduct::route('/{record}/edit'),
         ];
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('products_oos', fn () => static::getModel()::where('is_in_stock', false)->where('is_active', true)->count());
+        return NavBadge::count('products_oos', fn () => static::getModel()::where('is_in_stock', false)->where('is_active', true)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -797,7 +801,7 @@ class ProductResource extends Resource
         }
     }
 
-    public static function getGlobalSearchResultDetails(\Illuminate\Database\Eloquent\Model $record): array
+    public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
             'OEM' => $record->oem_number,

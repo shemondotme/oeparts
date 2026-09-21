@@ -3,13 +3,14 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\SearchLogResource;
+use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\SearchLog;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
@@ -17,9 +18,9 @@ use Illuminate\Support\Facades\DB;
 
 class TopSearchedOems extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasDashboardPeriod;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -30,11 +31,11 @@ class TopSearchedOems extends TableWidget
 
     protected static ?int $sort = -25;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected function getTableHeading(): string
     {
-        return 'Top Searched OEMs (' . $this->periodLabel() . ')';
+        return 'Top Searched OEMs ('.$this->periodLabel().')';
     }
 
     protected function getTableHeaderActions(): array
@@ -44,7 +45,7 @@ class TopSearchedOems extends TableWidget
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
                 ->link()
-                ->url(\App\Filament\Resources\SearchLogResource::getUrl('index')),
+                ->url(SearchLogResource::getUrl('index')),
         ];
     }
 
@@ -90,7 +91,7 @@ class TopSearchedOems extends TableWidget
                     ->badge()
                     ->color('primary')
                     ->icon('heroicon-m-magnifying-glass')
-                    ->formatStateUsing(fn ($state): string => number_format((int) $state) . '×')
+                    ->formatStateUsing(fn ($state): string => number_format((int) $state).'×')
                     ->alignEnd(),
             ])
             ->actions([

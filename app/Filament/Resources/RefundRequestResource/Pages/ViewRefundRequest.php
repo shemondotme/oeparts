@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\RefundRequestResource\Pages;
 
 use App\Enums\RefundStatus;
+use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\RefundRequestResource;
 use App\Filament\Support\AdminUi;
 use Filament\Actions;
@@ -13,6 +14,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Carbon;
 
 class ViewRefundRequest extends ViewRecord
 {
@@ -61,7 +63,7 @@ class ViewRefundRequest extends ViewRecord
                                         TextEntry::make('order.order_number')
                                             ->label('Order #')
                                             ->url(fn ($record): ?string => $record->order_id
-                                                ? \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id])
+                                                ? OrderResource::getUrl('view', ['record' => $record->order_id])
                                                 : null)
                                             ->color('primary')
                                             ->tooltip('Open the order')
@@ -153,13 +155,13 @@ class ViewRefundRequest extends ViewRecord
 
                                                 return $images->map(function ($item) {
                                                     $size = isset($item['size'])
-                                                        ? number_format($item['size'] / 1024, 1) . ' KB'
+                                                        ? number_format($item['size'] / 1024, 1).' KB'
                                                         : '—';
                                                     $when = isset($item['uploaded_at'])
-                                                        ? \Illuminate\Support\Carbon::parse($item['uploaded_at'])->format('Y-m-d H:i')
+                                                        ? Carbon::parse($item['uploaded_at'])->format('Y-m-d H:i')
                                                         : '—';
 
-                                                    return ($item['original_name'] ?? 'unknown') . ' · ' . $size . ' · ' . $when;
+                                                    return ($item['original_name'] ?? 'unknown').' · '.$size.' · '.$when;
                                                 })->implode("\n");
                                             })
                                             ->visible(fn ($record): bool => filled($record->return_images) && is_array(collect($record->return_images)->first()))

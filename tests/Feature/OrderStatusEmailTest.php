@@ -7,15 +7,14 @@ use App\Enums\PaymentGateway;
 use App\Jobs\SendOrderConfirmationEmail;
 use App\Jobs\SendOrderStatusEmail;
 use App\Jobs\SendRefundStatusEmail;
-use App\Models\ActivityLog;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use App\Models\Payment;
-use App\Models\RefundRequest;
 use App\Models\User;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\PendingMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,7 +49,7 @@ class OrderStatusEmailTest extends TestCase
         // failure would throw mid-transaction and roll back the status
         // change itself, just because the notification email failed. The
         // status transition must survive regardless.
-        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail = \Mockery::mock(PendingMail::class);
         $pendingMail->shouldReceive('send')->andThrow(new \RuntimeException('SMTP unavailable'));
         Mail::shouldReceive('to')->andReturn($pendingMail);
 
@@ -189,7 +188,7 @@ class OrderStatusEmailTest extends TestCase
         // activity_logs.admin_id was NOT NULL, silently dropping the
         // customer-initiated status-change log entry (LogOrderStatusChange's
         // own try/catch swallowed the SQL integrity error) — now nullable.
-        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail = \Mockery::mock(PendingMail::class);
         $pendingMail->shouldReceive('send')->andThrow(new \RuntimeException(
             'Expected response code "250" but got code "530", with message "530 5.7.1 Authentication required".'
         ));

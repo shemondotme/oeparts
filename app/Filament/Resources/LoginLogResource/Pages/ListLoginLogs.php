@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\LoginLogResource\Pages;
 
 use App\Filament\Resources\LoginLogResource;
-use Filament\Resources\Pages\ListRecords;
 use App\Filament\Support\HasDrilldownFilters;
+use Filament\Resources\Pages\ListRecords;
 
 class ListLoginLogs extends ListRecords
 {

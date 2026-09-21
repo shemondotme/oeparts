@@ -26,9 +26,12 @@ class BackupChunk extends Model
 
     protected $table = 'backup_parts';
 
-    public const TYPE_DB    = 'db';
+    public const TYPE_DB = 'db';
+
     public const TYPE_FILES = 'files';
-    public const TYPE_ENV   = 'env';
+
+    public const TYPE_ENV = 'env';
+
     public const TYPE_OTHER = 'other';
 
     protected $fillable = [
@@ -38,9 +41,9 @@ class BackupChunk extends Model
 
     protected $casts = [
         'sequence' => 'integer',
-        'bytes'    => 'integer',
-        'rows'     => 'integer',
-        'meta'     => 'array',
+        'bytes' => 'integer',
+        'rows' => 'integer',
+        'meta' => 'array',
     ];
 
     public function run(): BelongsTo

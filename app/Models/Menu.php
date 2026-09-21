@@ -15,7 +15,7 @@ class Menu extends Model
     protected $fillable = ['name', 'location', 'lang', 'is_active'];
 
     protected $casts = [
-        'location'  => MenuLocation::class,
+        'location' => MenuLocation::class,
         'is_active' => 'boolean',
     ];
 

@@ -32,7 +32,7 @@ class PartInquiryStatusUpdate extends Mailable
             subject: trans($subjectKey, ['oem' => $this->inquiry->oem_number], $this->locale),
             tags: ['part-inquiry-status'],
             metadata: [
-                'inquiry_id'    => $this->inquiry->id,
+                'inquiry_id' => $this->inquiry->id,
                 'template_type' => 'part_inquiry_status',
             ],
         );
@@ -44,9 +44,9 @@ class PartInquiryStatusUpdate extends Mailable
             view: 'emails.part-inquiry-status',
             text: 'emails.part-inquiry-status-text',
             with: [
-                'inquiry'   => $this->inquiry,
+                'inquiry' => $this->inquiry,
                 'newStatus' => $this->newStatus,
-                'locale'    => $this->locale,
+                'locale' => $this->locale,
             ],
         );
     }

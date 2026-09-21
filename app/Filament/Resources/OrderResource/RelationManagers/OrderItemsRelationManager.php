@@ -108,7 +108,7 @@ class OrderItemsRelationManager extends RelationManager
 
         Notification::make()
             ->title('Order totals recalculated')
-            ->body("Subtotal and grand total now reflect the updated items. New total: " . format_money($order->grand_total))
+            ->body('Subtotal and grand total now reflect the updated items. New total: '.format_money($order->grand_total))
             ->success()
             ->send();
     }

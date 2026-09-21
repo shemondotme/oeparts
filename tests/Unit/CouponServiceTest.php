@@ -18,6 +18,7 @@ class CouponServiceTest extends TestCase
     use RefreshDatabase;
 
     private CouponService $service;
+
     private int $adminId;
 
     protected function setUp(): void
@@ -35,13 +36,13 @@ class CouponServiceTest extends TestCase
     public function valid_percentage_coupon_returns_correct_discount(): void
     {
         $coupon = Coupon::factory()->create([
-            'created_by'       => $this->adminId,
-            'discount_type'    => DiscountType::Percentage,
-            'discount_value'   => 10,
+            'created_by' => $this->adminId,
+            'discount_type' => DiscountType::Percentage,
+            'discount_value' => 10,
             'min_order_amount' => null,
-            'usage_limit'      => null,
-            'expires_at'       => now()->addDays(30),
-            'is_active'        => true,
+            'usage_limit' => null,
+            'expires_at' => now()->addDays(30),
+            'is_active' => true,
         ]);
 
         $result = $this->service->validate($coupon->code, '200.00', null);
@@ -54,13 +55,13 @@ class CouponServiceTest extends TestCase
     public function valid_fixed_coupon_returns_correct_discount(): void
     {
         $coupon = Coupon::factory()->create([
-            'created_by'       => $this->adminId,
-            'discount_type'    => DiscountType::Fixed,
-            'discount_value'   => 25,
+            'created_by' => $this->adminId,
+            'discount_type' => DiscountType::Fixed,
+            'discount_value' => 25,
             'min_order_amount' => null,
-            'usage_limit'      => null,
-            'expires_at'       => null,
-            'is_active'        => true,
+            'usage_limit' => null,
+            'expires_at' => null,
+            'is_active' => true,
         ]);
 
         $result = $this->service->validate($coupon->code, '100.00', null);
@@ -73,13 +74,13 @@ class CouponServiceTest extends TestCase
     public function fixed_coupon_caps_discount_at_subtotal(): void
     {
         $coupon = Coupon::factory()->create([
-            'created_by'       => $this->adminId,
-            'discount_type'    => DiscountType::Fixed,
-            'discount_value'   => 150,
+            'created_by' => $this->adminId,
+            'discount_type' => DiscountType::Fixed,
+            'discount_value' => 150,
             'min_order_amount' => null,
-            'usage_limit'      => null,
-            'expires_at'       => null,
-            'is_active'        => true,
+            'usage_limit' => null,
+            'expires_at' => null,
+            'is_active' => true,
         ]);
 
         $result = $this->service->validate($coupon->code, '100.00', null);
@@ -127,11 +128,11 @@ class CouponServiceTest extends TestCase
     public function coupon_below_minimum_order_amount_is_rejected(): void
     {
         $coupon = Coupon::factory()->create([
-            'created_by'       => $this->adminId,
+            'created_by' => $this->adminId,
             'min_order_amount' => '200.00',
-            'usage_limit'      => null,
-            'expires_at'       => null,
-            'is_active'        => true,
+            'usage_limit' => null,
+            'expires_at' => null,
+            'is_active' => true,
         ]);
 
         $result = $this->service->validate($coupon->code, '150.00', null);
@@ -144,11 +145,11 @@ class CouponServiceTest extends TestCase
     public function coupon_at_usage_limit_is_rejected(): void
     {
         $coupon = Coupon::factory()->create([
-            'created_by'       => $this->adminId,
-            'usage_limit'      => 2,
+            'created_by' => $this->adminId,
+            'usage_limit' => 2,
             'min_order_amount' => null,
-            'expires_at'       => null,
-            'is_active'        => true,
+            'expires_at' => null,
+            'is_active' => true,
         ]);
 
         $user = User::factory()->create();
@@ -167,12 +168,12 @@ class CouponServiceTest extends TestCase
     public function coupon_exceeding_per_user_limit_is_rejected(): void
     {
         $coupon = Coupon::factory()->create([
-            'created_by'           => $this->adminId,
+            'created_by' => $this->adminId,
             'usage_limit_per_user' => 1,
-            'usage_limit'          => null,
-            'min_order_amount'     => null,
-            'expires_at'           => null,
-            'is_active'            => true,
+            'usage_limit' => null,
+            'min_order_amount' => null,
+            'expires_at' => null,
+            'is_active' => true,
         ]);
 
         $user = User::factory()->create();
@@ -265,8 +266,8 @@ class CouponServiceTest extends TestCase
 
         $this->assertDatabaseHas('coupon_usages', [
             'coupon_id' => $coupon->id,
-            'order_id'  => $order->id,
-            'user_id'   => $user->id,
+            'order_id' => $order->id,
+            'user_id' => $user->id,
         ]);
     }
 

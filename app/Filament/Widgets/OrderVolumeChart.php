@@ -24,7 +24,7 @@ class OrderVolumeChart extends ChartWidget
 
     protected ?string $pollingInterval = '120s';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected static ?int $sort = -34;
 

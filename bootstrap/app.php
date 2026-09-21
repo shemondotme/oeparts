@@ -1,7 +1,9 @@
 <?php
 
 use App\Exceptions\AdminFatalErrorNotifier;
+use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Middleware\CacheGuestStorefrontResponse;
+use App\Http\Middleware\ContentSecurityPolicy;
 use App\Http\Middleware\EnforceCanonicalHost;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
@@ -16,10 +18,13 @@ use App\Http\Middleware\TrackUtm;
 use App\Http\Middleware\TriggerDueScheduledTasks;
 use App\Models\NotFoundLog;
 use App\Providers\EventServiceProvider;
+use App\Support\LocaleRegistry;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Spatie\Honeypot\ProtectAgainstSpam;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -49,10 +54,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'track.utm' => TrackUtm::class,
             'handle.redirects' => HandleRedirects::class,
             'cache.guest' => CacheGuestStorefrontResponse::class,
-            'auth.admin' => \App\Http\Middleware\AuthenticateAdmin::class,
-            'csp' => \App\Http\Middleware\ContentSecurityPolicy::class,
-            'honeypot' => \Spatie\Honeypot\ProtectAgainstSpam::class,
-            'auth.sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'auth.admin' => AuthenticateAdmin::class,
+            'csp' => ContentSecurityPolicy::class,
+            'honeypot' => ProtectAgainstSpam::class,
+            'auth.sanctum' => EnsureFrontendRequestsAreStateful::class,
         ]);
 
         // Off by default (no behavior change for direct-to-PHP-FPM deployments).
@@ -96,7 +101,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
-            \App\Http\Middleware\ContentSecurityPolicy::class,
+            ContentSecurityPolicy::class,
             TriggerDueScheduledTasks::class,
         ]);
     })
@@ -113,7 +118,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if (! $request->is('admin/*') && ! $request->is('api/*') && ! $request->is('livewire/*')) {
                 try {
                     $segments = $request->segments();
-                    $lang = (in_array($segments[0] ?? null, \App\Support\LocaleRegistry::codes(), true))
+                    $lang = (in_array($segments[0] ?? null, LocaleRegistry::codes(), true))
                         ? $segments[0] : null;
 
                     NotFoundLog::recordHit(
@@ -122,7 +127,7 @@ return Application::configure(basePath: dirname(__DIR__))
                         $request->headers->get('referer'),
                         $request->ip()
                     );
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     // Logging must never break the 404 response itself.
                 }
             }
@@ -145,7 +150,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // own $internalDontReport list already keeps validation/404/403/419/auth
         // exceptions out of reportable(), so this only fires for genuinely
         // unexpected errors.
-        $exceptions->reportable(function (\Throwable $e) {
+        $exceptions->reportable(function (Throwable $e) {
             app(AdminFatalErrorNotifier::class)->handle($e, app()->bound('request') ? request() : null);
         });
 

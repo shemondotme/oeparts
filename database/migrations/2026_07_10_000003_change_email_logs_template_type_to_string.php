@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -23,7 +24,7 @@ return new class extends Migration
             // values — recreate without it (same pattern as the earlier
             // fix_email_logs_status_enum migration; test DBs are ephemeral).
             Schema::drop('email_logs');
-            Schema::create('email_logs', function (\Illuminate\Database\Schema\Blueprint $table) {
+            Schema::create('email_logs', function (Blueprint $table) {
                 $table->id();
                 $table->string('to_email', 255);
                 $table->string('subject', 255);

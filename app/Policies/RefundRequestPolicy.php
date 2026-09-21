@@ -9,6 +9,7 @@ use App\Models\Admin;
 class RefundRequestPolicy extends BasePolicy
 {
     protected string $model = 'refund_requests';
+
     protected ?string $permissionKey = 'refunds';
 
     // Override update/delete: BasePolicy's default 'edit refunds'/'delete

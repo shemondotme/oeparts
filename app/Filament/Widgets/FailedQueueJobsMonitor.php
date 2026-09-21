@@ -2,13 +2,16 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Pages\System\FailedJobsPage;
 use App\Models\FailedJob;
+use Filament\Notifications\Notification;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 
 class FailedQueueJobsMonitor extends TableWidget
@@ -22,7 +25,7 @@ class FailedQueueJobsMonitor extends TableWidget
 
     protected ?string $pollingInterval = '30s';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = -30;
 
@@ -35,7 +38,7 @@ class FailedQueueJobsMonitor extends TableWidget
     {
         $count = DB::table('failed_jobs')->count();
 
-        return 'Failed Queue Jobs' . ($count > 0 ? " ({$count})" : '');
+        return 'Failed Queue Jobs'.($count > 0 ? " ({$count})" : '');
     }
 
     protected function getTableHeaderActions(): array
@@ -45,7 +48,7 @@ class FailedQueueJobsMonitor extends TableWidget
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
                 ->link()
-                ->url(\App\Filament\Pages\System\FailedJobsPage::getUrl()),
+                ->url(FailedJobsPage::getUrl()),
         ];
     }
 
@@ -63,6 +66,7 @@ class FailedQueueJobsMonitor extends TableWidget
                     ->getStateUsing(function ($record): string {
                         $payload = json_decode($record->payload ?? '{}', true);
                         $command = $payload['displayName'] ?? $payload['job'] ?? 'Unknown';
+
                         return class_basename($command);
                     })
                     ->weight(FontWeight::Bold)
@@ -71,9 +75,10 @@ class FailedQueueJobsMonitor extends TableWidget
                     ->tooltip(function ($record): ?string {
                         $payload = json_decode($record->payload ?? '{}', true);
                         $command = $payload['displayName'] ?? $payload['job'] ?? 'Unknown';
+
                         return mb_strlen((string) $command) > 40 ? $command : null;
                     })
-                    ->description(fn ($record): string => ($record->connection ?? '—') . ' · ' . ($record->queue ?? 'default')),
+                    ->description(fn ($record): string => ($record->connection ?? '—').' · '.($record->queue ?? 'default')),
                 TextColumn::make('failed_flag')
                     ->label('Status')
                     ->state('Failed')
@@ -98,11 +103,11 @@ class FailedQueueJobsMonitor extends TableWidget
                         // queue:retry handles payload decoding (incl. encrypted
                         // commands) and removes the failed_jobs row itself —
                         // hand-unserializing here silently no-opped on failure.
-                        \Illuminate\Support\Facades\Artisan::call('queue:retry', ['id' => [$record->uuid]]);
+                        Artisan::call('queue:retry', ['id' => [$record->uuid]]);
 
                         $requeued = ! DB::table('failed_jobs')->where('uuid', $record->uuid)->exists();
 
-                        \Filament\Notifications\Notification::make()
+                        Notification::make()
                             ->title($requeued ? 'Job pushed back onto the queue' : 'Retry failed')
                             ->body($requeued ? null : 'The job could not be re-dispatched — retry it from the CLI with queue:retry.')
                             ->{$requeued ? 'success' : 'danger'}()

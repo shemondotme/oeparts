@@ -2,9 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\BlogPostResource\Pages\EditBlogPost;
+use App\Filament\Resources\MediaFileResource\Pages\EditMediaFile;
+use App\Filament\Resources\MediaFileResource\Pages\ListMediaFiles;
+use App\Filament\Resources\PageResource\Pages\CreatePage;
+use App\Filament\Resources\SectionResource\Pages\EditSection;
+use App\Filament\Resources\SectionResource\Pages\ViewSection;
 use App\Models\Admin;
+use App\Models\BlogPost;
 use App\Models\MediaFile;
+use App\Models\Page;
 use App\Models\Section;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -20,9 +31,9 @@ class ContentModuleTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');
@@ -32,11 +43,11 @@ class ContentModuleTest extends TestCase
     {
         return MediaFile::create([
             'uploaded_by' => Admin::first()->id,
-            'file_name'   => 'test.png',
-            'file_path'   => 'media/test.png',
-            'file_url'    => '/storage/media/test.png',
-            'mime_type'   => 'image/png',
-            'size'        => 2048,
+            'file_name' => 'test.png',
+            'file_path' => 'media/test.png',
+            'file_url' => '/storage/media/test.png',
+            'mime_type' => 'image/png',
+            'size' => 2048,
         ]);
     }
 
@@ -47,7 +58,7 @@ class ContentModuleTest extends TestCase
         // once the table had rows. Always test lists WITH data.
         $this->makeMediaFile();
 
-        Livewire::test(\App\Filament\Resources\MediaFileResource\Pages\ListMediaFiles::class)
+        Livewire::test(ListMediaFiles::class)
             ->loadTable()
             ->assertOk()
             ->assertSee('test.png');
@@ -58,7 +69,7 @@ class ContentModuleTest extends TestCase
         // Regression: TextInput::copyMessage() doesn't exist -> 500.
         $file = $this->makeMediaFile();
 
-        Livewire::test(\App\Filament\Resources\MediaFileResource\Pages\EditMediaFile::class, ['record' => $file->id])
+        Livewire::test(EditMediaFile::class, ['record' => $file->id])
             ->assertOk();
     }
 
@@ -72,22 +83,22 @@ class ContentModuleTest extends TestCase
         $ml = fn (string $en) => ['en' => $en, 'de' => null, 'lt' => null, 'fr' => null, 'es' => null];
 
         return Section::create([
-            'type'      => 'how_it_works',
-            'location'  => 'homepage',
-            'title'     => ['en' => 'How It Works'],
+            'type' => 'how_it_works',
+            'location' => 'homepage',
+            'title' => ['en' => 'How It Works'],
             // Real home sections carry nested structures — exactly what broke
             // both the view page (foreach on string) and the KeyValue editor.
-            'content'   => [
-                'eyebrow'     => $ml('Process'),
-                'headline'    => $ml('Three steps'),
+            'content' => [
+                'eyebrow' => $ml('Process'),
+                'headline' => $ml('Three steps'),
                 'subheadline' => ['en' => null, 'de' => null, 'lt' => null, 'fr' => null, 'es' => null],
-                'steps'    => [
+                'steps' => [
                     ['icon' => 'magnifying-glass', 'step_number' => 1, 'title' => $ml('Search'), 'description' => $ml('Enter your OEM number')],
                     ['icon' => 'shopping-cart', 'step_number' => 2, 'title' => $ml('Order'), 'description' => $ml('Checkout securely')],
                 ],
             ],
-            'is_active'  => true,
-            'status'     => 'published',
+            'is_active' => true,
+            'status' => 'published',
             'sort_order' => 1,
         ]);
     }
@@ -96,9 +107,9 @@ class ContentModuleTest extends TestCase
     {
         $section = $this->makeNestedSection();
 
-        Livewire::test(\App\Filament\Resources\SectionResource\Pages\ViewSection::class, ['record' => $section->id])
+        Livewire::test(ViewSection::class, ['record' => $section->id])
             ->assertOk();
-        Livewire::test(\App\Filament\Resources\SectionResource\Pages\EditSection::class, ['record' => $section->id])
+        Livewire::test(EditSection::class, ['record' => $section->id])
             ->assertOk();
     }
 
@@ -107,16 +118,16 @@ class ContentModuleTest extends TestCase
         // Real seeded rows store title as a bare JSON string ("Hero"), not a
         // locale map — the view page must tolerate both shapes.
         $section = Section::create([
-            'type'       => 'hero',
-            'location'   => 'homepage',
-            'title'      => 'Hero',
-            'content'    => ['headline' => 'x'],
-            'is_active'  => true,
-            'status'     => 'published',
+            'type' => 'hero',
+            'location' => 'homepage',
+            'title' => 'Hero',
+            'content' => ['headline' => 'x'],
+            'is_active' => true,
+            'status' => 'published',
             'sort_order' => 0,
         ]);
 
-        Livewire::test(\App\Filament\Resources\SectionResource\Pages\ViewSection::class, ['record' => $section->id])
+        Livewire::test(ViewSection::class, ['record' => $section->id])
             ->assertOk();
     }
 
@@ -125,7 +136,7 @@ class ContentModuleTest extends TestCase
         $section = $this->makeNestedSection();
         $original = $section->content;
 
-        Livewire::test(\App\Filament\Resources\SectionResource\Pages\EditSection::class, ['record' => $section->id])
+        Livewire::test(EditSection::class, ['record' => $section->id])
             ->call('save')
             ->assertHasNoFormErrors();
 
@@ -155,15 +166,15 @@ class ContentModuleTest extends TestCase
 
     public function test_blog_edit_renders_with_inline_tag_creation_select(): void
     {
-        $post = \App\Models\BlogPost::create([
-            'title'     => ['en' => 'Audit Post'],
-            'slug'      => 'audit-post',
-            'content'   => ['en' => 'Body'],
-            'status'    => 'draft',
+        $post = BlogPost::create([
+            'title' => ['en' => 'Audit Post'],
+            'slug' => 'audit-post',
+            'content' => ['en' => 'Body'],
+            'status' => 'draft',
             'author_id' => Admin::first()->id,
         ]);
 
-        Livewire::test(\App\Filament\Resources\BlogPostResource\Pages\EditBlogPost::class, ['record' => $post->id])
+        Livewire::test(EditBlogPost::class, ['record' => $post->id])
             ->assertOk();
     }
 
@@ -171,10 +182,10 @@ class ContentModuleTest extends TestCase
     {
         Storage::fake('public');
 
-        Livewire::test(\App\Filament\Resources\MediaFileResource\Pages\ListMediaFiles::class)
+        Livewire::test(ListMediaFiles::class)
             ->loadTable()
             ->callTableAction('upload', data: [
-                'file'     => UploadedFile::fake()->image('brake-diagram.png', 200, 200),
+                'file' => UploadedFile::fake()->image('brake-diagram.png', 200, 200),
                 'alt_text' => 'Brake diagram',
             ]);
 
@@ -198,7 +209,7 @@ class ContentModuleTest extends TestCase
     {
         $admin = auth('admin')->user();
 
-        Livewire::test(\App\Filament\Resources\PageResource\Pages\CreatePage::class)
+        Livewire::test(CreatePage::class)
             ->fillForm([
                 'slug' => 'test-cms-page',
                 'title' => ['en' => 'Test CMS Page'],
@@ -208,7 +219,7 @@ class ContentModuleTest extends TestCase
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $page = \App\Models\Page::where('slug', 'test-cms-page')->first();
+        $page = Page::where('slug', 'test-cms-page')->first();
         $this->assertNotNull($page, 'Page creation failed');
         $this->assertSame($admin->id, $page->created_by);
     }

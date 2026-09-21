@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Enums\EmailTemplate;
 use App\Enums\LogStatus;
 use App\Models\EmailLog;
+use App\Models\Order;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Support\Facades\Log;
 
@@ -21,7 +22,7 @@ class LogEmailSent
         $to = $message->getTo();
         $toEmail = $to ? collect($to)->first()?->getAddress() : null;
 
-        if (!$toEmail) {
+        if (! $toEmail) {
             return;
         }
 
@@ -33,8 +34,8 @@ class LogEmailSent
         $relatedType = null;
 
         $order = $event->data['order'] ?? null;
-        if ($order instanceof \App\Models\Order) {
-            $relatedId   = $order->id;
+        if ($order instanceof Order) {
+            $relatedId = $order->id;
             $relatedType = 'order';
         }
 
@@ -59,7 +60,7 @@ class LogEmailSent
 
     private function determineTemplateType(?string $mailableClass): EmailTemplate
     {
-        if (!$mailableClass) {
+        if (! $mailableClass) {
             return EmailTemplate::Other;
         }
 
@@ -71,7 +72,7 @@ class LogEmailSent
             'OrderShipped' => EmailTemplate::OrderShipped,
             'WelcomeEmail' => EmailTemplate::Welcome,
             'OtpEmail' => EmailTemplate::Otp,
-            'RefundProcessed'    => EmailTemplate::RefundProcessed,
+            'RefundProcessed' => EmailTemplate::RefundProcessed,
             'RefundStatusUpdate' => EmailTemplate::RefundProcessed,
             'AbandonedCartReminder' => EmailTemplate::AbandonedCart,
             'NewsletterConfirmation' => EmailTemplate::NewsletterConfirm,

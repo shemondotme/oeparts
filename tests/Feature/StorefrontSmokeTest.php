@@ -4,8 +4,22 @@ namespace Tests\Feature;
 
 use App\Models\BlogPost;
 use App\Models\CarModel;
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Models\Manufacturer;
 use App\Models\Page;
+use App\Models\Product;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\BlogPostsSeeder;
+use Database\Seeders\CarriersSeeder;
+use Database\Seeders\CmsFooterPagesSeeder;
+use Database\Seeders\DemoManufacturersAndPartsSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SectionsSeeder;
+use Database\Seeders\SequencesSeeder;
+use Database\Seeders\SettingsSeeder;
+use Database\Seeders\ShippingZonesAndMethodsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -19,17 +33,17 @@ class StorefrontSmokeTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
-            \Database\Seeders\SequencesSeeder::class,
-            \Database\Seeders\CarriersSeeder::class,
-            \Database\Seeders\SectionsSeeder::class,
-            \Database\Seeders\ShippingZonesAndMethodsSeeder::class,
-            \Database\Seeders\DemoManufacturersAndPartsSeeder::class,
-            \Database\Seeders\CmsFooterPagesSeeder::class,
-            \Database\Seeders\BlogPostsSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
+            SequencesSeeder::class,
+            CarriersSeeder::class,
+            SectionsSeeder::class,
+            ShippingZonesAndMethodsSeeder::class,
+            DemoManufacturersAndPartsSeeder::class,
+            CmsFooterPagesSeeder::class,
+            BlogPostsSeeder::class,
         ]);
 
         // Create at least one car model and attach it to some products
@@ -42,7 +56,7 @@ class StorefrontSmokeTest extends TestCase
                 'is_active' => true,
             ]);
 
-            $product = \App\Models\Product::where('manufacturer_id', $manufacturer->id)->first();
+            $product = Product::where('manufacturer_id', $manufacturer->id)->first();
             if ($product) {
                 $product->carModels()->attach($carModel->id);
             }
@@ -120,18 +134,18 @@ class StorefrontSmokeTest extends TestCase
         $this->get("/{$lang}/checkout")->assertRedirect("/{$lang}/cart");
 
         // 9b. Checkout (returns 200 when cart is populated)
-        $product = \App\Models\Product::where('manufacturer_id', $manufacturer->id)->first();
-        $cart = \App\Models\Cart::create([
-            'guest_token' => 'smoke-test-guest-token-' . $lang,
+        $product = Product::where('manufacturer_id', $manufacturer->id)->first();
+        $cart = Cart::create([
+            'guest_token' => 'smoke-test-guest-token-'.$lang,
             'expires_at' => now()->addDays(7),
         ]);
-        \App\Models\CartItem::create([
+        CartItem::create([
             'cart_id' => $cart->id,
             'product_id' => $product->id,
             'quantity' => 1,
             'price_at_add' => $product->price,
         ]);
-        $this->withCookie('guest_token', 'smoke-test-guest-token-' . $lang)
+        $this->withCookie('guest_token', 'smoke-test-guest-token-'.$lang)
             ->get("/{$lang}/checkout")
             ->assertStatus(200);
 

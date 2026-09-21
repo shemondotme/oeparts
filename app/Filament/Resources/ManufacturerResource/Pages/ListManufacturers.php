@@ -11,6 +11,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListManufacturers extends ListRecords
 {
     use HasDrilldownFilters, HasSavedViews;
+
     protected static string $resource = ManufacturerResource::class;
 
     protected function getHeaderActions(): array

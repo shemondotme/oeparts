@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ContentStatus;
+use App\Filament\Resources\LanguageResource\Pages\CreateLanguage;
 use App\Models\Admin;
 use App\Models\Language;
 use App\Models\Manufacturer;
@@ -11,6 +12,7 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
 use App\Services\SitemapService;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,7 +27,7 @@ class CmsMediumFixesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $this->admin = Admin::factory()->create();
         $this->admin->assignRole('super_admin');
         $this->actingAs($this->admin, 'admin');
@@ -93,7 +95,7 @@ class CmsMediumFixesTest extends TestCase
     {
         Language::create(['code' => 'xx', 'name' => 'Test Lang', 'native_name' => 'Test Lang', 'locale' => 'xx_XX', 'flag_emoji' => '🏳️', 'is_active' => true, 'sort_order' => 1]);
 
-        Livewire::test(\App\Filament\Resources\LanguageResource\Pages\CreateLanguage::class)
+        Livewire::test(CreateLanguage::class)
             ->fillForm(['code' => 'xx', 'name' => 'Duplicate'])
             ->call('create')
             ->assertHasFormErrors(['code']);

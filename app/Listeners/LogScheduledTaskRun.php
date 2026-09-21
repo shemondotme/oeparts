@@ -54,11 +54,11 @@ class LogScheduledTaskRun
     {
         try {
             CronLog::create([
-                'job_name'    => Str::limit(ScheduleCommandName::for($task), 100, ''),
-                'status'      => $status,
+                'job_name' => Str::limit(ScheduleCommandName::for($task), 100, ''),
+                'status' => $status,
                 'duration_ms' => max(0, $durationMs),
-                'output'      => $output,
-                'ran_at'      => now(),
+                'output' => $output,
+                'ran_at' => now(),
             ]);
         } catch (\Throwable $e) {
             report($e);

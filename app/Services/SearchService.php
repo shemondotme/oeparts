@@ -158,7 +158,7 @@ class SearchService
             return $resolver();
         }
 
-        $cacheKey = 'search:v' . self::cacheVersion() . ':' . md5(implode('|', [
+        $cacheKey = 'search:v'.self::cacheVersion().':'.md5(implode('|', [
             $normalized, $manufacturerId ?? '', $carModelId ?? '',
             $limit, $paginate ? '1' : '0', $perPage, $sort,
             $condition ?? '', $inStockOnly ? '1' : '0',
@@ -201,7 +201,7 @@ class SearchService
 
                 return Product::query()->whereIn('products.id', $ids);
             })(),
-            default => Product::query()->where('products.normalized_oem', 'LIKE', '%' . str_replace(['%', '_'], ['\\%', '\\_'], $normalized) . '%'),
+            default => Product::query()->where('products.normalized_oem', 'LIKE', '%'.str_replace(['%', '_'], ['\\%', '\\_'], $normalized).'%'),
         };
     }
 
@@ -250,7 +250,7 @@ class SearchService
      */
     public function getManufacturerCounts(string $matchType, string $normalized, ?int $carModelId, bool $inStockOnly, ?string $condition): array
     {
-        $cacheKey = 'mfr_counts:v' . self::cacheVersion() . ':' . md5(implode('|', [$matchType, $normalized, $carModelId ?? '', $inStockOnly ? '1' : '0', $condition ?? '']));
+        $cacheKey = 'mfr_counts:v'.self::cacheVersion().':'.md5(implode('|', [$matchType, $normalized, $carModelId ?? '', $inStockOnly ? '1' : '0', $condition ?? '']));
 
         return Cache::remember($cacheKey, 300, function () use ($matchType, $normalized, $carModelId, $inStockOnly, $condition) {
             $q = $this->buildMatchQuery($matchType, $normalized)->where('is_active', true);
@@ -531,7 +531,7 @@ class SearchService
 
         // Backs every OEM search-box keystroke sitewide — was fully-loaded
         // columns + an unloaded `condition` relation (N+1 per row) + uncached.
-        $cacheKey = 'search:autocomplete:v' . self::cacheVersion() . ':' . md5(implode('|', [$normalized, $lang, $limit]));
+        $cacheKey = 'search:autocomplete:v'.self::cacheVersion().':'.md5(implode('|', [$normalized, $lang, $limit]));
 
         return Cache::remember($cacheKey, 300, function () use ($normalized, $lang, $limit) {
             $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $normalized);

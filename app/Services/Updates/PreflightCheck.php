@@ -9,7 +9,9 @@ namespace App\Services\Updates;
 class PreflightCheck
 {
     public const PASS = 'pass'; // ready
+
     public const WARN = 'warn'; // proceed with caution (operator ack)
+
     public const FAIL = 'fail'; // blocks the update
 
     public function __construct(
@@ -48,11 +50,11 @@ class PreflightCheck
     public function toArray(): array
     {
         return [
-            'key'     => $this->key,
-            'label'   => $this->label,
-            'status'  => $this->status,
+            'key' => $this->key,
+            'label' => $this->label,
+            'status' => $this->status,
             'message' => $this->message,
-            'meta'    => $this->meta,
+            'meta' => $this->meta,
         ];
     }
 }

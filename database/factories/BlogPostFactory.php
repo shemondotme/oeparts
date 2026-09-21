@@ -20,16 +20,16 @@ class BlogPostFactory extends Factory
         $title = fake()->unique()->sentence(4);
 
         return [
-            'category_id'    => Category::factory(),
-            'title'          => ['en' => $title, 'de' => $title],
-            'slug'           => fake()->unique()->slug(),
-            'excerpt'        => ['en' => fake()->sentence(), 'de' => fake()->sentence()],
-            'content'        => ['en' => fake()->paragraphs(3, true), 'de' => fake()->paragraphs(3, true)],
-            'author_id'      => Admin::factory(),
-            'status'         => ContentStatus::Draft,
-            'meta_title'     => null,
+            'category_id' => Category::factory(),
+            'title' => ['en' => $title, 'de' => $title],
+            'slug' => fake()->unique()->slug(),
+            'excerpt' => ['en' => fake()->sentence(), 'de' => fake()->sentence()],
+            'content' => ['en' => fake()->paragraphs(3, true), 'de' => fake()->paragraphs(3, true)],
+            'author_id' => Admin::factory(),
+            'status' => ContentStatus::Draft,
+            'meta_title' => null,
             'meta_description' => null,
-            'published_at'   => null,
+            'published_at' => null,
             'last_reviewed_at' => null,
         ];
     }
@@ -37,7 +37,7 @@ class BlogPostFactory extends Factory
     public function published(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status'       => ContentStatus::Published,
+            'status' => ContentStatus::Published,
             'published_at' => fake()->dateTimeBetween('-3 months', 'now'),
         ]);
     }

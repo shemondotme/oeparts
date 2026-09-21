@@ -2,14 +2,14 @@
 
 namespace App\Filament\Pages\Reports;
 
-use App\Models\FailedSearchLog;
 use App\Filament\Clusters\Reports;
+use App\Models\SearchLog;
+use Carbon\Carbon;
 use Filament\Actions\Action;
-use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Response;
-use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SearchIntelligenceReport extends Page
 {
@@ -53,17 +53,17 @@ class SearchIntelligenceReport extends Page
         ];
     }
 
-    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function exportCsv(): StreamedResponse
     {
         $start = ($this->period === '1' ? Carbon::today() : Carbon::now()->subDays((int) $this->period));
 
-        $data = \App\Models\SearchLog::where('created_at', '>=', $start)
+        $data = SearchLog::where('created_at', '>=', $start)
             ->select('search_query', DB::raw('COUNT(*) as count'))
             ->groupBy('search_query')
             ->orderByDesc('count')
             ->get();
 
-        $filename = 'search-intelligence-' . now()->format('Y-m-d') . '.csv';
+        $filename = 'search-intelligence-'.now()->format('Y-m-d').'.csv';
 
         return Response::stream(function () use ($data) {
             $handle = fopen('php://output', 'w');

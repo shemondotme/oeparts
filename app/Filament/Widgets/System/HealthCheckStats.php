@@ -38,13 +38,13 @@ class HealthCheckStats extends Widget
      * key => [label, sub-label, icon]
      */
     private const CHECKS = [
-        'database'  => ['Database', 'MySQL connectivity', 'heroicon-o-circle-stack'],
-        'cache'     => ['Cache', 'Cache store read/write', 'heroicon-o-bolt'],
-        'queue'     => ['Queue', 'Worker connection', 'heroicon-o-queue-list'],
-        'storage'   => ['Storage', 'Writable storage path', 'heroicon-o-folder'],
+        'database' => ['Database', 'MySQL connectivity', 'heroicon-o-circle-stack'],
+        'cache' => ['Cache', 'Cache store read/write', 'heroicon-o-bolt'],
+        'queue' => ['Queue', 'Worker connection', 'heroicon-o-queue-list'],
+        'storage' => ['Storage', 'Writable storage path', 'heroicon-o-folder'],
         'scheduler' => ['Scheduler', 'Cron heartbeat', 'heroicon-o-clock'],
-        'assets'    => ['Assets', 'Compiled build manifest', 'heroicon-o-cube'],
-        'backup'    => ['Backup', 'Last successful backup age', 'heroicon-o-archive-box'],
+        'assets' => ['Assets', 'Compiled build manifest', 'heroicon-o-cube'],
+        'backup' => ['Backup', 'Last successful backup age', 'heroicon-o-archive-box'],
     ];
 
     /**
@@ -70,18 +70,18 @@ class HealthCheckStats extends Widget
                 ->values();
 
             $rows[] = [
-                'key'         => $key,
-                'label'       => $label,
-                'sub'         => $sub,
-                'icon'        => $icon,
-                'status'      => $check['status'],
-                'pill'        => $this->pillLabel($check['status']),
-                'state'       => $this->colorToState($this->statusColor($check['status'])),
-                'detail'      => $check['detail'] ?? '',
-                'latency'     => $check['response_time_ms'] !== null ? $check['response_time_ms'] . 'ms' : null,
-                'sparkline'   => $recent->map(fn ($row) => $this->colorToState($this->statusColor($row->status)))->all(),
+                'key' => $key,
+                'label' => $label,
+                'sub' => $sub,
+                'icon' => $icon,
+                'status' => $check['status'],
+                'pill' => $this->pillLabel($check['status']),
+                'state' => $this->colorToState($this->statusColor($check['status'])),
+                'detail' => $check['detail'] ?? '',
+                'latency' => $check['response_time_ms'] !== null ? $check['response_time_ms'].'ms' : null,
+                'sparkline' => $recent->map(fn ($row) => $this->colorToState($this->statusColor($row->status)))->all(),
                 'lastChecked' => $recent->last()?->checked_at?->diffForHumans() ?? 'never',
-                'url'         => $this->urlFor($key),
+                'url' => $this->urlFor($key),
             ];
         }
 
@@ -91,22 +91,22 @@ class HealthCheckStats extends Widget
     private function statusColor(string $status): string
     {
         return match ($status) {
-            'ok'                       => 'success',
+            'ok' => 'success',
             'stale', 'missing', 'none' => 'warning',
-            'fail'                     => 'danger',
-            default                    => 'gray',
+            'fail' => 'danger',
+            default => 'gray',
         };
     }
 
     private function pillLabel(string $status): string
     {
         return match ($status) {
-            'ok'      => 'Operational',
-            'fail'    => 'Failing',
-            'stale'   => 'Stale',
+            'ok' => 'Operational',
+            'fail' => 'Failing',
+            'stale' => 'Stale',
             'missing' => 'Missing',
-            'none'    => 'None',
-            default   => 'Unknown',
+            'none' => 'None',
+            default => 'Unknown',
         };
     }
 
@@ -114,11 +114,11 @@ class HealthCheckStats extends Widget
     {
         return match ($key) {
             'database', 'storage', 'assets' => ServerMonitor::getUrl(),
-            'cache'                          => CacheDashboard::getUrl(),
-            'queue'                          => QueueMonitor::getUrl(),
-            'scheduler'                      => ScheduledTasksPage::getUrl(),
-            'backup'                         => BackupDashboard::getUrl(),
-            default                          => null,
+            'cache' => CacheDashboard::getUrl(),
+            'queue' => QueueMonitor::getUrl(),
+            'scheduler' => ScheduledTasksPage::getUrl(),
+            'backup' => BackupDashboard::getUrl(),
+            default => null,
         };
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\OtpPurpose;
 use App\Models\Otp;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -21,10 +22,14 @@ class OtpService
     /**
      * Result codes returned by verify().
      */
-    const RESULT_OK           = 'ok';
-    const RESULT_INVALID      = 'invalid';
-    const RESULT_EXPIRED      = 'expired';
+    const RESULT_OK = 'ok';
+
+    const RESULT_INVALID = 'invalid';
+
+    const RESULT_EXPIRED = 'expired';
+
     const RESULT_MAX_ATTEMPTS = 'max_attempts';
+
     const RESULT_ALREADY_USED = 'already_used';
 
     /**
@@ -47,7 +52,7 @@ class OtpService
 
         try {
             $lock->block(5);
-        } catch (\Illuminate\Contracts\Cache\LockTimeoutException) {
+        } catch (LockTimeoutException) {
             throw new \RuntimeException(__('otp.wait_before_resend', ['wait' => 5]));
         }
 
@@ -62,7 +67,7 @@ class OtpService
                 ->first();
 
             if ($existing) {
-                $sentAt   = $existing->expires_at->subMinutes((int) settings('auth.otp_expiry_minutes', 10));
+                $sentAt = $existing->expires_at->subMinutes((int) settings('auth.otp_expiry_minutes', 10));
                 $cooldownEnd = $sentAt->addSeconds($cooldown);
 
                 if (now()->lt($cooldownEnd)) {
@@ -77,16 +82,16 @@ class OtpService
                     ->delete();
             }
 
-            $length  = (int) settings('auth.otp_length', 6);
-            $expiry  = (int) settings('auth.otp_expiry_minutes', 10);
-            $code    = $this->generateCode($length);
+            $length = (int) settings('auth.otp_length', 6);
+            $expiry = (int) settings('auth.otp_expiry_minutes', 10);
+            $code = $this->generateCode($length);
 
             $otp = Otp::create([
-                'email'      => $email,
-                'otp_code'   => $code,
-                'purpose'    => $purpose,
+                'email' => $email,
+                'otp_code' => $code,
+                'purpose' => $purpose,
                 'expires_at' => now()->addMinutes($expiry),
-                'attempts'   => 0,
+                'attempts' => 0,
                 'ip_address' => $ipAddress,
             ]);
 
@@ -191,12 +196,12 @@ class OtpService
     public function message(string $result): string
     {
         return match ($result) {
-            self::RESULT_OK           => __('otp.code_verified'),
-            self::RESULT_INVALID      => __('otp.invalid_code'),
-            self::RESULT_EXPIRED      => __('otp.code_expired'),
+            self::RESULT_OK => __('otp.code_verified'),
+            self::RESULT_INVALID => __('otp.invalid_code'),
+            self::RESULT_EXPIRED => __('otp.code_expired'),
             self::RESULT_MAX_ATTEMPTS => __('otp.max_attempts'),
             self::RESULT_ALREADY_USED => __('otp.already_used'),
-            default                   => __('otp.verification_failed'),
+            default => __('otp.verification_failed'),
         };
     }
 

@@ -14,6 +14,7 @@ use App\Models\SearchLog;
 use App\Models\SeoMeta;
 use App\Services\CoreWebVitalsService;
 use App\Services\GoogleSearchConsoleService;
+use App\Services\OemNormalizerService;
 use App\Services\RedirectLoopDetector;
 use App\Services\SeoService;
 use App\Support\LocaleRegistry;
@@ -353,7 +354,7 @@ class SeoHealthDashboard extends Page
     {
         $pattern = '#^/(?:'.LocaleRegistry::routePattern().')/parts/([A-Za-z0-9\-\.\s]+)$#';
         $broken = 0;
-        $normalizer = app(\App\Services\OemNormalizerService::class);
+        $normalizer = app(OemNormalizerService::class);
 
         Redirect::query()->active()->select('to_url')->chunk(200, function ($redirects) use ($pattern, $normalizer, &$broken) {
             foreach ($redirects as $redirect) {

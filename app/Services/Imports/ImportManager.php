@@ -65,13 +65,13 @@ class ImportManager
             }
 
             $run = ProductImportRun::create([
-                'admin_id'         => $adminId,
-                'status'           => ProductImportRun::STATUS_RUNNING,
+                'admin_id' => $adminId,
+                'status' => ProductImportRun::STATUS_RUNNING,
                 'original_filename' => $originalFilename,
-                'disk'             => $disk,
-                'path'             => $diskPath,
-                'update_existing'  => $updateExisting,
-                'started_at'       => now(),
+                'disk' => $disk,
+                'path' => $diskPath,
+                'update_existing' => $updateExisting,
+                'started_at' => now(),
             ]);
 
             $run->setCheckpoint(['stage_index' => 0, 'stage_state' => []]);
@@ -94,9 +94,9 @@ class ImportManager
             return ImportProgress::failed($run, (string) $run->error);
         }
 
-        $stages     = $this->stages->forProfile(self::PROFILE);
+        $stages = $this->stages->forProfile(self::PROFILE);
         $checkpoint = $run->checkpoint();
-        $index      = $checkpoint['stage_index'];
+        $index = $checkpoint['stage_index'];
 
         if ($index >= count($stages)) {
             return $this->finalize($run);
@@ -139,8 +139,8 @@ class ImportManager
 
     public function fail(ProductImportRun $run, string $error): ImportProgress
     {
-        $run->status      = ProductImportRun::STATUS_FAILED;
-        $run->error       = Str::limit($error, 2000, '');
+        $run->status = ProductImportRun::STATUS_FAILED;
+        $run->error = Str::limit($error, 2000, '');
         $run->finished_at = now();
         $run->save();
 
@@ -163,7 +163,7 @@ class ImportManager
 
         Storage::disk($run->disk)->delete($run->path);
 
-        $run->status      = ProductImportRun::STATUS_SUCCESS;
+        $run->status = ProductImportRun::STATUS_SUCCESS;
         $run->finished_at = now();
         $run->save();
 

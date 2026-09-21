@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
 
 class MaintenanceMode
@@ -21,13 +20,13 @@ class MaintenanceMode
 
         $enabled = (bool) settings('maintenance.enabled', false);
 
-        if (!$enabled) {
+        if (! $enabled) {
             return $next($request);
         }
 
         // Check if IP is whitelisted (admin bypass)
         $allowedIps = settings('maintenance.allowed_ips', '');
-        if (!empty($allowedIps)) {
+        if (! empty($allowedIps)) {
             $allowedIpArray = array_map('trim', explode(',', $allowedIps));
             $clientIp = $request->ip();
 
@@ -37,12 +36,12 @@ class MaintenanceMode
         }
 
         return response()->view('errors.maintenance', [
-            'message' => settings('maintenance.message', ["en" => "We'll be back soon."]),
+            'message' => settings('maintenance.message', ['en' => "We'll be back soon."]),
             'estimatedBackAt' => settings('maintenance.estimated_back_at', ''),
             'showEstimatedTime' => (bool) settings('maintenance.show_estimated_time', false),
             'contactEmail' => settings('maintenance.contact_email', ''),
         ], 503)
-        ->header('Retry-After', '3600')
-        ->header('X-Robots-Tag', 'noindex, nofollow');
+            ->header('Retry-After', '3600')
+            ->header('X-Robots-Tag', 'noindex, nofollow');
     }
 }

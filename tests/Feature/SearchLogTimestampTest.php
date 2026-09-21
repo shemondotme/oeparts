@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\FailedSearchLogResource;
 use App\Models\FailedSearchLog;
 use App\Models\SearchLog;
-use App\Filament\Resources\FailedSearchLogResource;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;

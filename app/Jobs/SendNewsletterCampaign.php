@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 
 class SendNewsletterCampaign implements ShouldQueue
@@ -78,9 +79,9 @@ class SendNewsletterCampaign implements ShouldQueue
         // so a retry's totals reflect every attempt, not just this run's —
         // an earlier partial run's already-'sent' rows must still count.
         $this->campaign->update([
-            'status'       => 'sent',
-            'sent_at'      => now(),
-            'sent_count'   => NewsletterCampaignRecipient::where('campaign_id', $this->campaign->id)->where('status', 'sent')->count(),
+            'status' => 'sent',
+            'sent_at' => now(),
+            'sent_count' => NewsletterCampaignRecipient::where('campaign_id', $this->campaign->id)->where('status', 'sent')->count(),
             'failed_count' => NewsletterCampaignRecipient::where('campaign_id', $this->campaign->id)->where('status', 'failed')->count(),
         ]);
     }
@@ -93,14 +94,14 @@ class SendNewsletterCampaign implements ShouldQueue
      * 'failed' row from a prior attempt would otherwise collide with the
      * unique (campaign_id, subscriber_id) index instead of being reused.
      */
-    private function createRecipientsFor($subscribers): \Illuminate\Support\Collection
+    private function createRecipientsFor($subscribers): Collection
     {
         NewsletterCampaignRecipient::upsert(
             $subscribers->map(fn ($subscriber) => [
-                'campaign_id'   => $this->campaign->id,
+                'campaign_id' => $this->campaign->id,
                 'subscriber_id' => $subscriber->id,
-                'email'         => $subscriber->email,
-                'status'        => 'pending',
+                'email' => $subscriber->email,
+                'status' => 'pending',
             ])->all(),
             ['campaign_id', 'subscriber_id'],
             ['email', 'status'],

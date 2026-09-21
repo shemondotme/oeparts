@@ -93,11 +93,11 @@ class RunBackup extends Command
     {
         try {
             DB::table('cron_logs')->insert([
-                'job_name'    => 'oeparts:backup',
-                'status'      => $status,
+                'job_name' => 'oeparts:backup',
+                'status' => $status,
                 'duration_ms' => $durationMs,
-                'output'      => $output,
-                'ran_at'      => now(),
+                'output' => $output,
+                'ran_at' => now(),
             ]);
         } catch (\Throwable $e) {
             // cron_logs is best-effort observability; never fail the backup on it.

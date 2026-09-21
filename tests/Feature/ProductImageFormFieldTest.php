@@ -9,6 +9,8 @@ use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductImage;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -56,8 +58,8 @@ class ProductImageFormFieldTest extends TestCase
         Storage::fake('public');
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         $admin = Admin::factory()->create(['is_active' => true]);

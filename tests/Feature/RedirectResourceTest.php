@@ -10,7 +10,9 @@ use App\Filament\Resources\RedirectResource\Pages\ListRedirects;
 use App\Models\Admin;
 use App\Models\NotFoundLog;
 use App\Models\Redirect;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,7 +35,7 @@ class RedirectResourceTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         // RolesSeeder never grants 'view/create/edit redirects' to any role
         // (not even 'admin') — redirects management is currently reachable
         // only via the super_admin Gate::before bypass. Unrelated to the
@@ -239,7 +241,7 @@ class RedirectResourceTest extends TestCase
     public function testing_a_redirect_whose_destination_is_unreachable_shows_a_danger_notification(): void
     {
         $redirect = Redirect::create(['from_url' => 'old-page', 'to_url' => '/en/new-page', 'type' => RedirectType::Permanent, 'is_active' => true]);
-        Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('down'));
+        Http::fake(fn () => throw new ConnectionException('down'));
 
         Livewire::test(ListRedirects::class)
             ->callTableAction('testRedirect', $redirect)

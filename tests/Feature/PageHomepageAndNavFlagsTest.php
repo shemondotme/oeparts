@@ -21,7 +21,7 @@ class PageHomepageAndNavFlagsTest extends TestCase
     private function publishedPage(array $attrs = []): Page
     {
         return Page::create(array_merge([
-            'title' => ['en' => 'Warranty'], 'slug' => 'warranty-' . uniqid(),
+            'title' => ['en' => 'Warranty'], 'slug' => 'warranty-'.uniqid(),
             'content' => ['en' => 'Warranty details go here.'],
             'status' => ContentStatus::Published,
             'published_at' => now()->subDay(),
@@ -77,7 +77,7 @@ class PageHomepageAndNavFlagsTest extends TestCase
         $response = $this->get('/en/');
 
         $response->assertOk();
-        $response->assertSee('href="' . url('/en/' . $page->slug) . '"', false);
+        $response->assertSee('href="'.url('/en/'.$page->slug).'"', false);
     }
 
     #[Test]

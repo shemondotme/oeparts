@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * VAT Validation API Controller
- * 
+ *
  * Provides real-time VAT number validation via EU VIES service.
  */
 class VatValidationController extends BaseApiController
@@ -57,7 +57,7 @@ class VatValidationController extends BaseApiController
 
         Log::info('VAT validation', [
             'country' => $countryCode,
-            'vat' => $countryCode . $vatNumber,
+            'vat' => $countryCode.$vatNumber,
             'valid' => $result->valid,
             'reason' => $result->reason,
         ]);
@@ -87,6 +87,7 @@ class VatValidationController extends BaseApiController
             if ($result->reason === 'not_eu') {
                 return __('This VAT number is not from an EU country. VAT will be applied.');
             }
+
             return __('VAT number is invalid. Please check and try again. VAT will be applied.');
         }
 

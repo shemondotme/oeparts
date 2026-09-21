@@ -33,10 +33,10 @@ class UpdateDownloader
             throw new UpdateException('Release manifest has no download URL.');
         }
 
-        $version  = (string) ($manifest['version'] ?? 'update');
+        $version = (string) ($manifest['version'] ?? 'update');
         $expected = $manifest['sha256'] ?? null;
-        $size     = (int) ($manifest['size_bytes'] ?? 0);
-        $path     = $this->downloadPath($version);
+        $size = (int) ($manifest['size_bytes'] ?? 0);
+        $path = $this->downloadPath($version);
         $this->ensureDir(dirname($path));
 
         // Idempotent: a previous run already produced a valid file.
@@ -91,7 +91,7 @@ class UpdateDownloader
             $from = 0;
         }
 
-        $headers  = $from > 0 ? ['Range' => "bytes={$from}-"] : [];
+        $headers = $from > 0 ? ['Range' => "bytes={$from}-"] : [];
         $response = Http::timeout($timeout)->withHeaders($headers)->withOptions(['stream' => true])->get($url);
 
         if (! $response->successful()) {

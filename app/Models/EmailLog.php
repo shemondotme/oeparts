@@ -4,9 +4,9 @@ namespace App\Models;
 
 use App\Enums\EmailTemplate;
 use App\Enums\LogStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 
 class EmailLog extends Model
 {
@@ -21,8 +21,8 @@ class EmailLog extends Model
 
     protected $casts = [
         'template_type' => EmailTemplate::class,
-        'status'        => LogStatus::class,
-        'sent_at'       => 'datetime',
+        'status' => LogStatus::class,
+        'sent_at' => 'datetime',
     ];
 
     public function scopeFailed(Builder $q): Builder

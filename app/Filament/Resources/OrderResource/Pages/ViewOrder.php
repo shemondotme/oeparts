@@ -7,9 +7,12 @@ use App\Enums\PaymentGateway;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
-use App\Filament\Support\AdminUi;
 use App\Filament\Resources\OrderResource;
+use App\Filament\Resources\OrderResource\RelationManagers\PaymentRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationManager;
+use App\Filament\Support\AdminUi;
 use App\Models\OrderNote;
+use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Services\SequenceService;
 use Filament\Actions;
@@ -41,7 +44,7 @@ class ViewOrder extends ViewRecord
                     ->authorize('update')
                     ->action(function (): void {
                         $record = $this->getRecord();
-                        $record->urgent_processing = !$record->urgent_processing;
+                        $record->urgent_processing = ! $record->urgent_processing;
                         $record->save();
 
                         Notification::make()
@@ -65,7 +68,7 @@ class ViewOrder extends ViewRecord
                         OrderNote::create([
                             'order_id' => $this->getRecord()->id,
                             'admin_id' => auth('admin')->id(),
-                            'note'     => $data['note'],
+                            'note' => $data['note'],
                         ]);
 
                         Notification::make()
@@ -119,13 +122,13 @@ class ViewOrder extends ViewRecord
                 ->action(function (array $data): void {
                     $record = $this->getRecord();
 
-                    $payment = \App\Models\Payment::firstOrCreate(
+                    $payment = Payment::firstOrCreate(
                         ['order_id' => $record->id],
                         [
-                            'gateway'        => PaymentGateway::BankTransfer,
+                            'gateway' => PaymentGateway::BankTransfer,
                             'transaction_id' => $data['transaction_id'] ?? null,
-                            'status'         => PaymentTransactionStatus::Pending,
-                            'amount'         => $record->grand_total,
+                            'status' => PaymentTransactionStatus::Pending,
+                            'amount' => $record->grand_total,
                         ]
                     );
 
@@ -147,7 +150,7 @@ class ViewOrder extends ViewRecord
                             ->send();
 
                         $this->dispatch('$refresh');
-                    } catch (\RuntimeException | \InvalidArgumentException $e) {
+                    } catch (\RuntimeException|\InvalidArgumentException $e) {
                         Notification::make()
                             ->title('Confirmation failed')
                             ->body($e->getMessage())
@@ -155,8 +158,7 @@ class ViewOrder extends ViewRecord
                             ->send();
                     }
                 })
-                ->visible(fn (): bool =>
-                    $this->getRecord()->payment_method === PaymentMethod::BankTransfer
+                ->visible(fn (): bool => $this->getRecord()->payment_method === PaymentMethod::BankTransfer
                     && $this->getRecord()->payment_status === PaymentStatus::Pending
                 ),
             Actions\Action::make('capturePayment')
@@ -224,8 +226,8 @@ class ViewOrder extends ViewRecord
     public function getRelationManagers(): array
     {
         return [
-            \App\Filament\Resources\OrderResource\RelationManagers\PaymentRelationManager::class,
-            \App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationManager::class,
+            PaymentRelationManager::class,
+            RefundRequestRelationManager::class,
         ];
     }
 
@@ -277,7 +279,7 @@ class ViewOrder extends ViewRecord
                                                 ->getStateUsing(fn ($record): string => format_money($record->total_price)),
                                         ])
                                         ->columns(['default' => 2, 'xl' => 6]),
-                                    \Filament\Infolists\Components\TextEntry::make('items_summary')
+                                    TextEntry::make('items_summary')
                                         ->hiddenLabel()
                                         ->default(function () use ($record): string {
                                             $count = $record->items->count();
@@ -285,7 +287,8 @@ class ViewOrder extends ViewRecord
                                                 fn (string $carry, $item): string => bcadd($carry, (string) $item->total_price, 2),
                                                 '0.00'
                                             );
-                                            return "{$count} item(s) — Total: " . format_money($total);
+
+                                            return "{$count} item(s) — Total: ".format_money($total);
                                         })
                                         ->extraAttributes(['class' => 'op-order-items-footer']),
                                 ]),
@@ -305,7 +308,7 @@ class ViewOrder extends ViewRecord
                                     TextEntry::make('shipping_country_code')
                                         ->label('Country')
                                         ->formatStateUsing(fn (?string $state): string => $state
-                                            ? (config('countries')[$state] ?? $state) . " ({$state})"
+                                            ? (config('countries')[$state] ?? $state)." ({$state})"
                                             : '—')
                                         ->badge()
                                         ->color('gray'),
@@ -431,7 +434,7 @@ class ViewOrder extends ViewRecord
                                     TextEntry::make('discount_amount')
                                         ->label('Discount')
                                         ->formatStateUsing(fn ($state): string => bccomp((string) $state, '0.00', 2) === 1
-                                            ? '− ' . format_money($state)
+                                            ? '− '.format_money($state)
                                             : format_money($state))
                                         ->color(fn ($state): ?string => bccomp((string) $state, '0.00', 2) === 1 ? 'success' : null)
                                         ->size('sm')
@@ -459,7 +462,7 @@ class ViewOrder extends ViewRecord
                                         ->money('EUR')
                                         ->size('sm')
                                         ->extraAttributes(['class' => 'op-fin-line']),
-                                    \Filament\Infolists\Components\TextEntry::make('fin_divider')
+                                    TextEntry::make('fin_divider')
                                         ->hiddenLabel()
                                         ->default('')
                                         ->extraAttributes(['class' => 'op-fin-divider']),

@@ -26,6 +26,7 @@ class DatabaseBackupStageTest extends TestCase
     use RefreshDatabase;
 
     private string $statePath;
+
     private string $filesRoot;
 
     protected function setUp(): void
@@ -96,9 +97,9 @@ class DatabaseBackupStageTest extends TestCase
     {
         return BackupRun::create([
             'profile' => BackupRun::PROFILE_FULL,
-            'status'  => BackupRun::STATUS_RUNNING,
+            'status' => BackupRun::STATUS_RUNNING,
             'trigger' => BackupRun::TRIGGER_MANUAL,
-            'disk'    => 'local',
+            'disk' => 'local',
         ]);
     }
 
@@ -107,11 +108,11 @@ class DatabaseBackupStageTest extends TestCase
     {
         config(['backup.db.chunk_rows' => 2]);
 
-        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
-        $mine  = array_values(array_filter($parts, fn ($p) => $p['name'] === 'oe_bk_widget'));
+        $parts = $this->drive(new DatabaseBackupStage, $this->newRun());
+        $mine = array_values(array_filter($parts, fn ($p) => $p['name'] === 'oe_bk_widget'));
 
         $schema = array_values(array_filter($mine, fn ($p) => $p['meta']['kind'] === 'schema'));
-        $data   = array_values(array_filter($mine, fn ($p) => $p['meta']['kind'] === 'data'));
+        $data = array_values(array_filter($mine, fn ($p) => $p['meta']['kind'] === 'data'));
 
         $this->assertCount(1, $schema, 'one schema part per table');
         // 5 rows @ 2/page = 3 data chunks (2, 2, 1).
@@ -129,8 +130,8 @@ class DatabaseBackupStageTest extends TestCase
     {
         config(['backup.db.chunk_rows' => 100]);
 
-        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
-        $data  = array_values(array_filter(
+        $parts = $this->drive(new DatabaseBackupStage, $this->newRun());
+        $data = array_values(array_filter(
             $parts,
             fn ($p) => $p['name'] === 'oe_bk_widget' && $p['meta']['kind'] === 'data'
         ));
@@ -147,7 +148,7 @@ class DatabaseBackupStageTest extends TestCase
     #[Test]
     public function a_schema_part_holds_a_create_table_statement(): void
     {
-        $parts  = $this->drive(new DatabaseBackupStage(), $this->newRun());
+        $parts = $this->drive(new DatabaseBackupStage, $this->newRun());
         $schema = array_values(array_filter(
             $parts,
             fn ($p) => $p['name'] === 'oe_bk_widget' && $p['meta']['kind'] === 'schema'
@@ -164,8 +165,8 @@ class DatabaseBackupStageTest extends TestCase
     {
         config(['backup.db.exclude_table_data' => ['oe_bk_widget']]);
 
-        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
-        $mine  = array_values(array_filter($parts, fn ($p) => $p['name'] === 'oe_bk_widget'));
+        $parts = $this->drive(new DatabaseBackupStage, $this->newRun());
+        $mine = array_values(array_filter($parts, fn ($p) => $p['name'] === 'oe_bk_widget'));
 
         $this->assertCount(1, $mine, 'only the schema part, no data');
         $this->assertSame('schema', $mine[0]['meta']['kind']);
@@ -186,8 +187,8 @@ class DatabaseBackupStageTest extends TestCase
     {
         config(['backup.db.exclude_tables_entirely' => ['oe_bk_widget']]);
 
-        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
-        $mine  = array_filter($parts, fn ($p) => $p['name'] === 'oe_bk_widget');
+        $parts = $this->drive(new DatabaseBackupStage, $this->newRun());
+        $mine = array_filter($parts, fn ($p) => $p['name'] === 'oe_bk_widget');
 
         $this->assertCount(0, $mine, 'neither schema nor data — not even structure-only');
     }
@@ -195,7 +196,7 @@ class DatabaseBackupStageTest extends TestCase
     #[Test]
     public function the_real_backup_and_update_tables_are_excluded_by_default(): void
     {
-        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
+        $parts = $this->drive(new DatabaseBackupStage, $this->newRun());
         $names = array_unique(array_map(fn ($p) => $p['name'], $parts));
 
         $this->assertNotContains('backup_runs', $names);
@@ -218,8 +219,8 @@ class DatabaseBackupStageTest extends TestCase
 
         config(['backup.db.chunk_rows' => 2]);
 
-        $parts = $this->drive(new DatabaseBackupStage(), $this->newRun());
-        $data  = array_values(array_filter(
+        $parts = $this->drive(new DatabaseBackupStage, $this->newRun());
+        $data = array_values(array_filter(
             $parts,
             fn ($p) => $p['name'] === 'oe_bk_pivot' && $p['meta']['kind'] === 'data'
         ));
@@ -299,7 +300,7 @@ class DatabaseBackupStageTest extends TestCase
         DB::connection('mysql')->statement("CREATE TABLE `oeparts`.`{$foreignTable}` (id INT)");
 
         try {
-            $stage = new DatabaseBackupStage();
+            $stage = new DatabaseBackupStage;
             $resolve = new \ReflectionMethod($stage, 'resolveTables');
             $resolve->setAccessible(true);
 

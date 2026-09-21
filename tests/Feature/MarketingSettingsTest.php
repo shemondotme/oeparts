@@ -103,7 +103,7 @@ class MarketingSettingsTest extends TestCase
 
         $method = new \ReflectionMethod(MarketingSettings::class, 'getFactoryDefaults');
         $method->setAccessible(true);
-        $defaults = $method->invoke(new MarketingSettings());
+        $defaults = $method->invoke(new MarketingSettings);
 
         $this->assertCount($expectedTotal, $defaults);
     }

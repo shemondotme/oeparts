@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Review;
 use App\Models\SeoMeta;
 use App\Support\LocaleRegistry;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -39,7 +40,7 @@ class SeoService
      *
      * @param  string  $type  'website', 'product', 'article', 'organization', 'breadcrumb'
      * @param  mixed  $entity  Product, Page, BlogPost, an array of breadcrumb
-     *         items (['label' => ..., 'url' => ...]) for 'breadcrumb', or null
+     *                         items (['label' => ..., 'url' => ...]) for 'breadcrumb', or null
      * @return string JSON‑LD script tag (empty string if nothing to output)
      */
     public function jsonLd(string $type = 'website', $entity = null): string
@@ -363,13 +364,13 @@ class SeoService
      * Generate hreflang link tags for the current route in all supported locales.
      *
      * @param  string|null  $canonicalUrl  If provided, used as the x‑default href
-     * @param  \Illuminate\Database\Eloquent\Model|null  $entity  When a Product,
-     *         a locale is skipped entirely unless it has a GENUINE translation
-     *         (not one trans_field() would silently fall back to English for)
-     *         — pointing an hreflang tag at English-fallback content under a
-     *         false "this is the French version" claim is worse than omitting
-     *         the tag. Backward-compatible: every other existing caller passes
-     *         no entity and keeps today's unconditional-all-locales behavior.
+     * @param  Model|null  $entity  When a Product,
+     *                              a locale is skipped entirely unless it has a GENUINE translation
+     *                              (not one trans_field() would silently fall back to English for)
+     *                              — pointing an hreflang tag at English-fallback content under a
+     *                              false "this is the French version" claim is worse than omitting
+     *                              the tag. Backward-compatible: every other existing caller passes
+     *                              no entity and keeps today's unconditional-all-locales behavior.
      * @return string HTML link tags
      */
     public function hreflang(?string $canonicalUrl = null, ?object $entity = null): string

@@ -19,7 +19,7 @@ class LogViewerPage extends Page
 
     protected string $view = 'filament.pages.system.log-viewer';
 
-public string $selectedFile = '';
+    public string $selectedFile = '';
 
     public string $levelFilter = '';
 
@@ -73,7 +73,7 @@ public string $selectedFile = '';
             return [];
         }
 
-        $filepath = storage_path('logs/' . basename($this->selectedFile));
+        $filepath = storage_path('logs/'.basename($this->selectedFile));
 
         if (! file_exists($filepath)) {
             return [];
@@ -138,7 +138,7 @@ public string $selectedFile = '';
             $read = (int) min($chunkSize, $pos);
             $pos -= $read;
             fseek($handle, $pos);
-            $buffer = fread($handle, $read) . $buffer;
+            $buffer = fread($handle, $read).$buffer;
         }
 
         fclose($handle);
@@ -191,7 +191,7 @@ public string $selectedFile = '';
             return;
         }
 
-        $filepath = storage_path('logs/' . basename($this->selectedFile));
+        $filepath = storage_path('logs/'.basename($this->selectedFile));
 
         if (file_exists($filepath)) {
             file_put_contents($filepath, '');
@@ -210,6 +210,7 @@ public string $selectedFile = '';
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
         $bytes /= pow(1024, $pow);
-        return round($bytes, $precision) . ' ' . $units[$pow];
+
+        return round($bytes, $precision).' '.$units[$pow];
     }
 }

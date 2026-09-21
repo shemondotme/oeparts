@@ -17,11 +17,11 @@ return new class extends Migration
                 ->nullOnDelete();
         });
 
-        DB::statement("
+        DB::statement('
             UPDATE products SET condition_id = (
                 SELECT id FROM conditions WHERE slug = products.condition
             )
-        ");
+        ');
 
         Schema::table('products', function (Blueprint $table) {
             $table->dropForeign(['condition_id']);
@@ -45,11 +45,11 @@ return new class extends Migration
             $table->string('condition', 50)->nullable()->after('id');
         });
 
-        DB::statement("
+        DB::statement('
             UPDATE products SET condition = (
                 SELECT slug FROM conditions WHERE id = products.condition_id
             )
-        ");
+        ');
 
         Schema::table('products', function (Blueprint $table) {
             $table->dropForeign(['condition_id']);

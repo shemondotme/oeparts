@@ -7,9 +7,9 @@ use App\Filament\Support\AdminUi;
 use App\Models\Carrier;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -102,32 +102,32 @@ class CarrierResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.carrier'))
-                ->searchable()
-                ->sortable()
-                ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('tracking_url')
-                ->label(__('admin.tracking_url'))
-                ->limit(40)
-                ->copyable()
-                ->copyMessage('URL copied')
-                ->tooltip(fn (Carrier $record): ?string => $record->tracking_url)
-                ->toggleable(isToggledHiddenByDefault: true),
-            Tables\Columns\TextColumn::make('is_active')
-                ->label(__('admin.active'))
-                ->badge()
-                ->alignCenter()
-                ->sortable()
-                ->getStateUsing(fn (Carrier $record): string => $record->is_active ? 'Active' : 'Inactive')
-                ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
-                ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
-            Tables\Columns\TextColumn::make('sort_order')
-                ->label(__('admin.order'))
-                ->numeric()
-                ->sortable()
-                ->fontMono()
-                ->alignCenter(),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.carrier'))
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('tracking_url')
+                    ->label(__('admin.tracking_url'))
+                    ->limit(40)
+                    ->copyable()
+                    ->copyMessage('URL copied')
+                    ->tooltip(fn (Carrier $record): ?string => $record->tracking_url)
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label(__('admin.active'))
+                    ->badge()
+                    ->alignCenter()
+                    ->sortable()
+                    ->getStateUsing(fn (Carrier $record): string => $record->is_active ? 'Active' : 'Inactive')
+                    ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
+                    ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->label(__('admin.order'))
+                    ->numeric()
+                    ->sortable()
+                    ->fontMono()
+                    ->alignCenter(),
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
@@ -149,17 +149,17 @@ class CarrierResource extends Resource
                     ->icon('heroicon-o-plus')
                     ->button(),
             ])
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Carriers', [
-                    'name' => 'Carrier',
-                    'tracking_url' => 'Tracking URL',
-                    'is_active' => 'Active',
-                    'sort_order' => 'Sort Order',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Carriers', [
+                        'name' => 'Carrier',
+                        'tracking_url' => 'Tracking URL',
+                        'is_active' => 'Active',
+                        'sort_order' => 'Sort Order',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
+            ]);
     }
 
     public static function getRelations(): array
@@ -170,10 +170,10 @@ class CarrierResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListCarriers::route('/'),
+            'index' => Pages\ListCarriers::route('/'),
             'create' => Pages\CreateCarrier::route('/create'),
-            'view'   => Pages\ViewCarrier::route('/{record}'),
-            'edit'   => Pages\EditCarrier::route('/{record}/edit'),
+            'view' => Pages\ViewCarrier::route('/{record}'),
+            'edit' => Pages\EditCarrier::route('/{record}/edit'),
         ];
     }
 

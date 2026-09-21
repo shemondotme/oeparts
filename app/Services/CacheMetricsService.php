@@ -3,11 +3,18 @@
 namespace App\Services;
 
 use App\Enums\AdminNotificationCategory;
+use App\Enums\ContentStatus;
 use App\Enums\SectionLocation;
 use App\Filament\Pages\System\CacheDashboard;
 use App\Models\ActivityLog;
+use App\Models\BlogPost;
+use App\Models\BlogTag;
 use App\Models\CacheMetricSnapshot;
+use App\Models\Category;
 use App\Models\Condition;
+use App\Models\Manufacturer;
+use App\Models\Page;
+use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
 
@@ -52,25 +59,25 @@ class CacheMetricsService
         $maxMemory = (int) ($info['maxmemory'] ?? 0);
 
         return [
-            'redis_version'       => $info['redis_version'] ?? 'unknown',
-            'hit_rate'            => $total > 0 ? round(($hits / $total) * 100, 1) : 0.0,
-            'hits'                => $hits,
-            'misses'              => $misses,
-            'memory_used_bytes'   => $memoryUsed,
-            'memory_used_human'   => $info['used_memory_human'] ?? 'N/A',
-            'memory_max_bytes'    => $maxMemory,
-            'memory_peak_human'   => $info['used_memory_peak_human'] ?? 'N/A',
-            'memory_used_pct'     => $maxMemory > 0 ? round(($memoryUsed / $maxMemory) * 100, 1) : null,
+            'redis_version' => $info['redis_version'] ?? 'unknown',
+            'hit_rate' => $total > 0 ? round(($hits / $total) * 100, 1) : 0.0,
+            'hits' => $hits,
+            'misses' => $misses,
+            'memory_used_bytes' => $memoryUsed,
+            'memory_used_human' => $info['used_memory_human'] ?? 'N/A',
+            'memory_max_bytes' => $maxMemory,
+            'memory_peak_human' => $info['used_memory_peak_human'] ?? 'N/A',
+            'memory_used_pct' => $maxMemory > 0 ? round(($memoryUsed / $maxMemory) * 100, 1) : null,
             'fragmentation_ratio' => isset($info['mem_fragmentation_ratio']) ? (float) $info['mem_fragmentation_ratio'] : null,
-            'rdb_last_save_at'    => isset($info['rdb_last_save_time']) ? (int) $info['rdb_last_save_time'] : null,
-            'rdb_last_bgsave_ok'  => ($info['rdb_last_bgsave_status'] ?? 'ok') === 'ok',
-            'aof_enabled'         => (bool) ($info['aof_enabled'] ?? false),
-            'ops_per_sec'         => isset($info['instantaneous_ops_per_sec']) ? (int) $info['instantaneous_ops_per_sec'] : null,
-            'evicted_keys'        => (int) ($info['evicted_keys'] ?? 0),
-            'maxmemory_policy'    => $info['maxmemory_policy'] ?? 'noeviction',
-            'total_keys'          => Redis::connection('cache')->dbSize(),
-            'connected_clients'   => (int) ($info['connected_clients'] ?? 0),
-            'uptime_seconds'      => (int) ($info['uptime_in_seconds'] ?? 0),
+            'rdb_last_save_at' => isset($info['rdb_last_save_time']) ? (int) $info['rdb_last_save_time'] : null,
+            'rdb_last_bgsave_ok' => ($info['rdb_last_bgsave_status'] ?? 'ok') === 'ok',
+            'aof_enabled' => (bool) ($info['aof_enabled'] ?? false),
+            'ops_per_sec' => isset($info['instantaneous_ops_per_sec']) ? (int) $info['instantaneous_ops_per_sec'] : null,
+            'evicted_keys' => (int) ($info['evicted_keys'] ?? 0),
+            'maxmemory_policy' => $info['maxmemory_policy'] ?? 'noeviction',
+            'total_keys' => Redis::connection('cache')->dbSize(),
+            'connected_clients' => (int) ($info['connected_clients'] ?? 0),
+            'uptime_seconds' => (int) ($info['uptime_in_seconds'] ?? 0),
         ];
     }
 
@@ -96,12 +103,14 @@ class CacheMetricsService
                     foreach (SectionLocation::cases() as $location) {
                         $this->sectionRenderer->getSections($location->value);
                     }
+
                     return count(SectionLocation::cases());
                 },
                 'clear' => function (): int {
                     foreach (SectionLocation::cases() as $location) {
                         $this->cacheService->forgetSections($location->value);
                     }
+
                     return count(SectionLocation::cases());
                 },
             ],
@@ -114,12 +123,14 @@ class CacheMetricsService
                     $this->sectionRenderer->warmTestimonials();
                     $this->sectionRenderer->warmFaqs();
                     $this->sectionRenderer->warmHomeBlogPosts();
+
                     return 3;
                 },
                 'clear' => function (): int {
                     $this->cacheService->forgetTestimonials();
                     $this->cacheService->forgetFaqs();
                     $this->cacheService->forgetHomeBlogPosts();
+
                     return 3;
                 },
             ],
@@ -130,10 +141,12 @@ class CacheMetricsService
                 'ttlMinutes' => fn () => (int) settings('performance.cache_ttl_manufacturers', 60),
                 'warm' => function (): int {
                     $this->sectionRenderer->warmManufacturers();
+
                     return 1;
                 },
                 'clear' => function (): int {
                     $this->cacheService->forgetManufacturers();
+
                     return 1;
                 },
             ],
@@ -146,10 +159,12 @@ class CacheMetricsService
                     $this->cacheService->rememberActiveConditions(
                         fn () => Condition::where('is_active', true)->orderBy('sort_order')->get()
                     );
+
                     return 1;
                 },
                 'clear' => function (): int {
                     $this->cacheService->forgetActiveConditions();
+
                     return 1;
                 },
             ],
@@ -170,10 +185,12 @@ class CacheMetricsService
                 'ttlMinutes' => fn () => 360,
                 'warm' => function (): int {
                     $this->sectionRenderer->warmHeroStats();
+
                     return 1;
                 },
                 'clear' => function (): int {
                     $this->cacheService->forgetHeroStats();
+
                     return 1;
                 },
             ],
@@ -184,10 +201,12 @@ class CacheMetricsService
                 'ttlMinutes' => fn () => 60,
                 'warm' => function (): int {
                     $this->sectionRenderer->warmPopularOems();
+
                     return 1;
                 },
                 'clear' => function (): int {
                     $this->cacheService->forgetPopularOems();
+
                     return 1;
                 },
             ],
@@ -208,8 +227,8 @@ class CacheMetricsService
                 'ttlMinutes' => fn () => ((int) settings('search.cache_ttl_hours', 6)) * 60,
                 'warm' => function (): int {
                     $this->cacheService->rememberSearchConsoleStats(fn () => [
-                        'brands'   => \App\Models\Manufacturer::where('is_active', true)->count(),
-                        'products' => \App\Models\Product::where('is_active', true)->count(),
+                        'brands' => Manufacturer::where('is_active', true)->count(),
+                        'products' => Product::where('is_active', true)->count(),
                     ]);
 
                     return 1;
@@ -227,7 +246,7 @@ class CacheMetricsService
                 'ttlMinutes' => fn () => (int) settings('performance.cache_ttl_manufacturers', 60),
                 'warm' => function (): int {
                     $this->cacheService->rememberAllActiveManufacturers(
-                        fn () => \App\Models\Manufacturer::where('is_active', true)->with('logo')->get()
+                        fn () => Manufacturer::where('is_active', true)->with('logo')->get()
                     );
 
                     return 1;
@@ -261,19 +280,19 @@ class CacheMetricsService
                 'ttlMinutes' => fn () => (int) settings('performance.cache_ttl_sections', 60),
                 'warm' => function (): int {
                     $this->cacheService->rememberBlogFeaturedPost(
-                        fn () => \App\Models\BlogPost::with('featuredImage')
+                        fn () => BlogPost::with('featuredImage')
                             ->published()
                             ->whereNotNull('featured_image_id')
                             ->orderBy('published_at', 'desc')
                             ->first()
                     );
                     $this->cacheService->rememberBlogCategories(
-                        fn () => \App\Models\Category::whereHas('blogPosts', fn ($q) => $q->published())
+                        fn () => Category::whereHas('blogPosts', fn ($q) => $q->published())
                             ->withCount(['blogPosts as blog_posts_count' => fn ($q) => $q->published()])
                             ->get()
                     );
                     $this->cacheService->rememberBlogTags(
-                        fn () => \App\Models\BlogTag::whereHas('posts', fn ($q) => $q->published())->get()
+                        fn () => BlogTag::whereHas('posts', fn ($q) => $q->published())->get()
                     );
 
                     return 3;
@@ -291,9 +310,9 @@ class CacheMetricsService
                 'patterns' => ['page.homepage_override'],
                 'ttlMinutes' => fn () => (int) settings('performance.cache_ttl_sections', 60),
                 'warm' => function (): int {
-                    $this->cacheService->rememberHomepagePageOverride(fn () => ['page' => \App\Models\Page::with('featuredImage')
+                    $this->cacheService->rememberHomepagePageOverride(fn () => ['page' => Page::with('featuredImage')
                         ->where('is_homepage', true)
-                        ->where('status', \App\Enums\ContentStatus::Published)
+                        ->where('status', ContentStatus::Published)
                         ->whereNotNull('published_at')
                         ->where('published_at', '<=', now())
                         ->first(),
@@ -333,7 +352,7 @@ class CacheMetricsService
         foreach ($this->categoryDefinitions() as $key => $def) {
             $count = 0;
             foreach ($def['patterns'] as $pattern) {
-                $count += count($this->scanAll($this->fullRawPrefix() . $pattern));
+                $count += count($this->scanAll($this->fullRawPrefix().$pattern));
             }
 
             $rows[] = [
@@ -359,7 +378,7 @@ class CacheMetricsService
     public function scanKeys(string $pattern, int $limit = 50): array
     {
         $pattern = trim($pattern) ?: '*';
-        $rawKeys = $this->scanAll($this->fullRawPrefix() . $pattern);
+        $rawKeys = $this->scanAll($this->fullRawPrefix().$pattern);
         $rawKeys = array_slice(array_unique($rawKeys), 0, $limit);
 
         $results = [];
@@ -368,7 +387,7 @@ class CacheMetricsService
 
             $results[] = [
                 'key' => $logicalKey,
-                'ttl' => Redis::connection('cache')->ttl($this->cacheLayerPrefix() . $logicalKey),
+                'ttl' => Redis::connection('cache')->ttl($this->cacheLayerPrefix().$logicalKey),
                 'sizeBytes' => $this->keySizeBytes($rawKey),
             ];
         }
@@ -378,7 +397,7 @@ class CacheMetricsService
 
     public function deleteKey(string $logicalKey): void
     {
-        Redis::connection('cache')->del($this->cacheLayerPrefix() . $logicalKey);
+        Redis::connection('cache')->del($this->cacheLayerPrefix().$logicalKey);
     }
 
     public function warmCategory(string $categoryKey, ?int $adminId = null): int
@@ -476,7 +495,7 @@ class CacheMetricsService
      */
     private function fullRawPrefix(): string
     {
-        return (string) config('database.redis.options.prefix') . (string) config('cache.prefix');
+        return (string) config('database.redis.options.prefix').(string) config('cache.prefix');
     }
 
     private function stripFullRawPrefix(string $rawKey): string
@@ -539,10 +558,10 @@ class CacheMetricsService
      */
     private function clearByPattern(string $logicalPattern): int
     {
-        $rawKeys = $this->scanAll($this->fullRawPrefix() . $logicalPattern);
+        $rawKeys = $this->scanAll($this->fullRawPrefix().$logicalPattern);
 
         foreach ($rawKeys as $rawKey) {
-            Redis::connection('cache')->del($this->cacheLayerPrefix() . $this->stripFullRawPrefix($rawKey));
+            Redis::connection('cache')->del($this->cacheLayerPrefix().$this->stripFullRawPrefix($rawKey));
         }
 
         return count($rawKeys);

@@ -3,13 +3,14 @@
 namespace App\Filament\Pages\Catalog;
 
 use App\Enums\InventoryChangeType;
+use App\Models\Admin;
 use App\Models\InventoryLog;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 
 class InventoryLogPage extends Page implements HasTable
 {
@@ -127,7 +128,7 @@ class InventoryLogPage extends Page implements HasTable
                     ->multiple(),
                 Tables\Filters\SelectFilter::make('admin_id')
                     ->label('Admin')
-                    ->options(fn () => \App\Models\Admin::pluck('name', 'id'))
+                    ->options(fn () => Admin::pluck('name', 'id'))
                     ->searchable(),
                 Tables\Filters\Filter::make('created_at')
                     ->label('Date Range')

@@ -20,7 +20,8 @@ class CrawlerVerificationServiceTest extends TestCase
      */
     private function serviceStubbingDns(string $reverseResult, array $forwardResults): CrawlerVerificationService
     {
-        return new class ($reverseResult, $forwardResults) extends CrawlerVerificationService {
+        return new class($reverseResult, $forwardResults) extends CrawlerVerificationService
+        {
             public function __construct(
                 private string $reverseResult,
                 private array $forwardResults,
@@ -99,7 +100,8 @@ class CrawlerVerificationServiceTest extends TestCase
     #[Test]
     public function dns_exception_during_lookup_resolves_to_false_never_throws(): void
     {
-        $service = new class extends CrawlerVerificationService {
+        $service = new class extends CrawlerVerificationService
+        {
             protected function reverseLookup(string $ip): string
             {
                 throw new \RuntimeException('DNS resolver unreachable');
@@ -116,7 +118,8 @@ class CrawlerVerificationServiceTest extends TestCase
         // crawler" — caching it for the same 12h TTL as a confirmed
         // negative would lock a real crawler's IP out of the bypass for
         // half a day over a one-off blip.
-        $failingService = new class extends CrawlerVerificationService {
+        $failingService = new class extends CrawlerVerificationService
+        {
             protected function reverseLookup(string $ip): string
             {
                 throw new \RuntimeException('DNS resolver unreachable');

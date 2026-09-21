@@ -28,6 +28,7 @@ class ProductOemContainsScopeTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void

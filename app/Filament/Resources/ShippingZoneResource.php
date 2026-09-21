@@ -91,31 +91,31 @@ class ShippingZoneResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->withCount(['countries', 'methods']))
             ->columns([
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.zone'))
-                ->searchable()
-                ->sortable()
-                ->weight(FontWeight::Medium)
-                ->description(fn (ShippingZone $record): string => "{$record->countries_count} countries · {$record->methods_count} methods"),
-            Tables\Columns\TextColumn::make('countries_count')
-                ->label(__('admin.countries'))
-                ->badge()
-                ->color('info')
-                ->icon('heroicon-o-globe-alt')
-                ->alignCenter(),
-            Tables\Columns\TextColumn::make('methods_count')
-                ->label(__('admin.methods'))
-                ->badge()
-                ->color('success')
-                ->icon('heroicon-o-truck')
-                ->alignCenter(),
-            Tables\Columns\TextColumn::make('is_active')
-                ->label(__('admin.active'))
-                ->badge()
-                ->alignCenter()
-                ->getStateUsing(fn (ShippingZone $record): string => $record->is_active ? 'Active' : 'Inactive')
-                ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
-                ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.zone'))
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->description(fn (ShippingZone $record): string => "{$record->countries_count} countries · {$record->methods_count} methods"),
+                Tables\Columns\TextColumn::make('countries_count')
+                    ->label(__('admin.countries'))
+                    ->badge()
+                    ->color('info')
+                    ->icon('heroicon-o-globe-alt')
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('methods_count')
+                    ->label(__('admin.methods'))
+                    ->badge()
+                    ->color('success')
+                    ->icon('heroicon-o-truck')
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('is_active')
+                    ->label(__('admin.active'))
+                    ->badge()
+                    ->alignCenter()
+                    ->getStateUsing(fn (ShippingZone $record): string => $record->is_active ? 'Active' : 'Inactive')
+                    ->color(fn (string $state): string => $state === 'Active' ? 'success' : 'gray')
+                    ->icon(fn (string $state): string => $state === 'Active' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle'),
                 Tables\Columns\TextColumn::make('sort_order')
                     ->label(__('admin.sort'))
                     ->fontMono()
@@ -168,18 +168,18 @@ class ShippingZoneResource extends Resource
                     ->columnSpan(2),
             ])
             ->actions(AdminUi::recordActions())
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Zones', [
-                    'name' => 'Zone',
-                    'countries_count' => 'Countries',
-                    'methods_count' => 'Methods',
-                    'is_active' => 'Active',
-                    'sort_order' => 'Sort Order',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Zones', [
+                        'name' => 'Zone',
+                        'countries_count' => 'Countries',
+                        'methods_count' => 'Methods',
+                        'is_active' => 'Active',
+                        'sort_order' => 'Sort Order',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ])
+            ])
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc')
             ->emptyStateIcon('heroicon-o-globe-alt')
@@ -205,10 +205,10 @@ class ShippingZoneResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListShippingZones::route('/'),
+            'index' => Pages\ListShippingZones::route('/'),
             'create' => Pages\CreateShippingZone::route('/create'),
-            'view'   => Pages\ViewShippingZone::route('/{record}'),
-            'edit'   => Pages\EditShippingZone::route('/{record}/edit'),
+            'view' => Pages\ViewShippingZone::route('/{record}'),
+            'edit' => Pages\EditShippingZone::route('/{record}/edit'),
         ];
     }
 

@@ -2,10 +2,33 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Widgets\AbandonedCartWidget;
+use App\Filament\Widgets\AwaitingConfirmationList;
+use App\Filament\Widgets\CacheStatusWidget;
 use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasPeriodFilterPills;
+use App\Filament\Widgets\CustomerGrowthChart;
+use App\Filament\Widgets\DashboardHeader;
+use App\Filament\Widgets\DiskSpaceWidget;
+use App\Filament\Widgets\FailedQueueJobsMonitor;
+use App\Filament\Widgets\HealthStrip;
+use App\Filament\Widgets\NewMessagesInbox;
+use App\Filament\Widgets\OrderStatsOverview;
+use App\Filament\Widgets\OrderStatusDistributionWidget;
+use App\Filament\Widgets\OrderVolumeChart;
+use App\Filament\Widgets\PartsInquiryWidget;
+use App\Filament\Widgets\RecentActivityLog;
+use App\Filament\Widgets\RefundsPendingList;
+use App\Filament\Widgets\RequestMetricsWidget;
+use App\Filament\Widgets\RevenueChart;
+use App\Filament\Widgets\StockAlertWidget;
 use App\Models\Admin;
 use App\Services\WidgetPreferenceService;
+use Carbon\CarbonInterface;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -22,8 +45,8 @@ class DashboardPeriodTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         $this->admin = Admin::factory()->create(['is_active' => true]);
@@ -87,10 +110,11 @@ class DashboardPeriodTest extends TestCase
     public function period_start_for_today_is_start_of_day_not_24h_back(): void
     {
         // Cannot redeclare the trait property — set after construction instead.
-        $widget = new class {
+        $widget = new class
+        {
             use HasDashboardPeriod;
 
-            public function getStart(): \Carbon\CarbonInterface
+            public function getStart(): CarbonInterface
             {
                 return $this->periodStart();
             }
@@ -111,10 +135,11 @@ class DashboardPeriodTest extends TestCase
     #[Test]
     public function period_start_for_seven_days_is_one_week_back(): void
     {
-        $widget = new class {
+        $widget = new class
+        {
             use HasDashboardPeriod;
 
-            public function getStart(): \Carbon\CarbonInterface
+            public function getStart(): CarbonInterface
             {
                 return $this->periodStart();
             }
@@ -131,26 +156,26 @@ class DashboardPeriodTest extends TestCase
     public function exempt_widgets_do_not_use_has_dashboard_period(): void
     {
         $exemptClasses = [
-            \App\Filament\Widgets\DashboardHeader::class,
-            \App\Filament\Widgets\HealthStrip::class,
-            \App\Filament\Widgets\StockAlertWidget::class,
-            \App\Filament\Widgets\RecentActivityLog::class,
-            \App\Filament\Widgets\DiskSpaceWidget::class,
-            \App\Filament\Widgets\RequestMetricsWidget::class,
-            \App\Filament\Widgets\AbandonedCartWidget::class,
-            \App\Filament\Widgets\PartsInquiryWidget::class,
-            \App\Filament\Widgets\AwaitingConfirmationList::class,
-            \App\Filament\Widgets\RefundsPendingList::class,
-            \App\Filament\Widgets\NewMessagesInbox::class,
-            \App\Filament\Widgets\FailedQueueJobsMonitor::class,
-            \App\Filament\Widgets\CacheStatusWidget::class,
+            DashboardHeader::class,
+            HealthStrip::class,
+            StockAlertWidget::class,
+            RecentActivityLog::class,
+            DiskSpaceWidget::class,
+            RequestMetricsWidget::class,
+            AbandonedCartWidget::class,
+            PartsInquiryWidget::class,
+            AwaitingConfirmationList::class,
+            RefundsPendingList::class,
+            NewMessagesInbox::class,
+            FailedQueueJobsMonitor::class,
+            CacheStatusWidget::class,
         ];
 
         foreach ($exemptClasses as $class) {
             $this->assertArrayNotHasKey(
                 HasDashboardPeriod::class,
                 class_uses_recursive($class),
-                class_basename($class) . ' must NOT use HasDashboardPeriod (registry period=false)',
+                class_basename($class).' must NOT use HasDashboardPeriod (registry period=false)',
             );
         }
     }
@@ -194,7 +219,7 @@ class DashboardPeriodTest extends TestCase
     #[Test]
     public function clicking_a_chart_pill_persists_the_period_and_broadcasts_it(): void
     {
-        \Livewire\Livewire::test(\App\Filament\Widgets\RevenueChart::class)
+        Livewire::test(RevenueChart::class)
             ->set('filter', '7')
             ->assertSet('period', '7')
             ->assertDispatched('period-changed', period: '7');
@@ -205,7 +230,7 @@ class DashboardPeriodTest extends TestCase
     #[Test]
     public function stat_widgets_follow_the_broadcast_period(): void
     {
-        \Livewire\Livewire::test(\App\Filament\Widgets\OrderStatsOverview::class)
+        Livewire::test(OrderStatsOverview::class)
             ->dispatch('period-changed', period: '90')
             ->assertSet('period', '90');
     }
@@ -213,7 +238,7 @@ class DashboardPeriodTest extends TestCase
     #[Test]
     public function other_charts_sync_their_pill_highlight_to_the_broadcast(): void
     {
-        \Livewire\Livewire::test(\App\Filament\Widgets\OrderVolumeChart::class)
+        Livewire::test(OrderVolumeChart::class)
             ->dispatch('period-changed', period: '365')
             ->assertSet('period', '365')
             ->assertSet('filter', '365');
@@ -224,7 +249,7 @@ class DashboardPeriodTest extends TestCase
     {
         $this->service->savePeriod('90');
 
-        \Livewire\Livewire::test(\App\Filament\Widgets\CustomerGrowthChart::class)
+        Livewire::test(CustomerGrowthChart::class)
             ->assertSet('filter', '90')
             ->assertSet('period', '90');
     }
@@ -233,13 +258,13 @@ class DashboardPeriodTest extends TestCase
     public function every_chart_with_pills_also_participates_in_the_global_period(): void
     {
         foreach ([
-            \App\Filament\Widgets\RevenueChart::class,
-            \App\Filament\Widgets\OrderVolumeChart::class,
-            \App\Filament\Widgets\OrderStatusDistributionWidget::class,
-            \App\Filament\Widgets\CustomerGrowthChart::class,
+            RevenueChart::class,
+            OrderVolumeChart::class,
+            OrderStatusDistributionWidget::class,
+            CustomerGrowthChart::class,
         ] as $class) {
             $uses = class_uses_recursive($class);
-            $this->assertArrayHasKey(\App\Filament\Widgets\Concerns\HasPeriodFilterPills::class, $uses, class_basename($class));
+            $this->assertArrayHasKey(HasPeriodFilterPills::class, $uses, class_basename($class));
             $this->assertArrayHasKey(HasDashboardPeriod::class, $uses, class_basename($class));
         }
     }

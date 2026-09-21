@@ -35,7 +35,7 @@ class HomeController extends Controller
         }
 
         $renderer = app(SectionRendererService::class);
-        $sections  = $renderer->getSections('homepage');
+        $sections = $renderer->getSections('homepage');
         $sectionData = $renderer->buildSectionData($sections);
 
         return view('frontend.home', compact('sections', 'sectionData'));

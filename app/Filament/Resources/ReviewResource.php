@@ -5,8 +5,9 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ReviewResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Review;
-use Filament\Forms;
+use App\Support\NavBadge;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -48,7 +49,7 @@ class ReviewResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('reviews_pending', fn () => static::getModel()::where('status', 'pending')->count());
+        return NavBadge::count('reviews_pending', fn () => static::getModel()::where('status', 'pending')->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -133,7 +134,7 @@ class ReviewResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('rating')
                     ->label('Rating')
-                    ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
+                    ->formatStateUsing(fn (int $state): string => str_repeat('★', $state).str_repeat('☆', 5 - $state))
                     ->color('warning')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('comment')

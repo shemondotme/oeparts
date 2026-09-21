@@ -9,10 +9,10 @@ use Database\Seeders\RolesSeeder;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\Test;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
-use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Regression coverage for the bug class this registry exists to prevent:
@@ -32,7 +32,7 @@ class SettingsRegistryTest extends TestCase
         $classes = [];
 
         foreach (Finder::create()->files()->in(app_path('Filament/Pages/Settings'))->name('*.php') as $file) {
-            $class = 'App\\Filament\\Pages\\Settings\\' . $file->getBasename('.php');
+            $class = 'App\\Filament\\Pages\\Settings\\'.$file->getBasename('.php');
 
             if (! class_exists($class)) {
                 continue;
@@ -65,7 +65,7 @@ class SettingsRegistryTest extends TestCase
             $onDisk,
             $registered,
             'A settings page exists on disk with no (or a duplicate) SettingsRegistry::PAGES entry — '
-            . 'it would be unreachable from /admin/settings with no error, the exact bug this registry prevents.'
+            .'it would be unreachable from /admin/settings with no error, the exact bug this registry prevents.'
         );
     }
 
@@ -91,7 +91,7 @@ class SettingsRegistryTest extends TestCase
                 // UiSettings unreachable.
                 $this->assertSame(
                     $page['url'],
-                    '/admin/settings/' . $page['class']::getSlug(),
+                    '/admin/settings/'.$page['class']::getSlug(),
                     "SettingsRegistry::PAGES['{$key}']['url'] does not match {$page['class']}::getSlug()."
                 );
             } else {
@@ -131,7 +131,7 @@ class SettingsRegistryTest extends TestCase
         $expected = collect(SettingsRegistry::PAGES)
             ->flatMap(fn (array $page) => empty($page['tabs'])
                 ? [$page['url']]
-                : collect($page['tabs'])->keys()->map(fn (int $i) => $page['url'] . '?tab=' . ($i + 1)))
+                : collect($page['tabs'])->keys()->map(fn (int $i) => $page['url'].'?tab='.($i + 1)))
             ->sort()
             ->values()
             ->all();

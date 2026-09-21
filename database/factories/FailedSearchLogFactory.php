@@ -18,11 +18,11 @@ class FailedSearchLogFactory extends Factory
         $query = fake()->word().' '.fake()->numerify('#####');
 
         return [
-            'search_query'      => $query,
-            'normalized_query'  => strtoupper(preg_replace('/[^A-Z0-9]/', '', $query)),
-            'lang'              => fake()->randomElement(['en', 'de']),
-            'user_id'           => null,
-            'ip_address'        => fake()->ipv4(),
+            'search_query' => $query,
+            'normalized_query' => strtoupper(preg_replace('/[^A-Z0-9]/', '', $query)),
+            'lang' => fake()->randomElement(['en', 'de']),
+            'user_id' => null,
+            'ip_address' => fake()->ipv4(),
             'inquiry_submitted' => false,
         ];
     }

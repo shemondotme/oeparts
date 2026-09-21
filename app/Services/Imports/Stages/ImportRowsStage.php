@@ -30,10 +30,10 @@ class ImportRowsStage implements ImportStage
     public function step(ProductImportRun $run, array $state): StageStepResult
     {
         $absolutePath = Storage::disk($run->disk)->path($run->path);
-        $headers      = (array) $run->getMetaValue('headers', []);
-        $headerCount  = count($headers);
+        $headers = (array) $run->getMetaValue('headers', []);
+        $headerCount = count($headers);
 
-        $offset    = (int) ($state['offset'] ?? $run->getMetaValue('data_start_offset', 0));
+        $offset = (int) ($state['offset'] ?? $run->getMetaValue('data_start_offset', 0));
         $rowNumber = (int) ($state['row_number'] ?? 1); // 1 = header row, matches legacy numbering
 
         $handle = fopen($absolutePath, 'r');
@@ -84,10 +84,10 @@ class ImportRowsStage implements ImportStage
         $offset = ftell($handle);
         fclose($handle);
 
-        $run->created_count   += $created;
-        $run->updated_count   += $updated;
-        $run->skipped_count   += $skipped;
-        $run->processed_rows  += $processedThisStep;
+        $run->created_count += $created;
+        $run->updated_count += $updated;
+        $run->skipped_count += $skipped;
+        $run->processed_rows += $processedThisStep;
         $run->save();
 
         if ($eof) {

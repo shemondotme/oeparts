@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\RefundRequest;
 use App\Services\AdminNotificationService;
 use Database\Seeders\RolesSeeder;
+use Illuminate\Contracts\Queue\Job;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Queue\Events\JobFailed;
@@ -174,31 +175,109 @@ class AdminNotificationsTest extends TestCase
 
     private function fakeJobFailedEvent(string $displayName, string $exceptionMessage): JobFailed
     {
-        $job = new class($displayName) implements \Illuminate\Contracts\Queue\Job {
+        $job = new class($displayName) implements Job
+        {
             public function __construct(private string $name) {}
-            public function uuid() { return 'fake-uuid'; }
-            public function getJobId() { return 'fake-id'; }
-            public function resolveName() { return $this->name; }
-            public function resolveQueuedJobClass() { return $this->name; }
-            public function payload() { return ['displayName' => $this->name]; }
+
+            public function uuid()
+            {
+                return 'fake-uuid';
+            }
+
+            public function getJobId()
+            {
+                return 'fake-id';
+            }
+
+            public function resolveName()
+            {
+                return $this->name;
+            }
+
+            public function resolveQueuedJobClass()
+            {
+                return $this->name;
+            }
+
+            public function payload()
+            {
+                return ['displayName' => $this->name];
+            }
+
             public function fire() {}
+
             public function release($delay = 0) {}
-            public function isReleased() { return false; }
+
+            public function isReleased()
+            {
+                return false;
+            }
+
             public function delete() {}
-            public function isDeleted() { return false; }
-            public function isDeletedOrReleased() { return false; }
-            public function attempts() { return 1; }
+
+            public function isDeleted()
+            {
+                return false;
+            }
+
+            public function isDeletedOrReleased()
+            {
+                return false;
+            }
+
+            public function attempts()
+            {
+                return 1;
+            }
+
             public function markAsFailed() {}
+
             public function fail($e = null) {}
-            public function maxTries() { return null; }
-            public function maxExceptions() { return null; }
-            public function timeout() { return null; }
-            public function retryUntil() { return null; }
-            public function getRawBody() { return ''; }
-            public function getConnectionName() { return 'redis'; }
-            public function getQueue() { return 'default'; }
-            public function getName() { return $this->name; }
-            public function hasFailed() { return true; }
+
+            public function maxTries()
+            {
+                return null;
+            }
+
+            public function maxExceptions()
+            {
+                return null;
+            }
+
+            public function timeout()
+            {
+                return null;
+            }
+
+            public function retryUntil()
+            {
+                return null;
+            }
+
+            public function getRawBody()
+            {
+                return '';
+            }
+
+            public function getConnectionName()
+            {
+                return 'redis';
+            }
+
+            public function getQueue()
+            {
+                return 'default';
+            }
+
+            public function getName()
+            {
+                return $this->name;
+            }
+
+            public function hasFailed()
+            {
+                return true;
+            }
         };
 
         return new JobFailed('redis', $job, new \Exception($exceptionMessage));

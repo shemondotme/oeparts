@@ -13,7 +13,7 @@ class OemNormalizerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->normalizer = new OemNormalizerService();
+        $this->normalizer = new OemNormalizerService;
     }
 
     #[Test]
@@ -77,7 +77,7 @@ class OemNormalizerTest extends TestCase
     public function normalize_is_idempotent(): void
     {
         $input = '06L-906-036-L';
-        $once  = $this->normalizer->normalize($input);
+        $once = $this->normalizer->normalize($input);
         $twice = $this->normalizer->normalize($once);
 
         $this->assertSame($once, $twice);

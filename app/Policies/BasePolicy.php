@@ -21,32 +21,32 @@ abstract class BasePolicy
 
     public function viewAny(Admin $admin): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('view ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('view '.$this->getKey());
     }
 
     public function view(Admin $admin, $record): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('view ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('view '.$this->getKey());
     }
 
     public function create(Admin $admin): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('create ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('create '.$this->getKey());
     }
 
     public function update(Admin $admin, $record): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('edit ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('edit '.$this->getKey());
     }
 
     public function delete(Admin $admin, $record): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('delete '.$this->getKey());
     }
 
     public function deleteAny(Admin $admin): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('delete '.$this->getKey());
     }
 
     /**
@@ -57,22 +57,22 @@ abstract class BasePolicy
      */
     public function restore(Admin $admin, $record): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('delete '.$this->getKey());
     }
 
     public function restoreAny(Admin $admin): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('delete '.$this->getKey());
     }
 
     public function forceDelete(Admin $admin, $record): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('delete '.$this->getKey());
     }
 
     public function forceDeleteAny(Admin $admin): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('delete ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('delete '.$this->getKey());
     }
 
     protected function getKey(): string

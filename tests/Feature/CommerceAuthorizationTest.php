@@ -4,15 +4,20 @@ namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
 use App\Filament\Resources\OrderResource\Pages\ListOrders;
 use App\Filament\Resources\OrderResource\Pages\ViewOrder;
+use App\Filament\Resources\RefundRequestResource;
+use App\Filament\Resources\RefundRequestResource\Pages\EditRefundRequest;
 use App\Filament\Resources\RefundRequestResource\Pages\ListRefundRequests;
+use App\Jobs\SendRefundStatusEmail;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\RefundRequest;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -28,7 +33,7 @@ class CommerceAuthorizationTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\RolesSeeder::class]);
+        $this->seed([RolesSeeder::class]);
     }
 
     private function adminWithRole(string $role): Admin
@@ -192,10 +197,10 @@ class CommerceAuthorizationTest extends TestCase
         // mounted (and passed ->visible()) against the earlier Pending row.
         $pending->update(['status' => RefundStatus::Approved]);
 
-        $action = \App\Filament\Resources\RefundRequestResource::approveAction();
+        $action = RefundRequestResource::approveAction();
         app()->call($action->getActionFunction(), ['record' => $pending]);
 
-        Queue::assertNotPushed(\App\Jobs\SendRefundStatusEmail::class);
+        Queue::assertNotPushed(SendRefundStatusEmail::class);
         $this->assertSame(RefundStatus::Approved, $pending->fresh()->status);
     }
 
@@ -225,7 +230,7 @@ class CommerceAuthorizationTest extends TestCase
 
         $pending = RefundRequest::factory()->create(['status' => RefundStatus::Pending, 'processed_at' => null]);
 
-        Livewire::test(\App\Filament\Resources\RefundRequestResource\Pages\EditRefundRequest::class, ['record' => $pending->id])
+        Livewire::test(EditRefundRequest::class, ['record' => $pending->id])
             ->assertFormFieldIsDisabled('status')
             ->fillForm(['status' => RefundStatus::Processed->value])
             ->call('save')
@@ -278,7 +283,7 @@ class CommerceAuthorizationTest extends TestCase
 
         $bankOrder = Order::factory()->create([
             'status' => OrderStatus::Pending,
-            'payment_method' => \App\Enums\PaymentMethod::BankTransfer,
+            'payment_method' => PaymentMethod::BankTransfer,
             'payment_status' => PaymentStatus::Pending,
         ]);
         Payment::factory()->create([
@@ -332,7 +337,7 @@ class CommerceAuthorizationTest extends TestCase
             'status' => OrderStatus::Pending,
             'urgent_processing' => false,
             'invoice_number' => null,
-            'payment_method' => \App\Enums\PaymentMethod::BankTransfer,
+            'payment_method' => PaymentMethod::BankTransfer,
             'payment_status' => PaymentStatus::Pending,
         ]);
         Payment::factory()->create([
@@ -365,7 +370,7 @@ class CommerceAuthorizationTest extends TestCase
             'status' => OrderStatus::Pending,
             'urgent_processing' => false,
             'invoice_number' => null,
-            'payment_method' => \App\Enums\PaymentMethod::BankTransfer,
+            'payment_method' => PaymentMethod::BankTransfer,
             'payment_status' => PaymentStatus::Pending,
         ]);
         Payment::factory()->create([

@@ -7,5 +7,6 @@ namespace App\Policies;
 class LoginLogPolicy extends LogPolicy
 {
     protected string $model = 'login_logs';
+
     protected ?string $permissionKey = 'login logs';
 }

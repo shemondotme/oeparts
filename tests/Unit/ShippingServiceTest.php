@@ -16,8 +16,11 @@ class ShippingServiceTest extends TestCase
     use RefreshDatabase;
 
     private ShippingService $service;
+
     private ShippingZone $zone;
+
     private ShippingMethod $standardMethod;
+
     private ShippingMethod $premiumMethod;
 
     protected function setUp(): void
@@ -28,31 +31,31 @@ class ShippingServiceTest extends TestCase
         $this->zone = ShippingZone::factory()->create(['name' => 'Western Europe', 'is_active' => true, 'sort_order' => 1]);
 
         ShippingCountry::create([
-            'zone_id'      => $this->zone->id,
+            'zone_id' => $this->zone->id,
             'country_code' => 'DE',
             'country_name' => 'Germany',
         ]);
 
         $this->standardMethod = ShippingMethod::create([
-            'zone_id'                  => $this->zone->id,
-            'name'                     => json_encode(['en' => 'Standard Shipping']),
-            'flat_rate'                => '9.90',
-            'free_shipping_threshold'  => '100.00',
-            'estimated_days_min'       => 3,
-            'estimated_days_max'       => 5,
-            'is_active'                => true,
-            'sort_order'               => 1,
+            'zone_id' => $this->zone->id,
+            'name' => json_encode(['en' => 'Standard Shipping']),
+            'flat_rate' => '9.90',
+            'free_shipping_threshold' => '100.00',
+            'estimated_days_min' => 3,
+            'estimated_days_max' => 5,
+            'is_active' => true,
+            'sort_order' => 1,
         ]);
 
         $this->premiumMethod = ShippingMethod::create([
-            'zone_id'                 => $this->zone->id,
-            'name'                    => json_encode(['en' => 'Express Shipping']),
-            'flat_rate'               => '19.90',
+            'zone_id' => $this->zone->id,
+            'name' => json_encode(['en' => 'Express Shipping']),
+            'flat_rate' => '19.90',
             'free_shipping_threshold' => null,
-            'estimated_days_min'      => 1,
-            'estimated_days_max'      => 2,
-            'is_active'               => true,
-            'sort_order'              => 2,
+            'estimated_days_min' => 1,
+            'estimated_days_max' => 2,
+            'is_active' => true,
+            'sort_order' => 2,
         ]);
     }
 

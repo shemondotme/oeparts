@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\TranslationResource\Pages;
 
 use App\Filament\Concerns\DisablesCreateAnother;
-
 use App\Filament\Resources\TranslationResource;
 use Filament\Resources\Pages\CreateRecord;
 

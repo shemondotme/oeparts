@@ -23,6 +23,7 @@ class CleanExpiredCarts extends Command
 
         if ($expiredCartIds->isEmpty()) {
             $this->info('No expired carts found.');
+
             return Command::SUCCESS;
         }
 

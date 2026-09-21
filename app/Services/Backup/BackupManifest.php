@@ -32,32 +32,32 @@ class BackupManifest
         $run->loadMissing('parts');
 
         return [
-            'schema'      => self::SCHEMA_VERSION,
-            'run_id'      => (int) $run->getKey(),
-            'profile'     => $run->profile,
-            'trigger'     => $run->trigger,
+            'schema' => self::SCHEMA_VERSION,
+            'run_id' => (int) $run->getKey(),
+            'profile' => $run->profile,
+            'trigger' => $run->trigger,
             'app_version' => $run->app_version,
             'php_version' => $run->php_version,
-            'db_version'  => $run->db_version,
-            'disk'        => $run->disk,
-            'encrypted'   => (bool) $run->encrypted,
-            'cipher'      => (string) config('backup.encryption.cipher', 'aes-256-gcm'),
+            'db_version' => $run->db_version,
+            'disk' => $run->disk,
+            'encrypted' => (bool) $run->encrypted,
+            'cipher' => (string) config('backup.encryption.cipher', 'aes-256-gcm'),
             'compression' => (string) config('backup.compression', 'gzip'),
-            'created_at'  => optional($run->started_at)->toIso8601String(),
-            'part_count'  => (int) $run->part_count,
+            'created_at' => optional($run->started_at)->toIso8601String(),
+            'part_count' => (int) $run->part_count,
             'total_bytes' => (int) $run->total_bytes,
-            'parts'       => $run->parts
+            'parts' => $run->parts
                 ->sortBy([['type', 'asc'], ['sequence', 'asc']])
                 ->map(fn ($p) => [
-                    'type'     => $p->type,
+                    'type' => $p->type,
                     'sequence' => (int) $p->sequence,
-                    'name'     => $p->name,
-                    'disk'     => $p->disk,
-                    'path'     => $p->path,
-                    'sha256'   => $p->sha256,
-                    'bytes'    => (int) $p->bytes,
-                    'rows'     => $p->rows,
-                    'meta'     => $p->meta,
+                    'name' => $p->name,
+                    'disk' => $p->disk,
+                    'path' => $p->path,
+                    'sha256' => $p->sha256,
+                    'bytes' => (int) $p->bytes,
+                    'rows' => $p->rows,
+                    'meta' => $p->meta,
                 ])
                 ->values()
                 ->all(),

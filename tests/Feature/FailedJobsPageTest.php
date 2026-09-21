@@ -5,10 +5,13 @@ namespace Tests\Feature;
 use App\Filament\Pages\System\FailedJobsPage;
 use App\Models\Admin;
 use App\Models\FailedJob;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -22,8 +25,8 @@ class FailedJobsPageTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         Filament::setCurrentPanel(Filament::getPanel('admin'));
@@ -40,7 +43,7 @@ class FailedJobsPageTest extends TestCase
     private function makeFailedJob(string $jobClass, string $exception, string $queue = 'default'): FailedJob
     {
         return FailedJob::create([
-            'uuid' => (string) \Illuminate\Support\Str::uuid(),
+            'uuid' => (string) Str::uuid(),
             'connection' => 'redis',
             'queue' => $queue,
             'payload' => json_encode([
@@ -92,7 +95,7 @@ class FailedJobsPageTest extends TestCase
         $this->makeFailedJob('App\\Jobs\\ProcessOrderWebhook', 'Call to a member function items() on null');
         $this->actingAs($this->adminWithRole('super_admin'), 'admin');
 
-        $page = new FailedJobsPage();
+        $page = new FailedJobsPage;
         $summary = $page->getFailedJobsSummary();
 
         $this->assertSame(3, $summary['total']);

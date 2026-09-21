@@ -2,11 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\CategoryResource;
+use App\Filament\Resources\CategoryResource\Pages\EditCategory;
+use App\Filament\Resources\CategoryResource\Pages\ViewCategory;
+use App\Filament\Resources\ConditionResource\Pages\CreateCondition;
+use App\Filament\Resources\ManufacturerResource;
+use App\Filament\Resources\ManufacturerResource\Pages\CreateManufacturer;
+use App\Filament\Resources\ManufacturerResource\Pages\EditManufacturer;
+use App\Filament\Resources\ManufacturerResource\Pages\ViewManufacturer;
+use App\Filament\Resources\ProductResource\Pages\ViewProduct;
 use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
@@ -26,10 +39,10 @@ class CatalogViewPagesTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');
@@ -44,7 +57,7 @@ class CatalogViewPagesTest extends TestCase
         ]);
         $product = Product::factory()->create(['condition_id' => $condition->id]);
 
-        Livewire::test(\App\Filament\Resources\ProductResource\Pages\ViewProduct::class, ['record' => $product->id])
+        Livewire::test(ViewProduct::class, ['record' => $product->id])
             ->assertOk();
     }
 
@@ -52,9 +65,9 @@ class CatalogViewPagesTest extends TestCase
     {
         $manufacturer = Manufacturer::factory()->create(['name' => ['en' => 'Bosch', 'de' => 'Bosch GmbH']]);
 
-        Livewire::test(\App\Filament\Resources\ManufacturerResource\Pages\ViewManufacturer::class, ['record' => $manufacturer->id])
+        Livewire::test(ViewManufacturer::class, ['record' => $manufacturer->id])
             ->assertOk();
-        Livewire::test(\App\Filament\Resources\ManufacturerResource\Pages\EditManufacturer::class, ['record' => $manufacturer->id])
+        Livewire::test(EditManufacturer::class, ['record' => $manufacturer->id])
             ->assertOk();
     }
 
@@ -66,9 +79,9 @@ class CatalogViewPagesTest extends TestCase
             'sort_order' => 0,
         ]);
 
-        Livewire::test(\App\Filament\Resources\CategoryResource\Pages\ViewCategory::class, ['record' => $category->id])
+        Livewire::test(ViewCategory::class, ['record' => $category->id])
             ->assertOk();
-        Livewire::test(\App\Filament\Resources\CategoryResource\Pages\EditCategory::class, ['record' => $category->id])
+        Livewire::test(EditCategory::class, ['record' => $category->id])
             ->assertOk();
     }
 
@@ -77,8 +90,8 @@ class CatalogViewPagesTest extends TestCase
         $manufacturer = Manufacturer::factory()->create(['name' => ['en' => 'Bosch']]);
         $category = Category::create(['name' => ['en' => 'Brakes'], 'slug' => 'brakes', 'sort_order' => 0]);
 
-        $this->assertSame('Bosch', \App\Filament\Resources\ManufacturerResource::getRecordTitle($manufacturer));
-        $this->assertSame('Brakes', \App\Filament\Resources\CategoryResource::getRecordTitle($category));
+        $this->assertSame('Bosch', ManufacturerResource::getRecordTitle($manufacturer));
+        $this->assertSame('Brakes', CategoryResource::getRecordTitle($category));
     }
 
     public function test_stock_and_visibility_changes_invalidate_homepage_cache(): void
@@ -108,7 +121,7 @@ class CatalogViewPagesTest extends TestCase
      */
     public function test_condition_name_field_auto_slug_does_not_throw(): void
     {
-        Livewire::test(\App\Filament\Resources\ConditionResource\Pages\CreateCondition::class)
+        Livewire::test(CreateCondition::class)
             ->fillForm(['name' => 'Refurbished'])
             ->assertHasNoErrors();
     }
@@ -121,7 +134,7 @@ class CatalogViewPagesTest extends TestCase
      */
     public function test_manufacturer_create_without_country_shows_validation_error_not_a_500(): void
     {
-        Livewire::test(\App\Filament\Resources\ManufacturerResource\Pages\CreateManufacturer::class)
+        Livewire::test(CreateManufacturer::class)
             ->fillForm(['name' => ['en' => 'Test Brand'], 'slug' => 'test-brand'])
             ->call('create')
             ->assertHasFormErrors(['country_code' => 'required']);

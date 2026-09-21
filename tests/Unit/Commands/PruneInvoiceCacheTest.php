@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Commands;
 
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
@@ -14,7 +15,7 @@ class PruneInvoiceCacheTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([\Database\Seeders\SettingsSeeder::class]);
+        $this->seed([SettingsSeeder::class]);
         Storage::fake('local');
     }
 

@@ -4,26 +4,26 @@ namespace App\Filament\Resources;
 
 use App\Enums\ContentStatus;
 use App\Filament\Resources\BlogPostResource\Pages;
-use App\Filament\Resources\BlogPostResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Models\BlogPost;
+use App\Models\BlogTag;
 use App\Models\Category;
-use Filament\Forms;
 use Filament\Actions;
-use Filament\Actions\BulkAction;
+use Filament\Forms;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Section;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Support\Enums\FontWeight;
+use Illuminate\Support\Str;
 
 class BlogPostResource extends Resource
 {
@@ -31,7 +31,7 @@ class BlogPostResource extends Resource
 
     protected static ?string $recordTitleAttribute = null;
 
-    public static function getRecordTitle(?Model $record): string|null
+    public static function getRecordTitle(?Model $record): ?string
     {
         return $record ? AdminUi::localizedName($record->title, 'Blog Post') : null;
     }
@@ -92,14 +92,14 @@ class BlogPostResource extends Resource
                                                     ->required()
                                                     ->maxLength(100)
                                                     ->live(onBlur: true)
-                                                    ->afterStateUpdated(fn ($state, callable $set) => filled($state) ? $set('slug', \Illuminate\Support\Str::slug($state)) : null),
+                                                    ->afterStateUpdated(fn ($state, callable $set) => filled($state) ? $set('slug', Str::slug($state)) : null),
                                                 Forms\Components\TextInput::make('slug')
                                                     ->required()
                                                     ->maxLength(200)
                                                     ->unique(table: 'blog_tags')
                                                     ->helperText('Auto-filled from the name.'),
                                             ])
-                                            ->createOptionUsing(fn (array $data): int => \App\Models\BlogTag::create([
+                                            ->createOptionUsing(fn (array $data): int => BlogTag::create([
                                                 'name' => ['en' => $data['name']],
                                                 'slug' => $data['slug'],
                                             ])->id)
@@ -263,37 +263,37 @@ class BlogPostResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with(['category', 'author']))
             ->columns([
-            Tables\Columns\TextColumn::make('title')
-                ->label(__('admin.title'))
-                ->getStateUsing(fn (BlogPost $record): string => AdminUi::localizedName($record->title))
-                ->searchable(query: function (Builder $query, string $search): Builder {
-                    return $query->where(function ($q) use ($search) {
-                        foreach (array_keys(AdminUi::LOCALES) as $code) {
-                            $q->orWhere("title->{$code}", 'like', "%{$search}%");
-                        }
-                    });
-                })
-                ->sortable()
-                ->weight(FontWeight::Medium)
-                ->limit(40),
-            Tables\Columns\TextColumn::make('category.name')
-                ->label(__('admin.category'))
-                ->getStateUsing(fn (BlogPost $record): string => $record->category ? AdminUi::localizedName($record->category->name) : '—')
-                ->badge()
-                ->color('gray')
-                ->limit(20),
-            Tables\Columns\TextColumn::make('author.name')
-                ->label(__('admin.author'))
-                ->toggleable(),
-            Tables\Columns\TextColumn::make('status')
-                ->label(__('admin.status'))
-                ->badge()
-                ->color(fn (ContentStatus $state): string => match ($state) {
-                    ContentStatus::Published => 'success',
-                    ContentStatus::Draft => 'warning',
-                    ContentStatus::Archived => 'danger',
-                    default => 'gray',
-                }),
+                Tables\Columns\TextColumn::make('title')
+                    ->label(__('admin.title'))
+                    ->getStateUsing(fn (BlogPost $record): string => AdminUi::localizedName($record->title))
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function ($q) use ($search) {
+                            foreach (array_keys(AdminUi::LOCALES) as $code) {
+                                $q->orWhere("title->{$code}", 'like', "%{$search}%");
+                            }
+                        });
+                    })
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->limit(40),
+                Tables\Columns\TextColumn::make('category.name')
+                    ->label(__('admin.category'))
+                    ->getStateUsing(fn (BlogPost $record): string => $record->category ? AdminUi::localizedName($record->category->name) : '—')
+                    ->badge()
+                    ->color('gray')
+                    ->limit(20),
+                Tables\Columns\TextColumn::make('author.name')
+                    ->label(__('admin.author'))
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('admin.status'))
+                    ->badge()
+                    ->color(fn (ContentStatus $state): string => match ($state) {
+                        ContentStatus::Published => 'success',
+                        ContentStatus::Draft => 'warning',
+                        ContentStatus::Archived => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('published_at')
                     ->dateTime('M j, Y H:i')
                     ->sortable(),
@@ -352,8 +352,8 @@ class BlogPostResource extends Resource
                     ->requiresConfirmation()
                     ->modalHeading(fn (BlogPost $record): string => $record->status === ContentStatus::Published ? 'Unpublish Post' : 'Publish Post')
                     ->modalDescription(fn (BlogPost $record): string => $record->status === ContentStatus::Published
-                        ? 'Unpublish "' . ($record->title['en'] ?? '') . '"? It will revert to draft.'
-                        : 'Publish "' . ($record->title['en'] ?? '') . '"? It will become visible on the storefront.')
+                        ? 'Unpublish "'.($record->title['en'] ?? '').'"? It will revert to draft.'
+                        : 'Publish "'.($record->title['en'] ?? '').'"? It will become visible on the storefront.')
                     ->action(function (BlogPost $record) {
                         $newStatus = $record->status === ContentStatus::Published
                             ? ContentStatus::Draft
@@ -407,7 +407,7 @@ class BlogPostResource extends Resource
                             });
 
                             Notification::make()
-                                ->title($records->count() . ' posts published')
+                                ->title($records->count().' posts published')
                                 ->success()
                                 ->send();
                         },
@@ -430,7 +430,7 @@ class BlogPostResource extends Resource
                             });
 
                             Notification::make()
-                                ->title($records->count() . ' posts unpublished')
+                                ->title($records->count().' posts unpublished')
                                 ->success()
                                 ->send();
                         },
@@ -482,4 +482,3 @@ class BlogPostResource extends Resource
         return ['title', 'slug', 'excerpt'];
     }
 }
-

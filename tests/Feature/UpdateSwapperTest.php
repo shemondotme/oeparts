@@ -20,18 +20,21 @@ class UpdateSwapperTest extends TestCase
     use RefreshDatabase;
 
     private string $base;
+
     private string $root;
+
     private string $staging;
+
     private string $state;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->base    = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-swap-'.getmypid();
-        $this->root    = $this->base.'/root';
+        $this->base = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-swap-'.getmypid();
+        $this->root = $this->base.'/root';
         $this->staging = $this->base.'/staging';
-        $this->state   = $this->base.'/state';
+        $this->state = $this->base.'/state';
 
         // Live "install".
         $this->writeFile($this->root.'/app/OldClass.php', '<?php // old');
@@ -50,7 +53,7 @@ class UpdateSwapperTest extends TestCase
         $this->writeFile($this->staging.'/public/build/manifest.json', 'new-build');
 
         config([
-            'updates.root_path'  => $this->root,
+            'updates.root_path' => $this->root,
             'updates.state_path' => $this->state,
             'updates.core_paths' => ['app', 'config', 'composer.json', 'version.json', 'public/build'],
         ]);

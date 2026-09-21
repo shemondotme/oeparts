@@ -5,9 +5,8 @@ namespace App\Filament\Resources\BlogPostResource\Pages;
 use App\Filament\Resources\BlogPostResource;
 use App\Filament\Support\AdminUi;
 use Filament\Actions\EditAction;
-use Filament\Infolists;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -93,9 +92,9 @@ class ViewBlogPost extends ViewRecord
                                             ->badge()
                                             ->color(fn ($state): string => match ($state->value) {
                                                 'published' => 'success',
-                                                'draft'     => 'warning',
-                                                'archived'  => 'danger',
-                                                default     => 'gray',
+                                                'draft' => 'warning',
+                                                'archived' => 'danger',
+                                                default => 'gray',
                                             })
                                             ->formatStateUsing(fn ($state): string => ucfirst($state->value)),
                                         TextEntry::make('published_at')
@@ -123,4 +122,3 @@ class ViewBlogPost extends ViewRecord
             ]);
     }
 }
-

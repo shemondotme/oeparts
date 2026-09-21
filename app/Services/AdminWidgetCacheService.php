@@ -20,7 +20,9 @@ use Illuminate\Support\Facades\DB;
 final class AdminWidgetCacheService
 {
     public const TAG_DASHBOARD = 'admin.dashboard';
+
     public const TAG_HEALTH = 'admin.health';
+
     public const TAG_NAV = 'admin.nav';
 
     /** Default TTL: 60 seconds — most widget data is fine to be 1 min stale */
@@ -40,7 +42,7 @@ final class AdminWidgetCacheService
 
     public static function dashboard(string $key, callable $callback, int $ttl = self::DEFAULT_TTL): mixed
     {
-        $cacheKey = 'admin:dashboard:' . $key;
+        $cacheKey = 'admin:dashboard:'.$key;
 
         if (self::shouldSkipCache()) {
             return $callback();
@@ -51,7 +53,7 @@ final class AdminWidgetCacheService
 
     public static function health(string $key, callable $callback, int $ttl = self::SHORT_TTL): mixed
     {
-        $cacheKey = 'admin:health:' . $key;
+        $cacheKey = 'admin:health:'.$key;
 
         if (self::shouldSkipCache()) {
             return $callback();
@@ -63,8 +65,8 @@ final class AdminWidgetCacheService
     public static function forget(string $key): void
     {
         if (! self::shouldSkipCache()) {
-            Cache::forget('admin:dashboard:' . $key);
-            Cache::forget('admin:health:' . $key);
+            Cache::forget('admin:dashboard:'.$key);
+            Cache::forget('admin:health:'.$key);
         }
     }
 
@@ -94,6 +96,7 @@ final class AdminWidgetCacheService
         } catch (\Throwable) {
             return -1;
         }
+
         return (int) round((microtime(true) - $start) * 1000);
     }
 }

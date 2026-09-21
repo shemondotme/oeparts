@@ -16,8 +16,8 @@ class AbandonedCart extends Model
     ];
 
     protected $casts = [
-        'cart_snapshot'       => 'array',
-        'last_active_at'      => 'datetime',
+        'cart_snapshot' => 'array',
+        'last_active_at' => 'datetime',
         'recovery_email_sent' => 'boolean',
     ];
 

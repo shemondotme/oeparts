@@ -7,12 +7,13 @@ use App\Filament\Resources\CustomerResource\Pages;
 use App\Filament\Resources\CustomerResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Models\ActivityLog;
+use App\Models\Order;
 use App\Models\User;
 use App\Services\GdprExportService;
-use Filament\Forms;
-use Filament\Actions\Action as NotificationAction;
-use Filament\Notifications\Notification;
 use Filament\Actions;
+use Filament\Actions\Action as NotificationAction;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -22,6 +23,8 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Response;
 
 class CustomerResource extends Resource
@@ -199,7 +202,7 @@ class CustomerResource extends Resource
                     ->label(__('admin.last_order'))
                     ->getStateUsing(fn (User $record): ?string => $record->orders->first()?->created_at?->diffForHumans())
                     ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderBy(
-                        \App\Models\Order::select('created_at')
+                        Order::select('created_at')
                             ->whereColumn('user_id', 'users.id')
                             ->latest()
                             ->limit(1),
@@ -273,7 +276,7 @@ class CustomerResource extends Resource
             ])
             ->filtersFormColumns(2)
             ->actions(AdminUi::recordActions(after: [
-                Actions\Action::make('sendPasswordReset')
+                NotificationAction::make('sendPasswordReset')
                     ->label(__('admin.send_password_reset'))
                     ->icon('heroicon-o-key')
                     ->authorize('update')
@@ -281,9 +284,9 @@ class CustomerResource extends Resource
                     ->modalHeading('Send Password Reset Link')
                     ->modalDescription(fn (User $record): string => "Email a secure password-reset link to {$record->email}. The customer chooses their own new password — nobody else ever sees it.")
                     ->action(function (User $record): void {
-                        $status = \Illuminate\Support\Facades\Password::broker()->sendResetLink(['email' => $record->email]);
+                        $status = Password::broker()->sendResetLink(['email' => $record->email]);
 
-                        if ($status === \Illuminate\Support\Facades\Password::RESET_LINK_SENT) {
+                        if ($status === Password::RESET_LINK_SENT) {
                             Notification::make()
                                 ->title('Reset link sent')
                                 ->body("A password-reset email is on its way to {$record->email}.")
@@ -297,14 +300,14 @@ class CustomerResource extends Resource
                                 ->send();
                         }
                     }),
-                Actions\Action::make('sendEmail')
+                NotificationAction::make('sendEmail')
                     ->label(__('admin.send_email'))
                     ->icon('heroicon-o-envelope')
                     ->color('info')
                     ->authorize('update')
                     ->url(fn (User $record): string => "mailto:{$record->email}")
                     ->openUrlInNewTab(),
-                Actions\Action::make('exportGdprData')
+                NotificationAction::make('exportGdprData')
                     ->label(__('admin.export_data_gdpr'))
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('gray')
@@ -322,15 +325,15 @@ class CustomerResource extends Resource
                             'ip_address' => request()->ip(),
                         ]);
 
-                        $filename = "gdpr-export-{$record->id}-" . now()->format('Y-m-d-His') . '.json';
+                        $filename = "gdpr-export-{$record->id}-".now()->format('Y-m-d-His').'.json';
 
                         return Response::streamDownload(
-                            fn () => print(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)),
+                            fn () => print (json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)),
                             $filename,
                             ['Content-Type' => 'application/json']
                         );
                     }),
-                Actions\Action::make('toggleActive')
+                NotificationAction::make('toggleActive')
                     ->label(fn (User $record): string => $record->is_active ? 'Deactivate' : 'Activate')
                     ->icon(fn (User $record): string => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
                     ->color(fn (User $record): string => $record->is_active ? 'danger' : 'success')
@@ -389,10 +392,10 @@ class CustomerResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListCustomers::route('/'),
+            'index' => Pages\ListCustomers::route('/'),
             'create' => Pages\CreateCustomer::route('/create'),
-            'view'   => Pages\ViewCustomer::route('/{record}'),
-            'edit'   => Pages\EditCustomer::route('/{record}/edit'),
+            'view' => Pages\ViewCustomer::route('/{record}'),
+            'edit' => Pages\EditCustomer::route('/{record}/edit'),
         ];
     }
 
@@ -401,7 +404,7 @@ class CustomerResource extends Resource
         return ['name', 'email', 'phone'];
     }
 
-    public static function getGlobalSearchResultDetails(\Illuminate\Database\Eloquent\Model $record): array
+    public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
             'Email' => $record->email,

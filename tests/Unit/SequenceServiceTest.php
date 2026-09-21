@@ -18,26 +18,26 @@ class SequenceServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new SequenceService();
+        $this->service = new SequenceService;
 
         Sequence::create([
-            'type'             => SequenceType::Order,
-            'current_value'    => 0,
-            'resets_monthly'   => true,
+            'type' => SequenceType::Order,
+            'current_value' => 0,
+            'resets_monthly' => true,
             'last_reset_month' => now()->format('Y-m'),
         ]);
 
         Sequence::create([
-            'type'             => SequenceType::Invoice,
-            'current_value'    => 0,
-            'resets_monthly'   => true,
+            'type' => SequenceType::Invoice,
+            'current_value' => 0,
+            'resets_monthly' => true,
             'last_reset_month' => now()->format('Y-m'),
         ]);
 
         Sequence::create([
-            'type'             => SequenceType::Rma,
-            'current_value'    => 0,
-            'resets_monthly'   => false,
+            'type' => SequenceType::Rma,
+            'current_value' => 0,
+            'resets_monthly' => false,
             'last_reset_month' => null,
         ]);
     }
@@ -46,7 +46,7 @@ class SequenceServiceTest extends TestCase
     public function order_number_starts_at_000001(): void
     {
         $number = $this->service->nextOrderNumber();
-        $month  = now()->format('Ym');
+        $month = now()->format('Ym');
 
         $this->assertSame("ORD-{$month}-000001", $number);
     }
@@ -54,9 +54,9 @@ class SequenceServiceTest extends TestCase
     #[Test]
     public function order_number_increments_sequentially(): void
     {
-        $first  = $this->service->nextOrderNumber();
+        $first = $this->service->nextOrderNumber();
         $second = $this->service->nextOrderNumber();
-        $third  = $this->service->nextOrderNumber();
+        $third = $this->service->nextOrderNumber();
 
         $month = now()->format('Ym');
         $this->assertSame("ORD-{$month}-000001", $first);
@@ -68,7 +68,7 @@ class SequenceServiceTest extends TestCase
     public function invoice_number_uses_inv_prefix(): void
     {
         $number = $this->service->nextInvoiceNumber();
-        $month  = now()->format('Ym');
+        $month = now()->format('Ym');
 
         $this->assertSame("INV-{$month}-000001", $number);
     }
@@ -90,12 +90,12 @@ class SequenceServiceTest extends TestCase
     public function order_resets_when_month_changes(): void
     {
         Sequence::where('type', SequenceType::Order)->update([
-            'current_value'    => 42,
+            'current_value' => 42,
             'last_reset_month' => '2020-01',
         ]);
 
         $number = $this->service->nextOrderNumber();
-        $month  = now()->format('Ym');
+        $month = now()->format('Ym');
 
         $this->assertSame("ORD-{$month}-000001", $number);
 

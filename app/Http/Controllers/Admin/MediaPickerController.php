@@ -38,7 +38,7 @@ class MediaPickerController extends Controller
             return response()->json(['success' => false, 'errors' => ['file' => [$e->getMessage()]]], 422);
         }
 
-        $path = $file->store('media/' . now()->format('Y/m'), 'public');
+        $path = $file->store('media/'.now()->format('Y/m'), 'public');
         $sanitizer->sanitize('public', $path, $file->getMimeType());
         $optimized = $optimizer->optimize('public', $path, $file->getMimeType());
 
@@ -72,7 +72,7 @@ class MediaPickerController extends Controller
             $search = str_replace(['%', '_'], ['\%', '\_'], $search);
             $query->where(function ($q) use ($search) {
                 $q->where('file_name', 'like', "%{$search}%")
-                  ->orWhere('alt_text', 'like', "%{$search}%");
+                    ->orWhere('alt_text', 'like', "%{$search}%");
             });
         }
 
@@ -88,7 +88,7 @@ class MediaPickerController extends Controller
     public function destroy(MediaFile $media): JsonResponse
     {
         $admin = Auth::guard('admin')->user();
-        if (!$admin || $admin->cannot('delete media files')) {
+        if (! $admin || $admin->cannot('delete media files')) {
             return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
         }
 

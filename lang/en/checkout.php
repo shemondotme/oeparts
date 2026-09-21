@@ -195,7 +195,7 @@ return [
     'payment_status_failed' => 'Failed',
     'payment_status_refunded' => 'Refunded',
     'order_total_currency_label' => 'Order total · :currency',
-    'whats_next_heading' => "What happens next · Protocol",
+    'whats_next_heading' => 'What happens next · Protocol',
     'three_steps' => '03 steps',
     'next_step_1_title' => 'Confirmation email',
     'next_step_1_desc' => 'Check your inbox for detailed order confirmation and receipt.',

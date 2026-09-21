@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Settings\AppearanceSettings;
+use App\Filament\Pages\Settings\CustomizationSettings;
+use App\Filament\Pages\Settings\PerformanceSettings;
+use App\Filament\Pages\Settings\SecurityAccessSettings;
 use App\Filament\Pages\Settings\SettingsPage;
-use App\Models\Admin;
+use App\Filament\Pages\Settings\StoreOperationsSettings;
 use Database\Seeders\SettingsSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
@@ -31,7 +33,7 @@ class SettingsFactoryDefaultsTest extends TestCase
         $classes = [];
 
         foreach (Finder::create()->files()->in(app_path('Filament/Pages/Settings'))->name('*.php') as $file) {
-            $class = 'App\\Filament\\Pages\\Settings\\' . $file->getBasename('.php');
+            $class = 'App\\Filament\\Pages\\Settings\\'.$file->getBasename('.php');
 
             if (! class_exists($class)) {
                 continue;
@@ -56,7 +58,7 @@ class SettingsFactoryDefaultsTest extends TestCase
         $method = new \ReflectionMethod($pageClass, 'getFactoryDefaults');
         $method->setAccessible(true);
 
-        return $method->invoke(new $pageClass());
+        return $method->invoke(new $pageClass);
     }
 
     #[Test]
@@ -110,7 +112,7 @@ class SettingsFactoryDefaultsTest extends TestCase
         // sections/menu/social_links) so its defaults are the union of all of
         // them now — filter to the hero_* prefix to isolate what was
         // previously UiSettings' entire (single-group) default set.
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\CustomizationSettings::class);
+        $defaults = $this->callGetFactoryDefaults(CustomizationSettings::class);
         $heroKeys = collect($defaults)->keys()->filter(fn (string $k) => str_starts_with($k, 'hero_'));
 
         $this->assertCount(22, $heroKeys);
@@ -120,7 +122,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function menu_settings_factory_defaults_uses_the_real_footer_toggle_keys(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\CustomizationSettings::class);
+        $defaults = $this->callGetFactoryDefaults(CustomizationSettings::class);
         $footerToggleKeys = collect(array_keys($defaults))->filter(fn (string $k) => str_starts_with($k, 'footer_show_'));
 
         $this->assertSame(
@@ -136,7 +138,7 @@ class SettingsFactoryDefaultsTest extends TestCase
         // StatsCounterSettings merged into AppearanceSettings (appearance/
         // preloader/stats_counter groups) — intersect down to just the
         // stats-counter keys rather than asserting the full combined set.
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\AppearanceSettings::class);
+        $defaults = $this->callGetFactoryDefaults(AppearanceSettings::class);
         $statsCounterKeys = ['countries_count', 'customers_count', 'orders_count', 'parts_count', 'rating', 'show_section'];
 
         $this->assertSame(
@@ -148,7 +150,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function checkout_factory_defaults_decodes_json_array_correctly(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\StoreOperationsSettings::class);
+        $defaults = $this->callGetFactoryDefaults(StoreOperationsSettings::class);
 
         $this->assertSame(['card', 'bank_transfer'], $defaults['allowed_payment_methods']);
         $this->assertIsArray($defaults['allowed_payment_methods']);
@@ -157,7 +159,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function auth_factory_defaults_matches_seeded_values_not_stale_hardcoded_ones(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\SecurityAccessSettings::class);
+        $defaults = $this->callGetFactoryDefaults(SecurityAccessSettings::class);
 
         $this->assertSame(3, $defaults['otp_max_attempts']);
         $this->assertSame(60, $defaults['otp_resend_cooldown']);
@@ -166,7 +168,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function performance_factory_defaults_includes_cache_ttl_manufacturers(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\PerformanceSettings::class);
+        $defaults = $this->callGetFactoryDefaults(PerformanceSettings::class);
 
         $this->assertArrayHasKey('cache_ttl_manufacturers', $defaults);
         $this->assertSame(60, $defaults['cache_ttl_manufacturers']);
@@ -175,7 +177,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function dashboard_factory_defaults_excludes_removed_dead_keys(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\StoreOperationsSettings::class);
+        $defaults = $this->callGetFactoryDefaults(StoreOperationsSettings::class);
 
         $this->assertArrayNotHasKey('pending_orders_attention', $defaults);
         $this->assertArrayNotHasKey('pending_orders_warning', $defaults);
@@ -187,7 +189,7 @@ class SettingsFactoryDefaultsTest extends TestCase
     #[Test]
     public function dashboard_factory_defaults_includes_health_check_thresholds(): void
     {
-        $defaults = $this->callGetFactoryDefaults(\App\Filament\Pages\Settings\StoreOperationsSettings::class);
+        $defaults = $this->callGetFactoryDefaults(StoreOperationsSettings::class);
 
         // backup_stale_hours used to be a phantom setting — read via
         // settings() with a code-only fallback, but never seeded/editable.

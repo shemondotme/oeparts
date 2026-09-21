@@ -7,6 +7,7 @@ use App\Services\CoreWebVitalsService;
 use App\Services\SettingsService;
 use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -96,7 +97,7 @@ class CoreWebVitalsServiceTest extends TestCase
         // HTTP error response. Without redaction this leaks the raw API
         // key in plaintext onto the Health Dashboard.
         Http::fake(function () {
-            throw new \Illuminate\Http\Client\ConnectionException(
+            throw new ConnectionException(
                 'cURL error 28: Connection timed out for URL https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=crux-key-123'
             );
         });

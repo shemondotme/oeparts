@@ -8,14 +8,15 @@ use App\Filament\Resources\ContactMessageResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendContactReplyEmail;
 use App\Models\ContactMessage;
-use Filament\Forms;
+use App\Support\NavBadge;
 use Filament\Actions;
-use Filament\Actions\BulkAction;
+use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class ContactMessageResource extends Resource
 {
@@ -164,7 +165,7 @@ class ContactMessageResource extends Resource
                             'reply_body' => $data['reply_body'],
                             'replied_at' => now(),
                             'replied_by' => auth('admin')->id(),
-                            'status'     => ($data['mark_resolved'] ?? true) ? ContactStatus::Resolved : ContactStatus::Read,
+                            'status' => ($data['mark_resolved'] ?? true) ? ContactStatus::Resolved : ContactStatus::Read,
                         ]);
 
                         Notification::make()
@@ -180,7 +181,7 @@ class ContactMessageResource extends Resource
                     ->authorize('update')
                     ->action(function (ContactMessage $record) {
                         $record->update(['status' => 'read']);
-                        
+
                         Notification::make()
                             ->title('Message marked as read')
                             ->success()
@@ -194,7 +195,7 @@ class ContactMessageResource extends Resource
                     ->authorize('update')
                     ->action(function (ContactMessage $record) {
                         $record->update(['status' => 'resolved']);
-                        
+
                         Notification::make()
                             ->title('Message marked as resolved')
                             ->success()
@@ -250,7 +251,7 @@ class ContactMessageResource extends Resource
                             });
 
                             Notification::make()
-                                ->title($records->count() . ' messages marked as resolved')
+                                ->title($records->count().' messages marked as resolved')
                                 ->success()
                                 ->send();
                         },
@@ -269,7 +270,7 @@ class ContactMessageResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('messages_unread', fn () => static::getModel()::where('status', 'unread')->count());
+        return NavBadge::count('messages_unread', fn () => static::getModel()::where('status', 'unread')->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -305,9 +306,9 @@ class ContactMessageResource extends Resource
     // resolved to null via getAttribute(), so every single global search
     // result fell back to the generic model label ("Contact Message"),
     // making every match in the dropdown indistinguishable from the others.
-    public static function getGlobalSearchResultTitle(\Illuminate\Database\Eloquent\Model $record): string
+    public static function getGlobalSearchResultTitle(Model $record): string
     {
-        return $record->name . ' — ' . ($record->subject_type instanceof ContactSubjectType
+        return $record->name.' — '.($record->subject_type instanceof ContactSubjectType
             ? str($record->subject_type->value)->replace('_', ' ')->title()
             : (string) $record->subject_type);
     }

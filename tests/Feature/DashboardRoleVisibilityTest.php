@@ -2,8 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\OrderStatsOverview;
+use App\Filament\Widgets\RevenueChart;
+use App\Filament\Widgets\TopManufacturersRevenue;
 use App\Models\Admin;
 use App\Services\WidgetPreferenceService;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -13,9 +19,9 @@ class DashboardRoleVisibilityTest extends TestCase
     use RefreshDatabase;
 
     private const FINANCIAL_WIDGETS = [
-        \App\Filament\Widgets\RevenueChart::class,
-        \App\Filament\Widgets\OrderStatsOverview::class,
-        \App\Filament\Widgets\TopManufacturersRevenue::class,
+        RevenueChart::class,
+        OrderStatsOverview::class,
+        TopManufacturersRevenue::class,
     ];
 
     protected function setUp(): void
@@ -23,8 +29,8 @@ class DashboardRoleVisibilityTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
     }
 
@@ -45,7 +51,7 @@ class DashboardRoleVisibilityTest extends TestCase
 
             foreach (WidgetPreferenceService::WIDGETS as $id => $config) {
                 $class = $config['class'];
-                $usesTrait = isset(class_uses_recursive($class)[\App\Filament\Widgets\Concerns\HasWidgetRoles::class]);
+                $usesTrait = isset(class_uses_recursive($class)[HasWidgetRoles::class]);
 
                 if (! $usesTrait) {
                     continue;
@@ -70,7 +76,7 @@ class DashboardRoleVisibilityTest extends TestCase
             $this->actingAs($admin, 'admin');
 
             foreach (self::FINANCIAL_WIDGETS as $class) {
-                $usesTrait = isset(class_uses_recursive($class)[\App\Filament\Widgets\Concerns\HasWidgetRoles::class]);
+                $usesTrait = isset(class_uses_recursive($class)[HasWidgetRoles::class]);
 
                 if (! $usesTrait) {
                     continue;
@@ -82,7 +88,7 @@ class DashboardRoleVisibilityTest extends TestCase
                 $this->assertSame(
                     $shouldSeeFinancial,
                     $class::canView(),
-                    class_basename($class) . " canView() does not match registry for {$role}",
+                    class_basename($class)." canView() does not match registry for {$role}",
                 );
             }
 
@@ -101,7 +107,7 @@ class DashboardRoleVisibilityTest extends TestCase
             $visibleWidgets = [];
             foreach (WidgetPreferenceService::WIDGETS as $id => $config) {
                 $class = $config['class'];
-                $usesTrait = isset(class_uses_recursive($class)[\App\Filament\Widgets\Concerns\HasWidgetRoles::class]);
+                $usesTrait = isset(class_uses_recursive($class)[HasWidgetRoles::class]);
 
                 if ($usesTrait && $class::canView()) {
                     $visibleWidgets[] = $id;

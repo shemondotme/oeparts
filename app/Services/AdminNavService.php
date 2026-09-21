@@ -24,6 +24,7 @@ final class AdminNavService
         }
 
         $prefs = $admin->dashboard_preferences ?? [];
+
         return $prefs['recent_nav'] ?? [];
     }
 
@@ -62,7 +63,7 @@ final class AdminNavService
         return collect(self::recent($admin))
             ->map(function ($item) use ($available) {
                 $url = $item['url'] ?? null;
-                $match = $url ? $available->first(fn ($nav) => $url === $nav['url'] || str_starts_with($url, $nav['url'] . '/')) : null;
+                $match = $url ? $available->first(fn ($nav) => $url === $nav['url'] || str_starts_with($url, $nav['url'].'/')) : null;
 
                 if (! $match) {
                     return null;
@@ -109,5 +110,4 @@ final class AdminNavService
             ]);
         }
     }
-
 }

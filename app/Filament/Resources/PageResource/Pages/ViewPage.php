@@ -3,11 +3,9 @@
 namespace App\Filament\Resources\PageResource\Pages;
 
 use App\Filament\Resources\PageResource;
-use App\Filament\Support\AdminUi;
 use Filament\Actions;
-use Filament\Infolists;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -82,9 +80,9 @@ class ViewPage extends ViewRecord
                                             ->badge()
                                             ->color(fn ($state): string => match ($state->value) {
                                                 'published' => 'success',
-                                                'draft'     => 'warning',
-                                                'archived'  => 'danger',
-                                                default     => 'gray',
+                                                'draft' => 'warning',
+                                                'archived' => 'danger',
+                                                default => 'gray',
                                             })
                                             ->formatStateUsing(fn ($state): string => ucfirst($state->value)),
                                         TextEntry::make('is_homepage')
@@ -123,4 +121,3 @@ class ViewPage extends ViewRecord
             ]);
     }
 }
-

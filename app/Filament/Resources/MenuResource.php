@@ -7,16 +7,16 @@ use App\Filament\Resources\MenuResource\Pages;
 use App\Filament\Resources\MenuResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Models\Menu;
-use Filament\Forms;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
 
 class MenuResource extends Resource
 {
@@ -108,13 +108,13 @@ class MenuResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('location')
-                ->label(__('admin.location'))
-                ->badge()
-                ->color(fn (MenuLocation $state): string => match ($state) {
-                    MenuLocation::Header => 'info',
-                    MenuLocation::Footer => 'gray',
-                }),
+                Tables\Columns\TextColumn::make('location')
+                    ->label(__('admin.location'))
+                    ->badge()
+                    ->color(fn (MenuLocation $state): string => match ($state) {
+                        MenuLocation::Header => 'info',
+                        MenuLocation::Footer => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('lang')
                     ->label(__('admin.language'))
                     ->badge()
@@ -150,18 +150,18 @@ class MenuResource extends Resource
                     ->falseLabel('Inactive Only'),
             ])
             ->actions(AdminUi::recordActions())
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Menus', [
-                    'name' => 'Menu',
-                    'location' => 'Location',
-                    'lang' => 'Language',
-                    'items_count' => 'Items',
-                    'is_active' => 'Active',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Menus', [
+                        'name' => 'Menu',
+                        'location' => 'Location',
+                        'lang' => 'Language',
+                        'items_count' => 'Items',
+                        'is_active' => 'Active',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ])
+            ])
             ->defaultSort('name', 'asc')
             ->emptyStateIcon('heroicon-o-bars-3')
             ->emptyStateHeading('No navigation menus created yet')
@@ -185,10 +185,10 @@ class MenuResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListMenus::route('/'),
+            'index' => Pages\ListMenus::route('/'),
             'create' => Pages\CreateMenu::route('/create'),
-            'view'   => Pages\ViewMenu::route('/{record}'),
-            'edit'   => Pages\EditMenu::route('/{record}/edit'),
+            'view' => Pages\ViewMenu::route('/{record}'),
+            'edit' => Pages\EditMenu::route('/{record}/edit'),
         ];
     }
 
@@ -197,4 +197,3 @@ class MenuResource extends Resource
         return ['name'];
     }
 }
-

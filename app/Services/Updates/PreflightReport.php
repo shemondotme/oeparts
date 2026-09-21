@@ -47,11 +47,11 @@ class PreflightReport
     public function toArray(): array
     {
         return [
-            'can_proceed'   => $this->canProceed(),
-            'has_warnings'  => $this->hasWarnings(),
+            'can_proceed' => $this->canProceed(),
+            'has_warnings' => $this->hasWarnings(),
             'failure_count' => count($this->failures()),
             'warning_count' => count($this->warnings()),
-            'checks'        => array_map(fn (PreflightCheck $c) => $c->toArray(), $this->checks),
+            'checks' => array_map(fn (PreflightCheck $c) => $c->toArray(), $this->checks),
         ];
     }
 }

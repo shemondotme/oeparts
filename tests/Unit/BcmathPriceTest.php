@@ -24,10 +24,10 @@ class BcmathPriceTest extends TestCase
     #[Test]
     public function vat_calculation_is_cent_accurate(): void
     {
-        $price   = '140.00';
+        $price = '140.00';
         $vatRate = '21';
 
-        $vatAmount  = bcmul($price, bcdiv($vatRate, '100', 4), 2);
+        $vatAmount = bcmul($price, bcdiv($vatRate, '100', 4), 2);
         $grandTotal = bcadd($price, $vatAmount, 2);
 
         $this->assertSame('29.40', $vatAmount);
@@ -39,8 +39,8 @@ class BcmathPriceTest extends TestCase
     {
         // 3.33 * 0.21 = 0.6993 — bcmath truncates to 0.69 (not 0.70)
         // This is expected and correct behaviour — we do not use PHP_ROUND_HALF_UP
-        $price     = '3.33';
-        $vatRate   = '21';
+        $price = '3.33';
+        $vatRate = '21';
         $vatAmount = bcmul($price, bcdiv($vatRate, '100', 4), 2);
 
         $this->assertSame('0.69', $vatAmount);
@@ -51,7 +51,7 @@ class BcmathPriceTest extends TestCase
     public function line_total_uses_bcmul(): void
     {
         $unitPrice = '12.50';
-        $qty       = 3;
+        $qty = 3;
         $lineTotal = bcmul($unitPrice, (string) $qty, 2);
 
         $this->assertSame('37.50', $lineTotal);
@@ -60,8 +60,8 @@ class BcmathPriceTest extends TestCase
     #[Test]
     public function subtotal_uses_bcadd(): void
     {
-        $line1    = '37.50';
-        $line2    = '12.99';
+        $line1 = '37.50';
+        $line2 = '12.99';
         $subtotal = bcadd($line1, $line2, 2);
 
         $this->assertSame('50.49', $subtotal);
@@ -70,10 +70,10 @@ class BcmathPriceTest extends TestCase
     #[Test]
     public function discount_percentage_uses_bcmath(): void
     {
-        $price    = '100.00';
-        $percent  = '15';
+        $price = '100.00';
+        $percent = '15';
         $discount = bcmul($price, bcdiv($percent, '100', 4), 2);
-        $after    = bcsub($price, $discount, 2);
+        $after = bcsub($price, $discount, 2);
 
         $this->assertSame('15.00', $discount);
         $this->assertSame('85.00', $after);
@@ -85,17 +85,17 @@ class BcmathPriceTest extends TestCase
         $threshold = '150.00';
 
         $this->assertSame(-1, bccomp('149.99', $threshold, 2));
-        $this->assertSame(0,  bccomp('150.00', $threshold, 2));
-        $this->assertSame(1,  bccomp('150.01', $threshold, 2));
+        $this->assertSame(0, bccomp('150.00', $threshold, 2));
+        $this->assertSame(1, bccomp('150.01', $threshold, 2));
     }
 
     #[Test]
     public function b2b_vat_exempt_gives_zero_vat(): void
     {
-        $price     = '200.00';
+        $price = '200.00';
         $vatExempt = true;
 
-        $vatAmount  = $vatExempt ? '0.00' : bcmul($price, bcdiv('21', '100', 4), 2);
+        $vatAmount = $vatExempt ? '0.00' : bcmul($price, bcdiv('21', '100', 4), 2);
         $grandTotal = bcadd($price, $vatAmount, 2);
 
         $this->assertSame('0.00', $vatAmount);

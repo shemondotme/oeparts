@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\Settings\GeneralBrandSettings;
 use App\Filament\Pages\Settings\SeoControlCenter;
+use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Models\Admin;
 use App\Models\Setting;
 use Database\Seeders\RolesSeeder;
@@ -116,7 +117,7 @@ class SettingsArrayFieldPhantomDiffTest extends TestCase
         $this->actingAs($this->superAdmin(), 'admin');
 
         $newHours = ['en' => 'Mon–Fri 8:00–17:00', 'de' => '', 'lt' => '', 'fr' => '', 'es' => ''];
-        Livewire::test(\App\Filament\Pages\Settings\StoreOperationsSettings::class)
+        Livewire::test(StoreOperationsSettings::class)
             ->set('data.hours', $newHours)
             ->call('save');
 

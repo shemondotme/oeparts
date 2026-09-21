@@ -79,8 +79,8 @@ class MarketingSettings extends SettingsPage
                             ->label('')
                             ->content(new HtmlString(
                                 'Search Console verification is set on the <a href="'
-                                . SeoControlCenter::getUrl()
-                                . '" class="fi-link text-primary-600">SEO &amp; Meta</a> page, alongside the other webmaster verification codes.'
+                                .SeoControlCenter::getUrl()
+                                .'" class="fi-link text-primary-600">SEO &amp; Meta</a> page, alongside the other webmaster verification codes.'
                             )),
                     ])->columns(2),
 
@@ -186,8 +186,8 @@ class MarketingSettings extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Discount codes and promo campaigns are managed on the <a href="'
-                                . CouponResource::getUrl()
-                                . '" class="fi-link text-primary-600">Coupons</a> page.'
+                                .CouponResource::getUrl()
+                                .'" class="fi-link text-primary-600">Coupons</a> page.'
                             )),
 
                         Forms\Components\Placeholder::make('rush_upsell_origin_note')
@@ -215,7 +215,7 @@ class MarketingSettings extends SettingsPage
                 try {
                     $value = Crypt::decryptString($value);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt setting {$setting->key}: " . $e->getMessage());
+                    Log::warning("Failed to decrypt setting {$setting->key}: ".$e->getMessage());
                 }
             }
 
@@ -249,7 +249,7 @@ class MarketingSettings extends SettingsPage
 
         Notification::make()
             ->title('Settings saved')
-            ->body('Cache cleared for: ' . implode(', ', static::$settingsGroups))
+            ->body('Cache cleared for: '.implode(', ', static::$settingsGroups))
             ->success()
             ->send();
     }
@@ -280,7 +280,7 @@ class MarketingSettings extends SettingsPage
                 $value = empty($value) ? '' : json_encode($value);
             }
 
-            $service->set($this->groupForKey($key) . '.' . $key, $value);
+            $service->set($this->groupForKey($key).'.'.$key, $value);
 
             if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $value) {
                 $oldValues[$key] = '***';

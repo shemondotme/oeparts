@@ -2,9 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\ProductResource;
+use App\Filament\Support\HasSavedViews;
 use App\Models\Admin;
 use App\Models\SavedView;
-use App\Filament\Support\HasSavedViews;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -22,10 +27,10 @@ class HasSavedViewsTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
@@ -237,7 +242,7 @@ class HasSavedViewsTestable
 {
     use HasSavedViews;
 
-    protected static $resource = \App\Filament\Resources\ProductResource::class;
+    protected static $resource = ProductResource::class;
 
     public $tableSort = null;
 

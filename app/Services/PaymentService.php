@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
-use App\Jobs\SendOrderConfirmationEmail;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
-use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
+use App\Events\PaymentReceived;
+use App\Jobs\SendOrderConfirmationEmail;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Cache;
@@ -29,12 +31,14 @@ use Illuminate\Support\Str;
 class PaymentService
 {
     private const AIRWALLEX_API_BASE_SANDBOX = 'https://api-demo.airwallex.com/api/v1';
+
     private const AIRWALLEX_API_BASE_LIVE = 'https://api.airwallex.com/api/v1';
 
     // Paysera's docs list a single base URL for both sandbox and live —
     // environment is distinguished only by which client_id/client_secret
     // pair is configured, not by a different host.
     private const PAYSERA_API_BASE = 'https://api.paysera.com';
+
     private const PAYSERA_TOKEN_URL = 'https://api.paysera.com/auth/realms/Paysera/protocol/openid-connect/token';
 
     public function __construct(
@@ -99,7 +103,7 @@ class PaymentService
 
             $data = $response->json();
 
-            if (!$response->successful() || !isset($data['client_secret'])) {
+            if (! $response->successful() || ! isset($data['client_secret'])) {
                 Log::error('Airwallex payment intent creation failed', [
                     'order_id' => $order->id,
                     'response' => $data,
@@ -127,7 +131,7 @@ class PaymentService
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
-            throw new \RuntimeException('Payment gateway error: ' . $e->getMessage());
+            throw new \RuntimeException('Payment gateway error: '.$e->getMessage());
         }
     }
 
@@ -145,7 +149,7 @@ class PaymentService
      */
     private function airwallexAuthToken(string $baseUrl, string $clientId, string $apiKey): string
     {
-        $cacheKey = 'airwallex_auth_token:' . md5($baseUrl . $clientId);
+        $cacheKey = 'airwallex_auth_token:'.md5($baseUrl.$clientId);
 
         return Cache::remember($cacheKey, now()->addMinutes(25), function () use ($baseUrl, $clientId, $apiKey) {
             $response = Http::withHeaders([
@@ -155,7 +159,7 @@ class PaymentService
             ])->timeout(15)->post("{$baseUrl}/authentication/login", (object) []);
 
             if (! $response->successful() || ! $response->json('token')) {
-                throw new \RuntimeException('Airwallex authentication failed: HTTP ' . $response->status());
+                throw new \RuntimeException('Airwallex authentication failed: HTTP '.$response->status());
             }
 
             return $response->json('token');
@@ -197,7 +201,7 @@ class PaymentService
                 (object) []
             );
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Airwallex capture failed', [
                     'payment_id' => $payment->id,
                     'payment_intent_id' => $payment->transaction_id,
@@ -235,7 +239,7 @@ class PaymentService
         $eventId = $webhookData['id'] ?? null;
         $paymentIntentId = $webhookData['data']['object']['id'] ?? null;
 
-        if (!$eventId || !$paymentIntentId) {
+        if (! $eventId || ! $paymentIntentId) {
             Log::error('Invalid Airwallex requires_capture webhook data', ['data' => $webhookData]);
             throw new \RuntimeException('Invalid webhook data');
         }
@@ -244,12 +248,12 @@ class PaymentService
             ->where('gateway', PaymentGateway::Airwallex)
             ->first();
 
-        if (!$payment) {
+        if (! $payment) {
             Log::error('Payment not found for requires_capture webhook', ['payment_intent_id' => $paymentIntentId]);
             throw new \RuntimeException('Payment not found');
         }
 
-        DB::transaction(function () use ($payment, $paymentIntentId, $webhookData, $eventId) {
+        DB::transaction(function () use ($payment, $webhookData, $eventId) {
             $payment->update([
                 'status' => PaymentTransactionStatus::Authorized,
                 'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
@@ -260,10 +264,10 @@ class PaymentService
             // Same guard as processSuccessfulPayment() below — only advance a
             // still-Pending order. A requires_capture retry delivery landing
             // after the order has already moved on must not re-trigger this.
-            if ($order->status === \App\Enums\OrderStatus::Pending) {
+            if ($order->status === OrderStatus::Pending) {
                 $this->orderService->transitionStatus(
                     $order,
-                    \App\Enums\OrderStatus::Processing,
+                    OrderStatus::Processing,
                     'Payment authorized (funds held) via Airwallex webhook',
                     null,
                     notifyCustomer: false,
@@ -333,7 +337,7 @@ class PaymentService
 
             $orderData = $orderResponse->json();
 
-            if (!$orderResponse->successful() || !isset($orderData['order_id'])) {
+            if (! $orderResponse->successful() || ! isset($orderData['order_id'])) {
                 Log::error('Paysera order creation failed', [
                     'order_id' => $order->id,
                     'response' => $orderData,
@@ -359,7 +363,7 @@ class PaymentService
 
             $linkData = $linkResponse->json();
 
-            if (!$linkResponse->successful() || !isset($linkData['payment_URL'])) {
+            if (! $linkResponse->successful() || ! isset($linkData['payment_URL'])) {
                 Log::error('Paysera payment link creation failed', [
                     'order_id' => $order->id,
                     'response' => $linkData,
@@ -408,7 +412,7 @@ class PaymentService
                 'client_secret' => $clientSecret,
             ]);
 
-            if (!$response->successful() || !$response->json('access_token')) {
+            if (! $response->successful() || ! $response->json('access_token')) {
                 throw new \RuntimeException('Paysera authentication failed: HTTP '.$response->status());
             }
 
@@ -456,7 +460,7 @@ class PaymentService
         // Cache::add()'s integer $ttl is seconds, not minutes.
         $ttl = (int) settings('payment.webhook_cache_days', 7) * 24 * 60 * 60;
 
-        return !Cache::add($cacheKey, true, $ttl);
+        return ! Cache::add($cacheKey, true, $ttl);
     }
 
     /**
@@ -466,7 +470,7 @@ class PaymentService
     {
         $payseraOrderId = $webhookData['order_id'] ?? null;
 
-        if (!$payseraOrderId) {
+        if (! $payseraOrderId) {
             Log::error('Invalid Paysera webhook data', ['data' => $webhookData]);
             throw new \RuntimeException('Invalid webhook data');
         }
@@ -475,7 +479,7 @@ class PaymentService
             ->where('gateway', PaymentGateway::Paysera)
             ->first();
 
-        if (!$payment) {
+        if (! $payment) {
             Log::error('Payment not found for Paysera webhook', ['paysera_order_id' => $payseraOrderId]);
             throw new \RuntimeException('Payment not found');
         }
@@ -488,7 +492,7 @@ class PaymentService
 
             $order = $payment->order;
             $order->update([
-                'payment_status' => \App\Enums\PaymentStatus::Paid,
+                'payment_status' => PaymentStatus::Paid,
                 'payment_reference' => $payseraOrderId,
             ]);
 
@@ -499,10 +503,10 @@ class PaymentService
             // Paysera redelivers because our 200 response was lost in transit)
             // must not attempt an invalid transition and throw, nor re-send a
             // second order confirmation email.
-            if ($order->status === \App\Enums\OrderStatus::Pending) {
+            if ($order->status === OrderStatus::Pending) {
                 $this->orderService->transitionStatus(
                     $order,
-                    \App\Enums\OrderStatus::Processing,
+                    OrderStatus::Processing,
                     'Payment confirmed via Paysera webhook',
                     null,
                     notifyCustomer: false,
@@ -511,7 +515,7 @@ class PaymentService
                 dispatch(new SendOrderConfirmationEmail($order));
             }
 
-            \App\Events\PaymentReceived::dispatch($order, $payment);
+            PaymentReceived::dispatch($order, $payment);
 
             Log::info('Paysera payment processed successfully', [
                 'order_id' => $order->id,
@@ -526,7 +530,7 @@ class PaymentService
     public function processFailedPayseraPayment(array $webhookData): void
     {
         $payseraOrderId = $webhookData['order_id'] ?? null;
-        if (!$payseraOrderId) {
+        if (! $payseraOrderId) {
             return;
         }
 
@@ -543,7 +547,7 @@ class PaymentService
 
                 $order = $payment->order;
                 $order->update([
-                    'payment_status' => \App\Enums\PaymentStatus::Failed,
+                    'payment_status' => PaymentStatus::Failed,
                 ]);
             });
 
@@ -571,7 +575,7 @@ class PaymentService
         }
 
         // Generate a unique reference for this order
-        $reference = $this->settings->get('payment.bank_reference_prefix', 'OEM') . '-' . $order->order_number;
+        $reference = $this->settings->get('payment.bank_reference_prefix', 'OEM').'-'.$order->order_number;
 
         // Create payment record
         $payment = Payment::create([
@@ -599,9 +603,9 @@ class PaymentService
     /**
      * Verify Airwallex webhook signature.
      *
-     * @param string $payload Raw request body
-     * @param string $signature Signature from X-Signature header
-     * @param int $timestamp Timestamp from X-Timestamp header
+     * @param  string  $payload  Raw request body
+     * @param  string  $signature  Signature from X-Signature header
+     * @param  int  $timestamp  Timestamp from X-Timestamp header
      * @return bool True if valid
      */
     public function verifyWebhookSignature(string $payload, string $signature, int $timestamp): bool
@@ -610,6 +614,7 @@ class PaymentService
 
         if (empty($webhookSecret)) {
             Log::warning('Airwallex webhook secret not configured');
+
             return false;
         }
 
@@ -621,11 +626,12 @@ class PaymentService
                 'timestamp' => $timestamp,
                 'now' => $now,
             ]);
+
             return false;
         }
 
         // Compute expected signature
-        $signedPayload = $timestamp . '.' . $payload;
+        $signedPayload = $timestamp.'.'.$payload;
         $expectedSignature = hash_hmac('sha256', $signedPayload, $webhookSecret);
 
         return hash_equals($expectedSignature, $signature);
@@ -636,7 +642,7 @@ class PaymentService
      *
      * Uses cache to prevent duplicate processing of the same event_id.
      *
-     * @param string $eventId Airwallex event ID
+     * @param  string  $eventId  Airwallex event ID
      * @return bool True if event has already been processed
      */
     public function isDuplicateEvent(string $eventId): bool
@@ -670,7 +676,7 @@ class PaymentService
         $eventId = $webhookData['id'] ?? null;
         $paymentIntentId = $webhookData['data']['object']['id'] ?? null;
 
-        if (!$eventId || !$paymentIntentId) {
+        if (! $eventId || ! $paymentIntentId) {
             Log::error('Invalid Airwallex webhook data', ['data' => $webhookData]);
             throw new \RuntimeException('Invalid webhook data');
         }
@@ -680,7 +686,7 @@ class PaymentService
             ->where('gateway', PaymentGateway::Airwallex)
             ->first();
 
-        if (!$payment) {
+        if (! $payment) {
             Log::error('Payment not found for webhook', ['payment_intent_id' => $paymentIntentId]);
             throw new \RuntimeException('Payment not found');
         }
@@ -695,7 +701,7 @@ class PaymentService
             // Update order
             $order = $payment->order;
             $order->update([
-                'payment_status' => \App\Enums\PaymentStatus::Paid,
+                'payment_status' => PaymentStatus::Paid,
                 'payment_reference' => $paymentIntentId,
             ]);
 
@@ -707,10 +713,10 @@ class PaymentService
             // Forcing Processing again on an order that's already Shipped
             // would violate OrderService's transition matrix and throw,
             // failing this webhook job despite the capture having succeeded.
-            if ($order->status === \App\Enums\OrderStatus::Pending) {
+            if ($order->status === OrderStatus::Pending) {
                 $this->orderService->transitionStatus(
                     $order,
-                    \App\Enums\OrderStatus::Processing,
+                    OrderStatus::Processing,
                     'Payment confirmed via Airwallex webhook',
                     null,
                     notifyCustomer: false,
@@ -725,7 +731,7 @@ class PaymentService
                 dispatch(new SendOrderConfirmationEmail($order));
             }
 
-            \App\Events\PaymentReceived::dispatch($order, $payment);
+            PaymentReceived::dispatch($order, $payment);
 
             Log::info('Payment processed successfully', [
                 'order_id' => $order->id,
@@ -741,7 +747,7 @@ class PaymentService
     public function processFailedPayment(array $webhookData): void
     {
         $paymentIntentId = $webhookData['data']['object']['id'] ?? null;
-        if (!$paymentIntentId) {
+        if (! $paymentIntentId) {
             return;
         }
 
@@ -758,7 +764,7 @@ class PaymentService
 
                 $order = $payment->order;
                 $order->update([
-                    'payment_status' => \App\Enums\PaymentStatus::Failed,
+                    'payment_status' => PaymentStatus::Failed,
                 ]);
             });
 
@@ -785,14 +791,14 @@ class PaymentService
 
             $order = $payment->order;
             $order->update([
-                'payment_status' => \App\Enums\PaymentStatus::Paid,
+                'payment_status' => PaymentStatus::Paid,
                 'payment_reference' => $referenceNote ?: $payment->transaction_id,
             ]);
 
             $this->orderService->transitionStatus(
                 $order,
-                \App\Enums\OrderStatus::Processing,
-                'Bank transfer confirmed manually' . ($referenceNote ? ": {$referenceNote}" : ''),
+                OrderStatus::Processing,
+                'Bank transfer confirmed manually'.($referenceNote ? ": {$referenceNote}" : ''),
                 $adminId,
                 notifyCustomer: false,
             );

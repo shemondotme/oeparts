@@ -7,8 +7,6 @@ use App\Filament\Support\AdminUi;
 use App\Models\Category;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -17,6 +15,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class CategoryResource extends Resource
 {
@@ -26,7 +25,7 @@ class CategoryResource extends Resource
     // getRecordTitle() fatal (must return string). Resolved in the override.
     protected static ?string $recordTitleAttribute = null;
 
-    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): ?string
+    public static function getRecordTitle(?Model $record): ?string
     {
         if (! $record instanceof Category) {
             return null;
@@ -200,10 +199,10 @@ class CategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListCategories::route('/'),
+            'index' => Pages\ListCategories::route('/'),
             'create' => Pages\CreateCategory::route('/create'),
-            'view'   => Pages\ViewCategory::route('/{record}'),
-            'edit'   => Pages\EditCategory::route('/{record}/edit'),
+            'view' => Pages\ViewCategory::route('/{record}'),
+            'edit' => Pages\EditCategory::route('/{record}/edit'),
         ];
     }
 

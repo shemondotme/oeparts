@@ -14,7 +14,7 @@ class Testimonial extends Model
     ];
 
     protected $casts = [
-        'quote'     => 'array',
+        'quote' => 'array',
         'is_active' => 'boolean',
     ];
 

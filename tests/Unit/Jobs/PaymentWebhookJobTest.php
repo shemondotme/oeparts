@@ -7,7 +7,9 @@ use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Jobs\ProcessAirwallexWebhook;
+use App\Jobs\SendOrderStatusEmail;
 use App\Models\Order;
+use App\Models\OrderStatusHistory;
 use App\Models\Payment;
 use App\Models\User;
 use App\Services\PaymentService;
@@ -149,9 +151,9 @@ class PaymentWebhookJobTest extends TestCase
         $order->refresh();
         $this->assertEquals(OrderStatus::Cancelled, $order->status);
         $this->assertEquals(PaymentStatus::Failed, $order->payment_status);
-        $this->assertSame(1, \App\Models\OrderStatusHistory::where('order_id', $order->id)->count());
+        $this->assertSame(1, OrderStatusHistory::where('order_id', $order->id)->count());
 
-        Queue::assertPushed(\App\Jobs\SendOrderStatusEmail::class, function ($job) use ($order) {
+        Queue::assertPushed(SendOrderStatusEmail::class, function ($job) use ($order) {
             return $job->order->is($order)
                 && $job->oldStatus === OrderStatus::Processing
                 && $job->newStatus === OrderStatus::Cancelled;

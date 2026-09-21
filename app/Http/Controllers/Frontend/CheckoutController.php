@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers\Frontend;
 
-use App\Http\Controllers\Controller;
-use App\Services\CheckoutService;
-use App\Services\CartService;
-use App\Services\PaymentService;
-use App\Services\ShippingService;
-use App\Services\TaxRateService;
+use App\Enums\OtpPurpose;
+use App\Enums\PaymentGateway;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
+use App\Http\Controllers\Controller;
+use App\Jobs\SendOtpEmail;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Models\ShippingMethod;
+use App\Services\CartService;
+use App\Services\CheckoutService;
+use App\Services\OtpService;
+use App\Services\PaymentService;
+use App\Services\ShippingService;
+use App\Services\TaxRateService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -36,7 +42,7 @@ class CheckoutController extends Controller
 
     private function guestOtpRequired(): bool
     {
-        return app(\App\Services\OtpService::class)->enabled()
+        return app(OtpService::class)->enabled()
             && filter_var(settings('cart.otp_required_guest', true), FILTER_VALIDATE_BOOLEAN);
     }
 
@@ -48,7 +54,7 @@ class CheckoutController extends Controller
     {
         $user = Auth::user();
 
-        if (!$user && !$this->guestCheckoutAllowed()) {
+        if (! $user && ! $this->guestCheckoutAllowed()) {
             return redirect()->route('frontend.cart.index', compact('lang'))
                 ->with('error', __('checkout.guest_checkout_disabled'))
                 ->with('show_auth_modal', true);
@@ -69,18 +75,18 @@ class CheckoutController extends Controller
         // correctly restarts from the real cart, same as it always did.
         $isBuyNowCheckout = $checkout && Cart::where('id', $checkout['cart_id'])->where('is_buy_now', true)->exists();
 
-        if ((!$cart || $cart->items->isEmpty()) && !$isBuyNowCheckout) {
+        if ((! $cart || $cart->items->isEmpty()) && ! $isBuyNowCheckout) {
             return redirect()->route('frontend.cart.index', compact('lang'))
                 ->with('error', __('Your cart is empty.'));
         }
 
-        if (!$checkoutId) {
+        if (! $checkoutId) {
             $checkoutId = $this->checkoutService->start($cart);
             Session::put('active_checkout_id', $checkoutId);
             $checkout = $this->checkoutService->get($checkoutId);
         }
 
-        if (!$checkout) {
+        if (! $checkout) {
             $checkoutId = $this->checkoutService->start($cart);
             Session::put('active_checkout_id', $checkoutId);
             $checkout = $this->checkoutService->get($checkoutId);
@@ -110,20 +116,20 @@ class CheckoutController extends Controller
     public function store(Request $request, string $lang)
     {
         $checkoutId = Session::get('active_checkout_id');
-        if (!$checkoutId) {
+        if (! $checkoutId) {
             return redirect()->route('frontend.checkout', compact('lang'))
                 ->with('error', __('Checkout session expired.'));
         }
 
         $checkout = $this->checkoutService->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return redirect()->route('frontend.checkout', compact('lang'))
                 ->with('error', __('Checkout session expired.'));
         }
 
         $step = $checkout['step'];
 
-        $method = 'processStep' . $step;
+        $method = 'processStep'.$step;
         if (method_exists($this, $method)) {
             return $this->$method($request, $checkoutId, $lang);
         }
@@ -137,14 +143,14 @@ class CheckoutController extends Controller
     private function showStep1(string $checkoutId, array $checkout, string $lang)
     {
         return $this->renderCheckoutStep('frontend.checkout.step1', $checkoutId, $checkout, $lang, [
-            'otpPending' => !empty($checkout['data']['otp_pending_email']),
+            'otpPending' => ! empty($checkout['data']['otp_pending_email']),
         ]);
     }
 
     private function processStep1(Request $request, string $checkoutId, string $lang)
     {
         $user = Auth::user();
-        $isGuest = !$user;
+        $isGuest = ! $user;
 
         // Escape hatch from the OTP-pending sub-step: clear the pending
         // state and fall back to the plain email/phone form. No OTP is
@@ -168,7 +174,7 @@ class CheckoutController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        if ($isGuest && !$this->guestCheckoutAllowed()) {
+        if ($isGuest && ! $this->guestCheckoutAllowed()) {
             return redirect()->route('frontend.cart.index', compact('lang'))
                 ->with('error', __('checkout.guest_checkout_disabled'))
                 ->with('show_auth_modal', true);
@@ -180,14 +186,14 @@ class CheckoutController extends Controller
         if ($isGuest && $this->guestOtpRequired()) {
             $otpCode = $request->input('otp');
             $resend = $request->boolean('resend');
-            $otpService = app(\App\Services\OtpService::class);
+            $otpService = app(OtpService::class);
 
             if (empty($otpCode) || $resend) {
                 // Generate the code — OtpService::generate() throws a
                 // RuntimeException with a safe, pre-translated message for
                 // the resend cooldown; that's fine to show verbatim.
                 try {
-                    $otp = $otpService->generate($email, \App\Enums\OtpPurpose::GuestCheckout, $request->ip());
+                    $otp = $otpService->generate($email, OtpPurpose::GuestCheckout, $request->ip());
                 } catch (\RuntimeException $e) {
                     $this->checkoutService->update($checkoutId, [
                         'otp_pending_email' => $email,
@@ -209,7 +215,7 @@ class CheckoutController extends Controller
                 // matching the pattern already used for order-creation
                 // failures below.
                 try {
-                    dispatch(new \App\Jobs\SendOtpEmail($email, $otp->otp_code, $lang));
+                    dispatch(new SendOtpEmail($email, $otp->otp_code, $lang));
                 } catch (\Throwable $e) {
                     report($e);
 
@@ -220,7 +226,7 @@ class CheckoutController extends Controller
 
                     $message = __('checkout.otp_send_failed');
                     if (config('app.debug')) {
-                        $message .= ' [debug: ' . $e->getMessage() . ']';
+                        $message .= ' [debug: '.$e->getMessage().']';
                     }
 
                     return back()->with('error', $message)->withInput();
@@ -234,8 +240,8 @@ class CheckoutController extends Controller
                 return back()->with('success', __('checkout.verification_code_sent'))->withInput();
             }
 
-            $result = $otpService->verify($email, $otpCode, \App\Enums\OtpPurpose::GuestCheckout);
-            if ($result !== \App\Services\OtpService::RESULT_OK) {
+            $result = $otpService->verify($email, $otpCode, OtpPurpose::GuestCheckout);
+            if ($result !== OtpService::RESULT_OK) {
                 $this->checkoutService->update($checkoutId, [
                     'otp_pending_email' => $email,
                     'otp_pending_phone' => $phone,
@@ -343,7 +349,7 @@ class CheckoutController extends Controller
             : collect();
 
         if ($methods->isEmpty()) {
-            $methods = \App\Models\ShippingMethod::where('is_active', true)
+            $methods = ShippingMethod::where('is_active', true)
                 ->orderBy('sort_order')
                 ->get();
         }
@@ -365,7 +371,7 @@ class CheckoutController extends Controller
                     'delivery_earliest' => $window['earliest'],
                     'delivery_latest' => $window['latest'],
                     'dispatches_today' => $window['dispatches_today'],
-                    'icon' => match(true) {
+                    'icon' => match (true) {
                         str_contains($enName, 'express') => 'rocket-launch',
                         str_contains($enName, 'economy') => 'globe-alt',
                         default => 'truck',
@@ -377,7 +383,7 @@ class CheckoutController extends Controller
 
     private function processStep3(Request $request, string $checkoutId, string $lang)
     {
-        $validIds = \App\Models\ShippingMethod::where('is_active', true)->pluck('id')->toArray();
+        $validIds = ShippingMethod::where('is_active', true)->pluck('id')->toArray();
 
         $validator = Validator::make($request->all(), [
             'shipping_method_id' => ['required', 'integer', Rule::in($validIds)],
@@ -397,6 +403,7 @@ class CheckoutController extends Controller
         ]);
 
         $this->checkoutService->advance($checkoutId);
+
         return redirect()->route('frontend.checkout', compact('lang'));
     }
 
@@ -410,13 +417,14 @@ class CheckoutController extends Controller
 
     private function processStep4(Request $request, string $checkoutId, string $lang)
     {
-        if (!$request->boolean('agree_terms')) {
+        if (! $request->boolean('agree_terms')) {
             return back()->withErrors([
                 'agree_terms' => __('Please accept the terms before continuing.'),
             ])->withInput();
         }
 
         $this->checkoutService->advance($checkoutId);
+
         return redirect()->route('frontend.checkout', compact('lang'));
     }
 
@@ -430,13 +438,13 @@ class CheckoutController extends Controller
 
     private function processStep5(Request $request, string $checkoutId, string $lang)
     {
-        if (!$this->checkoutService->isStepComplete($checkoutId, 4)) {
+        if (! $this->checkoutService->isStepComplete($checkoutId, 4)) {
             return back()->with('error', __('Please complete all previous steps.'));
         }
 
         $validated = $request->validate([
             'payment_method' => 'required|in:card,paysera,bank_transfer',
-            'customer_note' => 'nullable|string|max:' . settings('checkout.max_note_length', 500),
+            'customer_note' => 'nullable|string|max:'.settings('checkout.max_note_length', 500),
         ]);
 
         $this->checkoutService->update($checkoutId, [
@@ -469,7 +477,7 @@ class CheckoutController extends Controller
 
             $message = __('checkout.order_creation_failed');
             if (config('app.debug')) {
-                $message .= ' [debug: ' . $e->getMessage() . ']';
+                $message .= ' [debug: '.$e->getMessage().']';
             }
 
             return back()->with('error', $message);
@@ -498,7 +506,7 @@ class CheckoutController extends Controller
         $selectedShippingMethod = null;
         $shippingCost = null;
 
-        if (!empty($checkoutData['shipping_method_id'])) {
+        if (! empty($checkoutData['shipping_method_id'])) {
             $methodId = (int) $checkoutData['shipping_method_id'];
             $selectedShippingMethod = $this->getShippingMethod($methodId);
             $shippingCost = $selectedShippingMethod ? $this->checkoutService->calculateShippingCost($cart, $methodId) : null;
@@ -506,7 +514,7 @@ class CheckoutController extends Controller
 
         $sidebar = $this->buildSidebarSummary($checkoutData, $summary, $shippingCost);
 
-        $expiresAt = \Carbon\Carbon::parse($checkout['expires_at']);
+        $expiresAt = Carbon::parse($checkout['expires_at']);
         $secondsRemaining = max(0, now()->diffInSeconds($expiresAt, false));
 
         return view($view, array_merge($data, [
@@ -528,7 +536,7 @@ class CheckoutController extends Controller
      */
     private function getShippingMethod(int $id): ?object
     {
-        $method = \App\Models\ShippingMethod::where('is_active', true)->find($id);
+        $method = ShippingMethod::where('is_active', true)->find($id);
 
         if (! $method) {
             return null;
@@ -587,8 +595,8 @@ class CheckoutController extends Controller
      */
     public function payment(string $lang, string $order)
     {
-        $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
-        
+        $order = Order::where('order_number', $order)->firstOrFail();
+
         $this->authorizePaymentAccess($order);
 
         // payment_status is Eloquent-cast to the PaymentStatus enum — comparing
@@ -605,7 +613,7 @@ class CheckoutController extends Controller
         if ($order->payment_method === PaymentMethod::BankTransfer) {
             $bankTransferDetails = $this->paymentService->getBankTransferDetails($order);
         }
-        
+
         return view('frontend.checkout.payment', [
             'order' => $order,
             'lang' => $lang,
@@ -613,25 +621,25 @@ class CheckoutController extends Controller
             'selectedMethod' => $order->payment_method?->value ?? 'card',
         ]);
     }
-    
+
     /**
      * Get payment intent for Airwallex.
      * GET /{lang}/checkout/payment/{order}/intent
      */
     public function paymentIntent(string $lang, string $order)
     {
-        $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
+        $order = Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
-        
+
         if ($order->payment_method !== PaymentMethod::Card) {
             return response()->json([
                 'success' => false,
                 'message' => settings_trans('checkout.payment_error_message', 'Payment method is not card'),
             ], 400);
         }
-        
+
         $intent = $this->paymentService->createAirwallexIntent($order);
-        
+
         return response()->json([
             'success' => true,
             'payment_intent_id' => $intent['payment_intent_id'],
@@ -645,42 +653,42 @@ class CheckoutController extends Controller
             'enable_google_pay' => (bool) settings('checkout.enable_google_pay', true),
         ]);
     }
-    
+
     /**
      * Process payment submission.
      * POST /{lang}/checkout/payment/{order}/process
      */
     public function processPayment(Request $request, string $lang, string $order)
     {
-        $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
+        $order = Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
-        
+
         $rawAllowedPaymentMethods = settings('checkout.allowed_payment_methods', ['card', 'bank_transfer']);
         $allowedPaymentMethods = is_string($rawAllowedPaymentMethods)
             ? (json_decode($rawAllowedPaymentMethods, true) ?: ['card', 'bank_transfer'])
             : (array) $rawAllowedPaymentMethods;
 
         $validated = $request->validate([
-            'payment_method' => 'required|in:' . implode(',', $allowedPaymentMethods),
+            'payment_method' => 'required|in:'.implode(',', $allowedPaymentMethods),
             'payment_intent_id' => 'nullable|string|max:255',
             'payment_reference' => 'nullable|string|max:255',
-            'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:' . (settings('checkout.proof_max_size_kb', 5120)),
+            'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:'.(settings('checkout.proof_max_size_kb', 5120)),
         ]);
-        
+
         if ($validated['payment_method'] !== $order->payment_method->value) {
             $order->update([
                 'payment_method' => $validated['payment_method'],
             ]);
         }
-        
+
         // For bank transfer, mark as pending with reference
         if ($validated['payment_method'] === 'bank_transfer') {
             $payment = $order->payment;
-            if (!$payment) {
+            if (! $payment) {
                 $payment = $order->payment()->create([
                     'order_id' => $order->id,
-                    'gateway' => \App\Enums\PaymentGateway::BankTransfer,
-                    'status' => \App\Enums\PaymentTransactionStatus::Pending,
+                    'gateway' => PaymentGateway::BankTransfer,
+                    'status' => PaymentTransactionStatus::Pending,
                     'amount' => $order->grand_total,
                     'gateway_response' => [],
                 ]);
@@ -709,7 +717,7 @@ class CheckoutController extends Controller
                 'order' => $order->order_number,
             ]);
         }
-        
+
         // Paysera is a full redirect flow (Paysera hosts the payment form —
         // no client-side SDK/iframe like Airwallex's Drop-in), so this is a
         // normal synchronous form POST, same as the bank_transfer branch
@@ -722,7 +730,7 @@ class CheckoutController extends Controller
 
                 $message = settings_trans('checkout.payment_error_message', 'Payment method is not supported. Please try another method.');
                 if (config('app.debug')) {
-                    $message .= ' [debug: ' . $e->getMessage() . ']';
+                    $message .= ' [debug: '.$e->getMessage().']';
                 }
 
                 return back()->with('error', $message);
@@ -741,16 +749,16 @@ class CheckoutController extends Controller
             ]),
         ]);
     }
-    
+
     /**
      * Handle return from Airwallex.
      * GET /{lang}/checkout/payment/{order}/return
      */
     public function paymentReturn(string $lang, string $order)
     {
-        $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
+        $order = Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
-        
+
         // Check payment status via webhook. status is cast to the
         // PaymentTransactionStatus enum (Captured, not 'paid') — comparing
         // against a raw string can never match.
@@ -767,20 +775,20 @@ class CheckoutController extends Controller
             'lang' => $lang,
         ]);
     }
-    
+
     /**
      * Payment success page.
      * GET /{lang}/checkout/payment/{order}/success
      */
     public function paymentSuccess(string $lang, string $order)
     {
-        $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
+        $order = Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
 
         // Same enum-vs-string bug as payment()/paymentReturn() above — status
         // is cast to PaymentTransactionStatus (Captured, not 'paid').
         $payment = $order->payment;
-        if (!$payment || ($payment->status !== PaymentTransactionStatus::Captured && $payment->status !== PaymentTransactionStatus::Pending)) {
+        if (! $payment || ($payment->status !== PaymentTransactionStatus::Captured && $payment->status !== PaymentTransactionStatus::Pending)) {
             return redirect()->route('frontend.checkout.payment', [
                 'lang' => $lang,
                 'order' => $order->order_number,
@@ -793,22 +801,22 @@ class CheckoutController extends Controller
             'order' => $order->order_number,
         ]);
     }
-    
+
     /**
      * Payment failed page.
      * GET /{lang}/checkout/payment/{order}/failed
      */
     public function paymentFailed(string $lang, string $order)
     {
-        $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
+        $order = Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
-        
+
         return view('frontend.checkout.payment-failed', [
             'order' => $order,
             'lang' => $lang,
         ]);
     }
-    
+
     /**
      * Helper: authorize payment access.
      */
@@ -835,7 +843,7 @@ class CheckoutController extends Controller
      */
     public function thankYou(string $lang, string $order)
     {
-        $order = \App\Models\Order::where('order_number', $order)->firstOrFail();
+        $order = Order::where('order_number', $order)->firstOrFail();
 
         $this->authorizePaymentAccess($order);
 
@@ -844,5 +852,4 @@ class CheckoutController extends Controller
             'lang' => $lang,
         ]);
     }
-
 }

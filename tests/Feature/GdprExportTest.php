@@ -3,16 +3,15 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
-use App\Models\ActivityLog;
 use App\Models\Admin;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Condition;
 use App\Models\ContactMessage;
 use App\Models\LoginLog;
+use App\Models\Manufacturer;
 use App\Models\NewsletterSubscriber;
 use App\Models\Order;
-use App\Models\Condition;
-use App\Models\Manufacturer;
 use App\Models\PartInquiry;
 use App\Models\Product;
 use App\Models\RefundRequest;
@@ -20,6 +19,7 @@ use App\Models\SearchLog;
 use App\Models\User;
 use App\Models\UserAddress;
 use App\Services\GdprExportService;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,7 +34,7 @@ class GdprExportTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\RolesSeeder::class]);
+        $this->seed([RolesSeeder::class]);
     }
 
     private function adminWithRole(string $role): Admin

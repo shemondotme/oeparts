@@ -5,13 +5,14 @@ namespace Tests\Feature;
 use App\Enums\EmailTemplate;
 use App\Enums\LogStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Jobs\SendOrderConfirmationEmail;
-use App\Jobs\SendOtpEmail;
 use App\Jobs\SendOrderStatusEmail;
-use App\Jobs\SendTrackingUpdateEmail;
+use App\Jobs\SendOtpEmail;
 use App\Mail\OrderConfirmation;
-use App\Mail\OtpEmail;
 use App\Mail\OrderStatusUpdate;
+use App\Mail\OtpEmail;
 use App\Models\EmailLog;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -58,11 +59,11 @@ class EmailTest extends TestCase
         Queue::fake();
 
         $this->postJson('/en/register', [
-            'name'                  => 'Test User',
-            'email'                 => 'newuser@example.com',
-            'password'              => 'Qz7#mV2!xP',
+            'name' => 'Test User',
+            'email' => 'newuser@example.com',
+            'password' => 'Qz7#mV2!xP',
             'password_confirmation' => 'Qz7#mV2!xP',
-            'agree_terms'           => true,
+            'agree_terms' => true,
         ]);
 
         Queue::assertPushedOn('critical', SendOtpEmail::class);
@@ -91,7 +92,7 @@ class EmailTest extends TestCase
 
         (new SendOrderConfirmationEmail($order))->handle();
 
-        Mail::assertSent(OrderConfirmation::class, fn($m) => $m->order->id === $order->id);
+        Mail::assertSent(OrderConfirmation::class, fn ($m) => $m->order->id === $order->id);
     }
 
     // ── SendOrderStatusEmail job ────────────────────────────────────────────────
@@ -138,9 +139,9 @@ class EmailTest extends TestCase
         Mail::to('buyer@example.com')->send(new OrderConfirmation($order, 'en'));
 
         $this->assertDatabaseHas('email_logs', [
-            'to_email'      => 'buyer@example.com',
+            'to_email' => 'buyer@example.com',
             'template_type' => EmailTemplate::OrderConfirmation->value,
-            'status'        => LogStatus::Success->value,
+            'status' => LogStatus::Success->value,
         ]);
     }
 
@@ -150,9 +151,9 @@ class EmailTest extends TestCase
         Mail::to('user@example.com')->send(new OtpEmail('user@example.com', '654321', 'en'));
 
         $this->assertDatabaseHas('email_logs', [
-            'to_email'      => 'user@example.com',
+            'to_email' => 'user@example.com',
             'template_type' => EmailTemplate::Otp->value,
-            'status'        => LogStatus::Success->value,
+            'status' => LogStatus::Success->value,
         ]);
     }
 
@@ -166,9 +167,9 @@ class EmailTest extends TestCase
         );
 
         $this->assertDatabaseHas('email_logs', [
-            'to_email'      => 'buyer@example.com',
+            'to_email' => 'buyer@example.com',
             'template_type' => EmailTemplate::OrderStatus->value,
-            'status'        => LogStatus::Success->value,
+            'status' => LogStatus::Success->value,
         ]);
     }
 
@@ -181,7 +182,7 @@ class EmailTest extends TestCase
 
         (new SendOtpEmail('user@example.com', '999888', 'de'))->handle();
 
-        Mail::assertSent(OtpEmail::class, fn($m) => $m->locale === 'de');
+        Mail::assertSent(OtpEmail::class, fn ($m) => $m->locale === 'de');
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -191,32 +192,32 @@ class EmailTest extends TestCase
         $user = User::factory()->create(['email' => 'buyer@example.com']);
 
         $order = Order::create([
-            'order_number'            => 'ORD-202603-000001',
-            'user_id'                 => $user->id,
-            'status'                  => OrderStatus::Pending,
-            'payment_method'          => \App\Enums\PaymentMethod::BankTransfer,
-            'payment_status'          => \App\Enums\PaymentStatus::Pending,
-            'subtotal'                => '100.00',
-            'discount_amount'         => '0.00',
-            'shipping_cost'           => '10.00',
-            'vat_amount'              => '21.00',
-            'grand_total'             => '131.00',
-            'shipping_name'           => 'John Doe',
-            'shipping_address_line1'  => 'Test Street 1',
-            'shipping_city'           => 'Berlin',
-            'shipping_postal_code'    => '10115',
-            'shipping_country_code'   => 'DE',
-            'ip_address'              => '127.0.0.1',
+            'order_number' => 'ORD-202603-000001',
+            'user_id' => $user->id,
+            'status' => OrderStatus::Pending,
+            'payment_method' => PaymentMethod::BankTransfer,
+            'payment_status' => PaymentStatus::Pending,
+            'subtotal' => '100.00',
+            'discount_amount' => '0.00',
+            'shipping_cost' => '10.00',
+            'vat_amount' => '21.00',
+            'grand_total' => '131.00',
+            'shipping_name' => 'John Doe',
+            'shipping_address_line1' => 'Test Street 1',
+            'shipping_city' => 'Berlin',
+            'shipping_postal_code' => '10115',
+            'shipping_country_code' => 'DE',
+            'ip_address' => '127.0.0.1',
         ]);
 
         OrderItem::create([
-            'order_id'            => $order->id,
+            'order_id' => $order->id,
             'oem_number_snapshot' => 'BM-12345',
             'manufacturer_snapshot' => 'BMW',
-            'condition_snapshot'  => 'new',
-            'quantity'            => 1,
-            'unit_price'          => '100.00',
-            'total_price'         => '100.00',
+            'condition_snapshot' => 'new',
+            'quantity' => 1,
+            'unit_price' => '100.00',
+            'total_price' => '100.00',
         ]);
 
         return $order->fresh(['items']);

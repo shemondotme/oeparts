@@ -17,19 +17,19 @@ class ContactMessageFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'          => fake()->name(),
-            'email'         => fake()->safeEmail(),
-            'subject_type'  => fake()->randomElement(ContactSubjectType::cases()),
-            'order_number'  => null,
-            'oem_number'    => null,
-            'manufacturer'  => null,
-            'car_model'     => null,
-            'year'          => null,
-            'vin_number'    => null,
-            'message'       => fake()->paragraph(),
-            'status'        => ContactStatus::Unread,
-            'otp_verified'  => false,
-            'ip_address'    => fake()->ipv4(),
+            'name' => fake()->name(),
+            'email' => fake()->safeEmail(),
+            'subject_type' => fake()->randomElement(ContactSubjectType::cases()),
+            'order_number' => null,
+            'oem_number' => null,
+            'manufacturer' => null,
+            'car_model' => null,
+            'year' => null,
+            'vin_number' => null,
+            'message' => fake()->paragraph(),
+            'status' => ContactStatus::Unread,
+            'otp_verified' => false,
+            'ip_address' => fake()->ipv4(),
         ];
     }
 

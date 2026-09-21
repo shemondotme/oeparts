@@ -36,7 +36,7 @@ class UpdateCheckCommandTest extends TestCase
         Http::fake([
             'updates.test/*' => Http::response(['channel' => 'stable', 'releases' => [
                 ['version' => '9.9.9', 'min_version_to_update_from' => '0.0.0', 'security' => true,
-                 'download_url' => 'https://x/oeparts.zip'],
+                    'download_url' => 'https://x/oeparts.zip'],
             ]], 200),
             '*' => Http::response('', 500), // block any unexpected real network
         ]);

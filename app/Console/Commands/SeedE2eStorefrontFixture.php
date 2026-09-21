@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Admin;
 use App\Models\CarModel;
 use App\Models\Condition;
 use App\Models\Coupon;
@@ -156,7 +157,7 @@ class SeedE2eStorefrontFixture extends Command
                 'usage_limit_per_user' => null,
                 'expires_at' => now()->addYears(5),
                 'is_active' => true,
-                'created_by' => \App\Models\Admin::query()->value('id'),
+                'created_by' => Admin::query()->value('id'),
             ]
         );
 

@@ -3,20 +3,20 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\ActivityLogResource;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\ActivityLog;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
+use Illuminate\Contracts\View\View;
 
 class RecentActivityLog extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -62,9 +62,9 @@ class RecentActivityLog extends TableWidget
                         $label = ucfirst($record->action);
 
                         if ($record->model_type) {
-                            $label .= ' ' . class_basename($record->model_type);
+                            $label .= ' '.class_basename($record->model_type);
                             if ($record->model_id) {
-                                $label .= ' #' . $record->model_id;
+                                $label .= ' #'.$record->model_id;
                             }
                         }
 
@@ -77,7 +77,7 @@ class RecentActivityLog extends TableWidget
                         ));
 
                         if ($changedFields !== []) {
-                            $label .= ' (' . implode(', ', $changedFields) . ')';
+                            $label .= ' ('.implode(', ', $changedFields).')';
                         }
 
                         return $label;
@@ -96,8 +96,8 @@ class RecentActivityLog extends TableWidget
                     ->icon('heroicon-o-document-magnifying-glass')
                     ->size('sm')
                     ->color('primary')
-                    ->modalHeading(fn (ActivityLog $record): string => 'Audit Trail — ' . $record->action)
-                    ->modalContent(fn (ActivityLog $record): \Illuminate\Contracts\View\View => view(
+                    ->modalHeading(fn (ActivityLog $record): string => 'Audit Trail — '.$record->action)
+                    ->modalContent(fn (ActivityLog $record): View => view(
                         'filament.modals.audit-trail-detail',
                         ['record' => $record]
                     ))

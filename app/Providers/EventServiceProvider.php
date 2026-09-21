@@ -2,29 +2,43 @@
 
 namespace App\Providers;
 
+use App\Enums\LoginUserType;
+use App\Enums\LogStatus;
+use App\Events\ContactMessageReceived;
 use App\Events\OrderPlaced;
 use App\Events\OrderStatusChanged;
+use App\Events\PartInquiryReceived;
 use App\Events\PaymentReceived;
+use App\Events\RefundRequested;
 use App\Listeners\LogEmailFailed;
 use App\Listeners\LogEmailSent;
 use App\Listeners\LogOrderStatusChange;
 use App\Listeners\LogPaymentReceived;
 use App\Listeners\LogScheduledTaskRun;
+use App\Listeners\NotifyAdminOfContactMessage;
+use App\Listeners\NotifyAdminOfPartInquiry;
+use App\Listeners\NotifyAdminOfRefund;
+use App\Listeners\NotifyAdminsOnJobFailure;
+use App\Listeners\RestoreInventory;
 use App\Listeners\SendOrderConfirmation;
+use App\Listeners\UpdateInventory;
 use App\Models\Admin;
 use App\Models\AdminSession;
 use App\Models\LoginLog;
-use App\Enums\LoginUserType;
-use App\Enums\LogStatus;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Console\Events\ScheduledTaskFailed;
+use Illuminate\Console\Events\ScheduledTaskFinished;
+use Illuminate\Console\Events\ScheduledTaskStarting;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Mail\Events\MessageFailed;
 use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -45,34 +59,34 @@ class EventServiceProvider extends ServiceProvider
         ],
         OrderPlaced::class => [
             SendOrderConfirmation::class,
-            \App\Listeners\UpdateInventory::class,
+            UpdateInventory::class,
         ],
         OrderStatusChanged::class => [
             LogOrderStatusChange::class,
-            \App\Listeners\RestoreInventory::class,
+            RestoreInventory::class,
         ],
         PaymentReceived::class => [
             LogPaymentReceived::class,
         ],
-        \App\Events\RefundRequested::class => [
-            \App\Listeners\NotifyAdminOfRefund::class,
+        RefundRequested::class => [
+            NotifyAdminOfRefund::class,
         ],
-        \App\Events\ContactMessageReceived::class => [
-            \App\Listeners\NotifyAdminOfContactMessage::class,
+        ContactMessageReceived::class => [
+            NotifyAdminOfContactMessage::class,
         ],
-        \App\Events\PartInquiryReceived::class => [
-            \App\Listeners\NotifyAdminOfPartInquiry::class,
+        PartInquiryReceived::class => [
+            NotifyAdminOfPartInquiry::class,
         ],
-        \Illuminate\Queue\Events\JobFailed::class => [
-            \App\Listeners\NotifyAdminsOnJobFailure::class,
+        JobFailed::class => [
+            NotifyAdminsOnJobFailure::class,
         ],
-        \Illuminate\Console\Events\ScheduledTaskStarting::class => [
+        ScheduledTaskStarting::class => [
             [LogScheduledTaskRun::class, 'starting'],
         ],
-        \Illuminate\Console\Events\ScheduledTaskFinished::class => [
+        ScheduledTaskFinished::class => [
             [LogScheduledTaskRun::class, 'finished'],
         ],
-        \Illuminate\Console\Events\ScheduledTaskFailed::class => [
+        ScheduledTaskFailed::class => [
             [LogScheduledTaskRun::class, 'failed'],
         ],
     ];
@@ -94,10 +108,10 @@ class EventServiceProvider extends ServiceProvider
         }
 
         LoginLog::create([
-            'user_id'   => $user->getAuthIdentifier(),
+            'user_id' => $user->getAuthIdentifier(),
             'user_type' => $event->guard === 'admin' ? LoginUserType::Admin : LoginUserType::Customer,
-            'email'     => $user->email,
-            'status'    => LogStatus::Success,
+            'email' => $user->email,
+            'status' => LogStatus::Success,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
@@ -119,10 +133,10 @@ class EventServiceProvider extends ServiceProvider
         }
 
         LoginLog::create([
-            'user_id'   => $event->user?->getAuthIdentifier(),
+            'user_id' => $event->user?->getAuthIdentifier(),
             'user_type' => $event->guard === 'admin' ? LoginUserType::Admin : LoginUserType::Customer,
-            'email'     => $email,
-            'status'    => LogStatus::Failed,
+            'email' => $email,
+            'status' => LogStatus::Failed,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
@@ -167,9 +181,9 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot();
 
-        \Illuminate\Support\Facades\Event::listen(Login::class, [$this, 'onLogin']);
-        \Illuminate\Support\Facades\Event::listen(Failed::class, [$this, 'onLoginFailed']);
-        \Illuminate\Support\Facades\Event::listen(Logout::class, [$this, 'onLogout']);
+        Event::listen(Login::class, [$this, 'onLogin']);
+        Event::listen(Failed::class, [$this, 'onLoginFailed']);
+        Event::listen(Logout::class, [$this, 'onLogout']);
     }
 
     public function shouldDiscoverEvents(): bool

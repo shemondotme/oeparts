@@ -25,6 +25,7 @@ class RestoreBackupCommandTest extends TestCase
     use RefreshDatabase;
 
     private string $statePath;
+
     private string $fixture;
 
     protected function setUp(): void

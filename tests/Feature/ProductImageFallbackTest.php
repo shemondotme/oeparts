@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\MediaFile;
@@ -16,6 +17,7 @@ class ProductImageFallbackTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -82,7 +84,7 @@ class ProductImageFallbackTest extends TestCase
     {
         $product = $this->makeProduct();
         $logo = MediaFile::create([
-            'uploaded_by' => \App\Models\Admin::factory()->create()->id,
+            'uploaded_by' => Admin::factory()->create()->id,
             'file_name' => 'bosch-logo.png', 'file_path' => 'logos/bosch-logo.png',
             'file_url' => '', 'mime_type' => 'image/png', 'size' => 1024,
         ]);
@@ -101,7 +103,7 @@ class ProductImageFallbackTest extends TestCase
     {
         $product = $this->makeProduct();
         $logo = MediaFile::create([
-            'uploaded_by' => \App\Models\Admin::factory()->create()->id,
+            'uploaded_by' => Admin::factory()->create()->id,
             'file_name' => 'bosch-logo.png', 'file_path' => 'logos/bosch-logo.png',
             'file_url' => '', 'mime_type' => 'image/png', 'size' => 1024,
         ]);

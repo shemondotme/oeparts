@@ -15,7 +15,7 @@ class Sequence extends Model
     ];
 
     protected $casts = [
-        'type'           => SequenceType::class,
+        'type' => SequenceType::class,
         'resets_monthly' => 'boolean',
     ];
 }

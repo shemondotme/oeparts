@@ -4,8 +4,8 @@ namespace App\Models;
 
 use App\Enums\SectionLocation;
 use App\Enums\SectionStatus;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -18,6 +18,7 @@ class Section extends Model
      * component in resources/views/components/sections/ (blade filenames are
      * kebab-case; these keys stay snake_case as the stored DB values — the
      * home page converts one to the other at include time via
+     *
      * @includeIf('components.sections.' . str_replace('_', '-', $type)),
      * which silently skips unknown types — so the admin MUST offer exactly
      * these values. A test asserts every DB type and every blade component
@@ -26,36 +27,36 @@ class Section extends Model
      * @var array<string, string>
      */
     public const TYPES = [
-        'hero'             => 'Hero (search + specification panel)',
-        'trust_bar'        => 'Trust Bar',
-        'featured_brands'  => 'Featured Brands',
-        'how_it_works'     => 'How It Works',
+        'hero' => 'Hero (search + specification panel)',
+        'trust_bar' => 'Trust Bar',
+        'featured_brands' => 'Featured Brands',
+        'how_it_works' => 'How It Works',
         'popular_searches' => 'Popular Searches',
-        'stats_counter'    => 'Stats Counter',
-        'testimonials'     => 'Testimonials',
-        'blog_preview'     => 'Blog Preview',
-        'shipping_info'    => 'Shipping Info',
-        'faqs'             => 'FAQs Accordion',
-        'part_inquiry'     => 'Part Inquiry',
-        'contact_cta'      => 'Contact CTA',
-        'newsletter'       => 'Newsletter',
-        'banner'           => 'Banner / B2B Strip',
+        'stats_counter' => 'Stats Counter',
+        'testimonials' => 'Testimonials',
+        'blog_preview' => 'Blog Preview',
+        'shipping_info' => 'Shipping Info',
+        'faqs' => 'FAQs Accordion',
+        'part_inquiry' => 'Part Inquiry',
+        'contact_cta' => 'Contact CTA',
+        'newsletter' => 'Newsletter',
+        'banner' => 'Banner / B2B Strip',
     ];
 
     protected $fillable = [
-        'type', 'location', 'title', 'content', 'is_active', 'status', 'publish_at', 
+        'type', 'location', 'title', 'content', 'is_active', 'status', 'publish_at',
         'published_by', 'updated_by', 'sort_order',
     ];
 
     protected $casts = [
-        'location'      => SectionLocation::class,
-        'status'        => SectionStatus::class,
-        'title'         => 'array',
-        'content'       => 'array',
-        'is_active'     => 'boolean',
-        'publish_at'    => 'datetime',
-        'created_at'    => 'datetime',
-        'updated_at'    => 'datetime',
+        'location' => SectionLocation::class,
+        'status' => SectionStatus::class,
+        'title' => 'array',
+        'content' => 'array',
+        'is_active' => 'boolean',
+        'publish_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function publisher(): BelongsTo
@@ -76,11 +77,11 @@ class Section extends Model
     public function saveVersion(string $action = 'updated', ?int $adminId = null, ?string $summary = null): SectionVersion
     {
         return $this->versions()->create([
-            'created_by'     => $adminId ?? auth('admin')->id(),
-            'action'         => $action,
-            'snapshot'       => $this->toArray(),
+            'created_by' => $adminId ?? auth('admin')->id(),
+            'action' => $action,
+            'snapshot' => $this->toArray(),
             'change_summary' => $summary,
-            'created_at'     => now(),
+            'created_at' => now(),
         ]);
     }
 
@@ -103,10 +104,10 @@ class Section extends Model
     public function scopePublished($query)
     {
         return $query->where('status', SectionStatus::Published)
-                     ->where(function ($q) {
-                         $q->whereNull('publish_at')
-                           ->orWhere('publish_at', '<=', now());
-                     });
+            ->where(function ($q) {
+                $q->whereNull('publish_at')
+                    ->orWhere('publish_at', '<=', now());
+            });
     }
 
     public function scopeDraft($query)
@@ -117,7 +118,7 @@ class Section extends Model
     public function scopeScheduled($query)
     {
         return $query->where('status', SectionStatus::Scheduled)
-                     ->where('publish_at', '>', now());
+            ->where('publish_at', '>', now());
     }
 
     public function isVisible(): bool
@@ -148,6 +149,7 @@ class Section extends Model
     public function archive(): bool
     {
         $this->update(['status' => SectionStatus::Archived]);
+
         return true;
     }
 }

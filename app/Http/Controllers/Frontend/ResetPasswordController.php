@@ -14,7 +14,7 @@ class ResetPasswordController extends Controller
     /**
      * Display the password reset view.
      */
-    public function showResetForm(Request $request, string $lang, string $token = null)
+    public function showResetForm(Request $request, string $lang, ?string $token = null)
     {
         return view('auth.passwords.reset')->with(
             ['token' => $token, 'email' => $request->email]
@@ -29,10 +29,10 @@ class ResetPasswordController extends Controller
         $pwMin = (int) settings('auth.customer_password_min', 8);
 
         $request->validate([
-            'token'    => 'required',
-            'email'    => 'required|email',
+            'token' => 'required',
+            'email' => 'required|email',
             'password' => ['required', 'string', 'confirmed', PasswordRule::min($pwMin)->mixedCase()->numbers()->symbols()->uncompromised()],
-            'website'  => 'max:0',
+            'website' => 'max:0',
         ]);
 
         $status = Password::reset(

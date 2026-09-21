@@ -31,7 +31,7 @@ class EditNewsletterCampaign extends EditRecord
 
     public function getHeading(): string
     {
-        return 'Edit ' . ($this->record?->subject ?? 'Campaign');
+        return 'Edit '.($this->record?->subject ?? 'Campaign');
     }
 
     public function getSubheading(): ?string

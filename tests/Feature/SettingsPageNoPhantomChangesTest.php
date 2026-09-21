@@ -62,7 +62,7 @@ class SettingsPageNoPhantomChangesTest extends TestCase
         $classes = [];
 
         foreach (Finder::create()->files()->in(app_path('Filament/Pages/Settings'))->name('*.php') as $file) {
-            $class = 'App\\Filament\\Pages\\Settings\\' . $file->getBasename('.php');
+            $class = 'App\\Filament\\Pages\\Settings\\'.$file->getBasename('.php');
 
             if (! class_exists($class)) {
                 continue;
@@ -95,10 +95,10 @@ class SettingsPageNoPhantomChangesTest extends TestCase
             $pendingChanges = $component->get('pendingChanges');
 
             if ($pendingChanges !== null) {
-                $failures[] = $class . ': ' . json_encode(array_keys($pendingChanges['changed'] ?? []));
+                $failures[] = $class.': '.json_encode(array_keys($pendingChanges['changed'] ?? []));
             }
         }
 
-        $this->assertSame([], $failures, "These settings pages reported a phantom change with zero edits:\n" . implode("\n", $failures));
+        $this->assertSame([], $failures, "These settings pages reported a phantom change with zero edits:\n".implode("\n", $failures));
     }
 }

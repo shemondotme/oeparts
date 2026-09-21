@@ -21,6 +21,7 @@ class RunBackupCommandTest extends TestCase
     use RefreshDatabase;
 
     private string $statePath;
+
     private string $filesRoot;
 
     protected function setUp(): void
@@ -95,10 +96,10 @@ class RunBackupCommandTest extends TestCase
     public function a_stale_backup_is_flagged(): void
     {
         BackupRun::create([
-            'profile'     => BackupRun::PROFILE_FULL,
-            'status'      => BackupRun::STATUS_SUCCESS,
-            'trigger'     => BackupRun::TRIGGER_SCHEDULED,
-            'disk'        => 'local',
+            'profile' => BackupRun::PROFILE_FULL,
+            'status' => BackupRun::STATUS_SUCCESS,
+            'trigger' => BackupRun::TRIGGER_SCHEDULED,
+            'disk' => 'local',
             'finished_at' => now()->subHours(48),
         ]);
 

@@ -24,6 +24,7 @@ class FileBackupStageTest extends TestCase
     use RefreshDatabase;
 
     private string $statePath;
+
     private string $fixture;
 
     protected function setUp(): void
@@ -40,9 +41,9 @@ class FileBackupStageTest extends TestCase
         // A small fixture tree to back up.
         $this->fixture = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-file-fixture-'.getmypid();
         $this->writeFixture([
-            'app.txt'         => 'hello world',
-            'sub/nested.txt'  => 'nested content',
-            'empty.txt'       => '',
+            'app.txt' => 'hello world',
+            'sub/nested.txt' => 'nested content',
+            'empty.txt' => '',
             'node_modules/x.txt' => 'should be excluded',
         ]);
         config(['backup.files.root' => $this->fixture]);
@@ -85,10 +86,10 @@ class FileBackupStageTest extends TestCase
     {
         return BackupRun::create([
             'profile' => BackupRun::PROFILE_FULL,
-            'status'  => BackupRun::STATUS_RUNNING,
+            'status' => BackupRun::STATUS_RUNNING,
             'trigger' => BackupRun::TRIGGER_MANUAL,
-            'disk'    => 'local',
-            'meta'    => $meta,
+            'disk' => 'local',
+            'meta' => $meta,
         ]);
     }
 
@@ -101,18 +102,18 @@ class FileBackupStageTest extends TestCase
         do {
             $result = $stage->step($run, $state);
             if ($result->part !== null) {
-                $p    = $result->part;
+                $p = $result->part;
                 $type = $p['type'] ?? BackupChunk::TYPE_FILES;
                 $run->parts()->create([
-                    'type'     => $type,
+                    'type' => $type,
                     'sequence' => $run->parts()->where('type', $type)->count(),
-                    'name'     => $p['name'] ?? null,
-                    'disk'     => $p['disk'] ?? $run->disk,
-                    'path'     => $p['path'] ?? '',
-                    'sha256'   => $p['sha256'] ?? null,
-                    'bytes'    => $p['bytes'] ?? 0,
-                    'rows'     => $p['rows'] ?? null,
-                    'meta'     => $p['meta'] ?? null,
+                    'name' => $p['name'] ?? null,
+                    'disk' => $p['disk'] ?? $run->disk,
+                    'path' => $p['path'] ?? '',
+                    'sha256' => $p['sha256'] ?? null,
+                    'bytes' => $p['bytes'] ?? 0,
+                    'rows' => $p['rows'] ?? null,
+                    'meta' => $p['meta'] ?? null,
                 ]);
             }
             $state = $result->state;
@@ -130,7 +131,7 @@ class FileBackupStageTest extends TestCase
     private function extract(BackupRun $run, array $entry): string
     {
         $volBytes = Storage::disk('local')->get('backups/'.$run->id.'/files/vol-'.$entry['vol'].'.oevol');
-        $out      = '';
+        $out = '';
         foreach ($entry['segments'] as [$offset, $clen, $rawLen]) {
             $out .= gzdecode(substr($volBytes, $offset, $clen));
         }
@@ -142,9 +143,9 @@ class FileBackupStageTest extends TestCase
     public function it_archives_files_into_a_volume_with_a_manifest(): void
     {
         $run = $this->newRun();
-        $this->driveAndPersist(new FileBackupStage(), $run);
+        $this->driveAndPersist(new FileBackupStage, $run);
 
-        $volumes  = $run->parts()->where('meta->kind', 'volume')->count();
+        $volumes = $run->parts()->where('meta->kind', 'volume')->count();
         $manifest = $this->manifest($run);
 
         $this->assertGreaterThanOrEqual(1, $volumes);
@@ -161,7 +162,7 @@ class FileBackupStageTest extends TestCase
     public function an_archived_file_round_trips_byte_for_byte(): void
     {
         $run = $this->newRun();
-        $this->driveAndPersist(new FileBackupStage(), $run);
+        $this->driveAndPersist(new FileBackupStage, $run);
 
         $entry = collect($this->manifest($run)['files'])->firstWhere('path', 'app.txt');
 
@@ -176,7 +177,7 @@ class FileBackupStageTest extends TestCase
         config(['backup.volume_bytes' => 1]);
 
         $run = $this->newRun();
-        $this->driveAndPersist(new FileBackupStage(), $run);
+        $this->driveAndPersist(new FileBackupStage, $run);
 
         $this->assertGreaterThanOrEqual(2, $run->parts()->where('meta->kind', 'volume')->count());
         // Content still reconstructs correctly across the split.
@@ -188,7 +189,7 @@ class FileBackupStageTest extends TestCase
     public function an_empty_file_is_recorded_with_no_segments(): void
     {
         $run = $this->newRun();
-        $this->driveAndPersist(new FileBackupStage(), $run);
+        $this->driveAndPersist(new FileBackupStage, $run);
 
         $entry = collect($this->manifest($run)['files'])->firstWhere('path', 'empty.txt');
 
@@ -202,7 +203,7 @@ class FileBackupStageTest extends TestCase
     {
         // Baseline full backup.
         $first = $this->newRun();
-        $this->driveAndPersist(new FileBackupStage(), $first);
+        $this->driveAndPersist(new FileBackupStage, $first);
         $first->update(['status' => BackupRun::STATUS_SUCCESS]);
 
         // Change one file, add one, delete one.
@@ -212,7 +213,7 @@ class FileBackupStageTest extends TestCase
         @unlink($this->fixture.'/empty.txt');
 
         $second = $this->newRun(['incremental' => true]);
-        $this->driveAndPersist(new FileBackupStage(), $second);
+        $this->driveAndPersist(new FileBackupStage, $second);
 
         $counts = $this->manifest($second)['counts'];
 

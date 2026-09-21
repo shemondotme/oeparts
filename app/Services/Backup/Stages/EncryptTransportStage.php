@@ -53,7 +53,7 @@ class EncryptTransportStage implements BackupStage
         }
 
         $deadline = microtime(true) + max(0.0, (float) config('backup.encryption.batch_seconds', 5));
-        $secured  = 0;
+        $secured = 0;
         $lastName = null;
 
         do {
@@ -74,7 +74,7 @@ class EncryptTransportStage implements BackupStage
             $lastName = $part->name;
         } while (microtime(true) < $deadline);
 
-        $total    = max(1, (int) $state['total_parts']);
+        $total = max(1, (int) $state['total_parts']);
         $fraction = min($state['processed'], $total) / $total;
 
         $remaining = $run->parts()->where('id', '>', (int) $state['cursor_id'])->exists();
@@ -119,8 +119,8 @@ class EncryptTransportStage implements BackupStage
         }
 
         $srcDisk = $part->disk;                 // local staging
-        $srcRel  = $part->path;
-        $encRel  = $srcRel.'.enc';
+        $srcRel = $part->path;
+        $encRel = $srcRel.'.enc';
 
         $srcAbs = Storage::disk($srcDisk)->path($srcRel);
         $encAbs = Storage::disk($srcDisk)->path($encRel);
@@ -152,18 +152,18 @@ class EncryptTransportStage implements BackupStage
         // finish the cleanup, never re-attempt encryptFile() against a
         // source that might already be gone.
         $part->update([
-            'disk'   => $finalDisk,
-            'path'   => $encRel,
-            'bytes'  => $meta['enc_bytes'],
+            'disk' => $finalDisk,
+            'path' => $encRel,
+            'bytes' => $meta['enc_bytes'],
             'sha256' => $meta['enc_sha256'],
-            'meta'   => array_merge((array) ($part->meta ?? []), [
-                'encrypted'    => true,
-                'cipher'       => $meta['cipher'],
-                'frames'       => $meta['frames'],
+            'meta' => array_merge((array) ($part->meta ?? []), [
+                'encrypted' => true,
+                'cipher' => $meta['cipher'],
+                'frames' => $meta['frames'],
                 'plain_sha256' => $meta['plain_sha256'],
-                'plain_bytes'  => $meta['plain_bytes'],
-                'plain_disk'   => $srcDisk,
-                'plain_path'   => $srcRel,
+                'plain_bytes' => $meta['plain_bytes'],
+                'plain_disk' => $srcDisk,
+                'plain_path' => $srcRel,
                 'plain_enc_local_path' => $localEncPath,
             ]),
         ]);

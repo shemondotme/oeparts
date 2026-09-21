@@ -2,16 +2,20 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasPeriodFilterPills;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\User;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
 class CustomerGrowthChart extends ChartWidget
 {
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasPeriodFilterPills;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasDashboardPeriod;
+    use HasPeriodFilterPills;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected ?string $heading = 'Customer Growth';
 
@@ -21,7 +25,7 @@ class CustomerGrowthChart extends ChartWidget
     // Eager: async-alpine never initializes charts on lazily-morphed HTML (see RevenueChart).
     protected static bool $isLazy = false;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected function getType(): string
     {

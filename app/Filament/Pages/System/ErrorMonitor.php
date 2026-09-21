@@ -3,8 +3,8 @@
 namespace App\Filament\Pages\System;
 
 use Filament\Pages\Page;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ErrorMonitor extends Page
 {
@@ -45,7 +45,7 @@ class ErrorMonitor extends Page
         return 50;
     }
 
-public function getErrorStats(): array
+    public function getErrorStats(): array
     {
         return Cache::remember('error_monitor_stats', 30, function () {
             $exceptions = $this->getExceptionLog();
@@ -64,7 +64,7 @@ public function getErrorStats(): array
     {
         try {
             $logPath = storage_path('logs/laravel.log');
-            if (!file_exists($logPath)) {
+            if (! file_exists($logPath)) {
                 return [];
             }
 
@@ -82,7 +82,7 @@ public function getErrorStats(): array
                     'time' => $match[1],
                     'type' => $match[2],
                     'message' => $match[3],
-                    'file' => isset($match[4]) ? str_replace(base_path() . DIRECTORY_SEPARATOR, '', $match[4]) : '',
+                    'file' => isset($match[4]) ? str_replace(base_path().DIRECTORY_SEPARATOR, '', $match[4]) : '',
                     'line' => $match[5] ?? 0,
                 ];
             }

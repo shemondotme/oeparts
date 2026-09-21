@@ -3,11 +3,9 @@
 namespace App\Filament\Resources\FaqResource\Pages;
 
 use App\Filament\Resources\FaqResource;
-use App\Filament\Support\AdminUi;
 use Filament\Actions;
-use Filament\Infolists;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -89,4 +87,3 @@ class ViewFaq extends ViewRecord
             ]);
     }
 }
-

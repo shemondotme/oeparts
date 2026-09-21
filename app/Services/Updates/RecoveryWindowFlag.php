@@ -45,9 +45,9 @@ class RecoveryWindowFlag
         $this->ensureDir($this->stateDir());
 
         $payload = array_merge([
-            'armed_at'    => now()->toIso8601String(),
+            'armed_at' => now()->toIso8601String(),
             'php_version' => PHP_VERSION,
-            'pid'         => getmypid() ?: null,
+            'pid' => getmypid() ?: null,
         ], $context);
 
         file_put_contents(

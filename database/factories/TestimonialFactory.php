@@ -17,12 +17,12 @@ class TestimonialFactory extends Factory
         $quote = fake()->sentence(10);
 
         return [
-            'name'       => fake()->name(),
-            'company'    => fake()->company(),
-            'location'   => fake()->city().', '.fake()->country(),
-            'quote'      => ['en' => $quote, 'de' => $quote],
-            'rating'     => fake()->numberBetween(1, 5),
-            'is_active'  => true,
+            'name' => fake()->name(),
+            'company' => fake()->company(),
+            'location' => fake()->city().', '.fake()->country(),
+            'quote' => ['en' => $quote, 'de' => $quote],
+            'rating' => fake()->numberBetween(1, 5),
+            'is_active' => true,
             'sort_order' => fake()->numberBetween(0, 100),
         ];
     }

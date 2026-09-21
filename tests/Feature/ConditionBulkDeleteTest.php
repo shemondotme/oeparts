@@ -7,6 +7,7 @@ use App\Models\Admin;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,7 +30,7 @@ class ConditionBulkDeleteTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $this->admin = Admin::factory()->create();
         $this->admin->givePermissionTo(['view conditions', 'delete conditions']);

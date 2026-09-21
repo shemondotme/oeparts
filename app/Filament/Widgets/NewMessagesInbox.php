@@ -3,16 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\ContactStatus;
+use App\Filament\Resources\ContactMessageResource;
 use App\Models\ContactMessage;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
+use Illuminate\Support\Str;
 
 class NewMessagesInbox extends TableWidget
 {
@@ -25,7 +24,7 @@ class NewMessagesInbox extends TableWidget
 
     protected ?string $pollingInterval = '60s';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected static ?int $sort = -31;
 
@@ -40,7 +39,7 @@ class NewMessagesInbox extends TableWidget
             'count' => ContactMessage::where('status', ContactStatus::Unread->value)->count(),
         ]);
 
-        return 'New Messages' . ($d['count'] > 0 ? " ({$d['count']})" : '');
+        return 'New Messages'.($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected function getTableHeaderActions(): array
@@ -50,7 +49,7 @@ class NewMessagesInbox extends TableWidget
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
                 ->link()
-                ->url(\App\Filament\Resources\ContactMessageResource::getUrl('index')),
+                ->url(ContactMessageResource::getUrl('index')),
         ];
     }
 
@@ -71,8 +70,8 @@ class NewMessagesInbox extends TableWidget
                     ->label('From')
                     ->weight(FontWeight::Bold)
                     ->limit(24)
-                    ->tooltip(fn (ContactMessage $record): ?string => \Illuminate\Support\Str::limit((string) $record->message, 220))
-                    ->description(fn (ContactMessage $record): string => \Illuminate\Support\Str::limit((string) $record->message, 50))
+                    ->tooltip(fn (ContactMessage $record): ?string => Str::limit((string) $record->message, 220))
+                    ->description(fn (ContactMessage $record): string => Str::limit((string) $record->message, 50))
                     ->searchable(),
                 TextColumn::make('subject_type')
                     ->label('Subject')
@@ -88,7 +87,7 @@ class NewMessagesInbox extends TableWidget
                 Tables\Actions\Action::make('view')
                     ->icon('heroicon-o-eye')
                     ->color('gray')
-                    ->url(fn (ContactMessage $record): string => \App\Filament\Resources\ContactMessageResource::getUrl('view', ['record' => $record])),
+                    ->url(fn (ContactMessage $record): string => ContactMessageResource::getUrl('view', ['record' => $record])),
             ])
             ->striped()
             ->paginated(false)

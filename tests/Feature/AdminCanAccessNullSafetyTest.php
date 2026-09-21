@@ -30,12 +30,12 @@ class AdminCanAccessNullSafetyTest extends TestCase
 
     /**
      * @return array<int,class-string> every app\Filament\... class that
-     *         DECLARES its own canAccess() — including an abstract base like
-     *         SettingsPage (a static method can be called on an abstract
-     *         class directly; only `new` is disallowed), so the ~30 settings
-     *         pages that merely inherit it are deliberately excluded (they'd
-     *         just re-run the identical inherited check 30 times) while the
-     *         one real implementation still gets tested exactly once.
+     *                                 DECLARES its own canAccess() — including an abstract base like
+     *                                 SettingsPage (a static method can be called on an abstract
+     *                                 class directly; only `new` is disallowed), so the ~30 settings
+     *                                 pages that merely inherit it are deliberately excluded (they'd
+     *                                 just re-run the identical inherited check 30 times) while the
+     *                                 one real implementation still gets tested exactly once.
      */
     public static function discoverClassesWithCanAccess(): array
     {
@@ -81,7 +81,7 @@ class AdminCanAccessNullSafetyTest extends TestCase
     }
 
     #[Test]
-    public function canAccess_never_throws_and_returns_false_for_a_guest(): void
+    public function can_access_never_throws_and_returns_false_for_a_guest(): void
     {
         $this->assertGuest('admin');
 

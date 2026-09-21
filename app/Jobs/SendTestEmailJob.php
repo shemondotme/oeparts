@@ -25,7 +25,7 @@ class SendTestEmailJob implements ShouldQueue
     {
         Mail::raw('This is a test email from OeParts admin panel. Your SMTP configuration is working correctly.', function ($message) {
             $message->to($this->recipientEmail)
-                ->subject('[OeParts] SMTP Test Email — ' . now()->format('Y-m-d H:i'));
+                ->subject('[OeParts] SMTP Test Email — '.now()->format('Y-m-d H:i'));
         });
     }
 }
