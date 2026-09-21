@@ -48,6 +48,9 @@
 .phpunit.result.cache
 .phpunit.cache
 
+# PHPStan (phpstan-baseline.neon IS committed — only the result cache isn't)
+/storage/framework/phpstan
+
 # Homestead (legacy)
 Homestead.json
 Homestead.yaml

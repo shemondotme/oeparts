@@ -49,7 +49,7 @@ jobs:
           # openssl (backup cipher), fileinfo/curl (download/upload), zip (release
           # zip + e2e ZipArchive), gd/intl (Filament) — the update-system e2e needs these.
           extensions: mbstring, bcmath, pdo, pdo_sqlite, sqlite3, xml, zip, openssl, fileinfo, curl, gd, intl
-          coverage: none
+          coverage: pcov
 
       # Must run before `composer install` — its post-autoload-dump hook boots
       # the framework (artisan package:discover), which needs an APP_ENV/APP_KEY
@@ -85,5 +85,164 @@ jobs:
       - name: Create testing SQLite database file
         run: touch testing
 
+      # Coverage only on one leg (8.4) — ParaTest merges per-worker coverage
+      # into a single report; running it on all 3 PHP versions would just
+      # triplicate the same artifact for no benefit.
       - name: Run tests
-        run: php artisan test --parallel
+        run: php artisan test --parallel ${{ matrix.php == '8.4' && '--coverage-clover=coverage.xml' || '' }}
+
+      - name: Upload coverage report
+        if: matrix.php == '8.4'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14
+
+  static-analysis:
+    name: Static analysis (PHPStan + Pint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, bcmath, pdo, pdo_sqlite, sqlite3, xml, zip, openssl, fileinfo, curl, gd, intl
+          coverage: none
+
+      # Same as the test job — post-autoload-dump boots the framework.
+      - name: Copy test environment
+        run: cp .env.testing .env
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-8.4-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-8.4-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      # phpstan-baseline.neon (committed) snapshots pre-existing debt — this
+      # only fails on NEW errors introduced from here on.
+      - name: PHPStan
+        run: composer analyse -- --error-format=github
+
+      - name: Pint (code style)
+        run: composer format:check
+
+  e2e:
+    name: Playwright e2e (admin + guest)
+    runs-on: ubuntu-latest
+    # Real Docker Sail stack, not a bespoke CI-only setup — tests/e2e/helpers.js's
+    # artisan()/artisanOutput() shell out via `docker compose exec laravel.test`
+    # (this dev environment runs entirely under Docker, no host PHP — see that
+    # file's own comment), and auth.setup.js logs in through the real UI against
+    # baseURL http://oeparts.test. Reusing the exact same compose.yaml here means
+    # the e2e suite runs against the same stack contributors run it against
+    # locally, instead of a second, divergent CI-only environment.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Needed on the RUNNER (not just in-container) only to populate
+      # vendor/laravel/sail — compose.yaml's laravel.test/queue-worker build
+      # context is vendor/laravel/sail/runtimes/8.4, a composer package, so it
+      # must exist on disk before `docker compose build` can run. The
+      # container's OWN vendor/ (used at runtime) is a separate named volume,
+      # populated by the "Install PHP dependencies in container" step below —
+      # same two-step "composer install once after first `up`" local dev does
+      # (see compose.yaml's vendor-laravel-test volume comment).
+      - name: Setup PHP (for the Sail build context only)
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-8.4-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-8.4-
+
+      - name: Install dependencies (host, for the Sail build context)
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      # A full .env, not .env.testing: the e2e suite needs a real, persistent
+      # MySQL/Redis-backed app (matching local dev), not the sqlite-in-memory/
+      # array-driver setup the PHPUnit suite uses. .env.docker.overrides (env_file
+      # in compose.yaml) supplies DB_HOST/REDIS_HOST/CACHE/SESSION/QUEUE/MAIL —
+      # everything else (DB_DATABASE, APP_KEY, OE_BACKUP_KEY) comes from this base
+      # .env, same division of concerns local dev relies on.
+      - name: Prepare environment file
+        run: |
+          cp .env.example .env
+          sed -i 's/^APP_ENV=.*/APP_ENV=local/' .env
+          sed -i 's/^APP_DEBUG=.*/APP_DEBUG=true/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=oeparts/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=password/' .env
+          echo "OE_BACKUP_KEY=$(openssl rand -base64 32)" >> .env
+
+      - name: Start the Docker Sail stack
+        run: docker compose up -d --build --wait
+
+      # The container's own vendor/ is a separate named volume (vendor-laravel-test),
+      # isolated from the host vendor/ above — see compose.yaml's comment on that
+      # volume. Must run before artisan works inside the container at all.
+      - name: Install PHP dependencies in container
+        run: docker compose exec -T laravel.test composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Generate app key
+        run: docker compose exec -T laravel.test php artisan key:generate
+
+      # Full schema + the real DatabaseSeeder (roles, admin accounts including
+      # superadmin@oeparts.test — see AdminSeeder — settings, demo catalog data
+      # the guest storefront specs browse/search).
+      - name: Migrate + seed
+        run: docker compose exec -T laravel.test php artisan migrate:fresh --seed --force
+
+      # playwright.config.js's baseURL is http://oeparts.test — laravel.test
+      # publishes port 80 to the runner's host network (compose.yaml ports:
+      # ${APP_PORT:-80}:80), so this just needs the hostname to resolve.
+      - name: Point oeparts.test at the container
+        run: echo "127.0.0.1 oeparts.test" | sudo tee -a /etc/hosts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright e2e suite
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose logs laravel.test queue-worker mysql redis
+
+      - name: Stop the Docker Sail stack
+        if: always()
+        run: docker compose down -v

@@ -1,0 +1,3606 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
+			identifier: larastan.noEnvCallsOutsideOfConfig
+			count: 1
+			path: app/Console/Commands/CleanOldLogs.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cart_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$price_at_add\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Console/Commands/ProcessAbandonedCarts.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Pages/Catalog/BulkUpdateLogPage.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Pages\\Catalog\\BulkUpdateLogPage\:\:actionTypeValue\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 3
+			path: app/Filament/Pages/Catalog/BulkUpdateLogPage.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Pages\\Catalog\\BulkUpdateLogPage\:\:canManageBulkUpdates\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: app/Filament/Pages/Catalog/BulkUpdateLogPage.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Pages\\Catalog\\BulkUpdateLogPage\:\:canRevert\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: app/Filament/Pages/Catalog/BulkUpdateLogPage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$manufacturer\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$oem_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{oem_number\: string, manufacturer\: string, old\: string, new\: string\}, Closure\(App\\Models\\Product\)\: array\{oem_number\: string, manufacturer\: string, old\: string, new\: string\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Parameter \#1 \$p of method App\\Filament\\Pages\\Catalog\\BulkUpdateProducts\:\:previewChange\(\) expects App\\Models\\Product, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Parameter \#1 \$record of method App\\Filament\\Pages\\Catalog\\BulkUpdateProducts\:\:applyToRecord\(\) expects App\\Models\\Product, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Parameter \#1 \$rules of method Filament\\Pages\\BasePage\:\:validate\(\) expects array\<string, array\<mixed\>\>\|null, array\<string, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Catalog/BulkUpdateProducts.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Pages/Catalog/InventoryLogPage.php
+
+		-
+			message: '#^Parameter \#1 \$rules of method Filament\\Pages\\BasePage\:\:validate\(\) expects array\<string, array\<mixed\>\>\|null, array\<string, string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Catalog/ProductImport.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Pages/Content/ContentRevisionPage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Dashboard.php
+
+		-
+			message: '#^Call to function is_string\(\) with class\-string\<Filament\\Widgets\\Widget\> will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Filament/Pages/Dashboard.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Filament/Pages/Dashboard.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<class\-string\<Filament\\Widgets\\Widget\>\|Filament\\Widgets\\WidgetConfiguration\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Filament/Pages/Dashboard.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Pages/Dashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$order_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Reports/CustomersReport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Order\:\:\$oem_number_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Reports/SalesReport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Order\:\:\$order_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Reports/SalesReport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Order\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Reports/SalesReport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Order\:\:\$total_price\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Reports/SalesReport.php
+
+		-
+			message: '#^Instanceof between App\\Enums\\OrderStatus and BackedEnum will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Filament/Pages/Reports/SalesReport.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\SearchLog\:\:\$count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Reports/SearchIntelligenceReport.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\AppearanceSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/AppearanceSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{headline\: array\{label\: ''Headline''\}, spec_line\: array\{label\: ''Spec Line''\}, subline\: array\{label\: ''Subline''\}, status_line\: array\{label\: ''Status Line''\}, foot_left\: array\{label\: ''Footer Left''\}, foot_right\: array\{label\: ''Footer Right''\}, aria_label\: array\{label\: ''ARIA Label''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/AppearanceSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\CustomizationSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/CustomizationSettings.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Schemas\\Components\\Tabs\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/CustomizationSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{cta_text\: array\{label\: ''CTA'', helperText\: '''', placeholders\: array\{en\: ''e\.g\. Shop Now'', de\: ''e\.g\. Jetzt kaufen'', lt\: ''e\.g\. Pirkite dabar'', fr\: ''e\.g\. Acheter…'', es\: ''e\.g\. Comprar ahora''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/CustomizationSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{hero_footer_pill_1\: array\{label\: ''Pill 1''\}, hero_footer_pill_2\: array\{label\: ''Pill 2''\}, hero_footer_pill_3\: array\{label\: ''Pill 3'', helperText\: ''If this states a…''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/CustomizationSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{hero_index_badge\: array\{label\: ''Index Badge''\}, hero_live_status\: array\{label\: ''Live Status''\}, hero_eyebrow\: array\{label\: ''Eyebrow''\}, hero_subtext_default\: array\{label\: ''Subtext Default'', type\: ''textarea'', rows\: 3\}, hero_spec_title\: array\{label\: ''Spec Title''\}, hero_source_label\: array\{label\: ''Source Label''\}, hero_source_badge\: array\{label\: ''Source Badge''\}, hero_search_strip\: array\{label\: ''Search Strip''\}, \.\.\.\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/CustomizationSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{hero_spec_r1_label\: array\{label\: ''Row 1 Label''\}, hero_spec_r2_label\: array\{label\: ''Row 2 Label''\}, hero_spec_r2_value\: array\{label\: ''Row 2 Value''\}, hero_spec_r3_label\: array\{label\: ''Row 3 Label''\}, hero_spec_r3_value\: array\{label\: ''Row 3 Value''\}, hero_spec_r4_label\: array\{label\: ''Row 4 Label''\}, hero_spec_r4_value\: array\{label\: ''Row 4 Value'', helperText\: ''Also shown as the…''\}, hero_spec_r5_label\: array\{label\: ''Row 5 Label''\}, \.\.\.\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/CustomizationSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{text\: array\{label\: ''Text'', type\: ''textarea'', rows\: 2, helperText\: '''', placeholders\: array\{en\: ''e\.g\. Special offer\:…'', de\: ''e\.g\. Sonderangebot\:…'', lt\: ''e\.g\. Specialus…'', fr\: ''e\.g\. Offre spéciale…'', es\: ''e\.g\. ¡Oferta…''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/CustomizationSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\GeneralBrandSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/GeneralBrandSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\MarketingSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/MarketingSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{urgent_processing_label\: array\{label\: ''Checkout Option…'', required\: true, maxLength\: 100, placeholder\: ''Rush processing''\}, urgent_processing_description\: array\{label\: ''Checkout Option…'', type\: ''textarea'', rows\: 2, maxLength\: 300, placeholder\: ''Priority same\-day…''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/MarketingSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\SearchCatalogSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SearchCatalogSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\SecurityAccessSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SecurityAccessSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\SeoControlCenter\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{auto_description_template\: array\{label\: ''Fallback…'', type\: ''textarea'', rows\: 3, maxLength\: 500, helperText\: ''Placeholders\: …''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{console_title_template\: array\{label\: ''Console Title…'', maxLength\: 100, helperText\: ''Placeholders\: \{site…'', live\: true\}, console_meta_template\: array\{label\: ''Console Meta…'', type\: ''textarea'', rows\: 2, maxLength\: 200, helperText\: ''Placeholders\: \{site…'', live\: true\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{home_title\: array\{label\: ''Homepage Meta Title'', required\: true, maxLength\: 60, helperText\: ''Ideal\: 50\-60…'', live\: true\}, home_description\: array\{label\: ''Homepage Meta…'', type\: ''textarea'', rows\: 2, maxLength\: 160, helperText\: ''Ideal\: 150\-160…'', live\: true\}, brand_title_template\: array\{label\: ''Brand/Manufacturer…'', maxLength\: 100, helperText\: ''Available…'', live\: true\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{llms_txt_body\: array\{label\: ''llms\.txt Body'', type\: ''textarea'', rows\: 6, maxLength\: 2000, helperText\: ''Placeholder\: \{site…''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{search_results_title_template\: array\{label\: ''Search Results…'', maxLength\: 100, helperText\: ''Placeholders\: \{oem\}…'', live\: true\}, search_results_meta_template\: array\{label\: ''Search Results Meta…'', type\: ''textarea'', rows\: 2, maxLength\: 200, helperText\: ''Placeholders\: \{oem\}…'', live\: true\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>oem_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Pages/Settings/SeoControlCenter.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IndexNowPushLog\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IndexNowPushLog\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IndexNowPushLog\:\:\$url_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\SettingsPage\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SettingsPage.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Pages\\Settings\\SettingsPage\:\:castDefinitionValue\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Pages/Settings/SettingsPage.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{value\: array\{label\: ''Text'', type\: ''textarea'', rows\: 2\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/SiteCopyLibrary.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\StoreOperationsSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/StoreOperationsSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{hours\: array\{label\: ''Hours'', type\: ''textarea'', rows\: 2, helperText\: '''', placeholders\: array\{en\: ''e\.g\. Mon\-Fri\: 8\:00 …'', de\: ''e\.g\. Mo\-Fr\: 8\:00 \-…'', lt\: ''e\.g\. I\-V\: 8\:00 \- 17…'', fr\: ''e\.g\. Lun\-Ven\: 8h00 …'', es\: ''e\.g\. Lun\-Vie\: 8\:00 …''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/StoreOperationsSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{note_text\: array\{label\: ''Note'', type\: ''textarea'', rows\: 2, placeholders\: array\{en\: ''All shipments…'', de\: ''Alle Sendungen…'', lt\: ''Visos siuntos…'', fr\: ''Tous les envois…'', es\: ''Todos los envíos…''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/StoreOperationsSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{nudge_text\: array\{label\: ''Nudge'', type\: ''textarea'', rows\: 2, placeholders\: array\{en\: ''Add only €\{amount\}…'', de\: ''Fügen Sie noch €…'', lt\: ''Pridėkite dar €…'', fr\: ''Ajoutez €\{amount\}…'', es\: ''¡Añade €\{amount\}…''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/StoreOperationsSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{success_message\: array\{label\: ''Success Message'', type\: ''textarea'', rows\: 2, placeholders\: array\{en\: ''Your message has…'', de\: ''Ihre Nachricht…'', lt\: ''Jūsų žinutė…'', fr\: ''Votre message a été…'', es\: ''Su mensaje se ha…''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/StoreOperationsSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{thank_you_text\: array\{label\: ''Thank You Text'', type\: ''textarea'', rows\: 2, placeholders\: array\{en\: ''Thank you for your…'', de\: ''Vielen Dank für Ihr…'', lt\: ''Dėkojame už jūsų…'', fr\: ''Merci pour votre…'', es\: ''¡Gracias por su…''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/StoreOperationsSettings.php
+
+		-
+			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\SystemMaintenanceSettings\:\:\$form\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SystemMaintenanceSettings.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{message\: array\{label\: ''Message'', type\: ''textarea'', rows\: 2, placeholders\: array\{en\: ''We\\''re performing…'', de\: ''Wir führen…'', lt\: ''Atliekami…'', fr\: ''Nous effectuons une…'', es\: ''Estamos realizando…''\}\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/Settings/SystemMaintenanceSettings.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Pages\\Settings\\SystemMaintenanceSettings\:\:databaseVersion\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Pages/Settings/SystemMaintenanceSettings.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$disk\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Pages/System/BackupDashboard.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Pages/System/BackupDashboard.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Pages/System/BackupDashboard.php
+
+		-
+			message: '#^Method App\\Filament\\Pages\\System\\BackupDashboard\:\:reauthForm\(\) has invalid return type Filament\\Forms\\Components\\Component\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Filament/Pages/System/BackupDashboard.php
+
+		-
+			message: '#^Method App\\Filament\\Pages\\System\\BackupDashboard\:\:reauthForm\(\) should return array\<int, Filament\\Forms\\Components\\Component\> but returns array\<int, Filament\\Forms\\Components\\TextInput\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Filament/Pages/System/BackupDashboard.php
+
+		-
+			message: '#^Parameter \#1 \$form of method Filament\\Actions\\Action\:\:form\(\) expects array\<Filament\\Actions\\Action\|Filament\\Schemas\\Components\\Component\>\|Closure\|null, array\<int, Filament\\Forms\\Components\\Component\> given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Filament/Pages/System/BackupDashboard.php
+
+		-
+			message: '#^Parameter \#2 \$syntax of method Carbon\\Carbon\:\:diffForHumans\(\) expects array\|int\|null, true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/System/BackupDashboard.php
+
+		-
+			message: '#^Offset 4 on array\{string, non\-falsy\-string, string, string, numeric\-string\} in isset\(\) always exists and is not nullable\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Filament/Pages/System/ErrorMonitor.php
+
+		-
+			message: '#^Offset 5 on array\{string, non\-falsy\-string, string, string, numeric\-string\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Pages/System/ErrorMonitor.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Pages/System/FailedJobsPage.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Filament/Pages/System/FailedJobsPage.php
+
+		-
+			message: '#^Method App\\Filament\\Pages\\System\\FailedJobsPage\:\:aggregate\(\) should return array\{counts\: array\<string, int\>, oldest\: Illuminate\\Support\\Carbon\|null, retryableCount\: int\} but returns array\{counts\: array\<string, int\<1, max\>\>, oldest\: Carbon\\Carbon\|null, retryableCount\: int\<0, max\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Filament/Pages/System/FailedJobsPage.php
+
+		-
+			message: '#^Parameter \#2 \$syntax of method Carbon\\Carbon\:\:diffForHumans\(\) expects array\|int\|null, true given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Pages/System/FailedJobsPage.php
+
+		-
+			message: '#^Property App\\Filament\\Pages\\System\\FailedJobsPage\:\:\$aggregateCache \(array\{counts\: array\<string, int\>, oldest\: Illuminate\\Support\\Carbon\|null, retryableCount\: int\}\|null\) does not accept array\{counts\: array\<string, int\<1, max\>\>, oldest\: Carbon\\Carbon\|null, retryableCount\: int\<0, max\>\}\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Filament/Pages/System/FailedJobsPage.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Filament/Pages/System/PermissionMatrix.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: app/Filament/Pages/System/UpdateHistoryPage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/WidgetPreferences.php
+
+		-
+			message: '#^Offset ''group'' on array\{class\: ''App\\\\Filament\\\\Widgets\\\\AbandonedCartWidget''\|''App\\\\Filament\\\\Widgets\\\\AwaitingConfirmationList''\|''App\\\\Filament\\\\Widgets\\\\CacheStatusWidget''\|''App\\\\Filament\\\\Widgets\\\\CatalogStatsWidget''\|''App\\\\Filament\\\\Widgets\\\\CustomerGrowthChart''\|''App\\\\Filament\\\\Widgets\\\\DashboardHeader''\|''App\\\\Filament\\\\Widgets\\\\DiskSpaceWidget''\|''App\\\\Filament\\\\Widgets\\\\FailedQueueJobsMonitor''\|''App\\\\Filament\\\\Widgets\\\\FailedSearchesWidget''\|''App\\\\Filament\\\\Widgets\\\\HealthStrip''\|''App\\\\Filament\\\\Widgets\\\\LatestCustomersWidget''\|''App\\\\Filament\\\\Widgets\\\\NewMessagesInbox''\|''App\\\\Filament\\\\Widgets\\\\NewProductsAdded''\|''App\\\\Filament\\\\Widgets\\\\NewsletterGrowthWidget''\|''App\\\\Filament\\\\Widgets\\\\OrderStatsOverview''\|''App\\\\Filament\\\\Widgets\\\\OrderStatusDistributionWidget''\|''App\\\\Filament\\\\Widgets\\\\OrderVolumeChart''\|''App\\\\Filament\\\\Widgets\\\\PartsInquiryWidget''\|''App\\\\Filament\\\\Widgets\\\\RecentActivityLog''\|''App\\\\Filament\\\\Widgets\\\\RecentOrdersList''\|''App\\\\Filament\\\\Widgets\\\\RefundsPendingList''\|''App\\\\Filament\\\\Widgets\\\\RequestMetricsWidget''\|''App\\\\Filament\\\\Widgets\\\\RevenueChart''\|''App\\\\Filament\\\\Widgets\\\\StockAlertWidget''\|''App\\\\Filament\\\\Widgets\\\\TopManufacturersRevenue''\|''App\\\\Filament\\\\Widgets\\\\TopSearchedOems'', label\: ''Abandoned Carts''\|''Activity Metrics''\|''Awaiting…''\|''Cache Status''\|''Catalog Stats''\|''Customer Growth…''\|''Dashboard Header''\|''Disk Space''\|''Failed Queue Jobs''\|''Failed Searches''\|''Latest Customers''\|''New Messages''\|''New Products Added''\|''Newsletter Growth''\|''Order Stats Overview''\|''Order Status…''\|''Order Volume Chart''\|''Parts Inquiry''\|''Pending Refunds''\|''Recent Activity''\|''Recent Orders''\|''Revenue Chart''\|''Stock Alerts''\|''System Health Strip''\|''Top Manufacturers…''\|''Top Searched OEMs'', description\: ''Activity log of…''\|''Background jobs…''\|''Breakdown of orders…''\|''Carts left…''\|''Database, Redis,…''\|''Latest orders from…''\|''Manufacturers,…''\|''Monthly revenue…''\|''Most recent…''\|''Most\-searched OEM…''\|''New customer…''\|''Newsletter…''\|''Number of orders…''\|''OEM numbers…''\|''Paid orders…''\|''Part requests…''\|''Parts that are out…''\|''Queue, email, and…''\|''Recently added…''\|''Redis cache hit…''\|''Refund requests…''\|''Revenue breakdown…''\|''Revenue, orders,…''\|''Server disk usage…''\|''Today\\''s revenue,…''\|''Unread messages…'', group\: ''business\-overview''\|''catalog\-search''\|''live\-activity''\|''needs\-attention''\|''system\-health'', default_visible\: bool, default_sort\: 0\|1\|2\|3\|4\|5\|6\|7\|8\|9\|10\|11\|12\|13\|14\|15\|16\|17\|18\|19\|20\|22\|23\|24\|26, roles\: array\{''super_admin'', ''admin'', ''manager'', ''support''\}\|list\{0\: ''super_admin'', 1\: ''admin'', 2\?\: ''manager'', 3\?\: ''catalog_admin'', 4\?\: ''support''\}, financial\: bool, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Pages/WidgetPreferences.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Filament/Pages/WidgetPreferences.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/AbandonedCartResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/AbandonedCartResource/Pages/ListAbandonedCarts.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Infolists\\Components\\TextEntry\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ActivityLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ActivityLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ActivityLogResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ActivityLogResource/Pages/ListActivityLogs.php
+
+		-
+			message: '#^Cannot access property \$model_type on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/ActivityLogResource/Pages/ViewActivityLog.php
+
+		-
+			message: '#^Parameter \#1 \$record of static method App\\Policies\\AdminPolicy\:\:isLastActiveSuperAdmin\(\) expects App\\Models\\Admin, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/AdminResource/Pages/EditAdmin.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/AdminResource/Pages/ListAdmins.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/BlogPostResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/BlogPostResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/BlogPostResource.php
+
+		-
+			message: '#^Match arm comparison between App\\Enums\\ContentStatus\:\:Archived and App\\Enums\\ContentStatus\:\:Archived is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Filament/Resources/BlogPostResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{title\: array\{label\: ''Post Title'', placeholder\: ''e\.g\. How to Choose…'', required\: true, helperText\: ''English title is…'', slugSync\: true\}, excerpt\: array\{label\: ''Excerpt'', type\: ''textarea'', rows\: 3, placeholder\: ''Brief summary for…'', helperText\: ''Short summary shown…''\}, content\: array\{label\: ''Content Body'', type\: ''richeditor''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/BlogPostResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/BlogPostResource/Pages/ListBlogPosts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CarModelResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/CarModelResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/CarModelResource.php
+
+		-
+			message: '#^Parameter \#1 \$options of method Filament\\Forms\\Components\\Select\:\:options\(\) expects array\<array\<string\>\|string\>\|Closure\|Illuminate\\Contracts\\Support\\Arrayable\|string\|null, non\-empty\-array\<int, int\> given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Filament/Resources/CarModelResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CarModelResource/Pages/EditCarModel.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CarModelResource/Pages/EditCarModel.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/CarModelResource/Pages/ListCarModels.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/CarModelResource/RelationManagers/ProductsRelationManager.php
+
+		-
+			message: '#^Anonymous function never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Filament/Resources/CarrierResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/CarrierResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CarrierResource/Pages/EditCarrier.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CarrierResource/Pages/EditCarrier.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/CarrierResource/Pages/ListCarriers.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CategoryResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/CategoryResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/CategoryResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CategoryResource/Pages/EditCategory.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CategoryResource/Pages/EditCategory.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/CategoryResource/Pages/ListCategories.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Resources/ConditionResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ConditionResource/Pages/EditCondition.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ConditionResource/Pages/EditCondition.php
+
+		-
+			message: '#^Cannot access property \$name on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/ConditionResource/Pages/EditCondition.php
+
+		-
+			message: '#^Cannot call method products\(\) on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Filament/Resources/ConditionResource/Pages/EditCondition.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ConditionResource/Pages/ListConditions.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ContactMessageResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$subject_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ContactMessageResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/ContactMessageResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ContactMessageResource/Pages/ListContactMessages.php
+
+		-
+			message: '#^Cannot access property \$status on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/ContactMessageResource/Pages/ViewContactMessage.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Resources/CouponResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/CouponResource.php
+
+		-
+			message: '#^Cannot access property \$code on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/CouponResource/Pages/EditCoupon.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>code" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/CouponResource/Pages/EditCoupon.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/CouponResource/Pages/ListCoupons.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/CouponResource/RelationManagers/UsagesRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/CronLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/CronLogResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CustomerResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CustomerResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CustomerResource.php
+
+		-
+			message: '#^Anonymous function never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 2
+			path: app/Filament/Resources/CustomerResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Resources/CustomerResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CustomerResource/Pages/EditCustomer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/CustomerResource/Pages/EditCustomer.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/CustomerResource/Pages/ListCustomers.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/CustomerResource/RelationManagers/OrdersRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/EmailLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/FailedSearchLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/FailedSearchLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\TernaryFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/FailedSearchLogResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/FailedSearchLogResource/Pages/ListFailedSearchLogs.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$question\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/FaqResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/FaqResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/FaqResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{question\: array\{label\: ''Question'', required\: true\}, answer\: array\{label\: ''Answer'', type\: ''richeditor''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/FaqResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/FaqResource/Pages/ListFaqs.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/IpBlocklistResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\Filter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/IpBlocklistResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/IpBlocklistResource/Pages/ListIpBlocklists.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/LanguageResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/LoginLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/LoginLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ManufacturerResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ManufacturerResource/Pages/EditManufacturer.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ManufacturerResource/Pages/EditManufacturer.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ManufacturerResource/Pages/ListManufacturers.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/ManufacturerResource/RelationManagers/CarModelsRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ManufacturerResource/RelationManagers/ProductsRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/MediaFileResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/MenuResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/MenuResource.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:items\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/MenuResource/RelationManagers/MenuItemRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/NewsletterCampaignResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/NewsletterCampaignResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/NewsletterCampaignResource/Pages/EditNewsletterCampaign.php
+
+		-
+			message: '#^Cannot access property \$subject on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/NewsletterCampaignResource/Pages/EditNewsletterCampaign.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>subject" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/NewsletterCampaignResource/Pages/EditNewsletterCampaign.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/NewsletterCampaignResource/Pages/ListNewsletterCampaigns.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/NewsletterSubscriberResource.php
+
+		-
+			message: '#^Cannot access property \$email on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/NewsletterSubscriberResource/Pages/EditNewsletterSubscriber.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/NewsletterSubscriberResource/Pages/EditNewsletterSubscriber.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/NewsletterSubscriberResource/Pages/ListNewsletterSubscribers.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/NotFoundLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\TernaryFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/NotFoundLogResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\NotFoundLogResource\:\:createRedirectAction\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/NotFoundLogResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\NotFoundLogResource\:\:tryCreateRedirect\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: app/Filament/Resources/NotFoundLogResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/NotFoundLogResource/Pages/ListNotFoundLogs.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$grand_total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Parameter \#1 \$payment of method App\\Services\\PaymentService\:\:captureAirwallexPayment\(\) expects App\\Models\\Payment, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/OrderResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/EditOrder.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ListOrders.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$grand_total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$invoice_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$items\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$payment_method\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$payment_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$urgent_processing\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Infolists\\Components\\TextEntry\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 11
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notes\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:payments\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:statusHistory\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/OrderResource/RelationManagers/OrderItemsRelationManager.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/OrderResource/RelationManagers/OrderNotesRelationManager.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/OrderResource/RelationManagers/OrderStatusHistoryRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/OrderResource/RelationManagers/PaymentRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/OrderResource/RelationManagers/RefundRequestRelationManager.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/PageResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/PageResource.php
+
+		-
+			message: '#^Match arm comparison between App\\Enums\\ContentStatus\:\:Archived and App\\Enums\\ContentStatus\:\:Archived is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Filament/Resources/PageResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{title\: array\{label\: ''Title'', required\: true, slugSync\: true\}, content\: array\{label\: ''Content Body'', type\: ''richeditor''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/PageResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/PageResource/Pages/ListPages.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/PartInquiryResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/PartInquiryResource/Pages/ListPartInquiries.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$oem_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/PartInquiryResource/Pages/ViewPartInquiry.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Infolists\\Components\\TextEntry\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/PaymentResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: app/Filament/Resources/PaymentResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/PaymentResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/PaymentResource/Pages/ListPayments.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$bg_color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_in_stock\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$oem_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Anonymous function never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\:\:oemContains\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{name\: array\{label\: ''Product Name'', required\: true, placeholder\: ''e\.g\. Turbocharger…'', helperText\: ''Primary product…''\}, description\: array\{label\: ''Description'', type\: ''textarea'', rows\: 5, placeholder\: ''Detailed product…'', helperText\: ''Product description…''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/ProductResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$oem_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ProductResource/Pages/EditProduct.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ProductResource/Pages/EditProduct.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ProductResource/Pages/ListProducts.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/ProductResource/RelationManagers/CrossReferencesRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Resources/RedirectResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/RedirectResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\RedirectResource\:\:downloadTemplateAction\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/RedirectResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\RedirectResource\:\:importCsvAction\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/RedirectResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\RedirectResource\:\:testRedirectAction\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 1
+			path: app/Filament/Resources/RedirectResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RedirectResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/RedirectResource/Pages/ListRedirects.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$grand_total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$guest_email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$shipping_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Services\\OrderService\:\:transitionStatus\(\) expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\RefundRequestResource\:\:dispatchSafely\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 4
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Unsafe call to private method App\\Filament\\Resources\\RefundRequestResource\:\:transitionOrderToRefunded\(\) through static\:\:\.$#'
+			identifier: staticClassAccess.privateMethod
+			count: 2
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>guest_email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>shipping_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/EditRefundRequest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/EditRefundRequest.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/ListRefundRequests.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/ViewRefundRequest.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Infolists\\Components\\TextEntry\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: app/Filament/Resources/RefundRequestResource/Pages/ViewRefundRequest.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/ViewRefundRequest.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>guest_email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/ViewRefundRequest.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/ViewRefundRequest.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>shipping_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/RefundRequestResource/Pages/ViewRefundRequest.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$reviewer_name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/ReviewResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Filament/Resources/ReviewResource.php
+
+		-
+			message: '#^Cannot access property \$reviewer_name on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/ReviewResource/Pages/EditReview.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>reviewer_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/ReviewResource/Pages/EditReview.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ReviewResource/Pages/ListReviews.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/RoleResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/RoleResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RoleResource/Pages/EditRole.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:users\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/RoleResource/Pages/EditRole.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/RoleResource/Pages/ListRoles.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/SearchLogResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/SearchLogResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Match arm comparison between App\\Enums\\SectionStatus\:\:Archived and App\\Enums\\SectionStatus\:\:Archived is always true\.$#'
+			identifier: match.alwaysTrue
+			count: 1
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{description\: array\{label\: ''Description'', type\: ''textarea'', rows\: 2\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{label\: array\{label\: ''Label''\}\} given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{text\: array\{label\: ''Text''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{title\: array\{label\: ''Title''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{value\: array\{label\: ''Value''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/SectionResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/SectionResource/Pages/ListSections.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Infolists\\Components\\TextEntry\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/SectionResource/Pages/ViewSection.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/SeoMetaResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/SeoMetaResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ShippingMethodResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Resources/ShippingMethodResource.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/ShippingMethodResource.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{name\: array\{label\: ''Method Name'', required\: true, placeholder\: ''e\.g\. Standard…'', helperText\: ''English name is…''\}, description\: array\{label\: ''Description'', type\: ''textarea'', rows\: 4, placeholder\: ''e\.g\. Delivered…''\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/ShippingMethodResource.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/ShippingMethodResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ShippingMethodResource/Pages/EditShippingMethod.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ShippingMethodResource/Pages/EditShippingMethod.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ShippingMethodResource/Pages/ListShippingMethods.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/ShippingZoneResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ShippingZoneResource/Pages/EditShippingZone.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/ShippingZoneResource/Pages/EditShippingZone.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/ShippingZoneResource/Pages/ListShippingZones.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:countries\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/ShippingZoneResource/RelationManagers/CountriesRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: app/Filament/Resources/ShippingZoneResource/RelationManagers/MethodsRelationManager.php
+
+		-
+			message: '#^Parameter \#2 \$fields of static method App\\Filament\\Support\\AdminUi\:\:translatableTabs\(\) expects array\<string, array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\}\>, array\{name\: array\{label\: ''Method Name'', required\: true\}, description\: array\{label\: ''Description'', type\: ''textarea'', rows\: 2\}\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Resources/ShippingZoneResource/RelationManagers/MethodsRelationManager.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/TaxRateResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$country_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TaxRateResource/Pages/EditTaxRate.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/TaxRateResource/Pages/EditTaxRate.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/TaxRateResource/Pages/ListTaxRates.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Filament/Resources/TestimonialResource.php
+
+		-
+			message: '#^Cannot access property \$name on Illuminate\\Database\\Eloquent\\Model\|int\|string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Filament/Resources/TestimonialResource/Pages/EditTestimonial.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Resources/TestimonialResource/Pages/EditTestimonial.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/TestimonialResource/Pages/ListTestimonials.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Filters\\SelectFilter\:\:helperText\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Resources/TranslationResource.php
+
+		-
+			message: '#^Called ''pluck'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Resources/TranslationResource/Pages/ListTranslations.php
+
+		-
+			message: '#^Anonymous function has an unused use \$label\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^If condition is always false\.$#'
+			identifier: if.alwaysFalse
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Left side of && is always false\.$#'
+			identifier: booleanAnd.leftAlwaysFalse
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Offset ''helperText'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Offset ''live'' on array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Offset ''maxLength'' on array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Offset ''placeholder'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Offset ''required'' on array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Offset ''rows'' on array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Offset ''type'' on array\{label\: string, required\: bool, placeholder\?\: string, placeholders\?\: array\<string, string\>, helperText\?\: string, slugSync\?\: bool\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''text'' and ''richeditor'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''text'' and ''textarea'' will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Variable \$rows on left side of \?\? always exists and is always null\.$#'
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Filament/Support/AdminUi.php
+
+		-
+			message: '#^Trait App\\Filament\\Support\\DispatchesToasts is used zero times and is not analysed\.$#'
+			identifier: trait.unused
+			count: 1
+			path: app/Filament/Support/DispatchesToasts.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/AbandonedCartWidget.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/AbandonedCartWidget.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/AwaitingConfirmationList.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/AwaitingConfirmationList.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Cache\\Repository\:\:connection\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Filament/Widgets/CacheStatusWidget.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>order_items_count" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/CatalogStatsWidget.php
+
+		-
+			message: '#^Anonymous function never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Filament/Widgets/LatestCustomersWidget.php
+
+		-
+			message: '#^Anonymous function never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Filament/Widgets/NewMessagesInbox.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/NewProductsAdded.php
+
+		-
+			message: '#^Offset ''cancelled''\|''delivered''\|''paid''\|''pending''\|''processing''\|''refund_requested''\|''refunded''\|''shipped'' on array\{pending\: ''\#F59E0B'', paid\: ''\#D97706'', processing\: ''\#3B82F6'', shipped\: ''\#10B981'', delivered\: ''\#059669'', cancelled\: ''\#EF4444'', refund_requested\: ''\#DC2626'', refunded\: ''\#71717b''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Widgets/OrderStatusDistributionWidget.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/RecentActivityLog.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/RecentActivityLog.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/RecentOrdersList.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/RecentOrdersList.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/RefundsPendingList.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$shipping_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/RefundsPendingList.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/RefundsPendingList.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>shipping_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Filament/Widgets/RefundsPendingList.php
+
+		-
+			message: '#^Called ''count'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Filament/Widgets/Reports/CustomersStats.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Widgets/StockAlertWidget.php
+
+		-
+			message: '#^Offset 0 on array\{float, float, float\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Widgets/System/ServerStats.php
+
+		-
+			message: '#^Offset 1 on array\{float, float, float\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Widgets/System/ServerStats.php
+
+		-
+			message: '#^Offset 2 on array\{float, float, float\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Filament/Widgets/System/ServerStats.php
+
+		-
+			message: '#^Property App\\Http\\Controllers\\Api\\CatalogController\:\:\$searchService is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/Api/CatalogController.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Api/CheckoutController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:published\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Http/Controllers/Frontend/BlogController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>bg_color" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Frontend/CartController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Frontend/CartController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>text_color" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Frontend/CartController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Frontend/CheckoutController.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Http/Controllers/Frontend/CheckoutController.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Frontend/CheckoutController.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Frontend/CheckoutController.php
+
+		-
+			message: '#^Deprecated in PHP 8\.4\: Parameter \#3 \$token \(string\) is implicitly nullable via default value null\.$#'
+			identifier: parameter.implicitlyNullable
+			count: 1
+			path: app/Http/Controllers/Frontend/ResetPasswordController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Frontend/SearchController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Frontend/SearchController.php
+
+		-
+			message: '#^Offset ''cross_ref_checked'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Frontend/SearchController.php
+
+		-
+			message: '#^Offset ''filtered_empty'' does not exist on array\{products\: Illuminate\\Database\\Eloquent\\Collection\|Illuminate\\Pagination\\LengthAwarePaginator, total\: int, search_type\: string, normalized_query\: string, search_log_id\: int\|null, condition_counts\: array\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: app/Http/Controllers/Frontend/SearchController.php
+
+		-
+			message: '#^Parameter \#6 \$manufacturerId of method App\\Http\\Controllers\\Frontend\\SearchController\:\:buildResultsViewData\(\) expects int\|null, array\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/Frontend/SearchController.php
+
+		-
+			message: '#^Parameter \#7 \$carModelId of method App\\Http\\Controllers\\Frontend\\SearchController\:\:buildResultsViewData\(\) expects int\|null, array\|string\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/Frontend/SearchController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>normalized_oem" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Frontend/SearchController.php
+
+		-
+			message: '#^Offset ''action'' on array\{user_agent\: string, action\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/RobotsController.php
+
+		-
+			message: '#^Offset ''user_agent'' on array\{user_agent\: string, action\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/RobotsController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\WebhookController\:\:handleBankTransferConfirm\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
+			count: 6
+			path: app/Http/Controllers/WebhookController.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CarModelApiResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CarModelApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CarModelApiResource\:\:\$manufacturer_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CarModelApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CarModelApiResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CarModelApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CarModelApiResource\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CarModelApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CarModelApiResource\:\:\$year_from\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CarModelApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CarModelApiResource\:\:\$year_to\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CarModelApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryApiResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryApiResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryApiResource\:\:\$parent_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryApiResource\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\CategoryApiResource\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/CategoryApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ManufacturerApiResource\:\:\$country_code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ManufacturerApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ManufacturerApiResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ManufacturerApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ManufacturerApiResource\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ManufacturerApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ManufacturerApiResource\:\:\$is_verified_oem\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ManufacturerApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ManufacturerApiResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ManufacturerApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ManufacturerApiResource\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ManufacturerApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ManufacturerApiResource\:\:\$sort_order\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ManufacturerApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$condition\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$delivery_time\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$is_in_stock\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$manufacturer\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$moq\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$normalized_oem\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$oem_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductApiResource\:\:\$price\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductApiResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductCrossReferenceResource\:\:\$cross_oem_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductCrossReferenceResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductCrossReferenceResource\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductCrossReferenceResource.php
+
+		-
+			message: '#^Access to an undefined property App\\Http\\Resources\\ProductCrossReferenceResource\:\:\$normalized_cross_oem\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Resources/ProductCrossReferenceResource.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/BulkGenerateProductSeoMeta.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between resource and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Jobs/ImportRedirectsFromCsv.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/ProcessAirwallexWebhook.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Services\\OrderService\:\:transitionStatus\(\) expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Jobs/ProcessAirwallexWebhook.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Jobs/ProcessProductImage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/SendOrderConfirmationEmail.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/SendOrderConfirmationEmail.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/SendOrderStatusEmail.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/SendOrderStatusEmail.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$guest_email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/SendRefundProcessedEmail.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/SendRefundProcessedEmail.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$guest_email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/SendRefundStatusEmail.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/SendRefundStatusEmail.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/SendTrackingUpdateEmail.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Jobs/SendTrackingUpdateEmail.php
+
+		-
+			message: '#^Access to property \$error on an unknown class Illuminate\\Mail\\Events\\MessageFailed\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Listeners/LogEmailFailed.php
+
+		-
+			message: '#^Access to property \$message on an unknown class Illuminate\\Mail\\Events\\MessageFailed\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Listeners/LogEmailFailed.php
+
+		-
+			message: '#^Parameter \$event of method App\\Listeners\\LogEmailFailed\:\:handle\(\) has invalid type Illuminate\\Mail\\Events\\MessageFailed\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Listeners/LogEmailFailed.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/RestoreInventory.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Listeners/UpdateInventory.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$lang\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Mail/NewsletterCampaignEmail.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$unsubscribe_token\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Mail/NewsletterCampaignEmail.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Mail/RefundProcessed.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Mail/RefundStatusUpdate.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IndexNowPushLog\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/IndexNowPushLog.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$tracking_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/Order.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$logo\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Product.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$medium_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Product.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Product.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$thumbnail_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Product.php
+
+		-
+			message: '#^Parameter \#1 \$condition of function condition_label expects App\\Models\\Condition\|null, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Models/Product.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$medium_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/ProductImage.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Models/ProductImage.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$thumbnail_path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/ProductImage.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$rating\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Review.php
+
+		-
+			message: '#^Method App\\Models\\Section\:\:saveVersion\(\) should return App\\Models\\SectionVersion but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Section.php
+
+		-
+			message: '''
+				#^PHPDoc tag @includeIf has invalid value \(\('components\.sections\.' \. str_replace\('_', '\-', \$type\)\),
+				which silently skips unknown types — so the admin MUST offer exactly
+				these values\. A test asserts every DB type and every blade component
+				stays in sync\.\)\: Unexpected token "'components\.sections\.'", expected TOKEN_DOUBLE_QUOTED_STRING at offset 319 on line 6$#
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Models/Section.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Order\:\:\$total\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/RefundRequestedNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Notifications/RefundRequestedNotification.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Notifications/RefundRequestedNotification.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/CarModelObserver.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/CarModelObserver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$is_featured\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/ProductImageObserver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$product_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/ProductImageObserver.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Product\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/ProductObserver.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/ProductObserver.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Observers/RefundRequestObserver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>order_number" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Observers/RefundRequestObserver.php
+
+		-
+			message: '#^If condition is always true\.$#'
+			identifier: if.alwaysTrue
+			count: 1
+			path: app/Observers/SectionObserver.php
+
+		-
+			message: '#^Call to an undefined method App\\Providers\\AppServiceProvider\:\:fontFamily\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Providers/AppServiceProvider.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Providers/EventServiceProvider.php
+
+		-
+			message: '#^Class Illuminate\\Mail\\Events\\MessageFailed not found\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Providers/EventServiceProvider.php
+
+		-
+			message: '#^Property App\\Providers\\EventServiceProvider\:\:\$listen \(array\<class\-string, array\<int, class\-string\>\>\) does not accept default value of type array\<string, list\<list\<string\>\|string\>\>\.$#'
+			identifier: property.defaultValue
+			count: 1
+			path: app/Providers/EventServiceProvider.php
+
+		-
+			message: '#^Offset ''key'' on \*NEVER\* on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/AdminNavService.php
+
+		-
+			message: '#^Offset ''recent_nav'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/AdminNavService.php
+
+		-
+			message: '#^Parameter \#1 \$array \(array\{\}\) to function array_values is empty, call has no effect\.$#'
+			identifier: arrayValues.empty
+			count: 1
+			path: app/Services/AdminNavService.php
+
+		-
+			message: '#^Property App\\Models\\Admin\:\:\$dashboard_preferences \(string\|null\) does not accept array\<string, array\<int, array\<string, string\|null\>\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/AdminNavService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$disk\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Backup/BackupJanitor.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupJanitor.php
+
+		-
+			message: '#^Method App\\Services\\Backup\\BackupManager\:\:registerPart\(\) should return App\\Models\\BackupChunk but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Backup/BackupManager.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$bytes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$disk\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$meta\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$rows\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sequence\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$sha256\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/Backup/BackupManifest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/Backup/RestoreManager.php
+
+		-
+			message: '#^Parameter \#1 \$part of method App\\Services\\Backup\\RestoreManager\:\:plaintextOf\(\) expects App\\Models\\BackupChunk, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/Backup/RestoreManager.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between resource\|null and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Backup/RestoreManager.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<non\-falsy\-string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Backup/Stages/DatabaseBackupStage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Backup/Stages/EncryptTransportStage.php
+
+		-
+			message: '#^Parameter \#2 \$part of method App\\Services\\Backup\\Stages\\EncryptTransportStage\:\:securePart\(\) expects App\\Models\\BackupChunk, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Backup/Stages/EncryptTransportStage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$disk\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Backup/Stages/FileBackupStage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$path\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Backup/Stages/FileBackupStage.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:published\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Services/CacheMetricsService.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Redis\\Connections\\Connection\:\:executeRaw\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/CacheMetricsService.php
+
+		-
+			message: '#^Parameter \#2 \$pattern of method Redis\:\:scan\(\) expects string\|null, array\<string, int\|string\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/CacheMetricsService.php
+
+		-
+			message: '#^Parameter \#2 \.\.\.\$arrays of function array_merge expects array, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/CacheMetricsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/CartRecoveryService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/CartRecoveryService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$preferred_locale\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/CartRecoveryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/CartRecoveryService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>preferred_locale" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/CartRecoveryService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$price_at_add\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/CartService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/CartService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/CartService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Services/CartService.php
+
+		-
+			message: '#^Method App\\Services\\CartService\:\:addItem\(\) should return App\\Models\\CartItem but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/CartService.php
+
+		-
+			message: '#^Method App\\Services\\CartService\:\:updateQuantity\(\) should return App\\Models\\CartItem\|null but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/CartService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$price_at_add\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/CheckoutService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/CheckoutService.php
+
+		-
+			message: '#^Method App\\Services\\CoreWebVitalsService\:\:extractP75\(\) never returns int so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Services/CoreWebVitalsService.php
+
+		-
+			message: '#^Parameter \#1 \$num of function number_format expects float, string given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/CouponService.php
+
+		-
+			message: '#^Method App\\Services\\HealthCheckService\:\:lastBackupAt\(\) should return Illuminate\\Support\\Carbon\|null but returns Carbon\\Carbon\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/HealthCheckService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-list\<string\|null\> and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Imports/Stages/ValidateHeaderStage.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$price_at_add\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$total_price\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Left side of && is always true\.$#'
+			identifier: booleanAnd.leftAlwaysTrue
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Offset ''cancelled''\|''delivered''\|''paid''\|''pending''\|''processing''\|''refund_requested''\|''refunded''\|''shipped'' on array\{pending\: array\{App\\Enums\\OrderStatus\:\:Paid, App\\Enums\\OrderStatus\:\:Processing, App\\Enums\\OrderStatus\:\:Shipped, App\\Enums\\OrderStatus\:\:Delivered, App\\Enums\\OrderStatus\:\:Cancelled\}, paid\: array\{App\\Enums\\OrderStatus\:\:Processing, App\\Enums\\OrderStatus\:\:Shipped, App\\Enums\\OrderStatus\:\:Delivered, App\\Enums\\OrderStatus\:\:Cancelled\}, processing\: array\{App\\Enums\\OrderStatus\:\:Shipped, App\\Enums\\OrderStatus\:\:Delivered, App\\Enums\\OrderStatus\:\:Cancelled\}, shipped\: array\{App\\Enums\\OrderStatus\:\:Delivered\}, delivered\: array\{App\\Enums\\OrderStatus\:\:RefundRequested\}, refund_requested\: array\{App\\Enums\\OrderStatus\:\:Refunded\}, refunded\: array\{\}, cancelled\: array\{\}\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$payment of method App\\Services\\PaymentService\:\:captureAirwallexPayment\(\) expects App\\Models\\Payment, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Property App\\Services\\OrderService\:\:\$settings is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Anonymous function has an unused use \$paymentIntentId\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Parameter \#1 \$order of class App\\Jobs\\SendOrderConfirmationEmail constructor expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Parameter \#1 \$order of event class App\\Events\\PaymentReceived constructor expects App\\Models\\Order in App\\Events\\PaymentReceived\:\:dispatch\(\), Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Services\\OrderService\:\:transitionStatus\(\) expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: app/Services/PaymentService.php
+
+		-
+			message: '#^Method App\\Services\\ProductImportService\:\:process\(\) should return array\{created\: int, updated\: int, skipped\: int, errors\: array\<string\>\} but returns array\{created\: int\<0, max\>, updated\: int\<0, max\>, skipped\: int\<0, max\>, rowErrors\: list\<non\-falsy\-string\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ProductImportService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between non\-empty\-list\<string\|null\> and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/ProductImportService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/ProductSlugService.php
+
+		-
+			message: '#^Parameter \#1 \$condition of function condition_label expects App\\Models\\Condition\|null, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/ProductSlugService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/ProductSlugService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$avg_price\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$max_price\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$min_price\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),mixed\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Parameter \#1 \$condition of function condition_label expects App\\Models\\Condition\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/SearchService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Product\:\:\$video_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$comment\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$created_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$rating\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$reviewer_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Review\:\:\$title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$medium_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Method App\\Services\\SeoService\:\:localizedUrl\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{''@type''\: ''Review'', reviewRating\: array\{''@type''\: ''Rating'', ratingValue\: mixed, bestRating\: 5, worstRating\: 1\}, author\: array\{''@type''\: ''Person'', name\: mixed\}, reviewBody\?\: mixed, name\?\: mixed, datePublished\?\: mixed\}, Closure\(App\\Models\\Review\)\: array\{''@type''\: ''Review'', reviewRating\: array\{''@type''\: ''Rating'', ratingValue\: mixed, bestRating\: 5, worstRating\: 1\}, author\: array\{''@type''\: ''Person'', name\: mixed\}, reviewBody\?\: mixed, name\?\: mixed, datePublished\?\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$free_shipping_threshold\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Services/ShippingService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/ShippingService.php
+
+		-
+			message: '#^Method App\\Services\\ShippingService\:\:findZoneForCountry\(\) should return App\\Models\\ShippingZone\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ShippingService.php
+
+		-
+			message: '#^Method App\\Services\\ShippingService\:\:getMethodsForCountry\(\) should return Illuminate\\Support\\Collection\<int, App\\Models\\ShippingMethod\> but returns Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/ShippingService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductCrossReference\:\:\$updated_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SitemapService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$alt_text\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SitemapService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SitemapService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/TranslationService.php
+
+		-
+			message: '#^Negated boolean expression is always false\.$#'
+			identifier: booleanNot.alwaysFalse
+			count: 1
+			path: app/Services/Updates/ReleaseBuilder.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>message" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Updates/UpdateApplier.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Services/Updates/UpdateDownloader.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Throwable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Updates/UpdateDownloader.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/ViesService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model&object\{pivot\: Illuminate\\Database\\Eloquent\\Relations\\Pivot\}\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Call to function is_array\(\) with array\{\} will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Cannot unset offset ''widget_visibility'' on array\{\}\|string\.$#'
+			identifier: unset.offset
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Offset ''_meta'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Offset ''period'' on array\{class\: ''App\\\\Filament\\\\Widgets\\\\AbandonedCartWidget''\|''App\\\\Filament\\\\Widgets\\\\AwaitingConfirmationList''\|''App\\\\Filament\\\\Widgets\\\\CacheStatusWidget''\|''App\\\\Filament\\\\Widgets\\\\CatalogStatsWidget''\|''App\\\\Filament\\\\Widgets\\\\CustomerGrowthChart''\|''App\\\\Filament\\\\Widgets\\\\DashboardHeader''\|''App\\\\Filament\\\\Widgets\\\\DiskSpaceWidget''\|''App\\\\Filament\\\\Widgets\\\\FailedQueueJobsMonitor''\|''App\\\\Filament\\\\Widgets\\\\FailedSearchesWidget''\|''App\\\\Filament\\\\Widgets\\\\HealthStrip''\|''App\\\\Filament\\\\Widgets\\\\LatestCustomersWidget''\|''App\\\\Filament\\\\Widgets\\\\NewMessagesInbox''\|''App\\\\Filament\\\\Widgets\\\\NewProductsAdded''\|''App\\\\Filament\\\\Widgets\\\\NewsletterGrowthWidget''\|''App\\\\Filament\\\\Widgets\\\\OrderStatsOverview''\|''App\\\\Filament\\\\Widgets\\\\OrderStatusDistributionWidget''\|''App\\\\Filament\\\\Widgets\\\\OrderVolumeChart''\|''App\\\\Filament\\\\Widgets\\\\PartsInquiryWidget''\|''App\\\\Filament\\\\Widgets\\\\RecentActivityLog''\|''App\\\\Filament\\\\Widgets\\\\RecentOrdersList''\|''App\\\\Filament\\\\Widgets\\\\RefundsPendingList''\|''App\\\\Filament\\\\Widgets\\\\RequestMetricsWidget''\|''App\\\\Filament\\\\Widgets\\\\RevenueChart''\|''App\\\\Filament\\\\Widgets\\\\StockAlertWidget''\|''App\\\\Filament\\\\Widgets\\\\TopManufacturersRevenue''\|''App\\\\Filament\\\\Widgets\\\\TopSearchedOems'', label\: ''Abandoned Carts''\|''Activity Metrics''\|''Awaiting…''\|''Cache Status''\|''Catalog Stats''\|''Customer Growth…''\|''Dashboard Header''\|''Disk Space''\|''Failed Queue Jobs''\|''Failed Searches''\|''Latest Customers''\|''New Messages''\|''New Products Added''\|''Newsletter Growth''\|''Order Stats Overview''\|''Order Status…''\|''Order Volume Chart''\|''Parts Inquiry''\|''Pending Refunds''\|''Recent Activity''\|''Recent Orders''\|''Revenue Chart''\|''Stock Alerts''\|''System Health Strip''\|''Top Manufacturers…''\|''Top Searched OEMs'', description\: ''Activity log of…''\|''Background jobs…''\|''Breakdown of orders…''\|''Carts left…''\|''Database, Redis,…''\|''Latest orders from…''\|''Manufacturers,…''\|''Monthly revenue…''\|''Most recent…''\|''Most\-searched OEM…''\|''New customer…''\|''Newsletter…''\|''Number of orders…''\|''OEM numbers…''\|''Paid orders…''\|''Part requests…''\|''Parts that are out…''\|''Queue, email, and…''\|''Recently added…''\|''Redis cache hit…''\|''Refund requests…''\|''Revenue breakdown…''\|''Revenue, orders,…''\|''Server disk usage…''\|''Today\\''s revenue,…''\|''Unread messages…'', group\: ''business\-overview''\|''catalog\-search''\|''live\-activity''\|''needs\-attention''\|''system\-health'', default_visible\: bool, default_sort\: 0\|1\|2\|3\|4\|5\|6\|7\|8\|9\|10\|11\|12\|13\|14\|15\|16\|17\|18\|19\|20\|22\|23\|24\|26, roles\: array\{''super_admin'', ''admin'', ''manager'', ''support''\}\|list\{0\: ''super_admin'', 1\: ''admin'', 2\?\: ''manager'', 3\?\: ''catalog_admin'', 4\?\: ''support''\}, financial\: bool, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Offset ''widget_visibility'' on array\{\}\|string on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Offset string on array\{\} in isset\(\) does not exist\.$#'
+			identifier: isset.offset
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Property App\\Models\\Admin\:\:\$dashboard_preferences \(string\|null\) does not accept array\<string, array\<string, bool\>\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Property App\\Models\\Admin\:\:\$dashboard_preferences \(string\|null\) does not accept array\<string, array\>\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/WidgetPreferenceService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Support/MenuRegistry.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Support/MenuRegistry.php
+
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 2
+			path: app/helpers.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between non\-empty\-string and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/helpers.php
