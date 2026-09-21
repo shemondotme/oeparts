@@ -207,8 +207,19 @@ jobs:
           sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=password/' .env
           echo "OE_BACKUP_KEY=$(openssl rand -base64 32)" >> .env
 
+      # compose.yaml's laravel.test/queue-worker default WWWUSER/WWWGROUP to
+      # 1000 (matching a typical local dev host user) when unset — but
+      # actions/checkout's files are owned by the runner's own account,
+      # UID/GID 1001 on GitHub-hosted ubuntu runners, not 1000. That mismatch
+      # meant the container's sail user (1000) couldn't write into the
+      # bind-mounted checkout at all — confirmed live: every page request
+      # 500'd on `tempnam(): file created in the system's temporary directory`
+      # the moment the framework tried to write anything (view cache, etc.),
+      # which is also why every Playwright test timed out waiting for content
+      # that was actually a Symfony/Laravel debug error page. Same fix Sail's
+      # own docs give for this exact class of host/container UID mismatch.
       - name: Start the Docker Sail stack
-        run: docker compose up -d --build --wait
+        run: WWWUSER=$(id -u) WWWGROUP=$(id -g) docker compose up -d --build --wait
 
       # The container's own vendor/ is a separate named volume (vendor-laravel-test),
       # isolated from the host vendor/ above — see compose.yaml's comment on that
