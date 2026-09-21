@@ -242,16 +242,6 @@ jobs:
       - name: Point oeparts.test at the container
         run: echo "127.0.0.1 oeparts.test" | sudo tee -a /etc/hosts
 
-      # DIAGNOSTIC (temporary): a live run showed every Playwright test timing
-      # out waiting for page content that never appeared, with exactly one
-      # fast (~1s) request per attempt and no follow-up asset requests — the
-      # signature of a self-contained error page (e.g. Laravel's debug/Whoops
-      # page needs no external CSS/JS), not a slow server. This bare curl
-      # gets the raw HTTP response BEFORE involving the browser at all, for a
-      # few seconds instead of the 60-120s Playwright waits per failed test.
-      - name: DIAGNOSTIC — raw response from the admin login page
-        run: curl -sv http://oeparts.test/admin/login 2>&1 | head -100
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -264,14 +254,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      # DIAGNOSTIC (temporary): scoped to the one test every other test
-      # depends on (the auth setup project), instead of the full 579-test
-      # suite — the prior run took 1h18m because every one of ~30 distinct
-      # failures burned its own 60-120s timeout (plus a retry). This narrows
-      # one diagnostic iteration to a few minutes. Revert to the bare `npm
-      # run test:e2e` once the underlying page-not-rendering cause is fixed.
       - name: Run Playwright e2e suite
-        run: npm run test:e2e -- --grep "authenticate as super_admin"
+        run: npm run test:e2e
 
       - name: Upload Playwright report
         if: failure()
