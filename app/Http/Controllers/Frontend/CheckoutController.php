@@ -696,7 +696,14 @@ class CheckoutController extends Controller
             if ($payment) {
                 $proofPath = null;
                 if ($request->hasFile('payment_proof') && $request->file('payment_proof')->isValid()) {
-                    $proofPath = $request->file('payment_proof')->store('payment-proofs', 'public');
+                    // 'local' (private), not 'public': this can be a bank-transfer
+                    // receipt showing account numbers/names/amounts — the
+                    // auto-generated filename resists guessing, but a public disk
+                    // still means anyone with the URL (leaked via referrer, log,
+                    // proxy, browser history) can read it with no auth check.
+                    // Same disk refund-image uploads already use (UploadedImageSanitizer
+                    // call site, AccountController::storeRefundImage).
+                    $proofPath = $request->file('payment_proof')->store('payment-proofs', 'local');
                 }
 
                 $payment->update([

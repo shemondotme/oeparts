@@ -454,6 +454,62 @@ class CheckoutFlowTest extends TestCase
         $this->assertEquals('bank_transfer', $payment->gateway_response['method']);
     }
 
+    /**
+     * A bank-transfer proof can show account numbers/names/amounts — it must
+     * land on the private 'local' disk (matching refund-image uploads), not
+     * 'public', where an auto-generated filename is the only thing standing
+     * between it and anyone who has the URL (leaked via referrer, log,
+     * proxy, browser history).
+     */
+    #[Test]
+    public function bank_transfer_proof_is_stored_on_the_private_disk(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('local');
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $cart = Cart::create([
+            'guest_token' => 'proof-disk-test',
+            'expires_at' => now()->addDays(7),
+        ]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 1,
+            'price_at_add' => $this->product->price,
+        ]);
+
+        $this->withCookie('guest_token', 'proof-disk-test')
+            ->get('/en/checkout')
+            ->assertOk();
+
+        $checkoutId = Session::get('active_checkout_id');
+        app(CheckoutService::class)->update($checkoutId, [
+            'contact_email' => 'proof-disk@example.com',
+            'guest_email' => 'proof-disk@example.com',
+            'otp_verified' => true,
+            'step' => 5,
+            'shipping_address' => ['first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St', 'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE'],
+            'shipping_method_id' => $this->shippingMethod->id,
+            'payment_method' => 'bank_transfer',
+        ]);
+
+        $this->post('/en/checkout', ['payment_method' => 'bank_transfer'])->assertRedirect();
+        $order = Order::where('guest_email', 'proof-disk@example.com')->first();
+
+        $proof = \Illuminate\Http\UploadedFile::fake()->create('receipt.pdf', 100, 'application/pdf');
+        $this->post("/en/checkout/payment/{$order->order_number}/process", [
+            'payment_method' => 'bank_transfer',
+            'payment_proof' => $proof,
+        ])->assertRedirect();
+
+        $payment = $order->payment->fresh();
+        $proofPath = $payment->gateway_response['proof_path'] ?? null;
+
+        $this->assertNotNull($proofPath, 'the upload should have been stored and recorded');
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($proofPath);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($proofPath);
+    }
+
     #[Test]
     public function order_number_format_matches_spec(): void
     {
