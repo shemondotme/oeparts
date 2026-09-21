@@ -124,6 +124,24 @@ final class AdminUi
     }
 
     /**
+     * Neutralize CSV/formula injection (CWE-1236): a cell starting with
+     * =/+/-/@ (or tab/CR) is executed as a formula by Excel/Google Sheets
+     * the moment the file is opened, not just displayed as text. Several
+     * exportCsvBulkAction() columns carry unauthenticated-visitor-supplied
+     * free text (review comments, refund reasons, contact/part-inquiry
+     * messages) straight through to the CSV a super_admin later opens — a
+     * value like `=HYPERLINK("http://evil","x")` submitted as a review
+     * comment would run as a live formula for that admin. Prefixing with a
+     * single quote is the standard mitigation: spreadsheet apps treat the
+     * cell as literal text instead of a formula, and the quote itself isn't
+     * rendered.
+     */
+    protected static function escapeCsvFormula(string $value): string
+    {
+        return preg_match('/^[=+\-@\t\r]/', $value) ? "'".$value : $value;
+    }
+
+    /**
      * Standard copyable text column with monospace font and copy feedback.
      */
     public static function copyableColumn(string $name, string $label, string $copyMessage = 'Copied to clipboard'): TextColumn
@@ -541,7 +559,7 @@ final class AdminUi
                             default => (string) $cell,
                         };
 
-                        return '"'.str_replace('"', '""', $value).'"';
+                        return '"'.str_replace('"', '""', static::escapeCsvFormula($value)).'"';
                     })->implode(',')."\n";
                 });
 
