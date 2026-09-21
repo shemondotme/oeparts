@@ -7,7 +7,13 @@
 </head>
 <body style="margin:0;padding:0;background-color:#F7F3E7;">
 
-{!! $campaign->html_content !!}
+{{-- Same mews/purifier clean() already used for blog/page content
+     (resources/views/frontend/blog/show.blade.php, page.blade.php) — this
+     field is free-form HTML an admin composes for the campaign body, so it
+     can't be escaped outright without breaking the email's formatting, but
+     rendering it raw let stored script/event-handler markup execute for
+     every subscriber the moment they open the email. --}}
+{!! clean($campaign->html_content) !!}
 
 {{-- ═══════════════════════════════════════════════════════════════════
      COMPLIANCE FOOTER — server-appended to every campaign send so the
