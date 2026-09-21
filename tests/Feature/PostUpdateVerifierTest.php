@@ -8,6 +8,7 @@ use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\VerifyReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -27,6 +28,15 @@ class PostUpdateVerifierTest extends TestCase
         $this->state = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-verify-'.getmypid();
         @mkdir($this->state, 0775, true);
         config(['updates.state_path' => $this->state]);
+
+        // The FSM tests below drive UpdateApplier::run() to completion/failure,
+        // which dispatches NotifyAdminsOfUpdateResult — irrelevant to this
+        // file's verify/rollback assertions, and would otherwise run
+        // synchronously (sync queue in tests) and query Admin::role('super_admin'),
+        // which needs RolesSeeder this file doesn't run. Same fix as
+        // UpdateApplierTest; notification dispatch itself is covered by
+        // NotifyAdminsOfUpdateResultTest.
+        Queue::fake();
     }
 
     protected function tearDown(): void
@@ -69,8 +79,8 @@ class PostUpdateVerifierTest extends TestCase
 
         config(['updates.verify' => [
             'required_tables' => [],
-            'referential'     => [['oe_pv_child', 'parent_id', 'oe_pv_parent', 'id']],
-            'smoke'           => false,
+            'referential' => [['oe_pv_child', 'parent_id', 'oe_pv_parent', 'id']],
+            'smoke' => false,
         ]]);
 
         $report = app(PostUpdateVerifier::class)->verify();
@@ -134,14 +144,29 @@ class VerifyRollbackApplier extends UpdateApplier
     // GIT_STEPS and fall through to the real (unfaked) doGitCheckout(), running
     // an actual `git checkout` against this project during the test. Same fix
     // as Tests\Feature\FakeUpdateApplier.
-    protected function isGitMode(): bool { return false; }
+    protected function isGitMode(): bool
+    {
+        return false;
+    }
 
     protected function enterMaintenance(): void {}
+
     protected function exitMaintenance(): void {}
+
     protected function doBackup(UpdateHistory $h): void {}
+
     protected function doDownload(UpdateHistory $h): void {}
+
     protected function doExtract(UpdateHistory $h): void {}
+
     protected function doSwap(UpdateHistory $h): void {}
+
     protected function doFinalize(UpdateHistory $h): void {}
-    protected function rollback(UpdateHistory $h): bool { $this->rolledBack = true; return true; }
+
+    protected function rollback(UpdateHistory $h): bool
+    {
+        $this->rolledBack = true;
+
+        return true;
+    }
 }

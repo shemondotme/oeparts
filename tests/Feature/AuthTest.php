@@ -2,9 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\Otp;
 use App\Enums\OtpPurpose;
+use App\Models\Otp;
+use App\Models\User;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,7 +19,7 @@ class AuthTest extends TestCase
     {
         parent::setUp();
         // Clear login rate limiter between tests
-        app(\Illuminate\Cache\RateLimiter::class)->clear('login:127.0.0.1');
+        app(RateLimiter::class)->clear('login:127.0.0.1');
     }
 
     // ── Registration ───────────────────────────────────────────────────────────
@@ -38,7 +39,7 @@ class AuthTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'message',
-                'data' => ['requires_otp']
+                'data' => ['requires_otp'],
             ]);
 
         $this->assertDatabaseHas('users', [
@@ -115,7 +116,7 @@ class AuthTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'message',
-                'data' => ['user' => ['id', 'name', 'email'], 'token']
+                'data' => ['user' => ['id', 'name', 'email'], 'token'],
             ]);
     }
 
@@ -157,7 +158,7 @@ class AuthTest extends TestCase
             ->assertJsonStructure([
                 'success',
                 'message',
-                'data' => ['requires_otp']
+                'data' => ['requires_otp'],
             ]);
 
         $this->assertDatabaseHas('otps', [
@@ -171,6 +172,14 @@ class AuthTest extends TestCase
     #[Test]
     public function user_can_verify_email_with_correct_otp(): void
     {
+        // Freeze time: the controller stamps verified_at with its own now()
+        // call during the request, a moment strictly before any now() this
+        // test could capture afterward — comparing against a live now() here
+        // is a real-clock race that fails whenever a second boundary (or the
+        // datetime column's second-precision truncation of a microsecond
+        // now()) falls between the two calls, independent of app correctness.
+        $this->travelTo(now());
+
         $user = User::factory()->create([
             'email' => 'john@example.com',
             'email_verified_at' => null,
