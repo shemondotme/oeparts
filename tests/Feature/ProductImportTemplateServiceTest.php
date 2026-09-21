@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Language;
 use App\Services\Imports\ProductImportTemplateService;
 use App\Services\ProductImportService;
+use Database\Seeders\LanguagesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -50,7 +51,7 @@ class ProductImportTemplateServiceTest extends TestCase
     #[Test]
     public function the_full_template_includes_a_name_and_description_pair_per_active_language(): void
     {
-        $this->seed([\Database\Seeders\LanguagesSeeder::class]);
+        $this->seed([LanguagesSeeder::class]);
 
         $headers = $this->headerRow($this->service()->fullCsv());
 
@@ -71,7 +72,7 @@ class ProductImportTemplateServiceTest extends TestCase
     #[Test]
     public function the_full_template_excludes_inactive_languages(): void
     {
-        $this->seed([\Database\Seeders\LanguagesSeeder::class]);
+        $this->seed([LanguagesSeeder::class]);
         Language::where('code', 'es')->update(['is_active' => false]);
 
         $headers = $this->headerRow($this->service()->fullCsv());

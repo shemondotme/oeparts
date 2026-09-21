@@ -7,8 +7,11 @@ use App\Enums\RefundStatus;
 use App\Filament\Resources\RefundRequestResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendRefundProcessedEmail;
+use App\Jobs\SendRefundStatusEmail;
+use App\Models\Order;
 use App\Models\RefundRequest;
 use App\Services\OrderService;
+use App\Support\NavBadge;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -22,6 +25,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class RefundRequestResource extends Resource
 {
@@ -47,7 +51,7 @@ class RefundRequestResource extends Resource
         return 'id';
     }
 
-    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): ?string
+    public static function getRecordTitle(?Model $record): ?string
     {
         if (! $record instanceof RefundRequest) {
             return null;
@@ -165,15 +169,15 @@ class RefundRequestResource extends Resource
                                             ->maxValue(function (Get $get, ?RefundRequest $record): ?float {
                                                 $orderId = $get('order_id') ?? $record?->order_id;
 
-                                                return $orderId ? (float) (\App\Models\Order::find($orderId)?->grand_total) : null;
+                                                return $orderId ? (float) (Order::find($orderId)?->grand_total) : null;
                                             })
                                             ->step(0.01)
                                             ->placeholder('0.00')
                                             ->helperText(function (Get $get, ?RefundRequest $record): ?string {
                                                 $orderId = $get('order_id') ?? $record?->order_id;
-                                                $order = $orderId ? \App\Models\Order::find($orderId) : null;
+                                                $order = $orderId ? Order::find($orderId) : null;
 
-                                                return $order ? 'Cannot exceed the order total of ' . format_money($order->grand_total) . '.' : null;
+                                                return $order ? 'Cannot exceed the order total of '.format_money($order->grand_total).'.' : null;
                                             })
                                             ->extraAttributes(['class' => 'op-fin-form-total']),
                                     ]),
@@ -189,6 +193,7 @@ class RefundRequestResource extends Resource
                                                 if (empty($images)) {
                                                     return 'No images submitted with this refund request.';
                                                 }
+
                                                 // return_images holds either legacy flat path strings or
                                                 // {path, original_name, size, uploaded_at} objects.
                                                 return collect($images)
@@ -208,28 +213,27 @@ class RefundRequestResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with(['order', 'user']))
             ->columns([
-            AdminUi::copyableColumn('order.order_number', 'Order #', 'Order number copied')
-                ->url(fn (RefundRequest $record): ?string => $record->order_id
-                    ? \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record->order_id])
-                    : null)
-                ->color('primary')
-                ->searchable()
-                ->sortable(),
-            Tables\Columns\TextColumn::make('customer_name')
-                ->label(__('admin.customer'))
-                ->getStateUsing(fn (RefundRequest $record): string => $record->user?->name ?? $record->order?->shipping_name ?? $record->order?->guest_email ?? '—')
-                ->description(fn (RefundRequest $record): ?string =>
-                    $record->user?->email ?? $record->order?->guest_email ?? null
-                )
-                ->searchable(query: function (Builder $query, string $search): Builder {
-                    return $query->where(function ($q) use ($search) {
-                        $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"))
-                            ->orWhereHas('order', fn ($o) => $o->where('shipping_name', 'like', "%{$search}%")
-                                ->orWhere('guest_email', 'like', "%{$search}%"));
-                    });
-                })
-                ->limit(30)
-                ->toggleable(),
+                AdminUi::copyableColumn('order.order_number', 'Order #', 'Order number copied')
+                    ->url(fn (RefundRequest $record): ?string => $record->order_id
+                        ? OrderResource::getUrl('view', ['record' => $record->order_id])
+                        : null)
+                    ->color('primary')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('customer_name')
+                    ->label(__('admin.customer'))
+                    ->getStateUsing(fn (RefundRequest $record): string => $record->user?->name ?? $record->order?->shipping_name ?? $record->order?->guest_email ?? '—')
+                    ->description(fn (RefundRequest $record): ?string => $record->user?->email ?? $record->order?->guest_email ?? null
+                    )
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function ($q) use ($search) {
+                            $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"))
+                                ->orWhereHas('order', fn ($o) => $o->where('shipping_name', 'like', "%{$search}%")
+                                    ->orWhere('guest_email', 'like', "%{$search}%"));
+                        });
+                    })
+                    ->limit(30)
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('amount_requested')
                     ->label(__('admin.amount'))
                     ->getStateUsing(fn (RefundRequest $record): string => format_money($record->amount_requested))
@@ -341,19 +345,19 @@ class RefundRequestResource extends Resource
                             ->send();
                     }),
             ]))
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Refunds', [
-                    'order.order_number' => 'Order #',
-                    'customer_name' => 'Customer',
-                    'amount_requested' => 'Amount',
-                    'reason' => 'Reason',
-                    'status' => 'Status',
-                    'created_at' => 'Date',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Refunds', [
+                        'order.order_number' => 'Order #',
+                        'customer_name' => 'Customer',
+                        'amount_requested' => 'Amount',
+                        'reason' => 'Reason',
+                        'status' => 'Status',
+                        'created_at' => 'Date',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ])
+            ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-arrow-uturn-left')
             ->emptyStateHeading('No refund requests')
@@ -370,15 +374,15 @@ class RefundRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListRefundRequests::route('/'),
-            'view'   => Pages\ViewRefundRequest::route('/{record}'),
-            'edit'   => Pages\EditRefundRequest::route('/{record}/edit'),
+            'index' => Pages\ListRefundRequests::route('/'),
+            'view' => Pages\ViewRefundRequest::route('/{record}'),
+            'edit' => Pages\EditRefundRequest::route('/{record}/edit'),
         ];
     }
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('refunds_pending', fn () => static::getModel()::where('status', RefundStatus::Pending)->count());
+        return NavBadge::count('refunds_pending', fn () => static::getModel()::where('status', RefundStatus::Pending)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -415,7 +419,7 @@ class RefundRequestResource extends Resource
                 $record->status = RefundStatus::Approved;
                 $record->save();
 
-                static::dispatchSafely(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Approved));
+                static::dispatchSafely(new SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Approved));
 
                 Notification::make()
                     ->title('Refund approved')
@@ -461,7 +465,7 @@ class RefundRequestResource extends Resource
                 $record->processed_at = now();
                 $record->save();
 
-                static::dispatchSafely(new \App\Jobs\SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Rejected));
+                static::dispatchSafely(new SendRefundStatusEmail($record, RefundStatus::Pending, RefundStatus::Rejected));
 
                 Notification::make()
                     ->title('Refund request rejected')

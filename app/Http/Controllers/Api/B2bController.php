@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\PartInquiry;
 use App\Enums\PartInquiryStatus;
+use App\Models\PartInquiry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -16,7 +16,7 @@ class B2bController extends BaseApiController
     public function store(Request $request): JsonResponse
     {
         // Rate limit: 3 requests per hour per IP
-        if (!RateLimiter::attempt("b2b:{$request->ip()}", 3, fn () => true, 3600)) {
+        if (! RateLimiter::attempt("b2b:{$request->ip()}", 3, fn () => true, 3600)) {
             return $this->errorResponse('Too many requests. Please try again later.', null, 429);
         }
 

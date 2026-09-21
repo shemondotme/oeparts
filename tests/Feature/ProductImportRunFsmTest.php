@@ -78,7 +78,7 @@ class ProductImportRunFsmTest extends TestCase
     {
         $this->seedCatalog();
         $admin = Admin::factory()->create();
-        $path  = $this->fiveRowCsv();
+        $path = $this->fiveRowCsv();
 
         $run = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
         $this->assertSame(ProductImportRun::STATUS_RUNNING, $run->status);
@@ -101,7 +101,7 @@ class ProductImportRunFsmTest extends TestCase
     {
         $this->seedCatalog();
         $admin = Admin::factory()->create();
-        $path  = $this->fiveRowCsv();
+        $path = $this->fiveRowCsv();
 
         $run = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
 
@@ -141,7 +141,7 @@ class ProductImportRunFsmTest extends TestCase
     {
         $this->seedCatalog();
         $admin = Admin::factory()->create();
-        $path  = $this->putCsv('imports/test.csv', array_merge(
+        $path = $this->putCsv('imports/test.csv', array_merge(
             [['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock']],
             array_map(fn (int $i) => ["OEM{$i}", 'bmw', 'new', '10.00', '1'], range(1, 6)),
         ));
@@ -164,7 +164,7 @@ class ProductImportRunFsmTest extends TestCase
     public function a_second_concurrent_import_is_rejected_and_leaves_no_orphan_row(): void
     {
         $admin = Admin::factory()->create();
-        $path  = $this->putCsv('imports/one.csv', [
+        $path = $this->putCsv('imports/one.csv', [
             ['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock'],
         ]);
 
@@ -189,7 +189,7 @@ class ProductImportRunFsmTest extends TestCase
     public function start_is_blocked_while_another_process_holds_the_start_lock(): void
     {
         $admin = Admin::factory()->create();
-        $path  = $this->putCsv('imports/one.csv', [
+        $path = $this->putCsv('imports/one.csv', [
             ['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock'],
         ]);
 
@@ -210,14 +210,14 @@ class ProductImportRunFsmTest extends TestCase
     {
         $this->seedCatalog();
         $admin = Admin::factory()->create();
-        $path  = $this->putCsv('imports/test.csv', [
+        $path = $this->putCsv('imports/test.csv', [
             ['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock'],
             ['OEM1', 'bmw', 'new', '10.00', '1'],
             ['OEM2', 'does-not-exist', 'new', '10.00', '1'], // bad manufacturer slug
             ['OEM3', 'bmw', 'new', '10.00', '1'],
         ]);
 
-        $run      = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
+        $run = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
         $finished = $this->manager()->run($run);
 
         $this->assertSame(ProductImportRun::STATUS_SUCCESS, $finished->status);
@@ -233,12 +233,12 @@ class ProductImportRunFsmTest extends TestCase
     public function invalid_headers_fail_the_run_with_a_clear_message(): void
     {
         $admin = Admin::factory()->create();
-        $path  = $this->putCsv('imports/test.csv', [
+        $path = $this->putCsv('imports/test.csv', [
             ['oem_number', 'price'], // missing required columns
             ['OEM1', '10.00'],
         ]);
 
-        $run      = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
+        $run = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
         $finished = $this->manager()->run($run);
 
         $this->assertSame(ProductImportRun::STATUS_FAILED, $finished->status);

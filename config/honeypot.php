@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Spam\JsonAwareSpamResponder;
+use Spatie\Honeypot\SpamProtection;
 
 return [
     'enabled' => env('HONEYPOT_ENABLED', true),
@@ -11,6 +12,6 @@ return [
     'amount_of_seconds' => (int) env('HONEYPOT_SECONDS', 1),
     'respond_to_spam_with' => JsonAwareSpamResponder::class,
     'honeypot_fields_required_for_all_forms' => false,
-    'spam_protection' => \Spatie\Honeypot\SpamProtection::class,
+    'spam_protection' => SpamProtection::class,
     'with_csp' => env('HONEYPOT_WITH_CSP', false),
 ];

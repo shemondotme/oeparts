@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\ContactFormRequest;
 use App\Models\ContactMessage;
 use App\Services\OtpService;
-use Illuminate\Http\Request;
 
 class ContactController extends Controller
 {

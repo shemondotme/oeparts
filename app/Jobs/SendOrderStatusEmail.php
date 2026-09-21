@@ -32,6 +32,7 @@ class SendOrderStatusEmail implements ShouldQueue
 
         if (empty($toEmail)) {
             Log::warning('Skipped order status email: no recipient address', ['order_id' => $this->order->id]);
+
             return;
         }
 

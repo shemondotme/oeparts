@@ -6,16 +6,14 @@ use App\Filament\Resources\TranslationResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\LanguageString;
 use App\Models\Setting;
-use Filament\Forms;
 use Filament\Actions;
-use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
+use Filament\Forms;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
 
 class TranslationResource extends Resource
 {
@@ -60,7 +58,7 @@ class TranslationResource extends Resource
             return false;
         }
 
-        $uiValue = Setting::where('group', 'ui')->where('key', $prefix . $record->key)->value('value');
+        $uiValue = Setting::where('group', 'ui')->where('key', $prefix.$record->key)->value('value');
 
         if (blank($uiValue)) {
             return false;
@@ -134,18 +132,18 @@ class TranslationResource extends Resource
                     ->formatStateUsing(fn (string $state): string => AdminUi::LOCALES[$state] ?? strtoupper($state))
                     ->color('gray')
                     ->sortable(),
-            Tables\Columns\TextColumn::make('group')
-                ->label(__('admin.group'))
-                ->badge()
-                ->color('info')
-                ->searchable()
-                ->sortable(),
-            Tables\Columns\TextColumn::make('key')
-                ->label(__('admin.key_name'))
-                ->weight(FontWeight::Medium)
-                ->searchable()
-                ->sortable()
-                ->limit(40),
+                Tables\Columns\TextColumn::make('group')
+                    ->label(__('admin.group'))
+                    ->badge()
+                    ->color('info')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('key')
+                    ->label(__('admin.key_name'))
+                    ->weight(FontWeight::Medium)
+                    ->searchable()
+                    ->sortable()
+                    ->limit(40),
                 Tables\Columns\TextColumn::make('value')
                     ->label(__('admin.translation_value'))
                     ->limit(60)
@@ -178,16 +176,16 @@ class TranslationResource extends Resource
             ])
             ->actions(AdminUi::recordActionsWithoutView())
             ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Translations', [
-                    'lang_code' => 'Language',
-                    'group' => 'Group',
-                    'key' => 'Key',
-                    'value' => 'Value',
-                    'updated_at' => 'Updated',
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Translations', [
+                        'lang_code' => 'Language',
+                        'group' => 'Group',
+                        'key' => 'Key',
+                        'value' => 'Value',
+                        'updated_at' => 'Updated',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
             ])
             ->defaultSort('updated_at', 'desc')
             ->emptyStateIcon('heroicon-o-language')
@@ -215,4 +213,3 @@ class TranslationResource extends Resource
         return ['key', 'value'];
     }
 }
-

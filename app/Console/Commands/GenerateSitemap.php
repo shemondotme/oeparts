@@ -23,11 +23,12 @@ class GenerateSitemap extends Command
                 $this->line("  - {$file}");
             }
 
-            $this->info('Sitemap index available at: ' . $sitemapService->getSitemapUrl());
+            $this->info('Sitemap index available at: '.$sitemapService->getSitemapUrl());
 
             return self::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Failed to generate sitemaps: ' . $e->getMessage());
+            $this->error('Failed to generate sitemaps: '.$e->getMessage());
+
             return self::FAILURE;
         }
     }

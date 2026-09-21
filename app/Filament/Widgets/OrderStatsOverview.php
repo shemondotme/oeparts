@@ -21,7 +21,7 @@ class OrderStatsOverview extends StatsOverviewWidget
 
     protected ?string $heading = 'Order Overview';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function getDescription(): ?string
     {
@@ -90,7 +90,7 @@ class OrderStatsOverview extends StatsOverviewWidget
             $diff = bcsub($d['revenueCurrent'], $d['revenuePrevious'], 4);
             $ratio = bcdiv($diff, $d['revenuePrevious'], 4);
             $pct = (float) bcmul($ratio, '100', 1);
-            $revenueTrendLabel = ($pct > 0 ? '+' : '') . number_format($pct, 1) . '% vs prior period';
+            $revenueTrendLabel = ($pct > 0 ? '+' : '').number_format($pct, 1).'% vs prior period';
         } elseif (bccomp($d['revenueCurrent'], '0', 2) === 1) {
             $revenueTrendLabel = 'New';
         }
@@ -98,7 +98,7 @@ class OrderStatsOverview extends StatsOverviewWidget
         $ordersTrendLabel = 'No data';
         if ($d['ordersPrevious'] > 0) {
             $pct = round((($d['ordersCurrent'] - $d['ordersPrevious']) / $d['ordersPrevious']) * 100, 1);
-            $ordersTrendLabel = ($pct > 0 ? '+' : '') . number_format($pct, 1) . '% vs prior period';
+            $ordersTrendLabel = ($pct > 0 ? '+' : '').number_format($pct, 1).'% vs prior period';
         } elseif ($d['ordersCurrent'] > 0) {
             $ordersTrendLabel = 'New';
         }
@@ -106,16 +106,16 @@ class OrderStatsOverview extends StatsOverviewWidget
 
         $avgMinutes = $d['pendingAvgMinutes'];
         if ($avgMinutes >= 2880) {
-            $waitLabel = round($avgMinutes / 1440, 1) . 'd avg wait';
+            $waitLabel = round($avgMinutes / 1440, 1).'d avg wait';
         } elseif ($avgMinutes >= 60) {
-            $waitLabel = floor($avgMinutes / 60) . 'h ' . ($avgMinutes % 60) . 'm avg wait';
+            $waitLabel = floor($avgMinutes / 60).'h '.($avgMinutes % 60).'m avg wait';
         } else {
-            $waitLabel = $avgMinutes . 'm avg wait';
+            $waitLabel = $avgMinutes.'m avg wait';
         }
         $isDelayed = $avgMinutes > $d['pendingDelayedThreshold'];
 
         return [
-            Stat::make($this->periodLabel() . ' Revenue', '€' . number_format((float) $d['revenueCurrent'], 2))
+            Stat::make($this->periodLabel().' Revenue', '€'.number_format((float) $d['revenueCurrent'], 2))
                 ->description($revenueTrendLabel)
                 ->descriptionIcon($revenueTrendLabel === 'No data' ? null : 'heroicon-o-banknotes')
                 ->chart(array_map('floatval', $d['revenueSparkline']))

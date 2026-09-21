@@ -15,19 +15,19 @@ class NewsletterSubscriberFactory extends Factory
     public function definition(): array
     {
         return [
-            'email'           => fake()->unique()->safeEmail(),
-            'lang'            => fake()->randomElement(['en', 'de', 'fr', 'nl']),
-            'is_active'       => true,
-            'subscribed_at'   => fake()->dateTimeBetween('-1 year', 'now'),
+            'email' => fake()->unique()->safeEmail(),
+            'lang' => fake()->randomElement(['en', 'de', 'fr', 'nl']),
+            'is_active' => true,
+            'subscribed_at' => fake()->dateTimeBetween('-1 year', 'now'),
             'unsubscribed_at' => null,
-            'ip_address'      => fake()->ipv4(),
+            'ip_address' => fake()->ipv4(),
         ];
     }
 
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'is_active'       => false,
+            'is_active' => false,
             'unsubscribed_at' => fake()->dateTimeBetween('-1 month', 'now'),
         ]);
     }

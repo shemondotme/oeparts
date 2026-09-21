@@ -9,7 +9,9 @@ use App\Services\ProductImportService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Bulk Product Import — chunked, resumable (Bulk Import redesign).
@@ -27,7 +29,7 @@ class ProductImport extends Page
 
     protected string $view = 'filament.pages.catalog.product-import';
 
-    /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
+    /** @var TemporaryUploadedFile|null */
     public $csvFile = null;
 
     public bool $updateExisting = false;
@@ -46,8 +48,8 @@ class ProductImport extends Page
         $running = ProductImportRun::where('status', ProductImportRun::STATUS_RUNNING)->latest('id')->first();
 
         if ($running) {
-            $this->runId    = $running->id;
-            $this->running  = true;
+            $this->runId = $running->id;
+            $this->running = true;
             $this->progress = $this->snapshot($running);
         }
     }
@@ -57,7 +59,7 @@ class ProductImport extends Page
         return ProductImportService::REQUIRED_COLUMNS;
     }
 
-    public function downloadQuickTemplate(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadQuickTemplate(): StreamedResponse
     {
         return response()->streamDownload(
             fn () => print app(ProductImportTemplateService::class)->quickCsv(),
@@ -65,7 +67,7 @@ class ProductImport extends Page
         );
     }
 
-    public function downloadFullTemplate(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function downloadFullTemplate(): StreamedResponse
     {
         return response()->streamDownload(
             fn () => print app(ProductImportTemplateService::class)->fullCsv(),
@@ -81,10 +83,10 @@ class ProductImport extends Page
             'csvFile' => 'required|file|mimes:csv,txt|max:'.((int) config('imports.max_upload_kb', 1024 * 1024)),
         ]);
 
-        $disk      = (string) config('imports.disk', 'local');
+        $disk = (string) config('imports.disk', 'local');
         $directory = (string) config('imports.path', 'imports');
-        $original  = $this->csvFile->getClientOriginalName();
-        $diskPath  = $this->csvFile->storeAs($directory, Str::uuid().'.csv', $disk);
+        $original = $this->csvFile->getClientOriginalName();
+        $diskPath = $this->csvFile->storeAs($directory, Str::uuid().'.csv', $disk);
 
         try {
             $run = app(ImportManager::class)->start($diskPath, $disk, $original, (int) auth('admin')->id(), $this->updateExisting);
@@ -94,9 +96,9 @@ class ProductImport extends Page
             return;
         }
 
-        $this->csvFile  = null;
-        $this->runId    = $run->id;
-        $this->running  = true;
+        $this->csvFile = null;
+        $this->runId = $run->id;
+        $this->running = true;
         $this->progress = $this->snapshot($run);
 
         Notification::make()->title('Import started')->body('Do not close this window.')->success()->send();
@@ -147,15 +149,15 @@ class ProductImport extends Page
     private function snapshot(ProductImportRun $run): array
     {
         return [
-            'status'         => $run->status,
-            'total_rows'     => $run->total_rows,
+            'status' => $run->status,
+            'total_rows' => $run->total_rows,
             'processed_rows' => $run->processed_rows,
-            'created_count'  => $run->created_count,
-            'updated_count'  => $run->updated_count,
-            'skipped_count'  => $run->skipped_count,
-            'error_count'    => $run->error_count,
-            'errors'         => $run->errors ?? [],
-            'error'          => $run->error,
+            'created_count' => $run->created_count,
+            'updated_count' => $run->updated_count,
+            'skipped_count' => $run->skipped_count,
+            'error_count' => $run->error_count,
+            'errors' => $run->errors ?? [],
+            'error' => $run->error,
         ];
     }
 

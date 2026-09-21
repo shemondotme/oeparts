@@ -19,7 +19,7 @@ class NavBadge
 {
     public static function count(string $key, \Closure $callback, int $ttl = 60): ?string
     {
-        $value = (int) Cache::remember('nav:badge:' . $key, $ttl, fn (): int => (int) $callback());
+        $value = (int) Cache::remember('nav:badge:'.$key, $ttl, fn (): int => (int) $callback());
 
         return $value > 0 ? (string) $value : null;
     }

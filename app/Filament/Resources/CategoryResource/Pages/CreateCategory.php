@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\CategoryResource\Pages;
 
 use App\Filament\Concerns\DisablesCreateAnother;
-
 use App\Filament\Resources\CategoryResource;
 use Filament\Resources\Pages\CreateRecord;
 

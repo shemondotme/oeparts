@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\RefundStatus;
 use App\Filament\Resources\PartInquiryResource\Pages\CreatePartInquiry;
 use App\Filament\Resources\ProductResource\Pages\CreateProduct;
 use App\Filament\Widgets\AbandonedCartWidget;
@@ -9,9 +10,12 @@ use App\Filament\Widgets\RefundsPendingList;
 use App\Mail\AbandonedCartReminder;
 use App\Models\AbandonedCart;
 use App\Models\Admin;
+use App\Models\Product;
 use App\Models\RefundRequest;
 use App\Models\User;
 use App\Services\CartRecoveryService;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -34,8 +38,8 @@ class DashboardWidgetDataAccuracyTest extends TestCase
     {
         parent::setUp();
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         $admin = Admin::factory()->create();
@@ -120,7 +124,7 @@ class DashboardWidgetDataAccuracyTest extends TestCase
         Mail::fake();
 
         $user = User::factory()->create();
-        $product = \App\Models\Product::factory()->create();
+        $product = Product::factory()->create();
 
         $cartId = DB::table('carts')->insertGetId([
             'user_id' => $user->id,
@@ -182,7 +186,7 @@ class DashboardWidgetDataAccuracyTest extends TestCase
     {
         Mail::fake();
 
-        $product = \App\Models\Product::factory()->create();
+        $product = Product::factory()->create();
 
         $guestCartId = DB::table('carts')->insertGetId([
             'user_id' => null,
@@ -222,11 +226,11 @@ class DashboardWidgetDataAccuracyTest extends TestCase
     public function refunds_widget_lists_pending_requests_with_the_requested_amount(): void
     {
         $pending = RefundRequest::factory()->create([
-            'status' => \App\Enums\RefundStatus::Pending,
+            'status' => RefundStatus::Pending,
             'amount_requested' => '42.50',
         ]);
         $processed = RefundRequest::factory()->create([
-            'status' => \App\Enums\RefundStatus::Processed,
+            'status' => RefundStatus::Processed,
             'amount_requested' => '99.99',
         ]);
 

@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Jobs\NotifyAdminsOfUpdate;
 use App\Mail\UpdateAvailableMail;
 use App\Models\Admin;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,8 +24,8 @@ class NotifyAdminsOfUpdateTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
     }
 

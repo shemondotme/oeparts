@@ -141,7 +141,7 @@ class ProductImageUploadTest extends TestCase
         // exercising both derived-image code paths for real.
         $canvas = imagecreatetruecolor(300, 200);
         imagefill($canvas, 0, 0, imagecolorallocate($canvas, 120, 140, 160));
-        $tmpPath = tempnam(sys_get_temp_dir(), 'oeparts_test_img_') . '.jpg';
+        $tmpPath = tempnam(sys_get_temp_dir(), 'oeparts_test_img_').'.jpg';
         imagejpeg($canvas, $tmpPath);
         imagedestroy($canvas);
 

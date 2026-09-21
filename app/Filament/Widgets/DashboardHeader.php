@@ -5,6 +5,8 @@ namespace App\Filament\Widgets;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\CustomerResource;
 use App\Filament\Resources\OrderResource;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\Order;
 use App\Models\User;
 use Filament\Widgets\StatsOverviewWidget;
@@ -13,12 +15,12 @@ use Illuminate\Support\Facades\DB;
 
 class DashboardHeader extends StatsOverviewWidget
 {
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected static bool $isLazy = false;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected static ?int $sort = -39;
 
@@ -117,7 +119,7 @@ class DashboardHeader extends StatsOverviewWidget
         }
 
         $pct = (($today - $previous) / $previous) * 100;
-        $label = number_format(abs($pct), 1) . '% vs yesterday';
+        $label = number_format(abs($pct), 1).'% vs yesterday';
 
         if ($pct > 0.0) {
             return ['text' => $label, 'icon' => 'heroicon-m-arrow-trending-up', 'color' => 'success'];

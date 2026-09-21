@@ -4,9 +4,10 @@ namespace App\Models;
 
 use App\Enums\ContactStatus;
 use App\Enums\ContactSubjectType;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ContactMessage extends Model
 {
@@ -21,12 +22,12 @@ class ContactMessage extends Model
 
     protected $casts = [
         'subject_type' => ContactSubjectType::class,
-        'status'       => ContactStatus::class,
+        'status' => ContactStatus::class,
         'otp_verified' => 'boolean',
-        'replied_at'   => 'datetime',
+        'replied_at' => 'datetime',
     ];
 
-    public function repliedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function repliedBy(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'replied_by');
     }

@@ -39,15 +39,15 @@ class BlogController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('title->en', 'LIKE', "%{$search}%")
-                  ->orWhere('title->de', 'LIKE', "%{$search}%")
-                  ->orWhere('title->lt', 'LIKE', "%{$search}%")
-                  ->orWhere('title->fr', 'LIKE', "%{$search}%")
-                  ->orWhere('title->es', 'LIKE', "%{$search}%")
-                  ->orWhere('content->en', 'LIKE', "%{$search}%")
-                  ->orWhere('content->de', 'LIKE', "%{$search}%")
-                  ->orWhere('content->lt', 'LIKE', "%{$search}%")
-                  ->orWhere('content->fr', 'LIKE', "%{$search}%")
-                  ->orWhere('content->es', 'LIKE', "%{$search}%");
+                    ->orWhere('title->de', 'LIKE', "%{$search}%")
+                    ->orWhere('title->lt', 'LIKE', "%{$search}%")
+                    ->orWhere('title->fr', 'LIKE', "%{$search}%")
+                    ->orWhere('title->es', 'LIKE', "%{$search}%")
+                    ->orWhere('content->en', 'LIKE', "%{$search}%")
+                    ->orWhere('content->de', 'LIKE', "%{$search}%")
+                    ->orWhere('content->lt', 'LIKE', "%{$search}%")
+                    ->orWhere('content->fr', 'LIKE', "%{$search}%")
+                    ->orWhere('content->es', 'LIKE', "%{$search}%");
             });
         }
 
@@ -105,9 +105,9 @@ class BlogController extends Controller
             ->where('id', '!=', $post->id)
             ->where(function ($q) use ($post) {
                 $q->where('category_id', $post->category_id)
-                  ->orWhereHas('tags', function ($tagQ) use ($post) {
-                      $tagQ->whereIn('blog_tags.id', $post->tags->pluck('id'));
-                  });
+                    ->orWhereHas('tags', function ($tagQ) use ($post) {
+                        $tagQ->whereIn('blog_tags.id', $post->tags->pluck('id'));
+                    });
             })
             ->orderBy('published_at', 'desc')
             ->limit(3)

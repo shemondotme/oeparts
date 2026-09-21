@@ -6,9 +6,9 @@ use Filament\Support\Contracts\HasLabel;
 
 enum PaymentStatus: string implements HasLabel
 {
-    case Pending  = 'pending';
-    case Paid     = 'paid';
-    case Failed   = 'failed';
+    case Pending = 'pending';
+    case Paid = 'paid';
+    case Failed = 'failed';
     case Refunded = 'refunded';
 
     public function getLabel(): string

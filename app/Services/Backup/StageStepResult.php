@@ -2,8 +2,10 @@
 
 namespace App\Services\Backup;
 
+use App\Services\Backup\Contracts\BackupStage;
+
 /**
- * The outcome of a single {@see \App\Services\Backup\Contracts\BackupStage::step()}
+ * The outcome of a single {@see BackupStage::step()}
  * call.
  *
  * - $done   : the stage has no more work; the engine advances to the next stage.

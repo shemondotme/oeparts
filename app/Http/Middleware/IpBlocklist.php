@@ -26,7 +26,7 @@ class IpBlocklist
                     ->where('is_active', true)
                     ->where(function ($query) {
                         $query->whereNull('expires_at')
-                              ->orWhere('expires_at', '>', now());
+                            ->orWhere('expires_at', '>', now());
                     })
                     ->exists();
             } catch (\Exception) {
@@ -35,7 +35,7 @@ class IpBlocklist
         });
 
         if ($blocked) {
-            Log::warning('Blocked request from IP: ' . $request->ip(), ['path' => $request->path()]);
+            Log::warning('Blocked request from IP: '.$request->ip(), ['path' => $request->path()]);
             abort(403, 'Access denied.');
         }
 

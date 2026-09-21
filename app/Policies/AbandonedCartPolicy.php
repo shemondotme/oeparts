@@ -9,6 +9,7 @@ use App\Models\Admin;
 class AbandonedCartPolicy extends BasePolicy
 {
     protected string $model = 'abandoned_carts';
+
     // Seeder spells this permission with a space, not the model's
     // underscore — override the key so viewAny()/view() resolve correctly.
     protected ?string $permissionKey = 'abandoned carts';

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\CategoryResource\Pages;
 
 use App\Filament\Resources\CategoryResource;
+use App\Filament\Support\AdminUi;
 use Filament\Actions;
 use Filament\Infolists\Components\KeyValueEntry;
 use Filament\Infolists\Components\TextEntry;
@@ -55,7 +56,7 @@ class ViewCategory extends ViewRecord
                                             ->extraAttributes(['class' => 'font-mono']),
                                         TextEntry::make('parent.name')
                                             ->label('Parent Category')
-                                            ->getStateUsing(fn ($record): string => $record->parent ? \App\Filament\Support\AdminUi::localizedName($record->parent->name) : '—'),
+                                            ->getStateUsing(fn ($record): string => $record->parent ? AdminUi::localizedName($record->parent->name) : '—'),
                                         TextEntry::make('sort_order')
                                             ->label('Sort Order'),
                                     ])

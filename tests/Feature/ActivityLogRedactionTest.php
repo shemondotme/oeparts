@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Admin;
 use App\Models\ActivityLog;
+use App\Models\Admin;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;

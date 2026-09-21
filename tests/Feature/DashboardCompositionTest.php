@@ -3,9 +3,18 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\Dashboard;
+use App\Filament\Widgets\CustomerGrowthChart;
 use App\Filament\Widgets\GroupHeaderWidget;
+use App\Filament\Widgets\HealthStrip;
+use App\Filament\Widgets\OrderStatusDistributionWidget;
+use App\Filament\Widgets\OrderVolumeChart;
+use App\Filament\Widgets\RevenueChart;
 use App\Models\Admin;
 use App\Services\WidgetPreferenceService;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Widgets\WidgetConfiguration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -29,10 +38,10 @@ class DashboardCompositionTest extends TestCase
     {
         parent::setUp();
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');
     }
@@ -76,22 +85,22 @@ class DashboardCompositionTest extends TestCase
         }
 
         // The registry widgets themselves still render for super_admin.
-        $this->assertContains(\App\Filament\Widgets\RevenueChart::class, $classes);
-        $this->assertContains(\App\Filament\Widgets\HealthStrip::class, $classes);
+        $this->assertContains(RevenueChart::class, $classes);
+        $this->assertContains(HealthStrip::class, $classes);
     }
 
     #[Test]
     public function chart_widgets_render_eagerly(): void
     {
         foreach ([
-            \App\Filament\Widgets\RevenueChart::class,
-            \App\Filament\Widgets\OrderVolumeChart::class,
-            \App\Filament\Widgets\OrderStatusDistributionWidget::class,
-            \App\Filament\Widgets\CustomerGrowthChart::class,
+            RevenueChart::class,
+            OrderVolumeChart::class,
+            OrderStatusDistributionWidget::class,
+            CustomerGrowthChart::class,
         ] as $class) {
             $this->assertFalse(
                 $class::isLazy(),
-                class_basename($class) . ' must be eager — async-alpine never initializes charts on lazily-morphed HTML',
+                class_basename($class).' must be eager — async-alpine never initializes charts on lazily-morphed HTML',
             );
         }
     }

@@ -3,7 +3,12 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\ManufacturerResource;
-use App\Models\Order;
+use App\Filament\Support\AdminUi;
+use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+use App\Models\Manufacturer;
+use App\Models\Product;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -14,9 +19,9 @@ class CatalogStatsWidget extends StatsOverviewWidget
         return 'Manufacturers, products, and stock coverage';
     }
 
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasDashboardPeriod;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected ?string $pollingInterval = '60s';
 
@@ -31,21 +36,21 @@ class CatalogStatsWidget extends StatsOverviewWidget
     public function getStats(): array
     {
         $d = $this->cachedWidgetData(function (): array {
-            $top = \App\Models\Manufacturer::withCount(['orderItems' => fn ($q) => $q->whereHas('order', fn ($oq) => $oq->where('created_at', '>=', $this->periodStart()))])
+            $top = Manufacturer::withCount(['orderItems' => fn ($q) => $q->whereHas('order', fn ($oq) => $oq->where('created_at', '>=', $this->periodStart()))])
                 ->orderByDesc('order_items_count')
                 ->first();
 
-            $productCount = \App\Models\Product::where('is_active', true)->count();
-            $outOfStock = \App\Models\Product::where('is_active', true)->where('is_in_stock', false)->count();
+            $productCount = Product::where('is_active', true)->count();
+            $outOfStock = Product::where('is_active', true)->where('is_in_stock', false)->count();
             $outOfStockRate = $productCount > 0 ? round(($outOfStock / $productCount) * 100, 1) : 0;
 
             return [
-                'manufacturers' => \App\Models\Manufacturer::count(),
-                'activeManufacturers' => \App\Models\Manufacturer::where('is_active', true)->count(),
+                'manufacturers' => Manufacturer::count(),
+                'activeManufacturers' => Manufacturer::where('is_active', true)->count(),
                 'products' => $productCount,
                 'outOfStockRate' => $outOfStockRate,
                 'topId' => $top?->id,
-                'topName' => $top ? \App\Filament\Support\AdminUi::localizedName($top->name, '—') : null,
+                'topName' => $top ? AdminUi::localizedName($top->name, '—') : null,
                 'topOrders' => $top?->order_items_count ?? 0,
             ];
         });
@@ -70,8 +75,8 @@ class CatalogStatsWidget extends StatsOverviewWidget
                 ->description("{$d['outOfStockRate']}% out of stock")
                 ->descriptionIcon('heroicon-o-cube')
                 ->color($d['outOfStockRate'] > 25 ? 'danger' : ($d['outOfStockRate'] > 10 ? 'warning' : 'success')),
-            Stat::make('Top Mfr (' . $this->periodLabel() . ')', $d['topName'] ?? '—')
-                ->description($d['topOrders'] . ' orders')
+            Stat::make('Top Mfr ('.$this->periodLabel().')', $d['topName'] ?? '—')
+                ->description($d['topOrders'].' orders')
                 ->descriptionIcon('heroicon-o-trophy')
                 ->color('warning')
                 ->url($d['topId'] ? ManufacturerResource::getUrl('view', ['record' => $d['topId']]) : null),

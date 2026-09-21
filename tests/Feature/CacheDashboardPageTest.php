@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\System\CacheDashboard;
 use App\Models\Admin;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -26,8 +28,8 @@ class CacheDashboardPageTest extends TestCase
         config(['cache.default' => 'redis']);
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         Filament::setCurrentPanel(Filament::getPanel('admin'));

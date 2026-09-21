@@ -4,6 +4,7 @@ namespace App\Services\Install;
 
 use App\Models\Admin;
 use App\Models\Setting;
+use App\Services\Backup\BackupCipher;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -378,7 +379,7 @@ class InstallManager
         }
 
         $this->updateEnvFile([
-            'OE_BACKUP_KEY' => app(\App\Services\Backup\BackupCipher::class)->generateKey(),
+            'OE_BACKUP_KEY' => app(BackupCipher::class)->generateKey(),
         ]);
 
         return 'Backup encryption key generated.';

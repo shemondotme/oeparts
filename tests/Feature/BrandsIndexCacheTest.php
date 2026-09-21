@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Manufacturer;
+use App\Models\Setting;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
@@ -59,11 +61,11 @@ class BrandsIndexCacheTest extends TestCase
     #[Test]
     public function pagination_still_returns_the_correct_page_of_results(): void
     {
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'general', 'key' => 'pagination_per_page'],
             ['value' => '2', 'type' => 'integer', 'is_encrypted' => false]
         );
-        app(\App\Services\SettingsService::class)->forget('general');
+        app(SettingsService::class)->forget('general');
 
         Manufacturer::create(['name' => ['en' => 'Aaa'], 'slug' => 'aaa', 'country_code' => 'DE', 'is_active' => true]);
         Manufacturer::create(['name' => ['en' => 'Bbb'], 'slug' => 'bbb', 'country_code' => 'DE', 'is_active' => true]);

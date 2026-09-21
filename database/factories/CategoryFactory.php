@@ -17,9 +17,9 @@ class CategoryFactory extends Factory
         $name = fake()->unique()->word();
 
         return [
-            'name'       => ['en' => $name, 'de' => $name],
-            'slug'       => fake()->unique()->slug(),
-            'parent_id'  => null,
+            'name' => ['en' => $name, 'de' => $name],
+            'slug' => fake()->unique()->slug(),
+            'parent_id' => null,
             'sort_order' => fake()->numberBetween(0, 100),
         ];
     }

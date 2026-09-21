@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -17,8 +19,8 @@ class SettingsService
     /**
      * Get a setting value by dot-notation key (group.key).
      *
-     * @param  string  $key      e.g. 'tax.default_vat_rate'
-     * @param  mixed   $default  fallback if setting not found
+     * @param  string  $key  e.g. 'tax.default_vat_rate'
+     * @param  mixed  $default  fallback if setting not found
      */
     public function get(string $key, mixed $default = null): mixed
     {
@@ -48,14 +50,14 @@ class SettingsService
 
         $fetchFromDb = function () use ($group) {
             try {
-                return \App\Models\Setting::where('group', $group)
+                return Setting::where('group', $group)
                     ->get()
                     ->keyBy('key')
                     ->map(function ($setting) {
                         $value = $setting->value;
                         if ($setting->is_encrypted && $value) {
                             try {
-                                $value = \Illuminate\Support\Facades\Crypt::decryptString($value);
+                                $value = Crypt::decryptString($value);
                             } catch (\Exception $e) {
                                 Log::warning('Failed to decrypt setting value', [
                                     'group' => $setting->group,
@@ -64,6 +66,7 @@ class SettingsService
                                 ]);
                             }
                         }
+
                         return $value;
                     })
                     ->toArray();
@@ -88,6 +91,7 @@ class SettingsService
                 'group' => $group,
                 'error' => $e->getMessage(),
             ]);
+
             return $fetchFromDb();
         }
     }
@@ -111,7 +115,7 @@ class SettingsService
             return;
         }
 
-        $setting = \App\Models\Setting::where('group', $group)->where('key', $settingKey)->first();
+        $setting = Setting::where('group', $group)->where('key', $settingKey)->first();
 
         $sensitivePatterns = ['password', 'secret', 'key', 'token', 'api_key', 'access_key'];
         $shouldEncrypt = $setting
@@ -124,7 +128,7 @@ class SettingsService
 
         if ($shouldEncrypt && $value) {
             try {
-                $value = \Illuminate\Support\Facades\Crypt::encryptString((string) $value);
+                $value = Crypt::encryptString((string) $value);
             } catch (\Exception $e) {
                 Log::critical('Failed to encrypt setting value', [
                     'group' => $group,
@@ -135,7 +139,7 @@ class SettingsService
             }
         }
 
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => $group, 'key' => $settingKey],
             ['value' => $value, 'is_encrypted' => $shouldEncrypt]
         );

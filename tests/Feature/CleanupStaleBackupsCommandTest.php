@@ -43,7 +43,7 @@ class CleanupStaleBackupsCommandTest extends TestCase
     {
         $lock = app(BackupLock::class);
         file_put_contents($lock->path(), json_encode([
-            'owner'       => 'backup:dead',
+            'owner' => 'backup:dead',
             'acquired_at' => now()->subHours(2)->toIso8601String(),
         ]));
         $this->assertTrue($lock->isLocked());

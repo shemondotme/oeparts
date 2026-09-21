@@ -6,6 +6,7 @@ use App\Enums\OtpPurpose;
 use App\Models\Otp;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
@@ -19,7 +20,7 @@ class AuthMediumFixesTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        app(\Illuminate\Cache\RateLimiter::class)->clear('login:victim@example.com|127.0.0.1');
+        app(RateLimiter::class)->clear('login:victim@example.com|127.0.0.1');
     }
 
     // ── auth-2: login throttle keyed by email+IP, not IP alone ─────────────

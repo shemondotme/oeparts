@@ -27,7 +27,9 @@ class BackupRestoreTest extends TestCase
     use RefreshDatabase;
 
     private string $statePath;
+
     private string $fixture;
+
     private string $restoreTarget;
 
     protected function setUp(): void
@@ -111,7 +113,7 @@ class BackupRestoreTest extends TestCase
     #[Test]
     public function database_only_restore_writes_no_files(): void
     {
-        $run    = $this->backup();
+        $run = $this->backup();
         $report = app(RestoreManager::class)->restore($run, RestoreOptions::databaseOnly());
 
         $this->assertSame(0, $report->filesRestored);
@@ -150,7 +152,7 @@ class BackupRestoreTest extends TestCase
     #[Test]
     public function it_restores_cross_server_from_an_imported_manifest(): void
     {
-        $run          = $this->backup();
+        $run = $this->backup();
         $manifestPath = $run->manifest_path;
 
         // Simulate a fresh server: drop the DB rows but keep the backup files on disk.

@@ -52,7 +52,7 @@ return [
     'invalid_or_expired_code' => 'Code invalide ou expiré.',
     'email_verified_please_sign_in' => 'E-mail vérifié — veuillez vous connecter.',
     'new_code_sent' => 'Un nouveau code a été envoyé à votre e-mail.',
-    'could_not_resend_code' => "Impossible de renvoyer le code.",
+    'could_not_resend_code' => 'Impossible de renvoyer le code.',
 
     // Controller JSON responses (App\Http\Controllers\Frontend\AuthController)
     'validation_failed' => 'Échec de la validation',

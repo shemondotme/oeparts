@@ -44,31 +44,31 @@ class ImportProgress
     private static function snapshot(ProductImportRun $run): array
     {
         return [
-            'runId'         => (int) $run->getKey(),
-            'totalRows'     => $run->total_rows,
+            'runId' => (int) $run->getKey(),
+            'totalRows' => $run->total_rows,
             'processedRows' => (int) $run->processed_rows,
-            'createdCount'  => (int) $run->created_count,
-            'updatedCount'  => (int) $run->updated_count,
-            'skippedCount'  => (int) $run->skipped_count,
-            'errorCount'    => (int) $run->error_count,
+            'createdCount' => (int) $run->created_count,
+            'updatedCount' => (int) $run->updated_count,
+            'skippedCount' => (int) $run->skipped_count,
+            'errorCount' => (int) $run->error_count,
         ];
     }
 
     public function toArray(): array
     {
         return [
-            'run_id'         => $this->runId,
-            'status'         => $this->status,
-            'done'           => $this->done,
-            'stage'          => $this->stage,
-            'total_rows'     => $this->totalRows,
+            'run_id' => $this->runId,
+            'status' => $this->status,
+            'done' => $this->done,
+            'stage' => $this->stage,
+            'total_rows' => $this->totalRows,
             'processed_rows' => $this->processedRows,
-            'created_count'  => $this->createdCount,
-            'updated_count'  => $this->updatedCount,
-            'skipped_count'  => $this->skippedCount,
-            'error_count'    => $this->errorCount,
-            'message'        => $this->message,
-            'error'          => $this->error,
+            'created_count' => $this->createdCount,
+            'updated_count' => $this->updatedCount,
+            'skipped_count' => $this->skippedCount,
+            'error_count' => $this->errorCount,
+            'message' => $this->message,
+            'error' => $this->error,
         ];
     }
 }

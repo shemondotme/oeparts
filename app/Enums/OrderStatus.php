@@ -6,14 +6,14 @@ use Filament\Support\Contracts\HasLabel;
 
 enum OrderStatus: string implements HasLabel
 {
-    case Pending          = 'pending';
-    case Paid             = 'paid';
-    case Processing       = 'processing';
-    case Shipped          = 'shipped';
-    case Delivered        = 'delivered';
-    case Cancelled        = 'cancelled';
-    case RefundRequested  = 'refund_requested';
-    case Refunded         = 'refunded';
+    case Pending = 'pending';
+    case Paid = 'paid';
+    case Processing = 'processing';
+    case Shipped = 'shipped';
+    case Delivered = 'delivered';
+    case Cancelled = 'cancelled';
+    case RefundRequested = 'refund_requested';
+    case Refunded = 'refunded';
 
     public function getLabel(): string
     {
@@ -22,15 +22,15 @@ enum OrderStatus: string implements HasLabel
 
     public function label(): string
     {
-        return match($this) {
-            self::Pending         => 'Pending',
-            self::Paid            => 'Paid',
-            self::Processing      => 'Processing',
-            self::Shipped         => 'Shipped',
-            self::Delivered       => 'Delivered',
-            self::Cancelled       => 'Cancelled',
+        return match ($this) {
+            self::Pending => 'Pending',
+            self::Paid => 'Paid',
+            self::Processing => 'Processing',
+            self::Shipped => 'Shipped',
+            self::Delivered => 'Delivered',
+            self::Cancelled => 'Cancelled',
             self::RefundRequested => 'Refund Requested',
-            self::Refunded        => 'Refunded',
+            self::Refunded => 'Refunded',
         };
     }
 

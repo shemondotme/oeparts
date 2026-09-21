@@ -3,12 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ManufacturerResource\Pages;
+use App\Filament\Resources\ManufacturerResource\RelationManagers\CarModelsRelationManager;
+use App\Filament\Resources\ManufacturerResource\RelationManagers\ProductsRelationManager;
 use App\Filament\Support\AdminUi;
 use App\Models\Manufacturer;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -18,6 +18,7 @@ use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 
 class ManufacturerResource extends Resource
 {
@@ -45,7 +46,7 @@ class ManufacturerResource extends Resource
         return null;
     }
 
-    public static function getRecordTitle(?\Illuminate\Database\Eloquent\Model $record): ?string
+    public static function getRecordTitle(?Model $record): ?string
     {
         if (! $record instanceof Manufacturer) {
             return null;
@@ -248,7 +249,7 @@ class ManufacturerResource extends Resource
                         label: 'Deactivate',
                         color: 'danger',
                         icon: 'heroicon-o-x-circle',
-                        summary: fn ($record): ?array => !$record->is_active
+                        summary: fn ($record): ?array => ! $record->is_active
                             ? null
                             : [
                                 'key' => AdminUi::localizedName($record->name),
@@ -277,18 +278,18 @@ class ManufacturerResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\ManufacturerResource\RelationManagers\ProductsRelationManager::class,
-            \App\Filament\Resources\ManufacturerResource\RelationManagers\CarModelsRelationManager::class,
+            ProductsRelationManager::class,
+            CarModelsRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListManufacturers::route('/'),
+            'index' => Pages\ListManufacturers::route('/'),
             'create' => Pages\CreateManufacturer::route('/create'),
-            'view'   => Pages\ViewManufacturer::route('/{record}'),
-            'edit'   => Pages\EditManufacturer::route('/{record}/edit'),
+            'view' => Pages\ViewManufacturer::route('/{record}'),
+            'edit' => Pages\EditManufacturer::route('/{record}/edit'),
         ];
     }
 

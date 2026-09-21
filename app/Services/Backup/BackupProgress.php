@@ -65,15 +65,15 @@ class BackupProgress
     public function toArray(): array
     {
         return [
-            'run_id'      => $this->runId,
-            'status'      => $this->status,
-            'done'        => $this->done,
-            'percent'     => $this->percent,
-            'stage'       => $this->stage,
-            'part_count'  => $this->partCount,
+            'run_id' => $this->runId,
+            'status' => $this->status,
+            'done' => $this->done,
+            'percent' => $this->percent,
+            'stage' => $this->stage,
+            'part_count' => $this->partCount,
             'total_bytes' => $this->totalBytes,
-            'message'     => $this->message,
-            'error'       => $this->error,
+            'message' => $this->message,
+            'error' => $this->error,
         ];
     }
 }

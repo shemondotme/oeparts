@@ -5,8 +5,11 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\AbandonedCartResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\AbandonedCart;
-use Filament\Forms;
+use App\Services\CartRecoveryService;
+use App\Support\NavBadge;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -15,7 +18,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Notifications\Notification;
 
 class AbandonedCartResource extends Resource
 {
@@ -28,7 +30,7 @@ class AbandonedCartResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('carts_abandoned', fn () => static::getModel()::where('recovery_email_sent', false)->where('created_at', '>=', now()->subHours(24))->count());
+        return NavBadge::count('carts_abandoned', fn () => static::getModel()::where('recovery_email_sent', false)->where('created_at', '>=', now()->subHours(24))->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -122,19 +124,19 @@ class AbandonedCartResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with('user'))
             ->columns([
-            Tables\Columns\TextColumn::make('user.name')
-                ->label(__('admin.customer'))
-                ->searchable()
-                ->sortable()
-                ->placeholder('Guest Customer')
-                ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('guest_email')
-                ->label(__('admin.email'))
-                ->searchable()
-                ->copyable()
-                ->copyMessage('Email copied')
-                ->placeholder('—')
-                ->limit(30),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label(__('admin.customer'))
+                    ->searchable()
+                    ->sortable()
+                    ->placeholder('Guest Customer')
+                    ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('guest_email')
+                    ->label(__('admin.email'))
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Email copied')
+                    ->placeholder('—')
+                    ->limit(30),
                 Tables\Columns\TextColumn::make('last_active_at')
                     ->label(__('admin.last_active'))
                     ->dateTime('M j, Y H:i')
@@ -173,7 +175,7 @@ class AbandonedCartResource extends Resource
                         ? 'A recovery email was already sent for this cart — sending another should be a deliberate choice.'
                         : 'Send a cart recovery email to the customer. This will remind them of the items left in their cart.')
                     ->action(function (AbandonedCart $record) {
-                        if (! app(\App\Services\CartRecoveryService::class)->send($record)) {
+                        if (! app(CartRecoveryService::class)->send($record)) {
                             Notification::make()
                                 ->title('No email address')
                                 ->body('This abandoned cart has no associated customer or guest email.')
@@ -190,18 +192,18 @@ class AbandonedCartResource extends Resource
                     })
                     ->visible(fn (AbandonedCart $record): bool => (bool) ($record->guest_email ?? $record->user?->email)),
             ]))
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Carts', [
-                    'user.name' => 'Customer',
-                    'guest_email' => 'Email',
-                    'last_active_at' => 'Last Active',
-                    'recovery_email_sent' => 'Recovery Sent',
-                    'created_at' => 'Created',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Carts', [
+                        'user.name' => 'Customer',
+                        'guest_email' => 'Email',
+                        'last_active_at' => 'Last Active',
+                        'recovery_email_sent' => 'Recovery Sent',
+                        'created_at' => 'Created',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
-        ])
+            ])
             ->emptyStateIcon('heroicon-o-shopping-cart')
             ->emptyStateHeading('No abandoned carts detected')
             ->emptyStateDescription('Carts abandoned by customers during checkout will appear here. You can send recovery emails to encourage them to complete their order.');
@@ -216,7 +218,7 @@ class AbandonedCartResource extends Resource
     {
         return [
             'index' => Pages\ListAbandonedCarts::route('/'),
-            'view'  => Pages\ViewAbandonedCart::route('/{record}'),
+            'view' => Pages\ViewAbandonedCart::route('/{record}'),
         ];
     }
 

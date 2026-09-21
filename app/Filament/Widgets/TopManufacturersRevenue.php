@@ -4,16 +4,21 @@ namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
 use App\Filament\Resources\ManufacturerResource;
+use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\Manufacturer;
+use App\Models\Order;
 use Filament\Tables;
+use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class TopManufacturersRevenue extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasDashboardPeriod;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -26,7 +31,7 @@ class TopManufacturersRevenue extends TableWidget
 
     protected static ?string $heading = 'Top Manufacturers by Revenue';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getTableHeaderActions(): array
     {
@@ -101,11 +106,11 @@ class TopManufacturersRevenue extends TableWidget
                     ->getStateUsing(fn ($record): string => is_array($record->name) ? ($record->name['en'] ?? $record->name[array_key_first($record->name)] ?? '—') : ($record->name ?? '—'))
                     ->limit(25),
                 Tables\Columns\TextColumn::make('revenue')
-                    ->label('Revenue (' . $this->periodLabel() . ')')
+                    ->label('Revenue ('.$this->periodLabel().')')
                     ->getStateUsing(fn ($record): string => (float) $record->revenue > 0 ? format_money($record->revenue) : '—')
                     ->sortable()
                     ->summarize(
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                        Sum::make()
                             ->label('Top 10 total')
                             ->formatStateUsing(fn ($state): string => format_money($state))
                     ),
@@ -113,18 +118,21 @@ class TopManufacturersRevenue extends TableWidget
                     ->label('Orders')
                     ->alignCenter()
                     ->summarize(
-                        \Filament\Tables\Columns\Summarizers\Sum::make()
+                        Sum::make()
                             ->label('Total')
                     ),
                 Tables\Columns\TextColumn::make('market_share')
                     ->label('Share')
                     ->getStateUsing(function ($record) use ($paidStatuses): string {
-                        $totalRevenue = (float) \App\Models\Order::whereIn('status', $paidStatuses)
+                        $totalRevenue = (float) Order::whereIn('status', $paidStatuses)
                             ->where('created_at', '>=', $this->periodStart())
                             ->sum('grand_total');
-                        if ($totalRevenue <= 0) return '—';
+                        if ($totalRevenue <= 0) {
+                            return '—';
+                        }
                         $share = ((float) $record->revenue / $totalRevenue) * 100;
-                        return number_format($share, 1) . '%';
+
+                        return number_format($share, 1).'%';
                     })
                     ->alignCenter()
                     ->size('sm'),

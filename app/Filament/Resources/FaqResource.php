@@ -5,21 +5,19 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\FaqResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Faq;
-use Filament\Forms;
 use Filament\Actions;
-use Filament\Actions\BulkAction;
+use Filament\Forms;
 use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Filament\Support\Enums\FontWeight;
 
 class FaqResource extends Resource
 {
@@ -47,7 +45,7 @@ class FaqResource extends Resource
         return null;
     }
 
-    public static function getRecordTitle(?Model $record): string|null
+    public static function getRecordTitle(?Model $record): ?string
     {
         return $record ? AdminUi::localizedName($record->question, 'FAQ') : null;
     }
@@ -70,12 +68,12 @@ class FaqResource extends Resource
                                         Forms\Components\Select::make('category')
                                             ->label(__('admin.faq_category'))
                                             ->options([
-                                                'shipping'  => 'Shipping',
-                                                'ordering'  => 'Ordering',
-                                                'returns'   => 'Returns',
-                                                'payment'   => 'Payment',
-                                                'products'  => 'Products',
-                                                'general'   => 'General',
+                                                'shipping' => 'Shipping',
+                                                'ordering' => 'Ordering',
+                                                'returns' => 'Returns',
+                                                'payment' => 'Payment',
+                                                'products' => 'Products',
+                                                'general' => 'General',
                                             ])
                                             ->native(false)
                                             ->nullable()
@@ -127,19 +125,19 @@ class FaqResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('question')
-                ->label(__('admin.question'))
-                ->getStateUsing(fn (Faq $record): string => AdminUi::localizedName($record->question))
-                ->searchable(query: function (Builder $query, string $search): Builder {
-                    return $query->where(function ($q) use ($search) {
-                        foreach (array_keys(AdminUi::LOCALES) as $code) {
-                            $q->orWhere("question->{$code}", 'like', "%{$search}%");
-                        }
-                    });
-                })
-                ->sortable()
-                ->weight(FontWeight::Medium)
-                ->limit(50),
+                Tables\Columns\TextColumn::make('question')
+                    ->label(__('admin.question'))
+                    ->getStateUsing(fn (Faq $record): string => AdminUi::localizedName($record->question))
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function ($q) use ($search) {
+                            foreach (array_keys(AdminUi::LOCALES) as $code) {
+                                $q->orWhere("question->{$code}", 'like', "%{$search}%");
+                            }
+                        });
+                    })
+                    ->sortable()
+                    ->weight(FontWeight::Medium)
+                    ->limit(50),
                 Tables\Columns\TextColumn::make('category')
                     ->label(__('admin.category'))
                     ->badge()
@@ -164,10 +162,10 @@ class FaqResource extends Resource
                     ->options([
                         'shipping' => 'Shipping',
                         'ordering' => 'Ordering',
-                        'returns'  => 'Returns',
-                        'payment'  => 'Payment',
+                        'returns' => 'Returns',
+                        'payment' => 'Payment',
                         'products' => 'Products',
-                        'general'  => 'General',
+                        'general' => 'General',
                     ])
                     ->native(false)
                     ->helperText('Filter FAQs by topic category.'),
@@ -184,7 +182,7 @@ class FaqResource extends Resource
                     ->color(fn (Faq $record): string => $record->is_active ? 'warning' : 'success')
                     ->authorize('update')
                     ->action(function (Faq $record) {
-                        $record->update(['is_active' => !$record->is_active]);
+                        $record->update(['is_active' => ! $record->is_active]);
 
                         Notification::make()
                             ->title($record->is_active ? 'FAQ activated' : 'FAQ deactivated')
@@ -202,25 +200,25 @@ class FaqResource extends Resource
                         action: function ($records) {
                             $firstState = $records->first()->is_active;
                             $allSame = $records->every(fn (Faq $record) => $record->is_active === $firstState);
-                            $newState = $allSame ? !$firstState : true;
+                            $newState = $allSame ? ! $firstState : true;
 
                             $records->each(function (Faq $record) use ($newState) {
                                 $record->update(['is_active' => $newState]);
                             });
 
                             Notification::make()
-                                ->title($records->count() . ' FAQs ' . ($newState ? 'activated' : 'deactivated'))
+                                ->title($records->count().' FAQs '.($newState ? 'activated' : 'deactivated'))
                                 ->success()
                                 ->send();
                         },
                     ),
-                AdminUi::exportCsvBulkAction('Export FAQs', [
-                    'question' => 'Question',
-                    'answer' => 'Answer',
-                    'category' => 'Category',
-                    'is_active' => 'Active',
-                    'sort_order' => 'Sort Order',
-                ]),
+                    AdminUi::exportCsvBulkAction('Export FAQs', [
+                        'question' => 'Question',
+                        'answer' => 'Answer',
+                        'category' => 'Category',
+                        'is_active' => 'Active',
+                        'sort_order' => 'Sort Order',
+                    ]),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
@@ -246,10 +244,10 @@ class FaqResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListFaqs::route('/'),
+            'index' => Pages\ListFaqs::route('/'),
             'create' => Pages\CreateFaq::route('/create'),
-            'view'   => Pages\ViewFaq::route('/{record}'),
-            'edit'   => Pages\EditFaq::route('/{record}/edit'),
+            'view' => Pages\ViewFaq::route('/{record}'),
+            'edit' => Pages\EditFaq::route('/{record}/edit'),
         ];
     }
 
@@ -258,4 +256,3 @@ class FaqResource extends Resource
         return ['question', 'answer'];
     }
 }
-

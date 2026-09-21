@@ -2,11 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Models\CarModel;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
+use App\Models\Redirect;
 use App\Models\Setting;
 use App\Services\ProductSlugService;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -16,6 +19,7 @@ class ProductDetailPageTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -42,7 +46,7 @@ class ProductDetailPageTest extends TestCase
         );
         // A raw Eloquent write, unlike SettingsService::set(), never busts
         // SettingsService::getGroup()'s 5-minute per-group cache.
-        app(\App\Services\SettingsService::class)->forget('seo');
+        app(SettingsService::class)->forget('seo');
     }
 
     private function makeProduct(array $overrides = []): Product
@@ -77,7 +81,7 @@ class ProductDetailPageTest extends TestCase
             ['group' => $group, 'key' => $key],
             ['value' => $value, 'type' => $type, 'is_encrypted' => false]
         );
-        app(\App\Services\SettingsService::class)->forget($group);
+        app(SettingsService::class)->forget($group);
     }
 
     #[Test]
@@ -140,7 +144,7 @@ class ProductDetailPageTest extends TestCase
             'name' => ['en' => 'Audi', 'de' => 'Audi', 'lt' => 'Audi', 'fr' => 'Audi', 'es' => 'Audi'],
             'slug' => 'audi', 'country_code' => 'DE', 'is_active' => true,
         ]);
-        $carModel = \App\Models\CarModel::create([
+        $carModel = CarModel::create([
             'manufacturer_id' => $carManufacturer->id,
             'name' => 'A4 (B9)', 'slug' => 'a4-b9',
             'year_from' => 2016, 'year_to' => 2019, 'is_active' => true,
@@ -212,7 +216,7 @@ class ProductDetailPageTest extends TestCase
         $product = $this->makeProduct();
         $url = $this->detailUrl($product);
         $product->delete();
-        \App\Models\Redirect::where('from_url', 'like', '%'.$product->normalized_oem.'%')->delete();
+        Redirect::where('from_url', 'like', '%'.$product->normalized_oem.'%')->delete();
 
         $response = $this->get($url);
 
@@ -291,7 +295,7 @@ class ProductDetailPageTest extends TestCase
         // (ProductObserver's IndexNow trigger checks seo.indexnow_enabled)
         // while detail_pages_enabled was still '1' — a raw Eloquent write,
         // unlike SettingsService::set(), never busts that cache itself.
-        app(\App\Services\SettingsService::class)->forget('seo');
+        app(SettingsService::class)->forget('seo');
 
         $response = $this->get($staleUrl);
 

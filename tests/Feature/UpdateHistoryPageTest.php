@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Filament\Pages\System\UpdateHistoryPage;
 use App\Models\Admin;
 use App\Models\UpdateHistory;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -19,7 +21,7 @@ class UpdateHistoryPageTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([\Database\Seeders\SettingsSeeder::class, \Database\Seeders\RolesSeeder::class]);
+        $this->seed([SettingsSeeder::class, RolesSeeder::class]);
     }
 
     private function adminWithRole(string $role): Admin

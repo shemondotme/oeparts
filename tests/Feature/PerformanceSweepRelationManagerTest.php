@@ -26,6 +26,10 @@ use App\Models\OrderStatusHistory;
 use App\Models\Product;
 use App\Models\RefundRequest;
 use App\Models\User;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,10 +54,10 @@ class PerformanceSweepRelationManagerTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');

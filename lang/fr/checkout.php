@@ -56,7 +56,7 @@ return [
     'phone_label' => 'Téléphone',
     'optional' => '(facultatif)',
     'otp_step_heading' => 'Vérifiez votre e-mail',
-    'otp_step_subtitle' => "Sécurité · Vérification · Achat invité",
+    'otp_step_subtitle' => 'Sécurité · Vérification · Achat invité',
     'otp_sent_to' => 'Nous avons envoyé un code de vérification à',
     'otp_code_label' => 'Code de vérification',
     'otp_help_note' => "Entrez le code pour continuer en tant qu'invité.",

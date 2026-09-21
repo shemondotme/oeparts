@@ -23,7 +23,7 @@ class RecoveryConsoleSecurityTest extends TestCase
 
         require_once base_path('public/oe-recovery.php');
 
-        $this->base  = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-recov-sec-'.getmypid();
+        $this->base = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-recov-sec-'.getmypid();
         $this->state = $this->base.'/storage/app/updates';
         @mkdir($this->state, 0775, true);
     }

@@ -3,16 +3,15 @@
 namespace App\Filament\Resources\TestimonialResource\Pages;
 
 use App\Filament\Resources\TestimonialResource;
-use App\Filament\Support\AdminUi;
 use Filament\Actions;
-use Filament\Infolists;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 
 class ViewTestimonial extends ViewRecord
 {
@@ -42,7 +41,7 @@ class ViewTestimonial extends ViewRecord
                                     ->schema([
                                         TextEntry::make('name')
                                             ->label('Customer Name')
-                                            ->weight(\Filament\Support\Enums\FontWeight::Medium),
+                                            ->weight(FontWeight::Medium),
                                         TextEntry::make('company')
                                             ->label('Company')
                                             ->placeholder('—'),
@@ -79,7 +78,7 @@ class ViewTestimonial extends ViewRecord
                                             ->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive'),
                                         TextEntry::make('rating')
                                             ->label('Rating')
-                                            ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
+                                            ->formatStateUsing(fn (int $state): string => str_repeat('★', $state).str_repeat('☆', 5 - $state))
                                             ->color('warning'),
                                         TextEntry::make('sort_order')
                                             ->label('Sort Order')
@@ -101,4 +100,3 @@ class ViewTestimonial extends ViewRecord
             ]);
     }
 }
-

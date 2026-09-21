@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\DiscountType;
+use App\Enums\SequenceType;
 use App\Models\Admin;
 use App\Models\Cart;
 use App\Models\CartItem;
@@ -76,7 +77,7 @@ class CheckoutCouponTest extends TestCase
             'flat_rate' => 0, 'estimated_days_min' => 3, 'estimated_days_max' => 7, 'is_active' => true,
         ]);
 
-        Sequence::create(['type' => \App\Enums\SequenceType::Order, 'value' => 0, 'month' => now()->format('Ym')]);
+        Sequence::create(['type' => SequenceType::Order, 'value' => 0, 'month' => now()->format('Ym')]);
     }
 
     #[Test]

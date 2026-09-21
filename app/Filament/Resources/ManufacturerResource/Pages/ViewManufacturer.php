@@ -6,9 +6,9 @@ use App\Filament\Resources\ManufacturerResource;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ViewManufacturer extends ViewRecord

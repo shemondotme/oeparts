@@ -85,11 +85,11 @@ class HealthCheckServiceSnapshotTest extends TestCase
         Cache::forget('health_check:snapshot_lock');
 
         HealthCheckSnapshot::create([
-            'check_key'        => 'scheduler',
-            'status'           => 'ok',
-            'detail'           => 'beat 5s ago',
+            'check_key' => 'scheduler',
+            'status' => 'ok',
+            'detail' => 'beat 5s ago',
             'response_time_ms' => null,
-            'checked_at'       => now()->subMinutes(5),
+            'checked_at' => now()->subMinutes(5),
         ]);
 
         // 10 minutes old is 'stale' under the default 3-minute threshold, so
@@ -116,11 +116,11 @@ class HealthCheckServiceSnapshotTest extends TestCase
         Cache::forget('health_check:snapshot_lock');
 
         HealthCheckSnapshot::create([
-            'check_key'        => 'scheduler',
-            'status'           => 'stale',
-            'detail'           => '600s since last beat',
+            'check_key' => 'scheduler',
+            'status' => 'stale',
+            'detail' => '600s since last beat',
             'response_time_ms' => null,
-            'checked_at'       => now()->subMinutes(5),
+            'checked_at' => now()->subMinutes(5),
         ]);
 
         Cache::put('scheduler_heartbeat', now()->subMinutes(10)->toIso8601String(), 900);

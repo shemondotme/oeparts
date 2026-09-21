@@ -23,8 +23,8 @@ class BackupRetentionService
      */
     public function prune(): array
     {
-        $daily   = max(0, (int) settings('backup.retention_daily', config('backup.retention.daily', 7)));
-        $weekly  = max(0, (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4)));
+        $daily = max(0, (int) settings('backup.retention_daily', config('backup.retention.daily', 7)));
+        $weekly = max(0, (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4)));
         $monthly = max(0, (int) settings('backup.retention_monthly', config('backup.retention.monthly', 6)));
 
         // Newest first — the first run seen in each bucket is the one we keep.
@@ -45,19 +45,20 @@ class BackupRetentionService
         // silently losing the only file backup for that retention period if
         // it happened to lose to a same-day update_safety run.
         foreach ($runs->groupBy('profile') as $profileRuns) {
-            $days   = [];
-            $weeks  = [];
+            $days = [];
+            $weeks = [];
             $months = [];
 
             foreach ($profileRuns as $run) {
                 $at = $run->finished_at ?? $run->started_at ?? $run->created_at;
                 if (! $at) {
                     $keep[$run->getKey()] = true; // undateable — never auto-prune
+
                     continue;
                 }
 
-                $day   = $at->format('Y-m-d');
-                $week  = $at->format('o-W');
+                $day = $at->format('Y-m-d');
+                $week = $at->format('o-W');
                 $month = $at->format('Y-m');
 
                 if (! isset($days[$day]) && count($days) < $daily) {

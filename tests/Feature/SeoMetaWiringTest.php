@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\Page;
 use App\Models\SeoMeta;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,7 +31,7 @@ class SeoMetaWiringTest extends TestCase
     private function publishedPage(array $attrs = []): Page
     {
         return Page::create(array_merge([
-            'title' => ['en' => 'Warranty'], 'slug' => 'warranty-' . uniqid(),
+            'title' => ['en' => 'Warranty'], 'slug' => 'warranty-'.uniqid(),
             'content' => ['en' => 'Warranty details.'],
             'status' => ContentStatus::Published,
             'published_at' => now()->subDay(),
@@ -41,7 +42,7 @@ class SeoMetaWiringTest extends TestCase
     #[Test]
     public function saving_the_advanced_seo_section_creates_a_seo_meta_row_for_the_page(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->givePermissionTo(['view pages', 'edit pages']);
         $this->actingAs($admin, 'admin');
@@ -74,7 +75,7 @@ class SeoMetaWiringTest extends TestCase
             'robots' => 'noindex,nofollow',
         ]);
 
-        $response = $this->get('/en/' . $page->slug);
+        $response = $this->get('/en/'.$page->slug);
 
         $response->assertOk();
         $response->assertSee('<link rel="canonical" href="https://oeparts.example/custom-canonical">', false);
@@ -86,10 +87,10 @@ class SeoMetaWiringTest extends TestCase
     {
         $page = $this->publishedPage();
 
-        $response = $this->get('/en/' . $page->slug);
+        $response = $this->get('/en/'.$page->slug);
 
         $response->assertOk();
-        $response->assertSee('<link rel="canonical" href="' . url('/en/' . $page->slug) . '">', false);
+        $response->assertSee('<link rel="canonical" href="'.url('/en/'.$page->slug).'">', false);
     }
 
     #[Test]
@@ -98,7 +99,7 @@ class SeoMetaWiringTest extends TestCase
         $admin = Admin::factory()->create();
         $post = BlogPost::create([
             'title' => ['en' => 'How To Choose Brake Pads'],
-            'slug' => 'how-to-choose-brake-pads-' . uniqid(),
+            'slug' => 'how-to-choose-brake-pads-'.uniqid(),
             'content' => ['en' => 'Content body.'],
             'status' => ContentStatus::Published,
             'published_at' => now()->subDay(),

@@ -1,5 +1,8 @@
 <?php
 
+use App\Services\Imports\Stages\ImportRowsStage;
+use App\Services\Imports\Stages\ValidateHeaderStage;
+
 /*
 |--------------------------------------------------------------------------
 | Bulk Product Import
@@ -32,8 +35,8 @@ return [
     // consistency and in case a distinct pipeline is ever needed.
     'stages' => [
         'product_import' => [
-            \App\Services\Imports\Stages\ValidateHeaderStage::class,
-            \App\Services\Imports\Stages\ImportRowsStage::class,
+            ValidateHeaderStage::class,
+            ImportRowsStage::class,
         ],
     ],
 ];

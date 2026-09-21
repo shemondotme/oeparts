@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Http\Request;
 
 /**
  * ViesService — validate EU VAT numbers via the VIES SOAP service.
@@ -72,12 +72,13 @@ class ViesService
      * Return EU (+ near-Europe) countries keyed by ISO-3166-1 alpha-2 code,
      * sorted alphabetically by English display name.
      *
-     * @return array<string,string>  ['DE' => 'Germany', ...]
+     * @return array<string,string> ['DE' => 'Germany', ...]
      */
     public static function getEuCountries(): array
     {
         $list = self::EU_COUNTRY_NAMES;
         asort($list, SORT_NATURAL | SORT_FLAG_CASE);
+
         return $list;
     }
 
@@ -85,25 +86,25 @@ class ViesService
      * Validate a VAT number via VIES.
      *
      * @param  string  $countryCode  2-letter ISO country code (e.g. 'DE')
-     * @param  string  $vatNumber    VAT number without country prefix (e.g. '123456789')
-     * @return ViesResult
+     * @param  string  $vatNumber  VAT number without country prefix (e.g. '123456789')
      */
     public function validate(string $countryCode, string $vatNumber): ViesResult
     {
         $countryCode = strtoupper(trim($countryCode));
-        $vatNumber   = $this->normalizeVatNumber($countryCode, trim($vatNumber));
+        $vatNumber = $this->normalizeVatNumber($countryCode, trim($vatNumber));
 
         if (! $this->isEuCountry($countryCode)) {
             return new ViesResult(valid: false, reason: 'not_eu', countryCode: $countryCode, vatNumber: $vatNumber);
         }
 
         $request = app(Request::class);
-        $rateKey = 'vies:' . ($request->user()?->id ?? $request->ip());
+        $rateKey = 'vies:'.($request->user()?->id ?? $request->ip());
         if (RateLimiter::tooManyAttempts($rateKey, 30)) {
             Log::warning('VIES validation rate limited', [
                 'country' => $countryCode,
-                'vat'     => $vatNumber,
+                'vat' => $vatNumber,
             ]);
+
             return new ViesResult(valid: null, reason: 'rate_limited', countryCode: $countryCode, vatNumber: $vatNumber);
         }
 
@@ -128,33 +129,33 @@ class ViesService
                 // http.timeout covers that read phase too.
                 $client = new \SoapClient(self::WSDL, [
                     'connection_timeout' => 10,
-                    'cache_wsdl'         => WSDL_CACHE_DISK,
-                    'stream_context'     => stream_context_create([
+                    'cache_wsdl' => WSDL_CACHE_DISK,
+                    'stream_context' => stream_context_create([
                         'http' => ['timeout' => 10],
                     ]),
                 ]);
 
                 $response = $client->checkVat([
                     'countryCode' => $countryCode,
-                    'vatNumber'   => $vatNumber,
+                    'vatNumber' => $vatNumber,
                 ]);
 
                 $valid = (bool) ($response->valid ?? false);
 
                 return new ViesResult(
-                    valid:       $valid,
-                    reason:      $valid ? null : 'invalid',
+                    valid: $valid,
+                    reason: $valid ? null : 'invalid',
                     countryCode: $countryCode,
-                    vatNumber:   $vatNumber,
-                    name:        $response->name ?? null,
-                    address:     $response->address ?? null,
+                    vatNumber: $vatNumber,
+                    name: $response->name ?? null,
+                    address: $response->address ?? null,
                 );
             });
         } catch (\SoapFault $e) {
             Log::warning('VIES SOAP fault', [
                 'country' => $countryCode,
-                'vat'     => $vatNumber,
-                'fault'   => $e->getMessage(),
+                'vat' => $vatNumber,
+                'fault' => $e->getMessage(),
             ]);
 
             // SERVICE_UNAVAILABLE or MS_UNAVAILABLE — treat as unverifiable
@@ -162,8 +163,8 @@ class ViesService
         } catch (\Exception $e) {
             Log::error('VIES validation error', [
                 'country' => $countryCode,
-                'vat'     => $vatNumber,
-                'error'   => $e->getMessage(),
+                'vat' => $vatNumber,
+                'error' => $e->getMessage(),
             ]);
 
             return new ViesResult(valid: null, reason: 'error', countryCode: $countryCode, vatNumber: $vatNumber);
@@ -197,22 +198,22 @@ class ViesService
 /**
  * Value object returned by ViesService::validate().
  *
- * @property bool|null   $valid        true=valid, false=invalid, null=unverifiable
- * @property string|null $reason       null | 'invalid' | 'not_eu' | 'service_unavailable' | 'error' | 'rate_limited'
- * @property string      $countryCode
- * @property string      $vatNumber
- * @property string|null $name         Business name from VIES (if available)
- * @property string|null $address      Business address from VIES (if available)
+ * @property bool|null $valid true=valid, false=invalid, null=unverifiable
+ * @property string|null $reason null | 'invalid' | 'not_eu' | 'service_unavailable' | 'error' | 'rate_limited'
+ * @property string $countryCode
+ * @property string $vatNumber
+ * @property string|null $name Business name from VIES (if available)
+ * @property string|null $address Business address from VIES (if available)
  */
 readonly class ViesResult
 {
     public function __construct(
-        public bool|null $valid,
-        public ?string   $reason,
-        public string    $countryCode,
-        public string    $vatNumber,
-        public ?string   $name    = null,
-        public ?string   $address = null,
+        public ?bool $valid,
+        public ?string $reason,
+        public string $countryCode,
+        public string $vatNumber,
+        public ?string $name = null,
+        public ?string $address = null,
     ) {}
 
     public function isValid(): bool

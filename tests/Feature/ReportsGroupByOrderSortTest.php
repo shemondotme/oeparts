@@ -8,6 +8,8 @@ use App\Filament\Widgets\Reports\SearchFailedQueries;
 use App\Filament\Widgets\Reports\SearchTopSearches;
 use App\Filament\Widgets\TopSearchedOems;
 use App\Models\Admin;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,7 +37,7 @@ class ReportsGroupByOrderSortTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\SettingsSeeder::class, \Database\Seeders\RolesSeeder::class]);
+        $this->seed([SettingsSeeder::class, RolesSeeder::class]);
 
         $admin = Admin::factory()->create(['is_active' => true]);
         $admin->assignRole('super_admin');
@@ -56,7 +58,7 @@ class ReportsGroupByOrderSortTest extends TestCase
             }
         }
 
-        $this->assertSame([], $failures, "These widgets still have Filament's default id-based ORDER BY enabled, which MySQL's only_full_group_by rejects since their GROUP BY doesn't include the raw id column:\n" . implode("\n", $failures));
+        $this->assertSame([], $failures, "These widgets still have Filament's default id-based ORDER BY enabled, which MySQL's only_full_group_by rejects since their GROUP BY doesn't include the raw id column:\n".implode("\n", $failures));
     }
 
     #[Test]

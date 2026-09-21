@@ -2,12 +2,12 @@
 
 return [
     'navigation' => 'Pagination Navigation',
-    'range'    => 'Range',
+    'range' => 'Range',
     'previous' => '‹ Previous',
-    'next'     => 'Next ›',
-    'showing'  => 'Showing',
-    'to'       => 'to',
-    'of'       => 'of',
-    'results'  => 'results',
+    'next' => 'Next ›',
+    'showing' => 'Showing',
+    'to' => 'to',
+    'of' => 'of',
+    'results' => 'results',
     'go_to_page' => 'Go to page :page',
 ];

@@ -3,11 +3,21 @@
 namespace Tests\Feature;
 
 use App\Enums\ContactStatus;
+use App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages;
+use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
+use App\Jobs\SendContactReplyEmail;
+use App\Jobs\SendPasswordResetEmail;
 use App\Models\Admin;
 use App\Models\ContactMessage;
 use App\Models\Order;
+use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -20,9 +30,9 @@ class CustomersModuleTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');
@@ -31,12 +41,12 @@ class CustomersModuleTest extends TestCase
     private function makeMessage(array $attrs = []): ContactMessage
     {
         return ContactMessage::create(array_merge([
-            'name'         => 'Jane Doe',
-            'email'        => 'jane@example.com',
+            'name' => 'Jane Doe',
+            'email' => 'jane@example.com',
             'subject_type' => 'general_inquiry',
-            'message'      => 'Hello, do you stock this part?',
-            'status'       => ContactStatus::Unread,
-            'ip_address'   => '127.0.0.1',
+            'message' => 'Hello, do you stock this part?',
+            'status' => ContactStatus::Unread,
+            'ip_address' => '127.0.0.1',
         ], $attrs));
     }
 
@@ -47,7 +57,7 @@ class CustomersModuleTest extends TestCase
         // while the real table is broken, so load the table explicitly.
         $this->makeMessage();
 
-        Livewire::test(\App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages::class)
+        Livewire::test(ListContactMessages::class)
             ->loadTable()
             ->assertOk()
             ->assertSee('Jane Doe');
@@ -55,10 +65,10 @@ class CustomersModuleTest extends TestCase
 
     public function test_reply_is_persisted_and_resolves_the_message(): void
     {
-        \Illuminate\Support\Facades\Queue::fake();
+        Queue::fake();
         $message = $this->makeMessage();
 
-        Livewire::test(\App\Filament\Resources\ContactMessageResource\Pages\ListContactMessages::class)
+        Livewire::test(ListContactMessages::class)
             ->loadTable()
             ->callTableAction('reply', $message, ['reply_body' => 'We stock it — link attached.', 'mark_resolved' => true]);
 
@@ -67,23 +77,23 @@ class CustomersModuleTest extends TestCase
         $this->assertNotNull($message->replied_at);
         $this->assertNotNull($message->replied_by);
         $this->assertSame(ContactStatus::Resolved, $message->status);
-        \Illuminate\Support\Facades\Queue::assertPushed(\App\Jobs\SendContactReplyEmail::class);
+        Queue::assertPushed(SendContactReplyEmail::class);
     }
 
     public function test_password_reset_action_sends_broker_link_not_a_password(): void
     {
         // User overrides sendPasswordResetNotification to dispatch the custom
         // Industrial Blueprint email job — assert on that job.
-        \Illuminate\Support\Facades\Queue::fake();
+        Queue::fake();
         $customer = User::factory()->create();
         $originalHash = $customer->password;
 
-        Livewire::test(\App\Filament\Resources\CustomerResource\Pages\ListCustomers::class)
+        Livewire::test(ListCustomers::class)
             ->loadTable()
             ->callTableAction('sendPasswordReset', $customer);
 
-        \Illuminate\Support\Facades\Queue::assertPushed(
-            \App\Jobs\SendPasswordResetEmail::class,
+        Queue::assertPushed(
+            SendPasswordResetEmail::class,
             fn ($job) => $job->email === $customer->email,
         );
         $this->assertSame($originalHash, $customer->refresh()->password, 'the admin action must never change the password itself');
@@ -97,11 +107,11 @@ class CustomersModuleTest extends TestCase
 
         // Default repeat threshold is 3 — two orders is 'Regular'; with the
         // setting lowered to 2 the same customer becomes 'Repeat'.
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'customers', 'key' => 'repeat_min_orders'],
             ['value' => '2', 'type' => 'integer'],
         );
-        \Illuminate\Support\Facades\Cache::forget('settings.customers');
+        Cache::forget('settings.customers');
 
         $this->assertSame(2, (int) settings('customers.repeat_min_orders', 3));
     }

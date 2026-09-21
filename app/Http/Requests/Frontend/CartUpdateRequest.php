@@ -14,7 +14,7 @@ class CartUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'quantity' => 'required|integer|min:0|max:' . settings('cart.max_quantity', 999),
+            'quantity' => 'required|integer|min:0|max:'.settings('cart.max_quantity', 999),
         ];
     }
 
@@ -22,8 +22,8 @@ class CartUpdateRequest extends FormRequest
     {
         return [
             'quantity.required' => 'Please specify a quantity.',
-            'quantity.integer'  => 'Quantity must be a whole number.',
-            'quantity.min'      => 'Quantity cannot be negative.',
+            'quantity.integer' => 'Quantity must be a whole number.',
+            'quantity.min' => 'Quantity cannot be negative.',
         ];
     }
 }

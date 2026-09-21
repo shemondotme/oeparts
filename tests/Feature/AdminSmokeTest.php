@@ -3,10 +3,24 @@
 namespace Tests\Feature;
 
 use App\Filament\Resources\ProductResource\Pages\ListProducts;
+use App\Filament\Support\SettingsRegistry;
 use App\Models\Admin;
+use App\Models\BulkUpdateLog;
+use App\Models\CarModel;
 use App\Models\Condition;
+use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\Section;
+use App\Services\OemNormalizerService;
+use App\Services\WidgetPreferenceService;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\CarriersSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SectionsSeeder;
+use Database\Seeders\SequencesSeeder;
+use Database\Seeders\SettingsSeeder;
+use Illuminate\Cache\RateLimiter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -23,20 +37,20 @@ class AdminSmokeTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
-            \Database\Seeders\SequencesSeeder::class,
-            \Database\Seeders\CarriersSeeder::class,
-            \Database\Seeders\SectionsSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
+            SequencesSeeder::class,
+            CarriersSeeder::class,
+            SectionsSeeder::class,
         ]);
 
         $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
 
         $this->actingAs($this->admin, 'admin');
 
-        app(\Illuminate\Cache\RateLimiter::class)->clear('login:127.0.0.1');
+        app(RateLimiter::class)->clear('login:127.0.0.1');
     }
 
     // ── Dashboard ───────────────────────────────────────────────────────────────
@@ -53,7 +67,7 @@ class AdminSmokeTest extends TestCase
     #[Test]
     public function default_widget_visibility_is_correct(): void
     {
-        $widgets = \App\Services\WidgetPreferenceService::WIDGETS;
+        $widgets = WidgetPreferenceService::WIDGETS;
 
         // Always-on widgets
         $this->assertTrue($widgets['dashboard_header']['default_visible']);
@@ -86,7 +100,7 @@ class AdminSmokeTest extends TestCase
     #[Test]
     public function widget_period_can_be_saved(): void
     {
-        $service = app(\App\Services\WidgetPreferenceService::class);
+        $service = app(WidgetPreferenceService::class);
 
         // Save and retrieve period
         $service->savePeriod('7');
@@ -190,7 +204,7 @@ class AdminSmokeTest extends TestCase
         // Derived from the registry (not hand-maintained) so every settings
         // page is covered automatically — see SettingsRegistryTest.php for
         // the test that catches a page missing from the registry itself.
-        $pages = \App\Filament\Support\SettingsRegistry::PAGES;
+        $pages = SettingsRegistry::PAGES;
 
         foreach ($pages as $page) {
             $response = $this->get($page['url']);
@@ -214,8 +228,8 @@ class AdminSmokeTest extends TestCase
 
         foreach (['manager', 'catalog_admin', 'support'] as $role) {
             $roleAdmin = Admin::create([
-                'name' => ucfirst($role) . ' Test',
-                'email' => $role . '-reject@oeparts.test',
+                'name' => ucfirst($role).' Test',
+                'email' => $role.'-reject@oeparts.test',
                 'password' => bcrypt('password'),
             ]);
             $roleAdmin->assignRole($role);
@@ -269,10 +283,10 @@ class AdminSmokeTest extends TestCase
         // fell through to ucfirst($enumInstance), a TypeError. The test above
         // never caught this because it hits the page with an EMPTY table —
         // the crashing closures only run once a row actually exists.
-        \App\Models\BulkUpdateLog::create([
+        BulkUpdateLog::create([
             'admin_id' => $this->admin->id,
             'action_type' => 'price_increase',
-            'entity_type' => \App\Models\Product::class,
+            'entity_type' => Product::class,
             'affected_rows_count' => 3,
             'payload' => ['snapshot' => [], 'snapshot_truncated' => false],
             'filters' => ['manufacturer_id' => null],
@@ -350,8 +364,8 @@ class AdminSmokeTest extends TestCase
 
         foreach (['manager', 'catalog_admin', 'support'] as $role) {
             $roleAdmin = Admin::create([
-                'name' => ucfirst($role) . ' System Test',
-                'email' => $role . '-system@oeparts.test',
+                'name' => ucfirst($role).' System Test',
+                'email' => $role.'-system@oeparts.test',
                 'password' => bcrypt('password'),
             ]);
             $roleAdmin->assignRole($role);
@@ -397,15 +411,15 @@ class AdminSmokeTest extends TestCase
     #[Test]
     public function resource_view_pages_return_200(): void
     {
-        $manufacturer = \App\Models\Manufacturer::create([
+        $manufacturer = Manufacturer::create([
             'name' => json_encode(['en' => 'Test Mfr']),
-            'slug' => 'test-mfr-' . uniqid(),
+            'slug' => 'test-mfr-'.uniqid(),
             'country_code' => 'DE',
         ]);
-        $carModel = \App\Models\CarModel::create([
+        $carModel = CarModel::create([
             'manufacturer_id' => $manufacturer->id,
             'name' => 'Test Model',
-            'slug' => 'test-model-' . uniqid(),
+            'slug' => 'test-model-'.uniqid(),
             'is_active' => true,
         ]);
 
@@ -423,9 +437,9 @@ class AdminSmokeTest extends TestCase
     #[Test]
     public function resource_edit_pages_return_200(): void
     {
-        $manufacturer = \App\Models\Manufacturer::create([
+        $manufacturer = Manufacturer::create([
             'name' => json_encode(['en' => 'Test Mfr']),
-            'slug' => 'test-mfr-' . uniqid(),
+            'slug' => 'test-mfr-'.uniqid(),
             'country_code' => 'DE',
         ]);
         $condition = Condition::first() ?? Condition::create([
@@ -435,14 +449,14 @@ class AdminSmokeTest extends TestCase
             'text_color' => '#16A34A',
         ]);
         $product = Product::factory()->create([
-            'name'               => json_encode(['en' => 'Test Product']),
-            'normalized_oem'     => app(\App\Services\OemNormalizerService::class)->normalize('12345'),
-            'condition_id'       => $condition->id,
-            'is_in_stock'        => true,
-            'is_active'          => true,
-            'price'              => '10.00',
-            'oem_number'         => '12345',
-            'manufacturer_id'    => $manufacturer->id,
+            'name' => json_encode(['en' => 'Test Product']),
+            'normalized_oem' => app(OemNormalizerService::class)->normalize('12345'),
+            'condition_id' => $condition->id,
+            'is_in_stock' => true,
+            'is_active' => true,
+            'price' => '10.00',
+            'oem_number' => '12345',
+            'manufacturer_id' => $manufacturer->id,
         ]);
         $section = Section::factory()->create([
             'title' => ['en' => 'Test Section'],
@@ -466,9 +480,9 @@ class AdminSmokeTest extends TestCase
     #[Test]
     public function product_price_inline_edit_persists_for_authorized_role(): void
     {
-        $manufacturer = \App\Models\Manufacturer::create([
+        $manufacturer = Manufacturer::create([
             'name' => json_encode(['en' => 'Test Mfr']),
-            'slug' => 'test-mfr-' . uniqid(),
+            'slug' => 'test-mfr-'.uniqid(),
             'country_code' => 'DE',
         ]);
         $condition = Condition::first() ?? Condition::create([
@@ -478,13 +492,13 @@ class AdminSmokeTest extends TestCase
             'text_color' => '#16A34A',
         ]);
         $product = Product::factory()->create([
-            'name'            => json_encode(['en' => 'Test Product']),
-            'normalized_oem'  => app(\App\Services\OemNormalizerService::class)->normalize('99999'),
-            'condition_id'    => $condition->id,
-            'is_in_stock'     => true,
-            'is_active'       => true,
-            'price'           => '10.00',
-            'oem_number'      => '99999',
+            'name' => json_encode(['en' => 'Test Product']),
+            'normalized_oem' => app(OemNormalizerService::class)->normalize('99999'),
+            'condition_id' => $condition->id,
+            'is_in_stock' => true,
+            'is_active' => true,
+            'price' => '10.00',
+            'oem_number' => '99999',
             'manufacturer_id' => $manufacturer->id,
         ]);
 
@@ -501,9 +515,9 @@ class AdminSmokeTest extends TestCase
         // saves directly without checking Model Policies — `disabled()` is
         // the only gate Filament checks server-side, so confirm a role
         // without `edit products` cannot persist a change through it.
-        $manufacturer = \App\Models\Manufacturer::create([
+        $manufacturer = Manufacturer::create([
             'name' => json_encode(['en' => 'Test Mfr']),
-            'slug' => 'test-mfr-' . uniqid(),
+            'slug' => 'test-mfr-'.uniqid(),
             'country_code' => 'DE',
         ]);
         $condition = Condition::first() ?? Condition::create([
@@ -513,13 +527,13 @@ class AdminSmokeTest extends TestCase
             'text_color' => '#16A34A',
         ]);
         $product = Product::factory()->create([
-            'name'            => json_encode(['en' => 'Test Product']),
-            'normalized_oem'  => app(\App\Services\OemNormalizerService::class)->normalize('88888'),
-            'condition_id'    => $condition->id,
-            'is_in_stock'     => true,
-            'is_active'       => true,
-            'price'           => '10.00',
-            'oem_number'      => '88888',
+            'name' => json_encode(['en' => 'Test Product']),
+            'normalized_oem' => app(OemNormalizerService::class)->normalize('88888'),
+            'condition_id' => $condition->id,
+            'is_in_stock' => true,
+            'is_active' => true,
+            'price' => '10.00',
+            'oem_number' => '88888',
             'manufacturer_id' => $manufacturer->id,
         ]);
 
@@ -547,7 +561,7 @@ class AdminSmokeTest extends TestCase
     {
         $sorts = [];
 
-        foreach (\App\Services\WidgetPreferenceService::WIDGETS as $id => $config) {
+        foreach (WidgetPreferenceService::WIDGETS as $id => $config) {
             try {
                 $prop = (new \ReflectionClass($config['class']))->getProperty('sort');
                 $prop->setAccessible(true);
@@ -571,7 +585,7 @@ class AdminSmokeTest extends TestCase
         $this->assertCount(
             count($values),
             $unique,
-            'Widget $sort values must be unique. Duplicates: ' . json_encode($duplicates),
+            'Widget $sort values must be unique. Duplicates: '.json_encode($duplicates),
         );
     }
 

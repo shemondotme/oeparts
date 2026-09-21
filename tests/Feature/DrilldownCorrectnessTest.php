@@ -16,6 +16,13 @@ use App\Filament\Support\AdminUi;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\Product;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\CarriersSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SectionsSeeder;
+use Database\Seeders\SequencesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -31,13 +38,13 @@ class DrilldownCorrectnessTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
-            \Database\Seeders\SequencesSeeder::class,
-            \Database\Seeders\CarriersSeeder::class,
-            \Database\Seeders\SectionsSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
+            SequencesSeeder::class,
+            CarriersSeeder::class,
+            SectionsSeeder::class,
         ]);
 
         $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
@@ -54,7 +61,7 @@ class DrilldownCorrectnessTest extends TestCase
 
         $url = OrderResource::getUrl('view', ['record' => $order]);
 
-        $this->assertStringContainsString('/admin/orders/' . $order->getKey(), $url);
+        $this->assertStringContainsString('/admin/orders/'.$order->getKey(), $url);
     }
 
     // ── TopSearchedOems Widget ─────────────────────────────────────────────

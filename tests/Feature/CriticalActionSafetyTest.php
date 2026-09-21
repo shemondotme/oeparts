@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use App\Filament\Pages\System\HealthCheckDashboard;
 use App\Filament\Pages\System\SetupAssistant;
 use App\Models\Admin;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -24,10 +28,10 @@ class CriticalActionSafetyTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->superAdmin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();

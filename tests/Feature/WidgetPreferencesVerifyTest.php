@@ -2,9 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\WidgetPreferences;
+use App\Filament\Widgets\DashboardHeader;
+use App\Filament\Widgets\GroupHeaderWidget;
+use App\Filament\Widgets\HealthStrip;
+use App\Filament\Widgets\RecentOrdersList;
+use App\Filament\Widgets\RevenueChart;
 use App\Models\Admin;
 use App\Services\WidgetPreferenceService;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
+use Filament\Widgets\WidgetConfiguration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,10 +31,10 @@ class WidgetPreferencesVerifyTest extends TestCase
     {
         parent::setUp();
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
         $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
         $this->actingAs($this->admin, 'admin');
@@ -105,14 +116,14 @@ class WidgetPreferencesVerifyTest extends TestCase
         $service->saveVisibility('revenue_chart', false);
         $this->admin->refresh();
 
-        $widgets = app(\App\Filament\Pages\Dashboard::class)->getWidgets();
+        $widgets = app(Dashboard::class)->getWidgets();
         $classes = array_map(
-            fn ($w) => $w instanceof \Filament\Widgets\WidgetConfiguration ? $w->widget : $w,
+            fn ($w) => $w instanceof WidgetConfiguration ? $w->widget : $w,
             $widgets,
         );
-        $this->assertNotContains(\App\Filament\Widgets\RevenueChart::class, $classes);
+        $this->assertNotContains(RevenueChart::class, $classes);
         // always-on still present
-        $this->assertContains(\App\Filament\Widgets\DashboardHeader::class, $classes);
+        $this->assertContains(DashboardHeader::class, $classes);
     }
 
     #[Test]
@@ -140,15 +151,15 @@ class WidgetPreferencesVerifyTest extends TestCase
         // by sortFor(). (Bug: health_strip rendered at the bottom and groups
         // were interleaved because the legacy $sort values were arbitrary.)
         $classes = array_map(
-            fn ($w) => $w instanceof \Filament\Widgets\WidgetConfiguration ? $w->widget : $w,
-            app(\App\Filament\Pages\Dashboard::class)->getWidgets(),
+            fn ($w) => $w instanceof WidgetConfiguration ? $w->widget : $w,
+            app(Dashboard::class)->getWidgets(),
         );
 
         // Drop the injected structural group-header widgets — only content
         // widgets carry a registry default_sort.
         $classes = array_values(array_filter(
             $classes,
-            fn ($c) => $c !== \App\Filament\Widgets\GroupHeaderWidget::class,
+            fn ($c) => $c !== GroupHeaderWidget::class,
         ));
 
         $sorts = array_map(
@@ -163,12 +174,12 @@ class WidgetPreferencesVerifyTest extends TestCase
             $sortedAscending,
             $sorts,
             'Dashboard widgets must render in registry default_sort order. Got: '
-                . implode(',', array_map(fn ($c) => class_basename($c), $classes)),
+                .implode(',', array_map(fn ($c) => class_basename($c), $classes)),
         );
 
         // health_strip must come before every business/needs-attention widget.
-        $healthIdx = array_search(\App\Filament\Widgets\HealthStrip::class, $classes, true);
-        $ordersIdx = array_search(\App\Filament\Widgets\RecentOrdersList::class, $classes, true);
+        $healthIdx = array_search(HealthStrip::class, $classes, true);
+        $ordersIdx = array_search(RecentOrdersList::class, $classes, true);
         if ($healthIdx !== false && $ordersIdx !== false) {
             $this->assertLessThan($ordersIdx, $healthIdx, 'health_strip must render near the top, before content widgets.');
         }
@@ -177,16 +188,16 @@ class WidgetPreferencesVerifyTest extends TestCase
     #[Test]
     public function group_headers_are_injected_per_visible_group_in_order(): void
     {
-        $widgets = app(\App\Filament\Pages\Dashboard::class)->getWidgets();
+        $widgets = app(Dashboard::class)->getWidgets();
 
         // Walk the list; collect (header-label | content-id) sequence.
         $seq = [];
         $service = app(WidgetPreferenceService::class);
         foreach ($widgets as $w) {
-            if ($w instanceof \Filament\Widgets\WidgetConfiguration && $w->widget === \App\Filament\Widgets\GroupHeaderWidget::class) {
-                $seq[] = 'HEADER:' . $w->getProperties()['label'];
+            if ($w instanceof WidgetConfiguration && $w->widget === GroupHeaderWidget::class) {
+                $seq[] = 'HEADER:'.$w->getProperties()['label'];
             } else {
-                $class = $w instanceof \Filament\Widgets\WidgetConfiguration ? $w->widget : $w;
+                $class = $w instanceof WidgetConfiguration ? $w->widget : $w;
                 $seq[] = $service->getWidgetId($class) ?? class_basename($class);
             }
         }

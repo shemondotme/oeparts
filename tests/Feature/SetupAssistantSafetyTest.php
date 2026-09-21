@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Filament\Pages\System\SetupAssistant;
 use App\Models\Admin;
+use App\Services\SettingsService;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
@@ -27,8 +30,8 @@ class SetupAssistantSafetyTest extends TestCase
     {
         parent::setUp();
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         $admin = Admin::factory()->create(['is_active' => true]);
@@ -57,7 +60,7 @@ class SetupAssistantSafetyTest extends TestCase
 
         Livewire::test(SetupAssistant::class)->call('toggleMaintenance');
 
-        app(\App\Services\SettingsService::class)->forget('maintenance');
+        app(SettingsService::class)->forget('maintenance');
         $this->assertTrue((bool) settings('maintenance.enabled', false), 'toggle must enable the Module 19 settings flag');
         $this->assertFalse(
             File::exists(storage_path('framework/down')),
@@ -66,7 +69,7 @@ class SetupAssistantSafetyTest extends TestCase
 
         Livewire::test(SetupAssistant::class)->call('toggleMaintenance');
 
-        app(\App\Services\SettingsService::class)->forget('maintenance');
+        app(SettingsService::class)->forget('maintenance');
         $this->assertFalse((bool) settings('maintenance.enabled', false), 'second toggle must disable it again');
     }
 

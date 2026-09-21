@@ -3,11 +3,13 @@
 namespace App\Console\Commands;
 
 use App\Models\Section;
+use App\Services\CacheService;
 use Illuminate\Console\Command;
 
 class ReorderHomepageSections extends Command
 {
     protected $signature = 'sections:reorder-homepage';
+
     protected $description = 'Reorder homepage sections according to the new design';
 
     public function handle()
@@ -47,7 +49,7 @@ class ReorderHomepageSections extends Command
             }
         }
 
-        $cacheService = app(\App\Services\CacheService::class);
+        $cacheService = app(CacheService::class);
         $cacheService->forgetSections('homepage');
 
         $this->info('Homepage sections reordered successfully!');

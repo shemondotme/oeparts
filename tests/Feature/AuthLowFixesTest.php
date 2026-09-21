@@ -7,6 +7,7 @@ use App\Models\Otp;
 use App\Models\User;
 use App\Services\OtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -20,7 +21,7 @@ class AuthLowFixesTest extends TestCase
     #[Test]
     public function generating_an_otp_while_a_lock_is_held_for_the_same_email_and_purpose_is_rejected(): void
     {
-        $lock = \Illuminate\Support\Facades\Cache::lock('otp.generate:race@example.com:' . OtpPurpose::EmailVerify->value, 10);
+        $lock = Cache::lock('otp.generate:race@example.com:'.OtpPurpose::EmailVerify->value, 10);
         $this->assertTrue($lock->get(), 'test setup: must be able to acquire the lock first');
 
         try {

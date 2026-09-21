@@ -6,9 +6,9 @@ use App\Services\CloudflareService;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Cache;
 
 class PerformanceSettings extends SettingsPage
@@ -56,7 +56,7 @@ class PerformanceSettings extends SettingsPage
                     } catch (\Exception $e) {
                         Notification::make()
                             ->title('Cache error')
-                            ->body("Driver '{$driver}': " . $e->getMessage())
+                            ->body("Driver '{$driver}': ".$e->getMessage())
                             ->danger()
                             ->send();
                     }

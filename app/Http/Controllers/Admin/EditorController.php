@@ -31,7 +31,7 @@ class EditorController extends Controller
             return response()->json(['success' => false, 'errors' => ['file' => [$e->getMessage()]]], 422);
         }
 
-        $path = $file->store('editor/' . now()->format('Y/m'), 'public');
+        $path = $file->store('editor/'.now()->format('Y/m'), 'public');
         $sanitizer->sanitize('public', $path, $file->getMimeType());
         $optimized = $optimizer->optimize('public', $path, $file->getMimeType());
 

@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Models\Admin;
 use App\Services\CacheMetricsService;
+use App\Services\CacheService;
+use App\Services\SectionRendererService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
@@ -67,7 +69,7 @@ class CacheMetricsServiceTest extends TestCase
     #[Test]
     public function server_health_returns_the_expected_keys_and_types(): void
     {
-        $health = (new CacheMetricsService(app(\App\Services\CacheService::class), app(\App\Services\SectionRendererService::class)))->serverHealth();
+        $health = (new CacheMetricsService(app(CacheService::class), app(SectionRendererService::class)))->serverHealth();
 
         foreach (['redis_version', 'hit_rate', 'hits', 'misses', 'memory_used_bytes', 'memory_used_human', 'total_keys', 'connected_clients', 'uptime_seconds'] as $key) {
             $this->assertArrayHasKey($key, $health);

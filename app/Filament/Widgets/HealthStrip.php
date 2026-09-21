@@ -6,6 +6,9 @@ use App\Filament\Pages\System\CacheDashboard;
 use App\Filament\Pages\System\QueueMonitor;
 use App\Filament\Pages\System\ScheduledTasksPage;
 use App\Filament\Pages\System\ServerMonitor;
+use App\Filament\Widgets\Concerns\HasMonitoringVisuals;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\Cache;
@@ -14,13 +17,13 @@ use Illuminate\Support\Facades\Storage;
 
 class HealthStrip extends StatsOverviewWidget
 {
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-    use \App\Filament\Widgets\Concerns\HasMonitoringVisuals;
+    use HasMonitoringVisuals;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected static bool $isLazy = false;
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected ?string $pollingInterval = '30s';
 
@@ -58,7 +61,7 @@ class HealthStrip extends StatsOverviewWidget
             $stat = Stat::make($check['label'], $check['value'])
                 ->description($this->statusDescription($check['description'], live: $live))
                 ->color($check['color'])
-                ->extraAttributes(['class' => 'op-health-' . $this->colorToState($check['color'])]);
+                ->extraAttributes(['class' => 'op-health-'.$this->colorToState($check['color'])]);
 
             // Healthy checks show the pulse dot instead of a redundant icon;
             // degraded checks keep their warning/error icon.
@@ -213,7 +216,7 @@ class HealthStrip extends StatsOverviewWidget
             return [
                 'label' => 'Storage',
                 'value' => "{$usedPct}% used",
-                'description' => "{$freeGb} GB free" . ($usedPct > 90 ? ' — critical' : ''),
+                'description' => "{$freeGb} GB free".($usedPct > 90 ? ' — critical' : ''),
                 'icon' => $usedPct > 90 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-server-stack',
                 'color' => $usedPct > 90 ? 'danger' : ($usedPct > 75 ? 'warning' : 'success'),
             ];

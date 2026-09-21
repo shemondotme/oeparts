@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Services\CloudflareService;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -147,7 +148,7 @@ class CloudflareServiceTest extends TestCase
     public function a_network_failure_is_reported_not_thrown(): void
     {
         $this->enable();
-        Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('timed out'));
+        Http::fake(fn () => throw new ConnectionException('timed out'));
 
         $result = app(CloudflareService::class)->purgeEverything();
 

@@ -26,8 +26,8 @@ class TranslationService
     /**
      * Resolve the translated value from a multilang field.
      *
-     * @param  array|string|null  $field   The decoded JSON field (or raw JSON string)
-     * @param  string|null        $locale  Target locale; defaults to app()->getLocale()
+     * @param  array|string|null  $field  The decoded JSON field (or raw JSON string)
+     * @param  string|null  $locale  Target locale; defaults to app()->getLocale()
      */
     public function get(mixed $field, ?string $locale = null): string
     {
@@ -38,7 +38,7 @@ class TranslationService
         // Accept both already-decoded arrays and raw JSON strings
         if (is_string($field)) {
             $decoded = json_decode($field, true);
-            $field   = is_array($decoded) ? $decoded : [];
+            $field = is_array($decoded) ? $decoded : [];
         }
 
         if (! is_array($field)) {
@@ -86,7 +86,7 @@ class TranslationService
     public function merge(array $translations): array
     {
         $fallback = $translations['en'] ?? '';
-        $result   = [];
+        $result = [];
 
         foreach ($this->locales as $locale) {
             $result[$locale] = $translations[$locale] ?? $fallback;

@@ -5,9 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\NewsletterSubscriberResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\NewsletterSubscriber;
-use Filament\Forms;
 use Filament\Actions;
-use Filament\Actions\BulkAction;
+use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
@@ -17,7 +16,6 @@ use Filament\Schemas\Schema;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class NewsletterSubscriberResource extends Resource
 {
@@ -119,13 +117,13 @@ class NewsletterSubscriberResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('lang')
-                ->label(__('admin.language'))
-                ->badge()
-                ->formatStateUsing(fn (string $state): string => AdminUi::LOCALES[$state] ?? strtoupper($state))
-                ->color('gray')
-                ->searchable()
-                ->alignCenter(),
+                Tables\Columns\TextColumn::make('lang')
+                    ->label(__('admin.language'))
+                    ->badge()
+                    ->formatStateUsing(fn (string $state): string => AdminUi::LOCALES[$state] ?? strtoupper($state))
+                    ->color('gray')
+                    ->searchable()
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('is_active')
                     ->label(__('admin.active'))
                     ->badge()
@@ -170,7 +168,7 @@ class NewsletterSubscriberResource extends Resource
                         action: function ($records) {
                             $firstState = $records->first()->is_active;
                             $allSame = $records->every(fn (NewsletterSubscriber $record) => $record->is_active === $firstState);
-                            $newState = $allSame ? !$firstState : true;
+                            $newState = $allSame ? ! $firstState : true;
 
                             $records->each(function (NewsletterSubscriber $record) use ($newState) {
                                 $record->update([
@@ -180,18 +178,18 @@ class NewsletterSubscriberResource extends Resource
                             });
 
                             Notification::make()
-                                ->title($records->count() . ' subscribers ' . ($newState ? 'activated' : 'deactivated'))
+                                ->title($records->count().' subscribers '.($newState ? 'activated' : 'deactivated'))
                                 ->success()
                                 ->send();
                         },
                     )->authorize('update', NewsletterSubscriber::class),
-                AdminUi::exportCsvBulkAction('Export Subscribers', [
-                    'email' => 'Email',
-                    'lang' => 'Language',
-                    'is_active' => 'Active',
-                    'subscribed_at' => 'Subscribed',
-                    'unsubscribed_at' => 'Unsubscribed',
-                ]),
+                    AdminUi::exportCsvBulkAction('Export Subscribers', [
+                        'email' => 'Email',
+                        'lang' => 'Language',
+                        'is_active' => 'Active',
+                        'subscribed_at' => 'Subscribed',
+                        'unsubscribed_at' => 'Unsubscribed',
+                    ]),
                     Actions\DeleteBulkAction::make(),
                 ]),
             ])
@@ -216,10 +214,10 @@ class NewsletterSubscriberResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListNewsletterSubscribers::route('/'),
+            'index' => Pages\ListNewsletterSubscribers::route('/'),
             'create' => Pages\CreateNewsletterSubscriber::route('/create'),
-            'view'   => Pages\ViewNewsletterSubscriber::route('/{record}'),
-            'edit'   => Pages\EditNewsletterSubscriber::route('/{record}/edit'),
+            'view' => Pages\ViewNewsletterSubscriber::route('/{record}'),
+            'edit' => Pages\EditNewsletterSubscriber::route('/{record}/edit'),
         ];
     }
 

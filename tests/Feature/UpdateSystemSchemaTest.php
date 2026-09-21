@@ -19,8 +19,8 @@ class UpdateSystemSchemaTest extends TestCase
 
     private const MIGRATIONS = [
         'update_histories' => '2026_07_02_100001_create_update_histories_table.php',
-        'backup_runs'      => '2026_07_02_100002_create_backup_runs_table.php',
-        'backup_parts'     => '2026_07_02_100003_create_backup_parts_table.php',
+        'backup_runs' => '2026_07_02_100002_create_backup_runs_table.php',
+        'backup_parts' => '2026_07_02_100003_create_backup_parts_table.php',
     ];
 
     #[Test]

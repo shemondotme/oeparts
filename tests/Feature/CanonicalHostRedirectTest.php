@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
+use Illuminate\Testing\TestResponse;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -21,11 +22,11 @@ class CanonicalHostRedirectTest extends TestCase
      * dispatching a request built directly, the way call() does
      * internally minus the trim.
      */
-    private function getWithRawUri(string $uri, array $headers = []): \Illuminate\Testing\TestResponse
+    private function getWithRawUri(string $uri, array $headers = []): TestResponse
     {
         $server = [];
         foreach ($headers as $key => $value) {
-            $server['HTTP_' . strtoupper(str_replace('-', '_', $key))] = $value;
+            $server['HTTP_'.strtoupper(str_replace('-', '_', $key))] = $value;
         }
 
         $request = Request::create($uri, 'GET', [], [], [], $server);

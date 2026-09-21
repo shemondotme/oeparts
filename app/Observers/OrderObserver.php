@@ -30,7 +30,7 @@ class OrderObserver
         unset($changes['updated_at']);
         unset($original['updated_at']);
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             $this->log($order, 'updated', $original, $changes);
         }
 
@@ -50,7 +50,7 @@ class OrderObserver
                 ['super_admin', 'admin', 'manager'],
                 Notification::make()
                     ->title('New order placed')
-                    ->body($order->order_number . ' · ' . format_money($order->grand_total))
+                    ->body($order->order_number.' · '.format_money($order->grand_total))
                     ->icon('heroicon-o-shopping-bag')
                     ->iconColor('success')
                     ->actions([

@@ -19,11 +19,11 @@ class RefundImageController extends Controller
     {
         $admin = auth('admin')->user();
 
-        if (!$admin || (!$admin->hasRole('super_admin') && $admin->cannot('view refunds'))) {
+        if (! $admin || (! $admin->hasRole('super_admin') && $admin->cannot('view refunds'))) {
             abort(403, 'Unauthorized.');
         }
 
-        if (!str_starts_with($path, 'refund-images/') || !Storage::disk('local')->exists($path)) {
+        if (! str_starts_with($path, 'refund-images/') || ! Storage::disk('local')->exists($path)) {
             abort(404);
         }
 

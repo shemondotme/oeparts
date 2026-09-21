@@ -2,6 +2,12 @@
 
 namespace App\Jobs;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentGateway;
+use App\Enums\PaymentStatus;
+use App\Enums\PaymentTransactionStatus;
+use App\Models\Payment;
+use App\Services\OrderService;
 use App\Services\PaymentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -84,28 +90,28 @@ class ProcessAirwallexWebhook implements ShouldQueue
     private function handlePaymentCanceled(PaymentService $paymentService): void
     {
         $paymentIntentId = $this->webhookData['data']['object']['id'] ?? null;
-        if (!$paymentIntentId) {
+        if (! $paymentIntentId) {
             return;
         }
 
-        $payment = \App\Models\Payment::where('transaction_id', $paymentIntentId)
-            ->where('gateway', \App\Enums\PaymentGateway::Airwallex)
+        $payment = Payment::where('transaction_id', $paymentIntentId)
+            ->where('gateway', PaymentGateway::Airwallex)
             ->first();
 
         if ($payment) {
             $payment->update([
-                'status' => \App\Enums\PaymentTransactionStatus::Failed,
+                'status' => PaymentTransactionStatus::Failed,
                 'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $this->webhookData]),
             ]);
 
             $order = $payment->order;
             $order->update([
-                'payment_status' => \App\Enums\PaymentStatus::Failed,
+                'payment_status' => PaymentStatus::Failed,
             ]);
 
-            app(\App\Services\OrderService::class)->transitionStatus(
+            app(OrderService::class)->transitionStatus(
                 $order,
-                \App\Enums\OrderStatus::Cancelled,
+                OrderStatus::Cancelled,
                 'Payment canceled via Airwallex webhook',
             );
 

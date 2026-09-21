@@ -36,7 +36,8 @@ class SearchRateLimitCrawlerBypassTest extends TestCase
     public function verified_crawler_ip_is_never_rate_limited(): void
     {
         $this->app->bind(CrawlerVerificationService::class, function () {
-            return new class extends CrawlerVerificationService {
+            return new class extends CrawlerVerificationService
+            {
                 public function isVerifiedCrawler(string $ip): bool
                 {
                     return true;
@@ -56,7 +57,8 @@ class SearchRateLimitCrawlerBypassTest extends TestCase
     public function non_verified_visitor_is_still_rate_limited(): void
     {
         $this->app->bind(CrawlerVerificationService::class, function () {
-            return new class extends CrawlerVerificationService {
+            return new class extends CrawlerVerificationService
+            {
                 public function isVerifiedCrawler(string $ip): bool
                 {
                     return false;

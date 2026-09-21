@@ -30,7 +30,7 @@ class RefundRequestObserver
         unset($changes['updated_at']);
         unset($original['updated_at']);
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             $this->log($refundRequest, 'updated', $original, $changes);
         }
 
@@ -46,13 +46,13 @@ class RefundRequestObserver
     protected function notifyRefundRequested(RefundRequest $refundRequest): void
     {
         try {
-            $orderLabel = $refundRequest->order?->order_number ?? ('#' . $refundRequest->order_id);
+            $orderLabel = $refundRequest->order?->order_number ?? ('#'.$refundRequest->order_id);
 
             AdminNotifier::toRoles(
                 ['super_admin', 'admin', 'manager'],
                 Notification::make()
                     ->title('Refund requested')
-                    ->body('Order ' . $orderLabel)
+                    ->body('Order '.$orderLabel)
                     ->icon('heroicon-o-receipt-refund')
                     ->iconColor('warning')
                     ->actions([

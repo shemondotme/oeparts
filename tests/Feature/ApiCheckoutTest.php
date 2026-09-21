@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\OtpPurpose;
+use App\Enums\SequenceType;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Order;
+use App\Models\Otp;
 use App\Models\Product;
 use App\Models\Sequence;
 use App\Models\ShippingCountry;
@@ -77,7 +79,7 @@ class ApiCheckoutTest extends TestCase
         ]);
 
         Sequence::create([
-            'type' => \App\Enums\SequenceType::Order,
+            'type' => SequenceType::Order,
             'value' => 0,
             'month' => now()->format('Ym'),
         ]);
@@ -105,7 +107,7 @@ class ApiCheckoutTest extends TestCase
         $checkoutId = $this->startCheckout();
 
         app(OtpService::class)->generate('guest@example.com', OtpPurpose::GuestCheckout, '127.0.0.1');
-        $otp = \App\Models\Otp::where('email', 'guest@example.com')->where('purpose', OtpPurpose::GuestCheckout)->first();
+        $otp = Otp::where('email', 'guest@example.com')->where('purpose', OtpPurpose::GuestCheckout)->first();
 
         $response = $this->actingAs($this->user)->postJson("/api/checkout/{$checkoutId}/step1", [
             'email' => 'guest@example.com',

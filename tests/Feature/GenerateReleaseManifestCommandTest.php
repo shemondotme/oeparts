@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Services\Updates\ReleaseSignature;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Fixtures\ReleaseKeys;
 use Tests\TestCase;
 
 /**
@@ -72,8 +74,8 @@ class GenerateReleaseManifestCommandTest extends TestCase
     public function it_signs_the_release_when_a_private_key_is_configured(): void
     {
         config([
-            'updates.signing.private_key' => \Tests\Fixtures\ReleaseKeys::PRIVATE_KEY,
-            'updates.signing.public_key'  => \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY,
+            'updates.signing.private_key' => ReleaseKeys::PRIVATE_KEY,
+            'updates.signing.public_key' => ReleaseKeys::PUBLIC_KEY,
         ]);
 
         $version = $this->writeJson('version.json', ['version' => '1.4.0', 'sha256' => null, 'size_bytes' => null]);
@@ -92,8 +94,8 @@ class GenerateReleaseManifestCommandTest extends TestCase
         $this->assertNotEmpty($manifest['signature']);
 
         // The signature verifies against the public key — and the catalog carries it too.
-        $signer = app(\App\Services\Updates\ReleaseSignature::class);
-        $this->assertTrue($signer->verify($signer->payloadFor($manifest), $manifest['signature'], \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY));
+        $signer = app(ReleaseSignature::class);
+        $this->assertTrue($signer->verify($signer->payloadFor($manifest), $manifest['signature'], ReleaseKeys::PUBLIC_KEY));
 
         $cat = json_decode(file_get_contents($catalog), true);
         $this->assertSame($manifest['signature'], $cat['releases'][0]['signature']);
@@ -103,8 +105,8 @@ class GenerateReleaseManifestCommandTest extends TestCase
     public function it_signs_the_git_commit_binding_when_a_commit_sha_and_key_are_given(): void
     {
         config([
-            'updates.signing.private_key' => \Tests\Fixtures\ReleaseKeys::PRIVATE_KEY,
-            'updates.signing.public_key'  => \Tests\Fixtures\ReleaseKeys::PUBLIC_KEY,
+            'updates.signing.private_key' => ReleaseKeys::PRIVATE_KEY,
+            'updates.signing.public_key' => ReleaseKeys::PUBLIC_KEY,
         ]);
 
         $version = $this->writeJson('version.json', ['version' => '1.5.0', 'sha256' => null, 'size_bytes' => null]);
@@ -125,7 +127,7 @@ class GenerateReleaseManifestCommandTest extends TestCase
         $this->assertSame($commitSha, $manifest['git_commit_sha']);
         $this->assertNotEmpty($manifest['git_signature']);
 
-        $signer = app(\App\Services\Updates\ReleaseSignature::class);
+        $signer = app(ReleaseSignature::class);
         [$ok] = $signer->verifyGitManifest($manifest);
         $this->assertTrue($ok, 'git_signature must verify against the same public key as the zip signature');
 

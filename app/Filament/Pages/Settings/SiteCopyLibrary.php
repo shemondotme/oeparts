@@ -5,7 +5,6 @@ namespace App\Filament\Pages\Settings;
 use App\Filament\Support\AdminUi;
 use App\Models\Setting;
 use App\Services\SettingsService;
-use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables;
@@ -80,7 +79,7 @@ class SiteCopyLibrary extends Page implements HasTable
                     ->where('group', 'ui')
                     ->where(function (Builder $query): void {
                         foreach (self::PREFIXES as $prefix) {
-                            $query->orWhere('key', 'like', $prefix . '%');
+                            $query->orWhere('key', 'like', $prefix.'%');
                         }
                     })
             )
@@ -142,7 +141,7 @@ class SiteCopyLibrary extends Page implements HasTable
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         if (filled($data['value'] ?? null)) {
-                            $query->where('key', 'like', $data['value'] . '%');
+                            $query->where('key', 'like', $data['value'].'%');
                         }
 
                         return $query;
@@ -153,7 +152,7 @@ class SiteCopyLibrary extends Page implements HasTable
                     ->label('Edit')
                     ->icon('heroicon-o-pencil')
                     ->modalWidth('2xl')
-                    ->modalHeading(fn (Setting $record): string => 'Edit: ' . $record->key)
+                    ->modalHeading(fn (Setting $record): string => 'Edit: '.$record->key)
                     ->fillForm(function (Setting $record): array {
                         $decoded = json_decode((string) $record->value, true);
                         $decoded = is_array($decoded) ? $decoded : [];

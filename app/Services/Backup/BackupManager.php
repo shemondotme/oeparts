@@ -6,7 +6,9 @@ use App\Models\BackupChunk;
 use App\Models\BackupRun;
 use App\Services\Backup\Contracts\BackupStage;
 use App\Services\Backup\Exceptions\BackupException;
+use App\Services\Backup\Exceptions\BackupLockException;
 use App\Services\Updates\UpdateChecker;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -43,8 +45,8 @@ class BackupManager
     /**
      * Begin a backup run and acquire the shared update/backup lock.
      *
-     * @throws BackupException                                          on an invalid profile
-     * @throws \App\Services\Backup\Exceptions\BackupLockException      if a backup/update is already running
+     * @throws BackupException on an invalid profile
+     * @throws BackupLockException if a backup/update is already running
      */
     public function start(
         string $profile = BackupRun::PROFILE_FULL,
@@ -62,18 +64,18 @@ class BackupManager
         }
 
         $run = BackupRun::create([
-            'profile'     => $profile,
-            'status'      => BackupRun::STATUS_RUNNING,
-            'trigger'     => $trigger,
-            'disk'        => (string) config('backup.disk', 'local'),
-            'encrypted'   => (bool) config('backup.encryption.enabled', true),
+            'profile' => $profile,
+            'status' => BackupRun::STATUS_RUNNING,
+            'trigger' => $trigger,
+            'disk' => (string) config('backup.disk', 'local'),
+            'encrypted' => (bool) config('backup.encryption.enabled', true),
             'app_version' => app(UpdateChecker::class)->currentVersion(),
             'php_version' => PHP_VERSION,
-            'db_version'  => $this->databaseVersion(),
-            'started_at'  => now(),
+            'db_version' => $this->databaseVersion(),
+            'started_at' => now(),
             // lock_owned=false lets the Update Engine own the shared lock across the
             // WHOLE apply while its pre-update backup step runs (rule #48).
-            'meta'        => array_merge($meta, ['lock_owned' => $acquireLock]),
+            'meta' => array_merge($meta, ['lock_owned' => $acquireLock]),
         ]);
 
         // Acquire the lock AFTER the row exists so the owner token carries the id.
@@ -106,9 +108,9 @@ class BackupManager
             return BackupProgress::failed($run, (string) $run->error);
         }
 
-        $stages     = $this->stages->forProfile($run->profile);
+        $stages = $this->stages->forProfile($run->profile);
         $checkpoint = $run->checkpoint();
-        $index      = $checkpoint['stage_index'];
+        $index = $checkpoint['stage_index'];
 
         // All stages consumed → finalise.
         if ($index >= count($stages)) {
@@ -161,7 +163,7 @@ class BackupManager
         }
 
         $totalStages = max(1, count($stages));
-        $percent     = (int) round((($index + $fraction) / $totalStages) * 100);
+        $percent = (int) round((($index + $fraction) / $totalStages) * 100);
 
         return BackupProgress::running($run, $stage->key(), $result->message, $percent);
     }
@@ -179,7 +181,7 @@ class BackupManager
 
             try {
                 $run->refresh();
-            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            } catch (ModelNotFoundException) {
                 // The row is genuinely gone (not just "still running") — refresh()'s
                 // own exception gives no useful detail (Eloquent's default message
                 // carries no id/context). Surface something an operator can act on
@@ -198,8 +200,8 @@ class BackupManager
     /** Mark the run failed and release the lock (partial files left for the janitor). */
     public function fail(BackupRun $run, string $error): BackupProgress
     {
-        $run->status      = BackupRun::STATUS_FAILED;
-        $run->error       = Str::limit($error, 2000, '');
+        $run->status = BackupRun::STATUS_FAILED;
+        $run->error = Str::limit($error, 2000, '');
         $run->finished_at = now();
         $run->save();
 
@@ -220,13 +222,13 @@ class BackupManager
         $run->loadMissing('parts');
 
         $run->total_bytes = (int) $run->parts->sum('bytes');
-        $run->part_count  = $run->parts->count();
+        $run->part_count = $run->parts->count();
         $run->save(); // persist totals BEFORE the manifest reads them
 
         $run->manifest_path = $this->manifest->write($run);
-        $run->checksum      = $this->manifest->checksum($run);
-        $run->status        = BackupRun::STATUS_SUCCESS;
-        $run->finished_at   = now();
+        $run->checksum = $this->manifest->checksum($run);
+        $run->status = BackupRun::STATUS_SUCCESS;
+        $run->finished_at = now();
         $run->clearCheckpoint();
         $run->save();
 
@@ -252,15 +254,15 @@ class BackupManager
             ?? $run->parts()->where('type', $type)->count();
 
         return $run->parts()->create([
-            'type'     => $type,
+            'type' => $type,
             'sequence' => (int) $sequence,
-            'name'     => $attrs['name'] ?? null,
-            'disk'     => $attrs['disk'] ?? $run->disk,
-            'path'     => (string) ($attrs['path'] ?? ''),
-            'sha256'   => $attrs['sha256'] ?? null,
-            'bytes'    => (int) ($attrs['bytes'] ?? 0),
-            'rows'     => $attrs['rows'] ?? null,
-            'meta'     => $attrs['meta'] ?? null,
+            'name' => $attrs['name'] ?? null,
+            'disk' => $attrs['disk'] ?? $run->disk,
+            'path' => (string) ($attrs['path'] ?? ''),
+            'sha256' => $attrs['sha256'] ?? null,
+            'bytes' => (int) ($attrs['bytes'] ?? 0),
+            'rows' => $attrs['rows'] ?? null,
+            'meta' => $attrs['meta'] ?? null,
         ]);
     }
 

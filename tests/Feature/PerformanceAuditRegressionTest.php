@@ -16,6 +16,13 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Order;
 use App\Models\User;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\CarriersSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SectionsSeeder;
+use Database\Seeders\SequencesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
@@ -33,13 +40,13 @@ class PerformanceAuditRegressionTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
-            \Database\Seeders\SequencesSeeder::class,
-            \Database\Seeders\CarriersSeeder::class,
-            \Database\Seeders\SectionsSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
+            SequencesSeeder::class,
+            CarriersSeeder::class,
+            SectionsSeeder::class,
         ]);
 
         $this->admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
@@ -49,23 +56,23 @@ class PerformanceAuditRegressionTest extends TestCase
     private function makeMenuWithItems(Menu $menu, int $childCount): void
     {
         $parent = MenuItem::create([
-            'menu_id'    => $menu->id,
-            'label'      => ['en' => 'Parent'],
-            'type'       => 'url',
-            'url'        => '/parent',
+            'menu_id' => $menu->id,
+            'label' => ['en' => 'Parent'],
+            'type' => 'url',
+            'url' => '/parent',
             'sort_order' => 0,
-            'target'     => '_self',
+            'target' => '_self',
         ]);
 
         for ($i = 0; $i < $childCount; $i++) {
             MenuItem::create([
-                'menu_id'    => $menu->id,
-                'parent_id'  => $parent->id,
-                'label'      => ['en' => "Child {$i}"],
-                'type'       => 'url',
-                'url'        => "/child-{$i}",
+                'menu_id' => $menu->id,
+                'parent_id' => $parent->id,
+                'label' => ['en' => "Child {$i}"],
+                'type' => 'url',
+                'url' => "/child-{$i}",
                 'sort_order' => $i + 1,
-                'target'     => '_self',
+                'target' => '_self',
             ]);
         }
     }
@@ -83,20 +90,20 @@ class PerformanceAuditRegressionTest extends TestCase
         // roles) outside the measured window so they don't confound the count.
         Livewire::test(MenuItemRelationManager::class, [
             'ownerRecord' => $menuA,
-            'pageClass'   => EditMenu::class,
+            'pageClass' => EditMenu::class,
         ]);
 
         DB::enableQueryLog();
         Livewire::test(MenuItemRelationManager::class, [
             'ownerRecord' => $menuA,
-            'pageClass'   => EditMenu::class,
+            'pageClass' => EditMenu::class,
         ]);
         $queryCountSmall = count(DB::getQueryLog());
         DB::flushQueryLog();
 
         Livewire::test(MenuItemRelationManager::class, [
             'ownerRecord' => $menuB,
-            'pageClass'   => EditMenu::class,
+            'pageClass' => EditMenu::class,
         ]);
         $queryCountLarge = count(DB::getQueryLog());
         DB::disableQueryLog();
@@ -113,7 +120,7 @@ class PerformanceAuditRegressionTest extends TestCase
     {
         $user = User::factory()->create();
         $order = Order::factory()->create([
-            'user_id'    => $user->id,
+            'user_id' => $user->id,
             'created_at' => now()->subDays(3),
         ]);
 
@@ -131,7 +138,7 @@ class PerformanceAuditRegressionTest extends TestCase
         $retryAfter = config('queue.connections.redis.retry_after');
 
         $this->assertSame(3700, $retryAfter);
-        $this->assertGreaterThan((new RunBackupJob())->timeout, $retryAfter);
+        $this->assertGreaterThan((new RunBackupJob)->timeout, $retryAfter);
     }
 
     #[Test]

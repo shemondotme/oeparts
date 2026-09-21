@@ -52,13 +52,13 @@ class BuildRelease extends Command
 
         if ($this->option('json')) {
             $this->line((string) json_encode([
-                'success'     => true,
-                'path'        => $path,
-                'version'     => $manifest['version'],
-                'stripped'    => $removed,
-                'licenses'    => $licenses,
-                'file_count'  => $manifest['file_count'],
-                'manifest'    => $builder->manifestFile(),
+                'success' => true,
+                'path' => $path,
+                'version' => $manifest['version'],
+                'stripped' => $removed,
+                'licenses' => $licenses,
+                'file_count' => $manifest['file_count'],
+                'manifest' => $builder->manifestFile(),
             ], JSON_UNESCAPED_SLASHES));
 
             return self::SUCCESS;

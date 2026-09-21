@@ -2,16 +2,17 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+use App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 use App\Models\AbandonedCart;
 use App\Models\Order;
-use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class CheckoutStats extends StatsOverviewWidget
 {
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-    use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
+    use HasReportPeriod;
+    use InteractsWithDashboardCache;
 
     protected function getStats(): array
     {
@@ -31,7 +32,7 @@ class CheckoutStats extends StatsOverviewWidget
         });
 
         return [
-            Stat::make('Drop-off Rate', $d['dropoff'] . '%')
+            Stat::make('Drop-off Rate', $d['dropoff'].'%')
                 ->description('Started checkout but never paid')
                 ->descriptionIcon('heroicon-o-arrow-trending-down')
                 ->color($d['dropoff'] > 50 ? 'danger' : 'warning'),

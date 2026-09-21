@@ -36,9 +36,9 @@ class NewsletterConfirmation extends Mailable
             view: 'emails.newsletter-confirmation',
             text: 'emails.newsletter-confirmation-text',
             with: [
-                'subscriber'  => $this->subscriber,
-                'confirmUrl'  => $this->confirmUrl,
-                'locale'      => $this->locale,
+                'subscriber' => $this->subscriber,
+                'confirmUrl' => $this->confirmUrl,
+                'locale' => $this->locale,
             ],
         );
     }

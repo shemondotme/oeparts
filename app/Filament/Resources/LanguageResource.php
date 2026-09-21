@@ -5,16 +5,17 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\LanguageResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Language;
-use Filament\Forms;
+use App\Policies\LanguagePolicy;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
 
 class LanguageResource extends Resource
 {
@@ -144,17 +145,17 @@ class LanguageResource extends Resource
                     ->label(__('admin.flag'))
                     ->size('lg')
                     ->toggleable(isToggledHiddenByDefault: true),
-            Tables\Columns\TextColumn::make('code')
-                ->label(__('admin.code'))
-                ->badge()
-                ->color('gray')
-                ->searchable()
-                ->sortable(),
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.name'))
-                ->searchable()
-                ->sortable()
-                ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('code')
+                    ->label(__('admin.code'))
+                    ->badge()
+                    ->color('gray')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.name'))
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('native_name')
                     ->label(__('admin.native_name'))
                     ->placeholder('—')
@@ -196,23 +197,23 @@ class LanguageResource extends Resource
                         // default language drives the storefront — protected.
                         // Explicit closure because Gate::before bypasses the
                         // policy for super_admins.
-                        ->hidden(fn ($record): bool => \App\Policies\LanguagePolicy::isProtected($record)),
+                        ->hidden(fn ($record): bool => LanguagePolicy::isProtected($record)),
                 ]),
             ])
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Languages', [
-                    'code' => 'Code',
-                    'name' => 'Name',
-                    'native_name' => 'Native Name',
-                    'is_default' => 'Default',
-                    'is_active' => 'Active',
-                    'sort_order' => 'Sort Order',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Languages', [
+                        'code' => 'Code',
+                        'name' => 'Name',
+                        'native_name' => 'Native Name',
+                        'is_default' => 'Default',
+                        'is_active' => 'Active',
+                        'sort_order' => 'Sort Order',
+                    ]),
+                    // No bulk delete: a handful of rows, two of them load-bearing
+                    // ('en' + the default) — deletes go through the guarded action.
                 ]),
-                // No bulk delete: a handful of rows, two of them load-bearing
-                // ('en' + the default) — deletes go through the guarded action.
-            ]),
-        ])
+            ])
             ->reorderable('sort_order')
             ->defaultSort('sort_order', 'asc')
             ->emptyStateIcon('heroicon-o-language')
@@ -235,10 +236,10 @@ class LanguageResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListLanguages::route('/'),
+            'index' => Pages\ListLanguages::route('/'),
             'create' => Pages\CreateLanguage::route('/create'),
-            'view'   => Pages\ViewLanguage::route('/{record}'),
-            'edit'   => Pages\EditLanguage::route('/{record}/edit'),
+            'view' => Pages\ViewLanguage::route('/{record}'),
+            'edit' => Pages\EditLanguage::route('/{record}/edit'),
         ];
     }
 
@@ -247,4 +248,3 @@ class LanguageResource extends Resource
         return ['name', 'code'];
     }
 }
-

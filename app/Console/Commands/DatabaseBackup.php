@@ -24,13 +24,13 @@ class DatabaseBackup extends Command
         $dbPass = config('database.connections.mysql.password');
 
         $outputPath = $this->option('output');
-        if (!$outputPath) {
+        if (! $outputPath) {
             $timestamp = now()->format('Y-m-d-His');
             $outputPath = storage_path("app/backups/{$dbName}-{$timestamp}.sql");
         }
 
         $backupDir = dirname($outputPath);
-        if (!file_exists($backupDir)) {
+        if (! file_exists($backupDir)) {
             mkdir($backupDir, 0755, true);
         }
 
@@ -60,7 +60,7 @@ class DatabaseBackup extends Command
         $output = [];
 
         try {
-            exec($command . ' 2>&1', $output, $returnCode);
+            exec($command.' 2>&1', $output, $returnCode);
         } finally {
             @unlink($optionFile);
         }
@@ -101,7 +101,7 @@ class DatabaseBackup extends Command
         $pow = min($pow, count($units) - 1);
         $bytes /= (1 << (10 * $pow));
 
-        return round($bytes, 2) . ' ' . $units[$pow];
+        return round($bytes, 2).' '.$units[$pow];
     }
 
     /**
@@ -110,11 +110,11 @@ class DatabaseBackup extends Command
     private function cleanupOldBackups(): void
     {
         $backupDir = storage_path('app/backups');
-        if (!is_dir($backupDir)) {
+        if (! is_dir($backupDir)) {
             return;
         }
 
-        $files = glob($backupDir . '/*.sql');
+        $files = glob($backupDir.'/*.sql');
         $cutoffTime = time() - (7 * 24 * 60 * 60);
         $deletedCount = 0;
 
@@ -145,7 +145,7 @@ class DatabaseBackup extends Command
             ]);
         } catch (\Exception $e) {
             // Ignore logging errors
-            $this->warn("Failed to log cron result: " . $e->getMessage());
+            $this->warn('Failed to log cron result: '.$e->getMessage());
         }
     }
 }

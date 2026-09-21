@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
-use App\Models\NewsletterSubscriber;
 use App\Jobs\SendNewsletterConfirmationEmail;
+use App\Models\NewsletterSubscriber;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
@@ -25,7 +25,7 @@ class NewsletterController extends Controller
         // Rate limit: max subscriptions per hour per IP
         $maxSubscriptions = (int) settings('newsletter.rate_limit_per_hour', 3);
         $windowSeconds = (int) settings('newsletter.rate_window_seconds', 3600);
-        if (!RateLimiter::attempt("newsletter:{$request->ip()}", $maxSubscriptions, function () {
+        if (! RateLimiter::attempt("newsletter:{$request->ip()}", $maxSubscriptions, function () {
             return true;
         }, $windowSeconds)) {
             throw new TooManyRequestsHttpException(3600, __('newsletter.rate_limited'));
@@ -113,7 +113,7 @@ class NewsletterController extends Controller
     {
         $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
 
-        if (!$subscriber) {
+        if (! $subscriber) {
             return redirect()->route('frontend.home', compact('lang'))
                 ->with('error', __('newsletter.invalid_unsubscribe_link'));
         }
@@ -131,7 +131,7 @@ class NewsletterController extends Controller
     {
         $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
 
-        if (!$subscriber) {
+        if (! $subscriber) {
             return redirect()->route('frontend.home', compact('lang'))
                 ->with('error', __('newsletter.invalid_unsubscribe_link'));
         }
@@ -154,7 +154,7 @@ class NewsletterController extends Controller
     {
         $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
 
-        if (!$subscriber) {
+        if (! $subscriber) {
             return redirect()->route('frontend.home', compact('lang'))
                 ->with('error', __('newsletter.invalid_confirmation_link'));
         }
@@ -172,7 +172,7 @@ class NewsletterController extends Controller
     {
         $subscriber = NewsletterSubscriber::where('unsubscribe_token', $token)->first();
 
-        if (!$subscriber) {
+        if (! $subscriber) {
             return redirect()->route('frontend.home', compact('lang'))
                 ->with('error', __('newsletter.invalid_confirmation_link'));
         }

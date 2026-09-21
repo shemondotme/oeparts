@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\CronLogResource\Pages;
 
 use App\Filament\Resources\CronLogResource;
-use Filament\Resources\Pages\ListRecords;
 use App\Filament\Support\HasDrilldownFilters;
+use Filament\Resources\Pages\ListRecords;
 
 class ListCronLogs extends ListRecords
 {

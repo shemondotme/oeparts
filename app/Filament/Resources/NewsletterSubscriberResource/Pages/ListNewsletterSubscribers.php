@@ -11,6 +11,7 @@ use Filament\Resources\Pages\ListRecords;
 class ListNewsletterSubscribers extends ListRecords
 {
     use HasDrilldownFilters, HasSavedViews;
+
     protected static string $resource = NewsletterSubscriberResource::class;
 
     protected function getHeaderActions(): array

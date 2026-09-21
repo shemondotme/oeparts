@@ -20,15 +20,15 @@ class Page extends Model
     ];
 
     protected $casts = [
-        'title'            => 'array',
-        'content'          => 'array',
-        'meta_title'       => 'array',
+        'title' => 'array',
+        'content' => 'array',
+        'meta_title' => 'array',
         'meta_description' => 'array',
-        'status'           => ContentStatus::class,
-        'is_homepage'      => 'boolean',
-        'is_header'        => 'boolean',
-        'is_footer'        => 'boolean',
-        'published_at'     => 'datetime',
+        'status' => ContentStatus::class,
+        'is_homepage' => 'boolean',
+        'is_header' => 'boolean',
+        'is_footer' => 'boolean',
+        'published_at' => 'datetime',
     ];
 
     public function author(): BelongsTo

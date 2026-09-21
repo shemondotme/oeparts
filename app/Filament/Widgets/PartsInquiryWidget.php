@@ -4,13 +4,16 @@ namespace App\Filament\Widgets;
 
 use App\Enums\PartInquiryStatus;
 use App\Filament\Resources\PartInquiryResource;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+use App\Models\PartInquiry;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class PartsInquiryWidget extends StatsOverviewWidget
 {
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected ?string $pollingInterval = '60s';
 
@@ -18,19 +21,19 @@ class PartsInquiryWidget extends StatsOverviewWidget
 
     // Full-width: a 3-KPI StatsOverview reads better as a horizontal strip than
     // as 3 stats stacked vertically in a half-width column next to a table.
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getStats(): array
     {
         $d = $this->cachedWidgetData(fn (): array => [
-            'today' => \App\Models\PartInquiry::whereDate('created_at', now())->count(),
-            'pending' => \App\Models\PartInquiry::where('status', PartInquiryStatus::New->value)->count(),
-            'thisWeek' => \App\Models\PartInquiry::where('created_at', '>=', now()->startOfWeek())->count(),
-            'responded' => \App\Models\PartInquiry::whereNotNull('admin_note')
+            'today' => PartInquiry::whereDate('created_at', now())->count(),
+            'pending' => PartInquiry::where('status', PartInquiryStatus::New->value)->count(),
+            'thisWeek' => PartInquiry::where('created_at', '>=', now()->startOfWeek())->count(),
+            'responded' => PartInquiry::whereNotNull('admin_note')
                 ->where('created_at', '>=', now()->startOfWeek())->count(),
-            'totalThisWeek' => \App\Models\PartInquiry::where('created_at', '>=', now()->startOfWeek())->count(),
+            'totalThisWeek' => PartInquiry::where('created_at', '>=', now()->startOfWeek())->count(),
             'sparkline' => collect(range(6, 0))->map(
-                fn ($i) => \App\Models\PartInquiry::whereDate('created_at', now()->subDays($i))->count()
+                fn ($i) => PartInquiry::whereDate('created_at', now()->subDays($i))->count()
             )->all(),
         ]);
 

@@ -21,7 +21,7 @@ class StageRegistry
      */
     public function forProfile(string $profile): array
     {
-        $map     = (array) config('backup.stages', []);
+        $map = (array) config('backup.stages', []);
         $entries = (array) ($map[$profile] ?? []);
 
         return array_map(function ($entry) {

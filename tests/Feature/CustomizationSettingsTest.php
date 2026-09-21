@@ -51,7 +51,7 @@ class CustomizationSettingsTest extends TestCase
 
         $method = new \ReflectionMethod(CustomizationSettings::class, 'getFactoryDefaults');
         $method->setAccessible(true);
-        $defaults = $method->invoke(new CustomizationSettings());
+        $defaults = $method->invoke(new CustomizationSettings);
 
         $this->assertCount(
             $expectedTotal,

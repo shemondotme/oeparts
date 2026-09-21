@@ -30,16 +30,16 @@ class UpdatePreview
     public function toArray(): array
     {
         return [
-            'from_version'     => $this->fromVersion,
-            'to_version'       => $this->toVersion,
-            'security'         => $this->security,
-            'size_bytes'       => $this->sizeBytes,
-            'migration_count'  => $this->migrationCount,
+            'from_version' => $this->fromVersion,
+            'to_version' => $this->toVersion,
+            'security' => $this->security,
+            'size_bytes' => $this->sizeBytes,
+            'migration_count' => $this->migrationCount,
             'breaking_changes' => $this->breakingChanges,
-            'eta_seconds'      => $this->etaSeconds,
+            'eta_seconds' => $this->etaSeconds,
             'pre_update_notes' => $this->preUpdateNotes,
-            'can_proceed'      => $this->canProceed(),
-            'preflight'        => $this->preflight->toArray(),
+            'can_proceed' => $this->canProceed(),
+            'preflight' => $this->preflight->toArray(),
         ];
     }
 }

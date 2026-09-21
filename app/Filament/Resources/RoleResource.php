@@ -4,15 +4,15 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\RoleResource\Pages;
 use App\Filament\Support\AdminUi;
-use Filament\Forms;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Spatie\Permission\Models\Role;
-use Filament\Support\Enums\FontWeight;
 
 class RoleResource extends Resource
 {
@@ -72,13 +72,13 @@ class RoleResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.role'))
-                ->searchable()
-                ->sortable()
-                ->badge()
-                ->color('warning')
-                ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.role'))
+                    ->searchable()
+                    ->sortable()
+                    ->badge()
+                    ->color('warning')
+                    ->weight(FontWeight::Medium),
                 Tables\Columns\TextColumn::make('guard_name')
                     ->label(__('admin.guard'))
                     ->badge()
@@ -126,18 +126,18 @@ class RoleResource extends Resource
                             || $record->users()->exists()),
                 ]),
             ])
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Roles', [
-                    'name' => 'Role',
-                    'guard_name' => 'Guard',
-                    'permissions_count' => 'Permissions',
-                    'created_at' => 'Created',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Roles', [
+                        'name' => 'Role',
+                        'guard_name' => 'Guard',
+                        'permissions_count' => 'Permissions',
+                        'created_at' => 'Created',
+                    ]),
+                    // No bulk delete: role deletion is guarded per record
+                    // (super_admin immutable, in-use roles protected).
                 ]),
-                // No bulk delete: role deletion is guarded per record
-                // (super_admin immutable, in-use roles protected).
-            ]),
-        ])
+            ])
             ->defaultSort('name', 'asc')
             ->emptyStateIcon('heroicon-o-key')
             ->emptyStateHeading('No roles configured yet')
@@ -171,4 +171,3 @@ class RoleResource extends Resource
         return ['name'];
     }
 }
-

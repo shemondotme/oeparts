@@ -4,7 +4,6 @@ namespace Tests\Unit;
 
 use App\Services\RemoteImageDownloadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;

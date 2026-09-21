@@ -36,7 +36,7 @@ class LocaleFormattingTest extends TestCase
     public function format_price_handles_different_currencies(): void
     {
         app()->setLocale('en');
-        
+
         $eur = format_price(100, 'EUR');
         $this->assertStringContainsString('€', $eur);
 
@@ -72,7 +72,7 @@ class LocaleFormattingTest extends TestCase
 
         app()->setLocale('en');
         $formatted = format_datetime($datetime);
-        
+
         $this->assertNotEmpty($formatted);
         $this->assertStringContainsString('2025', $formatted);
     }
@@ -81,10 +81,10 @@ class LocaleFormattingTest extends TestCase
     public function format_money_is_alias_for_format_price(): void
     {
         app()->setLocale('en');
-        
+
         $price = format_price(100.50);
         $money = format_money(100.50);
-        
+
         $this->assertEquals($price, $money);
     }
 

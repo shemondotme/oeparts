@@ -22,7 +22,7 @@ class UserObserver
         unset($changes['updated_at']);
         unset($original['updated_at']);
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             $this->log($user, 'updated', $this->redact($user, $original), $this->redact($user, $changes));
         }
 

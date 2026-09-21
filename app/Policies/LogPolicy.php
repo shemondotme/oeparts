@@ -21,12 +21,12 @@ abstract class LogPolicy
 
     public function viewAny(Admin $admin): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('view ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('view '.$this->getKey());
     }
 
     public function view(Admin $admin, $record): bool
     {
-        return $admin->hasRole('super_admin') || $admin->can('view ' . $this->getKey());
+        return $admin->hasRole('super_admin') || $admin->can('view '.$this->getKey());
     }
 
     public function create(Admin $admin): bool

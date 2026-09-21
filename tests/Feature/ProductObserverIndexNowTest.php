@@ -9,7 +9,10 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -18,6 +21,7 @@ class ProductObserverIndexNowTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -80,7 +84,7 @@ class ProductObserverIndexNowTest extends TestCase
     public function product_save_succeeds_even_when_the_indexnow_endpoint_is_unreachable(): void
     {
         $this->enableIndexNow();
-        \Illuminate\Support\Facades\Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('down'));
+        Http::fake(fn () => throw new ConnectionException('down'));
 
         // The job itself would fail, but that's queued/async — the
         // synchronous product save (and the observer's dispatch call) must
@@ -100,22 +104,22 @@ class ProductObserverIndexNowTest extends TestCase
     {
         // Default disabled — dispatch it directly (bypassing the observer
         // gate) to confirm the job's OWN internal guard also no-ops.
-        \Illuminate\Support\Facades\Http::fake();
+        Http::fake();
 
         (new PushIndexNow(['https://oeparts.test/en/parts/06L906036L']))->handle();
 
-        \Illuminate\Support\Facades\Http::assertNothingSent();
+        Http::assertNothingSent();
     }
 
     #[Test]
     public function push_index_now_job_posts_to_the_indexnow_api_when_enabled(): void
     {
         $this->enableIndexNow();
-        \Illuminate\Support\Facades\Http::fake(['api.indexnow.org/*' => \Illuminate\Support\Facades\Http::response('OK', 200)]);
+        Http::fake(['api.indexnow.org/*' => Http::response('OK', 200)]);
 
         (new PushIndexNow(['https://oeparts.test/en/parts/06L906036L']))->handle();
 
-        \Illuminate\Support\Facades\Http::assertSent(function ($request) {
+        Http::assertSent(function ($request) {
             return str_contains($request->url(), 'api.indexnow.org')
                 && $request['key'] === 'testkey123'
                 && in_array('https://oeparts.test/en/parts/06L906036L', $request['urlList'], true);
@@ -126,7 +130,7 @@ class ProductObserverIndexNowTest extends TestCase
     public function a_successful_push_is_logged_for_the_health_dashboard(): void
     {
         $this->enableIndexNow();
-        \Illuminate\Support\Facades\Http::fake(['api.indexnow.org/*' => \Illuminate\Support\Facades\Http::response('OK', 200)]);
+        Http::fake(['api.indexnow.org/*' => Http::response('OK', 200)]);
 
         (new PushIndexNow(['https://oeparts.test/en/parts/06L906036L']))->handle();
 
@@ -155,9 +159,9 @@ class ProductObserverIndexNowTest extends TestCase
     public function logging_a_push_never_throws_even_if_the_table_is_unreachable(): void
     {
         $this->enableIndexNow();
-        \Illuminate\Support\Facades\Http::fake(['api.indexnow.org/*' => \Illuminate\Support\Facades\Http::response('OK', 200)]);
+        Http::fake(['api.indexnow.org/*' => Http::response('OK', 200)]);
 
-        \Illuminate\Support\Facades\Schema::drop('indexnow_push_logs');
+        Schema::drop('indexnow_push_logs');
 
         // The push itself (and the job) must succeed regardless of whether
         // the best-effort activity log could be written.

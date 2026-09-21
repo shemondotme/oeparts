@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BulkUpdateAction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -27,7 +28,7 @@ class BulkUpdateLog extends Model
     ];
 
     protected $casts = [
-        'action_type' => \App\Enums\BulkUpdateAction::class,
+        'action_type' => BulkUpdateAction::class,
         'payload' => 'array',
         'filters' => 'array',
         'updates' => 'array',

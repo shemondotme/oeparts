@@ -2,15 +2,16 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+use App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 use App\Models\AbandonedCart;
 use App\Models\Order;
-use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 
 class CheckoutFunnelChart extends ChartWidget
 {
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-    use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
+    use HasReportPeriod;
+    use InteractsWithDashboardCache;
 
     protected ?string $heading = 'Checkout Funnel';
 

@@ -2,6 +2,7 @@
 
 use App\Models\Condition;
 use App\Services\SettingsService;
+use App\Support\LocaleRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
 
@@ -143,7 +144,7 @@ function localized_country_name(string $code, ?string $locale = null): string
 {
     $locale = $locale ?? app()->getLocale();
 
-    $name = \Locale::getDisplayRegion('und-'.strtoupper($code), $locale);
+    $name = Locale::getDisplayRegion('und-'.strtoupper($code), $locale);
 
     return $name !== '' ? $name : $code;
 }
@@ -154,10 +155,10 @@ function localized_country_name(string $code, ?string $locale = null): string
  */
 function detectBrowserLanguage(Request $request): string
 {
-    $supported = \App\Support\LocaleRegistry::codes();
+    $supported = LocaleRegistry::codes();
     $preferred = $request->getPreferredLanguage($supported);
 
-    return in_array($preferred, $supported, true) ? $preferred : \App\Support\LocaleRegistry::defaultCode();
+    return in_array($preferred, $supported, true) ? $preferred : LocaleRegistry::defaultCode();
 }
 
 /**
@@ -307,7 +308,7 @@ function condition_label(?Condition $condition, ?string $locale = null): string
         return __('search.condition_label_new', [], $locale);
     }
 
-    $key = 'condition_label_' . str_replace('-', '_', $condition->slug);
+    $key = 'condition_label_'.str_replace('-', '_', $condition->slug);
 
     return Lang::has("search.{$key}", $locale) ? __("search.{$key}", [], $locale) : $condition->name;
 }

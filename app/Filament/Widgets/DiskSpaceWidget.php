@@ -2,6 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -12,8 +14,8 @@ class DiskSpaceWidget extends BaseWidget
         return 'Server disk usage statistics';
     }
 
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected static bool $isLazy = false;
 
@@ -67,13 +69,13 @@ class DiskSpaceWidget extends BaseWidget
             // empty gap below it in the half-width System Health column.
             return [
                 Stat::make('Disk Usage', "{$usedPercent}%")
-                    ->description("{$freeGB} GB free of {$totalGB} GB" . ($usedPercent > 90 ? ' — Critical' : ''))
+                    ->description("{$freeGB} GB free of {$totalGB} GB".($usedPercent > 90 ? ' — Critical' : ''))
                     ->descriptionIcon('heroicon-o-server-stack')
                     ->color($level)
                     ->extraAttributes([
                         // Progress bar always; a red/amber alert edge only when
                         // disk usage crosses the warning/critical thresholds.
-                        'class' => 'op-stat-bar' . ($usedPercent > 90 ? ' op-health-down' : ($usedPercent > 75 ? ' op-health-warn' : '')),
+                        'class' => 'op-stat-bar'.($usedPercent > 90 ? ' op-health-down' : ($usedPercent > 75 ? ' op-health-warn' : '')),
                         'style' => "--op-bar: {$usedPercent}%; --op-bar-color: {$barColor};",
                     ]),
                 Stat::make('Free Space', "{$freeGB} GB")
@@ -87,6 +89,7 @@ class DiskSpaceWidget extends BaseWidget
             ];
         } catch (\Exception $e) {
             report($e);
+
             return [
                 Stat::make('Disk Usage', 'N/A')
                     ->description('Unable to read disk space')

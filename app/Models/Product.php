@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class Product extends Model
 {
@@ -38,7 +39,7 @@ class Product extends Model
         // CSV import) — never Cache::flush() (rule #5).
         static::saved(function (Product $product): void {
             if ($product->wasChanged(['is_in_stock', 'is_active'])) {
-                \Illuminate\Support\Facades\Cache::forget('sections.homepage');
+                Cache::forget('sections.homepage');
             }
         });
     }
@@ -164,7 +165,7 @@ class Product extends Model
             $crossRefCount > 0 ? "Cross-references {$crossRefCount} other OEM number(s)." : null,
         ]);
 
-        return trim($sentence . '. ' . implode(' ', $clauses));
+        return trim($sentence.'. '.implode(' ', $clauses));
     }
 
     public function carModels(): BelongsToMany

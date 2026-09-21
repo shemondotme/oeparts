@@ -46,7 +46,7 @@ class CatalogController extends BaseApiController
             ->with('children')
             ->first();
 
-        if (!$category) {
+        if (! $category) {
             return $this->errorResponse('Category not found.', null, 404);
         }
 
@@ -78,7 +78,7 @@ class CatalogController extends BaseApiController
             ->where('is_active', true)
             ->first();
 
-        if (!$manufacturer) {
+        if (! $manufacturer) {
             return $this->errorResponse('Manufacturer not found.', null, 404);
         }
 
@@ -102,9 +102,9 @@ class CatalogController extends BaseApiController
         if ($request->has('year')) {
             $year = (int) $request->input('year');
             $query->where('year_from', '<=', $year)
-                  ->where(function ($q) use ($year) {
-                      $q->whereNull('year_to')->orWhere('year_to', '>=', $year);
-                  });
+                ->where(function ($q) use ($year) {
+                    $q->whereNull('year_to')->orWhere('year_to', '>=', $year);
+                });
         }
 
         return $this->successResponse(
@@ -122,7 +122,7 @@ class CatalogController extends BaseApiController
             ->with('manufacturer')
             ->first();
 
-        if (!$carModel) {
+        if (! $carModel) {
             return $this->errorResponse('Car model not found.', null, 404);
         }
 
@@ -149,12 +149,12 @@ class CatalogController extends BaseApiController
         $query = Product::where('is_active', true)
             ->with(['manufacturer', 'condition']);
 
-        if (!empty($validated['oem'])) {
+        if (! empty($validated['oem'])) {
             $normalized = preg_replace('/[^A-Z0-9]/i', '', strtoupper($validated['oem']));
             $query->where('normalized_oem', 'LIKE', "%{$normalized}%");
         }
 
-        if (!empty($validated['q']) && empty($validated['oem'])) {
+        if (! empty($validated['q']) && empty($validated['oem'])) {
             // Product.name is a JSON-cast {locale: text} column — a plain
             // `name LIKE %term%` matched against the raw encoded JSON text
             // (locale keys, quotes, punctuation from every OTHER locale
@@ -169,16 +169,16 @@ class CatalogController extends BaseApiController
             $query->where(function ($q) use ($validated, $jsonPath) {
                 $term = $validated['q'];
                 $q->whereRaw("{$jsonPath} LIKE ?", ["%{$term}%"])
-                  ->orWhere('oem_number', 'LIKE', "%{$term}%")
-                  ->orWhere('normalized_oem', 'LIKE', "%" . strtoupper($term) . "%");
+                    ->orWhere('oem_number', 'LIKE', "%{$term}%")
+                    ->orWhere('normalized_oem', 'LIKE', '%'.strtoupper($term).'%');
             });
         }
 
-        if (!empty($validated['manufacturer_id'])) {
+        if (! empty($validated['manufacturer_id'])) {
             $query->where('manufacturer_id', $validated['manufacturer_id']);
         }
 
-        if (!empty($validated['car_model_id'])) {
+        if (! empty($validated['car_model_id'])) {
             $query->whereHas('carModels', function ($q) use ($validated) {
                 $q->where('car_models.id', $validated['car_model_id']);
             });
@@ -188,10 +188,10 @@ class CatalogController extends BaseApiController
             $query->where('is_in_stock', (bool) $validated['in_stock']);
         }
 
-        if (!empty($validated['min_price'])) {
+        if (! empty($validated['min_price'])) {
             $query->where('price', '>=', $validated['min_price']);
         }
-        if (!empty($validated['max_price'])) {
+        if (! empty($validated['max_price'])) {
             $query->where('price', '<=', $validated['max_price']);
         }
 
@@ -222,7 +222,7 @@ class CatalogController extends BaseApiController
             ->with(['manufacturer', 'condition', 'crossReferences'])
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return $this->errorResponse('Part not found.', null, 404);
         }
 
@@ -241,7 +241,7 @@ class CatalogController extends BaseApiController
             ->with('crossReferences')
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return $this->errorResponse('Part not found.', null, 404);
         }
 
@@ -261,7 +261,7 @@ class CatalogController extends BaseApiController
             ->with(['manufacturer', 'condition', 'crossReferences', 'carModels'])
             ->first();
 
-        if (!$product) {
+        if (! $product) {
             return $this->errorResponse('Product not found.', null, 404);
         }
 

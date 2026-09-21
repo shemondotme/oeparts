@@ -79,7 +79,7 @@ trait HasSavedViews
         ]);
 
         Notification::make()
-            ->title('View saved as "' . $name . '"')
+            ->title('View saved as "'.$name.'"')
             ->success()
             ->send();
     }
@@ -94,7 +94,7 @@ trait HasSavedViews
         $this->tableSearch = $view->search ?? '';
 
         if ($view->sort_column) {
-            $this->tableSort = $view->sort_column . ($view->sort_direction ? ':' . $view->sort_direction : '');
+            $this->tableSort = $view->sort_column.($view->sort_direction ? ':'.$view->sort_direction : '');
         } else {
             $this->tableSort = null;
         }
@@ -105,7 +105,7 @@ trait HasSavedViews
         $this->updatedTableSort();
 
         Notification::make()
-            ->title('View "' . $view->name . '" applied')
+            ->title('View "'.$view->name.'" applied')
             ->success()
             ->send();
     }
@@ -119,7 +119,7 @@ trait HasSavedViews
         $view->delete();
 
         Notification::make()
-            ->title('View "' . $view->name . '" deleted')
+            ->title('View "'.$view->name.'" deleted')
             ->success()
             ->send();
     }

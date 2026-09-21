@@ -5,7 +5,6 @@ namespace App\Filament\Pages\Settings;
 use App\Enums\SettingType;
 use App\Filament\Clusters\Settings as SettingsCluster;
 use App\Models\ActivityLog;
-use App\Models\Admin;
 use App\Models\Setting;
 use App\Services\SettingsService;
 use Database\Seeders\SettingsSeeder;
@@ -130,8 +129,8 @@ abstract class SettingsPage extends Page
                     $value = Crypt::decryptString($value);
                     $settings[$key] = $value;
                 } catch (\Exception $e) {
-                \Log::warning("Failed to decrypt setting {$key}: " . $e->getMessage());
-            }
+                    \Log::warning("Failed to decrypt setting {$key}: ".$e->getMessage());
+                }
             }
 
             if (is_string($value) && (str_starts_with($value, '{') || str_starts_with($value, '['))) {
@@ -202,7 +201,7 @@ abstract class SettingsPage extends Page
                 $value = empty($value) ? '' : json_encode($value);
             }
 
-            $service->set(static::$settingsGroup . '.' . $key, $value);
+            $service->set(static::$settingsGroup.'.'.$key, $value);
 
             // Compare against the already-string-normalized $value, not the
             // original raw field value — for array-typed fields that used to
@@ -240,9 +239,7 @@ abstract class SettingsPage extends Page
         $this->afterSave();
     }
 
-    protected function afterSave(): void
-    {
-    }
+    protected function afterSave(): void {}
 
     public function cancelSave(): void
     {
@@ -399,8 +396,8 @@ abstract class SettingsPage extends Page
             }
 
             $changed[$key] = [
-                'old'    => $isEncrypted && $oldRaw ? '***' : (string) ($oldRaw ?? '—'),
-                'new'    => $isEncrypted && $raw ? '***' : $display,
+                'old' => $isEncrypted && $oldRaw ? '***' : (string) ($oldRaw ?? '—'),
+                'new' => $isEncrypted && $raw ? '***' : $display,
                 'masked' => $isEncrypted,
             ];
         }
@@ -421,7 +418,7 @@ abstract class SettingsPage extends Page
         if ($this->pendingChanges !== null && isset($this->pendingChanges['resetDefaults'])) {
             return [
                 Action::make('confirm_reset')
-                    ->label('Apply Defaults (' . count($this->pendingChanges['changed']) . ' changes)')
+                    ->label('Apply Defaults ('.count($this->pendingChanges['changed']).' changes)')
                     ->color('warning')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->action('confirmReset')

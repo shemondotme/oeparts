@@ -15,7 +15,9 @@ class ProductSlugServiceTest extends TestCase
     use RefreshDatabase;
 
     private ProductSlugService $service;
+
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void

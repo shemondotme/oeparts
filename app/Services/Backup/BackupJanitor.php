@@ -28,7 +28,7 @@ class BackupJanitor
     public function cleanupPartials(): int
     {
         $staleAfter = (int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600));
-        $cleaned    = 0;
+        $cleaned = 0;
 
         $runs = BackupRun::query()
             ->partials()
@@ -50,8 +50,8 @@ class BackupJanitor
             // itself succeeded, so it stops looking "running" and releases
             // its hold on the shared lock either way.
             if ($run->status === BackupRun::STATUS_RUNNING) {
-                $run->status      = BackupRun::STATUS_FAILED;
-                $run->error       = $run->error ?: 'Abandoned mid-run; reclaimed by janitor.';
+                $run->status = BackupRun::STATUS_FAILED;
+                $run->error = $run->error ?: 'Abandoned mid-run; reclaimed by janitor.';
                 $run->finished_at = $run->finished_at ?: now();
             }
 

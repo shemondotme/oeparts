@@ -4,6 +4,7 @@ namespace App\Filament\Pages\System;
 
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -38,7 +39,7 @@ class PermissionMatrix extends Page
         return auth('admin')->user()?->hasRole('super_admin') ?? false;
     }
 
-    public function getRoles(): \Illuminate\Support\Collection
+    public function getRoles(): Collection
     {
         return Role::where('guard_name', 'admin')->get();
     }
@@ -113,7 +114,7 @@ class PermissionMatrix extends Page
             $role->revokePermissionTo($permission);
 
             Notification::make()
-                ->title("Permission revoked")
+                ->title('Permission revoked')
                 ->body("Removed '{$permission->name}' from {$role->name}")
                 ->info()
                 ->send();
@@ -121,7 +122,7 @@ class PermissionMatrix extends Page
             $role->givePermissionTo($permission);
 
             Notification::make()
-                ->title("Permission granted")
+                ->title('Permission granted')
                 ->body("Added '{$permission->name}' to {$role->name}")
                 ->success()
                 ->send();

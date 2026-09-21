@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Settings;
 
 use App\Filament\Resources\LanguageResource;
 use App\Filament\Resources\TranslationResource;
+use Filament\Forms\Components\Placeholder;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -45,26 +46,26 @@ class LocalizationSettings extends SettingsPage
                 Section::make('Languages')
                     ->description('Which locales the storefront and admin panel support.')
                     ->schema([
-                        \Filament\Forms\Components\Placeholder::make('language_resource_note')
+                        Placeholder::make('language_resource_note')
                             ->label('')
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Add, remove, and reorder supported locales on the <a href="'
-                                . LanguageResource::getUrl()
-                                . '" class="fi-link text-primary-600">Languages</a> page.'
+                                .LanguageResource::getUrl()
+                                .'" class="fi-link text-primary-600">Languages</a> page.'
                             )),
                     ]),
 
                 Section::make('Translations')
                     ->description('Per-locale text strings used across the storefront and emails.')
                     ->schema([
-                        \Filament\Forms\Components\Placeholder::make('translation_resource_note')
+                        Placeholder::make('translation_resource_note')
                             ->label('')
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Edit translation strings on the <a href="'
-                                . TranslationResource::getUrl()
-                                . '" class="fi-link text-primary-600">Translations</a> page.'
+                                .TranslationResource::getUrl()
+                                .'" class="fi-link text-primary-600">Translations</a> page.'
                             )),
                     ]),
             ]);

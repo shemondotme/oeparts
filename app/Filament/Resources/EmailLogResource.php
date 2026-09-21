@@ -7,8 +7,9 @@ use App\Enums\LogStatus;
 use App\Filament\Resources\EmailLogResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\EmailLog;
-use Filament\Forms;
+use App\Support\NavBadge;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -92,44 +93,44 @@ class EmailLogResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('to_email')
-                ->label(__('admin.to'))
-                ->searchable()
-                ->sortable()
-                ->limit(30),
-            Tables\Columns\TextColumn::make('subject')
-                ->label(__('admin.subject'))
-                ->searchable()
-                ->limit(40),
-            Tables\Columns\TextColumn::make('template_type')
-                ->label(__('admin.template'))
-                ->badge()
-                ->color(fn (EmailTemplate $state): string => match ($state) {
-                    EmailTemplate::OrderConfirmation => 'success',
-                    EmailTemplate::OrderStatus => 'info',
-                    EmailTemplate::OrderShipped => 'success',
-                    EmailTemplate::Welcome => 'success',
-                    EmailTemplate::Otp => 'warning',
-                    EmailTemplate::RefundProcessed => 'info',
-                    EmailTemplate::AbandonedCart => 'warning',
-                    EmailTemplate::NewsletterConfirm => 'info',
-                    EmailTemplate::PasswordReset => 'warning',
-                    EmailTemplate::ContactReply => 'info',
-                    EmailTemplate::PartInquiryStatus => 'info',
-                    default => 'gray',
-                })
-                ->toggleable(),
-            Tables\Columns\TextColumn::make('status')
-                ->label(__('admin.status'))
-                ->badge()
-                ->color(fn (LogStatus $state): string => match ($state) {
-                    LogStatus::Success => 'success',
-                    LogStatus::Failed  => 'danger',
-                })
-                ->icon(fn (LogStatus $state): string => match ($state) {
-                    LogStatus::Success => 'heroicon-o-check-circle',
-                    LogStatus::Failed  => 'heroicon-o-x-circle',
-                }),
+                Tables\Columns\TextColumn::make('to_email')
+                    ->label(__('admin.to'))
+                    ->searchable()
+                    ->sortable()
+                    ->limit(30),
+                Tables\Columns\TextColumn::make('subject')
+                    ->label(__('admin.subject'))
+                    ->searchable()
+                    ->limit(40),
+                Tables\Columns\TextColumn::make('template_type')
+                    ->label(__('admin.template'))
+                    ->badge()
+                    ->color(fn (EmailTemplate $state): string => match ($state) {
+                        EmailTemplate::OrderConfirmation => 'success',
+                        EmailTemplate::OrderStatus => 'info',
+                        EmailTemplate::OrderShipped => 'success',
+                        EmailTemplate::Welcome => 'success',
+                        EmailTemplate::Otp => 'warning',
+                        EmailTemplate::RefundProcessed => 'info',
+                        EmailTemplate::AbandonedCart => 'warning',
+                        EmailTemplate::NewsletterConfirm => 'info',
+                        EmailTemplate::PasswordReset => 'warning',
+                        EmailTemplate::ContactReply => 'info',
+                        EmailTemplate::PartInquiryStatus => 'info',
+                        default => 'gray',
+                    })
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('admin.status'))
+                    ->badge()
+                    ->color(fn (LogStatus $state): string => match ($state) {
+                        LogStatus::Success => 'success',
+                        LogStatus::Failed => 'danger',
+                    })
+                    ->icon(fn (LogStatus $state): string => match ($state) {
+                        LogStatus::Success => 'heroicon-o-check-circle',
+                        LogStatus::Failed => 'heroicon-o-x-circle',
+                    }),
                 Tables\Columns\TextColumn::make('sent_at')
                     ->label(__('admin.sent'))
                     ->dateTime('M j, Y H:i')
@@ -150,22 +151,22 @@ class EmailLogResource extends Resource
                     ->columnSpan(1),
             ])
             ->filtersFormColumns(2)
-        ->actions([
-            ...AdminUi::recordActionsReadOnly(),
-        ])
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Email Logs', [
-                    'to_email' => 'To',
-                    'subject' => 'Subject',
-                    'template_type' => 'Template',
-                    'status' => 'Status',
-                    'sent_at' => 'Sent At',
+            ->actions([
+                ...AdminUi::recordActionsReadOnly(),
+            ])
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Email Logs', [
+                        'to_email' => 'To',
+                        'subject' => 'Subject',
+                        'template_type' => 'Template',
+                        'status' => 'Status',
+                        'sent_at' => 'Sent At',
+                    ]),
+                    // No bulk delete: delivery logs are an audit trail (row
+                    // actions are already read-only); retention is logs:clean's job.
                 ]),
-                // No bulk delete: delivery logs are an audit trail (row
-                // actions are already read-only); retention is logs:clean's job.
-            ]),
-        ])
+            ])
             ->defaultSort('sent_at', 'desc')
             ->emptyStateIcon('heroicon-o-envelope')
             ->emptyStateHeading('No emails logged yet')
@@ -181,7 +182,7 @@ class EmailLogResource extends Resource
     {
         return [
             'index' => Pages\ListEmailLogs::route('/'),
-            'view'  => Pages\ViewEmailLog::route('/{record}'),
+            'view' => Pages\ViewEmailLog::route('/{record}'),
         ];
     }
 
@@ -192,7 +193,7 @@ class EmailLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('emails_failed', fn () => static::getModel()::where('status', LogStatus::Failed)->count());
+        return NavBadge::count('emails_failed', fn () => static::getModel()::where('status', LogStatus::Failed)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string

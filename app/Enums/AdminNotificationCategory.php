@@ -4,38 +4,38 @@ namespace App\Enums;
 
 enum AdminNotificationCategory: string
 {
-    case System    = 'system';
-    case Orders    = 'orders';
+    case System = 'system';
+    case Orders = 'orders';
     case Inventory = 'inventory';
-    case Admin     = 'admin';
+    case Admin = 'admin';
 
     public function label(): string
     {
         return match ($this) {
-            self::System    => 'System',
-            self::Orders    => 'Orders',
+            self::System => 'System',
+            self::Orders => 'Orders',
             self::Inventory => 'Inventory',
-            self::Admin     => 'Admin',
+            self::Admin => 'Admin',
         };
     }
 
     public function icon(): string
     {
         return match ($this) {
-            self::System    => '⚠️',
-            self::Orders    => '📦',
+            self::System => '⚠️',
+            self::Orders => '📦',
             self::Inventory => '🔍',
-            self::Admin     => '👤',
+            self::Admin => '👤',
         };
     }
 
     public function cssAccent(): string
     {
         return match ($this) {
-            self::System    => 'var(--accent-warning)',
-            self::Orders    => 'var(--accent-brand)',
+            self::System => 'var(--accent-warning)',
+            self::Orders => 'var(--accent-brand)',
             self::Inventory => 'var(--accent-success)',
-            self::Admin     => 'var(--color-text-muted)',
+            self::Admin => 'var(--color-text-muted)',
         };
     }
 
@@ -47,10 +47,10 @@ enum AdminNotificationCategory: string
     public function filamentIcon(): string
     {
         return match ($this) {
-            self::System    => 'heroicon-o-exclamation-triangle',
-            self::Orders    => 'heroicon-o-shopping-bag',
+            self::System => 'heroicon-o-exclamation-triangle',
+            self::Orders => 'heroicon-o-shopping-bag',
             self::Inventory => 'heroicon-o-archive-box',
-            self::Admin     => 'heroicon-o-user',
+            self::Admin => 'heroicon-o-user',
         };
     }
 
@@ -61,10 +61,10 @@ enum AdminNotificationCategory: string
     public function filamentColor(): string
     {
         return match ($this) {
-            self::System    => 'warning',
-            self::Orders    => 'primary',
+            self::System => 'warning',
+            self::Orders => 'primary',
             self::Inventory => 'success',
-            self::Admin     => 'gray',
+            self::Admin => 'gray',
         };
     }
 }

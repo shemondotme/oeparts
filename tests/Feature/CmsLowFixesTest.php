@@ -9,6 +9,7 @@ use App\Models\Section;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 class CmsLowFixesTest extends TestCase
@@ -53,7 +54,7 @@ class CmsLowFixesTest extends TestCase
         ]);
 
         $admin = Admin::factory()->create();
-        \Spatie\Permission\Models\Permission::findOrCreate('edit sections', 'admin');
+        Permission::findOrCreate('edit sections', 'admin');
         $admin->givePermissionTo('edit sections');
         $this->actingAs($admin, 'admin');
 

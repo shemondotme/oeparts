@@ -5,8 +5,8 @@ namespace App\Filament\Resources\ContactMessageResource\Pages;
 use App\Enums\ContactStatus;
 use App\Filament\Resources\ContactMessageResource;
 use Filament\Actions;
-use Filament\Infolists;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -30,7 +30,7 @@ class ViewContactMessage extends ViewRecord
                     $this->record->update(['status' => 'resolved']);
                     $this->refreshFormData(['status']);
 
-                    \Filament\Notifications\Notification::make()
+                    Notification::make()
                         ->title('Message marked as resolved')
                         ->success()
                         ->send();

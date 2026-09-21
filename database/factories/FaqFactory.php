@@ -17,11 +17,11 @@ class FaqFactory extends Factory
         $question = fake()->sentence();
 
         return [
-            'category'   => fake()->randomElement(['shipping', 'ordering', 'returns', 'payment', 'products', 'general']),
-            'question'   => ['en' => $question, 'de' => $question],
-            'answer'     => ['en' => fake()->paragraph(), 'de' => fake()->paragraph()],
+            'category' => fake()->randomElement(['shipping', 'ordering', 'returns', 'payment', 'products', 'general']),
+            'question' => ['en' => $question, 'de' => $question],
+            'answer' => ['en' => fake()->paragraph(), 'de' => fake()->paragraph()],
             'sort_order' => fake()->numberBetween(0, 100),
-            'is_active'  => true,
+            'is_active' => true,
         ];
     }
 

@@ -22,7 +22,7 @@ class AccountPasswordRequest extends FormRequest
 
         return [
             'current_password' => 'required|string',
-            'new_password'     => ['required', 'string', 'confirmed', Password::min($pwMin)->mixedCase()->numbers()->symbols()->uncompromised()],
+            'new_password' => ['required', 'string', 'confirmed', Password::min($pwMin)->mixedCase()->numbers()->symbols()->uncompromised()],
         ];
     }
 
@@ -30,8 +30,8 @@ class AccountPasswordRequest extends FormRequest
     {
         return [
             'current_password.required' => trans('account.validation_current_password_required'),
-            'new_password.required'     => trans('account.validation_new_password_required'),
-            'new_password.confirmed'    => trans('account.validation_new_password_confirmed'),
+            'new_password.required' => trans('account.validation_new_password_required'),
+            'new_password.confirmed' => trans('account.validation_new_password_confirmed'),
         ];
     }
 }

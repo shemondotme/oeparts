@@ -18,7 +18,7 @@ class StageRegistry
      */
     public function forProfile(string $profile): array
     {
-        $map     = (array) config('imports.stages', []);
+        $map = (array) config('imports.stages', []);
         $entries = (array) ($map[$profile] ?? []);
 
         return array_map(function ($entry) {

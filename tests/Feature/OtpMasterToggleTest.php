@@ -12,7 +12,6 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\CheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use PHPUnit\Framework\Attributes\Test;

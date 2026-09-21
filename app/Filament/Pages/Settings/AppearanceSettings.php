@@ -223,7 +223,7 @@ class AppearanceSettings extends SettingsPage
                 try {
                     $value = Crypt::decryptString($value);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt setting {$setting->key}: " . $e->getMessage());
+                    Log::warning("Failed to decrypt setting {$setting->key}: ".$e->getMessage());
                 }
             }
 
@@ -257,7 +257,7 @@ class AppearanceSettings extends SettingsPage
 
         Notification::make()
             ->title('Settings saved')
-            ->body('Cache cleared for: ' . implode(', ', static::$settingsGroups))
+            ->body('Cache cleared for: '.implode(', ', static::$settingsGroups))
             ->success()
             ->send();
     }
@@ -288,7 +288,7 @@ class AppearanceSettings extends SettingsPage
                 $value = empty($value) ? '' : json_encode($value);
             }
 
-            $service->set($this->groupForKey($key) . '.' . $key, $value);
+            $service->set($this->groupForKey($key).'.'.$key, $value);
 
             if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $value) {
                 $oldValues[$key] = '***';

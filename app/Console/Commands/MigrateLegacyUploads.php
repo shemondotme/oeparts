@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\MediaFile;
 use App\Models\RefundRequest;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -77,8 +78,8 @@ class MigrateLegacyUploads extends Command
         }
 
         if ($storage->exists($to)) {
-            $to = pathinfo($to, PATHINFO_DIRNAME) . '/' . pathinfo($to, PATHINFO_FILENAME)
-                . '-' . substr(md5($from), 0, 8) . '.' . pathinfo($to, PATHINFO_EXTENSION);
+            $to = pathinfo($to, PATHINFO_DIRNAME).'/'.pathinfo($to, PATHINFO_FILENAME)
+                .'-'.substr(md5($from), 0, 8).'.'.pathinfo($to, PATHINFO_EXTENSION);
         }
 
         $this->line("  {$from} -> {$to}");
@@ -101,12 +102,12 @@ class MigrateLegacyUploads extends Command
             }
 
             $date = ($media->created_at ?? now())->format('Y/m');
-            $target = "media/{$date}/" . basename($media->file_path);
+            $target = "media/{$date}/".basename($media->file_path);
 
             $finalTarget = $target;
             if (Storage::disk('public')->exists($target)) {
-                $finalTarget = 'media/' . $date . '/' . pathinfo($target, PATHINFO_FILENAME)
-                    . '-' . $media->id . '.' . pathinfo($target, PATHINFO_EXTENSION);
+                $finalTarget = 'media/'.$date.'/'.pathinfo($target, PATHINFO_FILENAME)
+                    .'-'.$media->id.'.'.pathinfo($target, PATHINFO_EXTENSION);
             }
 
             $movedTo = $this->move('public', $media->file_path, $finalTarget);
@@ -139,7 +140,7 @@ class MigrateLegacyUploads extends Command
 
             $mtime = Storage::disk($disk)->lastModified($path);
             $date = date('Y/m', $mtime ?: time());
-            $target = "{$directory}/{$date}/" . basename($path);
+            $target = "{$directory}/{$date}/".basename($path);
 
             if ($this->move($disk, $path, $target) !== false) {
                 $moved++;
@@ -182,10 +183,10 @@ class MigrateLegacyUploads extends Command
 
                 $uploadedAt = $isObject ? ($item['uploaded_at'] ?? null) : null;
                 $date = $uploadedAt
-                    ? \Illuminate\Support\Carbon::parse($uploadedAt)->format('Y/m')
+                    ? Carbon::parse($uploadedAt)->format('Y/m')
                     : date('Y/m', Storage::disk('local')->lastModified($path) ?: time());
 
-                $target = 'refund-images/' . $date . '/' . basename($path);
+                $target = 'refund-images/'.$date.'/'.basename($path);
 
                 $movedTo = $this->move('local', $path, $target);
 

@@ -18,11 +18,11 @@ class ShippingMethod extends Model
     ];
 
     protected $casts = [
-        'name'                    => 'array',
-        'description'             => 'array',
-        'flat_rate'               => 'decimal:2',
+        'name' => 'array',
+        'description' => 'array',
+        'flat_rate' => 'decimal:2',
         'free_shipping_threshold' => 'decimal:2',
-        'is_active'               => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function zone(): BelongsTo

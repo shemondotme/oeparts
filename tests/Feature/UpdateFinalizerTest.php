@@ -26,11 +26,11 @@ class UpdateFinalizerTest extends TestCase
     private function minimalConfig(array $overrides = []): void
     {
         config(['updates.post_swap' => array_merge([
-            'artisan'             => [],
+            'artisan' => [],
             'vendor_publish_tags' => [],
-            'seeders'             => [],
-            'rebuild_cache'       => false,
-            'restart_queue'       => false,
+            'seeders' => [],
+            'rebuild_cache' => false,
+            'restart_queue' => false,
         ], $overrides)]);
     }
 
@@ -86,7 +86,7 @@ class UpdateFinalizerTest extends TestCase
     public function seeders_and_publish_tags_expand_into_steps(): void
     {
         $this->minimalConfig([
-            'seeders'             => ['Database\\Seeders\\SettingsSeeder'],
+            'seeders' => ['Database\\Seeders\\SettingsSeeder'],
             'vendor_publish_tags' => ['laravel-assets'],
         ]);
 

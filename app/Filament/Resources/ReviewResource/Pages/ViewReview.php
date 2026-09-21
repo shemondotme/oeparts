@@ -10,6 +10,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 
 class ViewReview extends ViewRecord
 {
@@ -38,7 +39,7 @@ class ViewReview extends ViewRecord
                                     ->schema([
                                         TextEntry::make('reviewer_name')
                                             ->label('Reviewer')
-                                            ->weight(\Filament\Support\Enums\FontWeight::Medium),
+                                            ->weight(FontWeight::Medium),
                                         TextEntry::make('title')
                                             ->label('Title')
                                             ->placeholder('—'),
@@ -68,7 +69,7 @@ class ViewReview extends ViewRecord
                                             }),
                                         TextEntry::make('rating')
                                             ->label('Rating')
-                                            ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state))
+                                            ->formatStateUsing(fn (int $state): string => str_repeat('★', $state).str_repeat('☆', 5 - $state))
                                             ->color('warning'),
                                         TextEntry::make('ip_address')
                                             ->label('Submitted From IP')

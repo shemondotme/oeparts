@@ -24,7 +24,7 @@ use App\Models\RefundRequest;
 use App\Models\SearchLog;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 class DashboardDemoSeeder extends Seeder
@@ -40,6 +40,7 @@ class DashboardDemoSeeder extends Seeder
         // 2. Idempotent guard: skip heavy transactional inserts if orders > 50
         if (Order::count() > 50) {
             $this->command->info('Order count is already > 50. Skipping heavy demo transactional inserts.');
+
             return;
         }
 
@@ -54,16 +55,17 @@ class DashboardDemoSeeder extends Seeder
 
         if ($products->isEmpty() || $users->isEmpty()) {
             $this->command->error('Cannot seed without users or products. Ensure catalog seeder ran.');
+
             return;
         }
 
         // Ensure we have an admin for created_by
         $admin = Admin::first();
-        if (!$admin) {
+        if (! $admin) {
             $admin = Admin::create([
                 'name' => 'System Admin',
                 'email' => 'system@oeparts.test',
-                'password' => \Illuminate\Support\Facades\Hash::make('password123'),
+                'password' => Hash::make('password123'),
                 'is_active' => true,
             ]);
         }
@@ -194,12 +196,12 @@ class DashboardDemoSeeder extends Seeder
             $grandTotal = bcadd($grandTotal, $vatAmount, 2);
 
             $order = Order::create([
-                'order_number' => 'ORD-' . fake()->unique()->numberBetween(100000, 999999),
+                'order_number' => 'ORD-'.fake()->unique()->numberBetween(100000, 999999),
                 'user_id' => $user->id,
                 'status' => $status,
                 'payment_method' => $paymentMethod,
                 'payment_status' => $paymentStatus,
-                'payment_reference' => $paymentStatus === PaymentStatus::Paid ? 'pi_' . fake()->unique()->numerify('####################') : null,
+                'payment_reference' => $paymentStatus === PaymentStatus::Paid ? 'pi_'.fake()->unique()->numerify('####################') : null,
                 'subtotal' => $subtotal,
                 'discount_amount' => $discountAmount,
                 'shipping_cost' => $shippingCost,
@@ -229,7 +231,7 @@ class DashboardDemoSeeder extends Seeder
                 RefundRequest::create([
                     'order_id' => $order->id,
                     'user_id' => $user->id,
-                    'reason' => 'Customer requested cancel/return: ' . fake()->sentence(),
+                    'reason' => 'Customer requested cancel/return: '.fake()->sentence(),
                     'amount_requested' => $grandTotal,
                     'status' => $status === OrderStatus::Refunded ? RefundStatus::Approved : RefundStatus::Pending,
                     'return_images' => [],
@@ -299,7 +301,7 @@ class DashboardDemoSeeder extends Seeder
                     'phone' => fake()->phoneNumber(),
                     'oem_number' => $query,
                     'manufacturer' => fake()->randomElement(['Audi', 'BMW', 'Opel', 'Toyota']),
-                    'car_model' => fake()->word() . ' ' . rand(2010, 2023),
+                    'car_model' => fake()->word().' '.rand(2010, 2023),
                     'year' => rand(2010, 2023),
                     'quantity' => rand(1, 4),
                     'urgency' => fake()->randomElement(['normal', 'soon', 'urgent']),
@@ -340,7 +342,7 @@ class DashboardDemoSeeder extends Seeder
         if ($admins->isNotEmpty()) {
             $actions = [
                 'Product updated', 'Order marked as paid', 'Refund request approved',
-                'Settings updated', 'B2B customer verified', 'Bulk price import completed'
+                'Settings updated', 'B2B customer verified', 'Bulk price import completed',
             ];
             for ($i = 0; $i < 8; $i++) {
                 ActivityLog::create([

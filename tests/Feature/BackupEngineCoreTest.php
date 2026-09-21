@@ -165,7 +165,7 @@ class BackupEngineCoreTest extends TestCase
     #[Test]
     public function a_stage_exception_fails_the_run_and_releases_the_lock(): void
     {
-        config(['backup.stages.full' => [new FakeThrowingStage()]]);
+        config(['backup.stages.full' => [new FakeThrowingStage]]);
 
         $run = $this->manager()->start(BackupRun::PROFILE_FULL);
         $run = $this->manager()->run($run);
@@ -185,9 +185,9 @@ class BackupEngineCoreTest extends TestCase
 
         $run = BackupRun::create([
             'profile' => BackupRun::PROFILE_FULL,
-            'status'  => BackupRun::STATUS_FAILED,
+            'status' => BackupRun::STATUS_FAILED,
             'trigger' => BackupRun::TRIGGER_MANUAL,
-            'disk'    => 'local',
+            'disk' => 'local',
             'started_at' => now()->subMinutes(5),
         ]);
         $run->parts()->create([
@@ -208,7 +208,7 @@ class BackupEngineCoreTest extends TestCase
         // Hand-write a lock file with an old timestamp (a crashed run's lock).
         $lock = app(BackupLock::class);
         file_put_contents($lock->path(), json_encode([
-            'owner'       => 'backup:dead',
+            'owner' => 'backup:dead',
             'acquired_at' => now()->subHours(2)->toIso8601String(),
         ]));
         $this->assertTrue($lock->isLocked());
@@ -239,7 +239,7 @@ class BackupEngineCoreTest extends TestCase
     #[Test]
     public function a_run_whose_row_disappears_mid_run_fails_with_a_clear_message_not_a_bare_eloquent_one(): void
     {
-        config(['backup.stages.full' => [new FakeDeletingStage()]]);
+        config(['backup.stages.full' => [new FakeDeletingStage]]);
 
         $run = $this->manager()->start(BackupRun::PROFILE_FULL);
 
@@ -263,18 +263,18 @@ class FakeDbStage implements BackupStage
 
     public function step(BackupRun $run, array $state): StageStepResult
     {
-        $i    = (int) ($state['i'] ?? 0);
+        $i = (int) ($state['i'] ?? 0);
         $data = "chunk-{$i}-data";
         $path = "backups/{$run->id}/db-{$i}.gz";
 
         Storage::disk($run->disk)->put($path, $data);
 
         $part = [
-            'type'   => BackupChunk::TYPE_DB,
-            'name'   => "table_{$i}",
-            'path'   => $path,
-            'bytes'  => strlen($data),
-            'rows'   => 10,
+            'type' => BackupChunk::TYPE_DB,
+            'name' => "table_{$i}",
+            'path' => $path,
+            'bytes' => strlen($data),
+            'rows' => 10,
             'sha256' => hash('sha256', $data),
         ];
 

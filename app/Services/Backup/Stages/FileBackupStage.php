@@ -4,6 +4,7 @@ namespace App\Services\Backup\Stages;
 
 use App\Models\BackupChunk;
 use App\Models\BackupRun;
+use App\Services\Backup\BackupCipher;
 use App\Services\Backup\Contracts\BackupStage;
 use App\Services\Backup\StageStepResult;
 use Illuminate\Support\Facades\Storage;
@@ -60,8 +61,8 @@ class FileBackupStage implements BackupStage
         if ($state['vol_has_content']) {
             $part = $this->finaliseVolume($run, (int) $state['vol']);
             $state['counts']['volumes'] = (int) $state['counts']['volumes'] + 1;
-            $state['vol']               = (int) $state['vol'] + 1;
-            $state['vol_has_content']   = false;
+            $state['vol'] = (int) $state['vol'] + 1;
+            $state['vol_has_content'] = false;
 
             return StageStepResult::progress($state, $part, 'files: volume '.$part['name'], 0.97);
         }
@@ -88,31 +89,31 @@ class FileBackupStage implements BackupStage
      */
     private function initialise(BackupRun $run): array
     {
-        $root     = rtrim((string) config('backup.files.root', base_path()), "/\\");
+        $root = rtrim((string) config('backup.files.root', base_path()), '/\\');
         $excludes = (array) config('backup.files.exclude', []);
 
-        $entriesRel     = 'backups/'.$run->getKey().'/files/_work/entries.ndjson';
-        $toArchiveRel   = 'backups/'.$run->getKey().'/files/_work/to_archive.ndjson';
-        $filelistRel    = 'backups/'.$run->getKey().'/files/_work/filelist.json';
+        $entriesRel = 'backups/'.$run->getKey().'/files/_work/entries.ndjson';
+        $toArchiveRel = 'backups/'.$run->getKey().'/files/_work/to_archive.ndjson';
+        $filelistRel = 'backups/'.$run->getKey().'/files/_work/filelist.json';
         $this->resetFile($run, $entriesRel);
         $this->resetFile($run, $toArchiveRel);
 
         return [
-            'root'              => $root,
-            'excludes'          => $excludes,
-            'entries'           => $entriesRel,
-            'to_archive_work'   => $toArchiveRel,
-            'filelist'          => $filelistRel,
-            'scan_done'         => false,
-            'scan_pending'      => [''], // relative dir paths still to visit; '' = root itself
-            'scan_seen_count'   => 0,
+            'root' => $root,
+            'excludes' => $excludes,
+            'entries' => $entriesRel,
+            'to_archive_work' => $toArchiveRel,
+            'filelist' => $filelistRel,
+            'scan_done' => false,
+            'scan_pending' => [''], // relative dir paths still to visit; '' = root itself
+            'scan_seen_count' => 0,
             'scan_archive_count' => 0,
-            'counts'            => ['archived' => 0, 'unchanged' => 0, 'deleted' => 0, 'volumes' => 0, 'file_count' => 0],
-            'total'             => 0,
-            'cursor'            => 0,
-            'vol'               => 0,
-            'vol_has_content'   => false,
-            'baseline_run_id'   => null,
+            'counts' => ['archived' => 0, 'unchanged' => 0, 'deleted' => 0, 'volumes' => 0, 'file_count' => 0],
+            'total' => 0,
+            'cursor' => 0,
+            'vol' => 0,
+            'vol_has_content' => false,
+            'baseline_run_id' => null,
         ];
     }
 
@@ -129,12 +130,12 @@ class FileBackupStage implements BackupStage
     {
         $deadline = microtime(true) + max(0.0, (float) config('backup.files.scan_seconds', 5));
 
-        $meta        = (array) ($run->meta ?? []);
+        $meta = (array) ($run->meta ?? []);
         $incremental = (bool) ($meta['incremental'] ?? config('backup.files.incremental', false));
         // Re-derived every call rather than cached in $state: $state is
         // checkpointed to the DB on every directory, and a large incremental
         // baseline has no business living inside that JSON column.
-        $baseline    = $incremental ? $this->loadBaseline($run) : ['run_id' => null, 'map' => []];
+        $baseline = $incremental ? $this->loadBaseline($run) : ['run_id' => null, 'map' => []];
         $baselineMap = $baseline['map'];
         $state['baseline_run_id'] = $baseline['run_id'];
 
@@ -170,7 +171,7 @@ class FileBackupStage implements BackupStage
                         continue;
                     }
 
-                    $size  = $entry->getSize();
+                    $size = $entry->getSize();
                     $mtime = $entry->getMTime();
 
                     $state['scan_seen_count']++;
@@ -180,14 +181,14 @@ class FileBackupStage implements BackupStage
                     if ($prev && (int) ($prev['size'] ?? -1) === (int) $size && (int) ($prev['mtime'] ?? -1) === (int) $mtime) {
                         // Unchanged — reference the baseline's stored bytes (incremental chain).
                         $this->appendEntry($run, $state['entries'], [
-                            'path'       => $entryRel,
-                            'size'       => (int) $size,
-                            'mtime'      => (int) $mtime,
-                            'sha256'     => $prev['sha256'] ?? null,
-                            'unchanged'  => true,
+                            'path' => $entryRel,
+                            'size' => (int) $size,
+                            'mtime' => (int) $mtime,
+                            'sha256' => $prev['sha256'] ?? null,
+                            'unchanged' => true,
                             'source_run' => $state['baseline_run_id'],
-                            'vol'        => $prev['vol'] ?? null,
-                            'segments'   => $prev['segments'] ?? [],
+                            'vol' => $prev['vol'] ?? null,
+                            'segments' => $prev['segments'] ?? [],
                         ]);
                         $state['counts']['unchanged']++;
                     } else {
@@ -216,7 +217,7 @@ class FileBackupStage implements BackupStage
         unset($state['baseline_seen']);
 
         $state['counts']['file_count'] = $state['scan_seen_count'];
-        $state['total']     = $state['scan_archive_count'];
+        $state['total'] = $state['scan_archive_count'];
         $state['scan_done'] = true;
 
         Storage::disk($this->stagingDisk())->put(
@@ -232,7 +233,7 @@ class FileBackupStage implements BackupStage
     /** Read back the NDJSON list of paths scanBatch() decided need archiving. */
     private function readToArchiveList(BackupRun $run, string $rel): array
     {
-        $abs  = $this->absolute($run, $rel);
+        $abs = $this->absolute($run, $rel);
         $list = [];
 
         if (is_file($abs) && ($fh = fopen($abs, 'rb')) !== false) {
@@ -256,13 +257,13 @@ class FileBackupStage implements BackupStage
 
     private function archiveBatch(BackupRun $run, array $state): StageStepResult
     {
-        $budget     = max(1, (int) config('backup.files.batch_bytes', 64 * 1024 * 1024));
-        $volumeCap  = max(1, (int) config('backup.volume_bytes', 512 * 1024 * 1024));
+        $budget = max(1, (int) config('backup.files.batch_bytes', 64 * 1024 * 1024));
+        $volumeCap = max(1, (int) config('backup.volume_bytes', 512 * 1024 * 1024));
         $throttleMs = (int) config('backup.files.throttle_ms', 0);
 
-        $list   = (array) json_decode((string) Storage::disk($this->stagingDisk())->get($state['filelist']), true);
+        $list = (array) json_decode((string) Storage::disk($this->stagingDisk())->get($state['filelist']), true);
         $cursor = (int) $state['cursor'];
-        $vol    = (int) $state['vol'];
+        $vol = (int) $state['vol'];
 
         $volRel = $this->volumePath($run, $vol);
         $volAbs = $this->absolute($run, $volRel);
@@ -271,17 +272,17 @@ class FileBackupStage implements BackupStage
         // Track the volume's compressed size ourselves: buffered writes aren't
         // reflected by filesize() until flush, so start from the flushed size on
         // disk (bytes from prior steps) and add what we write this step.
-        $volBytes  = $this->size($volAbs);
+        $volBytes = $this->size($volAbs);
         $processed = 0;
-        $part      = null;
+        $part = null;
 
         while ($cursor < (int) $state['total'] && $processed < $budget) {
-            $rel   = (string) $list[$cursor];
+            $rel = (string) $list[$cursor];
             $entry = $this->streamFileIntoVolume($handle, $state['root'].'/'.$rel, $rel, $vol);
 
             $this->appendEntry($run, $state['entries'], $entry);
             $state['counts']['archived'] = (int) $state['counts']['archived'] + 1;
-            $state['vol_has_content']    = true;
+            $state['vol_has_content'] = true;
             $volBytes += array_sum(array_map(fn ($s) => $s[1], $entry['segments']));
             $processed += max(1, (int) $entry['size']);
             $cursor++;
@@ -297,7 +298,7 @@ class FileBackupStage implements BackupStage
             // per file means a crash loses at most the in-flight file, never
             // duplicates a completed one.
             $state['cursor'] = $cursor;
-            $state['vol']    = $vol;
+            $state['vol'] = $vol;
             $this->checkpointNow($run, $state);
 
             if ($throttleMs > 0) {
@@ -312,7 +313,7 @@ class FileBackupStage implements BackupStage
                 $state['counts']['volumes'] = (int) $state['counts']['volumes'] + 1;
                 $vol++;
                 $state['vol_has_content'] = false;
-                $state['vol']             = $vol;
+                $state['vol'] = $vol;
                 $this->checkpointNow($run, $state);
                 break;
             }
@@ -323,7 +324,7 @@ class FileBackupStage implements BackupStage
         }
 
         $state['cursor'] = $cursor;
-        $state['vol']    = $vol;
+        $state['vol'] = $vol;
 
         $note = 'files: '.$state['counts']['archived'].'/'.$state['total'].' archived';
 
@@ -340,9 +341,9 @@ class FileBackupStage implements BackupStage
      */
     private function streamFileIntoVolume($handle, string $abs, string $rel, int $vol): array
     {
-        $ctx      = hash_init('sha256');
+        $ctx = hash_init('sha256');
         $segments = [];
-        $size     = 0;
+        $size = 0;
 
         $in = @fopen($abs, 'rb');
         if ($in !== false) {
@@ -366,11 +367,11 @@ class FileBackupStage implements BackupStage
         }
 
         return [
-            'path'     => $rel,
-            'size'     => $size,
-            'mtime'    => (int) @filemtime($abs),
-            'sha256'   => hash_final($ctx),
-            'vol'      => $vol,
+            'path' => $rel,
+            'size' => $size,
+            'mtime' => (int) @filemtime($abs),
+            'sha256' => hash_final($ctx),
+            'vol' => $vol,
             'segments' => $segments,
         ];
     }
@@ -381,13 +382,13 @@ class FileBackupStage implements BackupStage
         $abs = $this->absolute($run, $rel);
 
         return [
-            'type'   => BackupChunk::TYPE_FILES,
-            'name'   => 'vol-'.$vol,
-            'disk'   => $this->stagingDisk(),
-            'path'   => $rel,
-            'bytes'  => $this->size($abs),
+            'type' => BackupChunk::TYPE_FILES,
+            'name' => 'vol-'.$vol,
+            'disk' => $this->stagingDisk(),
+            'path' => $rel,
+            'bytes' => $this->size($abs),
             'sha256' => is_file($abs) ? hash_file('sha256', $abs) : null,
-            'meta'   => ['kind' => 'volume', 'index' => $vol],
+            'meta' => ['kind' => 'volume', 'index' => $vol],
         ];
     }
 
@@ -396,7 +397,7 @@ class FileBackupStage implements BackupStage
     private function writeManifest(BackupRun $run, array $state): array
     {
         $files = [];
-        $abs   = $this->absolute($run, $state['entries']);
+        $abs = $this->absolute($run, $state['entries']);
 
         if (is_file($abs) && ($fh = fopen($abs, 'rb')) !== false) {
             while (($line = fgets($fh)) !== false) {
@@ -409,27 +410,27 @@ class FileBackupStage implements BackupStage
         }
 
         $manifest = [
-            'schema'          => 1,
-            'run_id'          => (int) $run->getKey(),
+            'schema' => 1,
+            'run_id' => (int) $run->getKey(),
             'baseline_run_id' => $state['baseline_run_id'],
-            'root'            => $state['root'],
-            'counts'          => $state['counts'],
-            'files'           => $files,
+            'root' => $state['root'],
+            'counts' => $state['counts'],
+            'files' => $files,
         ];
 
         $rel = 'backups/'.$run->getKey().'/files/files-manifest.json.gz';
-        $gz  = (string) gzencode((string) json_encode($manifest), 6);
+        $gz = (string) gzencode((string) json_encode($manifest), 6);
         Storage::disk($this->stagingDisk())->put($rel, $gz);
 
         return [
-            'type'   => BackupChunk::TYPE_FILES,
-            'name'   => 'files-manifest',
-            'disk'   => $this->stagingDisk(),
-            'path'   => $rel,
-            'bytes'  => strlen($gz),
+            'type' => BackupChunk::TYPE_FILES,
+            'name' => 'files-manifest',
+            'disk' => $this->stagingDisk(),
+            'path' => $rel,
+            'bytes' => strlen($gz),
             'sha256' => hash('sha256', $gz),
-            'rows'   => (int) $state['counts']['file_count'],
-            'meta'   => array_merge(['kind' => 'manifest'], $state['counts']),
+            'rows' => (int) $state['counts']['file_count'],
+            'meta' => array_merge(['kind' => 'manifest'], $state['counts']),
         ];
     }
 
@@ -459,11 +460,11 @@ class FileBackupStage implements BackupStage
         // The baseline manifest is encrypted at rest (Chunk 2.4) — decrypt before gunzip.
         $bytes = (string) Storage::disk($part->disk)->get($part->path);
         if (($part->meta['encrypted'] ?? false) === true) {
-            $bytes = app(\App\Services\Backup\BackupCipher::class)->decryptData($bytes);
+            $bytes = app(BackupCipher::class)->decryptData($bytes);
         }
 
         $data = json_decode((string) gzdecode($bytes), true);
-        $map  = [];
+        $map = [];
 
         foreach ((array) ($data['files'] ?? []) as $entry) {
             if (empty($entry['deleted']) && ! empty($entry['path'])) {
@@ -492,7 +493,7 @@ class FileBackupStage implements BackupStage
     private function isExcluded(string $rel, array $excludes): bool
     {
         foreach ($excludes as $ex) {
-            $ex = str_replace('\\', '/', trim($ex, "/\\"));
+            $ex = str_replace('\\', '/', trim($ex, '/\\'));
             if ($ex !== '' && ($rel === $ex || Str::startsWith($rel, $ex.'/'))) {
                 return true;
             }

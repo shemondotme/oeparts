@@ -92,7 +92,7 @@ class CheckForUpdates extends Command
             // is fixed, instead of silently giving up on this version.
             Log::warning('Failed to notify admins of an available update', [
                 'version' => $status->latestVersion,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ]);
         }
     }

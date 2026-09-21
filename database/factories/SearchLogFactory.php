@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Manufacturer;
 use App\Models\SearchLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -19,14 +18,14 @@ class SearchLogFactory extends Factory
         $query = fake()->word().' '.fake()->numerify('#####');
 
         return [
-            'search_query'    => $query,
+            'search_query' => $query,
             'normalized_query' => strtoupper(preg_replace('/[^A-Z0-9]/', '', $query)),
-            'result_count'    => fake()->numberBetween(0, 100),
+            'result_count' => fake()->numberBetween(0, 100),
             'manufacturer_id' => null,
-            'car_model_id'    => null,
-            'lang'            => fake()->randomElement(['en', 'de']),
-            'user_id'         => null,
-            'ip_address'      => fake()->ipv4(),
+            'car_model_id' => null,
+            'lang' => fake()->randomElement(['en', 'de']),
+            'user_id' => null,
+            'ip_address' => fake()->ipv4(),
         ];
     }
 

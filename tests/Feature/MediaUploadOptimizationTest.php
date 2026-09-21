@@ -5,6 +5,11 @@ namespace Tests\Feature;
 use App\Filament\Resources\MediaFileResource\Pages\ListMediaFiles;
 use App\Models\Admin;
 use App\Models\MediaFile;
+use App\Models\Setting;
+use App\Services\SettingsService;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -80,9 +85,9 @@ class MediaUploadOptimizationTest extends TestCase
     #[Test]
     public function an_oversized_upload_is_downscaled_before_it_ever_reaches_the_media_library(): void
     {
-        \App\Models\Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_width'], ['value' => '200', 'type' => 'integer', 'is_encrypted' => false]);
-        \App\Models\Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_height'], ['value' => '200', 'type' => 'integer', 'is_encrypted' => false]);
-        app(\App\Services\SettingsService::class)->forget('performance');
+        Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_width'], ['value' => '200', 'type' => 'integer', 'is_encrypted' => false]);
+        Setting::updateOrCreate(['group' => 'performance', 'key' => 'image_max_height'], ['value' => '200', 'type' => 'integer', 'is_encrypted' => false]);
+        app(SettingsService::class)->forget('performance');
 
         $this->actingAs($this->admin(), 'admin');
 
@@ -101,9 +106,9 @@ class MediaUploadOptimizationTest extends TestCase
     public function the_media_library_admin_upload_action_stores_an_optimized_webp_file(): void
     {
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');
 

@@ -2,8 +2,10 @@
 
 namespace App\Services\Imports;
 
+use App\Services\Imports\Contracts\ImportStage;
+
 /**
- * The outcome of a single {@see \App\Services\Imports\Contracts\ImportStage::step()}
+ * The outcome of a single {@see ImportStage::step()}
  * call.
  *
  * - $done   : the stage has no more work; the engine advances to the next stage.

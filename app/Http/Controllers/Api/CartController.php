@@ -7,6 +7,7 @@ use App\Services\CouponService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -49,7 +50,7 @@ class CartController extends BaseApiController
     {
         // Rate limit: add requests per minute per IP
         $maxAdds = (int) settings('cart.rate_limit_per_minute', 60);
-        if (!RateLimiter::attempt("cart:add:{$request->ip()}", $maxAdds, function () {
+        if (! RateLimiter::attempt("cart:add:{$request->ip()}", $maxAdds, function () {
             return true;
         }, 60)) {
             throw new TooManyRequestsHttpException(60, 'Too many cart requests. Please slow down.');
@@ -57,7 +58,7 @@ class CartController extends BaseApiController
 
         $validated = $request->validate([
             'product_id' => 'required|integer|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:' . settings('cart.max_quantity', 99),
+            'quantity' => 'required|integer|min:1|max:'.settings('cart.max_quantity', 99),
         ]);
 
         $user = Auth::user();
@@ -86,7 +87,7 @@ class CartController extends BaseApiController
     public function update(Request $request, int $itemId): JsonResponse
     {
         $validated = $request->validate([
-            'quantity' => 'required|integer|min:0|max:' . settings('cart.max_quantity', 99),
+            'quantity' => 'required|integer|min:0|max:'.settings('cart.max_quantity', 99),
         ]);
 
         $user = Auth::user();
@@ -157,7 +158,7 @@ class CartController extends BaseApiController
         $summary = $this->cartService->getSummary($cart);
         $result = $this->couponService->validate($validated['code'], (string) $summary['subtotal'], $user?->id);
 
-        if (!$result['valid']) {
+        if (! $result['valid']) {
             return response()->json([
                 'success' => false,
                 'message' => $result['message'],
@@ -165,7 +166,7 @@ class CartController extends BaseApiController
         }
 
         $cart->update(['coupon_code' => $validated['code']]);
-        \Illuminate\Support\Facades\Cache::forget("cart_summary:{$cart->id}");
+        Cache::forget("cart_summary:{$cart->id}");
 
         return response()->json([
             'success' => true,
@@ -184,7 +185,7 @@ class CartController extends BaseApiController
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
 
         $cart->update(['coupon_code' => null]);
-        \Illuminate\Support\Facades\Cache::forget("cart_summary:{$cart->id}");
+        Cache::forget("cart_summary:{$cart->id}");
 
         return response()->json([
             'success' => true,

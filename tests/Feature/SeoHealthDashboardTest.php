@@ -5,10 +5,14 @@ namespace Tests\Feature;
 use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\SeoHealthDashboard;
 use App\Models\Admin;
+use App\Models\Condition;
+use App\Models\CoreWebVitalsSnapshot;
 use App\Models\FailedSearchLog;
 use App\Models\IndexNowPushLog;
 use App\Models\NotFoundLog;
+use App\Models\NotFoundLogSnapshot;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Redirect;
 use App\Models\SearchLog;
 use App\Models\SeoMeta;
@@ -147,8 +151,8 @@ class SeoHealthDashboardTest extends TestCase
     public function on_page_audit_reports_image_alt_text_coverage(): void
     {
         $product = Product::factory()->create();
-        \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => 'product-images/a.jpg', 'is_featured' => true, 'alt_text' => ['en' => 'Bosch brake pad, front, new']]);
-        \App\Models\ProductImage::create(['product_id' => $product->id, 'path' => 'product-images/b.jpg', 'alt_text' => null]);
+        ProductImage::create(['product_id' => $product->id, 'path' => 'product-images/a.jpg', 'is_featured' => true, 'alt_text' => ['en' => 'Bosch brake pad, front, new']]);
+        ProductImage::create(['product_id' => $product->id, 'path' => 'product-images/b.jpg', 'alt_text' => null]);
 
         $this->actingAs($this->superAdmin(), 'admin');
 
@@ -160,7 +164,7 @@ class SeoHealthDashboardTest extends TestCase
     #[Test]
     public function on_page_audit_reports_structured_data_condition_mapping(): void
     {
-        $unmapped = \App\Models\Condition::firstOrCreate(['slug' => 'salvage'], ['name' => 'Salvage', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        $unmapped = Condition::firstOrCreate(['slug' => 'salvage'], ['name' => 'Salvage', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
         Product::factory()->create(['condition_id' => $unmapped->id]); // 'new' is the other, mapped, factory default
 
         $this->actingAs($this->superAdmin(), 'admin');
@@ -264,8 +268,8 @@ class SeoHealthDashboardTest extends TestCase
     {
         app(SettingsService::class)->set('seo.crux_api_key', 'crux-key-123');
 
-        \App\Models\CoreWebVitalsSnapshot::create(['lcp_ms' => 1800, 'lcp_rating' => 'good', 'recorded_at' => now()->subWeek()]);
-        \App\Models\CoreWebVitalsSnapshot::create(['lcp_ms' => 2500, 'lcp_rating' => 'needs-improvement', 'recorded_at' => now()]);
+        CoreWebVitalsSnapshot::create(['lcp_ms' => 1800, 'lcp_rating' => 'good', 'recorded_at' => now()->subWeek()]);
+        CoreWebVitalsSnapshot::create(['lcp_ms' => 2500, 'lcp_rating' => 'needs-improvement', 'recorded_at' => now()]);
 
         Http::fake([
             'chromeuxreport.googleapis.com/*' => Http::response([
@@ -380,8 +384,8 @@ class SeoHealthDashboardTest extends TestCase
     #[Test]
     public function not_found_trend_shows_once_at_least_two_snapshots_exist(): void
     {
-        \App\Models\NotFoundLogSnapshot::create(['unresolved_count' => 2, 'recorded_at' => now()->subWeek()]);
-        \App\Models\NotFoundLogSnapshot::create(['unresolved_count' => 5, 'recorded_at' => now()]);
+        NotFoundLogSnapshot::create(['unresolved_count' => 2, 'recorded_at' => now()->subWeek()]);
+        NotFoundLogSnapshot::create(['unresolved_count' => 5, 'recorded_at' => now()]);
 
         $this->actingAs($this->superAdmin(), 'admin');
 

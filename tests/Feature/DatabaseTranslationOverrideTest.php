@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\LanguageString;
 use App\Support\DatabaseTranslationLoader;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -103,7 +104,7 @@ class DatabaseTranslationOverrideTest extends TestCase
     #[Test]
     public function loader_falls_back_cleanly_when_the_table_is_unusable(): void
     {
-        \Illuminate\Support\Facades\Schema::drop('language_strings');
+        Schema::drop('language_strings');
         DatabaseTranslationLoader::forget('en', 'auth');
         $this->freshTranslator();
 

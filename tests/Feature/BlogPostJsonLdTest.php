@@ -8,7 +8,9 @@ use App\Models\BlogPost;
 use App\Models\BlogTag;
 use App\Models\Category;
 use App\Models\MediaFile;
+use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -66,7 +68,7 @@ class BlogPostJsonLdTest extends TestCase
     #[Test]
     public function json_ld_publisher_logo_resolves_the_configured_site_logo_not_a_hardcoded_path(): void
     {
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'general', 'key' => 'logo_id'],
             ['value' => 'branding/logo.png', 'type' => 'string', 'is_encrypted' => false]
         );
@@ -76,7 +78,7 @@ class BlogPostJsonLdTest extends TestCase
         $response = $this->get(route('frontend.blog.show', ['lang' => 'en', 'slug' => $post->slug]));
 
         $response->assertSee(
-            '"url": "'.\Illuminate\Support\Facades\Storage::disk('public')->url('branding/logo.png').'"',
+            '"url": "'.Storage::disk('public')->url('branding/logo.png').'"',
             false
         );
         $response->assertDontSee('/logo.svg', false);

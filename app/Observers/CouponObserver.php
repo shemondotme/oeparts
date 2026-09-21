@@ -23,7 +23,7 @@ class CouponObserver
         unset($changes['updated_at']);
         unset($original['updated_at']);
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             $this->log($coupon, 'updated', $original, $changes);
         }
 

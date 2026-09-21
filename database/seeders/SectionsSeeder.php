@@ -19,11 +19,11 @@ class SectionsSeeder extends Seeder
             Section::updateOrCreate(
                 ['type' => $data['type'], 'location' => 'homepage'],
                 [
-                    'title'     => $data['title'],
-                    'content'   => $data['content'],
+                    'title' => $data['title'],
+                    'content' => $data['content'],
                     'is_active' => $data['is_active'] ?? true,
                     'sort_order' => $data['sort_order'],
-                    'status'    => $data['status'] ?? SectionStatus::Published->value,
+                    'status' => $data['status'] ?? SectionStatus::Published->value,
                 ]
             );
         }

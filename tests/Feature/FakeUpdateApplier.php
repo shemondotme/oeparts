@@ -17,9 +17,13 @@ use App\Services\Updates\UpdateApplier;
 class FakeUpdateApplier extends UpdateApplier
 {
     public array $log = [];
+
     public ?string $failAt = null;
+
     public bool $rolledBack = false;
+
     public bool $throwOnExitMaintenance = false;
+
     public bool $throwDuringStart = false;
 
     protected function gate(array $manifest): void {}
@@ -63,14 +67,42 @@ class FakeUpdateApplier extends UpdateApplier
         return false;
     }
 
-    protected function doBackup(UpdateHistory $h): void { $this->tick('backup'); }
-    protected function doDownload(UpdateHistory $h): void { $this->tick('download'); }
-    protected function doExtract(UpdateHistory $h): void { $this->tick('extract'); }
-    protected function doSwap(UpdateHistory $h): void { $this->tick('swap'); }
-    protected function doFinalize(UpdateHistory $h): void { $this->tick('finalize'); }
-    protected function doVerify(UpdateHistory $h): void { $this->tick('verify'); }
+    protected function doBackup(UpdateHistory $h): void
+    {
+        $this->tick('backup');
+    }
 
-    protected function rollback(UpdateHistory $h): bool { $this->rolledBack = true; return true; }
+    protected function doDownload(UpdateHistory $h): void
+    {
+        $this->tick('download');
+    }
+
+    protected function doExtract(UpdateHistory $h): void
+    {
+        $this->tick('extract');
+    }
+
+    protected function doSwap(UpdateHistory $h): void
+    {
+        $this->tick('swap');
+    }
+
+    protected function doFinalize(UpdateHistory $h): void
+    {
+        $this->tick('finalize');
+    }
+
+    protected function doVerify(UpdateHistory $h): void
+    {
+        $this->tick('verify');
+    }
+
+    protected function rollback(UpdateHistory $h): bool
+    {
+        $this->rolledBack = true;
+
+        return true;
+    }
 
     private function tick(string $name): void
     {

@@ -46,6 +46,6 @@ class ProductSlugService
      */
     public function buildIdSlug(Product $product, ?string $locale = null): string
     {
-        return $product->id . '-' . $this->generate($product, $locale);
+        return $product->id.'-'.$this->generate($product, $locale);
     }
 }

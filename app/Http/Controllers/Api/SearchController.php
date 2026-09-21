@@ -40,7 +40,7 @@ class SearchController extends BaseApiController
 
         // Rate limit autocomplete requests (30 per minute per IP)
         $maxSearches = (int) settings('search.rate_limit_per_minute', 30);
-        if (!RateLimiter::attempt("search:autocomplete:{$request->ip()}", $maxSearches, function () {
+        if (! RateLimiter::attempt("search:autocomplete:{$request->ip()}", $maxSearches, function () {
             return true;
         }, 60)) {
             throw new TooManyRequestsHttpException(60, 'Too many search requests. Please slow down.');

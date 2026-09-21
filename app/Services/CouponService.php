@@ -14,11 +14,6 @@ class CouponService
 {
     /**
      * Validate a coupon code against all eligibility rules.
-     *
-     * @param string $code
-     * @param string $subtotal
-     * @param int|null $userId
-     * @return array
      */
     public function validate(string $code, string $subtotal, ?int $userId): array
     {
@@ -27,7 +22,7 @@ class CouponService
             $code,
             fn () => Coupon::where('code', $code)->first(),
         );
-        if (!$coupon) {
+        if (! $coupon) {
             return [
                 'valid' => false,
                 'coupon' => null,
@@ -51,7 +46,7 @@ class CouponService
     public function validateCoupon(Coupon $coupon, string $subtotal, ?int $userId): array
     {
         // 2. Is active
-        if (!$coupon->is_active) {
+        if (! $coupon->is_active) {
             return [
                 'valid' => false,
                 'coupon' => $coupon,
@@ -94,6 +89,7 @@ class CouponService
         if ($coupon->min_order_amount !== null &&
             bccomp($subtotal, (string) $coupon->min_order_amount, 2) === -1) {
             $min = number_format($coupon->min_order_amount, 2);
+
             return [
                 'valid' => false,
                 'coupon' => $coupon,
@@ -147,15 +143,12 @@ class CouponService
 
     /**
      * Calculate discount amount based on coupon type.
-     *
-     * @param Coupon $coupon
-     * @param string $subtotal
-     * @return string
      */
     private function calculateDiscount(Coupon $coupon, string $subtotal): string
     {
         if ($coupon->discount_type === DiscountType::Percentage) {
             $rate = bcdiv((string) $coupon->discount_value, '100', 4);
+
             return bcmul($subtotal, $rate, 2);
         }
 
@@ -169,10 +162,6 @@ class CouponService
 
     /**
      * Record coupon usage after an order is placed.
-     *
-     * @param Coupon $coupon
-     * @param Order $order
-     * @return void
      */
     public function apply(Coupon $coupon, Order $order): void
     {
@@ -211,9 +200,9 @@ class CouponService
 
                 CouponUsage::create([
                     'coupon_id' => $coupon->id,
-                    'user_id'   => $order->user_id,
-                    'order_id'  => $order->id,
-                    'used_at'   => now(),
+                    'user_id' => $order->user_id,
+                    'order_id' => $order->id,
+                    'used_at' => now(),
                 ]);
             });
         } catch (\Exception $e) {
@@ -237,9 +226,6 @@ class CouponService
 
     /**
      * Remove coupon from session.
-     *
-     * @param string $checkoutId
-     * @return void
      */
     public function remove(string $checkoutId): void
     {

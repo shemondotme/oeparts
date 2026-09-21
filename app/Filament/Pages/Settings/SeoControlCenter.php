@@ -3,9 +3,12 @@
 namespace App\Filament\Pages\Settings;
 
 use App\Enums\SettingType;
+use App\Filament\Resources\RedirectResource;
+use App\Filament\Resources\SeoMetaResource;
 use App\Filament\Support\AdminUi;
 use App\Jobs\RegenerateSitemap;
 use App\Models\ActivityLog;
+use App\Models\Product;
 use App\Models\Setting;
 use App\Services\CloudflareService;
 use App\Services\SettingsService;
@@ -17,7 +20,9 @@ use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
@@ -106,7 +111,7 @@ class SeoControlCenter extends SettingsPage
 
         $total = array_sum($this->sitemapUrlCounts());
 
-        return 'Sitemap last generated '.\Illuminate\Support\Carbon::createFromTimestamp(filemtime($path))->diffForHumans()
+        return 'Sitemap last generated '.Carbon::createFromTimestamp(filemtime($path))->diffForHumans()
             ." — {$total} URLs across ".count($this->sitemapUrlCounts()).' files.';
     }
 
@@ -163,7 +168,7 @@ class SeoControlCenter extends SettingsPage
             .' &middot; <a href="'.$sitemapUrl.'" target="_blank" rel="noopener" class="fi-link text-primary-600">View sitemap.xml &#8599;</a></div>';
     }
 
-    private ?\App\Models\Product $samplePreviewProductCache = null;
+    private ?Product $samplePreviewProductCache = null;
 
     private bool $samplePreviewProductResolved = false;
 
@@ -178,10 +183,10 @@ class SeoControlCenter extends SettingsPage
      * catalog falls back to illustrative dummy values rather than showing
      * nothing.
      */
-    private function samplePreviewProduct(): ?\App\Models\Product
+    private function samplePreviewProduct(): ?Product
     {
         if (! $this->samplePreviewProductResolved) {
-            $this->samplePreviewProductCache = \App\Models\Product::query()->with('manufacturer')->where('is_active', true)->first();
+            $this->samplePreviewProductCache = Product::query()->with('manufacturer')->where('is_active', true)->first();
             $this->samplePreviewProductResolved = true;
         }
 
@@ -225,7 +230,7 @@ class SeoControlCenter extends SettingsPage
     {
         return Forms\Components\Placeholder::make($key)
             ->label($label)
-            ->content(fn (\Filament\Schemas\Components\Utilities\Get $get) => new HtmlString(
+            ->content(fn (Get $get) => new HtmlString(
                 '<span class="font-mono text-xs text-gray-600 dark:text-gray-400">'.e($this->renderTemplatePreview($get($fieldPath))).'</span>'
             ));
     }
@@ -574,8 +579,8 @@ class SeoControlCenter extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 '301 redirects for retired/moved URLs are managed on the <a href="'
-                                . \App\Filament\Resources\RedirectResource::getUrl()
-                                . '" class="fi-link text-primary-600">Redirects</a> page.'
+                                .RedirectResource::getUrl()
+                                .'" class="fi-link text-primary-600">Redirects</a> page.'
                             )),
 
                         Forms\Components\Placeholder::make('seo_meta_note')
@@ -583,8 +588,8 @@ class SeoControlCenter extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Per-page title/description overrides for individual products, categories, and manufacturers are managed on the <a href="'
-                                . \App\Filament\Resources\SeoMetaResource::getUrl()
-                                . '" class="fi-link text-primary-600">SEO Meta</a> page.'
+                                .SeoMetaResource::getUrl()
+                                .'" class="fi-link text-primary-600">SEO Meta</a> page.'
                             )),
                     ]),
             ]);

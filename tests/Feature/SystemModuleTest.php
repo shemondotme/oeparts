@@ -2,11 +2,22 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\ActivityLogResource\Pages\ViewActivityLog;
+use App\Filament\Resources\AdminResource\Pages\EditAdmin;
+use App\Filament\Resources\AdminResource\Pages\ListAdmins;
+use App\Filament\Resources\LanguageResource\Pages\CreateLanguage;
+use App\Filament\Resources\LanguageResource\Pages\ListLanguages;
+use App\Filament\Resources\RoleResource\Pages\ListRoles;
 use App\Models\ActivityLog;
 use App\Models\Admin;
 use App\Models\Language;
 use App\Policies\AdminPolicy;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\LanguagesSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -22,10 +33,10 @@ class SystemModuleTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\LanguagesSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            LanguagesSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->superAdmin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
@@ -46,7 +57,7 @@ class SystemModuleTest extends TestCase
             'ip_address' => '127.0.0.1',
         ]);
 
-        Livewire::test(\App\Filament\Resources\ActivityLogResource\Pages\ViewActivityLog::class, ['record' => $log->id])
+        Livewire::test(ViewActivityLog::class, ['record' => $log->id])
             ->assertOk();
     }
 
@@ -65,14 +76,14 @@ class SystemModuleTest extends TestCase
         // UI path (super_admin actor — Gate::before bypasses policies, the
         // hidden() closures must still protect):
         $this->actingAs($this->superAdmin, 'admin');
-        Livewire::test(\App\Filament\Resources\AdminResource\Pages\ListAdmins::class)
+        Livewire::test(ListAdmins::class)
             ->loadTable()
             ->assertTableActionHidden('delete', $this->superAdmin);
     }
 
     public function test_admin_cannot_deactivate_self(): void
     {
-        Livewire::test(\App\Filament\Resources\AdminResource\Pages\EditAdmin::class, ['record' => $this->superAdmin->id])
+        Livewire::test(EditAdmin::class, ['record' => $this->superAdmin->id])
             ->fillForm(['is_active' => false])
             ->call('save')
             ->assertHasFormErrors(['is_active']);
@@ -98,7 +109,7 @@ class SystemModuleTest extends TestCase
         // unreliable for link-type EditActions (reports visible while the
         // action's own isHidden() is true) — assert on the action directly.
         $this->actingAs($this->superAdmin, 'admin');
-        $list = Livewire::test(\App\Filament\Resources\RoleResource\Pages\ListRoles::class)
+        $list = Livewire::test(ListRoles::class)
             ->loadTable()
             ->assertTableActionHidden('delete', $superRole)
             ->assertTableActionHidden('delete', $managerRole);
@@ -119,7 +130,7 @@ class SystemModuleTest extends TestCase
         // Policy-level guard (would fire even off a crafted request that
         // bypasses the form entirely):
         $this->actingAs($manager, 'admin');
-        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectException(ValidationException::class);
         AdminPolicy::assertCanAssignRoles([$superRole->id, $managerRole->id]);
     }
 
@@ -134,7 +145,7 @@ class SystemModuleTest extends TestCase
         $target = Admin::where('email', 'support@oeparts.test')->firstOrFail();
 
         $this->actingAs($manager, 'admin');
-        Livewire::test(\App\Filament\Resources\AdminResource\Pages\EditAdmin::class, ['record' => $target->id])
+        Livewire::test(EditAdmin::class, ['record' => $target->id])
             // The roles picker's own modifyQueryUsing() already excludes
             // super_admin from a non-super_admin actor's options, so
             // submitting it here fails Filament's own "exists in the
@@ -156,7 +167,7 @@ class SystemModuleTest extends TestCase
         $target = Admin::where('email', 'support@oeparts.test')->firstOrFail();
 
         $this->actingAs($this->superAdmin, 'admin');
-        Livewire::test(\App\Filament\Resources\AdminResource\Pages\EditAdmin::class, ['record' => $target->id])
+        Livewire::test(EditAdmin::class, ['record' => $target->id])
             ->fillForm(['roles' => [$superRole->id]])
             ->call('save')
             ->assertHasNoFormErrors();
@@ -174,7 +185,7 @@ class SystemModuleTest extends TestCase
         $this->assertFalse($manager->can('delete', $en));
 
         $this->actingAs($this->superAdmin, 'admin');
-        Livewire::test(\App\Filament\Resources\LanguageResource\Pages\ListLanguages::class)
+        Livewire::test(ListLanguages::class)
             ->loadTable()
             ->assertTableActionHidden('delete', $en);
     }
@@ -201,7 +212,7 @@ class SystemModuleTest extends TestCase
      */
     public function test_language_can_be_created_without_flag_emoji_native_name_or_locale(): void
     {
-        Livewire::test(\App\Filament\Resources\LanguageResource\Pages\CreateLanguage::class)
+        Livewire::test(CreateLanguage::class)
             ->fillForm(['code' => 'it', 'name' => 'Italian', 'is_active' => true])
             ->call('create')
             ->assertHasNoFormErrors();

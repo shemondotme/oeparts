@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\LoginLog;
 use App\Models\Setting;
+use App\Services\SettingsService;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -24,17 +27,17 @@ class LogRetentionSettingTest extends TestCase
     #[Test]
     public function the_setting_is_seeded_under_security_not_search(): void
     {
-        $this->seed(\Database\Seeders\SettingsSeeder::class);
+        $this->seed(SettingsSeeder::class);
 
         $this->assertDatabaseHas('settings', [
             'group' => 'security',
-            'key'   => 'log_retention_days',
+            'key' => 'log_retention_days',
             'value' => '90',
         ]);
 
         $this->assertDatabaseMissing('settings', [
             'group' => 'search',
-            'key'   => 'log_retention_days',
+            'key' => 'log_retention_days',
         ]);
     }
 
@@ -48,13 +51,13 @@ class LogRetentionSettingTest extends TestCase
         Setting::where('group', 'security')->where('key', 'log_retention_days')->delete();
         Setting::create(['group' => 'search', 'key' => 'log_retention_days', 'value' => '30', 'type' => 'integer']);
 
-        \Illuminate\Support\Facades\DB::table('settings')
+        DB::table('settings')
             ->where('group', 'search')->where('key', 'log_retention_days')
             ->update(['group' => 'security']);
 
         $this->assertDatabaseHas('settings', [
             'group' => 'security',
-            'key'   => 'log_retention_days',
+            'key' => 'log_retention_days',
             'value' => '30',
         ]);
     }
@@ -62,8 +65,8 @@ class LogRetentionSettingTest extends TestCase
     #[Test]
     public function logs_clean_uses_the_security_group_setting(): void
     {
-        $this->seed(\Database\Seeders\SettingsSeeder::class);
-        app(\App\Services\SettingsService::class)->set('security.log_retention_days', '5');
+        $this->seed(SettingsSeeder::class);
+        app(SettingsService::class)->set('security.log_retention_days', '5');
 
         // created_at isn't fillable (LoginLog stamps it itself via a
         // booted() hook) — forceFill() to backdate it for this test.

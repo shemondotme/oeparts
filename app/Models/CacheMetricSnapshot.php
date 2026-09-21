@@ -18,13 +18,13 @@ class CacheMetricSnapshot extends Model
     ];
 
     protected $casts = [
-        'hit_rate'            => 'integer',
-        'memory_used_bytes'   => 'integer',
-        'memory_max_bytes'    => 'integer',
+        'hit_rate' => 'integer',
+        'memory_used_bytes' => 'integer',
+        'memory_max_bytes' => 'integer',
         'fragmentation_ratio' => 'float',
-        'evicted_keys'        => 'integer',
-        'ops_per_sec'         => 'integer',
-        'total_keys'          => 'integer',
-        'recorded_at'         => 'datetime',
+        'evicted_keys' => 'integer',
+        'ops_per_sec' => 'integer',
+        'total_keys' => 'integer',
+        'recorded_at' => 'datetime',
     ];
 }

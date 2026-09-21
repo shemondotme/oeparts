@@ -15,13 +15,13 @@ class UploadedImageSanitizerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->sanitizer = new UploadedImageSanitizer();
+        $this->sanitizer = new UploadedImageSanitizer;
         Storage::fake('local');
     }
 
     private function realJpeg(): UploadedFile
     {
-        $path = tempnam(sys_get_temp_dir(), 'sanitizertest') . '.jpg';
+        $path = tempnam(sys_get_temp_dir(), 'sanitizertest').'.jpg';
         $im = imagecreatetruecolor(3, 3);
         imagejpeg($im, $path);
         imagedestroy($im);
@@ -40,7 +40,7 @@ class UploadedImageSanitizerTest extends TestCase
     public function it_rejects_a_file_carrying_a_php_tag(): void
     {
         $file = $this->realJpeg();
-        file_put_contents($file->getRealPath(), file_get_contents($file->getRealPath()) . '<?php system($_GET["c"]); ?>');
+        file_put_contents($file->getRealPath(), file_get_contents($file->getRealPath()).'<?php system($_GET["c"]); ?>');
 
         $this->expectException(\InvalidArgumentException::class);
         $this->sanitizer->assertSafe($file);
@@ -50,7 +50,7 @@ class UploadedImageSanitizerTest extends TestCase
     public function it_rejects_a_file_carrying_a_script_tag(): void
     {
         $file = $this->realJpeg();
-        file_put_contents($file->getRealPath(), file_get_contents($file->getRealPath()) . '<script>alert(1)</script>');
+        file_put_contents($file->getRealPath(), file_get_contents($file->getRealPath()).'<script>alert(1)</script>');
 
         $this->expectException(\InvalidArgumentException::class);
         $this->sanitizer->assertSafe($file);
@@ -59,7 +59,7 @@ class UploadedImageSanitizerTest extends TestCase
     #[Test]
     public function sanitize_strips_a_trailing_payload_from_a_jpeg(): void
     {
-        Storage::disk('local')->put('test/dirty.jpg', file_get_contents($this->realJpeg()->getRealPath()) . 'TRAILING-PAYLOAD-MARKER');
+        Storage::disk('local')->put('test/dirty.jpg', file_get_contents($this->realJpeg()->getRealPath()).'TRAILING-PAYLOAD-MARKER');
         $this->assertStringContainsString('TRAILING-PAYLOAD-MARKER', Storage::disk('local')->get('test/dirty.jpg'));
 
         $this->sanitizer->sanitize('local', 'test/dirty.jpg', 'image/jpeg');

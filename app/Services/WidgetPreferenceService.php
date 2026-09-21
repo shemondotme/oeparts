@@ -2,6 +2,32 @@
 
 namespace App\Services;
 
+use App\Filament\Widgets\AbandonedCartWidget;
+use App\Filament\Widgets\AwaitingConfirmationList;
+use App\Filament\Widgets\CacheStatusWidget;
+use App\Filament\Widgets\CatalogStatsWidget;
+use App\Filament\Widgets\CustomerGrowthChart;
+use App\Filament\Widgets\DashboardHeader;
+use App\Filament\Widgets\DiskSpaceWidget;
+use App\Filament\Widgets\FailedQueueJobsMonitor;
+use App\Filament\Widgets\FailedSearchesWidget;
+use App\Filament\Widgets\HealthStrip;
+use App\Filament\Widgets\LatestCustomersWidget;
+use App\Filament\Widgets\NewMessagesInbox;
+use App\Filament\Widgets\NewProductsAdded;
+use App\Filament\Widgets\NewsletterGrowthWidget;
+use App\Filament\Widgets\OrderStatsOverview;
+use App\Filament\Widgets\OrderStatusDistributionWidget;
+use App\Filament\Widgets\OrderVolumeChart;
+use App\Filament\Widgets\PartsInquiryWidget;
+use App\Filament\Widgets\RecentActivityLog;
+use App\Filament\Widgets\RecentOrdersList;
+use App\Filament\Widgets\RefundsPendingList;
+use App\Filament\Widgets\RequestMetricsWidget;
+use App\Filament\Widgets\RevenueChart;
+use App\Filament\Widgets\StockAlertWidget;
+use App\Filament\Widgets\TopManufacturersRevenue;
+use App\Filament\Widgets\TopSearchedOems;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Log;
 
@@ -21,10 +47,10 @@ class WidgetPreferenceService
     /** Widget groups — intuitive categories for the dashboard. */
     public const GROUP_SLUGS = [
         'business-overview' => 'Business Overview',
-        'needs-attention'   => 'Needs Attention',
-        'live-activity'     => 'Live Activity',
-        'catalog-search'    => 'Catalog & Search',
-        'system-health'     => 'System Health',
+        'needs-attention' => 'Needs Attention',
+        'live-activity' => 'Live Activity',
+        'catalog-search' => 'Catalog & Search',
+        'system-health' => 'System Health',
     ];
 
     /** Widgets that are always visible, never shown in preferences. */
@@ -53,7 +79,7 @@ class WidgetPreferenceService
         // ── Always-on (never in preferences) ────────────────────────────
 
         'dashboard_header' => [
-            'class' => \App\Filament\Widgets\DashboardHeader::class,
+            'class' => DashboardHeader::class,
             'label' => 'Dashboard Header',
             'description' => "Today's revenue, orders, and customer KPIs",
             'group' => 'business-overview',
@@ -65,7 +91,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'health_strip' => [
-            'class' => \App\Filament\Widgets\HealthStrip::class,
+            'class' => HealthStrip::class,
             'label' => 'System Health Strip',
             'description' => 'Database, Redis, queue, and storage status',
             'group' => 'system-health',
@@ -80,7 +106,7 @@ class WidgetPreferenceService
         // ── Business Overview ───────────────────────────────────────────
 
         'order_stats_overview' => [
-            'class' => \App\Filament\Widgets\OrderStatsOverview::class,
+            'class' => OrderStatsOverview::class,
             'label' => 'Order Stats Overview',
             'description' => 'Revenue, orders, customers, and average order value',
             'group' => 'business-overview',
@@ -92,7 +118,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'revenue_chart' => [
-            'class' => \App\Filament\Widgets\RevenueChart::class,
+            'class' => RevenueChart::class,
             'label' => 'Revenue Chart',
             'description' => 'Monthly revenue trend over the selected period',
             'group' => 'business-overview',
@@ -104,7 +130,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'order_volume_chart' => [
-            'class' => \App\Filament\Widgets\OrderVolumeChart::class,
+            'class' => OrderVolumeChart::class,
             'label' => 'Order Volume Chart',
             'description' => 'Number of orders over the selected period',
             'group' => 'business-overview',
@@ -116,7 +142,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'order_status_distribution' => [
-            'class' => \App\Filament\Widgets\OrderStatusDistributionWidget::class,
+            'class' => OrderStatusDistributionWidget::class,
             'label' => 'Order Status Distribution',
             'description' => 'Breakdown of orders by status (pending, shipped, delivered)',
             'group' => 'business-overview',
@@ -128,7 +154,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'customer_growth' => [
-            'class' => \App\Filament\Widgets\CustomerGrowthChart::class,
+            'class' => CustomerGrowthChart::class,
             'label' => 'Customer Growth Chart',
             'description' => 'New customer registrations over the selected period',
             'group' => 'business-overview',
@@ -140,7 +166,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'manufacturer_revenue' => [
-            'class' => \App\Filament\Widgets\TopManufacturersRevenue::class,
+            'class' => TopManufacturersRevenue::class,
             'label' => 'Top Manufacturers by Revenue',
             'description' => 'Revenue breakdown by manufacturer',
             'group' => 'business-overview',
@@ -155,7 +181,7 @@ class WidgetPreferenceService
         // ── Needs Attention ─────────────────────────────────────────────
 
         'abandoned_carts' => [
-            'class' => \App\Filament\Widgets\AbandonedCartWidget::class,
+            'class' => AbandonedCartWidget::class,
             'label' => 'Abandoned Carts',
             'description' => 'Carts left unpurchased — recovery opportunity',
             'group' => 'needs-attention',
@@ -167,7 +193,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'awaiting_confirmation' => [
-            'class' => \App\Filament\Widgets\AwaitingConfirmationList::class,
+            'class' => AwaitingConfirmationList::class,
             'label' => 'Awaiting Confirmation',
             'description' => 'Paid orders awaiting fulfilment action',
             'group' => 'needs-attention',
@@ -179,7 +205,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'refunds_pending' => [
-            'class' => \App\Filament\Widgets\RefundsPendingList::class,
+            'class' => RefundsPendingList::class,
             'label' => 'Pending Refunds',
             'description' => 'Refund requests awaiting approval or processing',
             'group' => 'needs-attention',
@@ -191,7 +217,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'new_messages' => [
-            'class' => \App\Filament\Widgets\NewMessagesInbox::class,
+            'class' => NewMessagesInbox::class,
             'label' => 'New Messages',
             'description' => 'Unread messages from customers and suppliers',
             'group' => 'needs-attention',
@@ -203,7 +229,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'stock_alert' => [
-            'class' => \App\Filament\Widgets\StockAlertWidget::class,
+            'class' => StockAlertWidget::class,
             'label' => 'Stock Alerts',
             'description' => 'Parts that are out of stock or running low',
             'group' => 'needs-attention',
@@ -215,7 +241,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'failed_searches' => [
-            'class' => \App\Filament\Widgets\FailedSearchesWidget::class,
+            'class' => FailedSearchesWidget::class,
             'label' => 'Failed Searches',
             'description' => 'OEM numbers customers searched but didn\'t find',
             'group' => 'needs-attention',
@@ -227,7 +253,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'failed_queue_jobs' => [
-            'class' => \App\Filament\Widgets\FailedQueueJobsMonitor::class,
+            'class' => FailedQueueJobsMonitor::class,
             'label' => 'Failed Queue Jobs',
             'description' => 'Background jobs that failed and need review',
             'group' => 'needs-attention',
@@ -242,7 +268,7 @@ class WidgetPreferenceService
         // ── Live Activity ───────────────────────────────────────────────
 
         'recent_orders' => [
-            'class' => \App\Filament\Widgets\RecentOrdersList::class,
+            'class' => RecentOrdersList::class,
             'label' => 'Recent Orders',
             'description' => 'Latest orders from customers',
             'group' => 'live-activity',
@@ -254,7 +280,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'parts_inquiry' => [
-            'class' => \App\Filament\Widgets\PartsInquiryWidget::class,
+            'class' => PartsInquiryWidget::class,
             'label' => 'Parts Inquiry',
             'description' => 'Part requests pending your action',
             'group' => 'live-activity',
@@ -266,7 +292,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'recent_activity' => [
-            'class' => \App\Filament\Widgets\RecentActivityLog::class,
+            'class' => RecentActivityLog::class,
             'label' => 'Recent Activity',
             'description' => 'Activity log of recent admin actions and system events',
             'group' => 'live-activity',
@@ -278,7 +304,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'latest_customers' => [
-            'class' => \App\Filament\Widgets\LatestCustomersWidget::class,
+            'class' => LatestCustomersWidget::class,
             'label' => 'Latest Customers',
             'description' => 'Most recent customer registrations',
             'group' => 'live-activity',
@@ -293,7 +319,7 @@ class WidgetPreferenceService
         // ── Catalog & Search ────────────────────────────────────────────
 
         'new_products_added' => [
-            'class' => \App\Filament\Widgets\NewProductsAdded::class,
+            'class' => NewProductsAdded::class,
             'label' => 'New Products Added',
             'description' => 'Recently added parts to your catalog',
             'group' => 'catalog-search',
@@ -305,7 +331,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'top_searches' => [
-            'class' => \App\Filament\Widgets\TopSearchedOems::class,
+            'class' => TopSearchedOems::class,
             'label' => 'Top Searched OEMs',
             'description' => 'Most-searched OEM numbers by customers',
             'group' => 'catalog-search',
@@ -317,7 +343,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'manufacturing_stats' => [
-            'class' => \App\Filament\Widgets\CatalogStatsWidget::class,
+            'class' => CatalogStatsWidget::class,
             'label' => 'Catalog Stats',
             'description' => 'Manufacturers, products, and stock coverage',
             'group' => 'catalog-search',
@@ -329,7 +355,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::DEFAULT_TTL,
         ],
         'newsletter_growth' => [
-            'class' => \App\Filament\Widgets\NewsletterGrowthWidget::class,
+            'class' => NewsletterGrowthWidget::class,
             'label' => 'Newsletter Growth',
             'description' => 'Newsletter subscriber growth and engagement',
             'group' => 'catalog-search',
@@ -344,7 +370,7 @@ class WidgetPreferenceService
         // ── System Health ───────────────────────────────────────────────
 
         'disk_space' => [
-            'class' => \App\Filament\Widgets\DiskSpaceWidget::class,
+            'class' => DiskSpaceWidget::class,
             'label' => 'Disk Space',
             'description' => 'Server disk usage and available space',
             'group' => 'system-health',
@@ -356,7 +382,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::LONG_TTL,
         ],
         'cache_status' => [
-            'class' => \App\Filament\Widgets\CacheStatusWidget::class,
+            'class' => CacheStatusWidget::class,
             'label' => 'Cache Status',
             'description' => 'Redis cache hit rate and memory usage',
             'group' => 'system-health',
@@ -368,7 +394,7 @@ class WidgetPreferenceService
             'ttl' => AdminWidgetCacheService::SHORT_TTL,
         ],
         'request_metrics' => [
-            'class' => \App\Filament\Widgets\RequestMetricsWidget::class,
+            'class' => RequestMetricsWidget::class,
             'label' => 'Activity Metrics',
             'description' => 'Queue, email, and search activity (last hour)',
             'group' => 'system-health',
@@ -657,7 +683,7 @@ class WidgetPreferenceService
 
     private function registryDefault(string $widgetId): bool
     {
-        return (self::WIDGETS[$widgetId]['default_visible'] ?? false);
+        return self::WIDGETS[$widgetId]['default_visible'] ?? false;
     }
 
     private function getMeta(): array

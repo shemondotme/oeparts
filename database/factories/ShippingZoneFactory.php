@@ -15,8 +15,8 @@ class ShippingZoneFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'       => fake()->unique()->word().' Shipping Zone',
-            'is_active'  => true,
+            'name' => fake()->unique()->word().' Shipping Zone',
+            'is_active' => true,
             'sort_order' => fake()->numberBetween(0, 100),
         ];
     }

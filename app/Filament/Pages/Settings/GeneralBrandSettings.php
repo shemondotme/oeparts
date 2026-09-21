@@ -128,8 +128,8 @@ class GeneralBrandSettings extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Which page loads at the site root is set on that page\'s own edit screen (a "Set as Homepage" toggle) — see <a href="'
-                                . PageResource::getUrl()
-                                . '" class="fi-link text-primary-600">Pages</a>.'
+                                .PageResource::getUrl()
+                                .'" class="fi-link text-primary-600">Pages</a>.'
                             )),
                     ])->columns(2),
             ]);
@@ -191,7 +191,7 @@ class GeneralBrandSettings extends SettingsPage
                             ->label('Registered Address')
                             ->rows(3)
                             ->maxLength(1000)
-                            ->placeholder("Ulonų g. 5, Vilnius, Lithuania")
+                            ->placeholder('Ulonų g. 5, Vilnius, Lithuania')
                             ->columnSpanFull()
                             ->default(null),
                     ])->columns(2),
@@ -273,7 +273,7 @@ class GeneralBrandSettings extends SettingsPage
                         Placeholder::make('current_currency_display')
                             ->label('Store Currency')
                             ->content(function () {
-                                return settings('general.currency', 'EUR') . ' (' . settings('general.currency_symbol', '€') . ')';
+                                return settings('general.currency', 'EUR').' ('.settings('general.currency_symbol', '€').')';
                             })
                             ->helperText('Currency is configured above under Localization & Branding Defaults. This is a read-only reference.'),
 
@@ -351,7 +351,7 @@ class GeneralBrandSettings extends SettingsPage
                 try {
                     $value = Crypt::decryptString($value);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt setting {$setting->key}: " . $e->getMessage());
+                    Log::warning("Failed to decrypt setting {$setting->key}: ".$e->getMessage());
                 }
             }
 
@@ -385,7 +385,7 @@ class GeneralBrandSettings extends SettingsPage
 
         Notification::make()
             ->title('Settings saved')
-            ->body('Cache cleared for: ' . implode(', ', static::$settingsGroups))
+            ->body('Cache cleared for: '.implode(', ', static::$settingsGroups))
             ->success()
             ->send();
     }
@@ -416,7 +416,7 @@ class GeneralBrandSettings extends SettingsPage
                 $value = empty($value) ? '' : json_encode($value);
             }
 
-            $service->set($this->groupForKey($key) . '.' . $key, $value);
+            $service->set($this->groupForKey($key).'.'.$key, $value);
 
             if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $value) {
                 $oldValues[$key] = '***';

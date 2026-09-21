@@ -17,7 +17,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
     public function run(): void
     {
         $logoPath = base_path('media/Manufacturers Logo');
-        
+
         // Define manufacturers based on available logos
         $manufacturersData = [
             ['name' => 'Alfa Romeo', 'slug' => 'alfa-romeo', 'logo_file' => 'Alfa-Romeo.png', 'country' => 'IT', 'sort_order' => 10],
@@ -38,7 +38,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
 
             // 2. Ensure we have an admin to associate with media files
             $admin = Admin::first();
-            if (!$admin) {
+            if (! $admin) {
                 $admin = Admin::create([
                     'name' => 'System Admin',
                     'email' => 'system@oeparts.test',
@@ -49,27 +49,27 @@ class DemoManufacturersAndPartsSeeder extends Seeder
 
             foreach ($manufacturersData as $data) {
                 $logoId = null;
-                $logoFilePath = $logoPath . '/' . $data['logo_file'];
+                $logoFilePath = $logoPath.'/'.$data['logo_file'];
 
                 if (file_exists($logoFilePath)) {
                     $fileName = $data['logo_file'];
-                    $relativePath = 'logos/' . $fileName;
+                    $relativePath = 'logos/'.$fileName;
 
-                    if (!file_exists(public_path('storage/logos'))) {
+                    if (! file_exists(public_path('storage/logos'))) {
                         mkdir(public_path('storage/logos'), 0755, true);
                     }
-                    
+
                     // Copy file to public storage for demo purposes
-                    copy($logoFilePath, public_path('storage/' . $relativePath));
+                    copy($logoFilePath, public_path('storage/'.$relativePath));
 
                     $mediaFile = MediaFile::create([
                         'uploaded_by' => $admin->id,
                         'file_name' => $fileName,
                         'file_path' => $relativePath,
-                        'file_url' => asset('storage/' . $relativePath),
+                        'file_url' => asset('storage/'.$relativePath),
                         'mime_type' => mime_content_type($logoFilePath),
                         'size' => filesize($logoFilePath),
-                        'alt_text' => $data['name'] . ' Logo',
+                        'alt_text' => $data['name'].' Logo',
                     ]);
                     $logoId = $mediaFile->id;
                 }
@@ -106,7 +106,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                 ['name' => 'New', 'bg_color' => '#ecfdf5', 'text_color' => '#065f46', 'is_active' => true]
             );
             $isInStock = $i % 2 === 0; // Alternate stock status
-            $oemNumber = $oemPrefix . '-' . str_pad($i, 6, '0', STR_PAD_LEFT);
+            $oemNumber = $oemPrefix.'-'.str_pad($i, 6, '0', STR_PAD_LEFT);
 
             $normalizedOem = strtoupper(preg_replace('/[^A-Z0-9]/i', '', $oemNumber));
 
@@ -129,7 +129,7 @@ class DemoManufacturersAndPartsSeeder extends Seeder
                     'es' => "Pieza OEM de alta calidad de {$manufacturer->name['es']}. Condición: {$condition->name}.",
                 ],
                 'condition_id' => $condition->id,
-                'price' => bcmul((string)rand(20, 500), '1.00', 2),
+                'price' => bcmul((string) rand(20, 500), '1.00', 2),
                 'delivery_time' => '2-4 days',
                 'moq' => 1,
                 'is_in_stock' => $isInStock,

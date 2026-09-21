@@ -157,7 +157,7 @@ class CacheDashboard extends Page
             }
 
             fclose($handle);
-        }, 'cache-dashboard-' . date('Y-m-d-His') . '.csv');
+        }, 'cache-dashboard-'.date('Y-m-d-His').'.csv');
     }
 
     /**

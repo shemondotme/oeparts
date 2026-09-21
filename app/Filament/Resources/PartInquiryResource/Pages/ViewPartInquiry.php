@@ -4,8 +4,8 @@ namespace App\Filament\Resources\PartInquiryResource\Pages;
 
 use App\Enums\PartInquiryStatus;
 use App\Filament\Resources\PartInquiryResource;
+use App\Filament\Resources\ProductResource;
 use Filament\Actions;
-use Filament\Infolists;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
@@ -53,7 +53,7 @@ class ViewPartInquiry extends ViewRecord
                                     ->schema([
                                         TextEntry::make('oem_number')
                                             ->label('OEM Number')
-                                            ->url(fn ($record): string => \App\Filament\Resources\ProductResource::getUrl('index', ['tableSearch' => $record->oem_number]))
+                                            ->url(fn ($record): string => ProductResource::getUrl('index', ['tableSearch' => $record->oem_number]))
                                             ->color('primary')
                                             ->tooltip('Search the catalog for this OEM number')
                                             ->extraAttributes(['class' => 'font-mono uppercase']),
@@ -119,15 +119,15 @@ class ViewPartInquiry extends ViewRecord
                                             ->label('Status')
                                             ->badge()
                                             ->color(fn (PartInquiryStatus $state): string => match ($state) {
-                                                PartInquiryStatus::New        => 'gray',
-                                                PartInquiryStatus::Reviewing  => 'warning',
-                                                PartInquiryStatus::Sourced    => 'success',
+                                                PartInquiryStatus::New => 'gray',
+                                                PartInquiryStatus::Reviewing => 'warning',
+                                                PartInquiryStatus::Sourced => 'success',
                                                 PartInquiryStatus::Unavailable => 'danger',
                                             })
                                             ->icon(fn (PartInquiryStatus $state): string => match ($state) {
-                                                PartInquiryStatus::New        => 'heroicon-o-clock',
-                                                PartInquiryStatus::Reviewing  => 'heroicon-o-eye',
-                                                PartInquiryStatus::Sourced    => 'heroicon-o-check-circle',
+                                                PartInquiryStatus::New => 'heroicon-o-clock',
+                                                PartInquiryStatus::Reviewing => 'heroicon-o-eye',
+                                                PartInquiryStatus::Sourced => 'heroicon-o-check-circle',
                                                 PartInquiryStatus::Unavailable => 'heroicon-o-x-circle',
                                             }),
                                         TextEntry::make('admin_note')

@@ -60,7 +60,7 @@ class UpdateSwapper
             throw new UpdateException('Staging directory not found: '.$stagingDir);
         }
 
-        $root      = $this->root();
+        $root = $this->root();
         $backupDir = $this->swapBackupDir($version);
         $this->rrmdir($backupDir);
         $this->ensureDir($backupDir);
@@ -75,22 +75,22 @@ class UpdateSwapper
         }
 
         $map = [
-            'version'     => $version,
-            'started_at'  => now()->toIso8601String(),
-            'root'        => $root,
-            'backup_dir'  => $backupDir,
+            'version' => $version,
+            'started_at' => now()->toIso8601String(),
+            'root' => $root,
+            'backup_dir' => $backupDir,
             'staging_dir' => $stagingDir,
-            'swapped'     => [],
-            'completed'   => false,
+            'swapped' => [],
+            'completed' => false,
         ];
         $this->writeState($map); // persist early so recovery can act if we die
 
         $rel = null;
         try {
             foreach ($corePaths as $rel) {
-                $rootPath    = $root.DIRECTORY_SEPARATOR.$rel;
+                $rootPath = $root.DIRECTORY_SEPARATOR.$rel;
                 $stagingPath = $stagingDir.DIRECTORY_SEPARATOR.$rel;
-                $backupPath  = $backupDir.DIRECTORY_SEPARATOR.$rel;
+                $backupPath = $backupDir.DIRECTORY_SEPARATOR.$rel;
                 $hadOriginal = file_exists($rootPath);
 
                 if ($hadOriginal) {
@@ -110,7 +110,7 @@ class UpdateSwapper
             throw new UpdateException('File swap failed at ['.$rel.']: '.$e->getMessage().' — changes reversed.');
         }
 
-        $map['completed']  = true;
+        $map['completed'] = true;
         $map['swapped_at'] = now()->toIso8601String();
         $this->writeState($map);
 
@@ -185,9 +185,9 @@ class UpdateSwapper
     private function reverse(array $swapped, string $root, string $backupDir, string $stagingDir): void
     {
         foreach (array_reverse($swapped) as $entry) {
-            $rel         = $entry['path'];
-            $rootPath    = $root.DIRECTORY_SEPARATOR.$rel;
-            $backupPath  = $backupDir.DIRECTORY_SEPARATOR.$rel;
+            $rel = $entry['path'];
+            $rootPath = $root.DIRECTORY_SEPARATOR.$rel;
+            $backupPath = $backupDir.DIRECTORY_SEPARATOR.$rel;
             $stagingPath = $stagingDir.DIRECTORY_SEPARATOR.$rel;
 
             // Move the new code back out of the way (preserve it in staging).

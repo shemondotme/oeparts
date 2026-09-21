@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Enums\RedirectType;
+use App\Http\Middleware\HandleRedirects;
 use App\Models\Redirect;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -136,10 +139,10 @@ class RedirectMiddlewareTest extends TestCase
             'type' => RedirectType::Permanent, 'is_active' => true, 'hit_count' => 0,
         ]);
 
-        $request = \Illuminate\Http\Request::create('/en/contact', 'POST');
-        $middleware = app(\App\Http\Middleware\HandleRedirects::class);
+        $request = Request::create('/en/contact', 'POST');
+        $middleware = app(HandleRedirects::class);
 
-        $response = $middleware->handle($request, fn ($req) => new \Illuminate\Http\Response('handled', 200));
+        $response = $middleware->handle($request, fn ($req) => new Response('handled', 200));
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('handled', $response->getContent());

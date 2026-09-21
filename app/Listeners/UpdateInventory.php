@@ -18,7 +18,7 @@ class UpdateInventory
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Failed to update inventory for order: ' . $event->order->order_number, [
+            Log::error('Failed to update inventory for order: '.$event->order->order_number, [
                 'error' => $e->getMessage(),
             ]);
         }

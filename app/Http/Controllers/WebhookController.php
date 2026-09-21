@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentGateway;
 use App\Jobs\ProcessAirwallexWebhook;
 use App\Jobs\ProcessPayseraWebhook;
+use App\Models\Payment;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -43,14 +45,15 @@ class WebhookController extends Controller
         Log::debug('Airwallex webhook received', [
             'event_type' => $request->input('type'),
             'timestamp' => $timestamp,
-            'signature_present' => !empty($signature),
+            'signature_present' => ! empty($signature),
         ]);
 
-        if (!$this->paymentService->verifyWebhookSignature($payload, $signature, $timestamp)) {
+        if (! $this->paymentService->verifyWebhookSignature($payload, $signature, $timestamp)) {
             Log::warning('Airwallex webhook signature verification failed', [
                 'timestamp' => $timestamp,
-                'signature' => substr($signature ?? '', 0, 8) . '***',
+                'signature' => substr($signature ?? '', 0, 8).'***',
             ]);
+
             return response('Invalid signature', 401);
         }
 
@@ -59,19 +62,22 @@ class WebhookController extends Controller
             Log::warning('Airwallex webhook invalid JSON', [
                 'error' => json_last_error_msg(),
             ]);
+
             return response('Invalid JSON', 400);
         }
 
         $eventId = $data['id'] ?? null;
         $eventType = $data['type'] ?? null;
 
-        if (!$eventId || !$eventType) {
+        if (! $eventId || ! $eventType) {
             Log::warning('Airwallex webhook missing required fields', ['data' => $data]);
+
             return response('Missing required fields', 400);
         }
 
         if ($this->paymentService->isDuplicateEvent($eventId)) {
             Log::info('Airwallex webhook duplicate event ignored', ['event_id' => $eventId]);
+
             return response('Event already processed', 200);
         }
 
@@ -109,31 +115,35 @@ class WebhookController extends Controller
             Log::warning('Paysera webhook invalid JSON', [
                 'error' => json_last_error_msg(),
             ]);
+
             return response('Invalid JSON', 400);
         }
 
         Log::debug('Paysera webhook received', [
             'status' => $data['status'] ?? null,
-            'signature_present' => !empty($signature),
+            'signature_present' => ! empty($signature),
         ]);
 
-        if (!$this->paymentService->verifyPayseraWebhookSignature($payload, $signature)) {
+        if (! $this->paymentService->verifyPayseraWebhookSignature($payload, $signature)) {
             Log::warning('Paysera webhook signature verification failed', [
-                'signature' => substr($signature ?? '', 0, 8) . '***',
+                'signature' => substr($signature ?? '', 0, 8).'***',
             ]);
+
             return response('Invalid signature', 401);
         }
 
         $orderId = $data['order_id'] ?? null;
         $status = $data['status'] ?? null;
 
-        if (!$orderId) {
+        if (! $orderId) {
             Log::warning('Paysera webhook missing order_id', ['data' => $data]);
+
             return response('Missing required fields', 400);
         }
 
         if ($this->paymentService->isDuplicatePayseraEvent($orderId, $status)) {
             Log::info('Paysera webhook duplicate event ignored', ['order_id' => $orderId, 'status' => $status]);
+
             return response('Event already processed', 200);
         }
 
@@ -155,7 +165,7 @@ class WebhookController extends Controller
      */
     public function handleBankTransferConfirm(Request $request): Response
     {
-        $rateKey = 'bank-transfer:' . ($request->input('payment_id') ?? $request->ip());
+        $rateKey = 'bank-transfer:'.($request->input('payment_id') ?? $request->ip());
         if (RateLimiter::tooManyAttempts($rateKey, 10)) {
             return response()->json(['success' => false, 'message' => 'Too many attempts'], 429);
         }
@@ -177,9 +187,9 @@ class WebhookController extends Controller
             return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $validator->errors()], 422);
         }
 
-        $payment = \App\Models\Payment::find($request->input('payment_id'));
+        $payment = Payment::find($request->input('payment_id'));
 
-        if ($payment->gateway !== \App\Enums\PaymentGateway::BankTransfer) {
+        if ($payment->gateway !== PaymentGateway::BankTransfer) {
             return response()->json(['success' => false, 'message' => 'Payment is not a bank transfer'], 400);
         }
 
@@ -193,6 +203,7 @@ class WebhookController extends Controller
                 'payment_id' => $payment->id,
                 'error' => $e->getMessage(),
             ]);
+
             return response()->json(['success' => false, 'message' => 'Something went wrong'], 500);
         }
 

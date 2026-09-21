@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Frontend;
 
-use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Services\OtpService;
 use App\Enums\OtpPurpose;
+use App\Http\Controllers\Controller;
 use App\Jobs\SendOtpEmail;
 use App\Jobs\SendWelcomeEmail;
+use App\Models\User;
+use App\Services\OtpService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -44,7 +44,7 @@ class AuthController extends Controller
         // keying in AppServiceProvider.
         $maxAttempts = (int) settings('security.login_max_attempts', 5);
         $decayMinutes = (int) settings('security.login_window_minutes', 15);
-        $throttleKey = 'login:' . $request->input('email', '') . '|' . $request->ip();
+        $throttleKey = 'login:'.$request->input('email', '').'|'.$request->ip();
         if (! RateLimiter::attempt($throttleKey, $maxAttempts, function () {
             return true;
         }, $decayMinutes * 60)) {

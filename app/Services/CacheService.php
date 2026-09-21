@@ -471,7 +471,7 @@ class CacheService
         try {
             $redis = Redis::connection('cache');
             $cachePrefix = (string) config('cache.prefix', '');
-            $fullPrefix = (string) config('database.redis.options.prefix', 'laravel_database_') . $cachePrefix;
+            $fullPrefix = (string) config('database.redis.options.prefix', 'laravel_database_').$cachePrefix;
         } catch (\Exception $e) {
             return -1; // driver isn't Redis — no safe bulk-scan equivalent exists
         }

@@ -9,8 +9,6 @@ use App\Http\Requests\Frontend\PartInquiryRequest;
 use App\Jobs\SendPartInquiryNotification;
 use App\Models\FailedSearchLog;
 use App\Models\PartInquiry;
-use App\Services\OemNormalizerService;
-use Illuminate\Http\Request;
 
 class PartInquiryController extends Controller
 {
@@ -38,18 +36,18 @@ class PartInquiryController extends Controller
 
         $inquiry = PartInquiry::create([
             'failed_search_log_id' => $validated['failed_search_log_id'] ?? null,
-            'email'        => $validated['email'],
-            'phone'        => $validated['phone'] ?? null,
-            'oem_number'   => strtoupper(trim($validated['oem_number'])),
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? null,
+            'oem_number' => strtoupper(trim($validated['oem_number'])),
             'manufacturer' => $validated['manufacturer'] ?? null,
-            'car_model'    => $validated['car_model'] ?? null,
-            'year'         => $validated['year'] ?? null,
-            'vin_number'   => !empty($validated['vin_number']) ? strtoupper(trim($validated['vin_number'])) : null,
-            'quantity'     => $validated['quantity'] ?? 1,
-            'urgency'      => $validated['urgency'] ?? 'normal',
-            'notes'        => $validated['notes'] ?? null,
-            'status'       => PartInquiryStatus::New,
-            'ip_address'   => $request->ip(),
+            'car_model' => $validated['car_model'] ?? null,
+            'year' => $validated['year'] ?? null,
+            'vin_number' => ! empty($validated['vin_number']) ? strtoupper(trim($validated['vin_number'])) : null,
+            'quantity' => $validated['quantity'] ?? 1,
+            'urgency' => $validated['urgency'] ?? 'normal',
+            'notes' => $validated['notes'] ?? null,
+            'status' => PartInquiryStatus::New,
+            'ip_address' => $request->ip(),
         ]);
 
         if (! empty($validated['failed_search_log_id'])) {

@@ -3,9 +3,10 @@
 namespace App\Filament\Pages;
 
 use App\Services\WidgetPreferenceService;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Livewire\Attributes\On;
-use Filament\Notifications\Notification;
 
 class WidgetPreferences extends Page
 {
@@ -29,13 +30,13 @@ class WidgetPreferences extends Page
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Actions\Action::make('backToDashboard')
+            Action::make('backToDashboard')
                 ->label('Back to Dashboard')
                 ->icon('heroicon-o-arrow-left')
                 ->color('gray')
                 ->outlined()
                 ->url(Dashboard::getUrl()),
-            \Filament\Actions\Action::make('resetToDefaults')
+            Action::make('resetToDefaults')
                 ->label('Reset to Defaults')
                 ->icon('heroicon-o-arrow-uturn-left')
                 ->color('gray')
@@ -158,6 +159,6 @@ class WidgetPreferences extends Page
         }
 
         // Remove empty groups
-        return array_filter($grouped, fn($group) => ! empty($group['widgets']));
+        return array_filter($grouped, fn ($group) => ! empty($group['widgets']));
     }
 }

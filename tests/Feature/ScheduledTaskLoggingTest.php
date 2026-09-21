@@ -7,6 +7,7 @@ use App\Filament\Pages\System\ScheduledTasksPage;
 use App\Models\Admin;
 use App\Models\CronLog;
 use App\Support\ScheduleCommandName;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Console\Events\ScheduledTaskFailed;
 use Illuminate\Console\Events\ScheduledTaskFinished;
 use Illuminate\Console\Events\ScheduledTaskStarting;
@@ -74,7 +75,7 @@ class ScheduledTaskLoggingTest extends TestCase
     #[Test]
     public function running_a_task_now_from_the_admin_page_logs_it_and_does_not_crash(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');
@@ -91,12 +92,12 @@ class ScheduledTaskLoggingTest extends TestCase
     #[Test]
     public function the_admin_page_task_list_exposes_the_bare_command_name(): void
     {
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');
 
-        $tasks = (new ScheduledTasksPage())->getScheduledTasks();
+        $tasks = (new ScheduledTasksPage)->getScheduledTasks();
 
         $names = array_column($tasks, 'command');
         $this->assertContains('scheduler:heartbeat', $names);

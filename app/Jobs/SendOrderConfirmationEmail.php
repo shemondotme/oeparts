@@ -36,6 +36,7 @@ class SendOrderConfirmationEmail implements ShouldQueue
         // retries/backoff cycles on an order this job can never deliver for.
         if (empty($toEmail)) {
             Log::warning('Skipped order confirmation email: no recipient address', ['order_id' => $this->order->id]);
+
             return;
         }
 

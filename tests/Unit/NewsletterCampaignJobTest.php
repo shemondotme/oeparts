@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Jobs\SendNewsletterCampaign;
 use App\Mail\NewsletterCampaignEmail;
 use App\Models\NewsletterCampaign;
+use App\Models\NewsletterCampaignRecipient;
 use App\Models\NewsletterSubscriber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
@@ -81,7 +82,7 @@ class NewsletterCampaignJobTest extends TestCase
         $job->handle();
 
         $this->assertDatabaseHas('newsletter_campaigns', [
-            'id'     => $campaign->id,
+            'id' => $campaign->id,
             'status' => 'sent',
         ]);
     }
@@ -96,7 +97,7 @@ class NewsletterCampaignJobTest extends TestCase
         $job->handle();
 
         $this->assertDatabaseHas('newsletter_campaigns', [
-            'id'     => $campaign->id,
+            'id' => $campaign->id,
             'status' => 'sent',
         ]);
     }
@@ -113,7 +114,7 @@ class NewsletterCampaignJobTest extends TestCase
         $job->handle();
 
         $this->assertDatabaseHas('newsletter_campaigns', [
-            'id'         => $campaign->id,
+            'id' => $campaign->id,
             'sent_count' => 5,
         ]);
     }
@@ -137,9 +138,9 @@ class NewsletterCampaignJobTest extends TestCase
 
         foreach ($subscribers as $subscriber) {
             $this->assertDatabaseHas('newsletter_campaign_recipients', [
-                'campaign_id'   => $campaign->id,
+                'campaign_id' => $campaign->id,
                 'subscriber_id' => $subscriber->id,
-                'email'         => $subscriber->email,
+                'email' => $subscriber->email,
             ]);
         }
     }
@@ -157,7 +158,7 @@ class NewsletterCampaignJobTest extends TestCase
 
         $this->assertDatabaseMissing('newsletter_campaign_recipients', [
             'campaign_id' => $campaign->id,
-            'sent_at'     => null,
+            'sent_at' => null,
         ]);
     }
 
@@ -206,7 +207,7 @@ class NewsletterCampaignJobTest extends TestCase
         $notYetSent = NewsletterSubscriber::factory()->create(['is_active' => true]);
         $campaign = NewsletterCampaign::factory()->create(['status' => 'sending']);
 
-        \App\Models\NewsletterCampaignRecipient::create([
+        NewsletterCampaignRecipient::create([
             'campaign_id' => $campaign->id,
             'subscriber_id' => $alreadySent->id,
             'email' => $alreadySent->email,
@@ -232,7 +233,7 @@ class NewsletterCampaignJobTest extends TestCase
         $stuckPending = NewsletterSubscriber::factory()->create(['is_active' => true]);
         $campaign = NewsletterCampaign::factory()->create(['status' => 'sending']);
 
-        \App\Models\NewsletterCampaignRecipient::create([
+        NewsletterCampaignRecipient::create([
             'campaign_id' => $campaign->id,
             'subscriber_id' => $stuckPending->id,
             'email' => $stuckPending->email,
@@ -262,7 +263,7 @@ class NewsletterCampaignJobTest extends TestCase
         $fromThisRun = NewsletterSubscriber::factory()->create(['is_active' => true]);
         $campaign = NewsletterCampaign::factory()->create(['status' => 'sending']);
 
-        \App\Models\NewsletterCampaignRecipient::create([
+        NewsletterCampaignRecipient::create([
             'campaign_id' => $campaign->id,
             'subscriber_id' => $fromEarlierRun->id,
             'email' => $fromEarlierRun->email,

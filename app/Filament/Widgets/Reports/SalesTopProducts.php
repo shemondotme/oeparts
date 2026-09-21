@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets\Reports;
 
+use App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
 use App\Models\OrderItem;
-use Carbon\Carbon;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables\Columns\TextColumn;
@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  */
 class SalesTopProducts extends TableWidget
 {
-    use \App\Filament\Widgets\Reports\Concerns\HasReportPeriod;
+    use HasReportPeriod;
 
     protected static ?string $heading = 'Top Selling Products';
 

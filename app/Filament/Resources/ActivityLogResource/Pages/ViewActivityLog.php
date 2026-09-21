@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\ActivityLogResource\Pages;
 
-use App\Filament\Pages\System\SetupAssistant;
 use App\Filament\Pages\System\HealthCheckDashboard;
+use App\Filament\Pages\System\SetupAssistant;
 use App\Filament\Resources\ActivityLogResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;

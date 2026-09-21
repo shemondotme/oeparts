@@ -2,8 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SectionStatus;
 use App\Models\Section;
-use App\Services\CacheService;
+use App\Models\Setting;
 use App\Services\SectionRendererService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -52,7 +53,7 @@ class HomepageTest extends TestCase
     {
         // company.address is already collected (used on the Impressum
         // page) but never reached the homepage's Organization JSON-LD.
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'company', 'key' => 'address'],
             ['value' => 'Musterstrasse 1, 10115 Berlin, Germany', 'type' => 'string', 'is_encrypted' => false]
         );
@@ -77,22 +78,22 @@ class HomepageTest extends TestCase
     public function homepage_renders_active_sections_only(): void
     {
         Section::create([
-            'type'       => 'hero',
-            'location'   => 'homepage',
-            'title'      => 'Hero',
-            'content'    => ['headline' => ['en' => 'Test Hero', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']],
-            'is_active'  => true,
-            'status'     => \App\Enums\SectionStatus::Published,
+            'type' => 'hero',
+            'location' => 'homepage',
+            'title' => 'Hero',
+            'content' => ['headline' => ['en' => 'Test Hero', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']],
+            'is_active' => true,
+            'status' => SectionStatus::Published,
             'sort_order' => 10,
         ]);
 
         Section::create([
-            'type'       => 'trust_bar',
-            'location'   => 'homepage',
-            'title'      => 'Trust',
-            'content'    => ['items' => []],
-            'is_active'  => false, // inactive — should NOT render
-            'status'     => \App\Enums\SectionStatus::Published,
+            'type' => 'trust_bar',
+            'location' => 'homepage',
+            'title' => 'Trust',
+            'content' => ['items' => []],
+            'is_active' => false, // inactive — should NOT render
+            'status' => SectionStatus::Published,
             'sort_order' => 20,
         ]);
 
@@ -112,29 +113,29 @@ class HomepageTest extends TestCase
     public function sections_are_rendered_in_sort_order(): void
     {
         Section::create([
-            'type'       => 'stats_counter',
-            'location'   => 'homepage',
-            'title'      => 'Stats',
-            'content'    => ['headline' => ['en' => 'First Section', 'de' => '', 'lt' => '', 'fr' => '', 'es' => ''], 'items' => []],
-            'is_active'  => true,
-            'status'     => \App\Enums\SectionStatus::Published,
+            'type' => 'stats_counter',
+            'location' => 'homepage',
+            'title' => 'Stats',
+            'content' => ['headline' => ['en' => 'First Section', 'de' => '', 'lt' => '', 'fr' => '', 'es' => ''], 'items' => []],
+            'is_active' => true,
+            'status' => SectionStatus::Published,
             'sort_order' => 5,
         ]);
 
         Section::create([
-            'type'       => 'hero',
-            'location'   => 'homepage',
-            'title'      => 'Hero',
-            'content'    => ['headline' => ['en' => 'Second Section', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']],
-            'is_active'  => true,
-            'status'     => \App\Enums\SectionStatus::Published,
+            'type' => 'hero',
+            'location' => 'homepage',
+            'title' => 'Hero',
+            'content' => ['headline' => ['en' => 'Second Section', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']],
+            'is_active' => true,
+            'status' => SectionStatus::Published,
             'sort_order' => 10,
         ]);
 
         $response = $this->get('/en/');
         $response->assertStatus(200);
 
-        $firstPos  = strpos($response->getContent(), 'First Section');
+        $firstPos = strpos($response->getContent(), 'First Section');
         $secondPos = strpos($response->getContent(), 'Second Section');
         $this->assertLessThan($secondPos, $firstPos, 'Section with lower sort_order should appear first');
     }
@@ -146,11 +147,11 @@ class HomepageTest extends TestCase
     {
         Section::create([
             'type' => 'hero', 'location' => 'homepage', 'title' => 'A',
-            'content' => ['headline' => ['en' => '']], 'is_active' => true, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 1,
+            'content' => ['headline' => ['en' => '']], 'is_active' => true, 'status' => SectionStatus::Published, 'sort_order' => 1,
         ]);
         Section::create([
             'type' => 'banner', 'location' => 'homepage', 'title' => 'B',
-            'content' => [], 'is_active' => false, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 2,
+            'content' => [], 'is_active' => false, 'status' => SectionStatus::Published, 'sort_order' => 2,
         ]);
 
         $renderer = app(SectionRendererService::class);
@@ -165,11 +166,11 @@ class HomepageTest extends TestCase
     {
         Section::create([
             'type' => 'hero', 'location' => 'homepage', 'title' => 'H',
-            'content' => [], 'is_active' => true, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 1,
+            'content' => [], 'is_active' => true, 'status' => SectionStatus::Published, 'sort_order' => 1,
         ]);
         Section::create([
             'type' => 'banner', 'location' => 'landing', 'title' => 'L',
-            'content' => [], 'is_active' => true, 'status' => \App\Enums\SectionStatus::Published, 'sort_order' => 1,
+            'content' => [], 'is_active' => true, 'status' => SectionStatus::Published, 'sort_order' => 1,
         ]);
 
         $renderer = app(SectionRendererService::class);

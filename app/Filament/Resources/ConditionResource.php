@@ -5,18 +5,20 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ConditionResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\Condition;
-use Filament\Forms;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Support\Colors\Color;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
 use Illuminate\Support\Facades\DB;
 
 class ConditionResource extends Resource
@@ -120,7 +122,7 @@ class ConditionResource extends Resource
                                             ->helperText('Badge text color (hex).'),
                                         Forms\Components\Placeholder::make('preview')
                                             ->label(__('admin.preview'))
-                                            ->content(fn (\Filament\Schemas\Components\Utilities\Get $get) => sprintf(
+                                            ->content(fn (Get $get) => sprintf(
                                                 '<span class="inline-flex items-center rounded px-2 py-0.5 bp-spec-mono font-bold" style="background-color: %s; color: %s;">%s</span>',
                                                 $get('bg_color') ?? '#DCFCE7',
                                                 $get('text_color') ?? '#16A34A',
@@ -155,7 +157,7 @@ class ConditionResource extends Resource
                     ->badge()
                     ->weight(FontWeight::Medium)
                     ->color(fn (Condition $record) => $record->bg_color
-                        ? \Filament\Support\Colors\Color::hex($record->bg_color)
+                        ? Color::hex($record->bg_color)
                         : 'gray'),
                 Tables\Columns\TextColumn::make('slug')
                     ->label(__('admin.slug'))
@@ -203,7 +205,7 @@ class ConditionResource extends Resource
                         ->before(function (Actions\DeleteAction $action, Condition $record) {
                             $inUseCount = $record->products()->count();
                             if ($inUseCount > 0) {
-                                \Filament\Notifications\Notification::make()
+                                Notification::make()
                                     ->danger()
                                     ->title("Cannot delete \"{$record->name}\"")
                                     ->body("{$inUseCount} product(s) still use this condition. Reassign them first.")
@@ -249,7 +251,7 @@ class ConditionResource extends Resource
                                     }
                                 });
                             } catch (\RuntimeException $e) {
-                                \Filament\Notifications\Notification::make()
+                                Notification::make()
                                     ->danger()
                                     ->title('Delete failed')
                                     ->body($e->getMessage())
@@ -281,10 +283,10 @@ class ConditionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListConditions::route('/'),
+            'index' => Pages\ListConditions::route('/'),
             'create' => Pages\CreateCondition::route('/create'),
-            'view'   => Pages\ViewCondition::route('/{record}'),
-            'edit'   => Pages\EditCondition::route('/{record}/edit'),
+            'view' => Pages\ViewCondition::route('/{record}'),
+            'edit' => Pages\EditCondition::route('/{record}/edit'),
         ];
     }
 

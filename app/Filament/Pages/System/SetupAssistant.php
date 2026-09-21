@@ -2,10 +2,9 @@
 
 namespace App\Filament\Pages\System;
 
-use App\Console\Commands\DemoSetup;
 use App\Models\ActivityLog;
+use App\Services\SettingsService;
 use Filament\Actions\Action;
-use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Artisan;
@@ -157,7 +156,7 @@ class SetupAssistant extends Page
             $db = DB::connection()->getDatabaseName();
             $size = DB::select('SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size FROM information_schema.tables WHERE table_schema = ?', [$db]);
 
-            return ($size[0]->size ?? 0) . ' MB';
+            return ($size[0]->size ?? 0).' MB';
         } catch (\Exception $e) {
             return 'N/A';
         }
@@ -170,7 +169,7 @@ class SetupAssistant extends Page
 
             return config('cache.default');
         } catch (\Exception $e) {
-            return 'Error: ' . $e->getMessage();
+            return 'Error: '.$e->getMessage();
         }
     }
 
@@ -216,7 +215,7 @@ class SetupAssistant extends Page
 
             return "{$count} migrations run (last: {$last->migration})";
         } catch (\Exception $e) {
-            return 'Error: ' . $e->getMessage();
+            return 'Error: '.$e->getMessage();
         }
     }
 
@@ -364,7 +363,7 @@ class SetupAssistant extends Page
         // locks the operator out of this very panel.
         $wasDown = $this->isDownForMaintenance();
 
-        app(\App\Services\SettingsService::class)->set('maintenance.enabled', $wasDown ? '0' : '1');
+        app(SettingsService::class)->set('maintenance.enabled', $wasDown ? '0' : '1');
 
         if ($wasDown) {
             $this->logAction('maintenance_disabled', 'Maintenance mode disabled, storefront back online');

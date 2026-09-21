@@ -19,7 +19,7 @@ class ScheduleCommandName
             return $event->description;
         }
 
-        $prefix = ConsoleApplication::phpBinary() . ' ' . ConsoleApplication::artisanBinary() . ' ';
+        $prefix = ConsoleApplication::phpBinary().' '.ConsoleApplication::artisanBinary().' ';
 
         return str_starts_with($event->command, $prefix)
             ? substr($event->command, strlen($prefix))

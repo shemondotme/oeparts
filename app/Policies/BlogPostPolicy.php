@@ -7,5 +7,6 @@ namespace App\Policies;
 class BlogPostPolicy extends BasePolicy
 {
     protected string $model = 'blog_posts';
+
     protected ?string $permissionKey = 'blog';
 }

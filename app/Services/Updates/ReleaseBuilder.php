@@ -27,7 +27,7 @@ class ReleaseBuilder
     public function __construct(?array $config = null)
     {
         $config ??= (array) config('updates.build', []);
-        $this->exclude      = array_values((array) ($config['exclude'] ?? []));
+        $this->exclude = array_values((array) ($config['exclude'] ?? []));
         $this->manifestFile = (string) ($config['manifest_file'] ?? 'file-manifest.json');
         $this->licensesFile = (string) ($config['licenses_file'] ?? 'THIRD-PARTY-LICENSES.md');
     }
@@ -49,7 +49,7 @@ class ReleaseBuilder
      */
     public function stripDevFiles(string $dir): array
     {
-        $dir = rtrim($dir, "/\\");
+        $dir = rtrim($dir, '/\\');
         $removed = [];
 
         foreach ($this->exclude as $rel) {
@@ -84,7 +84,7 @@ class ReleaseBuilder
      */
     public function buildFileManifest(string $dir): array
     {
-        $dir = rtrim($dir, "/\\");
+        $dir = rtrim($dir, '/\\');
         $files = [];
 
         foreach ($this->walk($dir) as $abs) {
@@ -94,17 +94,17 @@ class ReleaseBuilder
             }
             $files[$rel] = [
                 'sha256' => hash_file('sha256', $abs),
-                'bytes'  => (int) filesize($abs),
+                'bytes' => (int) filesize($abs),
             ];
         }
 
         ksort($files);
 
         $manifest = [
-            'schema'     => 1,
-            'version'    => $this->versionOf($dir),
+            'schema' => 1,
+            'version' => $this->versionOf($dir),
             'file_count' => count($files),
-            'files'      => $files,
+            'files' => $files,
         ];
 
         file_put_contents(
@@ -122,7 +122,7 @@ class ReleaseBuilder
      */
     public function verifyAgainstManifest(string $dir, ?array $manifest = null): array
     {
-        $dir = rtrim($dir, "/\\");
+        $dir = rtrim($dir, '/\\');
         $manifest ??= json_decode((string) @file_get_contents($dir.'/'.$this->manifestFile), true);
 
         $expected = (array) (($manifest['files'] ?? []) ?: []);
@@ -150,12 +150,12 @@ class ReleaseBuilder
      */
     public function bundleLicenses(string $dir): int
     {
-        $dir = rtrim($dir, "/\\");
+        $dir = rtrim($dir, '/\\');
         $vendor = $dir.'/vendor';
         $sections = [];
 
         foreach ($this->findLicenses($vendor) as $file) {
-            $pkg = str_replace('\\', '/', trim(str_replace($vendor, '', dirname($file)), "/\\"));
+            $pkg = str_replace('\\', '/', trim(str_replace($vendor, '', dirname($file)), '/\\'));
             $sections[$pkg] = (string) @file_get_contents($file);
         }
 

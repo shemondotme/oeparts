@@ -3,15 +3,13 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
+use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\OrderService;
 use Filament\Notifications\Notification;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -28,7 +26,7 @@ class AwaitingConfirmationList extends TableWidget
 
     protected ?string $pollingInterval = '60s';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected static ?int $sort = -33;
 
@@ -45,7 +43,7 @@ class AwaitingConfirmationList extends TableWidget
                 ->count(),
         ]);
 
-        return 'Awaiting Confirmation' . ($d['count'] > 0 ? " ({$d['count']})" : '');
+        return 'Awaiting Confirmation'.($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected function getTableHeaderActions(): array
@@ -55,7 +53,7 @@ class AwaitingConfirmationList extends TableWidget
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
                 ->link()
-                ->url(\App\Filament\Resources\OrderResource::getUrl('index')),
+                ->url(OrderResource::getUrl('index')),
         ];
     }
 
@@ -134,7 +132,7 @@ class AwaitingConfirmationList extends TableWidget
                     ->label('View')
                     ->icon('heroicon-m-eye')
                     ->size('sm')
-                    ->url(fn (Order $record): string => \App\Filament\Resources\OrderResource::getUrl('view', ['record' => $record])),
+                    ->url(fn (Order $record): string => OrderResource::getUrl('view', ['record' => $record])),
             ])
             ->recordClasses(fn (Order $record): ?string => (int) $record->created_at->diffInDays(now()) >= 3 ? 'op-row-warn' : null)
             ->striped()

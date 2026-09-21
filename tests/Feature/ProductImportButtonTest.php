@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Filament\Resources\ProductResource\Pages\ListProducts;
 use App\Models\Admin;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,7 +18,7 @@ class ProductImportButtonTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([\Database\Seeders\RolesSeeder::class]);
+        $this->seed([RolesSeeder::class]);
     }
 
     #[Test]

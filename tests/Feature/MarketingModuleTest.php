@@ -2,9 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Enums\EmailTemplate;
+use App\Enums\LogStatus;
+use App\Filament\Resources\EmailLogResource\Pages\ListEmailLogs;
+use App\Filament\Resources\NewsletterCampaignResource\Pages\CreateNewsletterCampaign;
+use App\Filament\Resources\NewsletterCampaignResource\Pages\EditNewsletterCampaign;
+use App\Filament\Resources\NewsletterCampaignResource\Pages\ListNewsletterCampaigns;
+use App\Filament\Resources\NewsletterCampaignResource\Pages\ViewNewsletterCampaign;
+use App\Filament\Resources\NewsletterSubscriberResource\Pages\CreateNewsletterSubscriber;
 use App\Jobs\SendNewsletterCampaign;
+use App\Listeners\LogEmailSent;
 use App\Models\Admin;
+use App\Models\EmailLog;
 use App\Models\NewsletterCampaign;
+use App\Models\NewsletterSubscriber;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -19,9 +34,9 @@ class MarketingModuleTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');
@@ -30,10 +45,10 @@ class MarketingModuleTest extends TestCase
     private function makeCampaign(array $attrs = []): NewsletterCampaign
     {
         return NewsletterCampaign::create(array_merge([
-            'subject'      => 'Test Campaign',
+            'subject' => 'Test Campaign',
             'html_content' => '<p>Hello</p>',
-            'status'       => 'draft',
-            'created_by'   => Admin::first()->id,
+            'status' => 'draft',
+            'created_by' => Admin::first()->id,
         ], $attrs));
     }
 
@@ -43,19 +58,19 @@ class MarketingModuleTest extends TestCase
         // the entire campaign authoring flow (create/view/edit) 500'd.
         $campaign = $this->makeCampaign();
 
-        Livewire::test(\App\Filament\Resources\NewsletterCampaignResource\Pages\CreateNewsletterCampaign::class)
+        Livewire::test(CreateNewsletterCampaign::class)
             ->assertOk();
-        Livewire::test(\App\Filament\Resources\NewsletterCampaignResource\Pages\ViewNewsletterCampaign::class, ['record' => $campaign->id])
+        Livewire::test(ViewNewsletterCampaign::class, ['record' => $campaign->id])
             ->assertOk();
-        Livewire::test(\App\Filament\Resources\NewsletterCampaignResource\Pages\EditNewsletterCampaign::class, ['record' => $campaign->id])
+        Livewire::test(EditNewsletterCampaign::class, ['record' => $campaign->id])
             ->assertOk();
     }
 
     public function test_creating_a_campaign_saves_content_and_sets_status(): void
     {
-        Livewire::test(\App\Filament\Resources\NewsletterCampaignResource\Pages\CreateNewsletterCampaign::class)
+        Livewire::test(CreateNewsletterCampaign::class)
             ->fillForm([
-                'subject'      => 'Spring Sale',
+                'subject' => 'Spring Sale',
                 'html_content' => '<p>Deals!</p>',
                 'scheduled_at' => now()->addDay()->toDateTimeString(),
             ])
@@ -133,7 +148,7 @@ class MarketingModuleTest extends TestCase
         $admin = Admin::first();
         $this->actingAs($admin, 'admin');
 
-        Livewire::test(\App\Filament\Resources\NewsletterCampaignResource\Pages\ListNewsletterCampaigns::class)
+        Livewire::test(ListNewsletterCampaigns::class)
             ->callTableAction('duplicateCampaign', $original);
 
         $duplicate = NewsletterCampaign::where('subject', 'Original')->where('id', '!=', $original->id)->firstOrFail();
@@ -144,33 +159,33 @@ class MarketingModuleTest extends TestCase
 
     public function test_unknown_mailables_log_as_other_and_inquiry_status_maps(): void
     {
-        $listener = new \App\Listeners\LogEmailSent();
+        $listener = new LogEmailSent;
         $method = new \ReflectionMethod($listener, 'determineTemplateType');
 
-        $this->assertSame(\App\Enums\EmailTemplate::Other, $method->invoke($listener, 'App\Mail\SomeFutureMailable'));
-        $this->assertSame(\App\Enums\EmailTemplate::PartInquiryStatus, $method->invoke($listener, 'App\Mail\PartInquiryStatusUpdate'));
-        $this->assertSame(\App\Enums\EmailTemplate::Other, $method->invoke($listener, null));
+        $this->assertSame(EmailTemplate::Other, $method->invoke($listener, 'App\Mail\SomeFutureMailable'));
+        $this->assertSame(EmailTemplate::PartInquiryStatus, $method->invoke($listener, 'App\Mail\PartInquiryStatusUpdate'));
+        $this->assertSame(EmailTemplate::Other, $method->invoke($listener, null));
     }
 
     public function test_email_log_list_renders_new_template_types(): void
     {
-        \App\Models\EmailLog::create([
+        EmailLog::create([
             'to_email' => 'x@example.com',
             'subject' => 'Inquiry update',
-            'template_type' => \App\Enums\EmailTemplate::PartInquiryStatus,
-            'status' => \App\Enums\LogStatus::Success,
+            'template_type' => EmailTemplate::PartInquiryStatus,
+            'status' => LogStatus::Success,
             'sent_at' => now(),
         ]);
-        \App\Models\EmailLog::create([
+        EmailLog::create([
             'to_email' => 'y@example.com',
             'subject' => 'Mystery mail',
-            'template_type' => \App\Enums\EmailTemplate::Other,
-            'status' => \App\Enums\LogStatus::Failed,
+            'template_type' => EmailTemplate::Other,
+            'status' => LogStatus::Failed,
             'error_message' => 'smtp timeout',
             'sent_at' => now(),
         ]);
 
-        Livewire::test(\App\Filament\Resources\EmailLogResource\Pages\ListEmailLogs::class)
+        Livewire::test(ListEmailLogs::class)
             ->loadTable()
             ->assertOk()
             ->assertSee('Part Inquiry Status');
@@ -178,7 +193,7 @@ class MarketingModuleTest extends TestCase
 
     public function test_send_due_command_is_scheduled(): void
     {
-        $events = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events());
+        $events = collect(app(Schedule::class)->events());
 
         $this->assertTrue(
             $events->contains(fn ($event) => str_contains($event->command ?? '', 'oeparts:newsletter:send-due')),
@@ -196,12 +211,12 @@ class MarketingModuleTest extends TestCase
      */
     public function test_subscriber_creation_sets_subscribed_at_and_ip_address(): void
     {
-        Livewire::test(\App\Filament\Resources\NewsletterSubscriberResource\Pages\CreateNewsletterSubscriber::class)
+        Livewire::test(CreateNewsletterSubscriber::class)
             ->fillForm(['email' => 'new-subscriber@example.com', 'lang' => 'en', 'is_active' => true])
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $subscriber = \App\Models\NewsletterSubscriber::where('email', 'new-subscriber@example.com')->first();
+        $subscriber = NewsletterSubscriber::where('email', 'new-subscriber@example.com')->first();
         $this->assertNotNull($subscriber, 'Subscriber creation failed');
         $this->assertNotNull($subscriber->subscribed_at);
         $this->assertNotNull($subscriber->ip_address);
@@ -217,12 +232,12 @@ class MarketingModuleTest extends TestCase
      */
     public function test_subscriber_creation_sets_an_unsubscribe_token_matching_the_frontend_signup_flow(): void
     {
-        Livewire::test(\App\Filament\Resources\NewsletterSubscriberResource\Pages\CreateNewsletterSubscriber::class)
+        Livewire::test(CreateNewsletterSubscriber::class)
             ->fillForm(['email' => 'admin-added@example.com', 'lang' => 'en', 'is_active' => true])
             ->call('create')
             ->assertHasNoFormErrors();
 
-        $subscriber = \App\Models\NewsletterSubscriber::where('email', 'admin-added@example.com')->firstOrFail();
+        $subscriber = NewsletterSubscriber::where('email', 'admin-added@example.com')->firstOrFail();
 
         $this->assertNotNull($subscriber->unsubscribe_token);
         $this->assertSame(hash_hmac('sha256', 'admin-added@example.com', config('app.key')), $subscriber->unsubscribe_token);

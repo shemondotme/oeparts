@@ -15,10 +15,9 @@ class InvoiceService
      * Generate PDF invoice for an order.
      *
      * @param  bool  $download  Whether to return download response or PDF content
-     * @param  bool  $skipAuthorization Whether to bypass user authorization check (useful for system jobs)
-     * @return \Barryvdh\DomPDF\PDF|Response
+     * @param  bool  $skipAuthorization  Whether to bypass user authorization check (useful for system jobs)
      */
-    public function generate(Order $order, bool $download = false, bool $skipAuthorization = false): \Barryvdh\DomPDF\PDF|\Illuminate\Http\Response
+    public function generate(Order $order, bool $download = false, bool $skipAuthorization = false): \Barryvdh\DomPDF\PDF|Response
     {
         if (! $skipAuthorization) {
             $this->authorize($order);
@@ -109,7 +108,7 @@ class InvoiceService
 
         return response(Storage::disk('local')->get($filename), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'attachment; filename="invoice-' . $order->order_number . '.pdf"',
+            'Content-Disposition' => 'attachment; filename="invoice-'.$order->order_number.'.pdf"',
         ]);
     }
 
@@ -160,7 +159,7 @@ class InvoiceService
 
         $filename = "invoices/{$order->order_number}.pdf";
 
-        if (!Storage::disk('local')->exists($filename)) {
+        if (! Storage::disk('local')->exists($filename)) {
             Log::error('Invoice file not found in storage', [
                 'order_id' => $order->id,
                 'filename' => $filename,

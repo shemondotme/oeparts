@@ -12,21 +12,21 @@ class SequencesSeeder extends Seeder
     {
         $sequences = [
             [
-                'type'             => SequenceType::Order,
-                'current_value'    => 0,
-                'resets_monthly'   => true,
+                'type' => SequenceType::Order,
+                'current_value' => 0,
+                'resets_monthly' => true,
                 'last_reset_month' => now()->format('Y-m'),
             ],
             [
-                'type'             => SequenceType::Invoice,
-                'current_value'    => 0,
-                'resets_monthly'   => true,
+                'type' => SequenceType::Invoice,
+                'current_value' => 0,
+                'resets_monthly' => true,
                 'last_reset_month' => now()->format('Y-m'),
             ],
             [
-                'type'             => SequenceType::Rma,
-                'current_value'    => 0,
-                'resets_monthly'   => false,
+                'type' => SequenceType::Rma,
+                'current_value' => 0,
+                'resets_monthly' => false,
                 'last_reset_month' => null,
             ],
         ];

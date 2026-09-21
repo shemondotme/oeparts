@@ -5,7 +5,6 @@ namespace App\Filament\Resources\NewsletterSubscriberResource\Pages;
 use App\Filament\Resources\NewsletterSubscriberResource;
 use App\Filament\Support\AdminUi;
 use Filament\Actions;
-use Filament\Infolists;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;

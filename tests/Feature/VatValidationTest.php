@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Services\ViesResult;
 use App\Services\ViesService;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -24,7 +25,7 @@ class VatValidationTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed(\Database\Seeders\SettingsSeeder::class);
+        $this->seed(SettingsSeeder::class);
     }
 
     #[Test]

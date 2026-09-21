@@ -5,8 +5,8 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\SearchLogResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\SearchLog;
-use Filament\Resources\Resource;
 use Filament\Actions;
+use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 

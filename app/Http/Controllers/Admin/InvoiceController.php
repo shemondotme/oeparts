@@ -14,7 +14,7 @@ class InvoiceController extends Controller
     {
         $admin = auth('admin')->user();
 
-        if (!$admin || $admin->cannot('view orders')) {
+        if (! $admin || $admin->cannot('view orders')) {
             abort(403, 'Unauthorized.');
         }
 

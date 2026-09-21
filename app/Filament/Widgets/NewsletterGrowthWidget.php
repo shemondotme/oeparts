@@ -3,6 +3,9 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\NewsletterSubscriberResource;
+use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\NewsletterSubscriber;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -14,9 +17,9 @@ class NewsletterGrowthWidget extends StatsOverviewWidget
         return 'Subscriber acquisition over time';
     }
 
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasDashboardPeriod;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected ?string $pollingInterval = '60s';
 
@@ -63,7 +66,7 @@ class NewsletterGrowthWidget extends StatsOverviewWidget
 
         return [
             Stat::make('Active Subscribers', number_format($d['total']))
-                ->description("+{$d['inPeriod']} " . $this->periodLabel())
+                ->description("+{$d['inPeriod']} ".$this->periodLabel())
                 ->descriptionIcon('heroicon-o-arrow-trending-up')
                 ->color('success')
                 ->url(NewsletterSubscriberResource::getUrl('index')),
@@ -71,8 +74,8 @@ class NewsletterGrowthWidget extends StatsOverviewWidget
                 ->descriptionIcon('heroicon-o-calendar')
                 ->color('info')
                 ->url(NewsletterSubscriberResource::getUrl('index')),
-            Stat::make('Unsubscribed (' . $this->periodLabel() . ')', $d['unsubscribed'])
-                ->description('Rate: ' . ($d['inPeriod'] > 0 ? round(($d['unsubscribed'] / max($d['inPeriod'], 1)) * 100, 1) . '%' : '0%'))
+            Stat::make('Unsubscribed ('.$this->periodLabel().')', $d['unsubscribed'])
+                ->description('Rate: '.($d['inPeriod'] > 0 ? round(($d['unsubscribed'] / max($d['inPeriod'], 1)) * 100, 1).'%' : '0%'))
                 ->descriptionIcon('heroicon-o-arrow-trending-down')
                 ->color($d['unsubscribed'] > 0 ? 'warning' : 'success')
                 ->url($d['unsubscribed'] > 0 ? NewsletterSubscriberResource::getUrl('index') : null),

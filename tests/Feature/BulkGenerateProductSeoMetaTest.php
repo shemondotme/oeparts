@@ -9,6 +9,7 @@ use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\SeoMeta;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Livewire\Livewire;
@@ -32,7 +33,7 @@ class BulkGenerateProductSeoMetaTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $this->condition = Condition::firstOrCreate(
             ['slug' => 'new'],

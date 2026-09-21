@@ -11,7 +11,7 @@ enum SectionStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::Draft => 'Draft',
             self::Scheduled => 'Scheduled',
             self::Published => 'Published',
@@ -21,7 +21,7 @@ enum SectionStatus: string
 
     public function badgeColor(): string
     {
-        return match($this) {
+        return match ($this) {
             self::Draft => 'slate',
             self::Scheduled => 'blue',
             self::Published => 'green',

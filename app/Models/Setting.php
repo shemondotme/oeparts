@@ -16,7 +16,7 @@ class Setting extends Model
     protected function casts(): array
     {
         return [
-            'type'         => SettingType::class,
+            'type' => SettingType::class,
             'is_encrypted' => 'boolean',
         ];
     }

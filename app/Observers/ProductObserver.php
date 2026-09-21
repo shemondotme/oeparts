@@ -35,7 +35,7 @@ class ProductObserver
         unset($changes['updated_at']);
         unset($original['updated_at']);
 
-        if (!empty($changes)) {
+        if (! empty($changes)) {
             $this->log($product, 'updated', $original, $changes);
         }
 

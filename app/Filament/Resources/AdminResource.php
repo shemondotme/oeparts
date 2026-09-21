@@ -6,17 +6,19 @@ use App\Filament\Resources\AdminResource\Pages;
 use App\Filament\Resources\AdminResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Models\Admin;
-use Filament\Forms;
+use App\Policies\AdminPolicy;
+use App\Support\NavBadge;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Hash;
-use Filament\Support\Enums\FontWeight;
 
 class AdminResource extends Resource
 {
@@ -38,7 +40,7 @@ class AdminResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('admins_inactive', fn () => static::getModel()::where('is_active', false)->count());
+        return NavBadge::count('admins_inactive', fn () => static::getModel()::where('is_active', false)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
@@ -120,7 +122,7 @@ class AdminResource extends Resource
                                             ->helperText('Deactivated admins cannot log in to the panel.')
                                             ->default(true),
                                     ]),
-                                            ]),
+                            ]),
                     ]),
             ]);
     }
@@ -130,18 +132,18 @@ class AdminResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with('roles'))
             ->columns([
-            Tables\Columns\TextColumn::make('name')
-                ->label(__('admin.name'))
-                ->searchable()
-                ->sortable()
-                ->weight(FontWeight::Medium),
-            Tables\Columns\TextColumn::make('email')
-                ->label(__('admin.email_address'))
-                ->searchable()
-                ->sortable()
-                ->copyable()
-                ->copyMessage('Email copied')
-                ->limit(30),
+                Tables\Columns\TextColumn::make('name')
+                    ->label(__('admin.name'))
+                    ->searchable()
+                    ->sortable()
+                    ->weight(FontWeight::Medium),
+                Tables\Columns\TextColumn::make('email')
+                    ->label(__('admin.email_address'))
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->copyMessage('Email copied')
+                    ->limit(30),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label(__('admin.active'))
                     ->boolean()
@@ -177,22 +179,22 @@ class AdminResource extends Resource
                         // through every policy, so the lockout guards must
                         // live here too (hidden() is server-enforced).
                         ->hidden(fn (Admin $record): bool => $record->is(auth('admin')->user())
-                            || \App\Policies\AdminPolicy::isLastActiveSuperAdmin($record)),
+                            || AdminPolicy::isLastActiveSuperAdmin($record)),
                 ]),
             ])
-        ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Admins', [
-                    'name' => 'Name',
-                    'email' => 'Email',
-                    'is_active' => 'Active',
-                    'last_login_at' => 'Last Login',
-                    'created_at' => 'Created',
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Admins', [
+                        'name' => 'Name',
+                        'email' => 'Email',
+                        'is_active' => 'Active',
+                        'last_login_at' => 'Last Login',
+                        'created_at' => 'Created',
+                    ]),
+                    // No bulk delete: admins are deleted one at a time through
+                    // the guarded action above (self / last-super_admin lockout).
                 ]),
-                // No bulk delete: admins are deleted one at a time through
-                // the guarded action above (self / last-super_admin lockout).
-            ]),
-        ])
+            ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-shield-check')
             ->emptyStateHeading('No administrators created yet')
@@ -228,4 +230,3 @@ class AdminResource extends Resource
         return ['name', 'email'];
     }
 }
-

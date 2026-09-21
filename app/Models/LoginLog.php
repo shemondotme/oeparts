@@ -19,7 +19,7 @@ class LoginLog extends Model
 
     protected $casts = [
         'user_type' => LoginUserType::class,
-        'status'    => LogStatus::class,
+        'status' => LogStatus::class,
         'created_at' => 'datetime',
     ];
 

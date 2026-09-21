@@ -43,9 +43,9 @@ class NewsletterCampaignEmail extends Mailable
             view: 'emails.newsletter-campaign',
             text: 'emails.newsletter-campaign-text',
             with: [
-                'campaign'   => $this->campaign,
-                'recipient'  => $this->recipient,
-                'locale'     => $locale,
+                'campaign' => $this->campaign,
+                'recipient' => $this->recipient,
+                'locale' => $locale,
                 'unsubscribeUrl' => $unsubscribeUrl,
             ],
         );

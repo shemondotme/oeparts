@@ -57,9 +57,9 @@ trait HasMonitoringVisuals
      */
     protected function rollingSamples(string $key, float|int $value, int $max = 12, int $everySeconds = 45): array
     {
-        $base = 'dash:spark:' . $key;
+        $base = 'dash:spark:'.$key;
         $samples = Cache::get($base, []);
-        $lastAt = (int) Cache::get($base . ':at', 0);
+        $lastAt = (int) Cache::get($base.':at', 0);
         $now = now()->getTimestamp();
 
         if ($now - $lastAt >= $everySeconds) {
@@ -68,7 +68,7 @@ trait HasMonitoringVisuals
                 $samples = array_slice($samples, -$max);
             }
             Cache::put($base, $samples, now()->addDay());
-            Cache::put($base . ':at', $now, now()->addDay());
+            Cache::put($base.':at', $now, now()->addDay());
         }
 
         // A sparkline needs at least two points to draw a line, not a dot.
@@ -120,7 +120,7 @@ trait HasMonitoringVisuals
         $dot = $live ? '<span class="op-dot op-dot-live"></span>' : '';
 
         return new HtmlString(
-            '<span class="op-status-line">' . $dot . e($text) . '</span>'
+            '<span class="op-status-line">'.$dot.e($text).'</span>'
         );
     }
 }

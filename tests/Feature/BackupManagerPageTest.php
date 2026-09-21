@@ -9,8 +9,14 @@ use App\Models\BackupRun;
 use App\Models\Setting;
 use App\Services\Backup\BackupLock;
 use App\Services\HealthCheckService;
+use App\Services\SettingsService;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Facades\Filament;
+use Illuminate\Console\Scheduling\Event;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -36,8 +42,8 @@ class BackupManagerPageTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         Storage::fake('local');
@@ -81,9 +87,9 @@ class BackupManagerPageTest extends TestCase
     {
         $run = BackupRun::create([
             'profile' => BackupRun::PROFILE_FULL,
-            'status'  => BackupRun::STATUS_SUCCESS,
+            'status' => BackupRun::STATUS_SUCCESS,
             'trigger' => BackupRun::TRIGGER_MANUAL,
-            'disk'    => 'local',
+            'disk' => 'local',
             'finished_at' => now(),
         ]);
         $path = 'backups/'.$run->id.'/db/part.enc';
@@ -165,9 +171,9 @@ class BackupManagerPageTest extends TestCase
         $this->actingAs($this->adminWithRole('super_admin'), 'admin');
         $run = BackupRun::create([
             'profile' => BackupRun::PROFILE_FULL,
-            'status'  => BackupRun::STATUS_RUNNING,
+            'status' => BackupRun::STATUS_RUNNING,
             'trigger' => BackupRun::TRIGGER_MANUAL,
-            'disk'    => 'local',
+            'disk' => 'local',
         ]);
 
         Livewire::test(BackupDashboard::class)->assertSet('runningBackupId', $run->id);
@@ -200,11 +206,11 @@ class BackupManagerPageTest extends TestCase
 
     /* ---- Lock Status card + Backup Settings panel (this redesign) ---- */
 
-    private function writeLockFile(string $owner, \Illuminate\Support\Carbon $acquiredAt): void
+    private function writeLockFile(string $owner, Carbon $acquiredAt): void
     {
         $path = rtrim($this->statePath, '/\\').DIRECTORY_SEPARATOR.'lock';
         file_put_contents($path, json_encode([
-            'owner'       => $owner,
+            'owner' => $owner,
             'acquired_at' => $acquiredAt->toIso8601String(),
         ], JSON_PRETTY_PRINT));
     }
@@ -375,9 +381,9 @@ class BackupManagerPageTest extends TestCase
     // snapshot quirk when a plain method aborts mid-request on a
     // HasTable-backed page, same reasoning for not separately testing it here.
 
-    private function scheduledBackupEvent(): \Illuminate\Console\Scheduling\Event
+    private function scheduledBackupEvent(): Event
     {
-        $events = app(\Illuminate\Console\Scheduling\Schedule::class)->events();
+        $events = app(Schedule::class)->events();
 
         foreach ($events as $event) {
             if (str_contains($event->command, 'oeparts:backup') && str_contains($event->command, '--trigger=scheduled')) {
@@ -391,7 +397,7 @@ class BackupManagerPageTest extends TestCase
     #[Test]
     public function the_scheduled_backup_command_is_gated_by_backup_schedule_enabled(): void
     {
-        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService = app(SettingsService::class);
 
         $settingsService->set('backup.schedule_enabled', '1');
         $this->assertTrue($this->scheduledBackupEvent()->filtersPass($this->app));

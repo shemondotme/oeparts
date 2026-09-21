@@ -20,8 +20,8 @@ class InventoryLog extends Model
 
     protected $casts = [
         'change_type' => InventoryChangeType::class,
-        'old_status'  => 'boolean',
-        'new_status'  => 'boolean',
+        'old_status' => 'boolean',
+        'new_status' => 'boolean',
     ];
 
     public function product(): BelongsTo

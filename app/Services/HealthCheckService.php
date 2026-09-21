@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\AdminNotificationCategory;
 use App\Filament\Pages\System\HealthCheckDashboard;
+use App\Models\BackupRun;
 use App\Models\HealthCheckSnapshot;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -36,22 +38,22 @@ class HealthCheckService
     public function runAll(): array
     {
         $checks = [
-            'database'  => $this->checkDatabase(),
-            'cache'     => $this->checkCache(),
-            'queue'     => $this->checkQueue(),
-            'storage'   => $this->checkStorage(),
+            'database' => $this->checkDatabase(),
+            'cache' => $this->checkCache(),
+            'queue' => $this->checkQueue(),
+            'storage' => $this->checkStorage(),
             'scheduler' => $this->checkScheduler(),
-            'assets'    => $this->checkAssets(),
-            'backup'    => $this->checkLastBackup(),
+            'assets' => $this->checkAssets(),
+            'backup' => $this->checkLastBackup(),
         ];
 
         $status = in_array('fail', array_column($checks, 'status'), true) ? 'degraded' : 'ok';
 
         return [
-            'status'    => $status,
-            'version'   => $this->version(),
+            'status' => $status,
+            'version' => $this->version(),
             'timestamp' => now()->toIso8601String(),
-            'checks'    => $checks,
+            'checks' => $checks,
         ];
     }
 
@@ -82,17 +84,17 @@ class HealthCheckService
                 ->first();
 
             HealthCheckSnapshot::create([
-                'check_key'        => $key,
-                'status'           => $check['status'],
-                'detail'           => $check['detail'],
+                'check_key' => $key,
+                'status' => $check['status'],
+                'detail' => $check['detail'],
                 'response_time_ms' => $check['response_time_ms'],
-                'checked_at'       => now(),
+                'checked_at' => now(),
             ]);
 
             if ($previous?->status === 'ok' && $check['status'] !== 'ok') {
                 app(AdminNotificationService::class)->createForAll(
                     AdminNotificationCategory::System,
-                    ucfirst($key) . ' health check failing',
+                    ucfirst($key).' health check failing',
                     "Status changed from ok to {$check['status']}: {$check['detail']}",
                     HealthCheckDashboard::getUrl(),
                 );
@@ -119,7 +121,7 @@ class HealthCheckService
             // part that actually matters for 'ok'/'fail', so a table-count
             // failure degrades the detail message rather than the status.
             try {
-                $detail = count(DB::select('SHOW TABLES')) . ' tables';
+                $detail = count(DB::select('SHOW TABLES')).' tables';
             } catch (\Throwable) {
                 $detail = 'connected';
             }
@@ -139,7 +141,7 @@ class HealthCheckService
     {
         try {
             $start = microtime(true);
-            $key = 'health_ping_' . uniqid();
+            $key = 'health_ping_'.uniqid();
             Cache::put($key, 'ok', 1);
             $result = Cache::get($key);
             Cache::forget($key);
@@ -169,8 +171,8 @@ class HealthCheckService
                 $result = $this->checkCache();
 
                 return [
-                    'status'           => $result['status'],
-                    'detail'           => $result['status'] === 'ok' ? 'redis reachable' : $result['detail'],
+                    'status' => $result['status'],
+                    'detail' => $result['status'] === 'ok' ? 'redis reachable' : $result['detail'],
                     'response_time_ms' => $result['response_time_ms'],
                 ];
             }
@@ -190,7 +192,7 @@ class HealthCheckService
     {
         try {
             $start = microtime(true);
-            $testFile = 'health_test_' . uniqid() . '.tmp';
+            $testFile = 'health_test_'.uniqid().'.tmp';
             Storage::disk('local')->put($testFile, 'ok');
             $contents = Storage::disk('local')->get($testFile);
             Storage::disk('local')->delete($testFile);
@@ -213,7 +215,7 @@ class HealthCheckService
     {
         try {
             $heartbeat = Cache::get('scheduler_heartbeat');
-            if (!$heartbeat) {
+            if (! $heartbeat) {
                 return ['status' => 'unknown', 'detail' => 'no heartbeat recorded', 'response_time_ms' => null];
             }
 
@@ -260,9 +262,9 @@ class HealthCheckService
     }
 
     /** Timestamp of the newest successful, un-pruned backup, or null. */
-    public function lastBackupAt(): ?\Illuminate\Support\Carbon
+    public function lastBackupAt(): ?Carbon
     {
-        $run = \App\Models\BackupRun::query()
+        $run = BackupRun::query()
             ->successful()
             ->whereNull('meta->pruned_at')
             ->whereNotNull('finished_at')
@@ -296,10 +298,11 @@ class HealthCheckService
     private function version(): string
     {
         $path = base_path('version.json');
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             return 'unknown';
         }
         $data = json_decode(file_get_contents($path), true);
+
         return $data['version'] ?? 'unknown';
     }
 }

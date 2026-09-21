@@ -31,8 +31,8 @@ class ReleasePublisher
      * Fold the zip's build result into the release manifest.
      *
      * @param  array<string,mixed>  $manifest  the release's version.json (declared fields)
-     * @param  array<string,mixed>  $build     { version, sha256, size_bytes, download_url? }
-     * @return array<string,mixed>  the completed manifest
+     * @param  array<string,mixed>  $build  { version, sha256, size_bytes, download_url? }
+     * @return array<string,mixed> the completed manifest
      */
     public function finalize(array $manifest, array $build): array
     {
@@ -68,20 +68,20 @@ class ReleasePublisher
     public function toCatalogEntry(array $manifest): array
     {
         return [
-            'version'                    => $manifest['version'] ?? null,
-            'codename'                   => $manifest['codename'] ?? null,
-            'release_date'               => $manifest['release_date'] ?? null,
-            'channel'                    => $manifest['channel'] ?? 'stable',
-            'security'                   => (bool) ($manifest['security'] ?? false),
-            'min_php'                    => $manifest['min_php'] ?? null,
-            'min_mysql'                  => $manifest['min_mysql'] ?? null,
+            'version' => $manifest['version'] ?? null,
+            'codename' => $manifest['codename'] ?? null,
+            'release_date' => $manifest['release_date'] ?? null,
+            'channel' => $manifest['channel'] ?? 'stable',
+            'security' => (bool) ($manifest['security'] ?? false),
+            'min_php' => $manifest['min_php'] ?? null,
+            'min_mysql' => $manifest['min_mysql'] ?? null,
             'min_version_to_update_from' => $manifest['min_version_to_update_from'] ?? '0.0.0',
-            'migration_count'            => (int) ($manifest['migration_count'] ?? 0),
-            'sha256'                     => $manifest['sha256'] ?? null,
-            'size_bytes'                 => isset($manifest['size_bytes']) ? (int) $manifest['size_bytes'] : null,
-            'signature'                  => $manifest['signature'] ?? null,
-            'changelog_url'              => $manifest['changelog_url'] ?? null,
-            'download_url'               => $manifest['download_url'] ?? null,
+            'migration_count' => (int) ($manifest['migration_count'] ?? 0),
+            'sha256' => $manifest['sha256'] ?? null,
+            'size_bytes' => isset($manifest['size_bytes']) ? (int) $manifest['size_bytes'] : null,
+            'signature' => $manifest['signature'] ?? null,
+            'changelog_url' => $manifest['changelog_url'] ?? null,
+            'download_url' => $manifest['download_url'] ?? null,
             // Zip-path authenticity (signature, above) says nothing about
             // what a git checkout actually pulls down — ReleaseSignature::
             // verifyGitManifest() needs these two fields on whatever
@@ -94,8 +94,8 @@ class ReleasePublisher
             // update rehearsal (fresh v1.0.16 git-managed install ->
             // self-update to v1.0.17) where it reproduced on the very
             // first attempt.
-            'git_commit_sha'             => $manifest['git_commit_sha'] ?? null,
-            'git_signature'              => $manifest['git_signature'] ?? null,
+            'git_commit_sha' => $manifest['git_commit_sha'] ?? null,
+            'git_signature' => $manifest['git_signature'] ?? null,
         ];
     }
 
@@ -103,13 +103,13 @@ class ReleasePublisher
      * Insert or replace this release in the catalog, keeping releases newest-first
      * and `latest` pointing at the highest version. Idempotent for a given version.
      *
-     * @param  array<string,mixed>  $catalog   existing releases.json (or a fresh skeleton)
+     * @param  array<string,mixed>  $catalog  existing releases.json (or a fresh skeleton)
      * @param  array<string,mixed>  $manifest  the finalized release manifest
-     * @return array<string,mixed>  the updated catalog
+     * @return array<string,mixed> the updated catalog
      */
     public function upsert(array $catalog, array $manifest): array
     {
-        $entry   = $this->toCatalogEntry($manifest);
+        $entry = $this->toCatalogEntry($manifest);
         $version = (string) ($entry['version'] ?? '');
 
         $releases = array_values(array_filter(
@@ -122,8 +122,8 @@ class ReleasePublisher
         // Newest first.
         usort($releases, fn ($a, $b) => version_compare((string) $b['version'], (string) $a['version']));
 
-        $catalog['channel']  = $catalog['channel'] ?? ($manifest['channel'] ?? 'stable');
-        $catalog['latest']   = (string) $releases[0]['version'];
+        $catalog['channel'] = $catalog['channel'] ?? ($manifest['channel'] ?? 'stable');
+        $catalog['latest'] = (string) $releases[0]['version'];
         $catalog['releases'] = $releases;
 
         return $catalog;

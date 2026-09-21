@@ -2,12 +2,12 @@
 
 namespace Tests\Unit;
 
-use App\Models\Condition;
-use App\Models\Manufacturer;
 use App\Models\Order;
 use App\Models\User;
 use App\Services\InvoiceService;
+use Barryvdh\DomPDF\PDF;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -17,6 +17,7 @@ class InvoiceServiceTest extends TestCase
     use RefreshDatabase;
 
     private InvoiceService $service;
+
     private Order $order;
 
     protected function setUp(): void
@@ -26,13 +27,13 @@ class InvoiceServiceTest extends TestCase
 
         $user = User::factory()->create(['email' => 'buyer@example.com']);
         $this->order = Order::factory()->create([
-            'user_id'               => $user->id,
-            'order_number'          => 'ORD-TEST-001',
-            'invoice_number'        => 'INV-TEST-001',
-            'shipping_name'         => 'John Doe',
-            'shipping_address_line1'=> '123 Main St',
-            'shipping_city'         => 'Berlin',
-            'shipping_postal_code'  => '10115',
+            'user_id' => $user->id,
+            'order_number' => 'ORD-TEST-001',
+            'invoice_number' => 'INV-TEST-001',
+            'shipping_name' => 'John Doe',
+            'shipping_address_line1' => '123 Main St',
+            'shipping_city' => 'Berlin',
+            'shipping_postal_code' => '10115',
             'shipping_country_code' => 'DE',
         ]);
     }
@@ -42,7 +43,7 @@ class InvoiceServiceTest extends TestCase
     {
         $pdf = $this->service->generate($this->order, false, true);
 
-        $this->assertInstanceOf(\Barryvdh\DomPDF\PDF::class, $pdf);
+        $this->assertInstanceOf(PDF::class, $pdf);
     }
 
     #[Test]
@@ -76,7 +77,7 @@ class InvoiceServiceTest extends TestCase
     {
         $response = $this->service->generate($this->order, download: true, skipAuthorization: true);
 
-        $this->assertInstanceOf(\Illuminate\Http\Response::class, $response);
+        $this->assertInstanceOf(Response::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $this->assertStringContainsString('application/pdf', $response->headers->get('Content-Type'));
     }

@@ -5,9 +5,8 @@ namespace App\Filament\Resources\SectionResource\Pages;
 use App\Filament\Resources\SectionResource;
 use App\Filament\Support\AdminUi;
 use Filament\Actions;
-use Filament\Infolists;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\KeyValueEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -52,7 +51,7 @@ class ViewSection extends ViewRecord
                                                 }
 
                                                 return collect($title)
-                                                    ->mapWithKeys(fn ($value, $code) => [(\App\Filament\Support\AdminUi::LOCALES[$code] ?? $code) . " ({$code})" => $value])
+                                                    ->mapWithKeys(fn ($value, $code) => [(AdminUi::LOCALES[$code] ?? $code)." ({$code})" => $value])
                                                     ->all();
                                             })
                                             ->placeholder('No titles provided')
@@ -64,7 +63,7 @@ class ViewSection extends ViewRecord
                                     ->schema([
                                         // KeyValueEntry fatals on the nested arrays real sections
                                         // carry — render pretty-printed JSON instead (safe for any shape).
-                                        \Filament\Infolists\Components\TextEntry::make('content')
+                                        TextEntry::make('content')
                                             ->hiddenLabel()
                                             // state() (not formatStateUsing) — Filament treats array
                                             // states as item lists and formats per element.
@@ -99,10 +98,10 @@ class ViewSection extends ViewRecord
                                             ->badge()
                                             ->color(fn ($state): string => match ($state->value) {
                                                 'published' => 'success',
-                                                'draft'     => 'gray',
+                                                'draft' => 'gray',
                                                 'scheduled' => 'warning',
-                                                'archived'  => 'danger',
-                                                default     => 'gray',
+                                                'archived' => 'danger',
+                                                default => 'gray',
                                             })
                                             ->formatStateUsing(fn ($state): string => ucfirst($state->value)),
                                         TextEntry::make('publish_at')
@@ -134,4 +133,3 @@ class ViewSection extends ViewRecord
             ]);
     }
 }
-

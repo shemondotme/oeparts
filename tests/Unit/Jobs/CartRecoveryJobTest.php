@@ -6,6 +6,7 @@ use App\Jobs\SendAbandonedCartEmail;
 use App\Mail\AbandonedCartReminder;
 use App\Models\AbandonedCart;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\PendingMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
@@ -62,7 +63,7 @@ class CartRecoveryJobTest extends TestCase
     #[Test]
     public function does_not_mark_the_record_when_the_mail_send_throws(): void
     {
-        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail = \Mockery::mock(PendingMail::class);
         $pendingMail->shouldReceive('send')->andThrow(new \RuntimeException('SMTP unavailable'));
         Mail::shouldReceive('to')->andReturn($pendingMail);
 

@@ -2,8 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SettingType;
+use App\Models\Admin;
+use App\Models\Order;
+use App\Models\Setting;
+use App\Models\User;
 use App\Services\SettingsService;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -15,7 +25,7 @@ class SettingsCompletenessTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(\Database\Seeders\SettingsSeeder::class);
+        $this->seed(SettingsSeeder::class);
 
         // SettingsService caches per-group for 5 minutes with no test-isolation —
         // a prior test elsewhere in the suite reading these groups before this
@@ -28,24 +38,24 @@ class SettingsCompletenessTest extends TestCase
     public static function previouslyUndeclaredSettingsProvider(): array
     {
         return [
-            'cart.rate_limit_per_minute'  => ['cart.rate_limit_per_minute', 60],
-            'cart.max_quantity'           => ['cart.max_quantity', 999],
-            'cart.guest_cookie_days'      => ['cart.guest_cookie_days', 7],
-            'search.results_limit'        => ['search.results_limit', 50],
-            'search.per_page'             => ['search.per_page', 20],
-            'search.popular_days_window'  => ['search.popular_days_window', 30],
-            'search.popular_limit'        => ['search.popular_limit', 8],
-            'search.cache_ttl_hours'      => ['search.cache_ttl_hours', 6],
-            'checkout.proof_max_size_kb'      => ['checkout.proof_max_size_kb', 5120],
-            'checkout.guest_password_length'  => ['checkout.guest_password_length', 12],
-            'dashboard.orders_threshold'        => ['dashboard.orders_threshold', 50],
+            'cart.rate_limit_per_minute' => ['cart.rate_limit_per_minute', 60],
+            'cart.max_quantity' => ['cart.max_quantity', 999],
+            'cart.guest_cookie_days' => ['cart.guest_cookie_days', 7],
+            'search.results_limit' => ['search.results_limit', 50],
+            'search.per_page' => ['search.per_page', 20],
+            'search.popular_days_window' => ['search.popular_days_window', 30],
+            'search.popular_limit' => ['search.popular_limit', 8],
+            'search.cache_ttl_hours' => ['search.cache_ttl_hours', 6],
+            'checkout.proof_max_size_kb' => ['checkout.proof_max_size_kb', 5120],
+            'checkout.guest_password_length' => ['checkout.guest_password_length', 12],
+            'dashboard.orders_threshold' => ['dashboard.orders_threshold', 50],
             'dashboard.pending_delayed_minutes' => ['dashboard.pending_delayed_minutes', 120],
-            'invoice.payment_terms_days'        => ['invoice.payment_terms_days', 30],
+            'invoice.payment_terms_days' => ['invoice.payment_terms_days', 30],
         ];
     }
 
     #[Test]
-    #[\PHPUnit\Framework\Attributes\DataProvider('previouslyUndeclaredSettingsProvider')]
+    #[DataProvider('previouslyUndeclaredSettingsProvider')]
     public function previously_undeclared_setting_resolves_to_its_seeded_value(string $key, int|string $expected): void
     {
         $resolved = is_int($expected)
@@ -112,9 +122,9 @@ class SettingsCompletenessTest extends TestCase
     #[Test]
     public function homepage_title_uses_the_correctly_named_seo_setting(): void
     {
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'seo', 'key' => 'home_title'],
-            ['value' => 'Custom SEO Title For Testing', 'type' => \App\Enums\SettingType::String->value]
+            ['value' => 'Custom SEO Title For Testing', 'type' => SettingType::String->value]
         );
         app(SettingsService::class)->forget('seo');
 
@@ -132,9 +142,9 @@ class SettingsCompletenessTest extends TestCase
         $seeded = settings('seo.default_description', 'SENTINEL');
         $this->assertNotSame('SENTINEL', $seeded, 'seo.default_description has no seed row.');
 
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'seo', 'key' => 'default_description'],
-            ['value' => 'Custom sitewide fallback description for testing', 'type' => \App\Enums\SettingType::String->value]
+            ['value' => 'Custom sitewide fallback description for testing', 'type' => SettingType::String->value]
         );
         app(SettingsService::class)->forget('seo');
 
@@ -151,9 +161,9 @@ class SettingsCompletenessTest extends TestCase
         // so the og:description/twitter:description fallback on every
         // non-home page always fell back to a hardcoded literal regardless
         // of what an admin configured.
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'seo', 'key' => 'home_description'],
-            ['value' => json_encode(['en' => 'Custom OG description for testing', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']), 'type' => \App\Enums\SettingType::Json->value]
+            ['value' => json_encode(['en' => 'Custom OG description for testing', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']), 'type' => SettingType::Json->value]
         );
         app(SettingsService::class)->forget('seo');
 
@@ -165,13 +175,13 @@ class SettingsCompletenessTest extends TestCase
     #[Test]
     public function announcement_banner_renders_localized_text_not_raw_json(): void
     {
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'announcement', 'key' => 'enabled'],
-            ['value' => '1', 'type' => \App\Enums\SettingType::Boolean->value]
+            ['value' => '1', 'type' => SettingType::Boolean->value]
         );
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'announcement', 'key' => 'text'],
-            ['value' => json_encode(['en' => 'Free shipping today']), 'type' => \App\Enums\SettingType::Json->value]
+            ['value' => json_encode(['en' => 'Free shipping today']), 'type' => SettingType::Json->value]
         );
         app(SettingsService::class)->forget('announcement');
 
@@ -199,18 +209,18 @@ class SettingsCompletenessTest extends TestCase
     #[Test]
     public function invoice_pdf_renders_seeded_values_not_hardcoded_fallbacks(): void
     {
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'invoice', 'key' => 'payment_terms_days'],
-            ['value' => '45', 'type' => \App\Enums\SettingType::Integer->value]
+            ['value' => '45', 'type' => SettingType::Integer->value]
         );
-        \App\Models\Setting::updateOrCreate(
+        Setting::updateOrCreate(
             ['group' => 'invoice', 'key' => 'thank_you_text'],
-            ['value' => json_encode(['en' => 'Custom thank-you copy for this test', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']), 'type' => \App\Enums\SettingType::Json->value]
+            ['value' => json_encode(['en' => 'Custom thank-you copy for this test', 'de' => '', 'lt' => '', 'fr' => '', 'es' => '']), 'type' => SettingType::Json->value]
         );
         app(SettingsService::class)->forget('invoice');
 
-        $user = \App\Models\User::factory()->create();
-        $order = \App\Models\Order::factory()->create([
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
             'user_id' => $user->id,
             'order_number' => 'ORD-INV-TEST-001',
             'invoice_number' => 'INV-TEST-001',
@@ -219,7 +229,7 @@ class SettingsCompletenessTest extends TestCase
             'shipping_city' => 'Berlin',
             'shipping_postal_code' => '10115',
             'shipping_country_code' => 'DE',
-            'created_at' => \Illuminate\Support\Carbon::parse('2026-01-01'),
+            'created_at' => Carbon::parse('2026-01-01'),
         ]);
         $address = (object) [
             'first_name' => 'Jane', 'last_name' => 'Doe', 'company' => null,
@@ -255,10 +265,10 @@ class SettingsCompletenessTest extends TestCase
     public function dashboard_alert_thresholds_tab_loads_with_seeded_defaults(): void
     {
         $this->seed([
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
-        $admin = \App\Models\Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
+        $admin = Admin::where('email', 'superadmin@oeparts.test')->firstOrFail();
 
         $response = $this->actingAs($admin, 'admin')->get('/admin/settings/store-operations-settings');
 

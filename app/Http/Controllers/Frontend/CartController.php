@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Frontend;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Frontend\CartUpdateRequest;
 use App\Models\Cart;
 use App\Models\SearchLog;
 use App\Services\CartService;
@@ -35,7 +36,7 @@ class CartController extends Controller
         $cart->load('items.product.condition');
         $summary = $this->cartService->getSummary($cart);
 
-        $popularOems = Cache::remember('cart_popular_oems_' . $lang, 3600, function () {
+        $popularOems = Cache::remember('cart_popular_oems_'.$lang, 3600, function () {
             return SearchLog::selectRaw('normalized_query, COUNT(*) as hits')
                 ->where('result_count', '>', 0)
                 ->where('created_at', '>=', now()->subDays((int) settings('search.popular_days_window', 30)))
@@ -62,7 +63,7 @@ class CartController extends Controller
     {
         $request->validate([
             'product_id' => 'required|integer|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:' . settings('cart.max_quantity', 999),
+            'quantity' => 'required|integer|min:1|max:'.settings('cart.max_quantity', 999),
         ]);
 
         $cartData = $this->getCurrentCart($request);
@@ -111,7 +112,7 @@ class CartController extends Controller
 
         $request->validate([
             'product_id' => 'required|integer|exists:products,id',
-            'quantity' => 'required|integer|min:1|max:' . settings('cart.max_quantity', 999),
+            'quantity' => 'required|integer|min:1|max:'.settings('cart.max_quantity', 999),
         ]);
 
         $buyNowCart = Cart::create([
@@ -151,7 +152,7 @@ class CartController extends Controller
 
         $success = $this->cartService->removeItem($cart, $itemId);
 
-        if (!$success) {
+        if (! $success) {
             return response()->json([
                 'success' => false,
                 'message' => __('cart.item_not_found'),
@@ -170,7 +171,7 @@ class CartController extends Controller
      *
      * PUT /{lang}/cart/update/{item}
      */
-    public function update(\App\Http\Requests\Frontend\CartUpdateRequest $request, string $lang, int $itemId)
+    public function update(CartUpdateRequest $request, string $lang, int $itemId)
     {
         $validated = $request->validated();
         $request->merge($validated);
@@ -181,7 +182,7 @@ class CartController extends Controller
         try {
             $item = $this->cartService->updateQuantity($cart, $itemId, $request->quantity);
 
-            if (!$item && $request->quantity == 0) {
+            if (! $item && $request->quantity == 0) {
                 // Item was removed (quantity set to 0)
                 return response()->json([
                     'success' => true,
@@ -242,6 +243,7 @@ class CartController extends Controller
             ->values()
             ->map(function ($item) {
                 $product = $item->product;
+
                 return [
                     'id' => $item->id,
                     'quantity' => $item->quantity,
@@ -279,7 +281,7 @@ class CartController extends Controller
         ]);
 
         $user = Auth::user();
-        if (!$user) {
+        if (! $user) {
             return response()->json([
                 'success' => false,
                 'message' => __('auth.unauthenticated'),
@@ -330,7 +332,7 @@ class CartController extends Controller
         // Fetch summary (CartService will validate and nullify invalid coupons within getSummary)
         $summary = $this->cartService->getSummary($cart);
 
-        if (!$cart->fresh()->coupon_code) {
+        if (! $cart->fresh()->coupon_code) {
             return response()->json([
                 'success' => false,
                 'message' => __('cart.invalid_coupon'),
@@ -374,11 +376,11 @@ class CartController extends Controller
         $guestToken = $request->cookie('guest_token');
 
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
-        
+
         // If this is a guest cart and we didn't have a token before,
         // we need to return the new token to set as cookie
         $newGuestToken = null;
-        if (!$user && !$guestToken && $cart->guest_token) {
+        if (! $user && ! $guestToken && $cart->guest_token) {
             $newGuestToken = $cart->guest_token;
         }
 
@@ -391,11 +393,11 @@ class CartController extends Controller
     private function jsonResponse(array $data, int $status = 200, ?string $guestToken = null)
     {
         $response = response()->json($data, $status);
-        
+
         if ($guestToken) {
             $response->cookie('guest_token', $guestToken, (int) settings('cart.guest_cookie_days', 7) * 60 * 24);
         }
-        
+
         return $response;
     }
 }

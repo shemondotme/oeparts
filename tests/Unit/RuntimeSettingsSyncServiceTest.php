@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Services\RuntimeSettingsSyncService;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -27,7 +28,7 @@ class RuntimeSettingsSyncServiceTest extends TestCase
     {
         Setting::create(['group' => 'email', 'key' => 'smtp_host', 'value' => 'smtp.first.test', 'type' => SettingType::String]);
 
-        $service = new RuntimeSettingsSyncService();
+        $service = new RuntimeSettingsSyncService;
         $service->sync(app(SettingsService::class));
 
         $this->assertSame('smtp.first.test', config('mail.mailers.smtp.host'));
@@ -45,9 +46,9 @@ class RuntimeSettingsSyncServiceTest extends TestCase
     #[Test]
     public function it_swallows_a_database_failure_instead_of_throwing(): void
     {
-        \Illuminate\Support\Facades\Schema::drop('settings');
+        Schema::drop('settings');
 
-        $service = new RuntimeSettingsSyncService();
+        $service = new RuntimeSettingsSyncService;
         $service->sync(app(SettingsService::class));
 
         $this->assertTrue(true, 'sync() did not throw even though the settings table is gone.');

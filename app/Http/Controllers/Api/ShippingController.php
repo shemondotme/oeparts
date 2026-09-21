@@ -29,7 +29,7 @@ class ShippingController extends BaseApiController
             'country_code' => 'nullable|string|size:2',
         ]);
 
-        $methods = !empty($validated['country_code'])
+        $methods = ! empty($validated['country_code'])
             ? $this->shippingService->getMethodsForCountry($validated['country_code'])
             : ShippingMethod::where('is_active', true)->orderBy('sort_order')->get();
 

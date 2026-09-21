@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
@@ -22,7 +24,7 @@ class RefundImageControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([\Database\Seeders\SettingsSeeder::class, \Database\Seeders\RolesSeeder::class]);
+        $this->seed([SettingsSeeder::class, RolesSeeder::class]);
         Storage::fake('local');
         Storage::disk('local')->put('refund-images/evidence.jpg', 'fake-jpeg-bytes');
     }
@@ -70,7 +72,7 @@ class RefundImageControllerTest extends TestCase
     {
         $this->actingAs($this->adminWithRole('super_admin'), 'admin');
 
-        $url = $this->signedRefundImageUrl() . '-tampered';
+        $url = $this->signedRefundImageUrl().'-tampered';
 
         $this->get($url)->assertForbidden();
     }

@@ -48,13 +48,13 @@ class SitemapCrossReferencesTest extends TestCase
 
     private function makeProduct(array $overrides = []): Product
     {
-        $manufacturer = Manufacturer::create(['name' => ['en' => 'Mfr'], 'slug' => 'mfr-' . uniqid(), 'country_code' => 'DE', 'is_active' => true]);
+        $manufacturer = Manufacturer::create(['name' => ['en' => 'Mfr'], 'slug' => 'mfr-'.uniqid(), 'country_code' => 'DE', 'is_active' => true]);
         $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
 
         return Product::create(array_merge([
             'manufacturer_id' => $manufacturer->id,
-            'oem_number' => 'PRIM' . uniqid(),
-            'normalized_oem' => 'PRIM' . uniqid(),
+            'oem_number' => 'PRIM'.uniqid(),
+            'normalized_oem' => 'PRIM'.uniqid(),
             'name' => ['en' => 'Part'],
             'price' => 10,
             'condition_id' => $condition->id,
@@ -102,7 +102,7 @@ class SitemapCrossReferencesTest extends TestCase
         $xml = $this->generateCrossReferencesSitemap();
 
         $this->assertStringContainsString('/en/parts/XREF003', $xml);
-        $this->assertSame(1, substr_count($xml, '<loc>' . url('/en/parts/XREF003') . '</loc>'));
+        $this->assertSame(1, substr_count($xml, '<loc>'.url('/en/parts/XREF003').'</loc>'));
     }
 
     #[Test]
@@ -116,7 +116,7 @@ class SitemapCrossReferencesTest extends TestCase
 
         $xml = $this->generateCrossReferencesSitemap();
 
-        $this->assertSame(1, substr_count($xml, '<loc>' . url('/en/parts/XREF005') . '</loc>'));
+        $this->assertSame(1, substr_count($xml, '<loc>'.url('/en/parts/XREF005').'</loc>'));
     }
 
     #[Test]

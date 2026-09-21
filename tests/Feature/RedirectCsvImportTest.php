@@ -8,6 +8,7 @@ use App\Jobs\ImportRedirectsFromCsv;
 use App\Models\Admin;
 use App\Models\Redirect;
 use App\Services\RedirectLoopDetector;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Bus;
@@ -193,7 +194,7 @@ class RedirectCsvImportTest extends TestCase
     {
         Storage::fake('local');
         Bus::fake();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
@@ -212,7 +213,7 @@ class RedirectCsvImportTest extends TestCase
     {
         Storage::fake('local');
         Bus::fake();
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
 
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
@@ -232,7 +233,7 @@ class RedirectCsvImportTest extends TestCase
     {
         // A fresh install has no prior export to reverse-engineer the
         // column shape from — this is the blank starting point instead.
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');

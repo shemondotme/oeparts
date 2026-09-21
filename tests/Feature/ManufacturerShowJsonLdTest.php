@@ -7,6 +7,7 @@ use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -88,7 +89,7 @@ class ManufacturerShowJsonLdTest extends TestCase
 
         $response = $this->get(route('frontend.manufacturer.show', ['lang' => 'en', 'manufacturer' => $this->manufacturer->slug]));
 
-        $response->assertSee('"image":"'.\Illuminate\Support\Facades\Storage::disk('public')->url('product-images/brake-medium.jpg').'"', false);
+        $response->assertSee('"image":"'.Storage::disk('public')->url('product-images/brake-medium.jpg').'"', false);
     }
 
     #[Test]

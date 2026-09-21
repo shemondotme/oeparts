@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SettingType;
 use App\Models\Setting;
 use App\Providers\SettingsSyncServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,9 +30,9 @@ class SettingsSyncServiceProviderTest extends TestCase
     {
         Setting::create([
             'group' => 'email',
-            'key'   => 'reply_to',
+            'key' => 'reply_to',
             'value' => 'support@oeparts.test',
-            'type'  => \App\Enums\SettingType::String,
+            'type' => SettingType::String,
         ]);
 
         (new SettingsSyncServiceProvider(app()))->boot();

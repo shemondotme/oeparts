@@ -28,7 +28,7 @@ class ContactReply extends Mailable
             tags: ['contact-reply'],
             metadata: [
                 'contact_message_id' => $this->contactMessage->id,
-                'template_type'      => 'contact_reply',
+                'template_type' => 'contact_reply',
             ],
         );
     }
@@ -40,8 +40,8 @@ class ContactReply extends Mailable
             text: 'emails.contact-reply-text',
             with: [
                 'contactMessage' => $this->contactMessage,
-                'replyBody'      => $this->replyBody,
-                'locale'         => $this->locale,
+                'replyBody' => $this->replyBody,
+                'locale' => $this->locale,
             ],
         );
     }

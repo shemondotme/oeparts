@@ -20,13 +20,13 @@ class BlogPost extends Model
     ];
 
     protected $casts = [
-        'title'            => 'array',
-        'excerpt'          => 'array',
-        'content'          => 'array',
-        'meta_title'       => 'array',
+        'title' => 'array',
+        'excerpt' => 'array',
+        'content' => 'array',
+        'meta_title' => 'array',
         'meta_description' => 'array',
-        'status'           => ContentStatus::class,
-        'published_at'     => 'datetime',
+        'status' => ContentStatus::class,
+        'published_at' => 'datetime',
         'last_reviewed_at' => 'date',
     ];
 

@@ -36,7 +36,7 @@ class SyncRuntimeSettingsIntoConfigTest extends TestCase
         config(['mail.mailers.smtp.host' => 'stale-from-a-previous-boot.test']);
         app(SettingsService::class)->set('email.smtp_host', 'fresh-from-settings.test');
 
-        dispatch(new NoopSyncTestJob());
+        dispatch(new NoopSyncTestJob);
 
         $this->assertSame('fresh-from-settings.test', config('mail.mailers.smtp.host'));
     }

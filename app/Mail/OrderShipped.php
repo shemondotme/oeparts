@@ -28,7 +28,7 @@ class OrderShipped extends Mailable
             ], $this->locale),
             tags: ['order-shipped'],
             metadata: [
-                'order_id'      => $this->order->id,
+                'order_id' => $this->order->id,
                 'template_type' => 'order_shipped',
             ],
         );
@@ -40,7 +40,7 @@ class OrderShipped extends Mailable
             view: 'emails.order-shipped',
             text: 'emails.order-shipped-text',
             with: [
-                'order'  => $this->order,
+                'order' => $this->order,
                 'locale' => $this->locale,
             ],
         );

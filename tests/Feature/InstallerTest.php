@@ -380,7 +380,7 @@ class InstallerTest extends TestCase
         $this->assertFalse(File::exists($lockFile));
 
         // Create the lock file (simulating installer completion)
-        File::put($lockFile, 'Installed at ' . now()->toDateTimeString());
+        File::put($lockFile, 'Installed at '.now()->toDateTimeString());
 
         $this->assertTrue(File::exists($lockFile));
 

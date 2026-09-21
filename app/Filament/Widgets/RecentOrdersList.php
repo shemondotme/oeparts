@@ -4,13 +4,13 @@ namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
 use App\Filament\Resources\OrderResource;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\Order;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -18,8 +18,8 @@ use Filament\Widgets\TableWidget;
 
 class RecentOrdersList extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -39,11 +39,11 @@ class RecentOrdersList extends TableWidget
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
                 ->link()
-                ->url(\App\Filament\Resources\OrderResource::getUrl('index')),
+                ->url(OrderResource::getUrl('index')),
         ];
     }
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {

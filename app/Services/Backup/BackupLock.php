@@ -22,7 +22,7 @@ class BackupLock
     {
         $dir = (string) config('updates.state_path', storage_path('app/updates'));
 
-        return rtrim($dir, "/\\").DIRECTORY_SEPARATOR.'lock';
+        return rtrim($dir, '/\\').DIRECTORY_SEPARATOR.'lock';
     }
 
     /**
@@ -33,7 +33,7 @@ class BackupLock
     public function acquire(string $owner): void
     {
         $path = $this->path();
-        $dir  = dirname($path);
+        $dir = dirname($path);
 
         if (! is_dir($dir)) {
             @mkdir($dir, 0775, true);
@@ -51,7 +51,7 @@ class BackupLock
         }
 
         fwrite($handle, (string) json_encode([
-            'owner'       => $owner,
+            'owner' => $owner,
             'acquired_at' => now()->toIso8601String(),
         ], JSON_PRETTY_PRINT));
         fclose($handle);

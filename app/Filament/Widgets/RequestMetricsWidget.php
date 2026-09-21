@@ -6,6 +6,9 @@ use App\Filament\Pages\System\FailedJobsPage;
 use App\Filament\Pages\System\QueueMonitor;
 use App\Filament\Resources\EmailLogResource;
 use App\Filament\Resources\SearchLogResource;
+use App\Filament\Widgets\Concerns\HasMonitoringVisuals;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
@@ -17,9 +20,9 @@ class RequestMetricsWidget extends BaseWidget
         return 'Queue, email, and search activity (last hour)';
     }
 
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
-    use \App\Filament\Widgets\Concerns\HasMonitoringVisuals;
+    use HasMonitoringVisuals;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected static bool $isLazy = false;
 
@@ -41,28 +44,32 @@ class RequestMetricsWidget extends BaseWidget
             $pendingJobs = 0;
             try {
                 $pendingJobs = DB::table($jobsTable)->count();
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
 
             $failedJobs = 0;
             try {
                 $failedJobs = DB::table($failedTable)
                     ->where('failed_at', '>=', now()->subHour())
                     ->count();
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
 
             $emailsSent = 0;
             try {
                 $emailsSent = DB::table('email_logs')
                     ->where('created_at', '>=', now()->subHour())
                     ->count();
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
 
             $searches = 0;
             try {
                 $searches = DB::table('search_logs')
                     ->where('created_at', '>=', now()->subHour())
                     ->count();
-            } catch (\Exception $e) {}
+            } catch (\Exception $e) {
+            }
 
             return [
                 'pending_jobs' => $pendingJobs,

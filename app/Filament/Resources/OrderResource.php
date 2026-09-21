@@ -8,16 +8,25 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Filament\Resources\OrderResource\Pages;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderNotesRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderStatusHistoryRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\PaymentRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationManager;
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendTrackingUpdateEmail;
+use App\Models\Carrier;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\SequenceService;
-use Filament\Forms;
-use Filament\Actions\Action as NotificationAction;
-use Filament\Notifications\Notification;
+use App\Support\NavBadge;
 use Filament\Actions;
+use Filament\Actions\Action as NotificationAction;
+use Filament\Forms;
+use Filament\Forms\Components\Placeholder;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -26,6 +35,8 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class OrderResource extends Resource
 {
@@ -140,7 +151,7 @@ class OrderResource extends Resource
                                         ->helperText('Carrier tracking reference for the shipment.'),
                                     Forms\Components\Select::make('carrier_id')
                                         ->label(__('admin.shipping_carrier'))
-                                        ->options(fn (): array => \App\Models\Carrier::query()
+                                        ->options(fn (): array => Carrier::query()
                                             ->where('is_active', true)
                                             ->orderBy('sort_order')
                                             ->pluck('name', 'id')
@@ -273,7 +284,7 @@ class OrderResource extends Resource
                                         ->minValue(0)
                                         ->step(0.01)
                                         ->extraAttributes(['class' => 'op-fin-input']),
-                                    \Filament\Forms\Components\Placeholder::make('fin_divider')
+                                    Placeholder::make('fin_divider')
                                         ->hiddenLabel()
                                         ->extraAttributes(['class' => 'op-fin-form-divider']),
                                     Forms\Components\TextInput::make('grand_total')
@@ -352,74 +363,73 @@ class OrderResource extends Resource
         return AdminUi::configureTable($table)
             ->modifyQueryUsing(fn ($query) => $query->with('user')->withCount('items'))
             ->columns([
-            AdminUi::copyableColumn('order_number', 'Order #', 'Order number copied')
-                ->searchable()
-                ->sortable(),
-            Tables\Columns\TextColumn::make('customer_name')
-                ->label(__('admin.customer'))
-                ->getStateUsing(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—')
-                ->description(fn (Order $record): ?string =>
-                    $record->user?->email ?? ($record->guest_email ?: null)
-                )
-                ->searchable(query: function (Builder $query, string $search): Builder {
-                    return $query->where(function ($q) use ($search) {
-                        $q->where('shipping_name', 'like', "%{$search}%")
-                            ->orWhere('guest_email', 'like', "%{$search}%")
-                            ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
-                    });
-                })
-                ->limit(30)
-                ->toggleable(),
-            Tables\Columns\TextColumn::make('status')
-                ->label(__('admin.status'))
-                ->badge()
-                ->icon(fn (OrderStatus $state): string => match ($state) {
-                    OrderStatus::Pending => 'heroicon-o-clock',
-                    OrderStatus::Paid => 'heroicon-o-check-circle',
-                    OrderStatus::Processing => 'heroicon-o-arrow-path',
-                    OrderStatus::Shipped => 'heroicon-o-truck',
-                    OrderStatus::Delivered => 'heroicon-o-check-badge',
-                    OrderStatus::Cancelled => 'heroicon-o-x-circle',
-                    OrderStatus::RefundRequested => 'heroicon-o-arrow-uturn-left',
-                    OrderStatus::Refunded => 'heroicon-o-receipt-refund',
-                })
-                ->color(fn (OrderStatus $state): string => AdminUi::orderStatusColor($state))
-                ->sortable(),
-            Tables\Columns\TextColumn::make('payment_status')
-                ->label(__('admin.payment'))
-                ->badge()
-                ->icon(fn (PaymentStatus $state): string => match ($state) {
-                    PaymentStatus::Pending => 'heroicon-o-clock',
-                    PaymentStatus::Paid => 'heroicon-o-check-circle',
-                    PaymentStatus::Failed => 'heroicon-o-x-circle',
-                    PaymentStatus::Refunded => 'heroicon-o-receipt-refund',
-                })
-                ->color(fn (PaymentStatus $state): string => AdminUi::paymentStatusColor($state))
-                ->sortable(),
-            Tables\Columns\TextColumn::make('items_count')
-                ->label(__('admin.items'))
-                ->counts('items')
-                ->fontMono()
-                ->alignCenter(),
-            Tables\Columns\TextColumn::make('grand_total')
-                ->label(__('admin.total'))
-                ->getStateUsing(fn (Order $record): string => format_money($record->grand_total))
-                ->description(fn (Order $record): string => $record->vat_amount > 0 ? 'incl. VAT' : 'excl. VAT')
-                ->alignEnd()
-                ->weight('bold')
-                ->fontMono()
-                ->sortable(),
-            Tables\Columns\TextColumn::make('created_at')
-                ->label(__('admin.date'))
-                ->dateTime('d M Y H:i')
-                ->sortable(),
-            Tables\Columns\IconColumn::make('urgent_processing')
-                ->label(__('admin.urgent'))
-                // Icon only when urgent — a column of red X's for "normal" reads as alarm.
-                ->icon(fn (bool $state): ?string => $state ? 'heroicon-o-exclamation-triangle' : null)
-                ->color('danger')
-                ->tooltip(fn (bool $state): ?string => $state ? 'Urgent processing — same-day dispatch' : null)
-                ->alignCenter(),
+                AdminUi::copyableColumn('order_number', 'Order #', 'Order number copied')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('customer_name')
+                    ->label(__('admin.customer'))
+                    ->getStateUsing(fn (Order $record): string => $record->shipping_name ?? $record->user?->name ?? $record->guest_email ?? '—')
+                    ->description(fn (Order $record): ?string => $record->user?->email ?? ($record->guest_email ?: null)
+                    )
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function ($q) use ($search) {
+                            $q->where('shipping_name', 'like', "%{$search}%")
+                                ->orWhere('guest_email', 'like', "%{$search}%")
+                                ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%"));
+                        });
+                    })
+                    ->limit(30)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('admin.status'))
+                    ->badge()
+                    ->icon(fn (OrderStatus $state): string => match ($state) {
+                        OrderStatus::Pending => 'heroicon-o-clock',
+                        OrderStatus::Paid => 'heroicon-o-check-circle',
+                        OrderStatus::Processing => 'heroicon-o-arrow-path',
+                        OrderStatus::Shipped => 'heroicon-o-truck',
+                        OrderStatus::Delivered => 'heroicon-o-check-badge',
+                        OrderStatus::Cancelled => 'heroicon-o-x-circle',
+                        OrderStatus::RefundRequested => 'heroicon-o-arrow-uturn-left',
+                        OrderStatus::Refunded => 'heroicon-o-receipt-refund',
+                    })
+                    ->color(fn (OrderStatus $state): string => AdminUi::orderStatusColor($state))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('payment_status')
+                    ->label(__('admin.payment'))
+                    ->badge()
+                    ->icon(fn (PaymentStatus $state): string => match ($state) {
+                        PaymentStatus::Pending => 'heroicon-o-clock',
+                        PaymentStatus::Paid => 'heroicon-o-check-circle',
+                        PaymentStatus::Failed => 'heroicon-o-x-circle',
+                        PaymentStatus::Refunded => 'heroicon-o-receipt-refund',
+                    })
+                    ->color(fn (PaymentStatus $state): string => AdminUi::paymentStatusColor($state))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('items_count')
+                    ->label(__('admin.items'))
+                    ->counts('items')
+                    ->fontMono()
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('grand_total')
+                    ->label(__('admin.total'))
+                    ->getStateUsing(fn (Order $record): string => format_money($record->grand_total))
+                    ->description(fn (Order $record): string => $record->vat_amount > 0 ? 'incl. VAT' : 'excl. VAT')
+                    ->alignEnd()
+                    ->weight('bold')
+                    ->fontMono()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('admin.date'))
+                    ->dateTime('d M Y H:i')
+                    ->sortable(),
+                Tables\Columns\IconColumn::make('urgent_processing')
+                    ->label(__('admin.urgent'))
+                    // Icon only when urgent — a column of red X's for "normal" reads as alarm.
+                    ->icon(fn (bool $state): ?string => $state ? 'heroicon-o-exclamation-triangle' : null)
+                    ->color('danger')
+                    ->tooltip(fn (bool $state): ?string => $state ? 'Urgent processing — same-day dispatch' : null)
+                    ->alignCenter(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
@@ -479,7 +489,7 @@ class OrderResource extends Resource
             ->actions([
                 ...AdminUi::recordActions([
                     static::makeChangeStatusAction(),
-                    Actions\Action::make('printInvoice')
+                    NotificationAction::make('printInvoice')
                         ->label(__('admin.print_invoice'))
                         ->icon('heroicon-o-document-text')
                         ->color('gray')
@@ -503,7 +513,7 @@ class OrderResource extends Resource
                             return redirect()->to(route('admin.orders.invoice', ['order' => $record]));
                         })
                         ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped, OrderStatus::Delivered])),
-                    Actions\Action::make('sendTracking')
+                    NotificationAction::make('sendTracking')
                         ->label(__('admin.send_tracking'))
                         ->icon('heroicon-o-paper-airplane')
                         ->color('info')
@@ -521,7 +531,7 @@ class OrderResource extends Resource
                                 ->helperText('The carrier tracking reference for this shipment.'),
                             Forms\Components\Select::make('carrier_id')
                                 ->label(__('admin.shipping_carrier'))
-                                ->options(fn (): array => \App\Models\Carrier::query()
+                                ->options(fn (): array => Carrier::query()
                                     ->where('is_active', true)
                                     ->orderBy('sort_order')
                                     ->pluck('name', 'id')
@@ -545,7 +555,7 @@ class OrderResource extends Resource
                                 ->send();
                         })
                         ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Processing, OrderStatus::Shipped])),
-                    Actions\Action::make('confirmPayment')
+                    NotificationAction::make('confirmPayment')
                         ->label(__('admin.confirm_payment'))
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
@@ -561,13 +571,13 @@ class OrderResource extends Resource
                                 ->helperText('Enter the payment reference from your bank statement for reconciliation.'),
                         ])
                         ->action(function (Order $record, array $data): void {
-                            $payment = \App\Models\Payment::firstOrCreate(
+                            $payment = Payment::firstOrCreate(
                                 ['order_id' => $record->id],
                                 [
-                                    'gateway'        => PaymentGateway::BankTransfer,
+                                    'gateway' => PaymentGateway::BankTransfer,
                                     'transaction_id' => $data['transaction_id'] ?? null,
-                                    'status'         => PaymentTransactionStatus::Pending,
-                                    'amount'         => $record->grand_total,
+                                    'status' => PaymentTransactionStatus::Pending,
+                                    'amount' => $record->grand_total,
                                 ]
                             );
 
@@ -595,11 +605,10 @@ class OrderResource extends Resource
                                     ->send();
                             }
                         })
-                        ->visible(fn (Order $record): bool =>
-                            $record->payment_method === PaymentMethod::BankTransfer
+                        ->visible(fn (Order $record): bool => $record->payment_method === PaymentMethod::BankTransfer
                             && $record->payment_status === PaymentStatus::Pending
                         ),
-                    Actions\Action::make('capturePayment')
+                    NotificationAction::make('capturePayment')
                         ->label(__('admin.capture_payment'))
                         ->icon('heroicon-o-lock-open')
                         ->color('success')
@@ -687,7 +696,7 @@ class OrderResource extends Resource
                             } else {
                                 Notification::make()
                                     ->title('Some orders could not be updated')
-                                    ->body('Failed: ' . implode(', ', $failed))
+                                    ->body('Failed: '.implode(', ', $failed))
                                     ->warning()
                                     ->send();
                             }
@@ -712,7 +721,7 @@ class OrderResource extends Resource
             ->emptyStateHeading('No orders yet')
             ->emptyStateDescription('Orders from the storefront will appear here once customers start purchasing.')
             ->emptyStateActions([
-                Actions\Action::make('create')
+                NotificationAction::make('create')
                     ->label(__('admin.create_order'))
                     ->url(static::getUrl('create'))
                     ->icon('heroicon-o-plus')
@@ -723,21 +732,21 @@ class OrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager::class,
-            \App\Filament\Resources\OrderResource\RelationManagers\OrderNotesRelationManager::class,
-            \App\Filament\Resources\OrderResource\RelationManagers\OrderStatusHistoryRelationManager::class,
-            \App\Filament\Resources\OrderResource\RelationManagers\PaymentRelationManager::class,
-            \App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationManager::class,
+            OrderItemsRelationManager::class,
+            OrderNotesRelationManager::class,
+            OrderStatusHistoryRelationManager::class,
+            PaymentRelationManager::class,
+            RefundRequestRelationManager::class,
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListOrders::route('/'),
+            'index' => Pages\ListOrders::route('/'),
             'create' => Pages\CreateOrder::route('/create'),
-            'view'   => Pages\ViewOrder::route('/{record}'),
-            'edit'   => Pages\EditOrder::route('/{record}/edit'),
+            'view' => Pages\ViewOrder::route('/{record}'),
+            'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
     }
 
@@ -771,12 +780,12 @@ class OrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('orders_pending', fn () => static::getModel()::where('status', OrderStatus::Pending)->count());
+        return NavBadge::count('orders_pending', fn () => static::getModel()::where('status', OrderStatus::Pending)->count());
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return (int) \App\Support\NavBadge::count('orders_pending', fn () => static::getModel()::where('status', OrderStatus::Pending)->count()) > 10 ? 'danger' : 'warning';
+        return (int) NavBadge::count('orders_pending', fn () => static::getModel()::where('status', OrderStatus::Pending)->count()) > 10 ? 'danger' : 'warning';
     }
 
     public static function getNavigationBadgeTooltip(): ?string
@@ -784,9 +793,9 @@ class OrderResource extends Resource
         return 'Orders awaiting processing';
     }
 
-    public static function makeChangeStatusAction(): Actions\Action
+    public static function makeChangeStatusAction(): NotificationAction
     {
-        return Actions\Action::make('changeStatus')
+        return NotificationAction::make('changeStatus')
             ->label(__('admin.change_status'))
             ->icon('heroicon-o-arrow-path')
             ->color('warning')
@@ -837,12 +846,12 @@ class OrderResource extends Resource
         return ['order_number', 'shipping_name', 'guest_email'];
     }
 
-    public static function getGlobalSearchResultDetails(\Illuminate\Database\Eloquent\Model $record): array
+    public static function getGlobalSearchResultDetails(Model $record): array
     {
         $status = $record->status;
 
         return [
-            'Status' => \Illuminate\Support\Str::headline($status instanceof \BackedEnum ? $status->value : (string) $status),
+            'Status' => Str::headline($status instanceof \BackedEnum ? $status->value : (string) $status),
             'Total' => format_money($record->grand_total),
         ];
     }

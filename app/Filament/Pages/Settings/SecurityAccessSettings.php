@@ -3,6 +3,10 @@
 namespace App\Filament\Pages\Settings;
 
 use App\Enums\SettingType;
+use App\Filament\Pages\System\PermissionMatrix;
+use App\Filament\Resources\AdminResource;
+use App\Filament\Resources\IpBlocklistResource;
+use App\Filament\Resources\RoleResource;
 use App\Models\ActivityLog;
 use App\Models\Setting;
 use App\Services\SettingsService;
@@ -187,26 +191,26 @@ class SecurityAccessSettings extends SettingsPage
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Banned IPs and CIDR ranges are managed on the <a href="'
-                                . \App\Filament\Resources\IpBlocklistResource::getUrl()
-                                . '" class="fi-link text-primary-600">IP Blocklist</a> page — each entry is checked on every request with no restart or cache-clear needed.'
+                                .IpBlocklistResource::getUrl()
+                                .'" class="fi-link text-primary-600">IP Blocklist</a> page — each entry is checked on every request with no restart or cache-clear needed.'
                             )),
                         Forms\Components\Placeholder::make('permission_matrix_note')
                             ->label('')
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Which role can do what is managed on the <a href="'
-                                . \App\Filament\Pages\System\PermissionMatrix::getUrl()
-                                . '" class="fi-link text-primary-600">Permission Matrix</a> page.'
+                                .PermissionMatrix::getUrl()
+                                .'" class="fi-link text-primary-600">Permission Matrix</a> page.'
                             )),
                         Forms\Components\Placeholder::make('roles_admins_note')
                             ->label('')
                             ->columnSpanFull()
                             ->content(new HtmlString(
                                 'Admin accounts and named roles are managed on the <a href="'
-                                . \App\Filament\Resources\AdminResource::getUrl()
-                                . '" class="fi-link text-primary-600">Admins</a> and <a href="'
-                                . \App\Filament\Resources\RoleResource::getUrl()
-                                . '" class="fi-link text-primary-600">Roles</a> pages.'
+                                .AdminResource::getUrl()
+                                .'" class="fi-link text-primary-600">Admins</a> and <a href="'
+                                .RoleResource::getUrl()
+                                .'" class="fi-link text-primary-600">Roles</a> pages.'
                             )),
                     ]),
 
@@ -252,7 +256,7 @@ class SecurityAccessSettings extends SettingsPage
                 try {
                     $value = Crypt::decryptString($value);
                 } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt setting {$setting->key}: " . $e->getMessage());
+                    Log::warning("Failed to decrypt setting {$setting->key}: ".$e->getMessage());
                 }
             }
 
@@ -286,7 +290,7 @@ class SecurityAccessSettings extends SettingsPage
 
         Notification::make()
             ->title('Settings saved')
-            ->body('Cache cleared for: ' . implode(', ', static::$settingsGroups))
+            ->body('Cache cleared for: '.implode(', ', static::$settingsGroups))
             ->success()
             ->send();
     }
@@ -317,7 +321,7 @@ class SecurityAccessSettings extends SettingsPage
                 $value = empty($value) ? '' : json_encode($value);
             }
 
-            $service->set($this->groupForKey($key) . '.' . $key, $value);
+            $service->set($this->groupForKey($key).'.'.$key, $value);
 
             if (array_key_exists($key, $oldValues) && (string) ($oldValues[$key] ?? '') !== (string) $value) {
                 $oldValues[$key] = '***';

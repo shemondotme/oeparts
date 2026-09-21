@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Services\SettingsService;
 use App\Services\SitemapService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -79,7 +80,7 @@ class SitemapCloudflarePurgeTest extends TestCase
     public function sitemap_generation_succeeds_even_if_cloudflare_is_unreachable(): void
     {
         $this->enableCloudflare();
-        Http::fake(fn () => throw new \Illuminate\Http\Client\ConnectionException('down'));
+        Http::fake(fn () => throw new ConnectionException('down'));
 
         $files = app(SitemapService::class)->generateAll();
 

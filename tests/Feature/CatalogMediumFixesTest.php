@@ -2,12 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Resources\ProductResource\Pages\ListProducts;
 use App\Models\Admin;
 use App\Models\Condition;
 use App\Models\FailedSearchLog;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Services\SearchService;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -18,6 +20,7 @@ class CatalogMediumFixesTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -96,12 +99,12 @@ class CatalogMediumFixesTest extends TestCase
         $product->delete();
         $this->assertTrue($product->fresh()->trashed());
 
-        $this->seed(\Database\Seeders\RolesSeeder::class);
+        $this->seed(RolesSeeder::class);
         $admin = Admin::factory()->create();
         $admin->assignRole('super_admin');
         $this->actingAs($admin, 'admin');
 
-        Livewire::test(\App\Filament\Resources\ProductResource\Pages\ListProducts::class)
+        Livewire::test(ListProducts::class)
             ->filterTable('trashed')
             ->callTableAction('restore', $product);
 

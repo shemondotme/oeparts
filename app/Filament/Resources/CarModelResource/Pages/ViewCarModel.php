@@ -3,12 +3,13 @@
 namespace App\Filament\Resources\CarModelResource\Pages;
 
 use App\Filament\Resources\CarModelResource;
+use App\Filament\Support\AdminUi;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 
@@ -49,7 +50,7 @@ class ViewCarModel extends ViewRecord
                                     ->schema([
                                         Infolists\Components\TextEntry::make('manufacturer.name')
                                             ->label('Manufacturer')
-                                            ->getStateUsing(fn ($record): string => $record->manufacturer ? \App\Filament\Support\AdminUi::localizedName($record->manufacturer->name) : '—'),
+                                            ->getStateUsing(fn ($record): string => $record->manufacturer ? AdminUi::localizedName($record->manufacturer->name) : '—'),
                                         Infolists\Components\TextEntry::make('name')
                                             ->label('Model Name'),
                                         Infolists\Components\TextEntry::make('slug')

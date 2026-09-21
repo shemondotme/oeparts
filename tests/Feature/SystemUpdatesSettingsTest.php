@@ -6,6 +6,8 @@ use App\Filament\Pages\System\SystemUpdates;
 use App\Models\Admin;
 use App\Models\Setting;
 use App\Services\Updates\UpdateChecker;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -28,8 +30,8 @@ class SystemUpdatesSettingsTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         config()->set('updates.check.catalog_url', 'https://updates.test/releases.json');

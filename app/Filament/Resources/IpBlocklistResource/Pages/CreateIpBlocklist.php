@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\IpBlocklistResource\Pages;
 
 use App\Filament\Concerns\DisablesCreateAnother;
-
 use App\Filament\Resources\IpBlocklistResource;
 use Filament\Resources\Pages\CreateRecord;
 

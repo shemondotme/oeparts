@@ -8,6 +8,7 @@ use App\Jobs\SendOrderStatusEmail;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -24,7 +25,7 @@ class AwaitingConfirmationListTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\RolesSeeder::class,
+            RolesSeeder::class,
         ]);
     }
 

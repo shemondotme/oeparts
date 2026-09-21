@@ -528,7 +528,7 @@ final class SettingsRegistry
                 foreach ($page['tabs'] as $tabIndex => $tab) {
                     $superGroups[$superGroupKey]['sections'][$page['section']]['items'][] = [
                         $tab['label'],
-                        $page['url'] . '?tab=' . ($tabIndex + 1),
+                        $page['url'].'?tab='.($tabIndex + 1),
                         $tab['description'],
                         $page['icon'],
                     ];
@@ -557,9 +557,9 @@ final class SettingsRegistry
 
     /**
      * @return array<class-string> Classes for 'type' => 'page' entries only —
-     *                              the set tests/Feature/SettingsRegistryTest.php
-     *                              cross-checks 1:1 against disk-discovered
-     *                              SettingsPage subclasses.
+     *                             the set tests/Feature/SettingsRegistryTest.php
+     *                             cross-checks 1:1 against disk-discovered
+     *                             SettingsPage subclasses.
      */
     public static function pageClasses(): array
     {

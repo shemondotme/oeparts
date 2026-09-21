@@ -2,17 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Enums\SequenceType;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\Sequence;
+use App\Models\Setting;
 use App\Models\ShippingCountry;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
-use App\Models\Setting;
 use App\Services\CheckoutService;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Session;
@@ -24,9 +27,13 @@ class BuyNowCheckoutTest extends TestCase
     use RefreshDatabase;
 
     private Product $product;
+
     private Manufacturer $manufacturer;
+
     private Condition $condition;
+
     private ShippingZone $zone;
+
     private ShippingMethod $shippingMethod;
 
     protected function setUp(): void
@@ -65,8 +72,8 @@ class BuyNowCheckoutTest extends TestCase
             'estimated_days_max' => 7,
             'is_active' => true,
         ]);
-        \App\Models\Sequence::create([
-            'type' => \App\Enums\SequenceType::Order,
+        Sequence::create([
+            'type' => SequenceType::Order,
             'value' => 0,
             'month' => now()->format('Ym'),
         ]);
@@ -78,7 +85,7 @@ class BuyNowCheckoutTest extends TestCase
             ['group' => 'pdp', 'key' => 'buy_now_enabled'],
             ['value' => '1', 'type' => 'boolean', 'is_encrypted' => false]
         );
-        app(\App\Services\SettingsService::class)->forget('pdp');
+        app(SettingsService::class)->forget('pdp');
     }
 
     #[Test]

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class NewsletterCampaign extends Model
@@ -18,14 +19,14 @@ class NewsletterCampaign extends Model
     ];
 
     protected $casts = [
-        'status'        => 'string',
-        'sent_count'    => 'integer',
-        'failed_count'  => 'integer',
-        'scheduled_at'  => 'datetime',
-        'sent_at'       => 'datetime',
+        'status' => 'string',
+        'sent_count' => 'integer',
+        'failed_count' => 'integer',
+        'scheduled_at' => 'datetime',
+        'sent_at' => 'datetime',
     ];
 
-    public function admin(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by');
     }

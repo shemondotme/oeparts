@@ -23,7 +23,7 @@ class RefundsPendingList extends TableWidget
 
     protected ?string $pollingInterval = '60s';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected static ?int $sort = -32;
 
@@ -36,7 +36,7 @@ class RefundsPendingList extends TableWidget
     {
         $d = $this->cachedWidgetData(fn (): array => ['count' => RefundRequest::pending()->count()]);
 
-        return 'Refunds Pending' . ($d['count'] > 0 ? " ({$d['count']})" : '');
+        return 'Refunds Pending'.($d['count'] > 0 ? " ({$d['count']})" : '');
     }
 
     protected function getTableHeaderActions(): array
@@ -69,7 +69,7 @@ class RefundsPendingList extends TableWidget
                     ->label('Days Open')
                     ->badge()
                     ->icon('heroicon-m-clock')
-                    ->getStateUsing(fn (RefundRequest $record): string => (int) $record->created_at->diffInDays(now()) . ' days')
+                    ->getStateUsing(fn (RefundRequest $record): string => (int) $record->created_at->diffInDays(now()).' days')
                     ->color(function (RefundRequest $record): string {
                         $days = (int) $record->created_at->diffInDays(now());
                         if ($days < 14) {
@@ -78,6 +78,7 @@ class RefundsPendingList extends TableWidget
                         if ($days < 27) {
                             return 'warning';
                         }
+
                         return 'danger';
                     }),
                 TextColumn::make('amount_requested')
@@ -108,6 +109,7 @@ class RefundsPendingList extends TableWidget
                 if ($days >= 14) {
                     return 'op-row-warn';
                 }
+
                 return null;
             })
             ->striped()

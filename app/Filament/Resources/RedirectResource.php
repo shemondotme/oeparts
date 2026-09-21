@@ -5,21 +5,23 @@ namespace App\Filament\Resources;
 use App\Enums\RedirectType;
 use App\Filament\Resources\RedirectResource\Pages;
 use App\Filament\Support\AdminUi;
+use App\Jobs\ImportRedirectsFromCsv;
 use App\Models\Redirect;
 use App\Services\RedirectLoopDetector;
-use Filament\Forms;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Notifications\Notification;
-use Filament\Notifications\NotificationAction;
 use Filament\Resources\Resource;
-use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Support\Enums\FontWeight;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Response;
 
 class RedirectResource extends Resource
 {
@@ -158,30 +160,30 @@ class RedirectResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
-            Tables\Columns\TextColumn::make('from_url')
-                ->label(__('admin.from_url'))
-                ->searchable()
-                ->sortable()
-                ->copyable()
-                ->copyMessage('URL copied')
-                ->weight(FontWeight::Medium)
-                ->limit(40)
-                ->fontMono(),
-            Tables\Columns\TextColumn::make('to_url')
-                ->label(__('admin.to_url'))
-                ->searchable()
-                ->copyable()
-                ->copyMessage('URL copied')
-                ->limit(40)
-                ->fontMono(),
-            Tables\Columns\TextColumn::make('type')
-                ->label(__('admin.type'))
-                ->badge()
-                ->color(fn (RedirectType $state): string => match ($state) {
-                    RedirectType::Permanent => 'success',
-                    RedirectType::Temporary => 'warning',
-                })
-                ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('from_url')
+                    ->label(__('admin.from_url'))
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->copyMessage('URL copied')
+                    ->weight(FontWeight::Medium)
+                    ->limit(40)
+                    ->fontMono(),
+                Tables\Columns\TextColumn::make('to_url')
+                    ->label(__('admin.to_url'))
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('URL copied')
+                    ->limit(40)
+                    ->fontMono(),
+                Tables\Columns\TextColumn::make('type')
+                    ->label(__('admin.type'))
+                    ->badge()
+                    ->color(fn (RedirectType $state): string => match ($state) {
+                        RedirectType::Permanent => 'success',
+                        RedirectType::Temporary => 'warning',
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('hit_count')
                     ->label(__('admin.hits'))
                     ->fontMono()
@@ -207,16 +209,16 @@ class RedirectResource extends Resource
             ])
             ->actions(AdminUi::recordActionsWithoutView([static::testRedirectAction()]))
             ->bulkActions([
-            Actions\BulkActionGroup::make([
-                AdminUi::exportCsvBulkAction('Export Redirects', [
-                    'from_url' => 'From URL',
-                    'to_url' => 'To URL',
-                    'type' => 'Type',
-                    'hit_count' => 'Hits',
-                    'is_active' => 'Active',
+                Actions\BulkActionGroup::make([
+                    AdminUi::exportCsvBulkAction('Export Redirects', [
+                        'from_url' => 'From URL',
+                        'to_url' => 'To URL',
+                        'type' => 'Type',
+                        'hit_count' => 'Hits',
+                        'is_active' => 'Active',
+                    ]),
+                    Actions\DeleteBulkAction::make(),
                 ]),
-                Actions\DeleteBulkAction::make(),
-            ]),
             ])
             ->headerActions([static::downloadTemplateAction(), static::importCsvAction()])
             ->defaultSort('created_at', 'desc')
@@ -258,7 +260,7 @@ class RedirectResource extends Resource
             ->label('Download Template')
             ->icon('heroicon-o-document-arrow-down')
             ->color('gray')
-            ->action(fn () => \Illuminate\Support\Facades\Response::streamDownload(
+            ->action(fn () => Response::streamDownload(
                 fn () => print "from_url,to_url,type,is_active\nold-page,/new-page,301,1\n",
                 'redirect-import-template.csv',
             ));
@@ -285,7 +287,7 @@ class RedirectResource extends Resource
                     ->default(false),
             ])
             ->action(function (array $data): void {
-                \App\Jobs\ImportRedirectsFromCsv::dispatch(
+                ImportRedirectsFromCsv::dispatch(
                     $data['csv_file'],
                     auth('admin')->user()?->name ?? 'An admin',
                     (bool) ($data['overwrite_existing'] ?? false)
@@ -318,7 +320,7 @@ class RedirectResource extends Resource
                 $target = str_starts_with($record->to_url, 'http') ? $record->to_url : url($record->to_url);
 
                 try {
-                    $response = \Illuminate\Support\Facades\Http::timeout(5)->withoutRedirecting()->get($target);
+                    $response = Http::timeout(5)->withoutRedirecting()->get($target);
                     $status = $response->status();
 
                     if ($status >= 200 && $status < 300) {
@@ -346,10 +348,10 @@ class RedirectResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListRedirects::route('/'),
+            'index' => Pages\ListRedirects::route('/'),
             'create' => Pages\CreateRedirect::route('/create'),
-            'view'   => Pages\ViewRedirect::route('/{record}'),
-            'edit'   => Pages\EditRedirect::route('/{record}/edit'),
+            'view' => Pages\ViewRedirect::route('/{record}'),
+            'edit' => Pages\EditRedirect::route('/{record}/edit'),
         ];
     }
 
@@ -358,4 +360,3 @@ class RedirectResource extends Resource
         return ['from_url', 'to_url'];
     }
 }
-

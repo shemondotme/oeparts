@@ -6,15 +6,55 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Enums\RefundStatus;
+use App\Filament\Pages\Settings\SettingsPage;
+use App\Filament\Resources\AbandonedCartResource;
+use App\Filament\Resources\ActivityLogResource;
+use App\Filament\Resources\AdminResource;
+use App\Filament\Resources\BlogPostResource;
+use App\Filament\Resources\CarModelResource;
+use App\Filament\Resources\CarrierResource;
+use App\Filament\Resources\CategoryResource;
+use App\Filament\Resources\ConditionResource;
+use App\Filament\Resources\ContactMessageResource;
+use App\Filament\Resources\CouponResource;
+use App\Filament\Resources\CronLogResource;
+use App\Filament\Resources\CustomerResource;
+use App\Filament\Resources\EmailLogResource;
+use App\Filament\Resources\FailedSearchLogResource;
+use App\Filament\Resources\FaqResource;
+use App\Filament\Resources\IpBlocklistResource;
+use App\Filament\Resources\LanguageResource;
+use App\Filament\Resources\LoginLogResource;
+use App\Filament\Resources\ManufacturerResource;
+use App\Filament\Resources\MediaFileResource;
+use App\Filament\Resources\MenuResource;
+use App\Filament\Resources\NewsletterCampaignResource;
+use App\Filament\Resources\NewsletterSubscriberResource;
+use App\Filament\Resources\OrderResource;
+use App\Filament\Resources\PageResource;
+use App\Filament\Resources\PartInquiryResource;
+use App\Filament\Resources\PaymentResource;
+use App\Filament\Resources\ProductResource;
+use App\Filament\Resources\RedirectResource;
+use App\Filament\Resources\RefundRequestResource;
+use App\Filament\Resources\RoleResource;
+use App\Filament\Resources\SearchLogResource;
+use App\Filament\Resources\SectionResource;
+use App\Filament\Resources\SeoMetaResource;
+use App\Filament\Resources\ShippingMethodResource;
+use App\Filament\Resources\ShippingZoneResource;
+use App\Filament\Resources\TestimonialResource;
+use App\Filament\Resources\TranslationResource;
 use Closure;
 use Filament\Actions;
+use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
 use Filament\Tables\Actions\BulkAction;
@@ -103,7 +143,7 @@ final class AdminUi
      */
     public static function oemColumn(string $name = 'oem_number', string $copyMessage = 'OEM number copied'): TextColumn
     {
-        return static::copyableColumn($name, 'OEM Number', $copyMessage)
+        return self::copyableColumn($name, 'OEM Number', $copyMessage)
             ->weight(FontWeight::Bold)
             ->searchable()
             ->sortable()
@@ -181,11 +221,11 @@ final class AdminUi
     /**
      * Slug auto-generation input — auto-fills from a source field on blur if slug is empty.
      *
-     * @param  string        $name        Field name (e.g. 'slug')
-     * @param  string        $label       Display label
-     * @param  string        $sourceCode  Locale code of the source name field (e.g. 'en')
-     * @param  string        $sourceField Source field name to watch (e.g. 'name')
-     * @param  string|null   $uniqueGuard Column for unique(ignoreRecord:true), or null to skip
+     * @param  string  $name  Field name (e.g. 'slug')
+     * @param  string  $label  Display label
+     * @param  string  $sourceCode  Locale code of the source name field (e.g. 'en')
+     * @param  string  $sourceField  Source field name to watch (e.g. 'name')
+     * @param  string|null  $uniqueGuard  Column for unique(ignoreRecord:true), or null to skip
      */
     public static function slugInput(string $name, string $label, string $sourceCode = 'en', string $sourceField = 'name', ?string $uniqueGuard = null): TextInput
     {
@@ -226,7 +266,7 @@ final class AdminUi
         ?string $slugSyncTarget = null,
         string $slugSyncMode = 'fill-if-blank',
     ): Tabs {
-        $locales ??= static::LOCALES;
+        $locales ??= self::LOCALES;
 
         return Tabs::make($tabsLabel)
             ->schema(
@@ -247,7 +287,7 @@ final class AdminUi
                                     $wantsLive = $config['live'] ?? false;
 
                                     if (($config['type'] ?? 'text') === 'textarea') {
-                                        $field = \Filament\Forms\Components\Textarea::make("{$fieldName}.{$code}")
+                                        $field = Textarea::make("{$fieldName}.{$code}")
                                             ->label($config['label'])
                                             ->required($required)
                                             ->rows($rows ?? 5)
@@ -264,13 +304,13 @@ final class AdminUi
                                     }
 
                                     if (($config['type'] ?? 'text') === 'richeditor') {
-                                        return \Filament\Forms\Components\RichEditor::make("{$fieldName}.{$code}")
+                                        return RichEditor::make("{$fieldName}.{$code}")
                                             ->label($config['label'])
                                             ->nullable()
                                             ->columnSpanFull();
                                     }
 
-                                    $field = \Filament\Forms\Components\TextInput::make("{$fieldName}.{$code}")
+                                    $field = TextInput::make("{$fieldName}.{$code}")
                                         ->label($config['label'])
                                         ->required($required)
                                         ->maxLength($maxLength)
@@ -364,7 +404,7 @@ final class AdminUi
             ->striped()
             ->deferLoading()
             ->paginated([10, 25, 50, 100])
-            ->recordUrl(fn ($record): string => static::getResourceUrl($record));
+            ->recordUrl(fn ($record): string => self::getResourceUrl($record));
     }
 
     /**
@@ -381,14 +421,14 @@ final class AdminUi
     /**
      * Standard bulk action with impact summary in the confirmation modal.
      *
-     * @param  string         $name    Action name (used as Livewire key)
-     * @param  string         $label   Button label
-     * @param  string         $color   Filament color (success, warning, danger, gray, info)
-     * @param  string         $icon    Heroicon name
-     * @param  Closure        $action  fn(Collection $records, array $data): void
-     * @param  Closure|null   $summary fn($record): ?array Returns ['key'=>..., 'old'=>..., 'new'=>..., 'masked'=>bool] or null to skip
-     * @param  array<int, Component> $form  Optional modal form schema
-     * @param  Closure|null   $visible fn(Collection $records): bool
+     * @param  string  $name  Action name (used as Livewire key)
+     * @param  string  $label  Button label
+     * @param  string  $color  Filament color (success, warning, danger, gray, info)
+     * @param  string  $icon  Heroicon name
+     * @param  Closure  $action  fn(Collection $records, array $data): void
+     * @param  Closure|null  $summary  fn($record): ?array Returns ['key'=>..., 'old'=>..., 'new'=>..., 'masked'=>bool] or null to skip
+     * @param  array<int, Component>  $form  Optional modal form schema
+     * @param  Closure|null  $visible  fn(Collection $records): bool
      */
     public static function impactBulkAction(
         string $name,
@@ -410,7 +450,7 @@ final class AdminUi
             ->modalSubmitActionLabel('Yes, proceed')
             ->when($visible !== null, fn (BulkAction $a) => $a->visible($visible))
             ->when(! empty($form), fn (BulkAction $a) => $a->form($form))
-            ->modalDescription(function (Collection $records) use ($label, $summary, $form) {
+            ->modalDescription(function (Collection $records) use ($summary, $form) {
                 $count = $records->count();
 
                 if (! empty($form)) {
@@ -428,7 +468,7 @@ final class AdminUi
                     ->toArray();
 
                 if (empty($changes)) {
-                    return "No records will be affected.";
+                    return 'No records will be affected.';
                 }
 
                 return '';
@@ -450,7 +490,7 @@ final class AdminUi
 
                 return view('components.bulk-change-preview', [
                     'changes' => $changes,
-                    'heading' => count($changes) . ' ' . lcfirst($label),
+                    'heading' => count($changes).' '.lcfirst($label),
                 ]);
             })
             ->action(fn (Collection $records, array $data) => $action($records, $data))
@@ -480,7 +520,7 @@ final class AdminUi
                     array_keys($columns),
                 ));
 
-                $csv = collect($headers)->implode(',') . "\n";
+                $csv = collect($headers)->implode(',')."\n";
                 $rows->each(function ($row) use (&$csv) {
                     // A column accessor like 'manufacturer.name' can resolve
                     // to a translatable array-cast attribute (Product/
@@ -501,11 +541,11 @@ final class AdminUi
                             default => (string) $cell,
                         };
 
-                        return '"' . str_replace('"', '""', $value) . '"';
-                    })->implode(',') . "\n";
+                        return '"'.str_replace('"', '""', $value).'"';
+                    })->implode(',')."\n";
                 });
 
-                return Response::streamDownload(fn () => print($csv), 'export-' . now()->format('Y-m-d-His') . '.csv');
+                return Response::streamDownload(fn () => print ($csv), 'export-'.now()->format('Y-m-d-His').'.csv');
             })
             ->authorize(fn (?string $model): bool => $model === null || (auth('admin')->user()?->can('viewAny', $model) ?? false))
             ->deselectRecordsAfterCompletion();
@@ -669,17 +709,17 @@ final class AdminUi
     /**
      * Build a resource index URL with optional pre-filter parameters for drilldowns.
      *
-     * @param  string       $resourceClass  Fully-qualified Filament resource class
-     * @param  array|null   $tableFilters   Filters to apply, e.g. ['status' => ['value' => 'pending']]
-     * @param  string|null  $tableSearch    Search query string
-     * @param  string|null  $tableSort      Sort string, e.g. 'created_at:desc'
+     * @param  string  $resourceClass  Fully-qualified Filament resource class
+     * @param  array|null  $tableFilters  Filters to apply, e.g. ['status' => ['value' => 'pending']]
+     * @param  string|null  $tableSearch  Search query string
+     * @param  string|null  $tableSort  Sort string, e.g. 'created_at:desc'
      */
     /**
      * "Settings" header link from a module list to its settings page —
      * the WooCommerce-style module↔settings bridge. Hidden for admins who
      * can't access the settings page.
      *
-     * @param  class-string<\App\Filament\Pages\Settings\SettingsPage>  $settingsPage
+     * @param  class-string<SettingsPage>  $settingsPage
      */
     public static function settingsLinkAction(string $settingsPage, string $tooltip = 'Open the settings for this module'): Actions\Action
     {
@@ -722,49 +762,49 @@ final class AdminUi
     {
         $resourceClass = match (class_basename($record)) {
             // Commerce
-            'Order' => \App\Filament\Resources\OrderResource::class,
-            'Payment' => \App\Filament\Resources\PaymentResource::class,
-            'RefundRequest' => \App\Filament\Resources\RefundRequestResource::class,
-            'ShippingZone' => \App\Filament\Resources\ShippingZoneResource::class,
-            'ShippingMethod' => \App\Filament\Resources\ShippingMethodResource::class,
-            'Carrier' => \App\Filament\Resources\CarrierResource::class,
+            'Order' => OrderResource::class,
+            'Payment' => PaymentResource::class,
+            'RefundRequest' => RefundRequestResource::class,
+            'ShippingZone' => ShippingZoneResource::class,
+            'ShippingMethod' => ShippingMethodResource::class,
+            'Carrier' => CarrierResource::class,
             // Catalog
-            'Product' => \App\Filament\Resources\ProductResource::class,
-            'Manufacturer' => \App\Filament\Resources\ManufacturerResource::class,
-            'CarModel' => \App\Filament\Resources\CarModelResource::class,
-            'Category' => \App\Filament\Resources\CategoryResource::class,
-            'Condition' => \App\Filament\Resources\ConditionResource::class,
+            'Product' => ProductResource::class,
+            'Manufacturer' => ManufacturerResource::class,
+            'CarModel' => CarModelResource::class,
+            'Category' => CategoryResource::class,
+            'Condition' => ConditionResource::class,
             // Customers
-            'User' => \App\Filament\Resources\CustomerResource::class,
-            'ContactMessage' => \App\Filament\Resources\ContactMessageResource::class,
-            'PartInquiry' => \App\Filament\Resources\PartInquiryResource::class,
+            'User' => CustomerResource::class,
+            'ContactMessage' => ContactMessageResource::class,
+            'PartInquiry' => PartInquiryResource::class,
             // Content
-            'BlogPost' => \App\Filament\Resources\BlogPostResource::class,
-            'Section' => \App\Filament\Resources\SectionResource::class,
-            'Page' => \App\Filament\Resources\PageResource::class,
-            'Faq' => \App\Filament\Resources\FaqResource::class,
-            'Menu' => \App\Filament\Resources\MenuResource::class,
-            'MediaFile' => \App\Filament\Resources\MediaFileResource::class,
+            'BlogPost' => BlogPostResource::class,
+            'Section' => SectionResource::class,
+            'Page' => PageResource::class,
+            'Faq' => FaqResource::class,
+            'Menu' => MenuResource::class,
+            'MediaFile' => MediaFileResource::class,
             // Marketing
-            'Coupon' => \App\Filament\Resources\CouponResource::class,
-            'AbandonedCart' => \App\Filament\Resources\AbandonedCartResource::class,
-            'Testimonial' => \App\Filament\Resources\TestimonialResource::class,
-            'NewsletterSubscriber' => \App\Filament\Resources\NewsletterSubscriberResource::class,
-            'NewsletterCampaign' => \App\Filament\Resources\NewsletterCampaignResource::class,
-            'EmailLog' => \App\Filament\Resources\EmailLogResource::class,
+            'Coupon' => CouponResource::class,
+            'AbandonedCart' => AbandonedCartResource::class,
+            'Testimonial' => TestimonialResource::class,
+            'NewsletterSubscriber' => NewsletterSubscriberResource::class,
+            'NewsletterCampaign' => NewsletterCampaignResource::class,
+            'EmailLog' => EmailLogResource::class,
             // System
-            'Admin' => \App\Filament\Resources\AdminResource::class,
-            'Role' => \App\Filament\Resources\RoleResource::class,
-            'ActivityLog' => \App\Filament\Resources\ActivityLogResource::class,
-            'SearchLog' => \App\Filament\Resources\SearchLogResource::class,
-            'FailedSearchLog' => \App\Filament\Resources\FailedSearchLogResource::class,
-            'LoginLog' => \App\Filament\Resources\LoginLogResource::class,
-            'CronLog' => \App\Filament\Resources\CronLogResource::class,
-            'Translation' => \App\Filament\Resources\TranslationResource::class,
-            'SeoMeta' => \App\Filament\Resources\SeoMetaResource::class,
-            'Language' => \App\Filament\Resources\LanguageResource::class,
-            'Redirect' => \App\Filament\Resources\RedirectResource::class,
-            'IpBlocklist' => \App\Filament\Resources\IpBlocklistResource::class,
+            'Admin' => AdminResource::class,
+            'Role' => RoleResource::class,
+            'ActivityLog' => ActivityLogResource::class,
+            'SearchLog' => SearchLogResource::class,
+            'FailedSearchLog' => FailedSearchLogResource::class,
+            'LoginLog' => LoginLogResource::class,
+            'CronLog' => CronLogResource::class,
+            'Translation' => TranslationResource::class,
+            'SeoMeta' => SeoMetaResource::class,
+            'Language' => LanguageResource::class,
+            'Redirect' => RedirectResource::class,
+            'IpBlocklist' => IpBlocklistResource::class,
             default => null,
         };
 
@@ -786,5 +826,4 @@ final class AdminUi
 
         return '#';
     }
-
 }

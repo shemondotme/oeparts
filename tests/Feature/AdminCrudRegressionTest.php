@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\RedirectType;
+use App\Filament\Pages\Settings\GeneralBrandSettings;
 use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Filament\Resources\CategoryResource\Pages\CreateCategory;
 use App\Filament\Resources\CustomerResource\Pages\CreateCustomer;
@@ -17,6 +18,9 @@ use App\Models\Product;
 use App\Models\Redirect;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\AdminSeeder;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
@@ -86,9 +90,9 @@ class AdminCrudRegressionTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
-            \Database\Seeders\AdminSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
+            AdminSeeder::class,
         ]);
 
         $this->actingAs(Admin::where('email', 'superadmin@oeparts.test')->firstOrFail(), 'admin');
@@ -193,7 +197,7 @@ class AdminCrudRegressionTest extends TestCase
         Cache::forget('settings.general');
         Cache::forget('settings.store');
 
-        Livewire::test(\App\Filament\Pages\Settings\GeneralBrandSettings::class)
+        Livewire::test(GeneralBrandSettings::class)
             ->set('data.site_name', 'OeParts Regression Test')
             ->call('save')
             ->assertHasNoErrors();

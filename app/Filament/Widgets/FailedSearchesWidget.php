@@ -2,23 +2,25 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\FailedSearchLogResource;
 use App\Filament\Resources\PartInquiryResource;
+use App\Filament\Resources\ProductResource;
+use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\FailedSearchLog;
-use Filament\Support\Enums\Alignment;
 use Filament\Support\Enums\FontFamily;
 use Filament\Support\Enums\FontWeight;
 use Filament\Tables;
-use Filament\Tables\Columns\Layout\Split;
-use Filament\Tables\Columns\Layout\Stack;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 
 class FailedSearchesWidget extends TableWidget
 {
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasDashboardPeriod;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     public function getDescription(): ?string
     {
@@ -29,7 +31,7 @@ class FailedSearchesWidget extends TableWidget
     {
         $count = FailedSearchLog::where('created_at', '>=', $this->periodStart())->count();
 
-        return 'Failed Searches (Sourcing Opportunities)' . ($count > 0 ? " ({$count})" : '');
+        return 'Failed Searches (Sourcing Opportunities)'.($count > 0 ? " ({$count})" : '');
     }
 
     protected ?string $pollingInterval = '120s';
@@ -38,7 +40,7 @@ class FailedSearchesWidget extends TableWidget
 
     protected static ?string $heading = 'Failed Searches (Sourcing Opportunities)';
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected function getTableHeaderActions(): array
     {
@@ -47,7 +49,7 @@ class FailedSearchesWidget extends TableWidget
                 ->label('View all')
                 ->icon('heroicon-o-arrow-right')
                 ->link()
-                ->url(\App\Filament\Resources\FailedSearchLogResource::getUrl('index')),
+                ->url(FailedSearchLogResource::getUrl('index')),
         ];
     }
 
@@ -83,7 +85,7 @@ class FailedSearchesWidget extends TableWidget
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
                     ->size('sm')
-                    ->url(fn ($record): string => \App\Filament\Resources\ProductResource::getUrl('create', ['data' => ['oem_number' => $record->search_query]])),
+                    ->url(fn ($record): string => ProductResource::getUrl('create', ['data' => ['oem_number' => $record->search_query]])),
                 Tables\Actions\Action::make('inquire')
                     ->label('Inquire')
                     ->icon('heroicon-o-chat-bubble-left-right')

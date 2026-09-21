@@ -53,7 +53,7 @@ class ValidateHeaderStage implements ImportStage
         }
 
         $headers = array_map('trim', $rawHeaders);
-        $errors  = $this->importService->validateHeaders($headers);
+        $errors = $this->importService->validateHeaders($headers);
         if (! empty($errors)) {
             fclose($handle);
             throw new ImportException('Invalid CSV headers: '.implode('; ', $errors));

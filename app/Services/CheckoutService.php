@@ -5,16 +5,19 @@ namespace App\Services;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Events\OrderPlaced;
 use App\Jobs\GenerateInvoicePdf;
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ShippingMethod;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 /**
  * CheckoutService — orchestrates the 5‑step checkout flow.
@@ -79,17 +82,18 @@ class CheckoutService
     public function advance(string $checkoutId): bool
     {
         $checkout = $this->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return false;
         }
 
         $currentStep = $checkout['step'];
-        if (!$this->isStepComplete($checkoutId, $currentStep)) {
+        if (! $this->isStepComplete($checkoutId, $currentStep)) {
             return false;
         }
 
         $checkout['step'] = min((int) settings('checkout.max_steps', 5), $currentStep + 1);
         Session::put("checkout.{$checkoutId}", $checkout);
+
         return true;
     }
 
@@ -99,7 +103,7 @@ class CheckoutService
     public function goBack(string $checkoutId): bool
     {
         $checkout = $this->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return false;
         }
 
@@ -115,7 +119,7 @@ class CheckoutService
     public function isStepComplete(string $checkoutId, int $step): bool
     {
         $checkout = $this->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return false;
         }
 
@@ -123,11 +127,11 @@ class CheckoutService
 
         switch ($step) {
             case 1:
-                return !empty($data['contact_email']);
+                return ! empty($data['contact_email']);
             case 2:
-                return !empty($data['shipping_address']);
+                return ! empty($data['shipping_address']);
             case 3:
-                return !empty($data['shipping_method_id']);
+                return ! empty($data['shipping_method_id']);
             case 4:
                 return $this->isStepComplete($checkoutId, 1)
                     && $this->isStepComplete($checkoutId, 2)
@@ -148,7 +152,7 @@ class CheckoutService
     public function get(string $checkoutId): ?array
     {
         $data = Session::get("checkout.{$checkoutId}");
-        if (!$data) {
+        if (! $data) {
             return null;
         }
 
@@ -156,6 +160,7 @@ class CheckoutService
         $expiresAt = Carbon::parse($data['expires_at']);
         if ($expiresAt->isPast()) {
             $this->clear($checkoutId);
+
             return null;
         }
 
@@ -168,7 +173,7 @@ class CheckoutService
     public function update(string $checkoutId, array $updates): bool
     {
         $checkout = $this->get($checkoutId);
-        if (!$checkout) {
+        if (! $checkout) {
             return false;
         }
 
@@ -190,6 +195,7 @@ class CheckoutService
 
         $checkout['data'] = array_merge($checkout['data'], $updates);
         Session::put("checkout.{$checkoutId}", $checkout);
+
         return true;
     }
 
@@ -210,7 +216,7 @@ class CheckoutService
             return null;
         }
 
-        $method = \App\Models\ShippingMethod::where('is_active', true)->find($id);
+        $method = ShippingMethod::where('is_active', true)->find($id);
 
         if (! $method) {
             return null;
@@ -235,10 +241,9 @@ class CheckoutService
      * Create the final order from the checkout session.
      * Returns the Order model on success, throws on failure.
      *
-     * @param string $checkoutId
-     * @param int|null $userId       Explicit user ID — null for guest checkout
-     * @param string|null $ipAddress Client IP — null uses request()->ip()
-     * @param array $utmParams       UTM tracking params — null reads from session
+     * @param  int|null  $userId  Explicit user ID — null for guest checkout
+     * @param  string|null  $ipAddress  Client IP — null uses request()->ip()
+     * @param  array  $utmParams  UTM tracking params — null reads from session
      */
     public function createOrder(
         string $checkoutId,
@@ -248,7 +253,7 @@ class CheckoutService
     ): Order {
         return DB::transaction(function () use ($checkoutId, $userId, $ipAddress, $utmParams) {
             $checkout = $this->get($checkoutId);
-            if (!$checkout) {
+            if (! $checkout) {
                 throw new \RuntimeException('Checkout session expired or not found.');
             }
 
@@ -262,7 +267,7 @@ class CheckoutService
             // second call cleanly fails with "Cart is empty or invalid"
             // instead of creating a second Order charged from the same cart.
             $cart = Cart::where('id', $checkout['cart_id'])->lockForUpdate()->first();
-            if (!$cart || $cart->items->isEmpty()) {
+            if (! $cart || $cart->items->isEmpty()) {
                 throw new \RuntimeException('Cart is empty or invalid.');
             }
 
@@ -279,7 +284,7 @@ class CheckoutService
             foreach ($cart->items as $item) {
                 $lockedProduct = Product::where('id', $item->product_id)->lockForUpdate()->first();
                 if (! $lockedProduct || ! $lockedProduct->is_in_stock) {
-                    $label = $item->product->oem_number ?? ('#' . $item->product_id);
+                    $label = $item->product->oem_number ?? ('#'.$item->product_id);
                     throw new \RuntimeException("\"{$label}\" is no longer in stock and can't be ordered. Please remove it from your cart to continue.");
                 }
             }
@@ -306,10 +311,10 @@ class CheckoutService
             $resolvedUserId = $userId ?? auth()->id();
             $resolvedIp = $ipAddress ?? request()->ip();
             $utm = $utmParams ?? [
-                'source'   => session('utm_source'),
-                'medium'   => session('utm_medium'),
+                'source' => session('utm_source'),
+                'medium' => session('utm_medium'),
                 'campaign' => session('utm_campaign'),
-                'content'  => session('utm_content'),
+                'content' => session('utm_content'),
             ];
 
             // --- Coupon application ---
@@ -321,12 +326,12 @@ class CheckoutService
             // which would otherwise leave a stale discount amount (wrong
             // percentage-of, or one that no longer respects min_order_amount)
             // baked into the order.
-            $couponId      = $data['coupon_id'] ?? null;
+            $couponId = $data['coupon_id'] ?? null;
             $discountAmount = '0.00';
             $coupon = null;
 
             if ($couponId) {
-                $coupon = \App\Models\Coupon::find($couponId);
+                $coupon = Coupon::find($couponId);
                 if ($coupon) {
                     $revalidated = $this->couponService->validateCoupon($coupon, $subtotal, $resolvedUserId);
                     if ($revalidated['valid']) {
@@ -348,7 +353,7 @@ class CheckoutService
 
             $paymentMethod = PaymentMethod::BankTransfer; // default
             if (isset($data['payment_method'])) {
-                $paymentMethod = match($data['payment_method']) {
+                $paymentMethod = match ($data['payment_method']) {
                     'card' => PaymentMethod::Card,
                     'paysera' => PaymentMethod::Paysera,
                     'bank_transfer' => PaymentMethod::BankTransfer,
@@ -375,7 +380,7 @@ class CheckoutService
                 'shipping_cost' => $shippingCost,
                 'vat_amount' => $vatAmount,
                 'grand_total' => $grandTotal,
-                'coupon_id'       => $couponId,
+                'coupon_id' => $couponId,
                 'discount_amount' => $discountAmount,
                 'shipping_method_id' => $data['shipping_method_id'],
                 'shipping_method_name_snapshot' => $shippingMethod?->name,
@@ -430,13 +435,13 @@ class CheckoutService
 
             $this->clear($checkoutId);
 
-            if ($data['guest_email'] && !$resolvedUserId) {
+            if ($data['guest_email'] && ! $resolvedUserId) {
                 $this->createGuestAccount($data['guest_email'], $order);
             }
 
             dispatch(new GenerateInvoicePdf($order));
 
-            \App\Events\OrderPlaced::dispatch($order);
+            OrderPlaced::dispatch($order);
 
             return $order;
         });
@@ -462,24 +467,26 @@ class CheckoutService
     private function calculateVat(string $amount, ?string $countryCode = null): string
     {
         $vatRate = $this->taxRateService->resolve($countryCode);
+
         return bcmul($amount, bcdiv($vatRate, '100', 4), 2);
     }
 
     /**
      * Automatically create a user account for a guest after order placement.
      */
-    private function createGuestAccount(string $email, Order $order): \App\Models\User
+    private function createGuestAccount(string $email, Order $order): User
     {
         return DB::transaction(function () use ($email, $order) {
             $user = User::where('email', $email)->first();
             if ($user) {
                 $order->update(['user_id' => $user->id]);
+
                 return $user;
             }
 
             $password = Str::random((int) settings('checkout.guest_password_length', 12));
             $user = User::create([
-                'name' => 'Guest ' . explode('@', $email)[0],
+                'name' => 'Guest '.explode('@', $email)[0],
                 'email' => $email,
                 'password' => bcrypt($password),
             ]);

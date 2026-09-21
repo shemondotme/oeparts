@@ -19,6 +19,7 @@ class UpdateDownloadExtractTest extends TestCase
     use RefreshDatabase;
 
     private string $state;
+
     private const URL = 'https://releases.test/oeparts.zip';
 
     protected function setUp(): void
@@ -56,10 +57,10 @@ class UpdateDownloadExtractTest extends TestCase
     private function manifest(string $body, array $overrides = []): array
     {
         return array_merge([
-            'version'      => '1.1.0',
+            'version' => '1.1.0',
             'download_url' => self::URL,
-            'sha256'       => hash('sha256', $body),
-            'size_bytes'   => strlen($body),
+            'sha256' => hash('sha256', $body),
+            'size_bytes' => strlen($body),
         ], $overrides);
     }
 

@@ -36,7 +36,6 @@ class CheckoutDropoffReport extends Page
         return 40;
     }
 
-
     // The funnel KPIs and bar chart are native Filament widgets
     // (App\Filament\Widgets\Reports\Checkout*), rendered by the page view.
 }

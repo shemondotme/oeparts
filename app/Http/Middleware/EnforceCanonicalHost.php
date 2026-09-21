@@ -75,7 +75,7 @@ class EnforceCanonicalHost
         $finalPath = $needsSlashStrip ? (rtrim($path, '/') ?: '/') : $path;
         $query = $request->getQueryString();
 
-        $url = "{$scheme}://{$host}{$finalPath}" . ($query ? "?{$query}" : '');
+        $url = "{$scheme}://{$host}{$finalPath}".($query ? "?{$query}" : '');
 
         return redirect($url, 301);
     }

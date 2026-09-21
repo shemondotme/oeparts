@@ -16,11 +16,11 @@ class IpBlocklistFactory extends Factory
     public function definition(): array
     {
         return [
-            'ip_address'  => fake()->ipv4(),
-            'reason'      => fake()->sentence(),
-            'blocked_by'  => Admin::factory(),
-            'expires_at'  => fake()->dateTimeBetween('+1 week', '+6 months'),
-            'is_active'   => true,
+            'ip_address' => fake()->ipv4(),
+            'reason' => fake()->sentence(),
+            'blocked_by' => Admin::factory(),
+            'expires_at' => fake()->dateTimeBetween('+1 week', '+6 months'),
+            'is_active' => true,
         ];
     }
 

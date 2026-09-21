@@ -3,7 +3,10 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\OrderStatus;
-use App\Filament\Resources\OrderResource;
+use App\Filament\Widgets\Concerns\HasDashboardPeriod;
+use App\Filament\Widgets\Concerns\HasPeriodFilterPills;
+use App\Filament\Widgets\Concerns\HasWidgetRoles;
+use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
 use Flowframe\Trend\Trend;
@@ -11,10 +14,10 @@ use Flowframe\Trend\TrendValue;
 
 class RevenueChart extends ChartWidget
 {
-    use \App\Filament\Widgets\Concerns\HasDashboardPeriod;
-    use \App\Filament\Widgets\Concerns\HasPeriodFilterPills;
-    use \App\Filament\Widgets\Concerns\HasWidgetRoles;
-    use \App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
+    use HasDashboardPeriod;
+    use HasPeriodFilterPills;
+    use HasWidgetRoles;
+    use InteractsWithDashboardCache;
 
     protected ?string $heading = 'Revenue Trend';
 
@@ -30,7 +33,7 @@ class RevenueChart extends ChartWidget
 
     protected static ?int $sort = -38;
 
-    protected int | string | array $columnSpan = ['md' => 1, 'xl' => 1];
+    protected int|string|array $columnSpan = ['md' => 1, 'xl' => 1];
 
     protected function getType(): string
     {

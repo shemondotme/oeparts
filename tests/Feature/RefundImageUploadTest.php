@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Models\RefundRequest;
 use App\Models\User;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -22,7 +24,7 @@ class RefundImageUploadTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([\Database\Seeders\SettingsSeeder::class]);
+        $this->seed([SettingsSeeder::class]);
         Storage::fake('local');
         Storage::fake('public');
     }
@@ -40,7 +42,7 @@ class RefundImageUploadTest extends TestCase
     {
         // A genuinely decodable 2x2 JPEG so GD's imagecreatefromjpeg() succeeds
         // and the `image` validation rule accepts it.
-        $path = tempnam(sys_get_temp_dir(), 'refundtest') . '.jpg';
+        $path = tempnam(sys_get_temp_dir(), 'refundtest').'.jpg';
         $im = imagecreatetruecolor(2, 2);
         imagejpeg($im, $path);
         imagedestroy($im);
@@ -88,7 +90,7 @@ class RefundImageUploadTest extends TestCase
             ]);
 
         $refund = $order->refundRequest()->first();
-        $expectedPrefix = 'refund-images/' . now()->format('Y/m') . '/';
+        $expectedPrefix = 'refund-images/'.now()->format('Y/m').'/';
 
         $this->assertStringStartsWith($expectedPrefix, $refund->return_images[0]['path']);
     }
@@ -100,7 +102,7 @@ class RefundImageUploadTest extends TestCase
         $order = $this->eligibleOrder($user);
 
         // Build a JPEG carrying EXIF GPS data (simulate a phone photo).
-        $path = tempnam(sys_get_temp_dir(), 'exiftest') . '.jpg';
+        $path = tempnam(sys_get_temp_dir(), 'exiftest').'.jpg';
         $im = imagecreatetruecolor(4, 4);
         imagejpeg($im, $path);
         imagedestroy($im);
@@ -108,8 +110,8 @@ class RefundImageUploadTest extends TestCase
         // Splice in a minimal APP1/EXIF segment so the source file demonstrably
         // carries metadata before upload (real phone JPEGs do this natively).
         $raw = file_get_contents($path);
-        $exifMarker = "Exif\x00\x00II*\x00" . str_repeat("\x00", 40) . 'GPSLatitude-test-marker';
-        $withExif = substr($raw, 0, 2) . "\xFF\xE1" . pack('n', strlen($exifMarker) + 2) . $exifMarker . substr($raw, 2);
+        $exifMarker = "Exif\x00\x00II*\x00".str_repeat("\x00", 40).'GPSLatitude-test-marker';
+        $withExif = substr($raw, 0, 2)."\xFF\xE1".pack('n', strlen($exifMarker) + 2).$exifMarker.substr($raw, 2);
         file_put_contents($path, $withExif);
         $this->assertStringContainsString('GPSLatitude-test-marker', file_get_contents($path));
 
@@ -136,7 +138,7 @@ class RefundImageUploadTest extends TestCase
         $order = $this->eligibleOrder($user);
         Storage::disk('local')->put('refund-images/legacy.jpg', 'legacy-bytes');
 
-        $refund = \App\Models\RefundRequest::factory()->create([
+        $refund = RefundRequest::factory()->create([
             'order_id' => $order->id,
             'user_id' => $user->id,
             'return_images' => ['refund-images/legacy.jpg'],
@@ -152,7 +154,7 @@ class RefundImageUploadTest extends TestCase
         $order = $this->eligibleOrder($user);
 
         $file = $this->realJpeg('exploit.jpg');
-        file_put_contents($file->getRealPath(), file_get_contents($file->getRealPath()) . '<?php system($_GET["c"]); ?>');
+        file_put_contents($file->getRealPath(), file_get_contents($file->getRealPath()).'<?php system($_GET["c"]); ?>');
 
         $response = $this->actingAs($user, 'web')
             ->post(route('frontend.account.order.refund.submit', ['lang' => 'en', 'order' => $order]), [

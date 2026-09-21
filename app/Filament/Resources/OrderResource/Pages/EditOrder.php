@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\OrderResource\Pages;
 
 use App\Filament\Resources\OrderResource;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager;
+use App\Filament\Resources\OrderResource\RelationManagers\OrderNotesRelationManager;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
@@ -20,6 +22,7 @@ class EditOrder extends EditRecord
         $record = $this->getRecord();
         $updated = $record->updated_at?->diffForHumans() ?? 'recently';
         $created = $record->created_at?->format('d M Y H:i') ?? '—';
+
         return "Placed {$created} | Last updated {$updated}";
     }
 
@@ -48,8 +51,8 @@ class EditOrder extends EditRecord
     public function getRelationManagers(): array
     {
         return [
-            \App\Filament\Resources\OrderResource\RelationManagers\OrderItemsRelationManager::class,
-            \App\Filament\Resources\OrderResource\RelationManagers\OrderNotesRelationManager::class,
+            OrderItemsRelationManager::class,
+            OrderNotesRelationManager::class,
         ];
     }
 }

@@ -19,11 +19,11 @@ class PartInquiryNotificationTest extends TestCase
     private function makeInquiry(array $attrs = []): PartInquiry
     {
         return PartInquiry::create(array_merge([
-            'email'      => 'customer@example.com',
+            'email' => 'customer@example.com',
             'oem_number' => '04L115399F',
-            'quantity'   => 1,
-            'urgency'    => 'normal',
-            'status'     => PartInquiryStatus::New,
+            'quantity' => 1,
+            'urgency' => 'normal',
+            'status' => PartInquiryStatus::New,
             'ip_address' => '127.0.0.1',
         ], $attrs));
     }

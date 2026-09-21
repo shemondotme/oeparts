@@ -2,12 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ActivityLog;
-use App\Models\CronLog;
-use App\Models\EmailLog;
-use App\Models\FailedSearchLog;
-use App\Models\LoginLog;
-use App\Models\SearchLog;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;

@@ -2,16 +2,17 @@
 
 namespace App\Services;
 
+use App\Enums\DiscountType;
 use App\Models\Cart;
 use App\Models\CartItem;
-use App\Models\Product;
-use App\Models\User;
 use App\Models\Coupon;
-use App\Enums\DiscountType;
+use App\Models\Product;
+use App\Models\ShippingMethod;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 /**
  * Cart Management Service
@@ -28,15 +29,12 @@ class CartService
 
     /**
      * Get cart by checkout session ID.
-     *
-     * @param string $checkoutId
-     * @return \App\Models\Cart|null
      */
     public function getCartByCheckout(string $checkoutId): ?Cart
     {
         $checkout = session("checkout.{$checkoutId}");
         $cartId = $checkout['cart_id'] ?? null;
-        if (!$cartId) {
+        if (! $cartId) {
             return null;
         }
 
@@ -45,10 +43,6 @@ class CartService
 
     /**
      * Get or create a cart for the current session/user.
-     *
-     * @param \App\Models\User|null $user
-     * @param string|null $guestToken
-     * @return \App\Models\Cart
      */
     public function getOrCreateCart(?User $user = null, ?string $guestToken = null): Cart
     {
@@ -61,7 +55,7 @@ class CartService
                 ['expires_at' => $expiresAt]
             );
         } else {
-            if (!$guestToken) {
+            if (! $guestToken) {
                 $guestToken = Str::random(32);
             }
 
@@ -82,10 +76,6 @@ class CartService
     /**
      * Add a product to cart.
      *
-     * @param \App\Models\Cart $cart
-     * @param int $productId
-     * @param int $quantity
-     * @return \App\Models\CartItem
      * @throws \RuntimeException if product not found or out of stock
      */
     public function addItem(Cart $cart, int $productId, int $quantity = 1): CartItem
@@ -93,8 +83,8 @@ class CartService
         return DB::transaction(function () use ($cart, $productId, $quantity) {
             $product = Product::lockForUpdate()->findOrFail($productId);
 
-            if (!$product->is_in_stock) {
-                throw new \RuntimeException("Product is out of stock.");
+            if (! $product->is_in_stock) {
+                throw new \RuntimeException('Product is out of stock.');
             }
 
             $existingItem = $cart->items()->where('product_id', $productId)->first();
@@ -113,6 +103,7 @@ class CartService
                     'quantity' => $existingItem->quantity + $quantity,
                 ]);
                 Cache::forget("cart_summary:{$cart->id}");
+
                 return $existingItem;
             }
 
@@ -128,21 +119,18 @@ class CartService
                 'price_at_add' => $product->price,
             ]);
             Cache::forget("cart_summary:{$cart->id}");
+
             return $newItem;
         });
     }
 
     /**
      * Remove an item from cart.
-     *
-     * @param \App\Models\Cart $cart
-     * @param int $cartItemId
-     * @return bool
      */
     public function removeItem(Cart $cart, int $cartItemId): bool
     {
         $item = $cart->items()->where('id', $cartItemId)->first();
-        if (!$item) {
+        if (! $item) {
             return false;
         }
 
@@ -150,45 +138,39 @@ class CartService
         if ($deleted) {
             Cache::forget("cart_summary:{$cart->id}");
         }
+
         return $deleted;
     }
 
     /**
      * Update item quantity.
-     *
-     * @param \App\Models\Cart $cart
-     * @param int $cartItemId
-     * @param int $quantity
-     * @return \App\Models\CartItem|null
      */
     public function updateQuantity(Cart $cart, int $cartItemId, int $quantity): ?CartItem
     {
         if ($quantity <= 0) {
             $this->removeItem($cart, $cartItemId);
+
             return null;
         }
 
         $item = $cart->items()->where('id', $cartItemId)->first();
-        if (!$item) {
+        if (! $item) {
             return null;
         }
 
         $product = $item->product;
-        if (!$product->is_in_stock) {
-            throw new \RuntimeException("Product is out of stock.");
+        if (! $product->is_in_stock) {
+            throw new \RuntimeException('Product is out of stock.');
         }
 
         $item->update(['quantity' => $quantity]);
         Cache::forget("cart_summary:{$cart->id}");
+
         return $item;
     }
 
     /**
      * Merge guest cart into user cart when user logs in.
-     *
-     * @param \App\Models\User $user
-     * @param string $guestToken
-     * @return \App\Models\Cart
      */
     public function mergeGuestCart(User $user, string $guestToken): Cart
     {
@@ -200,7 +182,7 @@ class CartService
 
         $guestCart = Cart::where('guest_token', $guestToken)->first();
 
-        if (!$guestCart) {
+        if (! $guestCart) {
             return $userCart;
         }
 
@@ -218,13 +200,13 @@ class CartService
         });
 
         Cache::forget("cart_summary:{$userCart->id}");
+
         return $userCart;
     }
 
     /**
      * Check for price changes in cart items.
      *
-     * @param \App\Models\Cart $cart
      * @return array Array of items with significant price changes
      */
     public function checkPriceChanges(Cart $cart): array
@@ -233,11 +215,15 @@ class CartService
         $changes = [];
 
         foreach ($cart->items as $item) {
-            if (!$item->product) continue;
+            if (! $item->product) {
+                continue;
+            }
             $currentPrice = $item->product->price;
             $oldPrice = $item->price_at_add;
 
-            if (bccomp((string) $oldPrice, '0') === 0) continue;
+            if (bccomp((string) $oldPrice, '0') === 0) {
+                continue;
+            }
 
             $diff = bcsub((string) $currentPrice, (string) $oldPrice, 4);
             $absDiff = ltrim($diff, '-');
@@ -290,7 +276,7 @@ class CartService
                 // guard checkPriceChanges() below already applies, just
                 // missing here, where it broke the cart entirely for anyone
                 // holding a now-gone product.
-                if (!$item->product) {
+                if (! $item->product) {
                     continue;
                 }
                 $lineTotal = bcmul((string) $item->product->price, (string) $item->quantity, 2);
@@ -328,9 +314,9 @@ class CartService
                             : (string) $coupon->discount_type;
 
                         if ($type === DiscountType::Fixed->value) {
-                            $couponDiscount = bccomp((string)$coupon->discount_value, $subtotal, 2) > 0 ? $subtotal : (string)$coupon->discount_value;
+                            $couponDiscount = bccomp((string) $coupon->discount_value, $subtotal, 2) > 0 ? $subtotal : (string) $coupon->discount_value;
                         } elseif ($type === DiscountType::Percentage->value) {
-                            $discountAmt = bcmul($subtotal, bcdiv((string)$coupon->discount_value, '100', 4), 2);
+                            $discountAmt = bcmul($subtotal, bcdiv((string) $coupon->discount_value, '100', 4), 2);
                             $couponDiscount = bccomp($discountAmt, $subtotal, 2) > 0 ? $subtotal : $discountAmt;
                         }
                         $couponDiscount = bcadd($couponDiscount, '0', 2);
@@ -353,7 +339,7 @@ class CartService
             // read a settings key, `shipping.free_threshold`, that was never
             // seeded under that name — always fell back to 0, so this whole
             // progress block silently never rendered.)
-            $freeShippingThreshold = (string) (\App\Models\ShippingMethod::where('is_active', true)
+            $freeShippingThreshold = (string) (ShippingMethod::where('is_active', true)
                 ->whereNotNull('free_shipping_threshold')
                 ->min('free_shipping_threshold') ?? 0);
             $shippingRemaining = bcsub($freeShippingThreshold, $discountedSubtotal, 2);
@@ -383,5 +369,4 @@ class CartService
             ];
         });
     }
-
 }

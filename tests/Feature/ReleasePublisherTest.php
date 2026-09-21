@@ -17,27 +17,27 @@ class ReleasePublisherTest extends TestCase
     {
         return new ReleasePublisher([
             'release_url_template' => 'https://example.test/releases/download/v{version}/{asset}',
-            'asset_name'           => 'oeparts-{version}.zip',
+            'asset_name' => 'oeparts-{version}.zip',
         ]);
     }
 
     private function manifest(array $overrides = []): array
     {
         return array_merge([
-            'version'                    => '1.1.0',
-            'codename'                   => 'Borealis',
-            'release_date'               => '2026-07-03',
-            'channel'                    => 'stable',
-            'security'                   => false,
-            'min_php'                    => '8.2',
-            'min_mysql'                  => '8.0.16',
+            'version' => '1.1.0',
+            'codename' => 'Borealis',
+            'release_date' => '2026-07-03',
+            'channel' => 'stable',
+            'security' => false,
+            'min_php' => '8.2',
+            'min_mysql' => '8.0.16',
             'min_version_to_update_from' => '1.0.0',
-            'migration_count'            => 3,
-            'required_extensions'        => ['json', 'zip'],
-            'sha256'                     => null,
-            'size_bytes'                 => null,
-            'download_url'               => 'https://github.com/.../latest/oeparts.zip',
-            'changelog_url'              => 'https://example.test/CHANGELOG.md',
+            'migration_count' => 3,
+            'required_extensions' => ['json', 'zip'],
+            'sha256' => null,
+            'size_bytes' => null,
+            'download_url' => 'https://github.com/.../latest/oeparts.zip',
+            'changelog_url' => 'https://example.test/CHANGELOG.md',
         ], $overrides);
     }
 
@@ -45,8 +45,8 @@ class ReleasePublisherTest extends TestCase
     public function finalize_folds_the_build_result_into_the_manifest(): void
     {
         $final = $this->publisher()->finalize($this->manifest(), [
-            'version'    => '1.1.0',
-            'sha256'     => str_repeat('a', 64),
+            'version' => '1.1.0',
+            'sha256' => str_repeat('a', 64),
             'size_bytes' => 4096,
         ]);
 
@@ -60,9 +60,9 @@ class ReleasePublisherTest extends TestCase
     public function finalize_prefers_an_explicit_download_url_from_the_build(): void
     {
         $final = $this->publisher()->finalize($this->manifest(), [
-            'version'      => '1.1.0',
-            'sha256'       => str_repeat('b', 64),
-            'size_bytes'   => 10,
+            'version' => '1.1.0',
+            'sha256' => str_repeat('b', 64),
+            'size_bytes' => 10,
             'download_url' => 'https://mirror.test/oeparts-1.1.0.zip',
         ]);
 
@@ -96,7 +96,7 @@ class ReleasePublisherTest extends TestCase
         // had both fields correctly signed.
         $entry = $this->publisher()->toCatalogEntry($this->manifest([
             'git_commit_sha' => str_repeat('a', 40),
-            'git_signature'  => 'base64-signature-blob',
+            'git_signature' => 'base64-signature-blob',
         ]));
 
         $this->assertSame(str_repeat('a', 40), $entry['git_commit_sha']);

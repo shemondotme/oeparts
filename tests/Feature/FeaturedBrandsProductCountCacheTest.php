@@ -6,7 +6,9 @@ use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Services\CacheService;
+use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -28,6 +30,7 @@ class FeaturedBrandsProductCountCacheTest extends TestCase
     use RefreshDatabase;
 
     private Manufacturer $manufacturer;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -87,7 +90,7 @@ class FeaturedBrandsProductCountCacheTest extends TestCase
 
         $first = app(CacheService::class)->rememberBrandProductCounts([$this->manufacturer->id], $callback);
 
-        \Illuminate\Support\Facades\DB::table('products')->insert([
+        DB::table('products')->insert([
             'manufacturer_id' => $this->manufacturer->id, 'oem_number' => 'DIRECT', 'normalized_oem' => 'DIRECT',
             'name' => json_encode(['en' => 'x']), 'description' => json_encode(['en' => 'x']), 'price' => 10,
             'condition_id' => $this->condition->id, 'is_active' => true, 'is_in_stock' => true,
@@ -121,11 +124,11 @@ class FeaturedBrandsProductCountCacheTest extends TestCase
     #[Test]
     public function the_cache_toggle_setting_bypasses_caching_entirely(): void
     {
-        \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+        DB::table('settings')->updateOrInsert(
             ['group' => 'performance', 'key' => 'cache_manufacturers'],
             ['value' => 'false', 'type' => 'boolean', 'is_encrypted' => false]
         );
-        app(\App\Services\SettingsService::class)->forget('performance');
+        app(SettingsService::class)->forget('performance');
 
         $this->product();
         $callback = fn () => Product::where('manufacturer_id', $this->manufacturer->id)

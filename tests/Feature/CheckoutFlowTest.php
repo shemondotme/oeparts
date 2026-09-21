@@ -3,12 +3,15 @@
 namespace Tests\Feature;
 
 use App\Enums\OtpPurpose;
+use App\Enums\SequenceType;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Order;
+use App\Models\Otp;
 use App\Models\Product;
+use App\Models\Sequence;
 use App\Models\ShippingCountry;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
@@ -17,6 +20,7 @@ use App\Services\CheckoutService;
 use App\Services\OtpService;
 use App\Services\SequenceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\PendingMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
 use PHPUnit\Framework\Attributes\Test;
@@ -27,11 +31,17 @@ class CheckoutFlowTest extends TestCase
     use RefreshDatabase;
 
     private Product $product;
+
     private User $user;
+
     private ShippingCountry $country;
+
     private ShippingMethod $shippingMethod;
+
     private Manufacturer $manufacturer;
+
     private ShippingZone $zone;
+
     private Condition $condition;
 
     protected function setUp(): void
@@ -94,8 +104,8 @@ class CheckoutFlowTest extends TestCase
         ]);
 
         // Create a sequence record for order numbers
-        \App\Models\Sequence::create([
-            'type' => \App\Enums\SequenceType::Order,
+        Sequence::create([
+            'type' => SequenceType::Order,
             'value' => 0,
             'month' => now()->format('Ym'),
         ]);
@@ -138,10 +148,10 @@ class CheckoutFlowTest extends TestCase
         $response->assertRedirect(); // Should redirect back with OTP sent
 
         // Verify OTP was generated
-        $otp = \App\Models\Otp::where('email', 'guest@example.com')
+        $otp = Otp::where('email', 'guest@example.com')
             ->where('purpose', OtpPurpose::GuestCheckout)
             ->first();
-        
+
         $this->assertNotNull($otp, 'OTP should be generated for guest email');
 
         // Step 1: Submit OTP for verification
@@ -150,12 +160,12 @@ class CheckoutFlowTest extends TestCase
             'otp' => $otp->otp_code,
         ]);
         $response->assertRedirect(); // Should redirect to step 2
-        
+
         // Check what step we're at after OTP verification
         $checkoutId = Session::get('active_checkout_id');
         $checkoutService = app(CheckoutService::class);
         $checkout = $checkoutService->get($checkoutId);
-        
+
         $this->assertNotNull($checkout, 'Checkout should exist');
         $this->assertNotEmpty($checkout['data']['guest_email'] ?? null, 'guest_email should be set');
         $this->assertTrue($checkout['data']['otp_verified'] ?? false, 'otp_verified should be true');
@@ -176,7 +186,7 @@ class CheckoutFlowTest extends TestCase
             'country_code' => 'DE',
         ]);
         $response->assertRedirect();
-        
+
         // Debug: check what step we're at after step 2
         $checkout = $checkoutService->get($checkoutId);
         $this->assertEquals(3, $checkout['step'] ?? 0, 'Should be at step 3 after submitting shipping address');
@@ -196,23 +206,23 @@ class CheckoutFlowTest extends TestCase
         // Step 5: Place order - first check if we're at step 5
         $checkoutId = Session::get('active_checkout_id');
         $this->assertNotNull($checkoutId, 'Checkout session should still exist');
-        
+
         // Get checkout service to check current step
         $checkoutService = app(CheckoutService::class);
         $checkout = $checkoutService->get($checkoutId);
         $this->assertNotNull($checkout, 'Checkout data should exist');
         $this->assertEquals(5, $checkout['step'], 'Should be at step 5 before placing order');
-        
+
         $response = $this->post('/en/checkout', [
             'payment_method' => 'card',
             'customer_note' => 'Please deliver before 5pm',
         ]);
-        
+
         // Debug: check if there's an error in session
         if (Session::has('error')) {
-            $this->fail('Error in checkout: ' . Session::get('error'));
+            $this->fail('Error in checkout: '.Session::get('error'));
         }
-        
+
         $response->assertRedirect(); // Should redirect to payment page
 
         // Verify order was created
@@ -273,7 +283,7 @@ class CheckoutFlowTest extends TestCase
         $this->assertEquals('+49123456', $checkout['data']['otp_pending_phone']);
         $this->assertEquals(1, $checkout['step'], 'Should still be on step 1 awaiting the code');
 
-        $firstOtp = \App\Models\Otp::where('email', 'pending@example.com')
+        $firstOtp = Otp::where('email', 'pending@example.com')
             ->where('purpose', OtpPurpose::GuestCheckout)
             ->first();
         $this->assertNotNull($firstOtp);
@@ -327,7 +337,7 @@ class CheckoutFlowTest extends TestCase
         // order-creation-failure handling) for local troubleshooting.
         config(['app.debug' => false]);
 
-        $pendingMail = \Mockery::mock(\Illuminate\Mail\PendingMail::class);
+        $pendingMail = \Mockery::mock(PendingMail::class);
         $pendingMail->shouldReceive('send')->andThrow(new \RuntimeException(
             'Expected response code "250" but got code "530", with message "530 5.7.1 Authentication required".'
         ));
@@ -427,7 +437,7 @@ class CheckoutFlowTest extends TestCase
         $response->assertRedirect();
 
         // Verify order created
-        $order = \App\Models\Order::where('guest_email', 'proof@example.com')->first();
+        $order = Order::where('guest_email', 'proof@example.com')->first();
         $this->assertNotNull($order);
 
         // Test payment processing for bank transfer (returns redirect, not JSON)

@@ -7,7 +7,6 @@ use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\Category;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class BlogPostsSeeder extends Seeder
 {
@@ -39,19 +38,21 @@ class BlogPostsSeeder extends Seeder
                 ]
             );
         }
+
         return $categories;
     }
 
     private function getAuthor(): Admin
     {
         $author = Admin::first();
-        if (!$author) {
+        if (! $author) {
             $author = Admin::create([
                 'name' => 'OeParts Editorial',
                 'email' => 'editorial@oeparts.test',
                 'password' => bcrypt('password'),
             ]);
         }
+
         return $author;
     }
 
@@ -95,7 +96,7 @@ class BlogPostsSeeder extends Seeder
         return new BlogPost([
             'title' => ['en' => '5 Signs Your Brake Pads Need Replacement', 'de' => '5 Anzeichen fuer neue Bremsbelaege', 'lt' => '5 zenklai, kad reikia keisti stabdziu kaladeles', 'fr' => '5 signes que vos plaquettes de frein doivent etre remplacees', 'es' => '5 senales de que necesita reemplazar las pastillas de freno'],
             'slug' => '5-signs-your-brake-pads-need-replacement',
-            'excerpt' => ['en' => 'Dont ignore these warning signs. Discover when to replace your brake pads.', 'de' => 'Ignorieren Sie diese Warnsignale nicht.', 'lt' => 'Neignoruokite siu isp ejamuju zenklu.', 'fr' => "N ignorez pas ces signes d avertissement.", 'es' => 'No ignore estas senales de advertencia.'],
+            'excerpt' => ['en' => 'Dont ignore these warning signs. Discover when to replace your brake pads.', 'de' => 'Ignorieren Sie diese Warnsignale nicht.', 'lt' => 'Neignoruokite siu isp ejamuju zenklu.', 'fr' => 'N ignorez pas ces signes d avertissement.', 'es' => 'No ignore estas senales de advertencia.'],
             'content' => ['en' => "## Recognising Brake Wear\n\nHere are five unmistakable signs its time for new brake pads:\n\n1. Squeaking noises when braking\n2. Spongy brake pedal\n3. Vibrations during braking\n4. Pad material less than 3mm thick\n5. Dashboard warning light\n\nAlways choose OEM brake pads for guaranteed safety.", 'de' => "## Bremsverschleiss erkennen\n\n1. Quietschgeraeusche\n2. Schwammiges Bremspedal\n3. Vibrationen\n4. Belagstaerke unter 3 mm\n5. Warnleuchte\n\nOEM-Bremsbelaege waehlen.", 'lt' => "## Stabdziu susidevejimo atpazinimas\n\n1. Cypimas\n2. Minkstas pedalas\n3. Vibracijos\n4. Stores mazesnis nei 3 mm\n5. Isp ejamoji lempute\n\nRinkites OEM kaladeles.", 'fr' => "## Usure des freins\n\n1. Grincements\n2. Pedale molle\n3. Vibrations\n4. Epaisseur sous 3 mm\n5. Temoin au tableau\n\nPlaquettes OEM.", 'es' => "## Desgaste de frenos\n\n1. Chirridos\n2. Pedal blando\n3. Vibraciones\n4. Grosor bajo 3 mm\n5. Luz de advertencia\n\nPastillas OEM."],
             'category_id' => $cat['maintenance']->id,
             'author_id' => $author->id,
@@ -107,7 +108,7 @@ class BlogPostsSeeder extends Seeder
     private function post3($cat, $author): BlogPost
     {
         return new BlogPost([
-            'title' => ['en' => 'The Rise of EV Components in European Workshops', 'de' => 'Der Aufstieg der EV-Komponenten', 'lt' => 'Elektromobiliu komponentu augimas', 'fr' => "L essor des composants EV", 'es' => 'El auge de los componentes EV'],
+            'title' => ['en' => 'The Rise of EV Components in European Workshops', 'de' => 'Der Aufstieg der EV-Komponenten', 'lt' => 'Elektromobiliu komponentu augimas', 'fr' => 'L essor des composants EV', 'es' => 'El auge de los componentes EV'],
             'slug' => 'the-rise-of-ev-components-in-european-workshops',
             'excerpt' => ['en' => 'Explore the growing demand for EV components across European workshops.', 'de' => 'Die wachsende Nachfrage nach EV-Komponenten.', 'lt' => 'Auganti elektromobiliu komponentu paklausa.', 'fr' => 'La demande croissante de composants EV.', 'es' => 'La creciente demanda de componentes EV.'],
             'content' => ['en' => "## The EV Revolution\n\nBy 2026, EVs account for over 25% of new car sales in the EU. This shift is reshaping the aftermarket.\n\n## Key EV Components in Demand\n\n- Battery Management Systems\n- Electric Drive Motors\n- Inverters and Converters\n- HVAC Compressors\n- Regenerative Braking parts\n\n## Workshop Readiness\n\nOeParts partners with leading OEM suppliers to ensure genuine EV components reach every EU member state.", 'de' => "## Die EV-Revolution\n\nUeber 25% der Neuwagen in der EU sind EVs.\n\n## Gefragte Komponenten\n\n- Batteriemanagementsysteme\n- Elektrische Antriebsmotoren\n- Wechselrichter\n- HVAC-Kompressoren\n- Rekuperationsbremsen\n\n## Bereitschaft\n\nOeParts liefert OEM-EV-Komponenten in alle EU-Laender.", 'lt' => "## Elektromobiliu revoliucija\n\n>25% nauju automobiliu ES yra EV.\n\n## Paklausus komponentai\n\n- Bateriju valdymo sistemos\n- Elektriniai varikliai\n- Inverteriai\n- Kompresoriai\n- Regeneracinio stabdymo dalys", 'fr' => "## Revolution EV\n\n>25% des voitures neuves dans l UE sont des EV.\n\n## Composants recherches\n\n- Systemes de gestion batterie\n- Moteurs electriques\n- Onduleurs\n- Compresseurs HVAC\n- Freinage regeneratif", 'es' => "## Revolucion EV\n\n>25% de autos nuevos en la UE son EV.\n\n## Componentes demandados\n\n- Sistemas de gestion de bateria\n- Motores electricos\n- Inversores\n- Compresores HVAC\n- Frenado regenerativo"],

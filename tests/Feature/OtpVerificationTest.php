@@ -16,13 +16,13 @@ class OtpVerificationTest extends TestCase
     public function otp_can_be_sent_for_email_verification(): void
     {
         $response = $this->postJson(route('frontend.auth.resend-otp', ['lang' => 'en']), [
-            'email'   => 'test@example.com',
+            'email' => 'test@example.com',
             'purpose' => 'email_verify',
         ]);
 
         $response->assertOk();
         $this->assertDatabaseHas('otps', [
-            'email'   => 'test@example.com',
+            'email' => 'test@example.com',
             'purpose' => 'email_verify',
         ]);
     }
@@ -31,16 +31,16 @@ class OtpVerificationTest extends TestCase
     public function otp_can_be_verified(): void
     {
         $otp = Otp::create([
-            'email'      => 'test@example.com',
-            'otp_code'   => '123456',
-            'purpose'    => OtpPurpose::EmailVerify->value,
+            'email' => 'test@example.com',
+            'otp_code' => '123456',
+            'purpose' => OtpPurpose::EmailVerify->value,
             'expires_at' => now()->addMinutes(10),
             'ip_address' => '127.0.0.1',
         ]);
 
         $response = $this->postJson(route('frontend.auth.verify-otp', ['lang' => 'en']), [
-            'email'   => 'test@example.com',
-            'otp'     => '123456',
+            'email' => 'test@example.com',
+            'otp' => '123456',
             'purpose' => 'email_verify',
         ]);
 
@@ -52,16 +52,16 @@ class OtpVerificationTest extends TestCase
     public function otp_verification_fails_with_wrong_code(): void
     {
         Otp::create([
-            'email'      => 'test@example.com',
-            'otp_code'   => '999999',
-            'purpose'    => OtpPurpose::EmailVerify->value,
+            'email' => 'test@example.com',
+            'otp_code' => '999999',
+            'purpose' => OtpPurpose::EmailVerify->value,
             'expires_at' => now()->addMinutes(10),
             'ip_address' => '127.0.0.1',
         ]);
 
         $response = $this->postJson(route('frontend.auth.verify-otp', ['lang' => 'en']), [
-            'email'   => 'test@example.com',
-            'otp'     => '000000',
+            'email' => 'test@example.com',
+            'otp' => '000000',
             'purpose' => 'email_verify',
         ]);
 
@@ -72,9 +72,9 @@ class OtpVerificationTest extends TestCase
     public function otp_code_is_six_digits(): void
     {
         $otp = Otp::create([
-            'email'      => 'test@example.com',
-            'otp_code'   => '654321',
-            'purpose'    => OtpPurpose::EmailVerify->value,
+            'email' => 'test@example.com',
+            'otp_code' => '654321',
+            'purpose' => OtpPurpose::EmailVerify->value,
             'expires_at' => now()->addMinutes(10),
             'ip_address' => '127.0.0.1',
         ]);
@@ -86,16 +86,16 @@ class OtpVerificationTest extends TestCase
     public function otp_expires_after_ten_minutes(): void
     {
         $otp = Otp::create([
-            'email'      => 'expired@example.com',
-            'otp_code'   => '111111',
-            'purpose'    => OtpPurpose::EmailVerify->value,
+            'email' => 'expired@example.com',
+            'otp_code' => '111111',
+            'purpose' => OtpPurpose::EmailVerify->value,
             'expires_at' => now()->subMinutes(11),
             'ip_address' => '127.0.0.1',
         ]);
 
         $response = $this->postJson(route('frontend.auth.verify-otp', ['lang' => 'en']), [
-            'email'   => $otp->email,
-            'otp'     => $otp->otp_code,
+            'email' => $otp->email,
+            'otp' => $otp->otp_code,
             'purpose' => $otp->purpose->value,
         ]);
 

@@ -18,8 +18,8 @@ class Otp extends Model
     ];
 
     protected $casts = [
-        'purpose'     => OtpPurpose::class,
-        'expires_at'  => 'datetime',
+        'purpose' => OtpPurpose::class,
+        'expires_at' => 'datetime',
         'verified_at' => 'datetime',
     ];
 

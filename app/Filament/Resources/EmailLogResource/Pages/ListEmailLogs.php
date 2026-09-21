@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\EmailLogResource\Pages;
 
 use App\Filament\Resources\EmailLogResource;
-use Filament\Resources\Pages\ListRecords;
 use App\Filament\Support\HasDrilldownFilters;
+use Filament\Resources\Pages\ListRecords;
 
 class ListEmailLogs extends ListRecords
 {

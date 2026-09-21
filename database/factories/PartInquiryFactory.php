@@ -17,19 +17,19 @@ class PartInquiryFactory extends Factory
     {
         return [
             'failed_search_log_id' => null,
-            'email'                => fake()->safeEmail(),
-            'phone'                => null,
-            'oem_number'           => strtoupper(fake()->bothify('??####??')),
-            'manufacturer'         => fake()->company(),
-            'car_model'            => fake()->word().' '.fake()->randomDigit(),
-            'year'                 => fake()->numberBetween(2005, 2025),
-            'vin_number'           => null,
-            'quantity'             => fake()->numberBetween(1, 10),
-            'urgency'              => fake()->randomElement(['normal', 'soon', 'urgent']),
-            'notes'                => fake()->optional()->sentence(),
-            'status'               => PartInquiryStatus::New,
-            'admin_note'           => null,
-            'ip_address'           => fake()->ipv4(),
+            'email' => fake()->safeEmail(),
+            'phone' => null,
+            'oem_number' => strtoupper(fake()->bothify('??####??')),
+            'manufacturer' => fake()->company(),
+            'car_model' => fake()->word().' '.fake()->randomDigit(),
+            'year' => fake()->numberBetween(2005, 2025),
+            'vin_number' => null,
+            'quantity' => fake()->numberBetween(1, 10),
+            'urgency' => fake()->randomElement(['normal', 'soon', 'urgent']),
+            'notes' => fake()->optional()->sentence(),
+            'status' => PartInquiryStatus::New,
+            'admin_note' => null,
+            'ip_address' => fake()->ipv4(),
         ];
     }
 

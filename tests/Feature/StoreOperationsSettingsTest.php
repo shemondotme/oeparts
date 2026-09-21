@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Settings\SecurityAccessSettings;
 use App\Filament\Pages\Settings\StoreOperationsSettings;
 use App\Models\Admin;
 use App\Models\Setting;
@@ -58,7 +59,7 @@ class StoreOperationsSettingsTest extends TestCase
 
         $method = new \ReflectionMethod(StoreOperationsSettings::class, 'getFactoryDefaults');
         $method->setAccessible(true);
-        $defaults = $method->invoke(new StoreOperationsSettings());
+        $defaults = $method->invoke(new StoreOperationsSettings);
 
         $this->assertCount(
             $expectedTotal,
@@ -153,10 +154,10 @@ class StoreOperationsSettingsTest extends TestCase
         // CLI process has no opcache warmup, unlike a real PHP-FPM worker.
         $this->actingAs($this->superAdmin(), 'admin');
 
-        Livewire::test(\App\Filament\Pages\Settings\SecurityAccessSettings::class)->assertSuccessful();
+        Livewire::test(SecurityAccessSettings::class)->assertSuccessful();
 
         $startLight = hrtime(true);
-        Livewire::test(\App\Filament\Pages\Settings\SecurityAccessSettings::class)->assertSuccessful();
+        Livewire::test(SecurityAccessSettings::class)->assertSuccessful();
         $lightMs = max((hrtime(true) - $startLight) / 1e6, 1);
 
         $startHeavy = hrtime(true);
@@ -176,8 +177,8 @@ class StoreOperationsSettingsTest extends TestCase
         $this->assertLessThan(
             15,
             $heavyMs / $lightMs,
-            "StoreOperationsSettings mounted {$heavyMs}/{$lightMs} = " . round($heavyMs / $lightMs, 1)
-                . "x slower than a 2-group page — that's disproportionate to its 6x group count, suggesting O(n^2) field-building crept in."
+            "StoreOperationsSettings mounted {$heavyMs}/{$lightMs} = ".round($heavyMs / $lightMs, 1)
+                ."x slower than a 2-group page — that's disproportionate to its 6x group count, suggesting O(n^2) field-building crept in."
         );
     }
 

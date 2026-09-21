@@ -7,10 +7,9 @@ use App\Enums\LogStatus;
 use App\Filament\Resources\LoginLogResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\LoginLog;
-use Filament\Forms;
+use App\Support\NavBadge;
 use Filament\Actions;
 use Filament\Resources\Resource;
-use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -113,7 +112,7 @@ class LoginLogResource extends Resource
     {
         return [
             'index' => Pages\ListLoginLogs::route('/'),
-            'view'  => Pages\ViewLoginLog::route('/{record}'),
+            'view' => Pages\ViewLoginLog::route('/{record}'),
         ];
     }
 
@@ -124,7 +123,7 @@ class LoginLogResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return \App\Support\NavBadge::count('logins_failed_today', fn () => static::getModel()::where('status', LogStatus::Failed)->where('created_at', '>=', now()->startOfDay())->count());
+        return NavBadge::count('logins_failed_today', fn () => static::getModel()::where('status', LogStatus::Failed)->where('created_at', '>=', now()->startOfDay())->count());
     }
 
     public static function getNavigationBadgeColor(): ?string

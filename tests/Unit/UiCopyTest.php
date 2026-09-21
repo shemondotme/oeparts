@@ -2,11 +2,15 @@
 
 namespace Tests\Unit;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\SettingType;
 use App\Models\Setting;
 use App\Services\SettingsService;
+use App\Services\UiCopyInstaller;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Finder\Finder;
 use Tests\TestCase;
 
 class UiCopyTest extends TestCase
@@ -75,7 +79,7 @@ class UiCopyTest extends TestCase
         // every call site that DOES exist must reference a key that was
         // actually seeded, catching the exact navbar_/nav_ mismatch bug
         // without asserting the (unrelated) inverse.
-        $seededNavKeys = collect(\App\Services\UiCopyInstaller::installedUiKeyPrefixes())
+        $seededNavKeys = collect(UiCopyInstaller::installedUiKeyPrefixes())
             ->filter(fn (string $key) => str_starts_with($key, 'nav_'))
             ->all();
 
@@ -83,7 +87,7 @@ class UiCopyTest extends TestCase
 
         $navbarBlade = file_get_contents(resource_path('views/components/navbar.blade.php'));
         $appBlade = file_get_contents(resource_path('views/layouts/app.blade.php'));
-        $combined = $navbarBlade . $appBlade;
+        $combined = $navbarBlade.$appBlade;
 
         preg_match_all("/ui_copy\('(nav_[a-z_]+)'/", $combined, $matches);
         $callSiteKeys = array_unique($matches[1]);
@@ -143,11 +147,11 @@ class UiCopyTest extends TestCase
     #[Test]
     public function every_checkout_account_footer_ui_copy_call_uses_a_prefix_that_is_actually_seeded(): void
     {
-        $seededKeys = \App\Services\UiCopyInstaller::installedCheckoutAccountFooterUiKeyPrefixes();
+        $seededKeys = UiCopyInstaller::installedCheckoutAccountFooterUiKeyPrefixes();
         $this->assertNotEmpty($seededKeys);
 
         $combined = '';
-        foreach (\Symfony\Component\Finder\Finder::create()->files()->in(resource_path('views'))->name('*.blade.php') as $file) {
+        foreach (Finder::create()->files()->in(resource_path('views'))->name('*.blade.php') as $file) {
             $combined .= $file->getContents();
         }
 
@@ -179,14 +183,14 @@ class UiCopyTest extends TestCase
     #[Test]
     public function every_dynamically_built_checkout_account_key_is_seeded_for_every_real_enum_value(): void
     {
-        $seededKeys = \App\Services\UiCopyInstaller::installedCheckoutAccountFooterUiKeyPrefixes();
+        $seededKeys = UiCopyInstaller::installedCheckoutAccountFooterUiKeyPrefixes();
 
-        foreach (\App\Enums\OrderStatus::cases() as $status) {
+        foreach (OrderStatus::cases() as $status) {
             $key = 'account_order_status_'.$status->value;
             $this->assertContains($key, $seededKeys, "ui.{$key} missing — account/orders pages would silently fall back to the lang file for this order status.");
         }
 
-        foreach (\App\Enums\PaymentStatus::cases() as $status) {
+        foreach (PaymentStatus::cases() as $status) {
             $accountKey = 'account_payment_status_'.$status->value;
             $checkoutKey = 'checkout_payment_status_'.$status->value;
             $this->assertContains($accountKey, $seededKeys, "ui.{$accountKey} missing.");

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ProductResource\Pages;
 
 use App\Filament\Resources\ProductResource;
+use App\Filament\Support\AdminUi;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Resources\Pages\ViewRecord;
@@ -10,6 +11,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Colors\Color;
 
 class ViewProduct extends ViewRecord
 {
@@ -59,7 +61,7 @@ class ViewProduct extends ViewRecord
                                             // model — a ?Condition type-hint fatals on render.
                                             ->formatStateUsing(fn (?string $state): string => $state ?? '—')
                                             ->color(fn ($record) => $record->condition?->bg_color
-                                                ? \Filament\Support\Colors\Color::hex($record->condition->bg_color)
+                                                ? Color::hex($record->condition->bg_color)
                                                 : 'gray'),
                                     ])
                                     ->columns(2),
@@ -72,7 +74,7 @@ class ViewProduct extends ViewRecord
                                             ->keyLabel('Language')
                                             ->valueLabel('Name')
                                             ->state(fn ($record): array => collect($record->name ?? [])
-                                                ->mapWithKeys(fn ($value, $code) => [(\App\Filament\Support\AdminUi::LOCALES[$code] ?? $code) . " ({$code})" => $value])
+                                                ->mapWithKeys(fn ($value, $code) => [(AdminUi::LOCALES[$code] ?? $code)." ({$code})" => $value])
                                                 ->all())
                                             ->placeholder('No names provided')
                                             ->columnSpanFull(),
@@ -87,7 +89,7 @@ class ViewProduct extends ViewRecord
                                             ->keyLabel('Language')
                                             ->valueLabel('Description')
                                             ->state(fn ($record): array => collect($record->description ?? [])
-                                                ->mapWithKeys(fn ($value, $code) => [(\App\Filament\Support\AdminUi::LOCALES[$code] ?? $code) . " ({$code})" => $value])
+                                                ->mapWithKeys(fn ($value, $code) => [(AdminUi::LOCALES[$code] ?? $code)." ({$code})" => $value])
                                                 ->all())
                                             ->placeholder('No descriptions provided')
                                             ->columnSpanFull(),

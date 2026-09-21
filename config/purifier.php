@@ -1,4 +1,5 @@
 <?php
+
 /**
  * App-level override of vendor/mews/purifier/config/purifier.php.
  *
@@ -25,29 +26,29 @@
  */
 
 return [
-    'encoding'           => 'UTF-8',
-    'finalize'           => true,
-    'ignoreNonStrings'   => false,
-    'cachePath'          => storage_path('app/purifier'),
-    'cacheFileMode'      => 0755,
-    'settings'      => [
+    'encoding' => 'UTF-8',
+    'finalize' => true,
+    'ignoreNonStrings' => false,
+    'cachePath' => storage_path('app/purifier'),
+    'cacheFileMode' => 0755,
+    'settings' => [
         'default' => [
-            'HTML.Doctype'             => 'HTML 4.01 Transitional',
-            'HTML.Allowed'             => 'div[class|id],b,strong,i,em,u,a[href|title|target],ul,ol,li,p[style|id],br,span[style],img[width|height|alt|src],h1[id],h2[id],h3[id],h4[id],blockquote,code,pre,table,thead,tbody,tr,th[colspan|rowspan],td[colspan|rowspan]',
-            'CSS.AllowedProperties'    => 'font,font-size,font-weight,font-style,font-family,text-decoration,padding-left,color,background-color,text-align',
+            'HTML.Doctype' => 'HTML 4.01 Transitional',
+            'HTML.Allowed' => 'div[class|id],b,strong,i,em,u,a[href|title|target],ul,ol,li,p[style|id],br,span[style],img[width|height|alt|src],h1[id],h2[id],h3[id],h4[id],blockquote,code,pre,table,thead,tbody,tr,th[colspan|rowspan],td[colspan|rowspan]',
+            'CSS.AllowedProperties' => 'font,font-size,font-weight,font-style,font-family,text-decoration,padding-left,color,background-color,text-align',
             'AutoFormat.AutoParagraph' => true,
-            'AutoFormat.RemoveEmpty'   => true,
-            'Attr.EnableID'            => true,
+            'AutoFormat.RemoveEmpty' => true,
+            'Attr.EnableID' => true,
         ],
-        'test'    => [
+        'test' => [
             'Attr.EnableID' => 'true',
         ],
-        "youtube" => [
-            "HTML.SafeIframe"      => 'true',
-            "URI.SafeIframeRegexp" => "%^(http://|https://|//)(www.youtube.com/embed/|player.vimeo.com/video/)%",
+        'youtube' => [
+            'HTML.SafeIframe' => 'true',
+            'URI.SafeIframeRegexp' => '%^(http://|https://|//)(www.youtube.com/embed/|player.vimeo.com/video/)%',
         ],
         'custom_definition' => [
-            'id'  => 'html5-definitions',
+            'id' => 'html5-definitions',
             'rev' => 1,
             'debug' => false,
             'elements' => [
