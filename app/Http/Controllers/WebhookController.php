@@ -7,6 +7,7 @@ use App\Jobs\ProcessAirwallexWebhook;
 use App\Jobs\ProcessPayseraWebhook;
 use App\Models\Payment;
 use App\Services\PaymentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -163,7 +164,7 @@ class WebhookController extends Controller
      *
      * POST /webhooks/bank-transfer-confirm
      */
-    public function handleBankTransferConfirm(Request $request): Response
+    public function handleBankTransferConfirm(Request $request): JsonResponse
     {
         $rateKey = 'bank-transfer:'.($request->input('payment_id') ?? $request->ip());
         if (RateLimiter::tooManyAttempts($rateKey, 10)) {
@@ -171,10 +172,14 @@ class WebhookController extends Controller
         }
         RateLimiter::hit($rateKey, 60);
 
-        $apiKey = $request->header('X-Webhook-Key');
-        $expectedKey = settings('payment.webhook_secret', '');
+        $apiKey = (string) $request->header('X-Webhook-Key');
+        $expectedKey = (string) settings('payment.webhook_secret', '');
 
-        if ($apiKey !== $expectedKey) {
+        // hash_equals, not !==: a straight string comparison short-circuits
+        // on the first mismatched byte, leaking how many leading characters
+        // an attacker guessed right via response-timing — the standard
+        // constant-time-compare fix for any secret/token check.
+        if ($expectedKey === '' || ! hash_equals($expectedKey, $apiKey)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
