@@ -161,7 +161,16 @@ class CatalogController extends BaseApiController
             // included), producing both false positives and false negatives
             // instead of a real per-locale text match. Same fix as
             // ManufacturerController::index()'s locale-aware lookup.
+            //
+            // Unlike that controller's $lang, this one comes straight from
+            // the query string with no route-level whitelist — and, unlike
+            // the $term below, it's interpolated directly into the raw SQL
+            // JSON path rather than passed as a bound parameter, so an
+            // unvalidated value here is a real SQL injection vector on this
+            // public API endpoint. Same whitelist ManufacturerController::index()
+            // uses.
             $lang = $request->query('lang', app()->getLocale());
+            $lang = in_array($lang, ['en', 'de', 'lt', 'fr', 'es'], true) ? $lang : 'en';
             $jsonPath = DB::connection()->getDriverName() === 'sqlite'
                 ? "json_extract(name, '$.\"{$lang}\"')"
                 : "JSON_UNQUOTE(JSON_EXTRACT(name, '$.\"{$lang}\"'))";
