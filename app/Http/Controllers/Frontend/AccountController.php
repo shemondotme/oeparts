@@ -8,8 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Frontend\AccountPasswordRequest;
 use App\Http\Requests\Frontend\AccountSettingsRequest;
 use App\Jobs\SendRefundStatusEmail;
+use App\Models\AbandonedCart;
+use App\Models\FailedSearchLog;
+use App\Models\LoginLog;
 use App\Models\Order;
 use App\Models\RefundRequest;
+use App\Models\SearchLog;
 use App\Models\UserAddress;
 use App\Services\InvoiceService;
 use App\Services\OrderService;
@@ -324,6 +328,42 @@ class AccountController extends Controller
 
     /**
      * Soft-delete account and anonymize PII (GDPR-style).
+     *
+     * The users table itself was the only thing this ever touched — every
+     * OTHER table with a user_id foreign key was left completely alone,
+     * because those FKs' own cascadeOnDelete()/nullOnDelete() declarations
+     * (see the migrations) never fire: User uses SoftDeletes, so $user->
+     * delete() is an UPDATE (deleted_at), not a real SQL DELETE, and MySQL
+     * only cascades on an actual DELETE. Confirmed via a full audit of
+     * every migration constraining a user_id to users.id (Phase 11,
+     * bulletproof-testing initiative) — this explicitly re-does, in PHP,
+     * what those constraints were clearly written to do but silently
+     * never do:
+     *   - user_addresses (cascadeOnDelete intent) — deleted outright, a
+     *     saved address book has no retention need once the account is gone.
+     *   - carts/cart_items (nullOnDelete intent on carts.user_id) — the
+     *     account's cart is deleted outright rather than orphaned; nothing
+     *     legitimate reads a masterless cart.
+     *   - search_logs / failed_search_logs (nullOnDelete intent) — user_id
+     *     nulled; the query text itself is retained for aggregate search-
+     *     quality analytics, same as any anonymous visitor's search.
+     *   - abandoned_carts (nullOnDelete intent, PLUS its own guest_email
+     *     column that a bare user_id null wouldn't touch) — deleted
+     *     outright; the entire point of this table is "email this specific
+     *     person to finish their purchase", which must stop once they've
+     *     deleted their account, not just lose its user_id link.
+     *   - login_logs — no FK constraint exists here at all (plain
+     *     unsigned-int column + a separate snapshot `email` string), so
+     *     this needed its own explicit anonymization, matching the same
+     *     placeholder style as the users row itself.
+     * Deliberately NOT touched: orders / refund_requests (financial/tax
+     * records — EU retention obligations are a lawful-basis exemption from
+     * erasure under GDPR Art. 17(3)(b); nulling refund_requests.user_id
+     * would also break admin-side order/refund history entirely) and
+     * contact_messages / part_inquiries / newsletter_subscribers (matched
+     * by email, not user_id — these are standalone business records a
+     * guest can equally create, each with their own separate purpose/
+     * consent, not something uniquely tied to having an account).
      */
     public function destroy(Request $request, string $lang)
     {
@@ -339,7 +379,20 @@ class AccountController extends Controller
             return back()->withErrors(['current_password' => __('account.current_password_incorrect')])->withInput();
         }
 
-        $user->email = 'deleted_'.$user->id.'@oeparts.invalid';
+        $anonymizedEmail = 'deleted_'.$user->id.'@oeparts.invalid';
+
+        $user->addresses()->delete();
+        $user->carts()->delete();
+        SearchLog::where('user_id', $user->id)->update(['user_id' => null]);
+        FailedSearchLog::where('user_id', $user->id)->update(['user_id' => null]);
+        AbandonedCart::where('user_id', $user->id)->delete();
+        LoginLog::where('user_id', $user->id)->update([
+            'email' => $anonymizedEmail,
+            'ip_address' => '0.0.0.0',
+            'user_agent' => null,
+        ]);
+
+        $user->email = $anonymizedEmail;
         $user->name = 'Deleted User';
         $user->phone = null;
         $user->save();
