@@ -18,7 +18,7 @@
                     Regarding your inquiry<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
-                    {{ trans('emails.contact_reply.greeting', ['name' => $contact->name ?? 'Customer'], $locale) }}
+                    {{ trans('emails.contact_reply.greeting', ['name' => $contactMessage->name ?? 'Customer'], $locale) }}
                     <br>
                     {{ trans('emails.contact_reply.intro', [], $locale) ?: settings('email.contact_reply_intro', 'Thank you for contacting OeParts support. Please find our response below.') }}
                 </p>
@@ -26,17 +26,26 @@
         </tr>
 
         {{-- ═══ ORIGINAL MESSAGE REFERENCE ═══ --}}
-        @if(isset($contact->subject) || isset($contact->message))
+        {{-- $contact/$replyMessage (undefined here — the mailable's with()
+             array is keyed contactMessage/replyBody, matching the text
+             sibling template below) used to silently render this whole
+             email content-free: isset() on an undefined variable is false
+             (no error), so this block never rendered at all, and
+             `$replyMessage ?? ''` further down swallowed the actual admin
+             reply text the same way — every contact-reply email ever sent
+             showed neither the customer's original message nor the support
+             team's actual response, just generic boilerplate. --}}
+        @if(isset($contactMessage->subject) || isset($contactMessage->message))
         <tr>
             <td style="padding: 24px 0;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #4E5A74;">
                     YOUR ORIGINAL MESSAGE
                 </p>
                 <div style="background-color: #F7F3E7; border-left: 4px solid #D8CFB6; padding: 16px; font-size: 14px; line-height: 22px; color: #4E5A74; font-style: italic;">
-                    @if(isset($contact->subject))
-                        <strong style="display: block; margin-bottom: 8px; color: #0A1228; font-style: normal;">Subject: {{ $contact->subject }}</strong>
+                    @if(isset($contactMessage->subject))
+                        <strong style="display: block; margin-bottom: 8px; color: #0A1228; font-style: normal;">Subject: {{ $contactMessage->subject }}</strong>
                     @endif
-                    {!! nl2br(e($contact->message ?? '')) !!}
+                    {!! nl2br(e($contactMessage->message ?? '')) !!}
                 </div>
             </td>
         </tr>
@@ -49,7 +58,7 @@
                     OUR RESPONSE
                 </p>
                 <div style="background-color: #FFFFFF; border: 1px solid #D8CFB6; padding: 20px; font-size: 15px; line-height: 24px; color: #0A1228;">
-                    {!! nl2br(e($replyMessage ?? '')) !!}
+                    {!! nl2br(e($replyBody ?? '')) !!}
                 </div>
             </td>
         </tr>
