@@ -236,6 +236,23 @@ class EmailJobsTest extends TestCase
         Mail::assertSent(OrderStatusUpdate::class);
     }
 
+    /**
+     * Phase 15 (Email/Notification & Queue Failure Handling). Had no
+     * explicit $tries/$backoff at all — unlike its sibling
+     * SendOrderConfirmationEmail — meaning a transient mail failure
+     * retried immediately (worker-default backoff) instead of the
+     * staggered 1/3/10-minute delay used elsewhere.
+     */
+    #[Test]
+    public function send_order_status_email_has_retry_policy(): void
+    {
+        $order = Order::factory()->create();
+        $job = new SendOrderStatusEmail($order, OrderStatus::Pending, OrderStatus::Processing);
+
+        $this->assertSame(3, $job->tries);
+        $this->assertSame([60, 180, 600], $job->backoff);
+    }
+
     #[Test]
     public function send_tracking_update_email_is_queued_on_default(): void
     {
@@ -290,6 +307,37 @@ class EmailJobsTest extends TestCase
         Mail::assertSent(OrderShipped::class, function ($mail) use ($order) {
             return $mail->order->id === $order->id;
         });
+    }
+
+    /**
+     * Phase 15 (Email/Notification & Queue Failure Handling). Same missing-
+     * retry-policy gap as SendOrderStatusEmail.
+     */
+    #[Test]
+    public function send_tracking_update_email_has_retry_policy(): void
+    {
+        $order = Order::factory()->create();
+        $job = new SendTrackingUpdateEmail($order);
+
+        $this->assertSame(3, $job->tries);
+        $this->assertSame([60, 180, 600], $job->backoff);
+    }
+
+    /**
+     * Also missing entirely before this phase — SendOrderConfirmationEmail's
+     * own comment explains why: Mail::to(null) throws, which would
+     * otherwise burn all 3 retries/backoff cycles on an order this job can
+     * never deliver for.
+     */
+    #[Test]
+    public function send_tracking_update_email_skips_silently_when_the_order_has_no_recipient(): void
+    {
+        Mail::fake();
+        $order = Order::factory()->create(['user_id' => null, 'guest_email' => null]);
+
+        (new SendTrackingUpdateEmail($order))->handle();
+
+        Mail::assertNothingSent();
     }
 
     #[Test]

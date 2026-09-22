@@ -158,6 +158,44 @@ class RefundJobsTest extends TestCase
         });
     }
 
+    /**
+     * Phase 15 (Email/Notification & Queue Failure Handling). This job had
+     * no explicit $tries/$backoff at all — unlike its sibling
+     * SendRefundProcessedEmail (and the SAME "primary vs. follow-up email"
+     * inconsistency found across several jobs this phase) — meaning a
+     * transient mail failure retried immediately (worker-default backoff)
+     * instead of the staggered 1/3/10-minute delay used elsewhere, right
+     * when the transient issue is least likely to have resolved.
+     */
+    #[Test]
+    public function send_refund_status_email_has_retry_policy(): void
+    {
+        $order = Order::factory()->create();
+        $refund = RefundRequest::factory()->create(['order_id' => $order->id]);
+        $job = new SendRefundStatusEmail($refund, RefundStatus::Pending, RefundStatus::Approved);
+
+        $this->assertSame(3, $job->tries);
+        $this->assertSame([60, 180, 600], $job->backoff);
+    }
+
+    /**
+     * Also missing entirely before this phase: SendOrderConfirmationEmail's
+     * own comment explains why this guard matters — Mail::to(null) throws,
+     * which would otherwise burn all 3 retries/backoff cycles on a refund
+     * this job can never deliver for.
+     */
+    #[Test]
+    public function send_refund_status_email_skips_silently_when_the_order_has_no_recipient(): void
+    {
+        Mail::fake();
+        $order = Order::factory()->create(['user_id' => null, 'guest_email' => null]);
+        $refund = RefundRequest::factory()->create(['order_id' => $order->id]);
+
+        (new SendRefundStatusEmail($refund, RefundStatus::Pending, RefundStatus::Approved))->handle();
+
+        Mail::assertNothingSent();
+    }
+
     // ── Regression tests for Option P: broken refund-email route reference ──
     // Every test above uses Mail::fake(), which intercepts the Mailable
     // before it renders its Blade view — none of them could ever have

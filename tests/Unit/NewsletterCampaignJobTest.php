@@ -33,6 +33,22 @@ class NewsletterCampaignJobTest extends TestCase
         Queue::assertPushedOn('default', SendNewsletterCampaign::class);
     }
 
+    /**
+     * Phase 15 (Email/Notification & Queue Failure Handling). Had $tries=3
+     * but no explicit $backoff — a mail-service-wide outage (not just one
+     * bad address) would retry all 3 attempts back to back immediately
+     * instead of giving the outage time to resolve, unlike every sibling
+     * bulk/admin-notification job.
+     */
+    #[Test]
+    public function campaign_job_has_a_backoff_policy(): void
+    {
+        $job = new SendNewsletterCampaign(NewsletterCampaign::factory()->create());
+
+        $this->assertSame(3, $job->tries);
+        $this->assertSame([60, 300, 600], $job->backoff);
+    }
+
     // -------------------------------------------------------------------------
     // handle() — email dispatch
     // -------------------------------------------------------------------------

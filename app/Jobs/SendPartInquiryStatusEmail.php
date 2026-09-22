@@ -16,6 +16,10 @@ class SendPartInquiryStatusEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 3;
+
+    public array $backoff = [60, 180, 600];
+
     public function __construct(
         public readonly PartInquiry $inquiry,
         public readonly PartInquiryStatus $newStatus,

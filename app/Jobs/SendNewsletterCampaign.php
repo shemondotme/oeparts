@@ -21,6 +21,8 @@ class SendNewsletterCampaign implements ShouldQueue
 
     public int $tries = 3;
 
+    public array $backoff = [60, 300, 600];
+
     public function __construct(
         public readonly NewsletterCampaign $campaign,
     ) {

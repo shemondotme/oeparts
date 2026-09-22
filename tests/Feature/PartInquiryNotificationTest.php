@@ -73,4 +73,20 @@ class PartInquiryNotificationTest extends TestCase
 
         Mail::assertSent(PartInquiryStatusUpdate::class, fn ($mail) => $mail->hasTo('customer@example.com'));
     }
+
+    /**
+     * Phase 15 (Email/Notification & Queue Failure Handling). Had no
+     * explicit $tries/$backoff at all — unlike sibling customer-facing
+     * status-update jobs like SendOrderConfirmationEmail — meaning a
+     * transient mail failure retried immediately (worker-default backoff)
+     * instead of the staggered 1/3/10-minute delay used elsewhere.
+     */
+    public function test_job_has_retry_policy(): void
+    {
+        $inquiry = $this->makeInquiry();
+        $job = new SendPartInquiryStatusEmail($inquiry, PartInquiryStatus::Sourced);
+
+        $this->assertSame(3, $job->tries);
+        $this->assertSame([60, 180, 600], $job->backoff);
+    }
 }
