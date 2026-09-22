@@ -83,6 +83,7 @@ class RefundRequestObserver
             WidgetPreferenceService::forgetCache('refunds_pending');
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning("RefundRequestObserver: cache invalidation failed for refund request #{$refundRequest->id}: ".$e->getMessage());
         }
     }
 
@@ -101,7 +102,7 @@ class RefundRequestObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("RefundRequestObserver: failed to record activity log for refund request #{$refundRequest->id} ({$action}): ".$e->getMessage());
         }
     }
 }

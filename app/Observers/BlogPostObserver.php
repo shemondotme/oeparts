@@ -9,6 +9,7 @@ use App\Observers\Concerns\PushesToIndexNow;
 use App\Services\CacheService;
 use App\Support\LocaleRegistry;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class BlogPostObserver
 {
@@ -75,6 +76,7 @@ class BlogPostObserver
             $cache->forgetBlogFilters();
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning("BlogPostObserver: cache invalidation failed for blog post #{$blogPost->id}: ".$e->getMessage());
         }
     }
 
@@ -93,7 +95,7 @@ class BlogPostObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("BlogPostObserver: failed to record activity log for blog post #{$blogPost->id} ({$action}): ".$e->getMessage());
         }
     }
 }

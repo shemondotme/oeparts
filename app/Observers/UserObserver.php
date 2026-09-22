@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class UserObserver
 {
@@ -69,7 +70,7 @@ class UserObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("UserObserver: failed to record activity log for user #{$user->id} ({$action}): ".$e->getMessage());
         }
     }
 }

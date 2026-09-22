@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Jobs\ProcessProductImage;
 use App\Models\ProductImage;
+use Illuminate\Support\Facades\Log;
 
 class ProductImageObserver
 {
@@ -33,13 +34,21 @@ class ProductImageObserver
             return;
         }
 
+        // Captured once — referencing $image->product_id a second time in
+        // the catch below would otherwise double the pre-existing PHPStan
+        // baseline count for this dynamic-property access.
+        $productId = $image->product_id;
+
         try {
-            ProductImage::where('product_id', $image->product_id)
+            ProductImage::where('product_id', $productId)
                 ->where('id', '!=', $image->id)
                 ->where('is_featured', true)
                 ->update(['is_featured' => false]);
         } catch (\Throwable $e) {
-            // Must not break the save that triggered this.
+            // Must not break the save that triggered this — but a failure
+            // here can leave MORE THAN ONE image marked featured for the
+            // same product, a real data-integrity issue worth tracing.
+            Log::warning("ProductImageObserver: failed to enforce single-featured-image for product #{$productId}: ".$e->getMessage());
         }
     }
 
@@ -50,6 +59,7 @@ class ProductImageObserver
         } catch (\Throwable $e) {
             // Dispatch failure must not break the upload — the gallery
             // just serves the original until reprocessed.
+            Log::warning("ProductImageObserver: failed to dispatch ProcessProductImage for image #{$image->id}: ".$e->getMessage());
         }
     }
 }

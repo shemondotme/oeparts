@@ -7,6 +7,7 @@ use App\Models\Page;
 use App\Observers\Concerns\PushesToIndexNow;
 use App\Services\CacheService;
 use App\Support\LocaleRegistry;
+use Illuminate\Support\Facades\Log;
 
 class PageObserver
 {
@@ -54,6 +55,7 @@ class PageObserver
             app(CacheService::class)->forgetHomepagePageOverride();
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning('PageObserver: cache invalidation failed: '.$e->getMessage());
         }
     }
 }

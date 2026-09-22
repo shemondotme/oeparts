@@ -75,6 +75,7 @@ class ProductObserver
             }
         } catch (\Throwable $e) {
             // Slug refresh must not break CRUD
+            Log::warning("ProductObserver: slug refresh failed for product #{$product->id}: ".$e->getMessage());
         }
     }
 
@@ -183,6 +184,7 @@ class ProductObserver
             }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning("ProductObserver: cache invalidation failed for product #{$product->id}: ".$e->getMessage());
         }
 
         // Separate try/catch from the cache-forget block above: a
@@ -211,7 +213,7 @@ class ProductObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("ProductObserver: failed to record activity log for product #{$product->id} ({$action}): ".$e->getMessage());
         }
     }
 }

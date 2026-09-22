@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Section;
 use App\Services\CacheService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SectionObserver
 {
@@ -48,6 +49,7 @@ class SectionObserver
             }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning("SectionObserver: cache invalidation failed for section #{$section->id}: ".$e->getMessage());
         }
     }
 
@@ -66,7 +68,7 @@ class SectionObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("SectionObserver: failed to record activity log for section #{$section->id} ({$action}): ".$e->getMessage());
         }
     }
 }

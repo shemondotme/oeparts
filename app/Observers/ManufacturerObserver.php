@@ -7,6 +7,7 @@ use App\Observers\Concerns\PushesToIndexNow;
 use App\Services\CacheService;
 use App\Services\WidgetPreferenceService;
 use App\Support\LocaleRegistry;
+use Illuminate\Support\Facades\Log;
 
 class ManufacturerObserver
 {
@@ -56,6 +57,7 @@ class ManufacturerObserver
             }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning('ManufacturerObserver: cache invalidation failed: '.$e->getMessage());
         }
     }
 }

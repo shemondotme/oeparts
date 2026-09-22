@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class AdminObserver
 {
@@ -61,6 +62,7 @@ class AdminObserver
             Cache::forget('admin:dashboard:admin_count');
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning('AdminObserver: cache invalidation failed: '.$e->getMessage());
         }
     }
 
@@ -79,7 +81,10 @@ class AdminObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            // This is the security/audit trail for changes to admin
+            // accounts themselves — a missing entry here is more sensitive
+            // than the same gap on an ordinary content model.
+            Log::warning("AdminObserver: failed to record activity log for admin #{$admin->id} ({$action}): ".$e->getMessage());
         }
     }
 }

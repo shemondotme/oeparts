@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Condition;
 use App\Services\CacheService;
+use Illuminate\Support\Facades\Log;
 
 class ConditionObserver
 {
@@ -29,6 +30,7 @@ class ConditionObserver
             app(CacheService::class)->forgetConditionsBySlug();
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning('ConditionObserver: cache invalidation failed: '.$e->getMessage());
         }
     }
 }

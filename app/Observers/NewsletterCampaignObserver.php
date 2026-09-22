@@ -7,6 +7,7 @@ use App\Models\NewsletterCampaign;
 use App\Services\CacheService;
 use App\Services\WidgetPreferenceService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class NewsletterCampaignObserver
 {
@@ -47,6 +48,7 @@ class NewsletterCampaignObserver
             WidgetPreferenceService::forgetCache('newsletter_growth');
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning("NewsletterCampaignObserver: cache invalidation failed for campaign #{$campaign->id}: ".$e->getMessage());
         }
     }
 
@@ -65,7 +67,7 @@ class NewsletterCampaignObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("NewsletterCampaignObserver: failed to record activity log for campaign #{$campaign->id} ({$action}): ".$e->getMessage());
         }
     }
 }

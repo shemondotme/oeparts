@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Testimonial;
 use App\Services\CacheService;
+use Illuminate\Support\Facades\Log;
 
 class TestimonialObserver
 {
@@ -28,6 +29,7 @@ class TestimonialObserver
             app(CacheService::class)->forgetTestimonials();
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning('TestimonialObserver: cache invalidation failed: '.$e->getMessage());
         }
     }
 }

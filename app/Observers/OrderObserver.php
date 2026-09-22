@@ -96,6 +96,7 @@ class OrderObserver
             }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning("OrderObserver: cache invalidation failed for order #{$order->id}: ".$e->getMessage());
         }
     }
 
@@ -114,7 +115,7 @@ class OrderObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("OrderObserver: failed to record activity log for order #{$order->id} ({$action}): ".$e->getMessage());
         }
     }
 }

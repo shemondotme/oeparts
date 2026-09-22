@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Coupon;
 use App\Services\CacheService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class CouponObserver
 {
@@ -52,6 +53,7 @@ class CouponObserver
             }
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning("CouponObserver: cache invalidation failed for coupon #{$coupon->id}: ".$e->getMessage());
         }
     }
 
@@ -70,7 +72,7 @@ class CouponObserver
                 'ip_address' => request()->ip(),
             ]);
         } catch (\Exception $e) {
-            // Silently fail
+            Log::warning("CouponObserver: failed to record activity log for coupon #{$coupon->id} ({$action}): ".$e->getMessage());
         }
     }
 }

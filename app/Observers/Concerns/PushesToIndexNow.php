@@ -3,6 +3,7 @@
 namespace App\Observers\Concerns;
 
 use App\Jobs\PushIndexNow;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Shared by every content observer that announces URL changes to IndexNow
@@ -27,6 +28,7 @@ trait PushesToIndexNow
             PushIndexNow::dispatch($urls);
         } catch (\Throwable $e) {
             // Must not break the save that triggered this.
+            Log::warning('PushesToIndexNow::pushToIndexNow() failed to dispatch: '.$e->getMessage());
         }
     }
 }

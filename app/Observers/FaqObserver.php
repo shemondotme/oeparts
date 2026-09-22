@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Faq;
 use App\Services\CacheService;
+use Illuminate\Support\Facades\Log;
 
 class FaqObserver
 {
@@ -28,6 +29,7 @@ class FaqObserver
             app(CacheService::class)->forgetFaqs();
         } catch (\Exception $e) {
             // Cache failure must not break CRUD
+            Log::warning('FaqObserver: cache invalidation failed: '.$e->getMessage());
         }
     }
 }
