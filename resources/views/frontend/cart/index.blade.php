@@ -406,7 +406,7 @@
                         <dl class="space-y-0 border-t border-rule">
                             <div class="flex items-baseline justify-between gap-3 py-3 border-b border-rule">
                                 <dt class="bp-spec-mono">{{ ui_copy('cart_subtotal_label', 'cart.subtotal_label') }}</dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('general.currency_symbol', '€') }}<span x-text="summary.subtotal_excl_vat.toFixed(2)"></span></dd>
                             </div>
                             <template x-if="summary.coupon_code">
@@ -418,7 +418,7 @@
                                             <x-heroicon-s-x-mark class="w-3 h-3" />
                                         </button>
                                     </dt>
-                                    <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                    <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                     <dd class="font-mono text-sm font-bold tabular-nums text-amber-ink">-{{ settings('general.currency_symbol', '€') }}<span x-text="summary.coupon_discount.toFixed(2)"></span></dd>
                                 </div>
                             </template>
@@ -426,12 +426,12 @@
                                 <dt class="bp-spec-mono">
                                     {{ ui_copy('cart_vat_short', 'cart.vat_short') }} · <span x-text="summary.vat_rate"></span>%
                                 </dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ settings('general.currency_symbol', '€') }}<span x-text="summary.vat_amount.toFixed(2)"></span></dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3 py-3">
                                 <dt class="bp-spec-mono">{{ ui_copy('cart_shipping', 'cart.shipping') }}</dt>
-                                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                 <dd class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-amber-ink">{{ ui_copy('cart_shipping_calculated', 'cart.shipping_calculated') }}</dd>
                             </div>
                         </dl>

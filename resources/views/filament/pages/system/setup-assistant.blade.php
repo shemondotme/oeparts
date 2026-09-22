@@ -122,7 +122,7 @@
                 </h3>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <dl class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {{-- PHP Version --}}
                     <div class="p-4 rounded-xl" style="background: var(--color-bg-inset); border: 1px solid var(--color-border-subtle);">
                         <dt class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">PHP Version</dt>
@@ -189,7 +189,7 @@
                             {{ $this->getMigrationStatus() }}
                         </dd>
                     </div>
-                </div>
+                </dl>
             </div>
         </div>
 

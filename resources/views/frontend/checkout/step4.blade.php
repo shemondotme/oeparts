@@ -164,12 +164,12 @@
         <dl class="px-4 py-4 divide-y divide-rule">
             <div class="flex items-baseline justify-between gap-3 py-2.5">
                 <dt class="bp-spec-mono">{{ ui_copy('checkout_subtotal_excl_vat', 'checkout.subtotal_excl_vat') }}</dt>
-                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($subtotal) }}</dd>
             </div>
             <div class="flex items-baseline justify-between gap-3 py-2.5">
                 <dt class="bp-spec-mono">{{ ui_copy('checkout_shipping_label', 'checkout.shipping_label') }}</dt>
-                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                 <dd class="font-mono text-sm font-bold tabular-nums {{ $shippingCost === '0.00' ? 'text-amber-ink' : 'text-ink' }}">
                     {{ $shippingCost === '0.00' ? ui_copy('checkout_shipping_free', 'checkout.shipping_free') : format_price($shippingCost) }}
                 </dd>
@@ -177,20 +177,20 @@
             @if($urgentProcessing)
             <div class="flex items-baseline justify-between gap-3 py-2.5">
                 <dt class="bp-spec-mono">{{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}</dt>
-                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($urgentProcessingFee) }}</dd>
             </div>
             @endif
             @if(bccomp($handlingFee, '0', 2) > 0)
             <div class="flex items-baseline justify-between gap-3 py-2.5">
                 <dt class="bp-spec-mono">{{ ui_copy('checkout_handling_fee_label', 'checkout.handling_fee_label') }}</dt>
-                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($handlingFee) }}</dd>
             </div>
             @endif
             <div class="flex items-baseline justify-between gap-3 py-2.5">
                 <dt class="bp-spec-mono">{{ ui_copy('checkout_vat_short', 'checkout.vat_short') }} · {{ $vatRate }}%</dt>
-                <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                 <dd class="font-mono text-sm font-bold tabular-nums text-ink">{{ format_price($vatAmount) }}</dd>
             </div>
         </dl>

@@ -267,7 +267,7 @@
                                             <x-heroicon-s-ticket class="w-3 h-3" />
                                             {{ $summaryData['coupon_code'] }}
                                         </dt>
-                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-amber-ink">
                                             -{{ settings('general.currency_symbol', '€') }}{{ number_format($summaryData['coupon_discount'] ?? 0, 2) }}
                                         </dd>
@@ -275,14 +275,14 @@
                                     @endif
                                     <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
                                         <dt class="bp-spec-mono">{{ ui_copy('checkout_subtotal_label', 'checkout.subtotal_label') }}</dt>
-                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             {{ format_price($summarySidebar['subtotal'] ?? 0) }}
                                         </dd>
                                     </div>
                                     <div class="flex items-baseline justify-between gap-3 py-2 border-b border-rule">
                                         <dt class="bp-spec-mono">{{ ui_copy('checkout_shipping_label', 'checkout.shipping_label') }}</dt>
-                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             @if(($summarySidebar['shipping_cost'] ?? null) !== null)
                                                 @if(($summarySidebar['shipping_cost'] ?? null) === '0.00')
@@ -301,7 +301,7 @@
                                             <x-heroicon-s-bolt class="w-3 h-3" />
                                             {{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}
                                         </dt>
-                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             {{ format_price($summarySidebar['urgent_processing_fee'] ?? 0) }}
                                         </dd>
@@ -311,7 +311,7 @@
                                         <dt class="bp-spec-mono">
                                             {{ ui_copy('checkout_vat_short', 'checkout.vat_short') }} · {{ $summarySidebar['vat_rate'] ?? ($summaryData['vat_rate'] ?? settings('tax.default_vat_rate', 21)) }}%
                                         </dt>
-                                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                         <dd class="font-mono text-sm font-bold tabular-nums text-ink">
                                             @if($currentStep >= 2)
                                                 {{ format_price($summarySidebar['vat_amount'] ?? 0) }}

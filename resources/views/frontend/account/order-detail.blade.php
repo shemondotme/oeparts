@@ -298,19 +298,19 @@
                 <dl class="px-5 py-4 space-y-2">
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_subtotal', 'account.subtotal') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->subtotal) }}</dd>
                     </div>
                     @if($hasDiscount)
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_discount', 'account.discount') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-sm text-emerald-700 tabular-nums">−{{ format_price($order->discount_amount) }}</dd>
                     </div>
                     @endif
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_shipping', 'account.shipping') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->shipping_cost) }}</dd>
                     </div>
                     @if($order->urgent_processing && bccomp((string) $order->urgent_processing_fee, '0', 2) > 0)
@@ -319,20 +319,20 @@
                             <x-heroicon-s-bolt class="w-3 h-3" />
                             {{ settings_trans('rush_upsell.urgent_processing_label', 'Rush processing') }}
                         </dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->urgent_processing_fee) }}</dd>
                     </div>
                     @endif
                     @if(bccomp((string) $order->handling_fee, '0', 2) > 0)
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('checkout_handling_fee_label', 'checkout.handling_fee_label') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->handling_fee) }}</dd>
                     </div>
                     @endif
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_vat', 'account.vat') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-sm text-ink tabular-nums">{{ format_price($order->vat_amount) }}</dd>
                     </div>
                 </dl>
