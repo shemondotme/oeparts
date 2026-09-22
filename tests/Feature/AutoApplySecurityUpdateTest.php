@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Jobs\NotifyAdminsOfAutoUpdate;
+use App\Jobs\NotifyAdminsOfUpdateResult;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,10 +120,18 @@ class AutoApplySecurityUpdateTest extends TestCase
 
         $this->artisan('oeparts:update:auto-apply')->assertSuccessful();
 
-        Queue::assertPushed(NotifyAdminsOfAutoUpdate::class, function ($job) {
+        Queue::assertPushed(NotifyAdminsOfUpdateResult::class, function ($job) {
             return $job->result['success'] === true
                 && $job->result['to_version'] === '9.9.9';
         });
+        // The command itself no longer dispatches this on the ran-to-completion
+        // path — UpdateApplier::complete() does, exactly once. A plain
+        // assertPushed() above only proves at least one matching push
+        // happened; this is what actually guards against the double-notify
+        // regression the removed dispatch call's replacement comment warns
+        // about (the command used to ALSO dispatch NotifyAdminsOfAutoUpdate
+        // itself after $applier->run(), which would now double-email admins).
+        Queue::assertPushedTimes(NotifyAdminsOfUpdateResult::class, 1);
     }
 
     #[Test]
@@ -137,10 +145,11 @@ class AutoApplySecurityUpdateTest extends TestCase
 
         $this->artisan('oeparts:update:auto-apply')->assertSuccessful();
 
-        Queue::assertPushed(NotifyAdminsOfAutoUpdate::class, function ($job) {
+        Queue::assertPushed(NotifyAdminsOfUpdateResult::class, function ($job) {
             return $job->result['success'] === false
                 && str_contains((string) $job->result['error'], '[download]');
         });
+        Queue::assertPushedTimes(NotifyAdminsOfUpdateResult::class, 1);
     }
 
     #[Test]
