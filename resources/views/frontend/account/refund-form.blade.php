@@ -92,7 +92,7 @@
                         <legend class="bp-spec text-amber-ink mb-3">{{ ui_copy('account_evidence_legend', 'account.evidence_legend') }}</legend>
                         <label for="return_images" class="bp-spec block mb-2 text-ink">
                             {{ ui_copy('account_photo_evidence', 'account.photo_evidence') }}
-                            <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_photo_evidence_optional', 'account.photo_evidence_optional') }}</span>
+                            <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_photo_evidence_optional', 'account.photo_evidence_optional') }}</span>
                         </label>
                         <input type="file" id="return_images" name="return_images[]" multiple
                                accept="image/jpeg,image/png"
@@ -142,17 +142,17 @@
                 <dl class="p-4 space-y-2">
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_order_no', 'account.order_no') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-xs font-bold text-ink tabular-nums">{{ $order->order_number }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_placed', 'account.placed') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-xs font-bold text-ink tabular-nums">{{ $order->created_at->format('Y-m-d') }}</dd>
                     </div>
                     <div class="flex items-baseline justify-between gap-3">
                         <dt class="bp-spec-mono">{{ ui_copy('account_status_label', 'account.status_label') }}</dt>
-                        <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                        <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                         <dd class="font-mono text-xs font-bold text-ink">{{ ui_copy('account_order_status_'.$order->status->value, 'account.order_status_'.$order->status->value) }}</dd>
                     </div>
                 </dl>

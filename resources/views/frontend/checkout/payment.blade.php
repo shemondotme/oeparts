@@ -255,7 +255,7 @@
                                                 @if(is_scalar($value) || $value === null)
                                                 <div class="flex items-baseline justify-between gap-3 py-3">
                                                     <dt class="bp-spec-mono">{{ __(ucfirst(str_replace('_', ' ', $key))) }}</dt>
-                                                    <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                                                    <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                                                     <dd class="flex items-center gap-2">
                                                         <span class="font-mono text-sm font-bold text-ink tabular-nums">{{ $value }}</span>
                                                         <button type="button"
@@ -280,7 +280,7 @@
                                 <div>
                                     <label for="payment_proof" class="bp-spec block mb-2 text-ink">
                                         {{ ui_copy('checkout_upload_payment_proof', 'checkout.upload_payment_proof') }}
-                                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
+                                        <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
                                     </label>
                                     <input type="file" id="payment_proof" name="payment_proof"
                                            class="block w-full text-sm text-body font-mono
@@ -321,33 +321,33 @@
                         <span class="bp-spec-mono">{{ settings('general.currency', 'EUR') }}</span>
                     </div>
 
-                    <div class="p-5 space-y-2">
+                    <dl class="p-5 space-y-2">
                         <div class="flex items-baseline justify-between gap-3">
                             <dt class="bp-spec-mono">{{ ui_copy('checkout_order_number_label', 'checkout.order_number_label') }}</dt>
-                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->order_number }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
                             <dt class="bp-spec-mono">{{ ui_copy('checkout_items_label', 'checkout.items_label') }}</dt>
-                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ $order->items->count() }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
                             <dt class="bp-spec-mono">{{ ui_copy('checkout_subtotal_label', 'checkout.subtotal_label') }}</dt>
-                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->subtotal) }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
                             <dt class="bp-spec-mono">{{ ui_copy('checkout_shipping_label', 'checkout.shipping_label') }}</dt>
-                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->shipping_cost) }}</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
                             <dt class="bp-spec-mono">{{ ui_copy('checkout_vat_short', 'checkout.vat_short') }}</dt>
-                            <span class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></span>
+                            <dt aria-hidden="true" class="flex-1 border-b border-dotted border-rule-strong translate-y-[-4px]"></dt>
                             <dd class="font-mono text-sm font-bold text-ink tabular-nums">{{ format_price($order->vat_amount) }}</dd>
                         </div>
-                    </div>
+                    </dl>
 
                     <div class="px-5 py-4 border-t-2 border-ink flex items-end justify-between gap-3">
                         <div>

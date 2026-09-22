@@ -56,7 +56,12 @@
                                 {{-- Module Header --}}
                                 <tr style="background: var(--color-bg-inset);">
                                     <td colspan="{{ $roles->count() + 1 }}" class="px-4 py-2">
-                                        <span class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--warning-500);">
+                                        {{-- var(--warning-500) measured 1.94:1 against this row's
+                                             background (axe-core, WCAG AA needs 4.5:1) — it's a
+                                             Filament accent color meant for icons/graphics (3:1),
+                                             not small text; --color-text-muted matches this page's
+                                             other section-header labels (e.g. the h3 above). --}}
+                                        <span class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted);">
                                             {{ $module }}
                                         </span>
                                     </td>

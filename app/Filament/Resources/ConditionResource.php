@@ -117,7 +117,9 @@ class ConditionResource extends Resource
                                         Forms\Components\ColorPicker::make('text_color')
                                             ->label(__('admin.text_color'))
                                             ->required()
-                                            ->default('#16A34A')
+                                            // #16A34A on this bg measures 3.0:1 (axe-core,
+                                            // WCAG AA needs 4.5:1) — #166534 clears 6.5:1.
+                                            ->default('#166534')
                                             ->live()
                                             ->helperText('Badge text color (hex).'),
                                         Forms\Components\Placeholder::make('preview')
@@ -125,7 +127,7 @@ class ConditionResource extends Resource
                                             ->content(fn (Get $get) => sprintf(
                                                 '<span class="inline-flex items-center rounded px-2 py-0.5 bp-spec-mono font-bold" style="background-color: %s; color: %s;">%s</span>',
                                                 $get('bg_color') ?? '#DCFCE7',
-                                                $get('text_color') ?? '#16A34A',
+                                                $get('text_color') ?? '#166534',
                                                 $get('name') ?? 'Preview'
                                             ))
                                             ->html()

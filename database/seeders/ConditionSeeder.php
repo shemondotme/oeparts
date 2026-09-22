@@ -13,7 +13,10 @@ class ConditionSeeder extends Seeder
             'name' => 'New',
             'slug' => 'new',
             'bg_color' => '#DCFCE7',
-            'text_color' => '#16A34A',
+            // #16A34A measured 3.0:1 against this bg (axe-core, WCAG AA
+            // needs 4.5:1 for this badge's small bold text) — #166534
+            // (Tailwind green-800) clears 6.5:1.
+            'text_color' => '#166534',
             'is_active' => true,
             'sort_order' => 1,
         ]);

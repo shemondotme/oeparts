@@ -759,7 +759,7 @@
                 </div>
 
                 {{-- Keyboard hint --}}
-                <p class="mt-2 hidden sm:block text-center font-mono text-[9px] tracking-[0.15em] uppercase text-ink-muted/80">
+                <p class="mt-2 hidden sm:block text-center font-mono text-[9px] tracking-[0.15em] uppercase text-ink-muted/90">
                     {!! __('part_inquiry.keyboard_hint_html', [
                         'kbd' => '<kbd class="inline-block border border-rule-strong bg-paper px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">'.e(__('part_inquiry.keyboard_key')).'</kbd>',
                     ]) !!}

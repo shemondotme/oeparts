@@ -101,7 +101,7 @@
 
         <div>
             <label for="checkout-phone" class="bp-spec block mb-2 text-ink">
-                {{ ui_copy('checkout_phone_label', 'checkout.phone_label') }} <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
+                {{ ui_copy('checkout_phone_label', 'checkout.phone_label') }} <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
             </label>
             <div class="relative border border-ink bg-paper focus-within:border-amber transition-colors @error('phone') border-red-600 @enderror">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-ink-muted">

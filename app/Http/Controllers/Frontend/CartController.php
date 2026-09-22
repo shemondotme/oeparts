@@ -258,7 +258,9 @@ class CartController extends Controller
                     'condition_slug' => $product->condition?->slug ?? 'new',
                     'condition_name' => condition_label($product->condition),
                     'condition_bg' => $product->condition?->bg_color ?? '#DCFCE7',
-                    'condition_text' => $product->condition?->text_color ?? '#16A34A',
+                    // #16A34A on this bg measures 3.0:1 (axe-core, WCAG AA
+                    // needs 4.5:1) — #166534 clears 6.5:1.
+                    'condition_text' => $product->condition?->text_color ?? '#166534',
                 ];
             });
 

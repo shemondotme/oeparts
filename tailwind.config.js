@@ -37,8 +37,15 @@ export default {
                 rule: "#D8CFB6",
                 "rule-strong": "#B8AE90",
 
-                // Amber-on-ink compound
-                "amber-ink": "#9A5A00",
+                // Amber-on-ink compound — amber text for LIGHT backgrounds
+                // (see language-switcher.blade.php's `$isDark ? 'text-amber'
+                // : 'text-amber-ink'` — 'amber' is the dark-mode/dark-bg
+                // counterpart). Darkened from #9A5A00: axe-core found it
+                // failed WCAG AA (4.45:1, needs 4.5:1) against this site's
+                // tinted amber/ivory badge backgrounds (e.g. bg-amber/15) —
+                // #8A4B00 clears 5.5:1+ against every background this token
+                // is used on (pure white through to the darkest amber tint).
+                "amber-ink": "#8A4B00",
 
                 // Semantic grays
                 body: "#334155",

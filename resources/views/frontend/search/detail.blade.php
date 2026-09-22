@@ -292,7 +292,10 @@
                 <div class="grid grid-cols-2 divide-x divide-rule border-b border-rule">
                     <div class="p-3">
                         <p class="bp-spec-mono mb-1">{{ ui_copy('search_availability_label', 'search.availability_label') }}</p>
-                        <p class="text-sm font-bold {{ $product->is_in_stock ? 'text-green-700' : 'text-red-700' }}">
+                        {{-- text-green-700 measured 4.45:1 against this page's ivory
+                             background (axe-core, WCAG AA needs 4.5:1) — green-800 clears
+                             6.4:1+. text-red-700 already passes (~5.8:1), left as-is. --}}
+                        <p class="text-sm font-bold {{ $product->is_in_stock ? 'text-green-800' : 'text-red-700' }}">
                             {{ $product->is_in_stock ? ui_copy('search_in_stock', 'search.in_stock') : ui_copy('search_out_of_stock', 'search.out_of_stock') }}
                         </p>
                     </div>
@@ -452,7 +455,7 @@
                         <tr class="border-b border-rule last:border-b-0" data-testid="product-fitment-row">
                             <td class="px-3 py-2 font-medium text-ink">{{ trim(($carModel->manufacturer ? trans_field($carModel->manufacturer->name) : '').' '.$carModel->name) }}</td>
                             <td class="px-3 py-2 text-ink-muted">{{ $carModel->year_from }}–{{ $carModel->year_to ?: now()->year }}</td>
-                            <td class="px-3 py-2"><span class="font-mono text-[11px] font-bold text-green-700">✓ {{ __('search.fitment_match') }}</span></td>
+                            <td class="px-3 py-2"><span class="font-mono text-[11px] font-bold text-green-800">✓ {{ __('search.fitment_match') }}</span></td>
                         </tr>
                         @endforeach
                     </tbody>

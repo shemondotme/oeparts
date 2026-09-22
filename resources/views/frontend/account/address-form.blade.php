@@ -95,7 +95,7 @@
                 <div>
                     <label for="company" class="bp-spec block mb-2 text-ink">
                         {{ ui_copy('account_company', 'account.company') }}
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
+                        <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
                     </label>
                     <input type="text" id="company" name="company"
                            value="{{ old('company', $address->company ?? '') }}"
@@ -110,7 +110,7 @@
                 <div>
                     <label for="phone" class="bp-spec block mb-2 text-ink">
                         {{ ui_copy('account_phone', 'account.phone') }}
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
+                        <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
                     </label>
                     <input type="tel" id="phone" name="phone"
                            value="{{ old('phone', $address->phone ?? '') }}"
@@ -146,7 +146,7 @@
                 <div>
                     <label for="address_line_2" class="bp-spec block mb-2 text-ink">
                         {{ ui_copy('account_address_line_2', 'account.address_line_2') }}
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
+                        <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
                     </label>
                     <input type="text" id="address_line_2" name="address_line_2"
                            value="{{ old('address_line_2', $address->address_line2 ?? $address->address_line_2 ?? '') }}"

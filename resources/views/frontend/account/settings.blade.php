@@ -158,7 +158,7 @@
                 <div>
                     <label for="phone" class="bp-spec block mb-2 text-ink">
                         {{ ui_copy('account_phone', 'account.phone') }}
-                        <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
+                        <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('account_optional', 'account.optional') }}</span>
                     </label>
                     <input type="tel" id="phone" name="phone"
                            value="{{ old('phone', $user->phone ?? '') }}"

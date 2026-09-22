@@ -22,7 +22,12 @@
     /* Text */
     --color-text-primary: #18181b;      /* zinc-900 */
     --color-text-secondary: #52525b;    /* zinc-600 */
-    --color-text-muted: #71717a;        /* zinc-500 */
+    /* zinc-500 (#71717a) measured 4.40:1 against --color-bg-inset (axe-core,
+       WCAG AA needs 4.5:1) — darkened partway to zinc-600 (kept distinct
+       from --color-text-secondary above rather than reusing the same
+       value) clears 5.2:1+ against every surface this token is used on.
+       Dark mode has its own separate value below, untouched. */
+    --color-text-muted: #65656e;
     --color-text-disabled: #a1a1aa;     /* zinc-400 */
     --color-text-inverse: #ffffff;      /* white */
     --color-text-link: #4f46e5;         /* indigo-600 */

@@ -126,7 +126,7 @@
     <div>
         <label for="customer_note" class="bp-spec block mb-2 text-ink">
             {{ ui_copy('checkout_order_note_label', 'checkout.order_note_label') }}
-            <span class="text-ink-muted/80 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
+            <span class="text-ink-muted/90 normal-case tracking-normal font-normal ml-1">{{ ui_copy('checkout_optional', 'checkout.optional') }}</span>
         </label>
         <div class="border border-ink bg-paper focus-within:border-amber transition-colors">
             <textarea id="customer_note"
