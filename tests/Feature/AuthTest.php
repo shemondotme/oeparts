@@ -66,6 +66,31 @@ class AuthTest extends TestCase
             ->assertJsonValidationErrors(['email']);
     }
 
+    /**
+     * Phase 10 (Fraud & Abuse Prevention) — the register route carries the
+     * same `website` max:0 honeypot convention as the review/contact/
+     * part-inquiry forms (plus the spatie/laravel-honeypot route
+     * middleware, x-honeypot rendered in auth-modal.blade.php), but until
+     * now nothing proved it actually rejects a filled-in submission here —
+     * only that the field exists, not that it's effective.
+     */
+    #[Test]
+    public function honeypot_field_rejects_bot_registration(): void
+    {
+        $response = $this->postJson('/en/register', [
+            'name' => 'Bot',
+            'email' => 'bot@example.com',
+            'password' => 'Xk9#mP2$vR',
+            'password_confirmation' => 'Xk9#mP2$vR',
+            'agree_terms' => true,
+            'website' => 'https://spam-site.com',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['website']);
+        $this->assertDatabaseMissing('users', ['email' => 'bot@example.com']);
+    }
+
     #[Test]
     public function registration_requires_strong_password(): void
     {

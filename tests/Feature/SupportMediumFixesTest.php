@@ -59,6 +59,30 @@ class SupportMediumFixesTest extends TestCase
         });
     }
 
+    // ── Phase 10 (Fraud & Abuse Prevention) — the same `website` max:0
+    // honeypot convention as review/contact/register/newsletter, but this
+    // route never had a test proving it actually rejects a filled-in
+    // submission, only that it exists in the validation rules. ──
+
+    #[Test]
+    public function honeypot_field_rejects_bot_part_inquiry(): void
+    {
+        Event::fake([PartInquiryReceived::class]);
+
+        $response = $this->postJson('/en/inquiry', [
+            'email' => 'bot@example.com',
+            'oem_number' => '04L115399F',
+            'quantity' => 1,
+            'urgency' => 'normal',
+            'website' => 'https://spam-site.com',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['website']);
+        $this->assertDatabaseMissing('part_inquiries', ['email' => 'bot@example.com']);
+        Event::assertNotDispatched(PartInquiryReceived::class);
+    }
+
     #[Test]
     public function active_admins_receive_a_database_notification_for_a_new_part_inquiry(): void
     {

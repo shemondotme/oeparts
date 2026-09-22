@@ -41,6 +41,30 @@ class NewsletterSubscriptionTest extends TestCase
         });
     }
 
+    /**
+     * Phase 10 (Fraud & Abuse Prevention) — the same `website` max:0
+     * honeypot convention as review/contact/part-inquiry/register, but
+     * this specific route only ever had the route middleware + validation
+     * rule present, never a test proving it actually rejects a filled-in
+     * submission (real risk here specifically: subscription-bombing a
+     * third party's real address with confirmation emails).
+     */
+    #[Test]
+    public function honeypot_field_rejects_bot_subscription(): void
+    {
+        Queue::fake();
+
+        $response = $this->postJson('/en/newsletter/subscribe', [
+            'email' => 'victim@example.com',
+            'website' => 'https://spam-site.com',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['website']);
+        $this->assertDatabaseMissing('newsletter_subscribers', ['email' => 'victim@example.com']);
+        Queue::assertNotPushed(SendNewsletterConfirmationEmail::class);
+    }
+
     // GET no longer mutates state on its own — an email security scanner or
     // "Safe Links"-style prefetcher follows every link in an inbound email
     // before a human ever clicks it, so a bare GET that activated/cancelled
