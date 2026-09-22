@@ -9,23 +9,22 @@ use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Events\OrderStatusChanged;
 use App\Jobs\SendOrderStatusEmail;
-use App\Models\Cart;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\OrderStatusHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
- * OrderService — centralizes order lifecycle management.
+ * OrderService — centralizes order lifecycle management. Order *creation*
+ * lives in CheckoutService::createOrder() (the only live checkout path); this
+ * class covers everything that happens to an order after it exists.
  *
  * Responsibilities:
- *  - Create orders from checkout data
  *  - Handle status transitions with validation
  *  - Log status changes to order_status_history
  *  - Generate invoice numbers
- *  - Calculate order totals using bcmath
+ *  - Recalculate order totals after an admin edits line items
  *
  * Status flow:
  *   pending       → paid, processing, shipped, delivered, cancelled
@@ -40,143 +39,7 @@ class OrderService
 {
     public function __construct(
         private SequenceService $sequenceService,
-        private SettingsService $settings,
-        private CartService $cartService,
-        private ShippingService $shippingService,
-        private TaxRateService $taxRateService
     ) {}
-
-    /**
-     * Create an order from checkout data.
-     *
-     * @param  array  $checkoutData  Full checkout data array
-     * @param  Cart  $cart  The validated cart with items loaded
-     * @param  int|null  $userId  Explicit user ID — null for guest checkout
-     * @param  string|null  $ipAddress  Client IP — null uses request()->ip()
-     * @param  array|null  $utmParams  UTM tracking params — null reads from session
-     *
-     * @throws \RuntimeException on validation failure
-     */
-    public function createFromCheckout(
-        array $checkoutData,
-        Cart $cart,
-        ?int $userId = null,
-        ?string $ipAddress = null,
-        ?array $utmParams = null,
-    ): Order {
-        $data = $checkoutData['data'] ?? $checkoutData;
-
-        $requiredKeys = ['shipping_method_id'];
-        foreach ($requiredKeys as $key) {
-            if (! array_key_exists($key, $data)) {
-                throw new \InvalidArgumentException("Missing required checkout data key: {$key}");
-            }
-        }
-
-        return DB::transaction(function () use ($checkoutData, $cart, $userId, $ipAddress, $utmParams) {
-            $data = $checkoutData['data'] ?? $checkoutData;
-            $cart->loadMissing('items.product.manufacturer', 'items.product.condition');
-
-            // Calculate totals
-            $cartSummary = $this->cartService->getSummary($cart);
-            $subtotal = bcadd((string) $cartSummary['subtotal'], '0', 2);
-            $shippingCost = $this->calculateShippingCost(
-                $cart,
-                $data['shipping_method_id'] ?? null,
-                $data['shipping_address']['country_code'] ?? null
-            );
-            $taxableBase = bcadd($subtotal, $shippingCost, 2);
-            $vatAmount = ($data['vat_exempt'] ?? false) ? '0.00' : $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
-            $discountAmount = $data['discount_amount'] ?? '0.00';
-            $grandTotal = bcsub(bcadd($taxableBase, $vatAmount, 2), $discountAmount, 2);
-
-            if (bccomp($grandTotal, '0.00', 2) === -1) {
-                $grandTotal = '0.00';
-            }
-
-            $paymentMethod = match ($data['payment_method'] ?? 'bank_transfer') {
-                'card' => PaymentMethod::Card,
-                'paysera' => PaymentMethod::Paysera,
-                'bank_transfer' => PaymentMethod::BankTransfer,
-                default => PaymentMethod::BankTransfer,
-            };
-
-            $shippingAddress = $data['shipping_address'] ?? [];
-            $shippingName = trim(implode(' ', array_filter([
-                $shippingAddress['first_name'] ?? '',
-                $shippingAddress['last_name'] ?? '',
-            ])));
-
-            // Create the order record
-            $resolvedUserId = $userId ?? auth()->id();
-            $resolvedIp = $ipAddress ?? request()->ip();
-            $utm = $utmParams ?? [
-                'source' => session('utm_source'),
-                'medium' => session('utm_medium'),
-                'campaign' => session('utm_campaign'),
-                'content' => session('utm_content'),
-            ];
-
-            $order = Order::create([
-                'order_number' => $this->sequenceService->nextOrderNumber(),
-                'user_id' => $resolvedUserId,
-                'guest_email' => $data['guest_email'] ?? null,
-                'status' => OrderStatus::Pending,
-                'payment_method' => $paymentMethod,
-                'payment_status' => PaymentStatus::Pending,
-                'subtotal' => $subtotal,
-                'shipping_cost' => $shippingCost,
-                'vat_amount' => $vatAmount,
-                'grand_total' => $grandTotal,
-                'coupon_id' => $data['coupon_id'] ?? null,
-                'discount_amount' => $discountAmount,
-                'shipping_method_id' => $data['shipping_method_id'] ?? null,
-                'shipping_method_name_snapshot' => $data['shipping_method_name'] ?? null,
-                'shipping_estimated_days_min' => $data['shipping_estimated_days_min'] ?? null,
-                'shipping_estimated_days_max' => $data['shipping_estimated_days_max'] ?? null,
-                'shipping_name' => $shippingName,
-                'shipping_address_line1' => $shippingAddress['street'] ?? $shippingAddress['address_line1'] ?? null,
-                'shipping_city' => $shippingAddress['city'] ?? null,
-                'shipping_postal_code' => $shippingAddress['postal_code'] ?? null,
-                'shipping_country_code' => $shippingAddress['country_code'] ?? null,
-                'company_name' => $data['company_name'] ?? null,
-                'vat_number' => $data['vat_number'] ?? null,
-                'vat_exempt' => $data['vat_exempt'] ?? false,
-                'is_b2b' => $data['is_b2b'] ?? ! empty($data['vat_number']),
-                'customer_note' => $data['customer_note'] ?? null,
-                'ip_address' => $resolvedIp,
-                'utm_source' => $utm['source'] ?? null,
-                'utm_medium' => $utm['medium'] ?? null,
-                'utm_campaign' => $utm['campaign'] ?? null,
-                'utm_content' => $utm['content'] ?? null,
-            ]);
-
-            // Create order items from cart items
-            foreach ($cart->items as $item) {
-                $product = $item->product;
-                $manufacturerSnapshot = $product && $product->manufacturer
-                    ? (trans_field($product->manufacturer->name) ?: 'Unknown')
-                    : 'Unknown';
-
-                $conditionSnapshot = $product?->condition?->slug ?? '';
-
-                OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $item->product_id,
-                    'oem_number_snapshot' => $product->oem_number ?? '',
-                    'manufacturer_snapshot' => $manufacturerSnapshot,
-                    'condition_snapshot' => $conditionSnapshot,
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->price_at_add,
-                    'total_price' => bcmul((string) $item->price_at_add, (string) $item->quantity, 2),
-                ]);
-            }
-
-            $this->logStatusChange($order, null, OrderStatus::Pending);
-
-            return $order;
-        });
-    }
 
     /**
      * Transition an order to a new status with validation.
@@ -392,28 +255,6 @@ class OrderService
             'subtotal' => $subtotal,
             'grand_total' => $grandTotal,
         ])->save();
-    }
-
-    /**
-     * Calculate shipping cost. Returns '0.00' if no method selected.
-     */
-    public function calculateShippingCost(Cart $cart, ?int $shippingMethodId, ?string $destinationCountryCode = null): string
-    {
-        if (! $shippingMethodId) {
-            return '0.00';
-        }
-
-        return $this->shippingService->calculateCost($cart, $shippingMethodId, $destinationCountryCode);
-    }
-
-    /**
-     * Calculate VAT amount based on the configured rate (country-based when enabled).
-     */
-    public function calculateVat(string $amount, ?string $countryCode = null): string
-    {
-        $vatRate = $this->taxRateService->resolve($countryCode);
-
-        return bcmul($amount, bcdiv($vatRate, '100', 4), 2);
     }
 
     /**
