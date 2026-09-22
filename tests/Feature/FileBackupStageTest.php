@@ -45,6 +45,8 @@ class FileBackupStageTest extends TestCase
             'sub/nested.txt' => 'nested content',
             'empty.txt' => '',
             'node_modules/x.txt' => 'should be excluded',
+            'storage/framework/phpstan/cache/x.php' => 'should be excluded',
+            'dist/export/vendor/pkg/file.txt' => 'should be excluded',
         ]);
         config(['backup.files.root' => $this->fixture]);
     }
@@ -149,13 +151,18 @@ class FileBackupStageTest extends TestCase
         $manifest = $this->manifest($run);
 
         $this->assertGreaterThanOrEqual(1, $volumes);
-        $this->assertSame(3, $manifest['counts']['archived'], 'app + nested + empty (node_modules excluded)');
+        $this->assertSame(3, $manifest['counts']['archived'], 'app + nested + empty (node_modules, phpstan cache, dist excluded)');
         $this->assertSame(3, $manifest['counts']['file_count']);
 
         $paths = array_column($manifest['files'], 'path');
         $this->assertContains('app.txt', $paths);
         $this->assertContains('sub/nested.txt', $paths);
         $this->assertNotContains('node_modules/x.txt', $paths, 'excluded dir must not appear');
+        // Regression (2026-09-22): both grew large enough at 100k-scale to bloat
+        // the file-scan checkpoint JSON past MySQL's JSON column limits, crashing
+        // the whole backup run — see config/backup.php's files.exclude comments.
+        $this->assertNotContains('storage/framework/phpstan/cache/x.php', $paths, 'PHPStan result cache must not appear');
+        $this->assertNotContains('dist/export/vendor/pkg/file.txt', $paths, 'ReleaseBuilder build output must not appear');
     }
 
     #[Test]

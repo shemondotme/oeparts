@@ -109,12 +109,26 @@ return [
             'storage/framework/cache',
             'storage/framework/sessions',
             'storage/framework/views',
+            // PHPStan's result cache (phpstan.neon: tmpDir) — thousands of
+            // small, purely-rebuildable analysis-cache files at any real
+            // project size. Found live: backing these up at 100k-record
+            // scale grew the backup's file-scan checkpoint (backup_runs.meta,
+            // a JSON column) large enough to trip a MySQL "Invalid JSON
+            // text" write failure, crashing the whole backup run.
+            'storage/framework/phpstan',
             'storage/logs',
             'storage/app/backups',
             'storage/app/updates',
             'node_modules',
             '.git',
             '.env',
+            // ReleaseBuilder's own build output (gitignored, purely regenerable
+            // via `php artisan oeparts:release:build`) — `dist/export` re-explodes
+            // a full copy of vendor/ as a release payload, which hit the exact
+            // same checkpoint-JSON-bloat crash as the phpstan cache above at
+            // 100k-scale. Backing up a build artifact that itself contains a
+            // copy of already-excluded vendor/ protects nothing.
+            'dist',
             env('OE_BACKUP_INCLUDE_VENDOR', false) ? null : 'vendor',
         ])),
         'throttle_ms' => (int) env('OE_BACKUP_THROTTLE_MS', 0), // pause between files on shared hosting
