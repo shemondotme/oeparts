@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="app-build" content="{{ \App\Support\AppBuildId::current() }}">
 
     {{-- Resource hints — only for third-party origins actually loaded below,
          and only when that integration is configured. Kept this early in
@@ -149,60 +150,95 @@
     </style>
     @endif
 
-    {{-- Google Tag Manager --}}
+    {{-- Google Tag Manager, Google Analytics 4, Facebook Pixel, Crisp Chat —
+         all four are defined here as loader FUNCTIONS only, never
+         auto-executed. The EU ePrivacy Directive requires PRIOR consent
+         before non-essential cookies/trackers are set; firing on every
+         page load regardless of the cookie-consent banner's choice (the
+         previous behavior here) and only "honoring" a later Decline by...
+         not doing anything, since the tracker already ran — is not
+         consent-gating, it's decorative. The actual gating (reading stored
+         consent, calling these functions, and reacting live to the
+         banner's accept/save events) lives in one shared script right
+         after <x-cookie-consent> near the end of <body>, so it runs after
+         the visitor has actually had a chance to choose. --}}
     @if(settings('integrations.gtm_id', ''))
-    <script nonce="{{ csp_nonce() }}">(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer',{{ \Illuminate\Support\Js::from(settings('integrations.gtm_id')) }});</script>
-    @endif
-
-    {{-- Google Analytics 4 --}}
-    @if(settings('integrations.ga4_measurement_id', ''))
-    <script async nonce="{{ csp_nonce() }}" src="https://www.googletagmanager.com/gtag/js?id={{ urlencode(settings('integrations.ga4_measurement_id')) }}"></script>
     <script nonce="{{ csp_nonce() }}">
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', {{ \Illuminate\Support\Js::from(settings('integrations.ga4_measurement_id')) }});
+        window.__oepLoadGTM = function () {
+            if (window.__oepGTMLoaded) return;
+            window.__oepGTMLoaded = true;
+            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;
+            j.nonce={{ \Illuminate\Support\Js::from(csp_nonce()) }};
+            f.parentNode.insertBefore(j,f);
+            })(window,document,'script','dataLayer',{{ \Illuminate\Support\Js::from(settings('integrations.gtm_id')) }});
+        };
     </script>
     @endif
 
-    {{-- Facebook Pixel --}}
+    @if(settings('integrations.ga4_measurement_id', ''))
+    <script nonce="{{ csp_nonce() }}">
+        window.__oepLoadGA4 = function () {
+            if (window.__oepGA4Loaded) return;
+            window.__oepGA4Loaded = true;
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = 'https://www.googletagmanager.com/gtag/js?id={{ urlencode(settings('integrations.ga4_measurement_id')) }}';
+            s.nonce = {{ \Illuminate\Support\Js::from(csp_nonce()) }};
+            document.head.appendChild(s);
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = window.gtag || function(){dataLayer.push(arguments);};
+            gtag('js', new Date());
+            gtag('config', {{ \Illuminate\Support\Js::from(settings('integrations.ga4_measurement_id')) }});
+        };
+    </script>
+    @endif
+
     @if(settings('integrations.fb_pixel_id', ''))
     <script nonce="{{ csp_nonce() }}">
-        !function(f,b,e,v,n,t,s)
-        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];
-        s.parentNode.insertBefore(t,s)}(window, document,'script',
-        'https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', {{ \Illuminate\Support\Js::from(settings('integrations.fb_pixel_id')) }});
-        fbq('track', 'PageView');
+        window.__oepLoadFBPixel = function () {
+            if (window.__oepFBPixelLoaded) return;
+            window.__oepFBPixelLoaded = true;
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;t.nonce={{ \Illuminate\Support\Js::from(csp_nonce()) }};
+            s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', {{ \Illuminate\Support\Js::from(settings('integrations.fb_pixel_id')) }});
+            fbq('track', 'PageView');
+        };
     </script>
-    <noscript><img height="1" width="1" style="display:none" alt=""
-        src="https://www.facebook.com/tr?id={{ urlencode(settings('integrations.fb_pixel_id')) }}&ev=PageView&noscript=1"
-    /></noscript>
     @endif
 
     {{-- Crisp Chat — grounded in Crisp's own published embed snippet;
          CSP origins added in ContentSecurityPolicy middleware are grounded
          in Crisp's documented domains but NOT live-verified (no browser
          tool available this session) — validate in a real browser before
-         relying on this in production, same caveat as the Airwallex CSP. --}}
+         relying on this in production, same caveat as the Airwallex CSP.
+         Bucketed under the "Analytics" consent category below (pragmatic
+         default — Crisp doesn't map cleanly to Analytics or Marketing;
+         the consent banner only offers those two non-essential
+         categories, so re-bucket this if legal/DPO guidance says
+         otherwise). --}}
     @if(settings('integrations.crisp_website_id', ''))
     <script nonce="{{ csp_nonce() }}">
-        window.$crisp = [];
-        window.CRISP_WEBSITE_ID = {{ \Illuminate\Support\Js::from(settings('integrations.crisp_website_id')) }};
-        (function(){
-            var d = document, s = d.createElement('script');
+        window.__oepLoadCrisp = function () {
+            if (window.__oepCrispLoaded) return;
+            window.__oepCrispLoaded = true;
+            window.$crisp = [];
+            window.CRISP_WEBSITE_ID = {{ \Illuminate\Support\Js::from(settings('integrations.crisp_website_id')) }};
+            var s = document.createElement('script');
             s.src = 'https://client.crisp.chat/l.js';
-            s.async = 1;
-            d.getElementsByTagName('head')[0].appendChild(s);
-        })();
+            s.async = true;
+            s.nonce = {{ \Illuminate\Support\Js::from(csp_nonce()) }};
+            document.getElementsByTagName('head')[0].appendChild(s);
+        };
     </script>
     @endif
 
@@ -424,11 +460,12 @@
 </head>
 <body class="font-sans text-body bg-ivory antialiased min-h-screen flex flex-col">
 
-    {{-- Google Tag Manager (noscript) --}}
-    @if(settings('integrations.gtm_id', ''))
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ urlencode(settings('integrations.gtm_id')) }}"
-        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    @endif
+    {{-- No GTM <noscript> fallback and no Facebook Pixel <noscript> pixel
+         here (both existed in the old unconditional version of this
+         template) — a JS-disabled visitor can't interact with the consent
+         banner below at all, so there's no way to have obtained their
+         consent, and firing either unconditionally would just reintroduce
+         the same pre-consent tracking gap through a side door. --}}
 
     @if($showPreloader)
     {{-- ─── Industrial Blueprint · Preloader (copy from settings) ─── --}}
@@ -598,6 +635,63 @@
 
     {{-- Cookie consent banner (GDPR compliance) --}}
     <x-cookie-consent :enabled="true" />
+
+    {{-- Consent gate — actually calls the __oepLoad* functions defined in
+         <head> above, and only once the visitor has made a choice. Reads
+         the SAME localStorage keys the banner's Alpine component writes
+         (cookie_consent_accepted / cookie_consent_declined /
+         cookie_preferences). Granular cookie_preferences (Customize →
+         Save) is checked first and wins over the blanket "accepted" flag,
+         because save() always sets cookie_consent_accepted='1' even when
+         every category toggle was left off — reading the blanket flag
+         alone would wrongly treat "declined via Customize" as full
+         consent. Runs once on load (covers a returning visitor who
+         already chose) and again on the banner's own accept/save events
+         (covers a first-time visitor choosing during this page view).
+         Does NOT attempt to un-load a tracker after a live downgrade
+         (Accept → later Customize → uncheck → Save, same page view,
+         no reload) — stopping an already-running GTM/GA4/Crisp session
+         reliably needs a full consent-mode implementation, out of scope
+         here; the fix this addresses is trackers firing BEFORE any
+         consent choice at all, which this does prevent. --}}
+    <script nonce="{{ csp_nonce() }}">
+    (function () {
+        function readConsent() {
+            if (localStorage.getItem('cookie_consent_declined')) {
+                return { analytics: false, marketing: false };
+            }
+            var raw = localStorage.getItem('cookie_preferences');
+            if (raw) {
+                try {
+                    var prefs = JSON.parse(raw);
+                    return { analytics: !!prefs.analytics, marketing: !!prefs.marketing };
+                } catch (e) {
+                    // fall through to the blanket flag below
+                }
+            }
+            if (localStorage.getItem('cookie_consent_accepted')) {
+                return { analytics: true, marketing: true };
+            }
+            return { analytics: false, marketing: false };
+        }
+
+        function apply() {
+            var consent = readConsent();
+            if (consent.analytics) {
+                if (window.__oepLoadGTM) window.__oepLoadGTM();
+                if (window.__oepLoadGA4) window.__oepLoadGA4();
+                if (window.__oepLoadCrisp) window.__oepLoadCrisp();
+            }
+            if (consent.marketing && window.__oepLoadFBPixel) {
+                window.__oepLoadFBPixel();
+            }
+        }
+
+        apply();
+        window.addEventListener('cookie-consent-accepted', apply);
+        window.addEventListener('cookie-preferences-saved', apply);
+    })();
+    </script>
 
     {{-- Footer scripts from settings (analytics etc.) --}}
     @if(settings('general.footer_scripts', ''))
