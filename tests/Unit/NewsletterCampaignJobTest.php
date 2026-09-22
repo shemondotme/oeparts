@@ -8,6 +8,7 @@ use App\Models\NewsletterCampaign;
 use App\Models\NewsletterCampaignRecipient;
 use App\Models\NewsletterSubscriber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
@@ -277,5 +278,35 @@ class NewsletterCampaignJobTest extends TestCase
             'id' => $campaign->id,
             'sent_count' => 2,
         ]);
+    }
+
+    /**
+     * Phase 14 (Monitoring/Logging Audit). A per-subscriber send failure
+     * was surfaced on the recipient row ('failed', visible in admin), but
+     * the actual exception message/cause was silently discarded — a
+     * systematically-failing campaign (bad SMTP config, a broken template)
+     * was previously undiagnosable beyond "some failed."
+     */
+    #[Test]
+    public function a_per_subscriber_send_failure_logs_the_real_cause(): void
+    {
+        Log::spy();
+        Mail::shouldReceive('to')->andThrow(new \Exception('simulated mail transport failure'));
+
+        $subscriber = NewsletterSubscriber::factory()->create(['is_active' => true]);
+        $campaign = NewsletterCampaign::factory()->create(['status' => 'draft']);
+
+        (new SendNewsletterCampaign($campaign))->handle();
+
+        $this->assertDatabaseHas('newsletter_campaign_recipients', [
+            'campaign_id' => $campaign->id,
+            'subscriber_id' => $subscriber->id,
+            'status' => 'failed',
+        ]);
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn ($message) => str_contains($message, 'SendNewsletterCampaign')
+                && str_contains($message, (string) $subscriber->id)
+                && str_contains($message, 'simulated mail transport failure'));
     }
 }

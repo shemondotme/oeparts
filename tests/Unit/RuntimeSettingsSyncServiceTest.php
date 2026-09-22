@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Services\RuntimeSettingsSyncService;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -52,5 +53,34 @@ class RuntimeSettingsSyncServiceTest extends TestCase
         $service->sync(app(SettingsService::class));
 
         $this->assertTrue(true, 'sync() did not throw even though the settings table is gone.');
+    }
+
+    /**
+     * Phase 14 (Monitoring/Logging Audit). The catch here used to be
+     * completely silent, with a comment claiming a narrower scope ("DB may
+     * not exist yet") than what it actually caught (the WHOLE method) — any
+     * unrelated real bug in config-syncing would vanish under that same
+     * misleading trace, silently, on every HTTP request/queued job this
+     * runs from. In practice sync()'s own try/catch is defense-in-depth
+     * more than a live path: SettingsService::getGroup() already fully
+     * absorbs a DB failure internally (its own try/catch always returns []
+     * and logs its own warning, confirmed by reading it — dropping the
+     * settings table doesn't reach sync()'s catch at all). Mocking
+     * SettingsService directly (sync() takes it as a plain constructor-
+     * style argument, not container-resolved) is the only reliable way to
+     * exercise this outer catch specifically.
+     */
+    #[Test]
+    public function a_sync_failure_logs_a_warning(): void
+    {
+        Log::spy();
+        $settings = \Mockery::mock(SettingsService::class);
+        $settings->shouldReceive('getGroup')->andThrow(new \Exception('simulated failure'));
+
+        (new RuntimeSettingsSyncService)->sync($settings);
+
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn ($message) => str_contains($message, 'RuntimeSettingsSyncService::sync') && str_contains($message, 'simulated failure'));
     }
 }

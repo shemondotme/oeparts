@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+
 /**
  * Applies DB-backed settings (SMTP, OAuth client credentials, session
  * lifetime, queue retry_after) onto the in-memory config() array.
@@ -91,7 +93,13 @@ class RuntimeSettingsSyncService
                 }
             }
         } catch (\Exception $e) {
-            // DB may not exist yet during install/migration.
+            // Wraps the WHOLE method, not just the "DB may not exist yet
+            // during install/migration" case its old comment implied — any
+            // other unexpected failure (a malformed setting value, a real
+            // bug) would previously vanish under that same misleading
+            // trace, silently, on every one of the 3 call sites this runs
+            // from (every HTTP request, every queued job, and boot()).
+            Log::warning('RuntimeSettingsSyncService::sync() failed (DB may not exist yet during install/migration, or a real config-sync bug): '.$e->getMessage());
         }
     }
 }

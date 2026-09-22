@@ -12,6 +12,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendNewsletterCampaign implements ShouldQueue
@@ -62,6 +63,11 @@ class SendNewsletterCampaign implements ShouldQueue
 
                         $sentIds[] = $recipient->id;
                     } catch (\Exception $e) {
+                        // The recipient row IS surfaced ('failed', visible
+                        // in admin), but the actual cause never was — a
+                        // systematically-failing campaign was previously
+                        // undiagnosable beyond "some failed."
+                        Log::warning("SendNewsletterCampaign: failed to queue email to subscriber {$subscriber->id} for campaign {$this->campaign->id}: ".$e->getMessage());
                         $failedIds[] = $recipient->id;
                     }
                 }
