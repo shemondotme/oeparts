@@ -304,9 +304,6 @@ class CheckoutService
             $urgentProcessingFee = $urgentProcessing ? bcadd((string) settings('rush_upsell.urgent_processing_fee', '0.00'), '0', 2) : '0.00';
             $handlingFee = bcadd((string) settings('shipping.handling_fee', '0.00'), '0', 2);
 
-            $taxableBase = bcadd(bcadd(bcadd((string) $subtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);
-            $vatAmount = $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
-
             // Resolve context: explicit params or session/request helpers
             $resolvedUserId = $userId ?? auth()->id();
             $resolvedIp = $ipAddress ?? request()->ip();
@@ -325,7 +322,9 @@ class CheckoutService
             // cart contents afterwards (add/remove items, change quantity),
             // which would otherwise leave a stale discount amount (wrong
             // percentage-of, or one that no longer respects min_order_amount)
-            // baked into the order.
+            // baked into the order. Resolved before the taxable base below —
+            // VAT must be calculated on the post-discount amount, not the
+            // full pre-discount subtotal (see calculateVat() call below).
             $couponId = $data['coupon_id'] ?? null;
             $discountAmount = '0.00';
             $coupon = null;
@@ -345,7 +344,20 @@ class CheckoutService
                 }
             }
 
-            $grandTotal = bcsub(bcadd($taxableBase, $vatAmount, 2), $discountAmount, 2);
+            // EU VAT Directive Art. 79(b): a discount "allowed to the customer
+            // and accounted for at the time of the supply" is excluded from
+            // the VAT taxable amount — VAT is due on what's actually paid,
+            // not the pre-discount list price. The discount only ever applies
+            // against the product subtotal (CouponService::calculateDiscount()
+            // caps it at $subtotal, never at shipping/fees), matching
+            // CartService::getSummary()'s cart-page estimate, which already
+            // computes VAT on subtotal-minus-discount — the order actually
+            // charged here must not diverge from what the customer was shown.
+            $discountedSubtotal = bcsub((string) $subtotal, $discountAmount, 2);
+            $taxableBase = bcadd(bcadd(bcadd($discountedSubtotal, (string) $shippingCost, 2), $urgentProcessingFee, 2), $handlingFee, 2);
+            $vatAmount = $this->calculateVat($taxableBase, $data['shipping_address']['country_code'] ?? null);
+
+            $grandTotal = bcadd($taxableBase, $vatAmount, 2);
             // Floor at 0.00 (can't be negative)
             if (bccomp($grandTotal, '0.00', 2) === -1) {
                 $grandTotal = '0.00';

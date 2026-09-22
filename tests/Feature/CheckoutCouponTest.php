@@ -182,4 +182,127 @@ class CheckoutCouponTest extends TestCase
         $this->assertNull($order->coupon_id);
         $this->assertDatabaseMissing('coupon_usages', ['coupon_id' => $coupon->id]);
     }
+
+    /**
+     * EU VAT Directive Art. 79(b): discounts "allowed to the customer and
+     * accounted for at the time of the supply" are excluded from the VAT
+     * taxable amount — VAT is due on what the customer actually pays, not
+     * the pre-discount list price. CartService::getSummary()'s cart-page
+     * estimate already gets this right (computes VAT on subtotal minus
+     * coupon_discount — see its "Subtotal after discount for VAT" comment),
+     * so the order actually charged at checkout must match that, not
+     * silently diverge from what the customer was shown.
+     */
+    #[Test]
+    public function vat_is_calculated_on_the_subtotal_after_the_coupon_discount_not_before(): void
+    {
+        $admin = Admin::factory()->create();
+        $coupon = Coupon::factory()->create([
+            'created_by' => $admin->id,
+            'code' => 'SAVE20',
+            'discount_type' => DiscountType::Percentage,
+            'discount_value' => 20,
+            'is_active' => true,
+            'usage_limit' => null,
+            'usage_limit_per_user' => null,
+            'min_order_amount' => null,
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        $cart = Cart::create(['user_id' => $this->user->id, 'expires_at' => now()->addDays(7)]);
+        CartItem::create(['cart_id' => $cart->id, 'product_id' => $this->product->id, 'quantity' => 1, 'price_at_add' => $this->product->price]);
+
+        $checkoutService = app(CheckoutService::class);
+        $checkoutId = $checkoutService->start($cart);
+
+        Session::put("checkout.{$checkoutId}.data.coupon_id", $coupon->id);
+        Session::put("checkout.{$checkoutId}.data.discount_amount", '20.00');
+
+        $checkoutService->update($checkoutId, [
+            'step' => 5,
+            'contact_email' => $this->user->email,
+            'shipping_address' => [
+                'first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St',
+                'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE',
+            ],
+            'shipping_method_id' => $this->shippingMethod->id,
+            'payment_method' => 'card',
+        ]);
+
+        $order = $checkoutService->createOrder($checkoutId, $this->user->id, '127.0.0.1');
+
+        // subtotal 100.00, 20% off -> discount 20.00, shipping 0.00 (free
+        // shipping method in setUp), default VAT rate 21%.
+        // Correct: VAT on (100.00 - 20.00) = 80.00 -> 16.80. Grand total
+        // 80.00 + 16.80 = 96.80.
+        // Bug (pre-fix): VAT on the full pre-discount 100.00 -> 21.00, then
+        // discount subtracted only from the post-VAT total: 100.00 + 21.00
+        // - 20.00 = 101.00 — the customer would be charged VAT on money
+        // they never actually paid.
+        $this->assertSame('100.00', $order->subtotal);
+        $this->assertSame('20.00', $order->discount_amount);
+        $this->assertSame('16.80', $order->vat_amount);
+        $this->assertSame('96.80', $order->grand_total);
+    }
+
+    /**
+     * 100%-off edge case: with the entire product subtotal discounted away,
+     * VAT must be due only on the non-discounted portion (shipping/fees),
+     * never on the fully-discounted subtotal itself.
+     */
+    #[Test]
+    public function a_full_subtotal_discount_only_charges_vat_on_the_remaining_shipping_cost(): void
+    {
+        $admin = Admin::factory()->create();
+        $coupon = Coupon::factory()->create([
+            'created_by' => $admin->id,
+            'code' => 'FREE100',
+            'discount_type' => DiscountType::Fixed,
+            'discount_value' => 100,
+            'is_active' => true,
+            'usage_limit' => null,
+            'usage_limit_per_user' => null,
+            'min_order_amount' => null,
+            'expires_at' => now()->addDays(30),
+        ]);
+
+        // A paid shipping method this time, so there's a non-zero taxable
+        // remainder after the subtotal is fully discounted away.
+        $paidShipping = ShippingMethod::create([
+            'zone_id' => $this->shippingMethod->zone_id,
+            'name' => ['en' => 'Express'],
+            'flat_rate' => '10.00',
+            'estimated_days_min' => 1, 'estimated_days_max' => 2, 'is_active' => true,
+        ]);
+
+        $cart = Cart::create(['user_id' => $this->user->id, 'expires_at' => now()->addDays(7)]);
+        CartItem::create(['cart_id' => $cart->id, 'product_id' => $this->product->id, 'quantity' => 1, 'price_at_add' => $this->product->price]);
+
+        $checkoutService = app(CheckoutService::class);
+        $checkoutId = $checkoutService->start($cart);
+
+        Session::put("checkout.{$checkoutId}.data.coupon_id", $coupon->id);
+        Session::put("checkout.{$checkoutId}.data.discount_amount", '100.00');
+
+        $checkoutService->update($checkoutId, [
+            'step' => 5,
+            'contact_email' => $this->user->email,
+            'shipping_address' => [
+                'first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St',
+                'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE',
+            ],
+            'shipping_method_id' => $paidShipping->id,
+            'payment_method' => 'card',
+        ]);
+
+        $order = $checkoutService->createOrder($checkoutId, $this->user->id, '127.0.0.1');
+
+        // subtotal 100.00 fully discounted -> 0.00 taxable from products.
+        // + shipping 10.00 -> taxable base 10.00 -> VAT 21% = 2.10.
+        // Grand total: 10.00 + 2.10 = 12.10.
+        $this->assertSame('100.00', $order->subtotal);
+        $this->assertSame('100.00', $order->discount_amount);
+        $this->assertSame('2.10', $order->vat_amount);
+        $this->assertSame('12.10', $order->grand_total);
+    }
 }

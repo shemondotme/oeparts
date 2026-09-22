@@ -286,7 +286,13 @@
     </div>
 
     @php
-        $vatTaxableBase = bcadd(bcadd(bcadd((string) $order->subtotal, (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2), (string) $order->handling_fee, 2);
+        // Matches CheckoutService::createOrder()'s VAT base: the discount
+        // is excluded from the taxable amount (EU VAT Directive Art. 79(b)),
+        // so vat_amount is (subtotal - discount + shipping + fees) * rate —
+        // this must subtract discount_amount too, or the back-computed
+        // rate % shown below would come out understated for any
+        // coupon-discounted order.
+        $vatTaxableBase = bcadd(bcadd(bcadd(bcsub((string) $order->subtotal, (string) $order->discount_amount, 2), (string) $order->shipping_cost, 2), (string) $order->urgent_processing_fee, 2), (string) $order->handling_fee, 2);
         $vatRatePercent = bccomp($vatTaxableBase, '0', 2) > 0
             ? bcmul(bcdiv((string) $order->vat_amount, $vatTaxableBase, 4), '100', 2)
             : '0.00';

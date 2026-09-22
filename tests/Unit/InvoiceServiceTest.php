@@ -109,4 +109,60 @@ class InvoiceServiceTest extends TestCase
 
         $this->assertSame('%PDF-FAKE-CACHED-CONTENT', $response->getContent());
     }
+
+    /**
+     * The invoice template back-computes a displayed "VAT (X%)" label from
+     * vat_amount / taxable-base, since Order only stores the amount, not the
+     * rate. That base must subtract discount_amount the same way
+     * CheckoutService::createOrder() does when it originally calculates
+     * vat_amount — otherwise a coupon-discounted order's invoice shows an
+     * understated rate (dividing the correct, post-discount vat_amount by
+     * the pre-discount base) instead of the real store VAT rate.
+     */
+    #[Test]
+    public function the_displayed_vat_rate_accounts_for_the_discount_the_same_way_vat_amount_was_calculated(): void
+    {
+        $order = Order::factory()->create([
+            'user_id' => $this->order->user_id,
+            'order_number' => 'ORD-TEST-002',
+            'invoice_number' => 'INV-TEST-002',
+            'shipping_name' => 'John Doe',
+            'shipping_address_line1' => '123 Main St',
+            'shipping_city' => 'Berlin',
+            'shipping_postal_code' => '10115',
+            'shipping_country_code' => 'DE',
+            'subtotal' => '100.00',
+            'discount_amount' => '20.00',
+            'shipping_cost' => '0.00',
+            'urgent_processing_fee' => '0.00',
+            'handling_fee' => '0.00',
+            // Matches CheckoutService's now-correct calc: 21% of (100 - 20).
+            'vat_amount' => '16.80',
+            'grand_total' => '96.80',
+            'vat_exempt' => false,
+        ]);
+        $order->loadMissing('items.product');
+
+        $address = (object) [
+            'first_name' => 'John', 'last_name' => 'Doe', 'company' => null,
+            'address_line_1' => '123 Main St', 'address_line_2' => null,
+            'city' => 'Berlin', 'state' => '', 'postal_code' => '10115',
+            'country_code' => 'DE', 'phone' => null,
+        ];
+
+        $html = view('pdf.invoice', [
+            'order' => $order,
+            'user' => $order->user,
+            'items' => $order->items,
+            'billingAddress' => $address,
+            'shippingAddress' => $address,
+            'settings' => [
+                'company_name' => 'OeParts', 'company_address' => '', 'company_vat' => '',
+                'company_registration' => '', 'company_email' => 'info@oeparts.lt', 'company_phone' => '',
+            ],
+        ])->render();
+
+        $this->assertStringContainsString('VAT (21%)', $html);
+        $this->assertStringNotContainsString('VAT (16.8%)', $html, 'must not divide the post-discount vat_amount by the pre-discount base');
+    }
 }
