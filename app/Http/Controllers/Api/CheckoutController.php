@@ -209,6 +209,7 @@ class CheckoutController extends BaseApiController
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
 
+        $this->checkoutService->update($checkoutId, ['terms_accepted' => true]);
         $this->checkoutService->advance($checkoutId);
 
         return $this->successResponse([

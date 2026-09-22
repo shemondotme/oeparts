@@ -92,6 +92,7 @@ class CheckoutDoubleSubmitTest extends TestCase
             ],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'card',
+            'terms_accepted' => true,
         ]);
 
         $firstOrder = $checkoutService->createOrder($checkoutId, $this->user->id, '127.0.0.1');

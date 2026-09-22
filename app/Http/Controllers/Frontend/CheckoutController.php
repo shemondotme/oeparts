@@ -423,6 +423,7 @@ class CheckoutController extends Controller
             ])->withInput();
         }
 
+        $this->checkoutService->update($checkoutId, ['terms_accepted' => true]);
         $this->checkoutService->advance($checkoutId);
 
         return redirect()->route('frontend.checkout', compact('lang'));

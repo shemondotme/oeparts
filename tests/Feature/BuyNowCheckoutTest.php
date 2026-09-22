@@ -177,6 +177,7 @@ class BuyNowCheckoutTest extends TestCase
             'shipping_address' => ['first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St', 'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE'],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'bank_transfer',
+            'terms_accepted' => true,
         ]);
 
         $response = $this->post('/en/checkout', ['payment_method' => 'bank_transfer']);

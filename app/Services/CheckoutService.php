@@ -181,7 +181,7 @@ class CheckoutService
             'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes',
             'coupon_code',
             'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'customer_note',
-            'urgent_processing', 'otp_pending_email', 'otp_pending_phone',
+            'urgent_processing', 'otp_pending_email', 'otp_pending_phone', 'terms_accepted',
         ];
 
         foreach (['step', 'expires_at', 'created_at', 'cart_id'] as $topLevelKey) {
@@ -272,6 +272,21 @@ class CheckoutService
             }
 
             $data = $checkout['data'];
+
+            // Enforced here, not just at the step4 endpoint that sets it:
+            // the web flow can't reach this without having gone through
+            // step4 first (store() always routes through the session's own
+            // step counter — see CheckoutController@store — never a
+            // client-claimed step), but the stateless mobile API exposes
+            // every step as its own independently callable endpoint
+            // (routes/api.php: POST .../step5 takes no dependency on
+            // step4 ever having run), so nothing previously stopped a
+            // client from calling step5 directly and completing a real,
+            // chargeable order without ever agreeing to the terms.
+            if (empty($data['terms_accepted'])) {
+                throw new \RuntimeException('You must accept the terms and conditions before placing an order.');
+            }
+
             $cart->loadMissing('items.product.manufacturer', 'items.product.condition');
 
             // Re-verify stock at the moment of charge, not just at add-to-cart

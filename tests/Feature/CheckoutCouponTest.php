@@ -124,6 +124,7 @@ class CheckoutCouponTest extends TestCase
             ],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'card',
+            'terms_accepted' => true,
         ]);
 
         $order = $checkoutService->createOrder($checkoutId, $this->user->id, '127.0.0.1');
@@ -173,6 +174,7 @@ class CheckoutCouponTest extends TestCase
             ],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'card',
+            'terms_accepted' => true,
         ]);
 
         $order = $checkoutService->createOrder($checkoutId, $this->user->id, '127.0.0.1');
@@ -227,6 +229,7 @@ class CheckoutCouponTest extends TestCase
             ],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'card',
+            'terms_accepted' => true,
         ]);
 
         $order = $checkoutService->createOrder($checkoutId, $this->user->id, '127.0.0.1');
@@ -293,6 +296,7 @@ class CheckoutCouponTest extends TestCase
             ],
             'shipping_method_id' => $paidShipping->id,
             'payment_method' => 'card',
+            'terms_accepted' => true,
         ]);
 
         $order = $checkoutService->createOrder($checkoutId, $this->user->id, '127.0.0.1');

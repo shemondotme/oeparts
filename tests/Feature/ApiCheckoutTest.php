@@ -152,6 +152,7 @@ class ApiCheckoutTest extends TestCase
                 'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE',
             ],
             'shipping_method_id' => $this->shippingMethod->id,
+            'terms_accepted' => true,
         ]);
 
         $response = $this->actingAs($this->user)->postJson("/api/checkout/{$checkoutId}/step5", [
@@ -162,5 +163,65 @@ class ApiCheckoutTest extends TestCase
 
         $order = Order::where('user_id', $this->user->id)->firstOrFail();
         $this->assertSame('paysera', $order->payment_method->value);
+    }
+
+    // ── Phase 11 (Compliance/Legal): step5 used to place a real, chargeable
+    // order with no dependency at all on step4 ever having been called —
+    // each step is its own independently-callable REST endpoint here
+    // (unlike the web checkout flow, which always routes through the
+    // session's own server-side step counter and structurally can't skip
+    // ahead). A client could call /start then straight to /step5 and
+    // complete an order having never agreed to any terms. ──
+
+    #[Test]
+    public function step5_rejects_placing_an_order_if_step4_terms_acceptance_was_never_submitted(): void
+    {
+        $checkoutId = $this->startCheckout();
+
+        // Every other step's data is present and valid — step4 (terms) is
+        // the only one deliberately skipped.
+        app(CheckoutService::class)->update($checkoutId, [
+            'step' => 5,
+            'contact_email' => $this->user->email,
+            'shipping_address' => [
+                'first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St',
+                'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE',
+            ],
+            'shipping_method_id' => $this->shippingMethod->id,
+        ]);
+
+        $response = $this->actingAs($this->user)->postJson("/api/checkout/{$checkoutId}/step5", [
+            'payment_method' => 'card',
+        ]);
+
+        $response->assertStatus(409);
+        $this->assertDatabaseMissing('orders', ['user_id' => $this->user->id]);
+    }
+
+    #[Test]
+    public function calling_step4_then_step5_through_the_real_endpoints_places_the_order(): void
+    {
+        $checkoutId = $this->startCheckout();
+
+        app(CheckoutService::class)->update($checkoutId, [
+            'step' => 4,
+            'contact_email' => $this->user->email,
+            'shipping_address' => [
+                'first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St',
+                'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE',
+            ],
+            'shipping_method_id' => $this->shippingMethod->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->postJson("/api/checkout/{$checkoutId}/step4", ['agree_terms' => true])
+            ->assertOk();
+
+        $response = $this->actingAs($this->user)->postJson("/api/checkout/{$checkoutId}/step5", [
+            'payment_method' => 'card',
+        ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('orders', ['user_id' => $this->user->id]);
     }
 }

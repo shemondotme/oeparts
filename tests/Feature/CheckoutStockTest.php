@@ -79,6 +79,7 @@ class CheckoutStockTest extends TestCase
             ],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'card',
+            'terms_accepted' => true,
         ]);
 
         return $checkoutId;

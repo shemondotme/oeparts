@@ -20,9 +20,11 @@ use App\Services\CheckoutService;
 use App\Services\OtpService;
 use App\Services\SequenceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Mail\PendingMail;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -428,6 +430,7 @@ class CheckoutFlowTest extends TestCase
             'shipping_address' => ['first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St', 'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE'],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'bank_transfer',
+            'terms_accepted' => true,
         ]);
 
         // Place order (bank transfer)
@@ -464,8 +467,8 @@ class CheckoutFlowTest extends TestCase
     #[Test]
     public function bank_transfer_proof_is_stored_on_the_private_disk(): void
     {
-        \Illuminate\Support\Facades\Storage::fake('local');
-        \Illuminate\Support\Facades\Storage::fake('public');
+        Storage::fake('local');
+        Storage::fake('public');
 
         $cart = Cart::create([
             'guest_token' => 'proof-disk-test',
@@ -491,12 +494,13 @@ class CheckoutFlowTest extends TestCase
             'shipping_address' => ['first_name' => 'John', 'last_name' => 'Doe', 'street' => 'St', 'city' => 'Berlin', 'postal_code' => '10115', 'country_code' => 'DE'],
             'shipping_method_id' => $this->shippingMethod->id,
             'payment_method' => 'bank_transfer',
+            'terms_accepted' => true,
         ]);
 
         $this->post('/en/checkout', ['payment_method' => 'bank_transfer'])->assertRedirect();
         $order = Order::where('guest_email', 'proof-disk@example.com')->first();
 
-        $proof = \Illuminate\Http\UploadedFile::fake()->create('receipt.pdf', 100, 'application/pdf');
+        $proof = UploadedFile::fake()->create('receipt.pdf', 100, 'application/pdf');
         $this->post("/en/checkout/payment/{$order->order_number}/process", [
             'payment_method' => 'bank_transfer',
             'payment_proof' => $proof,
@@ -506,8 +510,8 @@ class CheckoutFlowTest extends TestCase
         $proofPath = $payment->gateway_response['proof_path'] ?? null;
 
         $this->assertNotNull($proofPath, 'the upload should have been stored and recorded');
-        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($proofPath);
-        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($proofPath);
+        Storage::disk('local')->assertExists($proofPath);
+        Storage::disk('public')->assertMissing($proofPath);
     }
 
     #[Test]
