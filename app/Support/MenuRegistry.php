@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Models\Menu;
 use App\Models\Page;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -29,8 +30,14 @@ class MenuRegistry
     {
         $cacheKey = "menus.{$location}.{$locale}";
 
-        $items = Cache::rememberForever($cacheKey, function () use ($location, $locale) {
-            try {
+        // The try/catch wraps the WHOLE rememberForever call, not just the
+        // callback — a failure must never get memoized as "no menu here"
+        // (rememberForever caches whatever the callback returns, including
+        // a value standing in for "broken"), or a single transient DB blip
+        // would silently hide a real, correctly-configured menu until
+        // someone happens to call forget()/forgetAll().
+        try {
+            $items = Cache::rememberForever($cacheKey, function () use ($location, $locale) {
                 if (! Schema::hasTable('menus')) {
                     return null;
                 }
@@ -64,10 +71,12 @@ class MenuRegistry
                     ->filter()
                     ->values()
                     ->all();
-            } catch (\Throwable) {
-                return null;
-            }
-        });
+            });
+        } catch (\Throwable $e) {
+            Log::warning("MenuRegistry::items({$location}, {$locale}) failed: ".$e->getMessage());
+
+            return null;
+        }
 
         return $items === [] ? null : $items;
     }
@@ -113,8 +122,16 @@ class MenuRegistry
     {
         $cacheKey = "menus.pages.{$column}.{$locale}";
 
-        return Cache::rememberForever($cacheKey, function () use ($column, $locale) {
-            try {
+        // Same reasoning as items() above: the try/catch wraps the WHOLE
+        // rememberForever call. Unlike items() (whose failure value is
+        // null, which rememberForever's own is_null() check transparently
+        // recomputes on the next read), this method's failure value used
+        // to be [] — a non-null value rememberForever genuinely treats as
+        // "already cached forever" — so a single transient DB blip would
+        // have permanently hidden every page-flagged nav link until
+        // someone happened to call forgetPageFlagged().
+        try {
+            return Cache::rememberForever($cacheKey, function () use ($column, $locale) {
                 if (! Schema::hasTable('pages')) {
                     return [];
                 }
@@ -131,10 +148,12 @@ class MenuRegistry
                         'target' => '_self',
                     ])
                     ->all();
-            } catch (\Throwable) {
-                return [];
-            }
-        });
+            });
+        } catch (\Throwable $e) {
+            Log::warning("MenuRegistry::pageFlaggedItems({$column}, {$locale}) failed: ".$e->getMessage());
+
+            return [];
+        }
     }
 
     public static function forgetPageFlagged(): void

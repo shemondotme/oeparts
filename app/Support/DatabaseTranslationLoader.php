@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\LanguageString;
 use Illuminate\Contracts\Translation\Loader;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -38,8 +39,18 @@ class DatabaseTranslationLoader implements Loader
     /** @return array<string, string> */
     private function overridesFor(string $locale, string $group): array
     {
-        return Cache::rememberForever("translations.db.{$locale}.{$group}", function () use ($locale, $group) {
-            try {
+        $cacheKey = "translations.db.{$locale}.{$group}";
+
+        // The try/catch wraps the WHOLE rememberForever call, not just the
+        // callback: the failure value here is [], a non-null value
+        // rememberForever genuinely treats as "already cached forever" —
+        // a single transient DB blip on THIS one (locale, group) pair
+        // would otherwise have permanently hidden every admin-edited
+        // translation override for it, silently falling back to the
+        // static lang/ file's text, until someone happened to call
+        // forget() for that exact pair.
+        try {
+            return Cache::rememberForever($cacheKey, function () use ($locale, $group) {
                 if (! Schema::hasTable('language_strings')) {
                     return [];
                 }
@@ -48,10 +59,12 @@ class DatabaseTranslationLoader implements Loader
                     ->where('group', $group)
                     ->pluck('value', 'key')
                     ->all();
-            } catch (\Throwable) {
-                return [];
-            }
-        });
+            });
+        } catch (\Throwable $e) {
+            Log::warning("DatabaseTranslationLoader::overridesFor({$locale}, {$group}) failed: ".$e->getMessage());
+
+            return [];
+        }
     }
 
     public function addNamespace($namespace, $hint)

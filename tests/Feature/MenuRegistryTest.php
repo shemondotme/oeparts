@@ -8,7 +8,11 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
 use App\Services\SettingsService;
+use App\Support\MenuRegistry;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -110,5 +114,36 @@ class MenuRegistryTest extends TestCase
         $disabled = $this->get('/en/');
         $disabled->assertOk();
         $disabled->assertDontSee('href="'.url('/en/faq').'"', false);
+    }
+
+    /**
+     * Phase 14 (Monitoring/Logging Audit). items()'s catch used to be
+     * inside the rememberForever() callback and completely silent — this
+     * pins both fixes: a warning is now logged, and the failure itself is
+     * never cached (asserted directly via Cache::has(), which is the actual
+     * invariant that matters — rememberForever() only skips recomputing a
+     * key it successfully wrote). Forces a genuine query failure by
+     * dropping menu_items (the eager-loaded relation, not Schema::hasTable-
+     * checked) while a real menus row exists — dropping a *column* Eloquent
+     * itself queries by does NOT reliably throw against SQLite here: its
+     * grammar double-quotes identifiers, and SQLite's well-known fallback
+     * silently reinterprets an unresolvable double-quoted identifier as a
+     * string literal instead of erroring, so the query just matches zero
+     * rows rather than failing. A genuinely missing TABLE (not "not
+     * created yet", which is the expected Schema::hasTable() path already
+     * handled without logging) doesn't have that escape hatch.
+     */
+    #[Test]
+    public function a_broken_menus_query_logs_a_warning_and_is_not_cached_forever(): void
+    {
+        Log::spy();
+        Menu::create(['name' => 'Header EN', 'location' => 'header', 'lang' => 'en', 'is_active' => true]);
+        Schema::drop('menu_items');
+
+        $this->assertNull(MenuRegistry::items('header', 'en'));
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn ($message) => str_contains($message, 'MenuRegistry::items'));
+        $this->assertFalse(Cache::has('menus.header.en'));
     }
 }

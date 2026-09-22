@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Language;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -36,8 +37,17 @@ class LocaleRegistry
      */
     public static function languages(): array
     {
-        return Cache::rememberForever(self::CACHE_KEY, function (): array {
-            try {
+        // The try/catch wraps the WHOLE rememberForever call, not just the
+        // callback: the failure value is fallbackLanguages(), a non-null,
+        // non-empty array rememberForever genuinely treats as "already
+        // cached forever". This registry is the single source of truth for
+        // routing/hreflang/sitemap/the language switcher — a single
+        // transient DB blip on the very first call would otherwise have
+        // permanently pinned the app to the hardcoded 5-locale fallback,
+        // silently ignoring any real admin-configured languages, until
+        // someone happened to call forget().
+        try {
+            return Cache::rememberForever(self::CACHE_KEY, function (): array {
                 if (! Schema::hasTable('languages')) {
                     return self::fallbackLanguages();
                 }
@@ -55,10 +65,12 @@ class LocaleRegistry
                     ->all();
 
                 return $rows === [] ? self::fallbackLanguages() : $rows;
-            } catch (\Throwable) {
-                return self::fallbackLanguages();
-            }
-        });
+            });
+        } catch (\Throwable $e) {
+            Log::warning('LocaleRegistry::languages() failed, using the hardcoded fallback: '.$e->getMessage());
+
+            return self::fallbackLanguages();
+        }
     }
 
     /** @return array<int, string> */

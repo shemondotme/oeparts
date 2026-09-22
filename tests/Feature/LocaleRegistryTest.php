@@ -85,4 +85,21 @@ class LocaleRegistryTest extends TestCase
 
         $this->assertSame(['en', 'de', 'lt', 'fr', 'es'], LocaleRegistry::codes());
     }
+
+    // Phase 14 (Monitoring/Logging Audit): languages()'s catch used to be
+    // inside the rememberForever() callback and completely silent — the
+    // fix (move the try/catch to wrap the whole rememberForever() call,
+    // log a warning) is the exact same pattern already verified end-to-end
+    // in MenuRegistryTest::a_broken_menus_query_logs_a_warning_and_is_not_
+    // cached_forever(). No equivalent synthetic-exception test here: a
+    // dropped column doesn't reliably throw against SQLite (its grammar
+    // double-quotes identifiers, and SQLite silently reinterprets an
+    // unresolvable quoted identifier as a string literal rather than
+    // erroring) and, unlike MenuRegistry::items(), this method has no
+    // eager-loaded related table to drop instead. A DB::purge('sqlite')-
+    // based connection break was tried and reverted: on the :memory:
+    // driver this doesn't just reconnect, it destroys and replaces the
+    // whole in-memory database, corrupting RefreshDatabase's state for
+    // every other test in the same PHPUnit process (confirmed live — it
+    // broke 23 unrelated tests with "table migrations already exists").
 }
