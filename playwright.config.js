@@ -66,5 +66,46 @@ export default defineConfig({
                 viewport: { width: 1280, height: 800 },
             },
         },
+        // Cross-browser / responsive coverage (Phase 8, bulletproof-testing
+        // initiative). Scoped to checkout-bank-transfer.spec.js specifically
+        // — the "browse -> cart -> checkout" purchase journey, this site's
+        // single most business-critical flow — rather than the entire guest
+        // suite: running every a11y/locale/responsive sweep across three
+        // more engines would multiply this suite's runtime for near-zero
+        // marginal signal (those already assert on rendered DOM state, which
+        // doesn't meaningfully differ by engine the way real user-input
+        // event handling and payment-form interaction can).
+        {
+            name: 'firefox',
+            testDir: './tests/e2e/guest',
+            testMatch: /checkout-bank-transfer\.spec\.js/,
+            use: {
+                ...devices['Desktop Firefox'],
+                viewport: { width: 1280, height: 800 },
+            },
+        },
+        {
+            name: 'webkit',
+            testDir: './tests/e2e/guest',
+            testMatch: /checkout-bank-transfer\.spec\.js/,
+            use: {
+                ...devices['Desktop Safari'],
+                viewport: { width: 1280, height: 800 },
+            },
+        },
+        {
+            // Real device profile (viewport + touch + UA), Chromium engine —
+            // deliberately not a 4th rendering engine; WebKit above already
+            // covers the "Safari" case that matters most for a real mobile
+            // user (iOS has no non-WebKit browsers). Pixel 5 pairs the most
+            // common real-world mobile form factor with the engine behind
+            // the majority of actual mobile traffic (Chrome on Android).
+            name: 'mobile',
+            testDir: './tests/e2e/guest',
+            testMatch: /checkout-bank-transfer\.spec\.js/,
+            use: {
+                ...devices['Pixel 5'],
+            },
+        },
     ],
 });
