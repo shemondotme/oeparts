@@ -252,4 +252,78 @@ return [
     'availability_label' => 'Prieinamumas',
     'out_of_stock' => 'Nėra sandėlyje',
     'price_label' => 'Kaina',
+
+    // PDP overhaul (2026-08) additions below — machine-translated, not yet
+    // reviewed by a native speaker (see lang/de/admin.php's header for the
+    // established convention this codebase uses for that disclaimer).
+    // Pluralization uses this file's existing {1} .../[2,*] ... convention
+    // (see filters_active_choice/listings_choice above), not simplified to
+    // Lithuanian's full 3-form grammar.
+    'delivery_label' => 'Pristatymas',
+    'moq_label' => 'Min. užsakymo kiekis',
+    'moq_value' => '{1} :count vnt.|[2,*] :count vnt.',
+    'genuine_badge' => 'Originali OEM dalis',
+    'gallery_zoom_hint' => 'Spustelėkite, kad padidintumėte',
+    'gallery_position' => ':current / :total',
+    'ask_fitment_button' => 'Klausti apie tinkamumą',
+    'fitment_title' => 'Patvirtintas tinkamumas transporto priemonei',
+    'fitment_subtitle' => 'Transporto priemonės, kurioms ši dalis patvirtinta tinkama pagal mūsų suderinamumo duomenis.',
+    'fitment_make_model' => 'Markė ir modelis',
+    'fitment_years' => 'Metai',
+    'fitment_match' => 'Patvirtinta',
+    'fitment_status' => 'Būsena',
+    'faq_title' => 'DUK apie tinkamumą ir pristatymą',
+    'faq_q_fit' => 'Ar tai tiks būtent mano automobiliui?',
+    'faq_a_fit' => 'Patikrinkite aukščiau pateiktą patvirtinto tinkamumo lentelę. Jei jūsų automobilio nėra sąraše, pateikite užklausą su savo OEM numeriu ar VIN kodu — mes tai patikrinsime už jus.',
+    'faq_q_condition' => 'Ką reiškia būklės žyma?',
+    'faq_a_condition' => 'Aukščiau nurodyta būklė (Nauja, Naudota, Atnaujinta ir kt.) atspindi konkrečios šios prekės būklę — tikslią šio skelbimo būklę žr. specifikacijų skydelyje.',
+    'faq_q_delivery' => 'Kaip tai siunčiama?',
+    'faq_a_delivery' => 'Siunčiama visoje ES per DHL, DPD arba GLS, numatomas pristatymo laikas nurodytas aukščiau esančiame specifikacijų skydelyje.',
+
+    // In-page section nav (PDP overhaul)
+    'nav_section_label' => 'Pereiti į skyrių',
+    'nav_fitment' => 'Tinkamumas',
+    'nav_specs' => 'Specifikacijos',
+    'nav_warranty' => 'Garantija',
+    'nav_video' => 'Vaizdo įrašas',
+    'nav_related' => 'Panašios',
+    'nav_reviews' => 'Atsiliepimai',
+    'nav_faq' => 'DUK',
+
+    // Manufacturer trust block
+    'trust_verified_oem' => 'Patikrintas OEM gamintojas',
+    'trust_country_of_origin' => 'Kilmės šalis',
+
+    // Specifications
+    'specs_title' => 'Specifikacijos',
+
+    // Warranty
+    'warranty_title' => 'Garantija',
+    'warranty_months' => '{1} :count mėnesio garantija|[2,*] :count mėnesių garantija',
+
+    // Product video
+    'video_title' => 'Produkto vaizdo įrašas',
+
+    // Related products
+    'related_title' => 'Panašūs produktai',
+    'related_subtitle' => 'Kitos šio gamintojo dalys arba tinkančios tam pačiam automobiliui.',
+
+    // Reviews
+    'reviews_title' => 'Klientų atsiliepimai',
+    'reviews_no_reviews_yet' => 'Atsiliepimų dar nėra — būkite pirmas, įvertinęs šią dalį.',
+    'reviews_average_of' => '{1} vidurkis iš :count atsiliepimo|[2,*] vidurkis iš :count atsiliepimų',
+    'reviews_write_a_review' => 'Rašyti atsiliepimą',
+    'reviews_form_name' => 'Jūsų vardas',
+    'reviews_form_title' => 'Atsiliepimo pavadinimas (neprivaloma)',
+    'reviews_form_rating' => 'Įvertinimas',
+    'reviews_form_comment' => 'Jūsų atsiliepimas',
+    'reviews_form_submit' => 'Pateikti atsiliepimą',
+    'review_submitted_pending' => 'Ačiū — jūsų atsiliepimas pateiktas ir bus rodomas jį patvirtinus.',
+    'review_validation_name_required' => 'Įveskite savo vardą.',
+    'review_validation_comment_required' => 'Parašykite trumpą atsiliepimą.',
+    'review_validation_rating_required' => 'Pasirinkite žvaigždučių įvertinimą.',
+
+    // Buy Now
+    'btn_buy_now' => 'Pirkti dabar',
+    'buy_now_helper' => 'Be krepšelio — iš karto pereikite prie apmokėjimo tik su šia preke.',
 ];

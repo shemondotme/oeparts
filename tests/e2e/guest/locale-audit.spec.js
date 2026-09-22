@@ -25,6 +25,7 @@ const VIEWPORTS = [
 
 const FIXTURE_QUERY_MULTI = 'E2EGUEST';
 const FIXTURE_MANUFACTURER_SLUG = 'e2e-storefront-fixture';
+const CART_OEM_A = 'E2ESTOREA1';
 
 const SCREENS_DIR = 'test-results/locale-audit';
 
@@ -70,6 +71,31 @@ test.describe('Multi-locale responsive audit', () => {
                             .toBeLessThanOrEqual(clientWidth + 1);
                     });
                 }
+
+                // Not in the plain PAGES loop above — the PDP's fixture OEM
+                // resolves through a redirect to its full slug URL, unlike
+                // the other static paths. Specifically worth covering here:
+                // this page carries by far the longest run of newly-added
+                // (2026-08 PDP overhaul) translated strings — the fitment
+                // table, FAQ accordion, and review form — none of which had
+                // ever been through this overflow check before they even
+                // existed in these locales.
+                test('product-detail: no horizontal overflow', async ({ page }) => {
+                    await page.setViewportSize({ width: vp.width, height: vp.height });
+                    await page.goto(`/${locale}/parts/${CART_OEM_A}`, { waitUntil: 'domcontentloaded' });
+                    await page.waitForURL(new RegExp(`/${locale}/parts/${CART_OEM_A}/\\d+-`), { waitUntil: 'domcontentloaded' });
+                    await page.waitForTimeout(400);
+
+                    const { scrollWidth, clientWidth } = await page.evaluate(() => ({
+                        scrollWidth: document.documentElement.scrollWidth,
+                        clientWidth: document.documentElement.clientWidth,
+                    }));
+
+                    await page.screenshot({ path: `${SCREENS_DIR}/${locale}--product-detail--${vp.name}.png`, fullPage: true });
+
+                    expect(scrollWidth, `${locale}/product-detail @ ${vp.width}px: scrollWidth ${scrollWidth} vs viewport ${clientWidth}`)
+                        .toBeLessThanOrEqual(clientWidth + 1);
+                });
             });
         }
     }

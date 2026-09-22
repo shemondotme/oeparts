@@ -252,4 +252,75 @@ return [
     'availability_label' => 'Verfügbarkeit',
     'out_of_stock' => 'Nicht auf Lager',
     'price_label' => 'Preis',
+
+    // PDP overhaul (2026-08) additions below — machine-translated, not yet
+    // reviewed by a native speaker (see lang/de/admin.php's header for the
+    // established convention this codebase uses for that disclaimer).
+    'delivery_label' => 'Lieferung',
+    'moq_label' => 'Mindestbestellmenge',
+    'moq_value' => ':count Einheit|:count Einheiten',
+    'genuine_badge' => 'Original-OEM',
+    'gallery_zoom_hint' => 'Zum Vergrößern klicken',
+    'gallery_position' => ':current / :total',
+    'ask_fitment_button' => 'Passform anfragen',
+    'fitment_title' => 'Bestätigte Fahrzeug-Passform',
+    'fitment_subtitle' => 'Fahrzeuge, für die dieses Teil laut unseren Kompatibilitätsdaten bestätigt passend ist.',
+    'fitment_make_model' => 'Marke & Modell',
+    'fitment_years' => 'Baujahre',
+    'fitment_match' => 'Bestätigt',
+    'fitment_status' => 'Status',
+    'faq_title' => 'FAQ zu Passform & Versand',
+    'faq_q_fit' => 'Passt das genau zu meinem Fahrzeug?',
+    'faq_a_fit' => 'Prüfen Sie die Tabelle mit bestätigter Passform oben. Ist Ihr Fahrzeug nicht gelistet, senden Sie uns eine Teileanfrage mit Ihrer OEM-Nummer oder Fahrgestellnummer — wir prüfen es für Sie.',
+    'faq_q_condition' => 'Was bedeutet die Zustandskennzeichnung?',
+    'faq_a_condition' => 'Der oben angezeigte Zustand (Neu, Gebraucht, Generalüberholt usw.) beschreibt den Zustand dieser konkreten Einheit — den genauen Zustand dieses Angebots finden Sie im Spezifikationsfeld.',
+    'faq_q_delivery' => 'Wie wird dies versendet?',
+    'faq_a_delivery' => 'Versand EU-weit per DHL, DPD oder GLS, mit dem geschätzten Lieferzeitraum im Spezifikationsfeld oben.',
+
+    // In-page section nav (PDP overhaul)
+    'nav_section_label' => 'Zu Abschnitt springen',
+    'nav_fitment' => 'Passform',
+    'nav_specs' => 'Spezifikationen',
+    'nav_warranty' => 'Garantie',
+    'nav_video' => 'Video',
+    'nav_related' => 'Ähnliche',
+    'nav_reviews' => 'Bewertungen',
+    'nav_faq' => 'FAQ',
+
+    // Manufacturer trust block
+    'trust_verified_oem' => 'Geprüfter OEM-Hersteller',
+    'trust_country_of_origin' => 'Herkunftsland',
+
+    // Specifications
+    'specs_title' => 'Spezifikationen',
+
+    // Warranty
+    'warranty_title' => 'Garantie',
+    'warranty_months' => ':count Monat Garantie|:count Monate Garantie',
+
+    // Product video
+    'video_title' => 'Produktvideo',
+
+    // Related products
+    'related_title' => 'Ähnliche Produkte',
+    'related_subtitle' => 'Weitere Teile dieses Herstellers oder für dasselbe Fahrzeug passend.',
+
+    // Reviews
+    'reviews_title' => 'Kundenbewertungen',
+    'reviews_no_reviews_yet' => 'Noch keine Bewertungen — seien Sie der Erste, der dieses Teil bewertet.',
+    'reviews_average_of' => 'Durchschnitt aus :count Bewertung|Durchschnitt aus :count Bewertungen',
+    'reviews_write_a_review' => 'Bewertung schreiben',
+    'reviews_form_name' => 'Ihr Name',
+    'reviews_form_title' => 'Titel der Bewertung (optional)',
+    'reviews_form_rating' => 'Bewertung',
+    'reviews_form_comment' => 'Ihre Bewertung',
+    'reviews_form_submit' => 'Bewertung absenden',
+    'review_submitted_pending' => 'Danke — Ihre Bewertung wurde übermittelt und erscheint nach Freigabe.',
+    'review_validation_name_required' => 'Bitte geben Sie Ihren Namen ein.',
+    'review_validation_comment_required' => 'Bitte schreiben Sie eine kurze Bewertung.',
+    'review_validation_rating_required' => 'Bitte wählen Sie eine Sternebewertung.',
+
+    // Buy Now
+    'btn_buy_now' => 'Jetzt kaufen',
+    'buy_now_helper' => 'Ohne Warenkorb — direkt zur Kasse mit nur diesem Artikel.',
 ];
