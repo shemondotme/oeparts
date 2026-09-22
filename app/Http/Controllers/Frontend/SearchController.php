@@ -14,6 +14,7 @@ use App\Services\SearchService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
@@ -422,6 +423,8 @@ class SearchController extends Controller
                     ->pluck('normalized_query');
             });
         } catch (\Exception $e) {
+            Log::warning('SearchController::getPopularOems() failed: '.$e->getMessage());
+
             return collect();
         }
     }

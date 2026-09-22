@@ -12,6 +12,7 @@ use App\Filament\Widgets\Concerns\InteractsWithDashboardCache;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RequestMetricsWidget extends BaseWidget
 {
@@ -41,10 +42,17 @@ class RequestMetricsWidget extends BaseWidget
             $jobsTable = config('queue.connections.database.table', 'jobs');
             $failedTable = 'failed_jobs';
 
+            // Each metric below is independently try/caught (one broken
+            // query must not blank out the other three) — but every catch
+            // used to be completely silent, so a DB error just rendered as
+            // a falsely-reassuring "0" on this exact activity-monitoring
+            // widget, with no trace anywhere that the metric itself was
+            // broken vs. genuinely zero.
             $pendingJobs = 0;
             try {
                 $pendingJobs = DB::table($jobsTable)->count();
             } catch (\Exception $e) {
+                Log::warning('RequestMetricsWidget: pending-jobs count failed: '.$e->getMessage());
             }
 
             $failedJobs = 0;
@@ -53,6 +61,7 @@ class RequestMetricsWidget extends BaseWidget
                     ->where('failed_at', '>=', now()->subHour())
                     ->count();
             } catch (\Exception $e) {
+                Log::warning('RequestMetricsWidget: failed-jobs count failed: '.$e->getMessage());
             }
 
             $emailsSent = 0;
@@ -61,6 +70,7 @@ class RequestMetricsWidget extends BaseWidget
                     ->where('created_at', '>=', now()->subHour())
                     ->count();
             } catch (\Exception $e) {
+                Log::warning('RequestMetricsWidget: emails-sent count failed: '.$e->getMessage());
             }
 
             $searches = 0;
@@ -69,6 +79,7 @@ class RequestMetricsWidget extends BaseWidget
                     ->where('created_at', '>=', now()->subHour())
                     ->count();
             } catch (\Exception $e) {
+                Log::warning('RequestMetricsWidget: searches count failed: '.$e->getMessage());
             }
 
             return [

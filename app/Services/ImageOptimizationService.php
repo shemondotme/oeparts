@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -73,10 +74,15 @@ class ImageOptimizationService
             imagedestroy($image);
 
             return ['path' => $path, 'mime' => $mime, 'size' => $store->size($path) ?: null];
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             // Optimization failing must never break the upload — the
             // already-sanitized original (or whatever partial state $image
-            // left the destination in) is still a valid, safe file.
+            // left the destination in) is still a valid, safe file. But if
+            // GD is systemically broken (bad build, missing WebP support),
+            // every upload would silently skip optimization forever with
+            // nothing anywhere to explain why — so this still logs.
+            Log::warning("ImageOptimizationService::optimize() failed for {$disk}:{$path}: ".$e->getMessage());
+
             return $unchanged;
         }
     }

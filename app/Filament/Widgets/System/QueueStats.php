@@ -5,6 +5,7 @@ namespace App\Filament\Widgets\System;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class QueueStats extends BaseWidget
 {
@@ -54,6 +55,11 @@ class QueueStats extends BaseWidget
     {
         $jobsTable = config('queue.connections.database.table', 'jobs');
 
+        // Each stat below is independently try/caught, but every catch used
+        // to be completely silent — a broken DB/queue connection rendered
+        // as a falsely-reassuring "0 pending / 0 failed" on the very widget
+        // whose entire purpose is queue *health*, with no trace anywhere
+        // that a query failed vs. the queue genuinely being empty.
         $byQueue = [];
         try {
             $byQueue = DB::table($jobsTable)
@@ -62,6 +68,7 @@ class QueueStats extends BaseWidget
                 ->pluck('count', 'queue')
                 ->toArray();
         } catch (\Throwable $e) {
+            Log::warning('QueueStats: pending-by-queue count failed: '.$e->getMessage());
         }
 
         $processing = 0;
@@ -70,6 +77,7 @@ class QueueStats extends BaseWidget
                 ->where('reserved_at', '>', now()->subMinutes(5))
                 ->count();
         } catch (\Throwable $e) {
+            Log::warning('QueueStats: processing count failed: '.$e->getMessage());
         }
 
         $failed24h = 0;
@@ -78,6 +86,7 @@ class QueueStats extends BaseWidget
                 ->where('failed_at', '>=', now()->subDay())
                 ->count();
         } catch (\Throwable $e) {
+            Log::warning('QueueStats: failed-24h count failed: '.$e->getMessage());
         }
 
         $completedHour = 0;
@@ -86,6 +95,7 @@ class QueueStats extends BaseWidget
                 ->where('finished_at', '>=', now()->subHour())
                 ->sum('total_jobs');
         } catch (\Throwable $e) {
+            Log::warning('QueueStats: completed-hour sum failed: '.$e->getMessage());
         }
 
         return [

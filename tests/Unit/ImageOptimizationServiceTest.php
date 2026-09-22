@@ -6,6 +6,7 @@ use App\Models\Setting;
 use App\Services\ImageOptimizationService;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -145,5 +146,32 @@ class ImageOptimizationServiceTest extends TestCase
 
         $this->assertSame('media/not-really-an-image.jpg', $result['path']);
         Storage::disk('public')->assertExists('media/not-really-an-image.jpg');
+    }
+
+    /**
+     * Phase 14 (Monitoring/Logging Audit). The catch(\Throwable) around the
+     * actual resize/WebP-convert/save pass was completely silent — if GD is
+     * systemically broken (bad build, missing WebP support), every single
+     * upload would fail soft forever with nothing anywhere to explain why.
+     * Forces a genuine write failure (a directory already sitting at the
+     * WebP destination path, so imagewebp() can't create a file there)
+     * rather than mocking — this exercises the real catch path, not an
+     * assumption about it.
+     */
+    #[Test]
+    public function a_failure_during_the_actual_optimization_pass_logs_a_warning_and_fails_soft(): void
+    {
+        Log::spy();
+
+        $this->putJpeg('media/photo.jpg', 60, 60);
+        mkdir(Storage::disk('public')->path('media/photo.webp'), 0775, true);
+
+        $result = app(ImageOptimizationService::class)->optimize('public', 'media/photo.jpg', 'image/jpeg');
+
+        $this->assertSame('media/photo.jpg', $result['path'], 'falls back to the original, untouched');
+        Storage::disk('public')->assertExists('media/photo.jpg');
+        Log::shouldHaveReceived('warning')
+            ->once()
+            ->withArgs(fn ($message) => str_contains($message, 'ImageOptimizationService') && str_contains($message, 'media/photo.jpg'));
     }
 }
