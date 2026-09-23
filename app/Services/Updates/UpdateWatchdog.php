@@ -2,20 +2,35 @@
 
 namespace App\Services\Updates;
 
-use App\Jobs\NotifyAdminsOfUpdateResult;
 use App\Models\UpdateHistory;
 use App\Services\Backup\BackupLock;
 use Illuminate\Support\Facades\Log;
 
 /**
- * UpdateWatchdog — reclaims UpdateHistory rows abandoned mid-apply (e.g. the
+ * UpdateWatchdog — reclaims UpdateHistory rows abandoned mid-apply (the
  * initiating admin closed the tab mid-poll, so nothing ever calls advance()
- * again) and alerts admins. Mirrors BackupJanitor::cleanupPartials() for the
- * backup engine, which this update-side gap was missing entirely: the shared
- * BackupLock already auto-releases once stale (BackupJanitor does that for
- * ANY stale lock, update or backup), but the UpdateHistory row itself sat in
- * its last non-terminal status forever with no cron-driven resolution and no
- * admin notification that it happened.
+ * again — OR the whole PHP process was killed outright, which is the same
+ * "nothing will ever call advance() again" situation from this class's own
+ * point of view) and alerts admins. Mirrors BackupJanitor::cleanupPartials()
+ * for the backup engine, which this update-side gap was missing entirely:
+ * the shared BackupLock already auto-releases once stale (BackupJanitor does
+ * that for ANY stale lock, update or backup), but the UpdateHistory row
+ * itself sat in its last non-terminal status forever with no cron-driven
+ * resolution and no admin notification that it happened.
+ *
+ * Routes every reclaimed row through UpdateApplier::fail() rather than
+ * marking it failed directly — a process-killed update can have left the
+ * working tree/vendor mid-swap exactly the same way a normal in-process
+ * failure can, and fail() already knows how to tell the difference (attempt
+ * a real rollback once $history->step is past the destructive-phase
+ * boundary, only then turn maintenance mode back off and disarm the
+ * Recovery Console). A prior version of this method always cleared
+ * maintenance mode unconditionally on reclaim — safe for the common case
+ * (an abandoned tab, nothing destructive ever started), but wrong for a
+ * genuine mid-swap crash: it would have silently reopened a half-updated
+ * site to real traffic instead of leaving it in maintenance for an operator
+ * to check, which is the one guarantee this whole failure path exists to
+ * provide.
  */
 class UpdateWatchdog
 {
@@ -41,24 +56,16 @@ class UpdateWatchdog
             ->get();
 
         foreach ($stale as $history) {
-            $history->status = UpdateHistory::STATUS_FAILED;
-            $history->error = 'Reclaimed — abandoned mid-update (a tab was likely closed); verify site state manually.';
-            $history->finished_at = now();
-            $history->save();
-
-            Log::channel(config('updates.log_channel', 'stack'))->warning('Watchdog reclaimed a stale update.', [
+            Log::channel(config('updates.log_channel', 'stack'))->warning('Watchdog reclaiming a stale update.', [
                 'history' => $history->getKey(), 'to' => $history->to_version, 'last_step' => $history->step,
             ]);
 
-            dispatch(new NotifyAdminsOfUpdateResult([
-                'from_version' => $history->from_version,
-                'to_version' => $history->to_version,
-                'success' => false,
-                'rolled_back' => false,
-                'error' => $history->error,
-                'started_at' => optional($history->started_at)->toIso8601String(),
-                'trigger' => $history->initiated_by ? 'manual' : 'auto',
-            ]));
+            app(UpdateApplier::class)->fail(
+                $history,
+                $history->step,
+                'Reclaimed — abandoned mid-update (a tab was likely closed, or the process crashed); '.
+                'rolled back if this had gone past the point of no return, verify site state manually either way.'
+            );
 
             $reclaimed++;
         }

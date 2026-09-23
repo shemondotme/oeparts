@@ -323,7 +323,16 @@ class UpdateApplier
 
     /* ---- Failure + rollback -------------------------------------------- */
 
-    protected function fail(UpdateHistory $history, string $step, string $error): UpdateHistory
+    /**
+     * Public so UpdateWatchdog::reclaimStale() can route an abandoned
+     * mid-update row through the exact same failure/rollback/maintenance/
+     * lock/notify handling a normal in-process failure gets, rather than a
+     * separate, thinner implementation that has to independently stay
+     * correct — see that class for why: reclaiming a row is exactly the
+     * same "did this fail partway through" situation this method already
+     * exists to handle, just discovered later by a different caller.
+     */
+    public function fail(UpdateHistory $history, string $step, string $error): UpdateHistory
     {
         Log::channel(config('updates.log_channel', 'stack'))
             ->error('Update apply failed at ['.$step.']: '.$error);
