@@ -101,10 +101,21 @@ class CatalogController extends BaseApiController
 
         if ($request->has('year')) {
             $year = (int) $request->input('year');
-            $query->where('year_from', '<=', $year)
-                ->where(function ($q) use ($year) {
-                    $q->whereNull('year_to')->orWhere('year_to', '>=', $year);
-                });
+            // year_from is just as nullable as year_to (CarModelResource's own
+            // form: both are optional Selects, year_to's helper text reads
+            // "Leave empty if still in production" but year_from has no
+            // equivalent guidance — an admin leaving the production START
+            // year blank, e.g. a model whose exact debut year isn't known but
+            // whose discontinuation year is, is an equally legitimate, DB-
+            // and form-supported state). Only guarding year_to's NULL case
+            // silently excluded every such car model from EVERY year-filtered
+            // lookup forever, since `NULL <= $year` evaluates to unknown/false
+            // in SQL.
+            $query->where(function ($q) use ($year) {
+                $q->whereNull('year_from')->orWhere('year_from', '<=', $year);
+            })->where(function ($q) use ($year) {
+                $q->whereNull('year_to')->orWhere('year_to', '>=', $year);
+            });
         }
 
         return $this->successResponse(
