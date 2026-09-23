@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { artisan } from '../helpers.js';
 
 /**
  * BulkUpdateProducts — a filter-driven mass-mutation tool operating on an
@@ -15,6 +16,16 @@ import { test, expect } from '@playwright/test';
  * matching no filter" — Mark In Stock then Mark Out of Stock again
  * restores the original state.
  */
+
+test.beforeEach(() => {
+    // Needs ALF-000001 starting OUT of stock (a real "false → true" change
+    // to preview/apply) — confirmed live that a prior run dying before its
+    // own restore-to-original-state step at the end (or bulk-update-log.spec.js
+    // / product-bulk-actions.spec.js sharing this same fixture product)
+    // leaves it stuck in_stock=true, at which point the first preview shows
+    // "In Stock → In Stock" instead of the expected "Out of Stock → In Stock".
+    artisan(`tinker --execute="App\\Models\\Product::where('oem_number','ALF-000001')->update(['is_in_stock'=>false]);"`);
+});
 
 test('bulk update products: filtered preview + apply changes exactly one product', async ({ page }) => {
     await page.goto('/admin/bulk-update-products', { waitUntil: 'domcontentloaded' });

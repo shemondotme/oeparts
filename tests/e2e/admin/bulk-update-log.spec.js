@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { artisan } from '../helpers.js';
 
 /**
  * BulkUpdateLogPage's "Revert" action — the entire reason BulkUpdateLog
@@ -10,6 +11,16 @@ import { test, expect } from '@playwright/test';
  * manually re-applying the opposite action, since that's the real feature
  * under test.
  */
+
+test.beforeEach(() => {
+    // This test needs ALF-000001 starting OUT of stock (a real "false →
+    // true" change to preview/apply/revert) — confirmed live that a prior
+    // run dying before its own revert step (or another spec sharing this
+    // same fixture product) leaves it stuck in_stock=true, at which point
+    // "stock_in" is a no-op with nothing to preview/revert. Force it back
+    // before every run instead of assuming the last run cleaned up.
+    artisan(`tinker --execute="App\\Models\\Product::where('oem_number','ALF-000001')->update(['is_in_stock'=>false]);"`);
+});
 
 test('bulk update log: revert restores the product to its pre-update state', async ({ page }) => {
     // Produce a fresh, known log entry to revert.

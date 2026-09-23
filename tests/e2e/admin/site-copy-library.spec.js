@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { artisan } from '../helpers.js';
 
 /**
  * Site Copy Library — editing a real ui.* text-override row through its
@@ -7,6 +8,14 @@ import { test, expect } from '@playwright/test';
  * exact original value at the end rather than leaving throwaway data
  * behind, unlike most other fixtures in this suite.
  */
+
+test.beforeEach(() => {
+    // Needs cart_apply_coupon starting at exactly "Apply Coupon" — confirmed
+    // live that a prior run dying after the first edit but before its own
+    // restore step (lines 35-42 below) leaves it stuck at the test's own
+    // "Apply Coupon E2E TEST" value. Force it back before every run.
+    artisan(`tinker --execute="App\\Models\\Setting::where('group','ui')->where('key','cart_apply_coupon')->update(['value' => json_encode(['en'=>'Apply Coupon','de'=>null,'lt'=>null,'fr'=>null,'es'=>null])]);"`);
+});
 
 test('site copy library: editing a row updates the value and restores it', async ({ page }) => {
     await page.goto('/admin/settings/site-copy-library', { waitUntil: 'domcontentloaded' });

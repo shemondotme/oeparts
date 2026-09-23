@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { artisan } from '../helpers.js';
 
 /**
  * ShippingZoneResource's Countries relation manager — focused on its one
@@ -17,6 +18,16 @@ import { test, expect } from '@playwright/test';
  * zero countries, confirmed live — this test restores that state at the
  * end so it stays repeatable.
  */
+
+test.beforeEach(() => {
+    // Needs zone 3 starting with zero countries — confirmed live that a
+    // prior run dying between the "add all" step and its own trailing
+    // cleanup (lines 40-61 below) leaves all 32 EU/EEA countries stuck on
+    // the zone, at which point the first "Add All" click correctly finds
+    // nothing left to add and shows "Nothing to add" instead of the
+    // expected "N countries added". Force it back before every run.
+    artisan(`tinker --execute="App\\Models\\ShippingZone::find(3)?->countries()->delete();"`);
+});
 
 test('shipping zone countries: Add All EU/EEA Countries is idempotent', async ({ page }) => {
     await page.goto('/admin/shipping-zones/3/edit', { waitUntil: 'domcontentloaded' });
@@ -54,8 +65,13 @@ test('shipping zone countries: Add All EU/EEA Countries is idempotent', async ({
     // deletes the WHOLE ZONE) shares the exact same accessible name and
     // is still in the DOM even though scrolled out of view. Scope to the
     // confirm dialog's own distinct heading to guarantee this can never
-    // click the wrong one.
-    const confirmDialog = page.locator('[role="dialog"]', { hasText: 'Delete selected Shipping Countries' });
+    // click the wrong one. role="alertdialog", not "dialog" — same
+    // Filament schema-less-confirmation quirk fixed elsewhere in this
+    // suite (menu-items/order-items/product-cross-references.spec.js);
+    // confirmed live via a trace that this bulk-delete confirmation was
+    // previously unreachable in practice (the test always failed earlier,
+    // at the "countries added" step, before this line could ever run).
+    const confirmDialog = page.locator('[role="alertdialog"]', { hasText: 'Delete selected Shipping Countries' });
     await confirmDialog.getByRole('button', { name: 'Delete', exact: true }).click();
     await page.waitForTimeout(2000);
     await expect(page.locator('table tbody tr')).toHaveCount(0, { timeout: 10000 });

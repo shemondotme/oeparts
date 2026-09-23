@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { artisan } from '../helpers.js';
 
 /**
  * ProductResource's bulk actions, built via AdminUi::impactBulkAction() —
@@ -11,6 +12,17 @@ import { test, expect } from '@playwright/test';
  * form but shows an impact-preview table instead (via impactBulkAction's
  * ->modalContent() closure) before the "Yes, proceed" submit button.
  */
+
+test.beforeEach(() => {
+    // "bulk mark in stock" below needs ALF-000001 starting OUT of stock —
+    // impactBulkAction's summary closure returns null (nothing to preview)
+    // when it's already in stock. Confirmed live this fixture is shared
+    // with bulk-update-log.spec.js/bulk-update-products.spec.js and a prior
+    // run dying before ITS OWN restore step (lines 66-73 below) leaves it
+    // stuck. Force it back before every run rather than trusting the last
+    // run's cleanup to have completed.
+    artisan(`tinker --execute="App\\Models\\Product::where('oem_number','ALF-000001')->update(['is_in_stock'=>false]);"`);
+});
 
 test('products: bulk increase price by percentage', async ({ page }) => {
     // Product 7 (ALF-000001) — any product works, this one is stable

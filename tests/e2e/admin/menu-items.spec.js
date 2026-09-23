@@ -53,9 +53,16 @@ test('menu items: create, edit, and delete a menu item end to end', async ({ pag
     const updatedRow = page.locator('table tbody tr', { hasText: updatedLabel });
     await expect(updatedRow).toBeVisible({ timeout: 10000 });
 
-    // Delete
+    // Delete — the confirmation modal is role="alertdialog", not "dialog"
+    // (confirmed live via a Playwright trace on the sibling
+    // product-cross-references.spec.js: Filament's schema-less DeleteAction
+    // confirmation renders as an alertdialog, unlike the Create/Edit modals
+    // above which really are role="dialog"). getByRole is an exact role
+    // match, not ARIA-subclass-aware, so the previous getByRole('dialog')
+    // scoping matched zero elements and timed out waiting for a button that
+    // was genuinely on screen the whole time.
     await updatedRow.getByRole('button', { name: 'Delete', exact: true }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await page.waitForTimeout(1500);
 
     await expect(page.locator('table tbody tr', { hasText: updatedLabel })).not.toBeVisible();

@@ -51,7 +51,13 @@ test('redirect: import CSV uploads a file and queues the job', async ({ page }) 
     // Filament's wire:model binding for the upload syncs slightly after that
     // via its own follow-up request — submitting before it lands throws a
     // spurious "The CSV File field is required" validation error.
-    await page.getByText('Upload complete', { exact: true }).waitFor({ timeout: 10000 });
+    //
+    // Confirmed live via a trace that a 10s wait isn't always enough: the
+    // progress bar can genuinely sit at "Uploading 100%" for several more
+    // seconds while that follow-up sync completes, matching this dev
+    // environment's already-documented slow real response times (see
+    // testRedirect's own 15s wait below) — not a stuck/broken upload.
+    await page.getByText('Upload complete', { exact: true }).waitFor({ timeout: 20000 });
     await page.waitForTimeout(1000);
 
     await page.getByRole('button', { name: 'Submit', exact: true }).click();

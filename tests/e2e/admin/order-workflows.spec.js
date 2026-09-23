@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { artisan } from '../helpers.js';
+import { artisan, artisanOutput } from '../helpers.js';
 
 /**
  * Order-specific header actions — the highest-business-value custom
@@ -55,19 +55,22 @@ test('order: changeStatus transitions a pending order to processing', async ({ p
 });
 
 test('order: confirmPayment marks a pending bank-transfer order as paid', async ({ page }) => {
-    // Order 28 confirmed bank_transfer + payment pending + status pending —
-    // a "clean" pre-payment order where the Processing transition is valid.
-    // (Order 5, tried first, turned out to be bank_transfer + payment
-    // pending but status refund_requested — a real seeded edge case, now
-    // covered by the regression test below instead.)
-    //
-    // Same one-time-fixture problem as the changeStatus test above: this
-    // test's own success consumes order 28's "pending payment" state
-    // (confirmPayment's own visible() gate requires payment_status ===
-    // Pending), so it can't naturally pass on a second run. Force it back.
-    artisan(`tinker --execute="App\\Models\\Order::find(28)->update(['status'=>'pending','payment_status'=>'pending']);"`);
+    // Hardcoding a specific order id (previously 28) drifts the same way
+    // ResolveE2eEditTargets's own doc comment already documents for other
+    // resources — confirmed live that order 28 no longer exists at all in
+    // this dev DB (visiting it 404s, which is what actually produced the
+    // reported "waiting for nav.fi-topbar" timeout below, not a state
+    // problem). Resolve a real order id at run time instead, and force it
+    // into the exact state this test needs — a "clean" pre-payment
+    // bank-transfer order where the Processing transition is valid — same
+    // one-time-fixture problem as the changeStatus test above: this test's
+    // own success consumes that state (confirmPayment's own visible() gate
+    // requires payment_status === Pending), so it must be forced back
+    // before every run regardless. Excludes order 12 (changeStatus test's
+    // own fixture above) so the two tests never fight over the same row.
+    const orderId = artisanOutput(`tinker --execute="\$o = App\\Models\\Order::where('id','!=',12)->orderBy('id')->first(); \$o->update(['status'=>'pending','payment_status'=>'pending','payment_method'=>'bank_transfer']); echo \$o->id;"`).trim();
 
-    await page.goto('/admin/orders/28', { waitUntil: 'domcontentloaded' });
+    await page.goto(`/admin/orders/${orderId}`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('nav.fi-topbar');
     await page.waitForTimeout(1000);
 
@@ -81,15 +84,23 @@ test('order: confirmPayment marks a pending bank-transfer order as paid', async 
 });
 
 test('order: confirmPayment fails gracefully instead of a 500 when the order cannot move to Processing', async ({ page }) => {
-    // Regression test for a real bug: order 5 is bank_transfer + payment
-    // pending, but its order status is already refund_requested. Confirming
-    // payment always tries to transitionStatus(..., Processing, ...)
-    // underneath (PaymentService::confirmBankTransferPayment), which
+    // Regression test for a real bug: an order that's bank_transfer +
+    // payment pending, but whose order status is already refund_requested.
+    // Confirming payment always tries to transitionStatus(..., Processing,
+    // ...) underneath (PaymentService::confirmBankTransferPayment), which
     // OrderService rejects for a refund_requested order — and the action's
     // try/catch only caught \RuntimeException, not the \InvalidArgumentException
     // transitionStatus() actually throws, so this used to render a raw
     // Laravel "Internal Server Error" page instead of a notification.
-    await page.goto('/admin/orders/5', { waitUntil: 'domcontentloaded' });
+    //
+    // Previously hardcoded to order 5, which held this state at seed time
+    // but drifted (confirmed live: now processing/paid, a real order that
+    // completed normally) — same fixture-drift problem as the test above.
+    // Force a real order into the required combo directly rather than
+    // relying on any specific row happening to still be in it.
+    const orderId = artisanOutput(`tinker --execute="\$o = App\\Models\\Order::where('id','!=',12)->orderBy('id')->first(); \$o->update(['status'=>'refund_requested','payment_status'=>'pending','payment_method'=>'bank_transfer']); echo \$o->id;"`).trim();
+
+    await page.goto(`/admin/orders/${orderId}`, { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('nav.fi-topbar');
     await page.waitForTimeout(1000);
 

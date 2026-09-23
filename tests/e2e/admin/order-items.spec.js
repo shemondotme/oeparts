@@ -43,14 +43,28 @@ test('order items: create, edit, and delete a line item recalculates order total
     await page.getByRole('dialog').getByRole('button', { name: 'Save changes', exact: true }).click();
     await page.waitForTimeout(1500);
 
-    await expect(page.getByText('Order totals recalculated')).toBeVisible({ timeout: 10000 });
+    // .last(): Filament's notification toasts stack rather than replacing
+    // each other, so by this point the CREATE step's own "Order totals
+    // recalculated" toast may still be lingering alongside this one — a
+    // bare getByText() is a strict-mode violation once there are 2 matches.
+    // Same pattern already established elsewhere in this suite (see
+    // bulk-update-products.spec.js's own comment on this exact issue).
+    await expect(page.getByText('Order totals recalculated').last()).toBeVisible({ timeout: 10000 });
     await expect(row.getByText('30.00', { exact: false })).toBeVisible();
 
-    // Delete
+    // Delete — the confirmation modal is role="alertdialog", not "dialog"
+    // (confirmed live via a Playwright trace on the sibling
+    // product-cross-references.spec.js: Filament's schema-less DeleteAction
+    // confirmation renders as an alertdialog, unlike the Create/Edit modals
+    // above which really are role="dialog"). getByRole is an exact role
+    // match, not ARIA-subclass-aware, so the previous getByRole('dialog')
+    // scoping matched zero elements and timed out waiting for a button that
+    // was genuinely on screen the whole time.
     await row.getByRole('button', { name: 'Delete', exact: true }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Delete', exact: true }).click();
     await page.waitForTimeout(1500);
 
-    await expect(page.getByText('Order totals recalculated')).toBeVisible({ timeout: 10000 });
+    // .last(): same notification-stacking reasoning as the EDIT step above.
+    await expect(page.getByText('Order totals recalculated').last()).toBeVisible({ timeout: 10000 });
     await expect(page.locator('table tbody tr', { hasText: oem })).not.toBeVisible();
 });

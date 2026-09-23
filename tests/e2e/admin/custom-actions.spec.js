@@ -20,8 +20,14 @@ test.beforeEach(() => {
     // makes the fixture self-healing regardless of whether a prior run
     // (or something else entirely) ever created it.
     artisan(`tinker --execute="App\\Models\\Review::updateOrCreate(['reviewer_name'=>'E2E Playwright Reviewer'],['product_id'=>App\\Models\\Product::query()->value('id'),'title'=>'E2E test review','comment'=>'Seeded by custom-actions.spec.js beforeEach.','rating'=>5,'status'=>'pending']);"`);
-    artisan(`tinker --execute="App\\Models\\RefundRequest::find(1)->update(['status'=>'pending','admin_note'=>null,'processed_at'=>null]);"`);
-    artisan(`tinker --execute="App\\Models\\RefundRequest::find(2)->update(['status'=>'pending','admin_note'=>null,'processed_at'=>null]);"`);
+    // Same self-healing rationale as the Review fixture above — confirmed
+    // live that this dev DB's refund_requests table can end up completely
+    // empty (not just stale), which made the old find(N)->update(...) form
+    // fatal (calling ->update() on null). Both tests navigate straight to
+    // /admin/refund-requests/{1,2} by URL, so the ids themselves must exist,
+    // not just some pending row — updateOrCreate(['id'=>N], ...) guarantees
+    // that regardless of whether a prior run (or a seeder) ever created them.
+    artisan(`tinker --execute="\$orderId = App\\Models\\Order::query()->value('id'); \$userId = App\\Models\\User::query()->value('id'); App\\Models\\RefundRequest::updateOrCreate(['id'=>1],['order_id'=>\$orderId,'user_id'=>\$userId,'reason'=>'E2E test refund reason.','amount_requested'=>10.00,'status'=>'pending','admin_note'=>null,'processed_at'=>null]); App\\Models\\RefundRequest::updateOrCreate(['id'=>2],['order_id'=>\$orderId,'user_id'=>\$userId,'reason'=>'E2E test refund reason 2.','amount_requested'=>10.00,'status'=>'pending','admin_note'=>null,'processed_at'=>null]);"`);
 });
 
 test('review: approving a pending review updates its status', async ({ page }) => {
@@ -30,7 +36,14 @@ test('review: approving a pending review updates its status', async ({ page }) =
     await page.waitForTimeout(1000);
 
     await page.locator('.fi-ta-search-field input').fill('E2E Playwright Reviewer');
-    await page.waitForTimeout(1000);
+    // Confirmed live (via the underlying Review row, product_id, and status
+    // all being correct when this intermittently failed) that this is the
+    // debounced search request not always landing within a flat 1000ms wait
+    // in this dev environment, not a missing/broken fixture — wait for the
+    // row itself instead of a blind timeout, matching the more generous
+    // budgets the other two tests in this file already use.
+    const row = page.locator('table tbody tr', { hasText: 'E2E Playwright Reviewer' });
+    await expect(row).toBeVisible({ timeout: 10000 });
 
     // Every row's View/Edit/Approve/Reject/Delete actions are grouped
     // behind one "..." trigger (AdminUi::recordActions() wraps them all
@@ -38,13 +51,13 @@ test('review: approving a pending review updates its status', async ({ page }) =
     // then click "Approve" inside whichever dropdown is currently
     // :visible (all rows' dropdown panels exist in the DOM at once,
     // teleported and CSS-hidden until opened).
-    const groupTrigger = page.locator('table tbody tr').first().locator('.fi-dropdown-trigger button');
+    const groupTrigger = row.locator('.fi-dropdown-trigger button');
     await groupTrigger.first().click();
 
     await page.locator('.fi-dropdown-list-item:visible', { hasText: 'Approve' }).click();
     await page.waitForTimeout(1000);
 
-    await expect(page.getByText('Review approved')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText('Review approved')).toBeVisible({ timeout: 10000 });
 });
 
 test('refund request: rejecting a pending request requires a reason and updates its status', async ({ page }) => {
