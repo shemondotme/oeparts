@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
+use App\Jobs\NotifyAdminsOfPaymentDispute;
 use App\Jobs\ProcessAirwallexWebhook;
 use App\Jobs\SendOrderStatusEmail;
 use App\Models\Order;
@@ -157,6 +158,109 @@ class PaymentWebhookJobTest extends TestCase
             return $job->order->is($order)
                 && $job->oldStatus === OrderStatus::Processing
                 && $job->newStatus === OrderStatus::Cancelled;
+        });
+    }
+
+    #[Test]
+    public function dispute_created_event_alerts_admins_without_touching_the_order(): void
+    {
+        Queue::fake();
+
+        $user = User::factory()->create();
+        $order = Order::factory()->create([
+            'user_id' => $user->id,
+            'status' => OrderStatus::Processing,
+            'payment_status' => PaymentStatus::Paid,
+        ]);
+        $payment = Payment::factory()->create([
+            'order_id' => $order->id,
+            'gateway' => PaymentGateway::Airwallex,
+            'status' => PaymentTransactionStatus::Captured,
+            'transaction_id' => 'pi_dispute_123',
+        ]);
+
+        $webhookData = [
+            'id' => 'evt_dispute_123',
+            'type' => 'dispute.created',
+            'data' => [
+                'object' => [
+                    'id' => 'dst_abc123',
+                    'payment_intent_id' => 'pi_dispute_123',
+                    'status' => 'REQUIRES_RESPONSE',
+                    'stage' => 'CHARGEBACK',
+                    'amount' => '49.99',
+                    'currency' => 'EUR',
+                    'reason' => ['type' => 'FRAUDULENT', 'description' => 'Fraudulent transaction'],
+                ],
+            ],
+        ];
+
+        $job = new ProcessAirwallexWebhook($webhookData);
+        $job->handle(app(PaymentService::class));
+
+        // Alert-only: order/payment state must be untouched.
+        $order->refresh();
+        $payment->refresh();
+        $this->assertEquals(OrderStatus::Processing, $order->status);
+        $this->assertEquals(PaymentStatus::Paid, $order->payment_status);
+        $this->assertEquals(PaymentTransactionStatus::Captured, $payment->status);
+
+        Queue::assertPushed(NotifyAdminsOfPaymentDispute::class, function ($job) use ($order) {
+            return $job->eventType === 'dispute.created'
+                && $job->orderId === $order->id
+                && $job->orderNumber === $order->order_number
+                && $job->disputeId === 'dst_abc123'
+                && $job->status === 'REQUIRES_RESPONSE'
+                && $job->stage === 'CHARGEBACK'
+                && $job->amount === '49.99'
+                && $job->currency === 'EUR'
+                && $job->reason === 'Fraudulent transaction';
+        });
+    }
+
+    #[Test]
+    public function a_dispute_event_for_an_unrecognized_sub_type_still_alerts_admins(): void
+    {
+        // Matched by prefix, not an enumerated list, so a dispute.won/
+        // dispute.lost/dispute.rfi_responded event Airwallex sends still
+        // reaches admins instead of silently falling into
+        // handleUnknownEvent().
+        Queue::fake();
+
+        $webhookData = [
+            'id' => 'evt_dispute_won_123',
+            'type' => 'dispute.won',
+            'data' => ['object' => ['id' => 'dst_won_123']],
+        ];
+
+        $job = new ProcessAirwallexWebhook($webhookData);
+        $job->handle(app(PaymentService::class));
+
+        Queue::assertPushed(NotifyAdminsOfPaymentDispute::class, fn ($job) => $job->eventType === 'dispute.won');
+    }
+
+    #[Test]
+    public function a_dispute_event_with_no_matching_payment_still_alerts_admins(): void
+    {
+        // A dispute can arrive after the linked payment record is gone
+        // (or the payment_intent_id simply doesn't match anything local) —
+        // the alert must not be silently dropped just because the order
+        // couldn't be resolved.
+        Queue::fake();
+
+        $webhookData = [
+            'id' => 'evt_dispute_orphan_123',
+            'type' => 'dispute.created',
+            'data' => ['object' => ['id' => 'dst_orphan_123', 'payment_intent_id' => 'pi_does_not_exist']],
+        ];
+
+        $job = new ProcessAirwallexWebhook($webhookData);
+        $job->handle(app(PaymentService::class));
+
+        Queue::assertPushed(NotifyAdminsOfPaymentDispute::class, function ($job) {
+            return $job->eventType === 'dispute.created'
+                && $job->orderId === null
+                && $job->orderNumber === null;
         });
     }
 

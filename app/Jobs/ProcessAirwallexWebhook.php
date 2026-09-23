@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Services\OrderService;
 use App\Services\PaymentService;
@@ -52,6 +53,12 @@ class ProcessAirwallexWebhook implements ShouldQueue
         ]);
 
         try {
+            if ($eventType !== null && str_starts_with($eventType, 'dispute.')) {
+                $this->handleDispute($eventType);
+
+                return;
+            }
+
             match ($eventType) {
                 'payment_intent.succeeded' => $this->handlePaymentSucceeded($paymentService),
                 'payment_intent.requires_capture' => $this->handlePaymentAuthorized($paymentService),
@@ -120,6 +127,50 @@ class ProcessAirwallexWebhook implements ShouldQueue
                 'payment_id' => $payment->id,
             ]);
         }
+    }
+
+    /**
+     * Payment Disputes (chargebacks) — dispute.created, dispute.won,
+     * dispute.lost, dispute.rfi_responded, etc. all share this handler
+     * since they need identical treatment here: alert admins, touch
+     * nothing else. Matched by prefix rather than an enumerated event
+     * list so a dispute sub-event Airwallex adds later still reaches
+     * admins instead of silently falling into handleUnknownEvent().
+     */
+    private function handleDispute(string $eventType): void
+    {
+        $dispute = $this->webhookData['data']['object'] ?? [];
+        $paymentIntentId = $dispute['payment_intent_id'] ?? null;
+
+        $payment = $paymentIntentId
+            ? Payment::where('transaction_id', $paymentIntentId)
+                ->where('gateway', PaymentGateway::Airwallex)
+                ->first()
+            : null;
+
+        /** @var Order|null $order */
+        $order = $payment ? $payment->order : null;
+
+        Log::warning('Airwallex dispute event received', [
+            'event_type' => $eventType,
+            'dispute_id' => $dispute['id'] ?? null,
+            'payment_intent_id' => $paymentIntentId,
+            'order_id' => $order?->id,
+            'status' => $dispute['status'] ?? null,
+            'stage' => $dispute['stage'] ?? null,
+        ]);
+
+        NotifyAdminsOfPaymentDispute::dispatch(
+            eventType: $eventType,
+            orderId: $order?->id,
+            orderNumber: $order?->order_number,
+            disputeId: $dispute['id'] ?? null,
+            status: $dispute['status'] ?? null,
+            stage: $dispute['stage'] ?? null,
+            amount: isset($dispute['amount']) ? (string) $dispute['amount'] : null,
+            currency: $dispute['currency'] ?? null,
+            reason: $dispute['reason']['description'] ?? $dispute['reason']['type'] ?? null,
+        );
     }
 
     private function handleUnknownEvent(string $eventType): void
