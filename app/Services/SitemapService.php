@@ -13,6 +13,7 @@ use App\Models\ProductImage;
 use App\Support\LocaleRegistry;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
@@ -62,10 +63,31 @@ class SitemapService
     /**
      * Generate all sitemaps and the master index.
      *
+     * Two independent triggers call this with no coordination between them
+     * — the daily `sitemap:generate` schedule and the SEO Control Center's
+     * "Regenerate Sitemap" admin button (via the queued RegenerateSitemap
+     * job) — both writing the SAME fixed set of files
+     * (public/sitemaps/*.xml, public/sitemap.xml). Without a shared lock,
+     * an admin clicking that button at (or near) the scheduled time could
+     * genuinely race the scheduled run: both processes writing to the same
+     * files concurrently, with no guarantee either one's writes land
+     * atomically or in order — a real risk of a corrupted or internally
+     * inconsistent sitemap (e.g. the index referencing a sub-sitemap file
+     * mid-write from the OTHER process). A non-blocking lock means the
+     * second caller fails fast and cleanly instead of silently racing.
+     *
      * @return array List of generated file basenames
+     *
+     * @throws \RuntimeException if another generation is already in progress
      */
     public function generateAll(): array
     {
+        $lock = Cache::lock('sitemap:generate:lock', 600);
+
+        if (! $lock->get()) {
+            throw new \RuntimeException('Sitemap generation is already in progress — skipped this run.');
+        }
+
         try {
             $this->ensureDirectory();
 
@@ -115,6 +137,8 @@ class SitemapService
             ]);
 
             throw $e;
+        } finally {
+            $lock->release();
         }
     }
 

@@ -20,8 +20,15 @@ Artisan::command('inspire', function () {
 |
 */
 
-// Sitemap generation — daily at 2 AM
-Schedule::command('sitemap:generate')->dailyAt('02:00');
+// Sitemap generation — daily at 2 AM.
+// withoutOverlapping(): guards this SCHEDULED entry against itself (cheap
+// insurance in case a previous run somehow ran long); it can't by itself
+// guard against the SEO Control Center's "Regenerate Sitemap" admin
+// button racing this at the same moment, since that's an entirely
+// separate trigger path (a queued RegenerateSitemap job) — that cross-
+// trigger race is what SitemapService::generateAll()'s own Cache::lock()
+// actually closes, both writing the exact same fixed set of files.
+Schedule::command('sitemap:generate')->dailyAt('02:00')->withoutOverlapping();
 
 // Clean expired OTPs — hourly
 Schedule::command('otp:clean')->hourly();
@@ -49,7 +56,11 @@ Schedule::command('oeparts:newsletter:send-due')->everyFiveMinutes()->withoutOve
 
 // Auto-complete shipped orders after the operator-configured window —
 // this is what makes OrdersSettings' "Auto-Complete Fulfillment" real.
-Schedule::command('oeparts:orders:auto-complete')->dailyAt('02:30');
+// withoutOverlapping(): the command's own query re-selects every order
+// still in Shipped status with no per-order claim — two concurrent runs
+// racing the same SELECT before either had updated a row could both
+// transition (and both notify the customer about) the same order.
+Schedule::command('oeparts:orders:auto-complete')->dailyAt('02:30')->withoutOverlapping();
 
 // Backup Engine (Module 21) — daily full encrypted backup + GFS prune.
 // Supersedes the old db:backup / mysqldump command (kept for now, no longer scheduled).
