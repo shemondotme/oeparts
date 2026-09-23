@@ -82,6 +82,42 @@ class BackupEngineCoreTest extends TestCase
         $this->manager()->start('nonsense');
     }
 
+    /**
+     * Phase 18 (Infrastructure/Ops Resilience). Fails FAST, before creating
+     * a BackupRun row or touching the lock, rather than letting a doomed
+     * run waste time/DB load before failing mid-way — mirrors
+     * PreflightService::checkDiskSpace()'s own "need more than 100% of free
+     * space" technique to force a real failure without actually filling
+     * the disk.
+     */
+    #[Test]
+    public function starting_a_backup_is_refused_when_free_disk_space_is_below_the_configured_floor(): void
+    {
+        $free = (int) disk_free_space(storage_path('app/backups'));
+        config(['backup.min_free_bytes' => $free + (100 * 1024 * 1024)]);
+
+        try {
+            $this->manager()->start(BackupRun::PROFILE_FULL);
+            $this->fail('Expected the disk-space floor check to refuse this run.');
+        } catch (BackupException $e) {
+            $this->assertStringContainsString('Insufficient free disk space', $e->getMessage());
+        }
+
+        // No row created, no lock taken — this must fail BEFORE either.
+        $this->assertSame(0, BackupRun::count());
+        $this->assertFalse(app(BackupLock::class)->isLocked());
+    }
+
+    #[Test]
+    public function starting_a_backup_succeeds_when_free_disk_space_is_above_the_configured_floor(): void
+    {
+        config(['backup.min_free_bytes' => 1024]); // 1 KB — trivially satisfied
+
+        $run = $this->manager()->start(BackupRun::PROFILE_FULL);
+
+        $this->assertSame(BackupRun::STATUS_RUNNING, $run->status);
+    }
+
     #[Test]
     public function a_second_run_is_blocked_by_the_lock_and_leaves_no_orphan_row(): void
     {

@@ -36,17 +36,7 @@ class CacheService
         $ttl = (int) settings('performance.cache_ttl_sections', 60);
         $key = $this->sectionKey($location);
 
-        try {
-            return Cache::remember($key, now()->addMinutes($ttl), $callback);
-        } catch (\Exception $e) {
-            Log::error('Cache rememberSection failed', [
-                'location' => $location,
-                'key' => $key,
-                'error' => $e->getMessage(),
-            ]);
-
-            return $callback();
-        }
+        return $this->safeRemember($key, now()->addMinutes($ttl), $callback, 'rememberSection');
     }
 
     /**
@@ -81,7 +71,7 @@ class CacheService
 
         $ttl = (int) settings('performance.cache_ttl_manufacturers', 60);
 
-        return Cache::remember('manufacturers.active', now()->addMinutes($ttl), $callback);
+        return $this->safeRemember('manufacturers.active', now()->addMinutes($ttl), $callback, 'rememberManufacturers');
     }
 
     /**
@@ -114,7 +104,7 @@ class CacheService
 
         $ttl = (int) settings('performance.cache_ttl_manufacturers', 60);
 
-        return Cache::remember('manufacturers.active.all', now()->addMinutes($ttl), $callback);
+        return $this->safeRemember('manufacturers.active.all', now()->addMinutes($ttl), $callback, 'rememberAllActiveManufacturers');
     }
 
     /**
@@ -141,7 +131,7 @@ class CacheService
         sort($manufacturerIds);
         $key = 'brand_product_counts.v'.SearchService::cacheVersion().'.'.implode('_', $manufacturerIds);
 
-        return Cache::remember($key, now()->addMinutes($ttl), $callback);
+        return $this->safeRemember($key, now()->addMinutes($ttl), $callback, 'rememberBrandProductCounts');
     }
 
     // ── Condition cache ───────────────────────────────────────────────────────
@@ -158,7 +148,7 @@ class CacheService
             return $callback();
         }
 
-        return Cache::remember('conditions.active', now()->addHour(), $callback);
+        return $this->safeRemember('conditions.active', now()->addHour(), $callback, 'rememberActiveConditions');
     }
 
     /**
@@ -178,7 +168,7 @@ class CacheService
             return $callback();
         }
 
-        return Cache::remember('conditions.by_slug', now()->addHour(), $callback);
+        return $this->safeRemember('conditions.by_slug', now()->addHour(), $callback, 'rememberConditionsBySlug');
     }
 
     /**
@@ -312,7 +302,7 @@ class CacheService
 
         $ttl = (int) settings('performance.cache_ttl_sections', 60);
 
-        return Cache::remember($key, now()->addMinutes($ttl), $callback);
+        return $this->safeRemember($key, now()->addMinutes($ttl), $callback, 'rememberHomeContent:'.$key);
     }
 
     // ── Coupon cache ──────────────────────────────────────────────────────────
@@ -321,11 +311,13 @@ class CacheService
      * Remember a coupon lookup by code — hit on every cart/checkout
      * coupon-apply request. Invalidated by CouponObserver on write (rule #6);
      * the short TTL is a belt-and-suspenders freshness bound in case a coupon
-     * is ever edited outside Eloquent.
+     * is ever edited outside Eloquent. Wrapped in safeRemember() specifically
+     * because this one sits directly in the checkout path — a cache-store
+     * outage must never block a customer from applying a coupon.
      */
     public function rememberCouponByCode(string $code, callable $callback): mixed
     {
-        return Cache::remember("coupon.code.{$code}", now()->addMinutes(15), $callback);
+        return $this->safeRemember("coupon.code.{$code}", now()->addMinutes(15), $callback, 'rememberCouponByCode');
     }
 
     // ── Search Console stats cache ───────────────────────────────────────────
@@ -345,7 +337,7 @@ class CacheService
 
         $ttl = (int) settings('search.cache_ttl_hours', 6);
 
-        return Cache::remember('search_console_stats', now()->addHours($ttl), $callback);
+        return $this->safeRemember('search_console_stats', now()->addHours($ttl), $callback, 'rememberSearchConsoleStats');
     }
 
     public function forgetSearchConsoleStats(): void
@@ -365,7 +357,7 @@ class CacheService
             return $callback();
         }
 
-        return Cache::remember('hero.stats', now()->addHours(6), $callback);
+        return $this->safeRemember('hero.stats', now()->addHours(6), $callback, 'rememberHeroStats');
     }
 
     /**
@@ -386,7 +378,7 @@ class CacheService
             return $callback();
         }
 
-        return Cache::remember('hero.popular_oems', now()->addHour(), $callback);
+        return $this->safeRemember('hero.popular_oems', now()->addHour(), $callback, 'rememberPopularOems');
     }
 
     /**
@@ -419,7 +411,7 @@ class CacheService
      */
     public function remember(string $key, int $minutes, callable $callback): mixed
     {
-        return Cache::remember($key, now()->addMinutes($minutes), $callback);
+        return $this->safeRemember($key, now()->addMinutes($minutes), $callback, 'remember:'.$key);
     }
 
     /**
@@ -486,6 +478,31 @@ class CacheService
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    /**
+     * Every rememberX() method in this file funnels through here — a cache-
+     * store outage (Redis down/unreachable) must degrade the WHOLE storefront
+     * to "slower, computed live" rather than a hard 500 on every single page
+     * that touches a section, manufacturer list, condition list, blog
+     * listing, coupon lookup, or homepage stat. Previously only
+     * rememberSection() had this guard (and even that one caught \Exception,
+     * not \Throwable — a missing Redis extension surfaces as \Error, which
+     * \Exception does not catch, the same gap SettingsService::getGroup()
+     * was already fixed for) — every other method here called
+     * Cache::remember() completely unguarded.
+     */
+    private function safeRemember(string $key, \DateTimeInterface|\DateInterval|int $ttl, callable $callback, string $context): mixed
+    {
+        try {
+            return Cache::remember($key, $ttl, $callback);
+        } catch (\Throwable $e) {
+            Log::error("CacheService::{$context} cache read/write failed, falling back to a live (uncached) call: ".$e->getMessage(), [
+                'key' => $key,
+            ]);
+
+            return $callback();
+        }
+    }
 
     private function sectionKey(string $location): string
     {

@@ -157,6 +157,18 @@ return [
     // the BackupJanitor reclaims its files and releases the shared lock.
     'stale_after_seconds' => (int) env('OE_BACKUP_STALE_AFTER', 3600),
 
+    // Refuse to even START a backup below this much free space on the backup
+    // path's volume — cheap, fails fast before wasting time/DB load on a run
+    // that would fail mid-way anyway. Unlike the Update Engine's equivalent
+    // check (PreflightService::checkDiskSpace()), a backup's eventual size
+    // can't be predicted from a manifest, so this is a floor, not a
+    // multiplier-of-expected-size estimate. Mid-run disk exhaustion despite
+    // this (usage can still change between the check and the write) is
+    // already handled safely regardless — BackupManager::advance()'s stage
+    // try/catch routes ANY \Throwable (including a disk-full write failure)
+    // to fail(), which marks the run FAILED and releases the lock cleanly.
+    'min_free_bytes' => (int) env('OE_BACKUP_MIN_FREE_BYTES', 200 * 1024 * 1024),
+
     // Ordered pipeline of BackupStage classes per profile (Chunk 2.1 seam).
     // The engine runs them in listed order, one chunk per poll. EncryptTransport
     // MUST be last — it encrypts + ships every part the earlier stages staged.

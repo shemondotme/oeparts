@@ -67,9 +67,18 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            // Must exceed the longest job timeout sharing this connection
-            // (ProcessCsvImport::$timeout = 3600) or a still-running job can
-            // be picked up and processed a second time by another worker.
+            // Must exceed the longest $timeout among every job dispatched on
+            // this connection (currently 3600s, shared by RunBackupJob/
+            // RestoreBackupJob/RunProductionRestoreJob) or a still-running
+            // job's queue reservation expires before the job itself
+            // finishes, letting another worker pick it up and process it a
+            // second time concurrently. QueueWorkerCrashRecoveryTest pins
+            // this invariant against every job's real $timeout so it can't
+            // silently drift again the way this comment itself once did
+            // (it previously named a since-removed job, ProcessCsvImport,
+            // as the reason for 3700 — the number was still numerically
+            // correct by coincidence, but nothing would have caught it
+            // going stale if a new, longer-running job were ever added).
             'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 3700),
             'block_for' => null,
             'after_commit' => false,

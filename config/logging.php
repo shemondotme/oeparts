@@ -54,7 +54,17 @@ return [
 
         'stack' => [
             'driver' => 'stack',
-            'channels' => explode(',', env('LOG_STACK', 'single')),
+            // 'daily', not 'single': the 'single' driver never rotates or
+            // prunes storage/logs/laravel.log — on a real deployment (this
+            // app explicitly supports shared hosting with no logrotate
+            // configured at the OS level) that file grows unbounded until
+            // the disk fills. 'daily' already existed below with a working
+            // days-based retention default; this just makes it the one
+            // actually used by default, matching the 'updates' channel's
+            // already-correct precedent. ErrorMonitor::getExceptionLog()
+            // (the admin's own log viewer) resolves the real dated filename
+            // this produces rather than assuming the bare 'single' path.
+            'channels' => explode(',', env('LOG_STACK', 'daily')),
             'ignore_exceptions' => false,
         ],
 

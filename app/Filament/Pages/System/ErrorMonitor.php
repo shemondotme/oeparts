@@ -64,11 +64,7 @@ class ErrorMonitor extends Page
     public function getExceptionLog(): array
     {
         try {
-            // Reads the actually-configured single-channel destination
-            // (falls back to the conventional default) rather than
-            // assuming it — also the seam a test overrides to exercise this
-            // without ever touching the real dev-environment log file.
-            $logPath = config('logging.channels.single.path', storage_path('logs/laravel.log'));
+            $logPath = $this->resolveActiveLogPath();
             if (! file_exists($logPath)) {
                 return [];
             }
@@ -126,6 +122,53 @@ class ErrorMonitor extends Page
 
             return [];
         }
+    }
+
+    /**
+     * The actually-configured default channel's real file — not a hardcoded
+     * assumption. config('logging.default') is normally 'stack', which
+     * delegates to whichever channels LOG_STACK lists (see
+     * config/logging.php). The 'daily' driver (the default since it replaced
+     * the never-rotating 'single' driver) writes a DATE-SUFFIXED filename
+     * (Monolog's RotatingFileHandler, e.g. laravel-2026-09-23.log), not the
+     * bare configured path — reading the bare path here would silently show
+     * zero exceptions forever once 'daily' became the default.
+     */
+    private function resolveActiveLogPath(): string
+    {
+        $defaultChannel = config('logging.default', 'stack');
+        $channels = $defaultChannel === 'stack'
+            ? (array) config('logging.channels.stack.channels', ['single'])
+            : [$defaultChannel];
+
+        if (in_array('daily', $channels, true)) {
+            $path = config('logging.channels.daily.path', storage_path('logs/laravel.log'));
+            $info = pathinfo($path);
+            $extension = isset($info['extension']) ? '.'.$info['extension'] : '';
+
+            return $info['dirname'].'/'.$info['filename'].'-'.now()->format('Y-m-d').$extension;
+        }
+
+        return config('logging.channels.single.path', storage_path('logs/laravel.log'));
+    }
+
+    /**
+     * The admin dashboard's "Log File" tile used to hardcode the label
+     * "laravel.log" and call filesize(storage_path('logs/laravel.log'))
+     * directly — broken the same way getExceptionLog() was the moment
+     * 'daily' became the default channel, since the real file is now
+     * date-suffixed and that bare path no longer exists.
+     *
+     * @return array{name: string, size_kb: float}
+     */
+    public function getLogFileInfo(): array
+    {
+        $path = $this->resolveActiveLogPath();
+
+        return [
+            'name' => basename($path),
+            'size_kb' => file_exists($path) ? round(filesize($path) / 1024, 1) : 0.0,
+        ];
     }
 
     public function getFailedJobStats(): array

@@ -3,9 +3,13 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\System\ErrorMonitor;
+use App\Models\Admin;
+use Database\Seeders\RolesSeeder;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -34,7 +38,13 @@ class ErrorMonitorTest extends TestCase
         parent::setUp();
 
         $this->logPath = storage_path('logs/error-monitor-test-'.getmypid().'.log');
-        config(['logging.channels.single.path' => $this->logPath]);
+        // Pin the resolver to the 'single' channel these tests target —
+        // the app default is 'daily' (Phase 18), which resolveActiveLogPath()
+        // covers separately below.
+        config([
+            'logging.channels.stack.channels' => ['single'],
+            'logging.channels.single.path' => $this->logPath,
+        ]);
     }
 
     protected function tearDown(): void
@@ -103,6 +113,40 @@ class ErrorMonitorTest extends TestCase
         rmdir($this->logPath);
     }
 
+    /**
+     * Phase 18 (Infrastructure/Ops Resilience). The app's default log
+     * channel is 'daily' (rotates + auto-prunes; the old 'single' default
+     * never did either, growing unbounded on a real deployment) —
+     * getExceptionLog() must resolve the DATE-SUFFIXED file 'daily'
+     * actually writes (Monolog's RotatingFileHandler), not the bare
+     * configured path, or this dashboard would silently show zero
+     * exceptions forever the moment 'daily' became the default.
+     */
+    #[Test]
+    public function it_reads_todays_dated_file_when_the_daily_channel_is_active(): void
+    {
+        $dailyBasePath = storage_path('logs/error-monitor-daily-test-'.getmypid().'.log');
+        $todaysFile = storage_path('logs/error-monitor-daily-test-'.getmypid().'-'.now()->format('Y-m-d').'.log');
+
+        config([
+            'logging.channels.stack.channels' => ['daily'],
+            'logging.channels.daily.path' => $dailyBasePath,
+        ]);
+
+        $line = '['.now()->format('Y-m-d H:i:s').'] local.ERROR: Daily channel broke'
+            .' {"exception":"[object] (App\\\\Services\\\\Bar(code: 0): Daily channel broke at /var/www/html/app/Services/Bar.php:7)'."\n"
+            .'[stacktrace]'."\n"
+            .'#0 {main}"}'."\n";
+        file_put_contents($todaysFile, $line);
+
+        $errors = (new ErrorMonitor)->getExceptionLog();
+
+        @unlink($todaysFile);
+
+        $this->assertNotEmpty($errors);
+        $this->assertSame('Daily channel broke', $errors[0]['message']);
+    }
+
     #[Test]
     public function it_logs_when_the_failed_job_stats_query_breaks(): void
     {
@@ -116,5 +160,60 @@ class ErrorMonitorTest extends TestCase
         Log::shouldHaveReceived('error')
             ->once()
             ->withArgs(fn ($message) => str_contains($message, 'getFailedJobStats'));
+    }
+
+    /**
+     * Phase 18 (Infrastructure/Ops Resilience). getLogFileInfo() replaces
+     * the "Log File" dashboard tile's old hardcoded "laravel.log" label +
+     * a direct filesize(storage_path('logs/laravel.log')) call — broken the
+     * moment 'daily' became the default channel, since the real file is
+     * date-suffixed and that bare path stopped existing. Neither this nor
+     * the page-render test below existed before this phase: the whole
+     * ErrorMonitor Livewire page was never actually rendered by any test,
+     * only its individual methods called directly.
+     */
+    #[Test]
+    public function get_log_file_info_reports_the_real_dated_filename_and_size(): void
+    {
+        config(['logging.channels.stack.channels' => ['daily']]);
+        config(['logging.channels.daily.path' => $this->logPath]);
+        $todaysFile = preg_replace('/\.log$/', '-'.now()->format('Y-m-d').'.log', $this->logPath);
+        file_put_contents($todaysFile, str_repeat('x', 2048));
+
+        $info = (new ErrorMonitor)->getLogFileInfo();
+
+        @unlink($todaysFile);
+
+        $this->assertSame(basename($todaysFile), $info['name']);
+        $this->assertEqualsWithDelta(2.0, $info['size_kb'], 0.1);
+    }
+
+    #[Test]
+    public function get_log_file_info_does_not_error_when_no_log_file_exists_yet(): void
+    {
+        $info = (new ErrorMonitor)->getLogFileInfo();
+
+        $this->assertSame(0.0, $info['size_kb']);
+    }
+
+    /**
+     * The whole point of a page-render test: getExceptionLog()'s own regex
+     * rebuild (Phase 14) and getLogFileInfo()'s path fix (Phase 18) were
+     * both found by reading the code, not by a failing test — nothing had
+     * ever actually mounted this Livewire page and rendered its Blade view,
+     * the same class of gap Phase 15/17 found repeatedly elsewhere
+     * (Mail::fake() intercepting before render, error views never rendered).
+     */
+    #[Test]
+    public function the_page_renders_successfully_for_an_authorized_admin(): void
+    {
+        $this->seed(RolesSeeder::class);
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        $admin = Admin::factory()->create(['is_active' => true]);
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        Livewire::test(ErrorMonitor::class)->assertOk();
     }
 }

@@ -3,6 +3,7 @@
         $stats = $this->getErrorStats();
         $exceptions = $this->getExceptionLog();
         $failedJobs = $this->getFailedJobStats();
+        $logFile = $this->getLogFileInfo();
     @endphp
 
     {{-- Error Stats --}}
@@ -51,10 +52,10 @@
                 <span class="text-xs font-bold uppercase tracking-widest" style="color: var(--color-text-muted);">Log File</span>
             </div>
             <p class="text-lg font-bold" style="color: var(--color-text-primary); font-family: var(--font-mono);">
-                laravel.log
+                {{ $logFile['name'] }}
             </p>
             <p class="text-xs mt-1" style="color: var(--color-text-muted);">
-                {{ number_format(filesize(storage_path('logs/laravel.log')) / 1024) }}KB
+                {{ number_format($logFile['size_kb']) }}KB
             </p>
         </div>
     </div>

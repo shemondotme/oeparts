@@ -63,6 +63,8 @@ class BackupManager
             throw new BackupException('Unknown backup profile: '.$profile);
         }
 
+        $this->assertSufficientDiskSpace();
+
         $run = BackupRun::create([
             'profile' => $profile,
             'status' => BackupRun::STATUS_RUNNING,
@@ -264,6 +266,48 @@ class BackupManager
             'rows' => $attrs['rows'] ?? null,
             'meta' => $attrs['meta'] ?? null,
         ]);
+    }
+
+    /**
+     * @throws BackupException if free space on the backup path's volume is
+     *                         below config('backup.min_free_bytes')
+     */
+    private function assertSufficientDiskSpace(): void
+    {
+        $path = (string) config('backup.path', storage_path('app/backups'));
+
+        // disk_free_space() needs an existing path to stat.
+        if (! is_dir($path)) {
+            @mkdir($path, 0775, true);
+        }
+
+        $free = @disk_free_space($path);
+
+        // false means "could not determine" (missing directory, an
+        // unsupported stream wrapper) — fail OPEN like PreflightService::
+        // checkDiskSpace() does for the same case, rather than block a
+        // backup over a check that itself couldn't run.
+        if ($free === false) {
+            return;
+        }
+
+        $floor = (int) config('backup.min_free_bytes', 200 * 1024 * 1024);
+
+        if ($free < $floor) {
+            throw new BackupException(
+                'Insufficient free disk space to start a backup: only '.
+                $this->formatBytes((int) $free).' free, need at least '.$this->formatBytes($floor).'.'
+            );
+        }
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes >= 1024 ** 3) {
+            return round($bytes / 1024 ** 3, 1).' GB';
+        }
+
+        return round($bytes / 1024 ** 2, 1).' MB';
     }
 
     private function databaseVersion(): ?string
