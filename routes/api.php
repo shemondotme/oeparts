@@ -18,12 +18,21 @@ use Illuminate\Support\Facades\Route;
 |
 | Rate limiting: throttle:api (60/min per IP) applied globally.
 | Auth: Sanctum optional on cart/checkout, required on b2b-request.
+| Maintenance: gated the same as the web storefront (Phase 17 fix) — this
+| API has no maintenance-mode awareness of its own, and its checkout
+| endpoints (Api\CheckoutController::step5()) write a real Order row and
+| can trigger a real gateway charge synchronously. Before this, a mobile
+| client could place and pay for a real order — against a database mid
+| self-update swap/migration — while the browser storefront correctly
+| showed the 503 maintenance page. /ping is exempted (mirrors the web
+| group's /health bypass) so uptime monitoring of the API itself still
+| works during a real maintenance window.
 |
 */
 
-Route::middleware('throttle:api')->group(function () {
+Route::middleware(['throttle:api', 'maintenance'])->group(function () {
 
-    // Health ping
+    // Health ping — exempt from maintenance (MaintenanceMode::handle()'s api/ping bypass).
     Route::get('/ping', fn () => response()->json(['ok' => true]));
 
     // ─── Public Catalog Endpoints ────────────────────────────────────

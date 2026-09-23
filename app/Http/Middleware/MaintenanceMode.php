@@ -13,8 +13,8 @@ class MaintenanceMode
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Allow admin routes and health endpoint through regardless
-        if ($request->is('admin/*') || $request->is('health') || $request->is('install/*')) {
+        // Allow admin routes and health endpoints through regardless
+        if ($request->is('admin/*') || $request->is('health') || $request->is('api/ping') || $request->is('install/*')) {
             return $next($request);
         }
 
@@ -35,8 +35,20 @@ class MaintenanceMode
             }
         }
 
+        $message = settings('maintenance.message', ['en' => "We'll be back soon."]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => trans_field(normalize_multilang_setting($message)),
+                'errors' => null,
+            ], 503)
+                ->header('Retry-After', '3600')
+                ->header('X-Robots-Tag', 'noindex, nofollow');
+        }
+
         return response()->view('errors.maintenance', [
-            'message' => settings('maintenance.message', ['en' => "We'll be back soon."]),
+            'message' => $message,
             'estimatedBackAt' => settings('maintenance.estimated_back_at', ''),
             'showEstimatedTime' => (bool) settings('maintenance.show_estimated_time', false),
             'contactEmail' => settings('maintenance.contact_email', ''),

@@ -136,6 +136,29 @@ function trans_field(array|string|null $field, ?string $locale = null): string
 }
 
 /**
+ * A multilang Setting value comes back from SettingsService as a raw
+ * JSON-encoded string (the Setting model has no array cast), not a decoded
+ * array — passed straight to trans_field(), its is_string() short-circuit
+ * would return the whole '{"en":"...","de":"..."}' string verbatim instead
+ * of the localized text. Normalize it first so both the maintenance page
+ * and any JSON caller (MaintenanceMode's API branch) resolve it correctly.
+ */
+function normalize_multilang_setting(mixed $value): array|string|null
+{
+    if (is_array($value)) {
+        return $value;
+    }
+
+    if (is_string($value) && str_starts_with(trim($value), '{')) {
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : $value;
+    }
+
+    return $value;
+}
+
+/**
  * Localized display name for an ISO 3166-1 alpha-2 country code, in the
  * current (or given) storefront locale — via PHP's intl extension, so
  * adding a checkout country never means hand-translating a name x4 locales.

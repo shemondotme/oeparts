@@ -1,18 +1,5 @@
 @php
-    /**
-     * Multilang settings are stored as JSON strings in DB.
-     * Normalise to an array so trans_field() can pick the right locale.
-     */
-    $normalizeMultilang = static function ($value): array|string|null {
-        if (is_array($value)) return $value;
-        if (is_string($value) && str_starts_with(trim($value), '{')) {
-            $decoded = json_decode($value, true);
-            return is_array($decoded) ? $decoded : $value;
-        }
-        return $value;
-    };
-
-    $maintenanceMessage = $normalizeMultilang($message ?? null)
+    $maintenanceMessage = normalize_multilang_setting($message ?? null)
         ?: ['en' => "We're currently performing scheduled maintenance. We'll be back shortly."];
 
     $brandName            = config('app.name');
