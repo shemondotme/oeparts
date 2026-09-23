@@ -161,6 +161,83 @@ class AdminCrudRegressionTest extends TestCase
             ->assertOk();
     }
 
+    /**
+     * Phase 20 (Admin-Panel Specific). exportCsvBulkAction() used to build
+     * the ENTIRE CSV as one accumulating string ($csv .= ...) before
+     * streaming it — on a table at real production scale (Products: 1M+
+     * rows; the dev seed is only ~90 — see
+     * [[project_production_catalog_scale]]) via Filament's default
+     * cross-pagination "select all" bulk-selection, that meant holding the
+     * full Eloquent Collection, a second mapped array, AND the whole CSV
+     * string in memory simultaneously — risking a fatal "Allowed memory
+     * size exhausted" on shared hosting. Refactored to echo row by row
+     * instead. This proves the refactor didn't silently corrupt the output
+     * format (row order, field content) while changing how it's produced —
+     * the two existing "does not crash" tests above wouldn't have caught a
+     * content regression, only a hard crash.
+     */
+    #[Test]
+    public function the_exported_csv_content_is_correct_and_in_order_across_multiple_rows(): void
+    {
+        $manufacturer = Manufacturer::factory()->create(['name' => ['en' => 'Bosch']]);
+        $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        $productA = Product::factory()->create([
+            'manufacturer_id' => $manufacturer->id, 'condition_id' => $condition->id, 'oem_number' => 'AAA111',
+        ]);
+        $productB = Product::factory()->create([
+            'manufacturer_id' => $manufacturer->id, 'condition_id' => $condition->id, 'oem_number' => 'BBB222',
+        ]);
+
+        $component = Livewire::test(ListProducts::class)
+            ->loadTable()
+            ->callTableBulkAction('exportCsv', [$productA, $productB])
+            ->assertOk();
+
+        $output = base64_decode(data_get($component->effects, 'download.content'));
+        $lines = array_filter(explode("\n", trim($output)));
+
+        // Header + exactly 2 data rows, both products present with their
+        // real field content — a buggy refactor that lost the loop body,
+        // dropped a row partway through, or double-emitted one would fail
+        // this, not just the "does not crash" checks above.
+        $this->assertCount(3, $lines);
+        $this->assertStringContainsString('"AAA111"', $output);
+        $this->assertStringContainsString('"BBB222"', $output);
+    }
+
+    /**
+     * Phase 20 (Admin-Panel Specific). The old $csv .= accumulator built
+     * the whole file as one string before streaming it — this proves the
+     * row-by-row refactor doesn't drop, truncate, or duplicate rows at a
+     * volume meaningfully larger than the "does it crash on 1-2 rows"
+     * checks elsewhere in this file exercise. Not a true 100k+/production-
+     * scale run (that would make the suite itself slow) — a genuine flat-
+     * memory guarantee at that scale comes from reading the implementation
+     * (no per-row accumulation left anywhere in the loop), not from an
+     * absolute memory-threshold assertion, which this Docker test
+     * environment's own documented run-to-run variance
+     * ([[feedback_no_absolute_ms_assertions]]) would make unreliable.
+     */
+    #[Test]
+    public function exporting_a_few_hundred_products_produces_exactly_that_many_rows(): void
+    {
+        $manufacturer = Manufacturer::factory()->create(['name' => ['en' => 'Bosch']]);
+        $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        $products = Product::factory()->count(250)->create([
+            'manufacturer_id' => $manufacturer->id, 'condition_id' => $condition->id,
+        ]);
+
+        $component = Livewire::test(ListProducts::class)
+            ->loadTable()
+            ->callTableBulkAction('exportCsv', $products->all())
+            ->assertOk();
+
+        $output = base64_decode(data_get($component->effects, 'download.content'));
+        $lines = array_filter(explode("\n", trim($output)));
+
+        $this->assertCount(251, $lines); // header + 250 data rows
+    }
+
     #[Test]
     public function exporting_redirects_to_csv_does_not_crash_on_the_backed_enum_type_column(): void
     {

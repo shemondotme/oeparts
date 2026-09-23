@@ -134,7 +134,8 @@ class BackupManagerPageTest extends TestCase
         // blocking the request past the web server's timeout. runNow must only
         // call BackupManager::start() — fast — and hand off to pollBackup().
         Queue::fake();
-        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        $admin = $this->adminWithRole('super_admin');
+        $this->actingAs($admin, 'admin');
 
         $component = Livewire::test(BackupDashboard::class)->callTableAction('runNow');
 
@@ -142,6 +143,11 @@ class BackupManagerPageTest extends TestCase
         $run = BackupRun::sole();
         $this->assertSame(BackupRun::STATUS_RUNNING, $run->status);
         $component->assertSet('runningBackupId', $run->id);
+        $this->assertDatabaseHas('activity_logs', [
+            'admin_id' => $admin->id,
+            'action' => 'backup.run',
+            'model_id' => $run->id,
+        ]);
     }
 
     #[Test]
@@ -183,12 +189,19 @@ class BackupManagerPageTest extends TestCase
     public function delete_removes_the_run_and_its_files(): void
     {
         $run = $this->makeRun();
-        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        $runId = $run->id;
+        $admin = $this->adminWithRole('super_admin');
+        $this->actingAs($admin, 'admin');
 
         Livewire::test(BackupDashboard::class)->callTableAction('delete', $run);
 
         $this->assertModelMissing($run);
         Storage::disk('local')->assertMissing('backups/'.$run->id.'/db/part.enc');
+        $this->assertDatabaseHas('activity_logs', [
+            'admin_id' => $admin->id,
+            'action' => 'backup.delete',
+            'model_id' => $runId,
+        ]);
     }
 
     #[Test]
@@ -196,12 +209,23 @@ class BackupManagerPageTest extends TestCase
     {
         Queue::fake();
         $run = $this->makeRun();
-        $this->actingAs($this->adminWithRole('super_admin', ['password' => Hash::make('secret-pass')]), 'admin');
+        $admin = $this->adminWithRole('super_admin', ['password' => Hash::make('secret-pass')]);
+        $this->actingAs($admin, 'admin');
 
         Livewire::test(BackupDashboard::class)
             ->callTableAction('restore', $run, data: ['password' => 'secret-pass']);
 
         Queue::assertPushed(RestoreBackupJob::class);
+
+        // Phase 20 (Admin-Panel Specific): a database/file restore is one of
+        // the most consequential actions in the whole system — it must show
+        // up in the admin panel's own Activity Log page, not just the
+        // technical log file audit() already wrote to.
+        $this->assertDatabaseHas('activity_logs', [
+            'admin_id' => $admin->id,
+            'action' => 'backup.restore',
+            'model_id' => $run->id,
+        ]);
     }
 
     /* ---- Lock Status card + Backup Settings panel (this redesign) ---- */
@@ -257,12 +281,20 @@ class BackupManagerPageTest extends TestCase
     #[Test]
     public function release_lock_releases_a_confirmed_stale_lock_and_audits_it(): void
     {
-        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        $admin = $this->adminWithRole('super_admin');
+        $this->actingAs($admin, 'admin');
         $this->writeLockFile('backup:1', now()->subHours(3));
 
         Livewire::test(BackupDashboard::class)->call('releaseLock');
 
         $this->assertFalse(app(BackupLock::class)->isLocked());
+        // This test's own name promised auditing was verified — it never
+        // actually was (Phase 20 audit finding), only the lock-release
+        // side effect. Now genuinely proven.
+        $this->assertDatabaseHas('activity_logs', [
+            'admin_id' => $admin->id,
+            'action' => 'backup.release_lock',
+        ]);
     }
 
     #[Test]

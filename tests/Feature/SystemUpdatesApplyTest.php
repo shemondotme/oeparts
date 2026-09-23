@@ -9,6 +9,8 @@ use App\Services\Updates\PreflightReport;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
 use App\Services\Updates\UpdatePreview;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -32,8 +34,8 @@ class SystemUpdatesApplyTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         config()->set('updates.check.catalog_url', 'https://updates.test/releases.json');
@@ -41,7 +43,7 @@ class SystemUpdatesApplyTest extends TestCase
 
         Http::fake(['updates.test/*' => Http::response(['channel' => 'stable', 'releases' => [
             ['version' => '9.9.9', 'min_version_to_update_from' => '0.0.0', 'download_url' => 'https://x/oeparts.zip',
-             'sha256' => str_repeat('a', 64), 'size_bytes' => 1000, 'migration_count' => 1],
+                'sha256' => str_repeat('a', 64), 'size_bytes' => 1000, 'migration_count' => 1],
         ]], 200), '*' => Http::response('', 500)]);
 
         Filament::setCurrentPanel(Filament::getPanel('admin'));
@@ -75,12 +77,12 @@ class SystemUpdatesApplyTest extends TestCase
             {
                 return UpdateHistory::create([
                     'from_version' => '1.0.1',
-                    'to_version'   => $manifest['version'] ?? '9.9.9',
-                    'status'       => UpdateHistory::STATUS_BACKING_UP,
-                    'step'         => 'backup',
+                    'to_version' => $manifest['version'] ?? '9.9.9',
+                    'status' => UpdateHistory::STATUS_BACKING_UP,
+                    'step' => 'backup',
                     'initiated_by' => $initiatedBy,
-                    'started_at'   => now(),
-                    'meta'         => ['manifest' => $manifest, 'step_index' => 0],
+                    'started_at' => now(),
+                    'meta' => ['manifest' => $manifest, 'step_index' => 0],
                 ]);
             }
         });
@@ -131,6 +133,83 @@ class SystemUpdatesApplyTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertSame(1, UpdateHistory::count());
-        $this->assertSame('9.9.9', UpdateHistory::first()->to_version);
+        $history = UpdateHistory::first();
+        $this->assertSame('9.9.9', $history->to_version);
+
+        // Phase 20 (Admin-Panel Specific): applying a self-update swaps live
+        // production code — one of the most consequential actions in the
+        // whole system — it must show up in the admin panel's own Activity
+        // Log page, not just UpdateHistory's own dedicated (but separate)
+        // tracking.
+        $this->assertDatabaseHas('activity_logs', [
+            'admin_id' => $admin->id,
+            'action' => 'update.apply_started',
+            'model_id' => $history->id,
+        ]);
+    }
+
+    #[Test]
+    public function start_apply_is_throttled_per_admin(): void
+    {
+        $this->fakeApplier();
+
+        $admin = Admin::factory()->create(['is_active' => true, 'password' => Hash::make('correct-horse')]);
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        $component = Livewire::test(SystemUpdates::class)
+            ->call('loadPreview')
+            ->set('previewAcknowledged', true)
+            ->set('applyPassword', 'correct-horse');
+
+        // 3 allowed attempts/minute — each of these starts (and the fake
+        // applier never leaves an UpdateHistory row non-terminal to block a
+        // retry, so this genuinely exercises the throttle, not the lock).
+        for ($i = 0; $i < 3; $i++) {
+            $component->set('applyPassword', 'correct-horse')->call('startApply');
+        }
+        $this->assertSame(3, UpdateHistory::count());
+
+        // The 4th attempt within the same minute is a no-op.
+        $component->set('applyPassword', 'correct-horse')->call('startApply');
+        $this->assertSame(3, UpdateHistory::count());
+    }
+
+    /**
+     * Regression guard for breaking_changes/pre_update_notes rendering in
+     * the confirm panel (system-updates.blade.php) — these were already
+     * fetched into UpdatePreview but nothing guarded them from silently
+     * regressing since no test asserted they actually render.
+     */
+    #[Test]
+    public function the_confirm_panel_shows_breaking_changes_and_pre_update_notes(): void
+    {
+        $admin = Admin::factory()->create(['is_active' => true]);
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        app()->instance(UpdateApplier::class, new class extends UpdateApplier
+        {
+            public function preview(array $manifest): UpdatePreview
+            {
+                return new UpdatePreview(
+                    fromVersion: '1.0.1',
+                    toVersion: '9.9.9',
+                    security: false,
+                    sizeBytes: 1000,
+                    migrationCount: 1,
+                    breakingChanges: ['The legacy /old-api endpoint has been removed.'],
+                    etaSeconds: 60,
+                    preflight: new PreflightReport([]),
+                    preUpdateNotes: 'Take a manual backup of custom themes before applying.',
+                );
+            }
+        });
+
+        Livewire::test(SystemUpdates::class)
+            ->call('loadPreview')
+            ->assertSee('Breaking changes')
+            ->assertSee('The legacy /old-api endpoint has been removed.')
+            ->assertSee('Take a manual backup of custom themes before applying.');
     }
 }

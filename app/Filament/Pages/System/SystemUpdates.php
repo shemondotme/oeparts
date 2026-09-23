@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\System;
 
+use App\Models\ActivityLog;
 use App\Models\UpdateHistory;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
@@ -205,6 +206,24 @@ class SystemUpdates extends Page
 
             return;
         }
+
+        // The admin panel's own "Activity Log" page (ActivityLogResource) is
+        // where a compliance/business review of "who did what on this
+        // system" actually looks — before this, applying a self-update
+        // (which swaps live production code) left no trace there at all,
+        // unlike far lower-stakes actions (e.g. HealthCheckDashboard's
+        // cache-clear/scheduler-reset) that already do. Matches
+        // BackupDashboard::audit()'s identical fix for restore/backup
+        // actions, same phase.
+        ActivityLog::create([
+            'admin_id' => $admin->id,
+            'action' => 'update.apply_started',
+            'model_type' => self::class,
+            'model_id' => $history->id,
+            'old_values' => [],
+            'new_values' => ['from_version' => $history->from_version, 'to_version' => $history->to_version],
+            'ip_address' => request()->ip(),
+        ]);
 
         $this->applyHistoryId = $history->id;
         $this->applying = true;

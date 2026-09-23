@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\System;
 
 use App\Jobs\RestoreBackupJob;
+use App\Models\ActivityLog;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupCipher;
 use App\Services\Backup\BackupJanitor;
@@ -457,6 +458,20 @@ public static function getNavigationSort(): ?int
         }
     }
 
+    /**
+     * Two DISTINCT audiences, both fed from every call site: the technical
+     * log file (config('updates.log_channel'), unchanged) for developer/
+     * sysadmin diagnosis, and — added here — a row in the SAME ActivityLog
+     * table HealthCheckDashboard/SetupAssistant already write to, which is
+     * what the admin panel's own "Activity Log" page actually displays.
+     * Before this, the single most consequential admin actions in the
+     * whole system (a live production restore, later also self-update
+     * apply — see SystemUpdates::startApply()) were completely invisible
+     * there: a compliance/business review of "who did what on this
+     * system" would see a scheduler-heartbeat reset but never a
+     * destructive database restore, unless they specifically knew to
+     * check the separate Backup Dashboard / Update History pages instead.
+     */
     private function audit(string $action, ?BackupRun $record, array $context = []): void
     {
         Log::channel(config('updates.log_channel', 'stack'))->notice('backup.'.$action, array_merge([
@@ -464,6 +479,16 @@ public static function getNavigationSort(): ?int
             'run'     => $record?->getKey(),
             'profile' => $record?->profile,
         ], $context));
+
+        ActivityLog::create([
+            'admin_id' => auth('admin')->id(),
+            'action' => 'backup.'.$action,
+            'model_type' => self::class,
+            'model_id' => $record?->getKey(),
+            'old_values' => [],
+            'new_values' => array_merge(array_filter(['profile' => $record?->profile]), $context),
+            'ip_address' => request()->ip(),
+        ]);
     }
 
     private function streamZip(BackupRun $record): \Symfony\Component\HttpFoundation\BinaryFileResponse

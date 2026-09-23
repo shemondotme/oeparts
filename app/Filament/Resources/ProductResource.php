@@ -7,6 +7,7 @@ use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers;
 use App\Filament\Support\AdminUi;
 use App\Jobs\BulkGenerateProductSeoMeta;
+use App\Jobs\BulkUpdateProductStockStatus;
 use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
@@ -30,6 +31,21 @@ use Illuminate\Database\Eloquent\Model;
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
+
+    /**
+     * Above this many selected rows, markInStock/markOutOfStock defer to a
+     * queued job (BulkUpdateProductStockStatus) instead of writing inline —
+     * same threshold value and reasoning as the sibling
+     * BulkUpdateProducts::LARGE_BATCH_THRESHOLD page (Phase 20). Filament's
+     * default "select all X records" crosses pagination, so on the real
+     * catalog (1M+ products) this table's own row-selection bulk actions
+     * were exposed to the same unbounded-scale risk despite the dedicated,
+     * already-chunked BulkUpdateProducts page existing for exactly this —
+     * an admin can reach "select all" from here too. Kept low enough that
+     * the common case (a handful of checked rows) still completes
+     * instantly, matching product-bulk-actions.spec.js's e2e expectations.
+     */
+    private const LARGE_BATCH_ROW_THRESHOLD = 500;
 
     // LOCALES constant is defined in AdminUi::LOCALES
 
@@ -602,6 +618,22 @@ class ProductResource extends Resource
                                 'new' => 'In stock',
                             ],
                         action: function ($records): void {
+                            if ($records->count() > self::LARGE_BATCH_ROW_THRESHOLD) {
+                                BulkUpdateProductStockStatus::dispatch(
+                                    $records->pluck('id')->all(),
+                                    true,
+                                    auth('admin')->user()?->name ?? 'An admin'
+                                );
+
+                                Notification::make()
+                                    ->title('Mark In Stock queued for '.$records->count().' product(s)')
+                                    ->body("You'll get a notification here (the bell icon) once it finishes.")
+                                    ->success()
+                                    ->send();
+
+                                return;
+                            }
+
                             $count = 0;
                             foreach ($records as $record) {
                                 if (! $record->is_in_stock) {
@@ -630,6 +662,22 @@ class ProductResource extends Resource
                                 'new' => 'Out of stock',
                             ],
                         action: function ($records): void {
+                            if ($records->count() > self::LARGE_BATCH_ROW_THRESHOLD) {
+                                BulkUpdateProductStockStatus::dispatch(
+                                    $records->pluck('id')->all(),
+                                    false,
+                                    auth('admin')->user()?->name ?? 'An admin'
+                                );
+
+                                Notification::make()
+                                    ->title('Mark Out of Stock queued for '.$records->count().' product(s)')
+                                    ->body("You'll get a notification here (the bell icon) once it finishes.")
+                                    ->success()
+                                    ->send();
+
+                                return;
+                            }
+
                             $count = 0;
                             foreach ($records as $record) {
                                 if ($record->is_in_stock) {

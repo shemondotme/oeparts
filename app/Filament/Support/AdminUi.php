@@ -533,37 +533,64 @@ final class AdminUi
             ->icon('heroicon-o-arrow-down-tray')
             ->action(function (Collection $records) use ($columns) {
                 $headers = array_values($columns);
-                $rows = $records->map(fn ($record) => array_map(
-                    fn ($accessor) => data_get($record, $accessor, ''),
-                    array_keys($columns),
-                ));
+                $accessors = array_keys($columns);
 
-                $csv = collect($headers)->implode(',')."\n";
-                $rows->each(function ($row) use (&$csv) {
-                    // A column accessor like 'manufacturer.name' can resolve
-                    // to a translatable array-cast attribute (Product/
-                    // Manufacturer names are all {locale => value} JSON, not
-                    // plain strings) — (string) $cell on an array crashed
-                    // every export whose columns touched one, confirmed live
-                    // via a real "Export Products" click 500ing outright.
-                    //
-                    // A backed enum (e.g. Redirect::type) crashed the SAME
-                    // way — PHP backed enums don't implement Stringable, so
-                    // (string) $cell threw "could not be converted to
-                    // string" on every "Export Redirects" click, confirmed
-                    // live via a real RedirectType-cast column.
-                    $csv .= collect($row)->map(function ($cell) {
-                        $value = match (true) {
-                            $cell instanceof \BackedEnum => (string) $cell->value,
-                            is_array($cell) => static::localizedName($cell),
-                            default => (string) $cell,
-                        };
+                return Response::streamDownload(function () use ($records, $headers, $accessors) {
+                    // Echoes row by row instead of building the whole CSV as
+                    // ONE string in $csv first (the original implementation)
+                    // — this is a shared BulkAction, and Filament's default
+                    // "select all X records" crosses pagination, so on a
+                    // table at real production scale (Products: 1M+ rows;
+                    // the dev seed is only ~90 — see
+                    // [[project_production_catalog_scale]]) that meant
+                    // holding the full Eloquent Collection, a second mapped
+                    // array of the same size, AND an ever-growing
+                    // accumulator string all in memory simultaneously —
+                    // easily exceeding shared hosting's typical 128-256M
+                    // memory_limit on a genuinely large "select all" export.
+                    // Echoing keeps peak memory flat regardless of row
+                    // count; @set_time_limit(0) below matches, since this is
+                    // still a synchronous request (right for every OTHER
+                    // resource on this shared helper, all small reference/
+                    // config tables where an instant download is the
+                    // correct UX) that could otherwise be killed mid-export
+                    // by PHP's default max_execution_time on a legitimately
+                    // large selection.
+                    @set_time_limit(0);
 
-                        return '"'.str_replace('"', '""', static::escapeCsvFormula($value)).'"';
-                    })->implode(',')."\n";
-                });
+                    echo collect($headers)->implode(',')."\n";
 
-                return Response::streamDownload(fn () => print ($csv), 'export-'.now()->format('Y-m-d-His').'.csv');
+                    foreach ($records as $record) {
+                        // A column accessor like 'manufacturer.name' can
+                        // resolve to a translatable array-cast attribute
+                        // (Product/Manufacturer names are all {locale =>
+                        // value} JSON, not plain strings) — (string) $cell
+                        // on an array crashed every export whose columns
+                        // touched one, confirmed live via a real "Export
+                        // Products" click 500ing outright.
+                        //
+                        // A backed enum (e.g. Redirect::type) crashed the
+                        // SAME way — PHP backed enums don't implement
+                        // Stringable, so (string) $cell threw "could not be
+                        // converted to string" on every "Export Redirects"
+                        // click, confirmed live via a real RedirectType-cast
+                        // column.
+                        $line = collect($accessors)
+                            ->map(fn ($accessor) => data_get($record, $accessor, ''))
+                            ->map(function ($cell) {
+                                $value = match (true) {
+                                    $cell instanceof \BackedEnum => (string) $cell->value,
+                                    is_array($cell) => static::localizedName($cell),
+                                    default => (string) $cell,
+                                };
+
+                                return '"'.str_replace('"', '""', static::escapeCsvFormula($value)).'"';
+                            })
+                            ->implode(',');
+
+                        echo $line."\n";
+                    }
+                }, 'export-'.now()->format('Y-m-d-His').'.csv');
             })
             ->authorize(fn (?string $model): bool => $model === null || (auth('admin')->user()?->can('viewAny', $model) ?? false))
             ->deselectRecordsAfterCompletion();
