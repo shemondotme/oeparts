@@ -3,25 +3,30 @@
 namespace App\Filament\Pages\System;
 
 use App\Jobs\RestoreBackupJob;
+use App\Jobs\RunProductionRestoreJob;
 use App\Models\ActivityLog;
 use App\Models\BackupRun;
 use App\Services\Backup\BackupCipher;
 use App\Services\Backup\BackupJanitor;
 use App\Services\Backup\BackupLock;
 use App\Services\Backup\BackupManager;
+use App\Services\Backup\BackupProgress;
 use App\Services\HealthCheckService;
 use App\Services\SettingsService;
 use Filament\Forms;
+use Filament\Forms\Components\Component;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Backup Manager (Module 21, Chunk 2.6) — lists Backup Engine runs and drives
@@ -54,23 +59,28 @@ class BackupDashboard extends Page implements HasTable
     /** Non-null while an admin-triggered backup is actively being polled to completion. */
     public ?int $runningBackupId = null;
 
-    /** Latest {@see \App\Services\Backup\BackupProgress} snapshot for the running backup, for the progress bar. */
+    /** Latest {@see BackupProgress} snapshot for the running backup, for the progress bar. */
     public array $backupProgress = [];
 
     /* ---- Backup Settings panel (this redesign) ---- */
     public int $settingsRetentionDaily = 7;
+
     public int $settingsRetentionWeekly = 4;
+
     public int $settingsRetentionMonthly = 6;
+
     public string $settingsScheduleTime = '01:00';
+
     public bool $settingsScheduleEnabled = true;
+
     /** Stored as backup.stale_after_seconds; shown/edited here in MINUTES. */
     public int $settingsStaleAfterMinutes = 60;
 
     /** Human labels for every selectable/stored backup profile. */
     private const PROFILE_LABELS = [
-        BackupRun::PROFILE_FULL          => 'Full (database + files)',
+        BackupRun::PROFILE_FULL => 'Full (database + files)',
         BackupRun::PROFILE_DATABASE_ONLY => 'Database only',
-        BackupRun::PROFILE_FILES_ONLY    => 'Files only',
+        BackupRun::PROFILE_FILES_ONLY => 'Files only',
         BackupRun::PROFILE_UPDATE_SAFETY => 'Update safety',
     ];
 
@@ -126,11 +136,11 @@ class BackupDashboard extends Page implements HasTable
         $acquiredAt = $owner['acquired_at'] ?? null;
 
         return [
-            'locked'      => true,
-            'owner'       => $owner['owner'] ?? 'unknown',
+            'locked' => true,
+            'owner' => $owner['owner'] ?? 'unknown',
             'acquired_at' => $acquiredAt,
-            'age_human'   => $acquiredAt ? \Illuminate\Support\Carbon::parse($acquiredAt)->diffForHumans(null, true) : 'unknown',
-            'is_stale'    => $lock->isStale($staleAfter),
+            'age_human' => $acquiredAt ? Carbon::parse($acquiredAt)->diffForHumans(null, true) : 'unknown',
+            'is_stale' => $lock->isStale($staleAfter),
         ];
     }
 
@@ -179,8 +189,8 @@ class BackupDashboard extends Page implements HasTable
     public function overviewRetentionPolicy(): array
     {
         return [
-            'daily'   => (int) settings('backup.retention_daily', config('backup.retention.daily', 7)),
-            'weekly'  => (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4)),
+            'daily' => (int) settings('backup.retention_daily', config('backup.retention.daily', 7)),
+            'weekly' => (int) settings('backup.retention_weekly', config('backup.retention.weekly', 4)),
             'monthly' => (int) settings('backup.retention_monthly', config('backup.retention.monthly', 6)),
         ];
     }
@@ -195,11 +205,11 @@ class BackupDashboard extends Page implements HasTable
         abort_unless($this->canManageBackups(), 403);
 
         $data = $this->validate([
-            'settingsRetentionDaily'    => ['required', 'integer', 'min:0', 'max:365'],
-            'settingsRetentionWeekly'   => ['required', 'integer', 'min:0', 'max:104'],
-            'settingsRetentionMonthly'  => ['required', 'integer', 'min:0', 'max:120'],
-            'settingsScheduleTime'      => ['required', 'date_format:H:i'],
-            'settingsScheduleEnabled'   => ['required', 'boolean'],
+            'settingsRetentionDaily' => ['required', 'integer', 'min:0', 'max:365'],
+            'settingsRetentionWeekly' => ['required', 'integer', 'min:0', 'max:104'],
+            'settingsRetentionMonthly' => ['required', 'integer', 'min:0', 'max:120'],
+            'settingsScheduleTime' => ['required', 'date_format:H:i'],
+            'settingsScheduleEnabled' => ['required', 'boolean'],
             'settingsStaleAfterMinutes' => ['required', 'integer', 'min:1', 'max:1440'],
         ]);
 
@@ -214,7 +224,7 @@ class BackupDashboard extends Page implements HasTable
         Notification::make()->title('Backup settings saved')->success()->send();
     }
 
-public static function getNavigationSort(): ?int
+    public static function getNavigationSort(): ?int
     {
         return 25;
     }
@@ -253,9 +263,9 @@ public static function getNavigationSort(): ?int
                     ->badge()->size('sm')
                     ->color(fn (string $state): string => match ($state) {
                         BackupRun::STATUS_SUCCESS => 'success',
-                        BackupRun::STATUS_FAILED  => 'danger',
+                        BackupRun::STATUS_FAILED => 'danger',
                         BackupRun::STATUS_RUNNING => 'warning',
-                        default                   => 'gray',
+                        default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state, BackupRun $record): string => ($record->meta['pruned_at'] ?? null)
                         ? 'pruned' : $state),
@@ -276,7 +286,7 @@ public static function getNavigationSort(): ?int
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options([
                     BackupRun::STATUS_SUCCESS => 'Success',
-                    BackupRun::STATUS_FAILED  => 'Failed',
+                    BackupRun::STATUS_FAILED => 'Failed',
                     BackupRun::STATUS_RUNNING => 'Running',
                 ]),
                 Tables\Filters\SelectFilter::make('profile')->options(self::PROFILE_LABELS),
@@ -284,6 +294,7 @@ public static function getNavigationSort(): ?int
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     $this->restoreAction(),
+                    $this->restoreFullAction(),
                     $this->downloadAction(),
                     $this->deleteAction(),
                 ]),
@@ -298,14 +309,14 @@ public static function getNavigationSort(): ?int
                         Forms\Components\Radio::make('profile')
                             ->label('What should this backup include?')
                             ->options([
-                                BackupRun::PROFILE_FULL          => 'Full — database + files (recommended before an update)',
+                                BackupRun::PROFILE_FULL => 'Full — database + files (recommended before an update)',
                                 BackupRun::PROFILE_DATABASE_ONLY => 'Database only — fastest, smallest',
-                                BackupRun::PROFILE_FILES_ONLY    => 'Files only — uploads/config, no database',
+                                BackupRun::PROFILE_FILES_ONLY => 'Files only — uploads/config, no database',
                             ])
                             ->descriptions([
-                                BackupRun::PROFILE_FULL          => 'Everything needed for full disaster recovery.',
+                                BackupRun::PROFILE_FULL => 'Everything needed for full disaster recovery.',
                                 BackupRun::PROFILE_DATABASE_ONLY => 'Just the database. Runs in seconds on most sites.',
-                                BackupRun::PROFILE_FILES_ONLY    => 'Application files only (vendor/ is excluded — reinstall via composer on restore).',
+                                BackupRun::PROFILE_FILES_ONLY => 'Application files only (vendor/ is excluded — reinstall via composer on restore).',
                             ])
                             ->default(BackupRun::PROFILE_FULL)
                             ->required(),
@@ -330,7 +341,7 @@ public static function getNavigationSort(): ?int
                             return;
                         }
                         $this->runningBackupId = $run->id;
-                        $this->backupProgress  = [];
+                        $this->backupProgress = [];
                         $this->audit('run', $run);
                         Notification::make()->title('Backup started')->success()->send();
                     }),
@@ -362,7 +373,7 @@ public static function getNavigationSort(): ?int
 
         if ($run->isTerminal()) {
             $this->runningBackupId = null;
-            $this->backupProgress  = [];
+            $this->backupProgress = [];
 
             if ($run->status === BackupRun::STATUS_SUCCESS) {
                 Notification::make()->title('Backup complete')->success()->send();
@@ -388,6 +399,52 @@ public static function getNavigationSort(): ?int
                 Notification::make()->title('Restore queued')
                     ->body('Files will be restored to storage/app/restore/run-'.$record->getKey().'.')
                     ->success()->send();
+            });
+    }
+
+    /**
+     * The destructive counterpart to restoreAction() above: files-only
+     * restore there never touches the live install, extracting instead to
+     * storage/app/restore/. This one actually swaps a chosen backup's files
+     * AND database into production — an intentional downgrade (e.g. a
+     * release turns out to have a bad bug discovered days later), which
+     * previously had no self-service path at all (only UpdateApplier's
+     * automatic same-attempt rollback existed). Same `restore backups`
+     * permission — do not invent a new one for this.
+     */
+    private function restoreFullAction(): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make('restoreFull')
+            ->label('Restore into production (files + database)')
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('danger')
+            ->authorize('restore backups')
+            // Only a PROFILE_FULL run actually has both database and file
+            // parts — see ProductionRestoreService::restore()'s matching
+            // guard for what a files_only/database_only backup would
+            // otherwise do here (a silent skip or a wasted destructive
+            // write-then-rollback, neither of which this action should ever
+            // even be offered for).
+            ->visible(fn (BackupRun $record): bool => $this->isRestorable($record) && $record->profile === BackupRun::PROFILE_FULL)
+            ->requiresConfirmation()
+            ->modalHeading('Restore this backup into production?')
+            ->modalDescription(
+                "This REPLACES live files and the database with this backup's contents. ".
+                'A safety backup of the CURRENT state is taken first and the site enters '.
+                'maintenance mode during the restore, so a failed restore can itself be '.
+                'reversed. vendor/ is usually not included in a backup — if dependencies '.
+                'changed since this backup was taken, you may need to run `composer install` '.
+                'afterward. This cannot be undone except by restoring another backup.'
+            )
+            ->form($this->reauthForm('Restoring into production is destructive. Confirm your password.'))
+            ->action(function (BackupRun $record, array $data): void {
+                $this->reauthenticate($data);
+                RunProductionRestoreJob::dispatch($record->getKey(), auth('admin')->id());
+                $this->audit('restore_full_production', $record);
+                Notification::make()
+                    ->title('Restore into production started')
+                    ->body('The site is in maintenance mode until this finishes. Check Update History for the outcome.')
+                    ->warning()->send();
             });
     }
 
@@ -427,7 +484,7 @@ public static function getNavigationSort(): ?int
 
     private function isRestorable(BackupRun $record): bool
     {
-        return $record->status === BackupRun::STATUS_SUCCESS && ! ($record->meta['pruned_at'] ?? null);
+        return $record->isRestorable();
     }
 
     private function allPartsLocal(BackupRun $record): bool
@@ -437,7 +494,7 @@ public static function getNavigationSort(): ?int
         );
     }
 
-    /** @return array<int,\Filament\Forms\Components\Component> */
+    /** @return array<int,Component> */
     private function reauthForm(string $description): array
     {
         return [
@@ -475,8 +532,8 @@ public static function getNavigationSort(): ?int
     private function audit(string $action, ?BackupRun $record, array $context = []): void
     {
         Log::channel(config('updates.log_channel', 'stack'))->notice('backup.'.$action, array_merge([
-            'admin'   => auth('admin')->id(),
-            'run'     => $record?->getKey(),
+            'admin' => auth('admin')->id(),
+            'run' => $record?->getKey(),
             'profile' => $record?->profile,
         ], $context));
 
@@ -491,7 +548,7 @@ public static function getNavigationSort(): ?int
         ]);
     }
 
-    private function streamZip(BackupRun $record): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    private function streamZip(BackupRun $record): BinaryFileResponse
     {
         $zipPath = tempnam(sys_get_temp_dir(), 'oebk').'.zip';
         $zip = new \ZipArchive;
