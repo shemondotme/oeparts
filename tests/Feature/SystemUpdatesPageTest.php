@@ -201,4 +201,31 @@ class SystemUpdatesPageTest extends TestCase
         $this->assertCount(3, $component->instance()->recentUpdates());
         $component->assertSeeHtml(\App\Filament\Pages\System\UpdateHistoryPage::getUrl());
     }
+
+    /**
+     * Pre-Phase-22 backlog sweep (2026-09-23). This strip rendered a restore
+     * row identically to a normal update ("1.0.19 → restore-42", a plain
+     * status pill) with nothing distinguishing it — cosmetically confusing,
+     * unlike UpdateHistoryPage's own dedicated Restore/Update badge column.
+     */
+    #[Test]
+    public function a_restore_row_in_the_recent_strip_is_labeled_restore(): void
+    {
+        $this->fakeUpdateAvailable();
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        UpdateHistory::create([
+            'from_version' => '1.0.19',
+            'to_version' => 'restore-42',
+            'type' => UpdateHistory::TYPE_RESTORE,
+            'channel' => 'stable',
+            'status' => UpdateHistory::STATUS_SUCCESS,
+            'step' => 'restore',
+            'started_at' => now(),
+            'finished_at' => now(),
+        ]);
+
+        Livewire::test(SystemUpdates::class)->assertSeeHtml('Restore');
+    }
 }

@@ -371,6 +371,9 @@
                     @endphp
                     <div class="op-upd-row" wire:key="upd-row-{{ $h->id }}">
                         <span class="font-mono text-sm" style="color: var(--color-text-primary, #111827);">
+                            @if($h->type === \App\Models\UpdateHistory::TYPE_RESTORE)
+                                <span class="op-status-pill op-status-pill-warn" style="margin-right: 6px;">Restore</span>
+                            @endif
                             {{ $h->from_version }} &rarr; {{ $h->to_version }}
                         </span>
                         <span class="op-status-pill {{ $tone }}">{{ str_replace('_', ' ', $h->status) }}</span>
