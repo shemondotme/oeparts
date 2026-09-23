@@ -143,6 +143,50 @@ class BulkGenerateProductSeoMetaTest extends TestCase
         $this->assertSame('Original description.', $meta->meta_description);
     }
 
+    /**
+     * Phase 19 (Import/Export Functionality). No transaction wraps
+     * chunkById()'s per-chunk writes (by design — a routine, re-runnable
+     * admin action, same reasoning as ImportRedirectsFromCsv's identical
+     * choice). Proves that's safe: simulates a crash partway (only A and B
+     * "succeeded" before it) by calling handle() with just those two, then
+     * simulates the natural admin recovery — re-selecting the FULL
+     * original set (they don't know exactly where it stopped) and
+     * re-triggering. Must not create a duplicate SeoMeta row for the
+     * already-done products, and must still pick up the one that never ran.
+     */
+    #[Test]
+    public function a_rerun_after_a_partial_failure_completes_the_rest_without_duplicating_already_done_rows(): void
+    {
+        $productA = $this->makeProduct(['oem_number' => 'AAA111', 'normalized_oem' => 'AAA111']);
+        $productB = $this->makeProduct(['oem_number' => 'BBB222', 'normalized_oem' => 'BBB222']);
+        $productC = $this->makeProduct(['oem_number' => 'CCC333', 'normalized_oem' => 'CCC333']);
+
+        (new BulkGenerateProductSeoMeta(
+            productIds: [$productA->id, $productB->id],
+            titleTemplate: 'Buy {oem}',
+            descriptionTemplate: null,
+            overwriteExisting: true,
+            triggeredBy: 'Test Admin',
+        ))->handle();
+
+        (new BulkGenerateProductSeoMeta(
+            productIds: [$productA->id, $productB->id, $productC->id],
+            titleTemplate: 'Buy {oem}',
+            descriptionTemplate: null,
+            overwriteExisting: true,
+            triggeredBy: 'Test Admin',
+        ))->handle();
+
+        foreach ([$productA, $productB, $productC] as $product) {
+            $this->assertSame(
+                1,
+                SeoMeta::where('metable_type', Product::class)->where('metable_id', $product->id)->count(),
+                "expected exactly one SeoMeta row for product {$product->id}, not a duplicate"
+            );
+        }
+        $this->assertDatabaseHas('seo_meta', ['metable_id' => $productC->id, 'meta_title' => 'Buy CCC333']);
+    }
+
     #[Test]
     public function the_bulk_action_dispatches_the_job_with_the_selected_product_ids(): void
     {

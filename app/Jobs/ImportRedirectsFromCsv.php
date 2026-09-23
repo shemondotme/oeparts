@@ -68,6 +68,18 @@ class ImportRedirectsFromCsv implements ShouldQueue
                 return;
             }
 
+            // Strip a UTF-8 BOM from the first header cell. fgetcsv() does
+            // not strip it, and Excel's "CSV UTF-8" export — a completely
+            // normal way for an admin to have edited a round-tripped export
+            // before re-uploading it — always prepends one. Left in place,
+            // it silently breaks matching the very first column (from_url)
+            // even though the file is otherwise entirely valid, producing a
+            // confusing "Missing required columns" error for a file that
+            // opens and looks correct in every spreadsheet program.
+            if (isset($header[0])) {
+                $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header[0]);
+            }
+
             // Case/whitespace-tolerant header matching — the exact column
             // names AdminUi::exportCsvBulkAction() produces for Redirects
             // ("From URL", "To URL", "Type", "Active"), so a round-tripped

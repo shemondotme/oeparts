@@ -279,6 +279,7 @@ class RedirectResource extends Resource
                     ->disk((string) config('imports.disk', 'local'))
                     ->directory(((string) config('imports.path', 'imports')).'/redirects')
                     ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
+                    ->maxSize((int) config('imports.redirects_max_upload_kb', 2048))
                     ->required()
                     ->helperText('Columns: from_url, to_url, type (301 or 302), is_active (1/0). Header row required — matches what "Export Redirects" produces.'),
                 Forms\Components\Toggle::make('overwrite_existing')

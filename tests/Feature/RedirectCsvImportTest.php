@@ -228,6 +228,107 @@ class RedirectCsvImportTest extends TestCase
         Bus::assertDispatched(ImportRedirectsFromCsv::class, fn ($job) => $job->overwriteExisting === true);
     }
 
+    /**
+     * Phase 19 (Import/Export Functionality). Excel's "CSV UTF-8" export —
+     * a completely normal way for an admin to have edited a round-tripped
+     * export before re-uploading it — always prepends a UTF-8 BOM, which
+     * fgetcsv() does not strip. Confirmed live (before the fix) that this
+     * silently broke matching the first column: strtolower(trim("\xEF\xBB
+     * \xBFfrom_url")) !== "from_url", so a perfectly valid file produced
+     * "Missing required columns" — the fix strips it from the first header
+     * cell specifically.
+     */
+    #[Test]
+    public function a_utf8_bom_prefixed_header_still_imports_correctly(): void
+    {
+        $path = $this->writeCsv(
+            "\xEF\xBB\xBFfrom_url,to_url,type,is_active\n"
+            ."old-page,/new-page,301,1\n"
+        );
+
+        (new ImportRedirectsFromCsv($path, 'Test Admin'))->handle(new RedirectLoopDetector);
+
+        $this->assertDatabaseHas('redirects', ['from_url' => 'old-page', 'to_url' => '/new-page']);
+    }
+
+    #[Test]
+    public function an_empty_file_is_reported_cleanly_not_as_a_crash(): void
+    {
+        $path = $this->writeCsv('');
+
+        (new ImportRedirectsFromCsv($path, 'Test Admin'))->handle(new RedirectLoopDetector);
+
+        $this->assertSame(0, Redirect::count());
+        // No exception propagated — notifyResult() ran instead, matching
+        // the "malformed input never crashes the job" contract the method
+        // already documents for its other early-return paths.
+    }
+
+    #[Test]
+    public function a_file_missing_both_required_columns_is_reported_cleanly_not_as_a_crash(): void
+    {
+        $path = $this->writeCsv("some_column,another_column\nfoo,bar\n");
+
+        (new ImportRedirectsFromCsv($path, 'Test Admin'))->handle(new RedirectLoopDetector);
+
+        $this->assertSame(0, Redirect::count());
+    }
+
+    /**
+     * Phase 19 (Import/Export Functionality). No DB transaction wraps the
+     * per-row loop (by design — a routine, re-runnable action per the
+     * job's own docblock, not the Backup Engine's chunked-FSM machinery).
+     * Proves that design choice is actually SAFE: a crash partway through
+     * leaves earlier rows committed (no rollback), and simply re-running
+     * the same file converges to the fully-correct end state — the
+     * default overwriteExisting=false behavior means an already-imported
+     * row is safely skipped, not duplicated, on the re-run.
+     */
+    #[Test]
+    public function a_mid_import_crash_leaves_earlier_rows_committed_and_a_rerun_safely_completes_the_rest(): void
+    {
+        $csv = "from_url,to_url\n"
+            ."row-one,/dest-one\n"
+            ."row-two,/dest-two\n"
+            ."row-three,/dest-three\n";
+
+        $flakyDetector = new class extends RedirectLoopDetector
+        {
+            private int $calls = 0;
+
+            public function findLoop(string $from, string $to, ?int $ignoreId = null): ?string
+            {
+                $this->calls++;
+                if ($this->calls === 2) {
+                    throw new \RuntimeException('simulated mid-import DB blip');
+                }
+
+                return parent::findLoop($from, $to, $ignoreId);
+            }
+        };
+
+        $path = $this->writeCsv($csv);
+
+        try {
+            (new ImportRedirectsFromCsv($path, 'Test Admin'))->handle($flakyDetector);
+            $this->fail('Expected the simulated blip to propagate out of handle().');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('simulated mid-import DB blip', $e->getMessage());
+        }
+
+        $this->assertDatabaseHas('redirects', ['from_url' => 'row-one']);
+        $this->assertDatabaseMissing('redirects', ['from_url' => 'row-two']);
+        $this->assertDatabaseMissing('redirects', ['from_url' => 'row-three']);
+
+        // Natural recovery: the admin re-uploads the same file.
+        $rerunPath = $this->writeCsv($csv);
+        (new ImportRedirectsFromCsv($rerunPath, 'Test Admin'))->handle(new RedirectLoopDetector);
+
+        $this->assertSame(1, Redirect::where('from_url', 'row-one')->count());
+        $this->assertDatabaseHas('redirects', ['from_url' => 'row-two']);
+        $this->assertDatabaseHas('redirects', ['from_url' => 'row-three']);
+    }
+
     #[Test]
     public function the_template_download_action_streams_a_valid_starting_csv(): void
     {

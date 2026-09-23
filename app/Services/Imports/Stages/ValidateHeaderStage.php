@@ -52,6 +52,16 @@ class ValidateHeaderStage implements ImportStage
             throw new ImportException('CSV file appears to be empty.');
         }
 
+        // Strip a UTF-8 BOM from the first header cell. fgetcsv() does not
+        // strip it and trim() does not treat it as whitespace — Excel's
+        // "CSV UTF-8" export always prepends one, which would otherwise
+        // silently fail to match the first REQUIRED_COLUMNS entry even
+        // though the file is entirely valid (same bug independently found
+        // and fixed in ImportRedirectsFromCsv, Phase 19).
+        if (isset($rawHeaders[0])) {
+            $rawHeaders[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $rawHeaders[0]);
+        }
+
         $headers = array_map('trim', $rawHeaders);
         $errors = $this->importService->validateHeaders($headers);
         if (! empty($errors)) {

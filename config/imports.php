@@ -30,6 +30,16 @@ return [
     'disk' => env('OE_IMPORT_DISK', 'local'),
     'path' => 'imports',
 
+    // Redirect CSV import (ImportRedirectsFromCsv) is a DELIBERATELY separate,
+    // much smaller cap than max_upload_kb above — unlike the chunked/
+    // resumable product importer, it's a single non-resumable pass with a
+    // fixed 300s job timeout and up to ~10 DB queries per row (existing-row
+    // lookup, reverse-pair check, RedirectLoopDetector's chain walk), so a
+    // multi-hundred-MB file risks a mid-timeout SIGKILL rather than a clean
+    // failure. 2MB comfortably covers the "a few thousand rows" scale this
+    // job is actually built for.
+    'redirects_max_upload_kb' => (int) env('OE_IMPORT_REDIRECTS_MAX_UPLOAD_KB', 2048),
+
     // Ordered pipeline of ImportStage classes per profile — same seam as
     // config('backup.stages'). Only one profile today; kept as a map for
     // consistency and in case a distinct pipeline is ever needed.

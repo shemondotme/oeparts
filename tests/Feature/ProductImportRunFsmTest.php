@@ -245,6 +245,38 @@ class ProductImportRunFsmTest extends TestCase
         $this->assertStringContainsString('missing column', (string) $finished->error);
     }
 
+    /**
+     * Phase 19 (Import/Export Functionality). Excel's "CSV UTF-8" export —
+     * a completely normal way for an admin to have edited a round-tripped
+     * export before re-uploading it — always prepends a UTF-8 BOM, which
+     * fgetcsv()/trim() do not strip. Before the fix, this silently broke
+     * matching the very first required column (oem_number, always the
+     * first column in this app's template), failing the run with a
+     * confusing "missing column" error for a file that opens and looks
+     * entirely correct in every spreadsheet program. Same bug class
+     * independently found and fixed in ImportRedirectsFromCsv.
+     */
+    #[Test]
+    public function a_utf8_bom_prefixed_header_does_not_fail_the_run(): void
+    {
+        $this->seedCatalog();
+        $admin = Admin::factory()->create();
+        $path = $this->putCsv('imports/test.csv', [
+            ['oem_number', 'manufacturer_slug', 'condition_slug', 'price', 'is_in_stock'],
+            ['OEM1', 'bmw', 'new', '10.00', '1'],
+        ]);
+        // putCsv() writes via fputcsv(), which never adds a BOM — prepend
+        // one directly onto the stored file to fully simulate a real
+        // Excel-exported upload.
+        Storage::disk('local')->put($path, "\xEF\xBB\xBF".Storage::disk('local')->get($path));
+
+        $run = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
+        $finished = $this->manager()->run($run);
+
+        $this->assertSame(ProductImportRun::STATUS_SUCCESS, $finished->status);
+        $this->assertSame(1, $finished->created_count);
+    }
+
     #[Test]
     public function completion_writes_a_bulk_update_log_row_and_invalidates_caches(): void
     {
