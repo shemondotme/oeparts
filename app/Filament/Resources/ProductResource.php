@@ -622,7 +622,7 @@ class ProductResource extends Resource
                                 BulkUpdateProductStockStatus::dispatch(
                                     $records->pluck('id')->all(),
                                     true,
-                                    auth('admin')->user()?->name ?? 'An admin'
+                                    auth('admin')->user()->name ?? 'An admin'
                                 );
 
                                 Notification::make()
@@ -666,7 +666,7 @@ class ProductResource extends Resource
                                 BulkUpdateProductStockStatus::dispatch(
                                     $records->pluck('id')->all(),
                                     false,
-                                    auth('admin')->user()?->name ?? 'An admin'
+                                    auth('admin')->user()->name ?? 'An admin'
                                 );
 
                                 Notification::make()
@@ -728,7 +728,7 @@ class ProductResource extends Resource
                                 $titleTemplate !== '' ? $titleTemplate : null,
                                 $descriptionTemplate !== '' ? $descriptionTemplate : null,
                                 (bool) ($data['overwrite_existing'] ?? false),
-                                auth('admin')->user()?->name ?? 'An admin'
+                                auth('admin')->user()->name ?? 'An admin'
                             );
 
                             Notification::make()
