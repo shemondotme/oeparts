@@ -16,6 +16,7 @@ use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SyncRuntimeSettingsIntoConfig;
 use App\Http\Middleware\TrackUtm;
 use App\Http\Middleware\TriggerDueScheduledTasks;
+use App\Http\Middleware\VerifySameOriginForStatefulCookies;
 use App\Models\NotFoundLog;
 use App\Providers\EventServiceProvider;
 use App\Support\LocaleRegistry;
@@ -58,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'csp' => ContentSecurityPolicy::class,
             'honeypot' => ProtectAgainstSpam::class,
             'auth.sanctum' => EnsureFrontendRequestsAreStateful::class,
+            'verify.same-origin' => VerifySameOriginForStatefulCookies::class,
         ]);
 
         // Off by default (no behavior change for direct-to-PHP-FPM deployments).

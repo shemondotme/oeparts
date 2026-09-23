@@ -64,7 +64,11 @@ Route::middleware(['throttle:api', 'maintenance'])->group(function () {
     Route::get('/sections/landing', [SectionController::class, 'landing'])->name('api.sections.landing');
 
     // ─── Cart API (supports guest via cookie + optional Sanctum auth) ──
-    Route::prefix('cart')->group(function () {
+    // verify.same-origin: defense-in-depth CSRF mitigation for the
+    // guest_token cookie identifying an unauthenticated cart — see
+    // VerifySameOriginForStatefulCookies's own docblock for why this,
+    // not Sanctum's stateful CSRF, is the right tool here.
+    Route::middleware('verify.same-origin')->prefix('cart')->group(function () {
         Route::get('/summary', [CartController::class, 'summary'])->name('api.cart.summary');
         Route::post('/add', [CartController::class, 'add'])->name('api.cart.add');
         Route::put('/update/{itemId}', [CartController::class, 'update'])->name('api.cart.update');
@@ -74,7 +78,7 @@ Route::middleware(['throttle:api', 'maintenance'])->group(function () {
     });
 
     // ─── Checkout API (supports guest + optional Sanctum auth) ──────
-    Route::prefix('checkout')->group(function () {
+    Route::middleware('verify.same-origin')->prefix('checkout')->group(function () {
         Route::post('/start', [CheckoutController::class, 'start'])->name('api.checkout.start');
         Route::get('/{checkoutId}', [CheckoutController::class, 'show'])->name('api.checkout.show');
         Route::post('/{checkoutId}/step1', [CheckoutController::class, 'step1'])->name('api.checkout.step1');
