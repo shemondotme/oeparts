@@ -80,7 +80,7 @@ class CartService
      */
     public function addItem(Cart $cart, int $productId, int $quantity = 1): CartItem
     {
-        return DB::transaction(function () use ($cart, $productId, $quantity) {
+        $item = DB::transaction(function () use ($cart, $productId, $quantity) {
             $product = Product::lockForUpdate()->findOrFail($productId);
 
             if (! $product->is_in_stock) {
@@ -102,7 +102,6 @@ class CartService
                 $existingItem->update([
                     'quantity' => $existingItem->quantity + $quantity,
                 ]);
-                Cache::forget("cart_summary:{$cart->id}");
 
                 return $existingItem;
             }
@@ -112,16 +111,26 @@ class CartService
                 throw new \RuntimeException("Cart cannot have more than {$maxItems} items.");
             }
 
-            $newItem = CartItem::create([
+            return CartItem::create([
                 'cart_id' => $cart->id,
                 'product_id' => $productId,
                 'quantity' => $quantity,
                 'price_at_add' => $product->price,
             ]);
-            Cache::forget("cart_summary:{$cart->id}");
-
-            return $newItem;
         });
+
+        // Invalidate AFTER the transaction commits, not inside it. Forgetting
+        // mid-transaction leaves a window, between the forget and the actual
+        // commit, where a concurrent read (the navbar's own background
+        // cart-count fetch on the very page the user is on is enough) still
+        // sees the pre-write DB state, computes a stale/empty summary, and
+        // re-populates the cache with it right after this forget already
+        // ran — silently undoing the invalidation for the full 60s TTL. This
+        // was the guest "add to cart then immediately view /cart shows
+        // empty" race ([[project_bulletproof_testing_2026_09]]).
+        Cache::forget("cart_summary:{$cart->id}");
+
+        return $item;
     }
 
     /**
