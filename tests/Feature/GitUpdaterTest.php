@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Services\Updates\Exceptions\UpdateException;
 use App\Services\Updates\GitUpdater;
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 /**
@@ -51,7 +52,7 @@ class GitUpdaterTest extends TestCase
 
     private function git(array $args): void
     {
-        $process = new \Symfony\Component\Process\Process(array_merge(['git'], $args), $this->root);
+        $process = new Process(array_merge(['git'], $args), $this->root);
         $process->run();
         if (! $process->isSuccessful()) {
             $this->fail('git '.implode(' ', $args).' failed: '.$process->getErrorOutput());
@@ -63,7 +64,7 @@ class GitUpdaterTest extends TestCase
     {
         $bare = $this->root.'-origin.git';
         @mkdir($bare, 0775, true);
-        (new \Symfony\Component\Process\Process(['git', 'init', '--bare'], $bare))->mustRun();
+        (new Process(['git', 'init', '--bare'], $bare))->mustRun();
 
         $this->git(['init']);
         $this->git(['config', 'user.email', 'test@test.local']);
@@ -244,7 +245,7 @@ class GitUpdaterTest extends TestCase
         // What v1.1.0 actually points at, per the real repo — this is what a
         // signed release manifest's git_commit_sha would carry.
         $this->git(['fetch', '--tags', 'origin']);
-        $process = new \Symfony\Component\Process\Process(['git', 'rev-list', '-n', '1', 'v1.1.0'], $this->root);
+        $process = new Process(['git', 'rev-list', '-n', '1', 'v1.1.0'], $this->root);
         $process->mustRun();
         $expected = trim($process->getOutput());
 
@@ -266,6 +267,33 @@ class GitUpdaterTest extends TestCase
         $this->expectException(UpdateException::class);
         $this->expectExceptionMessageMatches('/does not match the signed release manifest/');
         (new GitUpdater)->checkout('1.1.0', $wrongSha);
+    }
+
+    /**
+     * PreflightService::checkPhpVersion()/checkExtensions() already validate
+     * the release MANIFEST's declared min_php/required_extensions before an
+     * apply starts — this covers the narrower gap where the manifest omitted
+     * a requirement the tag's ACTUAL composer.json now needs.
+     * composerInstall() runs `composer check-platform-reqs` first so that
+     * mismatch surfaces cleanly here, before `composer install` itself.
+     */
+    #[Test]
+    public function composer_install_fails_fast_on_an_unmet_platform_requirement(): void
+    {
+        @mkdir($this->root, 0775, true);
+        // An impossible PHP requirement — check-platform-reqs must fail on
+        // this before `composer install` ever runs.
+        file_put_contents($this->root.'/composer.json', json_encode([
+            'name' => 'oe/gitupdater-test', 'require' => ['php' => '>=99.0'],
+        ]));
+        file_put_contents($this->root.'/composer.lock', json_encode([
+            'content-hash' => 'x', 'packages' => [], 'packages-dev' => [], 'platform' => ['php' => '>=99.0'],
+        ]));
+
+        $this->expectException(UpdateException::class);
+        $this->expectExceptionMessageMatches('/check-platform-reqs/');
+
+        (new GitUpdater)->composerInstall();
     }
 
     #[Test]

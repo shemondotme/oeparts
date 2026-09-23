@@ -75,15 +75,15 @@ class UpdateChecker
     {
         $current = $this->currentVersion();
         $channel = (string) settings('updates.channel', config('updates.channel', 'stable'));
-        $now     = now()->toIso8601String();
+        $now = now()->toIso8601String();
 
         // Prefer the catalog (enables sequential-path resolution); fall back to
         // the single manifest.
-        $catalog  = $this->fetch(config('updates.check.catalog_url'));
+        $catalog = $this->fetch(config('updates.check.catalog_url'), config('updates.check.catalog_url_fallback'));
         $releases = is_array($catalog['releases'] ?? null) ? $catalog['releases'] : null;
 
         if ($releases === null) {
-            $manifest = $this->fetch(config('updates.check.manifest_url'));
+            $manifest = $this->fetch(config('updates.check.manifest_url'), config('updates.check.manifest_url_fallback'));
 
             if ($manifest === null) {
                 return new UpdateStatus(
@@ -118,7 +118,7 @@ class UpdateChecker
 
         // Ascending by version; latest = last.
         usort($releases, fn ($a, $b) => version_compare((string) $a['version'], (string) $b['version']));
-        $latest        = end($releases);
+        $latest = end($releases);
         $latestVersion = (string) $latest['version'];
 
         // 'unknown' (version.json missing/unparsable) previously forced
@@ -138,7 +138,7 @@ class UpdateChecker
             );
         }
 
-        $available   = version_compare($latestVersion, $current, '>');
+        $available = version_compare($latestVersion, $current, '>');
         $upgradePath = $available ? $this->resolveUpgradePath($current, $releases) : [];
 
         // The release an apply should actually target — upgradePath[0], NOT
@@ -150,7 +150,7 @@ class UpdateChecker
         // compatibility gate (it only receives whatever manifest it's given).
         $nextRelease = null;
         if ($upgradePath !== []) {
-            $matches     = array_filter($releases, fn ($r) => (string) $r['version'] === $upgradePath[0]);
+            $matches = array_filter($releases, fn ($r) => (string) $r['version'] === $upgradePath[0]);
             $nextRelease = $matches !== [] ? (array) reset($matches) : null;
         }
 
@@ -184,7 +184,7 @@ class UpdateChecker
      */
     private function resolveUpgradePath(string $current, array $releasesAsc): array
     {
-        $path   = [];
+        $path = [];
         $cursor = $current;
 
         while (true) {
@@ -200,7 +200,7 @@ class UpdateChecker
             }
 
             usort($reachable, fn ($a, $b) => version_compare((string) $a['version'], (string) $b['version']));
-            $next   = end($reachable);
+            $next = end($reachable);
             $path[] = (string) $next['version'];
             $cursor = (string) $next['version'];
         }
@@ -208,8 +208,12 @@ class UpdateChecker
         return $path;
     }
 
-    /** Fetch + JSON-decode a URL, returning null on any failure (never throws). */
-    private function fetch(?string $url): ?array
+    /**
+     * Fetch + JSON-decode a URL, returning null on any failure (never
+     * throws). If $fallbackUrl is set and the primary fetch fails, tries it
+     * once — no further chaining beyond that one extra attempt.
+     */
+    private function fetch(?string $url, ?string $fallbackUrl = null): ?array
     {
         if (empty($url)) {
             return null;
@@ -220,18 +224,24 @@ class UpdateChecker
                 ->acceptJson()
                 ->get($url);
 
-            if (! $response->successful()) {
-                return null;
+            if ($response->successful()) {
+                $json = $response->json();
+                if (is_array($json)) {
+                    return $json;
+                }
             }
-
-            $json = $response->json();
-
-            return is_array($json) ? $json : null;
         } catch (\Throwable $e) {
             Log::channel(config('updates.log_channel', 'stack'))
                 ->warning('Update check failed: '.$e->getMessage(), ['url' => $url]);
-
-            return null;
         }
+
+        if (! empty($fallbackUrl)) {
+            Log::channel(config('updates.log_channel', 'stack'))
+                ->notice('Update check falling back to secondary URL.', ['primary' => $url, 'fallback' => $fallbackUrl]);
+
+            return $this->fetch($fallbackUrl);
+        }
+
+        return null;
     }
 }

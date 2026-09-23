@@ -19,10 +19,18 @@ return [
     // Where the updater looks for new releases (raw over HTTPS — no API rate limit).
     'check' => [
         'manifest_url' => env('OE_UPDATE_CHECK_URL', 'https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json'),
-        'catalog_url'  => env('OE_UPDATE_CATALOG_URL', 'https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json'),
-        'frequency'    => env('OE_UPDATE_CHECK_FREQUENCY', 'daily'), // scheduled cadence
-        'cache_ttl'    => (int) env('OE_UPDATE_CHECK_TTL', 21600),   // lazy-check cache (6h)
-        'timeout'      => (int) env('OE_UPDATE_CHECK_TIMEOUT', 10),  // seconds
+        'catalog_url' => env('OE_UPDATE_CATALOG_URL', 'https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json'),
+        // Optional second URL, tried only if the primary fetch fails (unset
+        // by default — purely opt-in). No further fallback chain beyond this
+        // one extra attempt; UpdateChecker::fetch() already degrades
+        // gracefully (logs + surfaces "Could not reach the update server")
+        // when both fail, so a sustained outage of the primary host is
+        // covered, not eliminated.
+        'manifest_url_fallback' => env('OE_UPDATE_CHECK_URL_FALLBACK'),
+        'catalog_url_fallback' => env('OE_UPDATE_CATALOG_URL_FALLBACK'),
+        'frequency' => env('OE_UPDATE_CHECK_FREQUENCY', 'daily'), // scheduled cadence
+        'cache_ttl' => (int) env('OE_UPDATE_CHECK_TTL', 21600),   // lazy-check cache (6h)
+        'timeout' => (int) env('OE_UPDATE_CHECK_TIMEOUT', 10),  // seconds
     ],
 
     // Opt-in auto-apply of security-flagged patch releases (OFF by default).
@@ -33,9 +41,9 @@ return [
     'auto_apply_security' => env('OE_UPDATE_AUTO_SECURITY', false),
 
     'download' => [
-        'timeout'       => (int) env('OE_UPDATE_DOWNLOAD_TIMEOUT', 300),
-        'retries'       => (int) env('OE_UPDATE_DOWNLOAD_RETRIES', 3),
-        'backoff'       => [1, 3, 5], // seconds between retries (resumable HTTP Range)
+        'timeout' => (int) env('OE_UPDATE_DOWNLOAD_TIMEOUT', 300),
+        'retries' => (int) env('OE_UPDATE_DOWNLOAD_RETRIES', 3),
+        'backoff' => [1, 3, 5], // seconds between retries (resumable HTTP Range)
         'verify_sha256' => true,      // never disable in production (rule #11-security)
     ],
 
@@ -62,7 +70,7 @@ return [
     // App-independent recovery console (public/oe-recovery.php). Disabled unless a
     // key is set (opt-in-armed). See CLAUDE.md rule #47.
     'recovery' => [
-        'enabled'      => (bool) env('OE_RECOVERY_KEY'),
+        'enabled' => (bool) env('OE_RECOVERY_KEY'),
         'ip_allowlist' => array_values(array_filter(array_map('trim', explode(',', (string) env('OE_RECOVERY_IP_ALLOWLIST', ''))))),
     ],
 
@@ -79,7 +87,7 @@ return [
         // Free disk needed ≈ zip + extract + backup ⇒ size_bytes × this multiplier.
         'disk_multiplier' => (int) env('OE_UPDATE_DISK_MULTIPLIER', 3),
         // Absolute floor of free space required regardless of release size.
-        'min_free_bytes'  => (int) env('OE_UPDATE_MIN_FREE_BYTES', 200 * 1024 * 1024), // 200 MB
+        'min_free_bytes' => (int) env('OE_UPDATE_MIN_FREE_BYTES', 200 * 1024 * 1024), // 200 MB
     ],
 
     // Post-swap boot steps (Chunk 3.4) — run on a FRESH request after the file swap,
@@ -167,6 +175,15 @@ return [
     // Framework-independent state files (dir-rename map, arm flag, single-update lock).
     'state_path' => storage_path('app/updates'),
 
+    // A row still non-terminal this long after its last checkpoint write
+    // (updated_at, bumped by every advance() step) is presumed abandoned —
+    // e.g. the initiating admin closed the tab mid-poll. Deliberately more
+    // generous than backup.stale_after_seconds' 1h default: a single update
+    // legitimately chains backup+download+extract+swap+composer/migrate+
+    // verify, so it can validly run far longer than a backup alone. See
+    // App\Services\Updates\UpdateWatchdog / oeparts:update:cleanup-stale.
+    'stale_after_seconds' => (int) env('OE_UPDATE_STALE_AFTER', 7200), // 2h
+
     // Dedicated log channel (config/logging.php).
     'log_channel' => 'updates',
 
@@ -209,6 +226,6 @@ return [
         // Release download URL template (Chunk 5.2). {version} = SemVer, {asset} = zip name.
         // Versioned (not /latest/) so the updater can resolve a sequential upgrade path.
         'release_url_template' => env('OE_RELEASE_URL', 'https://github.com/shemondotme/oeparts/releases/download/v{version}/{asset}'),
-        'asset_name'           => 'oeparts-{version}.zip',
+        'asset_name' => 'oeparts-{version}.zip',
     ],
 ];

@@ -52,8 +52,8 @@ class ContentSecurityPolicy
         // 'https://checkout-demo.airwallex.com/' violates ... frame-src", and
         // the dropin element's createElement() call returns null as a result
         // (same failure mode as the o11y-demo connect-src gap below).
-        $airwallexScript  = 'https://checkout.airwallex.com https://checkout-demo.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
-        $airwallexFrame   = 'https://checkout.airwallex.com https://checkout-demo.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
+        $airwallexScript = 'https://checkout.airwallex.com https://checkout-demo.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
+        $airwallexFrame = 'https://checkout.airwallex.com https://checkout-demo.airwallex.com https://static.airwallex.com https://static-demo.airwallex.com';
         // o11y[-demo].airwallex.com is the Elements SDK's own telemetry beacon
         // (airtracker/logs) — confirmed via a real live sandbox card checkout
         // (Playwright, real Airwallex sandbox credentials) that blocking it
@@ -78,10 +78,10 @@ class ContentSecurityPolicy
         // load a browser script, call out to their own analytics endpoints, and
         // (GTM only) render a <noscript> fallback iframe. Grounded in each vendor's
         // documented snippet origins.
-        $analyticsScript  = 'https://www.googletagmanager.com https://connect.facebook.net';
+        $analyticsScript = 'https://www.googletagmanager.com https://connect.facebook.net';
         $analyticsConnect = 'https://www.google-analytics.com https://analytics.google.com '
             .'https://www.googletagmanager.com https://www.facebook.com';
-        $analyticsFrame   = 'https://www.googletagmanager.com';
+        $analyticsFrame = 'https://www.googletagmanager.com';
 
         // Crisp Chat (integrations.crisp_website_id) — the widget loads its own
         // script bundle, opens a real-time WebSocket relay, and self-hosts its
@@ -91,9 +91,22 @@ class ContentSecurityPolicy
         // this is the exact reason the master workflow deferred this
         // integration; validate in a real browser before go-live, same
         // caveat already carried for the Airwallex CSP block above.
-        $crispScript  = 'https://client.crisp.chat';
+        $crispScript = 'https://client.crisp.chat';
         $crispConnect = 'https://client.crisp.chat wss://client.relay.crisp.chat';
-        $crispFont    = 'https://client.crisp.chat';
+        $crispFont = 'https://client.crisp.chat';
+
+        // Paysera (checkout.blade.php's payment form) is a classic, non-AJAX
+        // form POST to our own /checkout/payment/.../process route, which
+        // then issues a server-side redirect()->away() to the Paysera-hosted
+        // payment page. Per the CSP spec, form-action is enforced against the
+        // *final* URL after redirects, not just the form's own action
+        // attribute — so without the Paysera origin here, browsers that
+        // follow that spec (Chrome included) block the redirect outright
+        // once it leaves our origin. PaymentService::createPayseraPaymentLink()
+        // returns a payment_URL under api.paysera.com (Checkout Modern hosts
+        // the payment page on the same domain as its API), so that's the
+        // origin that needs whitelisting here.
+        $payseraFormAction = 'https://api.paysera.com';
 
         $csp = implode('; ', [
             "default-src 'self'",
@@ -105,7 +118,7 @@ class ContentSecurityPolicy
             "frame-src {$airwallexFrame} {$analyticsFrame}",
             "object-src 'none'",
             "base-uri 'self'",
-            "form-action 'self'",
+            "form-action 'self' {$payseraFormAction}",
         ]);
 
         $response->headers->set('Content-Security-Policy', $csp);

@@ -2,6 +2,8 @@
 
 namespace App\Services\Updates;
 
+use App\Jobs\NotifyAdminsOfBackupFailure;
+use App\Jobs\NotifyAdminsOfUpdateResult;
 use App\Models\BackupRun;
 use App\Models\UpdateHistory;
 use App\Services\Backup\BackupLock;
@@ -77,13 +79,13 @@ class UpdateApplier
 
             $history = UpdateHistory::create([
                 'from_version' => app(UpdateChecker::class)->currentVersion(),
-                'to_version'   => $version,
-                'channel'      => (string) ($manifest['channel'] ?? config('updates.channel', 'stable')),
-                'status'       => UpdateHistory::STATUS_BACKING_UP,
-                'step'         => $this->steps()[0],
+                'to_version' => $version,
+                'channel' => (string) ($manifest['channel'] ?? config('updates.channel', 'stable')),
+                'status' => UpdateHistory::STATUS_BACKING_UP,
+                'step' => $this->steps()[0],
                 'initiated_by' => $initiatedBy,
-                'started_at'   => now(),
-                'meta'         => ['manifest' => $manifest, 'step_index' => 0],
+                'started_at' => now(),
+                'meta' => ['manifest' => $manifest, 'step_index' => 0],
             ]);
 
             // Open the recovery window: arm the app-independent Recovery Console for
@@ -159,7 +161,7 @@ class UpdateApplier
 
             $next = $index + 1;
             $history->setStepIndex($next);
-            $history->step   = $steps[$next] ?? 'complete';
+            $history->step = $steps[$next] ?? 'complete';
             $history->status = $this->statusFor($history->step);
             $history->save();
 
@@ -211,6 +213,15 @@ class UpdateApplier
         $run = app(BackupManager::class)->run($run);
 
         if ($run->status !== BackupRun::STATUS_SUCCESS) {
+            // doBackup() calls BackupManager directly (not via the RunBackup
+            // command), so this never double-notifies RunBackup's own
+            // dispatch of the same job — that's a separate scheduled code
+            // path. The overall update-failure email (fail(), below) still
+            // fires too; that one lacks room for this backup-specific detail.
+            dispatch(new NotifyAdminsOfBackupFailure(
+                $run->profile, (string) $run->error, (int) $run->getKey(), optional($run->finished_at)->toDateTimeString()
+            ));
+
             throw new UpdateException('Pre-update backup failed: '.$run->error);
         }
 
@@ -282,8 +293,8 @@ class UpdateApplier
 
     protected function complete(UpdateHistory $history): UpdateHistory
     {
-        $history->status      = UpdateHistory::STATUS_SUCCESS;
-        $history->step        = 'complete';
+        $history->status = UpdateHistory::STATUS_SUCCESS;
+        $history->step = 'complete';
         $history->finished_at = now();
         $history->save();
 
@@ -304,6 +315,8 @@ class UpdateApplier
         Log::channel(config('updates.log_channel', 'stack'))->notice('update.success', [
             'history' => $history->getKey(), 'to' => $history->to_version,
         ]);
+
+        $this->notifyResult($history, success: true, rolledBack: false);
 
         return $history;
     }
@@ -326,8 +339,8 @@ class UpdateApplier
             $rolledBack = $this->rollback($history);
         }
 
-        $history->status      = $rolledBack ? UpdateHistory::STATUS_ROLLED_BACK : UpdateHistory::STATUS_FAILED;
-        $history->error       = Str::limit('['.$step.'] '.$error, 2000, '');
+        $history->status = $rolledBack ? UpdateHistory::STATUS_ROLLED_BACK : UpdateHistory::STATUS_FAILED;
+        $history->error = Str::limit('['.$step.'] '.$error, 2000, '');
         $history->finished_at = now();
         $history->save();
 
@@ -347,7 +360,31 @@ class UpdateApplier
             app(BackupLock::class)->release();
         }
 
+        $this->notifyResult($history, success: false, rolledBack: $rolledBack);
+
         return $history;
+    }
+
+    /**
+     * Every apply outcome (manual admin click or the scheduled auto-apply
+     * command) reaches admins by email regardless of whether the initiating
+     * admin's own browser tab is still open — previously only the auto-apply
+     * command's own dispatch covered this, so a manually-triggered update
+     * that failed/rolled back with the tab closed notified nobody.
+     * initiated_by (set by SystemUpdates::startApply(), null for the
+     * scheduled command) is the existing signal for which wording to use.
+     */
+    private function notifyResult(UpdateHistory $history, bool $success, bool $rolledBack): void
+    {
+        dispatch(new NotifyAdminsOfUpdateResult([
+            'from_version' => $history->from_version,
+            'to_version' => $history->to_version,
+            'success' => $success,
+            'rolled_back' => $rolledBack,
+            'error' => $history->error,
+            'started_at' => optional($history->started_at)->toIso8601String(),
+            'trigger' => $history->initiated_by ? 'manual' : 'auto',
+        ]));
     }
 
     /**
@@ -432,9 +469,9 @@ class UpdateApplier
         // particular action can do for THIS deployment type, here's what to
         // do manually instead.
         app(RecoveryWindowFlag::class)->arm([
-            'history_id'      => $history->getKey(),
-            'from_version'    => $history->from_version,
-            'to_version'      => $history->to_version,
+            'history_id' => $history->getKey(),
+            'from_version' => $history->from_version,
+            'to_version' => $history->to_version,
             'deployment_type' => $this->isGitMode() ? 'git' : 'zip',
         ]);
     }
@@ -449,15 +486,15 @@ class UpdateApplier
     private function statusFor(string $step): string
     {
         return match ($step) {
-            'backup'           => UpdateHistory::STATUS_BACKING_UP,
-            'download'         => UpdateHistory::STATUS_DOWNLOADING,
-            'extract'          => UpdateHistory::STATUS_EXTRACTING,
-            'swap'             => UpdateHistory::STATUS_SWAPPING,
-            'git_checkout'     => UpdateHistory::STATUS_PULLING,
+            'backup' => UpdateHistory::STATUS_BACKING_UP,
+            'download' => UpdateHistory::STATUS_DOWNLOADING,
+            'extract' => UpdateHistory::STATUS_EXTRACTING,
+            'swap' => UpdateHistory::STATUS_SWAPPING,
+            'git_checkout' => UpdateHistory::STATUS_PULLING,
             'composer_install' => UpdateHistory::STATUS_INSTALLING,
-            'finalize'         => UpdateHistory::STATUS_MIGRATING,
-            'verify'           => UpdateHistory::STATUS_FINALIZING,
-            default            => UpdateHistory::STATUS_FINALIZING,
+            'finalize' => UpdateHistory::STATUS_MIGRATING,
+            'verify' => UpdateHistory::STATUS_FINALIZING,
+            default => UpdateHistory::STATUS_FINALIZING,
         };
     }
 

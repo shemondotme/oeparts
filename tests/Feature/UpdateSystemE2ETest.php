@@ -11,6 +11,7 @@ use App\Services\Updates\UpdateSwapper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Fixtures\ReleaseKeys;
@@ -40,10 +41,10 @@ class UpdateSystemE2ETest extends TestCase
     {
         parent::setUp();
 
-        $this->base    = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-e2e-'.getmypid();
-        $this->root    = $this->base.'/root';
+        $this->base = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-e2e-'.getmypid();
+        $this->root = $this->base.'/root';
         $this->staging = $this->base.'/newrelease';
-        $this->state   = $this->base.'/state';
+        $this->state = $this->base.'/state';
         $this->rrmdir($this->base);
 
         // Fixture install at v1.0.0 (the "installed" app the updater operates on).
@@ -57,10 +58,14 @@ class UpdateSystemE2ETest extends TestCase
         $this->writeFile($this->staging.'/version.json', '{"version":"1.1.0"}');
 
         config([
-            'updates.root_path'  => $this->root,
+            'updates.root_path' => $this->root,
             'updates.state_path' => $this->state,
             'updates.core_paths' => ['app', 'version.json'],
         ]);
+
+        // See UpdateApplierTest::setUp() — complete()/fail() now dispatch an
+        // admin-notification job irrelevant to this file's real-pipeline assertions.
+        Queue::fake();
     }
 
     protected function tearDown(): void
@@ -80,10 +85,10 @@ class UpdateSystemE2ETest extends TestCase
         Http::fake(['fake.test/*' => Http::response($bytes, 200)]);
 
         $manifest = [
-            'version'      => '1.1.0',
+            'version' => '1.1.0',
             'download_url' => 'https://fake.test/oeparts-1.1.0.zip',
-            'sha256'       => hash('sha256', $bytes),
-            'size_bytes'   => strlen($bytes),
+            'sha256' => hash('sha256', $bytes),
+            'size_bytes' => strlen($bytes),
         ];
 
         // REAL download (sha256-verified) → REAL extract (zip-slip-guarded) → REAL swap.
@@ -133,12 +138,12 @@ class UpdateSystemE2ETest extends TestCase
         // test's own real-services-over-stubs philosophy.
         config(['updates.signing.public_key' => ReleaseKeys::PUBLIC_KEY]);
         $manifest = [
-            'version'                    => '1.1.0',
-            'sha256'                     => hash('sha256', 'e2e-fixture'),
-            'channel'                    => 'stable',
+            'version' => '1.1.0',
+            'sha256' => hash('sha256', 'e2e-fixture'),
+            'channel' => 'stable',
             'min_version_to_update_from' => '1.0.0',
-            'required_extensions'        => ['json'],
-            'migration_count'            => 0,
+            'required_extensions' => ['json'],
+            'migration_count' => 0,
         ];
         $signer = app(ReleaseSignature::class);
         $manifest['signature'] = $signer->sign($signer->payloadFor($manifest), ReleaseKeys::PRIVATE_KEY);

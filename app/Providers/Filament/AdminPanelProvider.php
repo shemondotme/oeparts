@@ -2,13 +2,17 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\System\HelpPage;
 use App\Filament\Pages\System\ServerMonitor;
-use Filament\Navigation\MenuItem;
+use App\Http\Middleware\IpBlocklist;
+use App\Http\Middleware\RecordsAdminPageVisit;
+use App\Support\AppBuildId;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -19,14 +23,13 @@ use Filament\Resources\Resource;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
 use Filament\View\PanelsRenderHook;
-use App\Http\Middleware\IpBlocklist;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Session\Middleware\AuthenticateSession;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -38,19 +41,29 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->authGuard('admin')
-            ->login(\App\Filament\Pages\Auth\CustomLogin::class)
+            ->login(CustomLogin::class)
             ->simplePageMaxContentWidth(Width::Medium)
             ->colors([
                 'primary' => Color::Indigo,
-                'gray'    => Color::Zinc,
-                'danger'  => Color::Rose,
+                'gray' => Color::Zinc,
+                'danger' => Color::Rose,
                 'success' => Color::Emerald,
                 'warning' => Color::Amber,
-                'info'    => Color::Blue,
+                'info' => Color::Blue,
             ])
             ->renderHook(
                 PanelsRenderHook::STYLES_AFTER,
                 fn (): string => Blade::render("@vite('resources/css/filament/admin/theme.css')"),
+            )
+            // Deploy-freshness signal (Module 21 self-update / manual redeploy):
+            // the meta tag lets the polling script in build-freshness-check
+            // know what build this tab loaded with (see AppBuildId).
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => Blade::render(
+                    '<meta name="app-build" content="{{ $build }}">',
+                    ['build' => AppBuildId::current()],
+                ),
             )
             ->brandName('OeParts')
             ->brandLogo(fn () => view('filament.brand-logo'))
@@ -105,6 +118,13 @@ class AdminPanelProvider extends PanelProvider
             ->renderHook(
                 PanelsRenderHook::PAGE_START,
                 fn (): string => Blade::render('@include(\'filament.hooks.update-banner\')'),
+            )
+            // Polls for a new deployed build (Gap A) and turns Livewire's
+            // release-token 419 into a branded "please refresh" modal
+            // instead of its native confirm() popup (Gap B).
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => Blade::render('@include(\'filament.hooks.build-freshness-check\')'),
             )
             // "Back to list" button on every resource Create/Edit/View page — these
             // pages had no way back except the small breadcrumb link at the top
@@ -193,7 +213,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-                \App\Http\Middleware\RecordsAdminPageVisit::class,
+                RecordsAdminPageVisit::class,
             ]);
     }
 }

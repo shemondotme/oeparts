@@ -80,6 +80,22 @@ class ContentSecurityPolicyTest extends TestCase
     }
 
     #[Test]
+    public function the_csp_header_allows_the_paysera_redirect_in_form_action(): void
+    {
+        $csp = $this->get('/en/')->headers->get('Content-Security-Policy');
+
+        // The Paysera payment form is a plain POST that our controller then
+        // redirect()->away()'s to Paysera's hosted payment page. CSP's
+        // form-action is enforced against the post-redirect URL too, so
+        // without this the redirect is silently blocked in Chrome.
+        $this->assertMatchesRegularExpression(
+            '/form-action[^;]*api\.paysera\.com/',
+            $csp,
+            'Paysera must be explicitly allowed in form-action or the post-checkout redirect to its hosted payment page is blocked.'
+        );
+    }
+
+    #[Test]
     public function the_other_required_security_headers_are_present(): void
     {
         $response = $this->get('/en/');

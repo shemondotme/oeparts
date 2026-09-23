@@ -6,7 +6,9 @@ use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Models\Admin;
 use Database\Seeders\RolesSeeder;
 use Database\Seeders\SettingsSeeder;
+use Illuminate\Contracts\Cache\Lock;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,9 +24,26 @@ class SeoControlCenterSitemapStatsTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Lock $sitemapLock;
+
     protected function setUp(): void
     {
         parent::setUp();
+
+        // This class deletes and rewrites the SAME real, shared
+        // public_path('sitemaps') directory every single test (raw
+        // File::deleteDirectory(), not through SitemapService) — under
+        // --parallel, another worker mid-write inside
+        // SitemapService::generateAll() (which guards ITS OWN body with
+        // this exact lock, see SitemapGenerationLockTest) could have its
+        // output deleted or corrupted out from under it. Blocking on the
+        // SAME lock key for the whole test (acquired here, released in
+        // tearDown()) serializes this class's raw filesystem access
+        // against every real generateAll() caller — this was the
+        // confirmed root cause of SitemapLastmodTest's intermittent
+        // parallel-run flake (bulletproof-testing backlog item 3).
+        $this->sitemapLock = Cache::lock('sitemap:generate:lock', 600);
+        $this->sitemapLock->block(30);
 
         $this->seed([RolesSeeder::class, SettingsSeeder::class]);
 
@@ -43,6 +62,7 @@ class SeoControlCenterSitemapStatsTest extends TestCase
     protected function tearDown(): void
     {
         $this->clearSitemapFiles();
+        $this->sitemapLock->release();
 
         parent::tearDown();
     }

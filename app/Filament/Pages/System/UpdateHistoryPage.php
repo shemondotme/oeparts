@@ -32,7 +32,7 @@ class UpdateHistoryPage extends Page implements HasTable
 
     protected ?string $subheading = 'Every in-app update attempt, its outcome, and the post-update verification report.';
 
-public static function getNavigationSort(): ?int
+    public static function getNavigationSort(): ?int
     {
         return 26;
     }
@@ -57,6 +57,11 @@ public static function getNavigationSort(): ?int
             ->columns([
                 Tables\Columns\TextColumn::make('id')->label('#')->fontMono()->size('sm')->sortable(),
 
+                Tables\Columns\TextColumn::make('type')
+                    ->label('Type')->badge()->size('sm')
+                    ->formatStateUsing(fn (?string $state): string => $state === UpdateHistory::TYPE_RESTORE ? 'Restore' : 'Update')
+                    ->color(fn (?string $state): string => $state === UpdateHistory::TYPE_RESTORE ? 'danger' : 'gray'),
+
                 Tables\Columns\TextColumn::make('from_version')
                     ->label('From → To')->size('sm')->fontMono()
                     ->formatStateUsing(fn (?string $state, UpdateHistory $r): string => ($state ?? '—').' → '.$r->to_version),
@@ -64,10 +69,10 @@ public static function getNavigationSort(): ?int
                 Tables\Columns\TextColumn::make('status')
                     ->badge()->size('sm')
                     ->color(fn (string $state): string => match ($state) {
-                        UpdateHistory::STATUS_SUCCESS     => 'success',
-                        UpdateHistory::STATUS_FAILED      => 'danger',
+                        UpdateHistory::STATUS_SUCCESS => 'success',
+                        UpdateHistory::STATUS_FAILED => 'danger',
                         UpdateHistory::STATUS_ROLLED_BACK => 'warning',
-                        default                           => 'gray',
+                        default => 'gray',
                     }),
 
                 Tables\Columns\TextColumn::make('step')->label('Step')->badge()->color('gray')->size('sm'),
@@ -82,8 +87,8 @@ public static function getNavigationSort(): ?int
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options([
-                    UpdateHistory::STATUS_SUCCESS     => 'Success',
-                    UpdateHistory::STATUS_FAILED      => 'Failed',
+                    UpdateHistory::STATUS_SUCCESS => 'Success',
+                    UpdateHistory::STATUS_FAILED => 'Failed',
                     UpdateHistory::STATUS_ROLLED_BACK => 'Rolled back',
                 ]),
             ])

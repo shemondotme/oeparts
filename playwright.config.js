@@ -46,7 +46,20 @@ export default defineConfig({
             testMatch: /auth\.setup\.js/,
         },
         {
+            // No testDir override here on purpose — this project's real
+            // scope is topbar.spec.js (top-level, not under admin/) PLUS
+            // everything under tests/e2e/admin/, so it can't just point
+            // testDir at ./tests/e2e/admin the way the other projects below
+            // point at ./tests/e2e/guest. Without testIgnore, it silently
+            // inherited the top-level testDir and ALSO ran every spec under
+            // tests/e2e/guest/* a second time here, using the authenticated
+            // admin storageState even though those specs are written to
+            // test anonymous/guest behavior — roughly doubling guest-spec
+            // execution and a likely contributor to the topbar suite's own
+            // session-invalidation flakiness (bulletproof-testing backlog
+            // item 2).
             name: 'chromium',
+            testIgnore: /guest[\\/]/,
             use: {
                 ...devices['Desktop Chrome'],
                 viewport: { width: 1280, height: 800 },

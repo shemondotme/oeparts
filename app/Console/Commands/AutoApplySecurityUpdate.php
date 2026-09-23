@@ -2,8 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\NotifyAdminsOfAutoUpdate;
-use App\Models\UpdateHistory;
+use App\Jobs\NotifyAdminsOfUpdateResult;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
 use Illuminate\Console\Command;
@@ -76,30 +75,25 @@ class AutoApplySecurityUpdate extends Command
             Log::channel(config('updates.log_channel', 'stack'))
                 ->error('Scheduled auto-apply failed to start: '.$e->getMessage());
 
-            NotifyAdminsOfAutoUpdate::dispatch([
+            NotifyAdminsOfUpdateResult::dispatch([
                 'from_version' => $fromVersion,
                 'to_version' => $toVersion,
                 'success' => false,
                 'rolled_back' => false,
                 'error' => $e->getMessage(),
                 'started_at' => $startedAt,
+                'trigger' => 'auto',
             ]);
 
             return self::SUCCESS; // the update system itself is fine; nothing to retry here
         }
 
+        // From here on, UpdateApplier::complete()/fail() dispatch the outcome
+        // notification themselves (trigger inferred from initiated_by=null)
+        // — do not dispatch again here, that would double-notify admins.
         $history = $applier->run($history);
 
-        $result = [
-            'from_version' => $history->from_version,
-            'to_version' => $history->to_version,
-            'success' => $history->isSuccessful(),
-            'rolled_back' => $history->status === UpdateHistory::STATUS_ROLLED_BACK,
-            'error' => $history->error,
-            'started_at' => $startedAt,
-        ];
-
-        if ($result['success']) {
+        if ($history->isSuccessful()) {
             $this->info('Auto-applied security update to '.$history->to_version.'.');
             Log::channel(config('updates.log_channel', 'stack'))
                 ->notice('Scheduled auto-apply succeeded: '.$history->from_version.' -> '.$history->to_version);
@@ -108,8 +102,6 @@ class AutoApplySecurityUpdate extends Command
             Log::channel(config('updates.log_channel', 'stack'))
                 ->error('Scheduled auto-apply failed/rolled back: '.$history->error);
         }
-
-        NotifyAdminsOfAutoUpdate::dispatch($result);
 
         return self::SUCCESS;
     }

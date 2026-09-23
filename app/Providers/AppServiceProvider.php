@@ -34,6 +34,17 @@ use App\Observers\RefundRequestObserver;
 use App\Observers\SectionObserver;
 use App\Observers\TestimonialObserver;
 use App\Observers\UserObserver;
+use App\Services\CacheService;
+use App\Services\OemNormalizerService;
+use App\Services\PreloaderService;
+use App\Services\SearchService;
+use App\Services\SettingsService;
+use App\Services\TranslationService;
+use App\Support\AppBuildId;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Component;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\BaseFilter;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -47,12 +58,12 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(\App\Services\CacheService::class);
-        $this->app->singleton(\App\Services\SettingsService::class);
-        $this->app->singleton(\App\Services\OemNormalizerService::class);
-        $this->app->singleton(\App\Services\TranslationService::class);
-        $this->app->singleton(\App\Services\SearchService::class);
-        $this->app->singleton(\App\Services\PreloaderService::class);
+        $this->app->singleton(CacheService::class);
+        $this->app->singleton(SettingsService::class);
+        $this->app->singleton(OemNormalizerService::class);
+        $this->app->singleton(TranslationService::class);
+        $this->app->singleton(SearchService::class);
+        $this->app->singleton(PreloaderService::class);
 
         // Register legacy Filament Tables Actions class aliases for Filament v3 compatibility
         $aliases = [
@@ -68,7 +79,7 @@ class AppServiceProvider extends ServiceProvider
         ];
 
         foreach ($aliases as $original => $alias) {
-            if (class_exists($original) && !class_exists($alias)) {
+            if (class_exists($original) && ! class_exists($alias)) {
                 class_alias($original, $alias);
             }
         }
@@ -89,8 +100,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Register custom macro for TextColumn to support legacy fontMono calls in Filament v3
-        if (class_exists(\Filament\Tables\Columns\TextColumn::class)) {
-            \Filament\Tables\Columns\TextColumn::macro('fontMono', function () {
+        if (class_exists(TextColumn::class)) {
+            TextColumn::macro('fontMono', function () {
                 return $this->fontFamily('mono');
             });
         }
@@ -100,22 +111,22 @@ class AppServiceProvider extends ServiceProvider
         // test had ever rendered one): every ViewRecord infolist using
         // ->fontMono() was throwing BadMethodCallException, a real, currently-
         // live 500 on every "View" click for affected resources (e.g. Orders).
-        if (class_exists(\Filament\Infolists\Components\TextEntry::class)) {
-            \Filament\Infolists\Components\TextEntry::macro('fontMono', function () {
+        if (class_exists(TextEntry::class)) {
+            TextEntry::macro('fontMono', function () {
                 return $this->fontFamily('mono');
             });
         }
 
         // Register custom macro for Filament Schemas Components to support helperText calls
-        if (class_exists(\Filament\Schemas\Components\Component::class)) {
-            \Filament\Schemas\Components\Component::macro('helperText', function ($text) {
+        if (class_exists(Component::class)) {
+            Component::macro('helperText', function ($text) {
                 return $this;
             });
         }
 
         // Register custom macro for Filament Tables Filters to support helperText calls
-        if (class_exists(\Filament\Tables\Filters\BaseFilter::class)) {
-            \Filament\Tables\Filters\BaseFilter::macro('helperText', function ($text) {
+        if (class_exists(BaseFilter::class)) {
+            BaseFilter::macro('helperText', function ($text) {
                 return $this;
             });
         }
@@ -145,12 +156,21 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // Seed Livewire's built-in release-token check with the current deployed
+        // build. Livewire (used only by the Filament admin panel — the storefront
+        // is Alpine-only) embeds this in every component snapshot and rejects a
+        // stale one with a clean 419 instead of a corrupt-payload error; the
+        // Filament panel's build-freshness-check hook turns that 419 into a
+        // branded "please refresh" modal. Set at runtime rather than published
+        // to config/livewire.php to avoid forking that file's other defaults.
+        config(['livewire.release_token' => AppBuildId::current()]);
+
         // Use the project's custom password-reset route instead of Laravel's default 'password.reset'
         ResetPassword::createUrlUsing(function ($user, string $token) {
             return route('frontend.password.reset', [
-                'lang'  => app()->getLocale() ?: 'en',
+                'lang' => app()->getLocale() ?: 'en',
                 'token' => $token,
-            ]) . '?email=' . urlencode($user->getEmailForPasswordReset());
+            ]).'?email='.urlencode($user->getEmailForPasswordReset());
         });
 
         // Super admin gets all permissions via Gate::before hook (no explicit assignment needed).
@@ -163,6 +183,7 @@ class AppServiceProvider extends ServiceProvider
             if ($admin && $admin->hasRole('super_admin')) {
                 return true;
             }
+
             return null;
         });
 
@@ -187,7 +208,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by(
-                $request->input('email', '') . '|' . $request->ip()
+                $request->input('email', '').'|'.$request->ip()
             );
         });
 
@@ -197,7 +218,7 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('password-reset', function (Request $request) {
             return Limit::perMinute(3)->by(
-                $request->input('email', '') . '|' . $request->ip()
+                $request->input('email', '').'|'.$request->ip()
             );
         });
 

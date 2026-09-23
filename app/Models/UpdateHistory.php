@@ -19,29 +19,53 @@ class UpdateHistory extends Model
     use HasFactory;
 
     // Granular statuses (mirror the migration comment).
-    public const STATUS_PENDING     = 'pending';
-    public const STATUS_BACKING_UP  = 'backing_up';
+    public const STATUS_PENDING = 'pending';
+
+    public const STATUS_BACKING_UP = 'backing_up';
+
     public const STATUS_DOWNLOADING = 'downloading';
-    public const STATUS_EXTRACTING  = 'extracting';
-    public const STATUS_SWAPPING    = 'swapping';
+
+    public const STATUS_EXTRACTING = 'extracting';
+
+    public const STATUS_SWAPPING = 'swapping';
+
     // Git-managed deployment path (UpdateApplier::GIT_STEPS) — see GitUpdater.
-    public const STATUS_PULLING     = 'pulling';
-    public const STATUS_INSTALLING  = 'installing';
-    public const STATUS_MIGRATING   = 'migrating';
-    public const STATUS_FINALIZING  = 'finalizing';
-    public const STATUS_SUCCESS     = 'success';
-    public const STATUS_FAILED      = 'failed';
+    public const STATUS_PULLING = 'pulling';
+
+    public const STATUS_INSTALLING = 'installing';
+
+    public const STATUS_MIGRATING = 'migrating';
+
+    public const STATUS_FINALIZING = 'finalizing';
+
+    public const STATUS_SUCCESS = 'success';
+
+    public const STATUS_FAILED = 'failed';
+
     public const STATUS_ROLLED_BACK = 'rolled_back';
 
+    // ProductionRestoreService only — a restore has no multi-poll FSM (it
+    // runs synchronously inside one queued job), so it needs just this one
+    // in-progress marker before landing on one of the three terminal statuses above.
+    public const STATUS_RESTORING = 'restoring';
+
+    // Row kind — distinguishes a self-service full (files+DB) restore into
+    // production (ProductionRestoreService) from a normal update/auto-apply
+    // row, sharing this table so a restore shows up on Update History too.
+    public const TYPE_UPDATE = 'update';
+
+    public const TYPE_RESTORE = 'restore';
+
     protected $fillable = [
-        'from_version', 'to_version', 'channel', 'status', 'step',
-        'initiated_by', 'backup_run_id', 'started_at', 'finished_at', 'error', 'meta',
+        'from_version', 'to_version', 'channel', 'type', 'status', 'step',
+        'initiated_by', 'backup_run_id', 'restore_of_backup_run_id',
+        'started_at', 'finished_at', 'error', 'meta',
     ];
 
     protected $casts = [
-        'started_at'  => 'datetime',
+        'started_at' => 'datetime',
         'finished_at' => 'datetime',
-        'meta'        => 'array',
+        'meta' => 'array',
     ];
 
     public function backupRun(): BelongsTo

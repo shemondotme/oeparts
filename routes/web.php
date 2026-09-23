@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Frontend\AccountController;
-use App\Http\Controllers\Frontend\AuthController;
+use App\Http\Controllers\Admin\CmsSectionController;
+use App\Http\Controllers\Admin\EditorController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes — OeParts
@@ -16,6 +16,12 @@ use App\Http\Controllers\Frontend\AuthController;
 |
 */
 
+use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\MediaPickerController;
+use App\Http\Controllers\Admin\RefundImageController;
+use App\Http\Controllers\BuildVersionController;
+use App\Http\Controllers\Frontend\AccountController;
+use App\Http\Controllers\Frontend\AuthController;
 use App\Http\Controllers\Frontend\BlogController;
 use App\Http\Controllers\Frontend\CarModelController;
 use App\Http\Controllers\Frontend\CartController;
@@ -26,15 +32,21 @@ use App\Http\Controllers\Frontend\ForgotPasswordController;
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\ImpressumController;
 use App\Http\Controllers\Frontend\ManufacturerController;
+use App\Http\Controllers\Frontend\NewsletterController;
 use App\Http\Controllers\Frontend\PageController;
 use App\Http\Controllers\Frontend\PartInquiryController;
 use App\Http\Controllers\Frontend\ProductReviewController;
 use App\Http\Controllers\Frontend\ResetPasswordController;
 use App\Http\Controllers\Frontend\SearchController;
 use App\Http\Controllers\Frontend\SitemapController;
+use App\Http\Controllers\Frontend\SocialAuthController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\IndexNowController;
+use App\Http\Controllers\LlmsTxtController;
 use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\WebhookController;
+use App\Support\LocaleRegistry;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -56,22 +68,22 @@ Route::get('/login', function (Request $request) {
 Route::post('/webhooks/airwallex', [WebhookController::class, 'handleAirwallex'])
     ->name('webhooks.airwallex')
     ->middleware('throttle:webhook')
-    ->withoutMiddleware(['web', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+    ->withoutMiddleware(['web', VerifyCsrfToken::class]);
 Route::post('/webhooks/paysera', [WebhookController::class, 'handlePaysera'])
     ->name('webhooks.paysera')
     ->middleware('throttle:webhook')
-    ->withoutMiddleware(['web', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+    ->withoutMiddleware(['web', VerifyCsrfToken::class]);
 Route::post('/webhooks/bank-transfer-confirm', [WebhookController::class, 'handleBankTransferConfirm'])
     ->name('webhooks.bank-transfer-confirm')
     ->middleware('throttle:webhook')
-    ->withoutMiddleware(['web', \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+    ->withoutMiddleware(['web', VerifyCsrfToken::class]);
 
 // Robots.txt (dynamic)
 Route::get('/robots.txt', [RobotsController::class, 'index'])
     ->name('robots.txt');
 
 // llms.txt (dynamic, admin-editable body)
-Route::get('/llms.txt', [\App\Http\Controllers\LlmsTxtController::class, 'index'])
+Route::get('/llms.txt', [LlmsTxtController::class, 'index'])
     ->name('llms.txt');
 
 // IndexNow key-verification file — must be reachable at the site root
@@ -79,13 +91,20 @@ Route::get('/llms.txt', [\App\Http\Controllers\LlmsTxtController::class, 'index'
 // the literal /llms.txt and /robots.txt routes so those exact matches win
 // first; this wildcard would otherwise also technically match "llms" or
 // "robots" as a {key} value.
-Route::get('/{key}.txt', [\App\Http\Controllers\IndexNowController::class, 'verify'])
+Route::get('/{key}.txt', [IndexNowController::class, 'verify'])
     ->where('key', '[a-zA-Z0-9]+')
     ->name('indexnow.verify');
 
 // Public health check (unauthenticated, for uptime monitoring)
 Route::get('/health', HealthController::class)
     ->name('health');
+
+// Deploy-freshness signal — polled by open tabs (storefront + admin) to
+// detect a deploy that happened while the page was loaded. Cheap (no DB,
+// no network); throttled since it's polled continuously by every open tab.
+Route::get('/build-version', BuildVersionController::class)
+    ->name('build-version')
+    ->middleware('throttle:60,1');
 
 /*
 |--------------------------------------------------------------------------
@@ -123,7 +142,7 @@ require __DIR__.'/installer.php';
 // the original five-locale pattern if the table isn't queryable yet (fresh
 // install, pre-migration).
 Route::prefix('{lang}')
-    ->where(['lang' => \App\Support\LocaleRegistry::routePattern()])
+    ->where(['lang' => LocaleRegistry::routePattern()])
     ->middleware(['set.locale', 'customer.idle-timeout', 'ip.blocklist', 'maintenance', 'track.utm', 'handle.redirects'])
     ->group(function () {
         // Homepage
@@ -146,10 +165,10 @@ Route::prefix('{lang}')
         Route::post('/reset-password/update', [ResetPasswordController::class, 'reset'])->middleware(['honeypot', 'throttle:password-reset'])->name('frontend.password.update');
 
         // Social login routes
-        Route::get('/auth/{provider}/redirect', [\App\Http\Controllers\Frontend\SocialAuthController::class, 'redirect'])
+        Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])
             ->whereIn('provider', ['google', 'facebook'])
             ->name('social.redirect');
-        Route::get('/auth/{provider}/callback', [\App\Http\Controllers\Frontend\SocialAuthController::class, 'callback'])
+        Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])
             ->whereIn('provider', ['google', 'facebook'])
             ->name('social.callback');
 
@@ -221,7 +240,7 @@ Route::prefix('{lang}')
 
         // Autocomplete endpoint
         Route::get('/search/autocomplete', [SearchController::class, 'autocomplete'])
-            ->middleware('throttle:' . settings('search.autocomplete_rate_limit', 60) . ',1')
+            ->middleware('throttle:'.settings('search.autocomplete_rate_limit', 60).',1')
             ->name('frontend.search.autocomplete');
 
         // Human-readable HTML sitemap (the machine-readable /sitemap.xml lives at root)
@@ -289,19 +308,19 @@ Route::prefix('{lang}')
         Route::delete('/coupon/remove', [CouponAjaxController::class, 'remove'])->name('frontend.coupon.remove');
 
         // Newsletter subscription
-        Route::post('/newsletter/subscribe', [App\Http\Controllers\Frontend\NewsletterController::class, 'subscribe'])
+        Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
             ->middleware('honeypot')
             ->name('frontend.newsletter.subscribe');
-        Route::get('/newsletter/unsubscribe/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'unsubscribe'])
+        Route::get('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribe'])
             ->middleware('throttle:10,1')
             ->name('frontend.newsletter.unsubscribe');
-        Route::post('/newsletter/unsubscribe/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'unsubscribeConfirmed'])
+        Route::post('/newsletter/unsubscribe/{token}', [NewsletterController::class, 'unsubscribeConfirmed'])
             ->middleware('throttle:10,1')
             ->name('frontend.newsletter.unsubscribe.confirmed');
-        Route::get('/newsletter/confirm/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'confirm'])
+        Route::get('/newsletter/confirm/{token}', [NewsletterController::class, 'confirm'])
             ->middleware('throttle:10,1')
             ->name('frontend.newsletter.confirm');
-        Route::post('/newsletter/confirm/{token}', [App\Http\Controllers\Frontend\NewsletterController::class, 'confirmConfirmed'])
+        Route::post('/newsletter/confirm/{token}', [NewsletterController::class, 'confirmConfirmed'])
             ->middleware('throttle:10,1')
             ->name('frontend.newsletter.confirm.confirmed');
 
@@ -317,7 +336,7 @@ Route::prefix('{lang}')
 
         // Part Inquiry (from search results page)
         Route::post('/inquiry', [PartInquiryController::class, 'store'])
-            ->middleware(['honeypot', 'throttle:' . settings('part_inquiry.rate_limit_per_hour', 10) . ',1'])
+            ->middleware(['honeypot', 'throttle:'.settings('part_inquiry.rate_limit_per_hour', 10).',1'])
             ->name('frontend.inquiry.store');
 
         // CMS catch-all slug — MUST be defined LAST
@@ -334,9 +353,9 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
 
     // Export file downloads (generated by Filament CSV exports)
     Route::get('/export/download/{filename}', function (string $filename) {
-        $path = storage_path('app/exports/' . basename($filename));
+        $path = storage_path('app/exports/'.basename($filename));
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             abort(404, 'Export file not found');
         }
 
@@ -414,40 +433,40 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
 
     // ── WYSIWYG Editor (Feature 2) ───────────────────────────────────────
     Route::prefix('editor')->name('editor.')->middleware('auth.admin')->group(function () {
-        Route::post('/upload-image', [\App\Http\Controllers\Admin\EditorController::class, 'uploadImage'])
+        Route::post('/upload-image', [EditorController::class, 'uploadImage'])
             ->name('upload-image');
-        Route::post('/preview-html', [\App\Http\Controllers\Admin\EditorController::class, 'previewHtml'])
+        Route::post('/preview-html', [EditorController::class, 'previewHtml'])
             ->name('preview-html');
     });
 
     // ── CMS Sections & Media Picker (Features 3–5) ──────────────────────
     Route::prefix('cms')->name('cms.')->middleware('auth.admin')->group(function () {
         Route::prefix('sections')->name('sections.')->group(function () {
-            Route::put('/{section}', [\App\Http\Controllers\Admin\CmsSectionController::class, 'update'])
+            Route::put('/{section}', [CmsSectionController::class, 'update'])
                 ->name('update');
-            Route::post('/{section}/preview', [\App\Http\Controllers\Admin\CmsSectionController::class, 'preview'])
+            Route::post('/{section}/preview', [CmsSectionController::class, 'preview'])
                 ->name('preview');
-            Route::post('/{section}/restore-version/{version}', [\App\Http\Controllers\Admin\CmsSectionController::class, 'restoreVersion'])
+            Route::post('/{section}/restore-version/{version}', [CmsSectionController::class, 'restoreVersion'])
                 ->name('restore-version');
         });
 
         Route::prefix('media-picker')->name('media-picker.')->group(function () {
-            Route::post('/upload', [\App\Http\Controllers\Admin\MediaPickerController::class, 'upload'])
+            Route::post('/upload', [MediaPickerController::class, 'upload'])
                 ->name('upload');
-            Route::get('/', [\App\Http\Controllers\Admin\MediaPickerController::class, 'index'])
+            Route::get('/', [MediaPickerController::class, 'index'])
                 ->name('index');
-            Route::delete('/{media}', [\App\Http\Controllers\Admin\MediaPickerController::class, 'destroy'])
+            Route::delete('/{media}', [MediaPickerController::class, 'destroy'])
                 ->name('destroy');
         });
     });
 
     // ── Invoice PDF Download ─────────────────────────────────────────────
-    Route::get('/orders/{order}/invoice', [\App\Http\Controllers\Admin\InvoiceController::class, 'download'])
+    Route::get('/orders/{order}/invoice', [InvoiceController::class, 'download'])
         ->name('orders.invoice')
         ->middleware('auth.admin');
 
     // ── Refund Image (private disk, signed URL only) ─────────────────────
-    Route::get('/refund-images/{path}', [\App\Http\Controllers\Admin\RefundImageController::class, 'show'])
+    Route::get('/refund-images/{path}', [RefundImageController::class, 'show'])
         ->name('refund-images.show')
         ->where('path', '.*')
         ->middleware(['auth.admin', 'signed']);
@@ -455,13 +474,13 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
     // ── Backup Download ─────────────────────────────────────────────────
     Route::get('/backups/{filename}', function (string $filename) {
         $admin = auth('admin')->user();
-        if (!$admin || !$admin->hasRole('super_admin')) {
+        if (! $admin || ! $admin->hasRole('super_admin')) {
             abort(403, 'Unauthorized.');
         }
 
-        $path = storage_path('app/backups/' . basename($filename));
+        $path = storage_path('app/backups/'.basename($filename));
 
-        if (!file_exists($path)) {
+        if (! file_exists($path)) {
             abort(404, 'Backup file not found.');
         }
 

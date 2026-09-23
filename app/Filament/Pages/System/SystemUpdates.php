@@ -4,11 +4,16 @@ namespace App\Filament\Pages\System;
 
 use App\Models\ActivityLog;
 use App\Models\UpdateHistory;
+use App\Services\SettingsService;
+use App\Services\Updates\PreflightService;
+use App\Services\Updates\RecoveryWindowFlag;
 use App\Services\Updates\UpdateApplier;
 use App\Services\Updates\UpdateChecker;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -39,20 +44,26 @@ class SystemUpdates extends Page
 
     /* ---- One-click apply (Chunk 3.5) ---- */
     public bool $applying = false;
+
     public ?int $applyHistoryId = null;
+
     /** @var array<string,mixed>|null current FSM status for the progress panel */
     public ?array $applyStatus = null;
+
     public ?string $applyPassword = null;
 
     /** @var array<string,mixed> UpdatePreview::toArray() once loaded — drives the confirm panel. */
     public array $applyPreview = [];
+
     /** Operator has explicitly acknowledged the preflight WARNs shown in the preview. */
     public bool $previewAcknowledged = false;
 
     /* ---- Readiness strip + Update Settings panel (this redesign) ---- */
     /** @var array<int,array{key:string,label:string,status:string,message:string}> */
     public array $preflightSummary = [];
+
     public string $settingsChannel = 'stable';
+
     public bool $settingsAutoApplySecurity = false;
 
     public function mount(): void
@@ -87,7 +98,7 @@ class SystemUpdates extends Page
     private function loadPreflightSummary(): void
     {
         $manifest = $this->applyManifest() ?? [];
-        $report = app(\App\Services\Updates\PreflightService::class)->run($manifest);
+        $report = app(PreflightService::class)->run($manifest);
 
         $this->preflightSummary = array_values(array_filter(array_map(
             fn (string $key) => $report->get($key)?->toArray(),
@@ -98,11 +109,11 @@ class SystemUpdates extends Page
     /** Cheap is_file() check — no caching needed. */
     public function recoveryArmed(): bool
     {
-        return app(\App\Services\Updates\RecoveryWindowFlag::class)->isArmed();
+        return app(RecoveryWindowFlag::class)->isArmed();
     }
 
-    /** @return \Illuminate\Support\Collection<int,UpdateHistory> */
-    public function recentUpdates(): \Illuminate\Support\Collection
+    /** @return Collection<int,UpdateHistory> */
+    public function recentUpdates(): Collection
     {
         return UpdateHistory::query()->recent()->limit(3)->get();
     }
@@ -123,7 +134,7 @@ class SystemUpdates extends Page
             'settingsAutoApplySecurity' => ['boolean'],
         ]);
 
-        $settingsService = app(\App\Services\SettingsService::class);
+        $settingsService = app(SettingsService::class);
         $settingsService->set('updates.channel', $data['settingsChannel']);
         $settingsService->set('updates.auto_apply_security', $data['settingsAutoApplySecurity'] ? '1' : '0');
 
@@ -131,7 +142,7 @@ class SystemUpdates extends Page
         $this->status = app(UpdateChecker::class)->check(force: true)->toArray();
         $this->loadPreflightSummary();
 
-        Notification::make()->title('Update settings saved')->success()->send();
+        Notification::make()->title(__('updates.update_settings_saved'))->success()->send();
     }
 
     public function canApply(): bool
@@ -146,7 +157,7 @@ class SystemUpdates extends Page
 
         $manifest = $this->applyManifest();
         if (! $manifest) {
-            Notification::make()->title('No update to apply')->warning()->send();
+            Notification::make()->title(__('updates.no_update_to_apply'))->warning()->send();
 
             return;
         }
@@ -168,15 +179,27 @@ class SystemUpdates extends Page
     {
         abort_unless($this->canApply(), 403);
 
+        // Starting an apply acquires the shared backup/update lock — the
+        // guard here is against a runaway double-click/script storm hammering
+        // that lock, not against legitimate reuse (one admin only starts an
+        // update rarely).
+        $throttleKey = 'update-apply:'.auth('admin')->id();
+        if (RateLimiter::tooManyAttempts($throttleKey, 3)) {
+            Notification::make()->title(__('updates.please_slow_down'))->body(__('updates.too_many_attempts'))->warning()->send();
+
+            return;
+        }
+        RateLimiter::hit($throttleKey, 60);
+
         $admin = auth('admin')->user();
         if (! $admin || ! Hash::check((string) $this->applyPassword, $admin->password)) {
-            throw ValidationException::withMessages(['applyPassword' => 'Your password is incorrect.']);
+            throw ValidationException::withMessages(['applyPassword' => __('updates.your_password_is_incorrect')]);
         }
         $this->applyPassword = null;
 
         $manifest = $this->applyManifest();
         if (! $manifest) {
-            Notification::make()->title('No update to apply')->warning()->send();
+            Notification::make()->title(__('updates.no_update_to_apply'))->warning()->send();
 
             return;
         }
@@ -188,13 +211,13 @@ class SystemUpdates extends Page
         $this->applyPreview = $preview->toArray();
 
         if (! $preview->canProceed()) {
-            Notification::make()->title('Update cannot start')->body('Pre-flight checks are failing — see the details below.')->danger()->send();
+            Notification::make()->title(__('updates.update_cannot_start'))->body(__('updates.preflight_checks_failing'))->danger()->send();
 
             return;
         }
 
         if ($preview->preflight->hasWarnings() && ! $this->previewAcknowledged) {
-            Notification::make()->title('Please acknowledge the warnings below before applying')->warning()->send();
+            Notification::make()->title(__('updates.please_acknowledge_warnings'))->warning()->send();
 
             return;
         }
@@ -202,7 +225,7 @@ class SystemUpdates extends Page
         try {
             $history = app(UpdateApplier::class)->start($manifest, $admin->id);
         } catch (\Throwable $e) {
-            Notification::make()->title('Update cannot start')->body($e->getMessage())->danger()->send();
+            Notification::make()->title(__('updates.update_cannot_start'))->body($e->getMessage())->danger()->send();
 
             return;
         }
@@ -229,7 +252,7 @@ class SystemUpdates extends Page
         $this->applying = true;
         $this->applyPreview = [];
         $this->applyStatus = ['status' => $history->status, 'step' => $history->step];
-        Notification::make()->title('Update started')->body('Do not close this window.')->success()->send();
+        Notification::make()->title(__('updates.update_started'))->body(__('updates.do_not_close_window'))->success()->send();
     }
 
     /** Advance the FSM one step per poll; signal a hard reload on success. */
@@ -257,11 +280,11 @@ class SystemUpdates extends Page
             $this->applying = false;
             if ($history->isSuccessful()) {
                 $this->status = app(UpdateChecker::class)->check(force: true)->toArray();
-                Notification::make()->title('Update complete')->body('Now running '.$history->to_version.'.')->success()->send();
+                Notification::make()->title(__('updates.update_complete'))->body(__('updates.now_running', ['version' => $history->to_version]))->success()->send();
                 $this->dispatch('update-complete'); // storefront hard-reload
             } else {
-                Notification::make()->title('Update did not complete')
-                    ->body($history->error ?? 'See the update history.')->danger()->send();
+                Notification::make()->title(__('updates.update_did_not_complete'))
+                    ->body($history->error ?? __('updates.see_update_history'))->danger()->send();
             }
         }
     }
@@ -291,14 +314,25 @@ class SystemUpdates extends Page
 
     public function checkNow(): void
     {
+        // check(force:true) always hits the remote catalog/manifest URL
+        // (bypasses the 6h cache) — a light per-admin cap so a buggy client
+        // or an impatient repeated click doesn't hammer it.
+        $throttleKey = 'update-check:'.auth('admin')->id();
+        if (RateLimiter::tooManyAttempts($throttleKey, 6)) {
+            Notification::make()->title(__('updates.please_slow_down'))->body(__('updates.too_many_checks'))->warning()->send();
+
+            return;
+        }
+        RateLimiter::hit($throttleKey, 60);
+
         $status = app(UpdateChecker::class)->check(force: true);
         $this->status = $status->toArray();
         $this->loadPreflightSummary();
 
         if (! $status->reachable) {
             Notification::make()
-                ->title('Could not reach the update server')
-                ->body($status->error ?? 'Please try again later.')
+                ->title(__('updates.could_not_reach_update_server'))
+                ->body($status->error ?? __('updates.please_try_again_later'))
                 ->warning()
                 ->send();
 
@@ -307,7 +341,7 @@ class SystemUpdates extends Page
 
         if ($status->updateAvailable) {
             Notification::make()
-                ->title(($status->security ? 'Security update' : 'Update').' available')
+                ->title(__('updates.x_available', ['type' => $status->security ? __('updates.security_update_word') : __('updates.update_word')]))
                 ->body($status->currentVersion.' → '.$status->latestVersion)
                 ->success()
                 ->send();
@@ -316,13 +350,13 @@ class SystemUpdates extends Page
         }
 
         Notification::make()
-            ->title('You are up to date')
-            ->body('Running the latest version ('.$status->currentVersion.').')
+            ->title(__('updates.you_are_up_to_date'))
+            ->body(__('updates.running_latest_version', ['version' => $status->currentVersion]))
             ->success()
             ->send();
     }
 
-public static function getNavigationSort(): ?int
+    public static function getNavigationSort(): ?int
     {
         return 24;
     }

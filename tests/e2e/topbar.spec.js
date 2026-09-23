@@ -27,7 +27,14 @@ import { loginAsSuperAdmin } from './helpers.js';
  *   - Global search: Filament\Livewire\GlobalSearch, input inside
  *     `.fi-global-search-field`.
  *   - Notifications: Filament\Livewire\DatabaseNotifications, trigger
- *     button `title="Notifications"`, opens `#database-notifications`.
+ *     button `.fi-topbar-database-notifications-btn`, opens
+ *     `#database-notifications`. NOT `button[title="Notifications"]`
+ *     (an exact-match attribute selector) — the real title is dynamic,
+ *     e.g. "Notifications, 3 unread notifications" once any exist, so an
+ *     exact match only ever worked by accident against a freshly-seeded
+ *     zero-notification dev DB and silently timed out the moment real
+ *     admin activity (bulk actions, queued-job completions, backups,
+ *     bell alerts from this very testing initiative) produced any.
  *   - Quick-create "+" dropdown and the user avatar menu
  *     (`.fi-user-menu-trigger`, `aria-label="User menu"`) both use
  *     Filament's standard `.fi-dropdown` + `.fi-dropdown-list-item`
@@ -97,7 +104,7 @@ test.describe('Notifications', () => {
     });
 
     test('the notifications bell opens and closes the notifications panel', async ({ page }) => {
-        await page.locator('button[title="Notifications"]').click();
+        await page.locator('.fi-topbar-database-notifications-btn').click();
 
         // The panel is genuinely visible at this point (confirmed via
         // screenshot — full notification list rendered) but
@@ -203,7 +210,7 @@ test.describe('Responsive behavior', () => {
         await page.waitForSelector('nav.fi-topbar');
 
         await expect(page.locator('.fi-global-search-field input')).toBeVisible();
-        await expect(page.locator('button[title="Notifications"]')).toBeVisible();
+        await expect(page.locator('.fi-topbar-database-notifications-btn')).toBeVisible();
         await expect(page.locator('.fi-user-menu-trigger')).toBeVisible();
     });
 });

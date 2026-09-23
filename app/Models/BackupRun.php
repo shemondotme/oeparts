@@ -22,20 +22,28 @@ class BackupRun extends Model
     use HasFactory;
 
     /** Profiles. */
-    public const PROFILE_UPDATE_SAFETY  = 'update_safety';  // slim, taken just before an update
-    public const PROFILE_FULL           = 'full';           // full disaster-recovery backup (db + files)
-    public const PROFILE_DATABASE_ONLY  = 'database_only';  // db only, admin-triggered
-    public const PROFILE_FILES_ONLY     = 'files_only';     // files only, admin-triggered
+    public const PROFILE_UPDATE_SAFETY = 'update_safety';  // slim, taken just before an update
+
+    public const PROFILE_FULL = 'full';           // full disaster-recovery backup (db + files)
+
+    public const PROFILE_DATABASE_ONLY = 'database_only';  // db only, admin-triggered
+
+    public const PROFILE_FILES_ONLY = 'files_only';     // files only, admin-triggered
 
     /** Statuses. */
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_RUNNING = 'running';
+
     public const STATUS_SUCCESS = 'success';
-    public const STATUS_FAILED  = 'failed';
+
+    public const STATUS_FAILED = 'failed';
 
     /** Triggers. */
-    public const TRIGGER_MANUAL     = 'manual';
-    public const TRIGGER_SCHEDULED  = 'scheduled';
+    public const TRIGGER_MANUAL = 'manual';
+
+    public const TRIGGER_SCHEDULED = 'scheduled';
+
     public const TRIGGER_PRE_UPDATE = 'pre_update';
 
     protected $fillable = [
@@ -46,13 +54,13 @@ class BackupRun extends Model
     ];
 
     protected $casts = [
-        'encrypted'   => 'boolean',
+        'encrypted' => 'boolean',
         'total_bytes' => 'integer',
-        'part_count'  => 'integer',
-        'started_at'  => 'datetime',
+        'part_count' => 'integer',
+        'started_at' => 'datetime',
         'finished_at' => 'datetime',
-        'expires_at'  => 'datetime',
-        'meta'        => 'array',
+        'expires_at' => 'datetime',
+        'meta' => 'array',
     ];
 
     public function parts(): HasMany
@@ -116,5 +124,15 @@ class BackupRun extends Model
     public function scopeSuccessful(Builder $q): Builder
     {
         return $q->where('status', self::STATUS_SUCCESS);
+    }
+
+    /**
+     * A successful, un-pruned run — the one predicate every restore path
+     * (files-only in BackupDashboard, full files+DB in ProductionRestoreService)
+     * must share so they never disagree on what's safe to restore from.
+     */
+    public function isRestorable(): bool
+    {
+        return $this->status === self::STATUS_SUCCESS && ! ($this->meta['pruned_at'] ?? null);
     }
 }

@@ -7,6 +7,7 @@ use App\Services\Updates\Exceptions\UpdateException;
 use App\Services\Updates\GitUpdater;
 use App\Services\Updates\UpdateApplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -32,6 +33,10 @@ class GitUpdateApplierTest extends TestCase
         $this->state = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-git-apply-'.getmypid();
         @mkdir($this->state, 0775, true);
         config(['updates.state_path' => $this->state]);
+
+        // See UpdateApplierTest::setUp() — complete()/fail() now dispatch an
+        // admin-notification job irrelevant to this file's assertions.
+        Queue::fake();
     }
 
     protected function tearDown(): void
@@ -44,8 +49,8 @@ class GitUpdateApplierTest extends TestCase
     private function manifest(array $overrides = []): array
     {
         return array_merge([
-            'version'         => '1.1.0',
-            'channel'         => 'stable',
+            'version' => '1.1.0',
+            'channel' => 'stable',
             'migration_count' => 1,
         ], $overrides);
     }
@@ -130,7 +135,9 @@ class GitUpdateApplierTest extends TestCase
 class FakeGitUpdateApplier extends UpdateApplier
 {
     public array $log = [];
+
     public ?string $failAt = null;
+
     public bool $rolledBack = false;
 
     protected function gate(array $manifest): void {}
@@ -140,13 +147,37 @@ class FakeGitUpdateApplier extends UpdateApplier
         return true;
     }
 
-    protected function doBackup(UpdateHistory $h): void { $this->tick('backup'); }
-    protected function doGitCheckout(UpdateHistory $h): void { $this->tick('git_checkout'); }
-    protected function doComposerInstall(UpdateHistory $h): void { $this->tick('composer_install'); }
-    protected function doFinalize(UpdateHistory $h): void { $this->tick('finalize'); }
-    protected function doVerify(UpdateHistory $h): void { $this->tick('verify'); }
+    protected function doBackup(UpdateHistory $h): void
+    {
+        $this->tick('backup');
+    }
 
-    protected function rollback(UpdateHistory $h): bool { $this->rolledBack = true; return true; }
+    protected function doGitCheckout(UpdateHistory $h): void
+    {
+        $this->tick('git_checkout');
+    }
+
+    protected function doComposerInstall(UpdateHistory $h): void
+    {
+        $this->tick('composer_install');
+    }
+
+    protected function doFinalize(UpdateHistory $h): void
+    {
+        $this->tick('finalize');
+    }
+
+    protected function doVerify(UpdateHistory $h): void
+    {
+        $this->tick('verify');
+    }
+
+    protected function rollback(UpdateHistory $h): bool
+    {
+        $this->rolledBack = true;
+
+        return true;
+    }
 
     private function tick(string $name): void
     {

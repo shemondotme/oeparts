@@ -2,13 +2,18 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\NotifyAdminsOfBackupFailure;
+use App\Jobs\NotifyAdminsOfUpdateResult;
 use App\Models\BackupRun;
 use App\Models\UpdateHistory;
 use App\Services\Backup\BackupLock;
 use App\Services\Backup\BackupManager;
+use App\Services\Updates\RecoveryWindowFlag;
 use App\Services\Updates\ReleaseSignature;
 use App\Services\Updates\UpdateApplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Fixtures\ReleaseKeys;
@@ -33,6 +38,14 @@ class UpdateApplierTest extends TestCase
         $this->state = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-apply-'.getmypid();
         @mkdir($this->state, 0775, true);
         config(['updates.state_path' => $this->state]);
+
+        // complete()/fail() dispatch an admin-notification job — irrelevant
+        // to this file's FSM-ordering/rollback assertions, and would
+        // otherwise run synchronously (sync queue in tests) and query
+        // Admin::role('super_admin'), which needs RolesSeeder this file
+        // doesn't run. Notification dispatch itself is covered by
+        // UpdateResultNotificationTest.
+        Queue::fake();
     }
 
     protected function tearDown(): void
@@ -45,12 +58,12 @@ class UpdateApplierTest extends TestCase
     private function manifest(array $overrides = []): array
     {
         return array_merge([
-            'version'         => '1.1.0',
-            'channel'         => 'stable',
-            'size_bytes'      => 1024,
+            'version' => '1.1.0',
+            'channel' => 'stable',
+            'size_bytes' => 1024,
             'migration_count' => 2,
-            'download_url'    => 'https://x/oeparts.zip',
-            'sha256'          => str_repeat('a', 64),
+            'download_url' => 'https://x/oeparts.zip',
+            'sha256' => str_repeat('a', 64),
         ], $overrides);
     }
 
@@ -205,7 +218,7 @@ class UpdateApplierTest extends TestCase
         $history = $applier->start($this->manifest());
 
         // Simulate an overlapping poll already holding the per-history lock.
-        $lock = \Illuminate\Support\Facades\Cache::lock('update_apply.advance.'.$history->getKey(), 300);
+        $lock = Cache::lock('update_apply.advance.'.$history->getKey(), 300);
         $this->assertTrue($lock->get(), 'test setup: acquire the lock the real advance() would need');
 
         $result = $applier->advance($history->refresh());
@@ -245,7 +258,7 @@ class UpdateApplierTest extends TestCase
     #[Test]
     public function it_arms_the_recovery_console_on_start_and_disarms_on_success(): void
     {
-        $arm = app(\App\Services\Updates\RecoveryWindowFlag::class);
+        $arm = app(RecoveryWindowFlag::class);
 
         $applier = new FakeUpdateApplier;
         $history = $applier->start($this->manifest());
@@ -261,7 +274,7 @@ class UpdateApplierTest extends TestCase
     #[Test]
     public function a_hard_failure_leaves_the_console_armed_but_a_rollback_disarms_it(): void
     {
-        $arm = app(\App\Services\Updates\RecoveryWindowFlag::class);
+        $arm = app(RecoveryWindowFlag::class);
 
         // Pre-swap failure → status failed, no rollback → stay armed (operator territory).
         $failed = new FakeUpdateApplier;
@@ -307,5 +320,89 @@ class UpdateApplierTest extends TestCase
         $this->assertSame(2, $preview->migrationCount);
         $this->assertGreaterThan(0, $preview->etaSeconds);
         $this->assertTrue($preview->canProceed());
+    }
+
+    #[Test]
+    public function complete_notifies_admins_with_the_manual_trigger_when_initiated_by_an_admin(): void
+    {
+        $applier = new FakeUpdateApplier;
+        $applier->run($applier->start($this->manifest(), initiatedBy: 7));
+
+        Queue::assertPushed(NotifyAdminsOfUpdateResult::class, fn ($job) => $job->result['success'] === true
+            && $job->result['trigger'] === 'manual'
+            && $job->result['to_version'] === '1.1.0'
+        );
+    }
+
+    #[Test]
+    public function complete_notifies_admins_with_the_auto_trigger_when_unattended(): void
+    {
+        $applier = new FakeUpdateApplier;
+        $applier->run($applier->start($this->manifest(), initiatedBy: null));
+
+        Queue::assertPushed(NotifyAdminsOfUpdateResult::class, fn ($job) => $job->result['trigger'] === 'auto'
+        );
+    }
+
+    #[Test]
+    public function fail_notifies_admins_with_the_rolled_back_flag(): void
+    {
+        $applier = new FakeUpdateApplier;
+        $applier->failAt = 'finalize';
+        $applier->run($applier->start($this->manifest(), initiatedBy: 7));
+
+        Queue::assertPushed(NotifyAdminsOfUpdateResult::class, fn ($job) => $job->result['success'] === false
+            && $job->result['rolled_back'] === true
+            && $job->result['trigger'] === 'manual'
+        );
+    }
+
+    #[Test]
+    public function a_failed_pre_update_backup_notifies_admins_of_the_backup_failure_too(): void
+    {
+        // A partial fake: everything EXCEPT doBackup() is stubbed (mirrors
+        // FakeUpdateApplier), so the real UpdateApplier::doBackup() runs
+        // against a BackupManager double that reports a failed run —
+        // exercising the actual failure-detection branch, not a mock of it.
+        $failedRun = new BackupRun([
+            'profile' => BackupRun::PROFILE_UPDATE_SAFETY,
+            'status' => BackupRun::STATUS_FAILED,
+            'error' => 'simulated backup failure',
+        ]);
+        $failedRun->id = 999;
+
+        $fakeBackupManager = new class($failedRun) extends BackupManager
+        {
+            public function __construct(private BackupRun $failedRun) {}
+
+            public function start(string $profile = BackupRun::PROFILE_FULL, string $trigger = BackupRun::TRIGGER_MANUAL, array $meta = [], bool $acquireLock = true): BackupRun
+            {
+                return $this->failedRun;
+            }
+
+            public function run(BackupRun $run): BackupRun
+            {
+                return $this->failedRun;
+            }
+        };
+        app()->instance(BackupManager::class, $fakeBackupManager);
+
+        $applier = new class extends UpdateApplier
+        {
+            protected function gate(array $manifest): void {}
+
+            protected function armRecovery(UpdateHistory $history): void {}
+
+            protected function isGitMode(): bool
+            {
+                return false;
+            }
+        };
+
+        $history = $applier->start($this->manifest(), initiatedBy: 7);
+        $applier->advance($history->refresh());
+
+        Queue::assertPushed(NotifyAdminsOfBackupFailure::class, fn ($job) => $job->reason === 'simulated backup failure');
+        Queue::assertPushed(NotifyAdminsOfUpdateResult::class, fn ($job) => $job->result['success'] === false);
     }
 }

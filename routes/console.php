@@ -76,6 +76,11 @@ Schedule::command('oeparts:backup --trigger=scheduled')
 // config('backup.stale_after_seconds')'s default 1-hour threshold.
 Schedule::command('oeparts:backup:cleanup-stale')->hourly();
 
+// Same reclaim, for UpdateHistory rows abandoned mid-apply (e.g. a tab closed
+// while the poll-driven apply FSM was still in progress) — see
+// config('updates.stale_after_seconds').
+Schedule::command('oeparts:update:cleanup-stale')->hourly();
+
 // Check for available updates — daily at 6 AM (warms the update-check cache)
 Schedule::command('oeparts:update:check')->dailyAt('06:00');
 

@@ -3,6 +3,7 @@
 namespace App\Services\Updates;
 
 use App\Services\Updates\Exceptions\UpdateException;
+use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
 /**
@@ -53,12 +54,12 @@ class GitUpdater
      * detached HEAD at that tag — the normal, expected state for a production
      * checkout (it doesn't need to be "on a branch").
      *
-     * @param string|null $expectedCommitSha When given (from a signed release
-     *     manifest's git_commit_sha — see ReleaseSignature::verifyGitManifest()),
-     *     the actually-checked-out commit MUST match it exactly. Without this,
-     *     nothing here confirms the tag the remote served is the release that
-     *     was actually signed/published — a compromised or re-pushed remote
-     *     tag would be checked out and trusted silently.
+     * @param  string|null  $expectedCommitSha  When given (from a signed release
+     *                                          manifest's git_commit_sha — see ReleaseSignature::verifyGitManifest()),
+     *                                          the actually-checked-out commit MUST match it exactly. Without this,
+     *                                          nothing here confirms the tag the remote served is the release that
+     *                                          was actually signed/published — a compromised or re-pushed remote
+     *                                          tag would be checked out and trusted silently.
      */
     public function checkout(string $version, ?string $expectedCommitSha = null): void
     {
@@ -90,10 +91,30 @@ class GitUpdater
 
     public function composerInstall(): void
     {
+        $this->checkPlatformReqs();
         $this->run(
             ['composer', 'install', '--no-dev', '--optimize-autoloader', '--no-interaction'],
             timeout: 300,
         );
+    }
+
+    /**
+     * Belt-and-suspenders check of the just-checked-out tag's ACTUAL
+     * composer.json/lock platform requirements (PHP version, extensions),
+     * run before `composer install`. PreflightService::checkPhpVersion()/
+     * checkExtensions() already validate the release MANIFEST's declared
+     * min_php/required_extensions before the apply even starts — this
+     * catches the narrower case where a release's manifest omitted a
+     * requirement its actual composer.json/lock now needs, so the mismatch
+     * surfaces here cleanly instead of mid-`composer install` (which
+     * UpdateApplier's rollback matrix already treats as a rollback-worthy
+     * failure either way — this is strictly earlier and easier to diagnose,
+     * not a new safety net). `check-platform-reqs` is a built-in Composer
+     * command; no custom composer.json parsing here.
+     */
+    private function checkPlatformReqs(): void
+    {
+        $this->run(['composer', 'check-platform-reqs', '--no-dev'], timeout: 60);
     }
 
     /**
@@ -216,7 +237,7 @@ class GitUpdater
 
     private function binaryExists(string $name): bool
     {
-        $finder = new \Symfony\Component\Process\ExecutableFinder;
+        $finder = new ExecutableFinder;
 
         return $finder->find($name) !== null;
     }

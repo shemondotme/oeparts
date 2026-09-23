@@ -6,6 +6,7 @@ import otpInput from './otp-input';
 import countup from './countup';
 import clipboard from './clipboard';
 import cartData from './cart';
+import initBuildFreshnessCheck from './build-freshness';
 
 // Alpine.js — the ONLY JS interactivity layer (no Vue, React, Livewire, jQuery)
 window.Alpine = Alpine;
@@ -53,6 +54,8 @@ Alpine.data('cartData', (initialCart, initialSummary, locale, routeUpdate, route
 );
 
 Alpine.start();
+
+initBuildFreshnessCheck();
 
 // NProgress — page loading bar (amber color configured in CSS)
 NProgress.configure({ showSpinner: false });

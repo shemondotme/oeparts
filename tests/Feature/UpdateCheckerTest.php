@@ -51,7 +51,7 @@ class UpdateCheckerTest extends TestCase
         $this->fakeCatalog([
             ['version' => '1.0.0', 'min_version_to_update_from' => '1.0.0'],
             ['version' => '1.2.0', 'min_version_to_update_from' => '1.0.0', 'security' => true,
-             'download_url' => 'https://x/oeparts.zip', 'sha256' => 'abc', 'migration_count' => 2],
+                'download_url' => 'https://x/oeparts.zip', 'sha256' => 'abc', 'migration_count' => 2],
         ]);
 
         $status = $this->checkerWithCurrent('1.0.0')->check(true);
@@ -136,6 +136,61 @@ class UpdateCheckerTest extends TestCase
         $checker->check();      // served from cache — no network
         $checker->check(true);  // forced — hits network again
 
+        Http::assertSentCount(2);
+    }
+
+    #[Test]
+    public function it_falls_back_to_the_secondary_url_when_the_primary_fails(): void
+    {
+        config()->set('updates.check.catalog_url_fallback', 'https://fallback.test/releases.json');
+
+        Http::fake([
+            'updates.test/*' => Http::response('', 500),
+            'fallback.test/*' => Http::response(['channel' => 'stable', 'releases' => [
+                ['version' => '1.0.0'],
+                ['version' => '1.2.0', 'min_version_to_update_from' => '1.0.0'],
+            ]], 200),
+        ]);
+
+        $status = $this->checkerWithCurrent('1.0.0')->check(true);
+
+        $this->assertTrue($status->reachable);
+        $this->assertTrue($status->updateAvailable);
+        $this->assertSame('1.2.0', $status->latestVersion);
+        Http::assertSentCount(2); // primary (failed) + fallback
+    }
+
+    #[Test]
+    public function it_still_degrades_gracefully_when_both_primary_and_fallback_fail(): void
+    {
+        config()->set('updates.check.catalog_url_fallback', 'https://fallback.test/releases.json');
+
+        // performCheck() already falls through to manifest_url when the
+        // catalog yields no releases at all (existing behaviour, unrelated
+        // to this fallback-URL feature) — so a fully-unreachable catalog
+        // (primary + its fallback) still makes one further manifest_url
+        // attempt before giving up.
+        Http::fake([
+            'updates.test/*' => Http::response('', 500),
+            'fallback.test/*' => Http::response('', 500),
+        ]);
+
+        $status = $this->checkerWithCurrent('1.0.0')->check(true);
+
+        $this->assertFalse($status->reachable);
+        $this->assertNotNull($status->error);
+        Http::assertSentCount(3); // catalog primary + catalog fallback + manifest_url
+    }
+
+    #[Test]
+    public function no_fallback_configured_makes_no_extra_request(): void
+    {
+        Http::fake(['updates.test/*' => Http::response('', 500)]);
+
+        $this->checkerWithCurrent('1.0.0')->check(true);
+
+        // No catalog_url_fallback set, so just the existing catalog -> manifest_url
+        // chain (2 requests), never a 3rd fallback attempt.
         Http::assertSentCount(2);
     }
 

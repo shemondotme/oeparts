@@ -6,13 +6,13 @@
         $security  = $s['security'] ?? false;
 
         if (! $reachable) {
-            $tone = ['color' => 'var(--color-text-muted, #6b7280)', 'label' => 'Update server unreachable', 'icon' => 'heroicon-o-signal-slash'];
+            $tone = ['color' => 'var(--color-text-muted, #6b7280)', 'label' => __('updates.update_server_unreachable'), 'icon' => 'heroicon-o-signal-slash'];
         } elseif ($available && $security) {
-            $tone = ['color' => 'var(--danger-500, #dc2626)', 'label' => 'Security update available', 'icon' => 'heroicon-o-shield-exclamation'];
+            $tone = ['color' => 'var(--danger-500, #dc2626)', 'label' => __('updates.security_update_available'), 'icon' => 'heroicon-o-shield-exclamation'];
         } elseif ($available) {
-            $tone = ['color' => 'var(--warning-500, #f59e0b)', 'label' => 'Update available', 'icon' => 'heroicon-o-arrow-up-circle'];
+            $tone = ['color' => 'var(--warning-500, #f59e0b)', 'label' => __('updates.update_available'), 'icon' => 'heroicon-o-arrow-up-circle'];
         } else {
-            $tone = ['color' => 'var(--success-600, #16a34a)', 'label' => 'Up to date', 'icon' => 'heroicon-o-check-circle'];
+            $tone = ['color' => 'var(--success-600, #16a34a)', 'label' => __('updates.up_to_date'), 'icon' => 'heroicon-o-check-circle'];
         }
     @endphp
 
@@ -24,12 +24,10 @@
                     <h2 class="text-lg font-bold tracking-tight flex items-center gap-2"
                         style="color: var(--color-text-on-accent, #ffffff); font-family: var(--font-display);">
                         <x-heroicon-o-arrow-up-circle class="w-5 h-5" style="color: var(--warning-500, #f59e0b);" />
-                        System Updates
+                        {{ __('updates.system_updates') }}
                     </h2>
                     <p class="mt-1 text-sm max-w-2xl leading-relaxed" style="color: var(--color-text-muted-on-accent, rgba(228, 228, 231, 0.72));">
-                        Check for new OeParts releases and review the changelog. When an update is
-                        available, apply it with one click below — a full backup runs first, and it's
-                        verified automatically.
+                        {{ __('updates.page_intro') }}
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -42,7 +40,7 @@
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
-                        Check now
+                        {{ __('updates.check_now') }}
                     </button>
                 </div>
             </div>
@@ -61,11 +59,11 @@
                         {{ $tone['label'] }}
                     </div>
                     <div class="mt-1 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm font-mono" style="color: var(--color-text-muted, #6b7280);">
-                        <span>Installed: <strong style="color: var(--color-text-primary, #111827);">{{ $s['current_version'] ?? 'unknown' }}</strong></span>
+                        <span>{{ __('updates.installed_label') }} <strong style="color: var(--color-text-primary, #111827);">{{ $s['current_version'] ?? 'unknown' }}</strong></span>
                         @if($reachable)
-                            <span>Latest: <strong style="color: var(--color-text-primary, #111827);">{{ $s['latest_version'] ?? 'unknown' }}</strong></span>
+                            <span>{{ __('updates.latest_label') }} <strong style="color: var(--color-text-primary, #111827);">{{ $s['latest_version'] ?? 'unknown' }}</strong></span>
                         @endif
-                        <span>Channel: {{ $s['channel'] ?? 'stable' }}</span>
+                        <span>{{ __('updates.channel_label') }} {{ $s['channel'] ?? 'stable' }}</span>
                     </div>
                 </div>
             </div>
@@ -87,7 +85,7 @@
             @endphp
             <div class="op-card p-5" style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
                 <div class="text-xs font-bold uppercase tracking-widest font-mono mb-3" style="color: var(--color-text-muted, #6b7280);">
-                    Readiness
+                    {{ __('updates.readiness') }}
                 </div>
                 <div class="flex flex-wrap gap-2">
                     @foreach($preflightSummary as $check)
@@ -98,8 +96,8 @@
                 </div>
                 <div class="mt-3 flex items-center gap-2 text-xs" style="color: var(--color-text-muted, #6b7280);">
                     <span class="op-dot {{ $this->recoveryArmed() ? 'op-dot-live' : '' }}" style="{{ $this->recoveryArmed() ? '' : 'background: rgba(120,120,130,0.45);' }}"></span>
-                    Recovery console:
-                    <strong style="color: var(--color-text-primary, #111827);">{{ $this->recoveryArmed() ? 'Armed (update window open)' : 'Not armed' }}</strong>
+                    {{ __('updates.recovery_console_label') }}
+                    <strong style="color: var(--color-text-primary, #111827);">{{ $this->recoveryArmed() ? __('updates.armed_update_window_open') : __('updates.not_armed') }}</strong>
                 </div>
             </div>
         @endif
@@ -116,18 +114,16 @@
 
                 @if(! $applying && empty($applyPreview))
                     <div class="text-sm font-bold uppercase tracking-widest font-mono mb-3" style="color: var(--color-text-muted, #6b7280);">
-                        Apply this update
+                        {{ __('updates.apply_this_update') }}
                     </div>
                     <p class="text-sm mb-4" style="color: var(--color-text-muted, #6b7280);">
-                        Review exactly what will happen before updating to {{ $s['latest_version'] ?? 'the latest version' }} —
-                        a full backup is taken first, the site enters maintenance mode, and the update is applied and
-                        verified automatically.
+                        {{ __('updates.review_what_will_happen', ['version' => $s['latest_version'] ?? 'the latest version']) }}
                     </p>
                     <button wire:click="loadPreview" wire:loading.attr="disabled" wire:target="loadPreview"
                         class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
                         style="background: {{ $security ? 'var(--danger-500, #dc2626)' : 'var(--primary-600, #2563eb)' }}; color: white;">
                         <x-heroicon-o-rocket-launch class="w-3.5 h-3.5" />
-                        Review &amp; apply update
+                        {{ __('updates.review_and_apply_update') }}
                     </button>
                 @elseif(! $applying)
                     @php
@@ -136,35 +132,35 @@
                         $mins = (int) ceil(($p['eta_seconds'] ?? 0) / 60);
                     @endphp
                     <div class="text-sm font-bold uppercase tracking-widest font-mono mb-3" style="color: var(--color-text-muted, #6b7280);">
-                        Confirm update: {{ $p['from_version'] ?? '?' }} &rarr; {{ $p['to_version'] ?? '?' }}
+                        {{ __('updates.confirm_update_label') }} {{ $p['from_version'] ?? '?' }} &rarr; {{ $p['to_version'] ?? '?' }}
                     </div>
 
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                         <div class="p-3 rounded-xl" style="background: var(--color-bg-inset, #f3f4f6);">
-                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">Download size</div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.download_size') }}</div>
                             <div class="text-sm font-mono font-bold" style="color: var(--color-text-primary, #111827);">
                                 {{ $p['size_bytes'] ? round($p['size_bytes'] / 1048576, 1).' MB' : '—' }}
                             </div>
                         </div>
                         <div class="p-3 rounded-xl" style="background: var(--color-bg-inset, #f3f4f6);">
-                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">Migrations</div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.migrations') }}</div>
                             <div class="text-sm font-mono font-bold" style="color: var(--color-text-primary, #111827);">{{ $p['migration_count'] ?? 0 }}</div>
                         </div>
                         <div class="p-3 rounded-xl" style="background: var(--color-bg-inset, #f3f4f6);">
-                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">Est. time</div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.est_time') }}</div>
                             <div class="text-sm font-mono font-bold" style="color: var(--color-text-primary, #111827);">~{{ max(1, $mins) }} min</div>
                         </div>
                         <div class="p-3 rounded-xl" style="background: var(--color-bg-inset, #f3f4f6);">
-                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">Pre-flight</div>
+                            <div class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.pre_flight') }}</div>
                             <div class="text-sm font-mono font-bold" style="color: {{ $preflight['can_proceed'] ? (($preflight['has_warnings'] ?? false) ? 'var(--warning-500, #f59e0b)' : 'var(--success-600, #16a34a)') : 'var(--danger-500, #dc2626)' }};">
-                                {{ $preflight['failure_count'] ?? 0 }} fail / {{ $preflight['warning_count'] ?? 0 }} warn
+                                {{ __('updates.fail_warn_counts', ['fail' => $preflight['failure_count'] ?? 0, 'warn' => $preflight['warning_count'] ?? 0]) }}
                             </div>
                         </div>
                     </div>
 
                     @if(!empty($p['breaking_changes']))
                         <div class="mb-4 p-3 rounded-xl text-sm" style="background: rgba(220, 38, 38, 0.08); border: 1px solid var(--danger-500, #dc2626);">
-                            <div class="text-xs font-bold uppercase tracking-wider mb-1" style="color: var(--danger-500, #dc2626);">Breaking changes</div>
+                            <div class="text-xs font-bold uppercase tracking-wider mb-1" style="color: var(--danger-500, #dc2626);">{{ __('updates.breaking_changes') }}</div>
                             <ul class="list-disc pl-4 space-y-0.5" style="color: var(--color-text-primary, #111827);">
                                 @foreach($p['breaking_changes'] as $change)
                                     <li>{{ $change }}</li>
@@ -197,7 +193,7 @@
                     @if($preflight['can_proceed'] ?? true)
                         <div class="flex flex-wrap items-end gap-3">
                             <div>
-                                <label class="block text-xs font-bold uppercase tracking-wider mb-1" style="color: var(--color-text-muted, #6b7280);">Your password</label>
+                                <label class="block text-xs font-bold uppercase tracking-wider mb-1" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.your_password') }}</label>
                                 <input type="password" wire:model="applyPassword"
                                     class="op-focus-ring rounded-xl px-3 py-2 text-sm font-mono"
                                     style="background: var(--color-bg-inset, #f3f4f6); border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);" />
@@ -207,7 +203,7 @@
                             @if($preflight['has_warnings'] ?? false)
                                 <label class="flex items-center gap-2 text-xs mb-2" style="color: var(--color-text-primary, #111827);">
                                     <input type="checkbox" wire:model.live="previewAcknowledged" class="rounded" />
-                                    I've reviewed the warnings above and want to proceed anyway
+                                    {{ __('updates.acknowledge_warnings_checkbox') }}
                                 </label>
                             @endif
 
@@ -216,23 +212,23 @@
                                 class="op-focus-ring op-press inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-40"
                                 style="background: {{ $security ? 'var(--danger-500, #dc2626)' : 'var(--primary-600, #2563eb)' }}; color: white;">
                                 <x-heroicon-o-rocket-launch class="w-3.5 h-3.5" />
-                                Confirm &amp; apply
+                                {{ __('updates.confirm_and_apply') }}
                             </button>
                             <button wire:click="cancelPreview" type="button"
                                 class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
                                 style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-muted, #6b7280);">
-                                Cancel
+                                {{ __('updates.cancel') }}
                             </button>
                         </div>
                     @else
                         <div class="flex items-center gap-3">
                             <p class="text-xs" style="color: var(--danger-500, #dc2626);">
-                                Pre-flight checks are failing — resolve the issues above before applying.
+                                {{ __('updates.preflight_failing_resolve') }}
                             </p>
                             <button wire:click="cancelPreview" type="button"
                                 class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
                                 style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-muted, #6b7280);">
-                                Close
+                                {{ __('updates.close') }}
                             </button>
                         </div>
                     @endif
@@ -242,14 +238,14 @@
                             ? \App\Services\Updates\UpdateApplier::GIT_STEPS
                             : \App\Services\Updates\UpdateApplier::STEPS;
                         $stepLabels = [
-                            'backup'           => 'Backing up database & files',
-                            'download'         => 'Downloading release',
-                            'extract'          => 'Extracting release',
-                            'swap'             => 'Swapping in new files',
-                            'git_checkout'     => 'Pulling latest code (git)',
-                            'composer_install' => 'Installing dependencies (composer)',
-                            'finalize'         => 'Running migrations',
-                            'verify'           => 'Verifying the update',
+                            'backup'           => __('updates.step_backup'),
+                            'download'         => __('updates.step_download'),
+                            'extract'          => __('updates.step_extract'),
+                            'swap'             => __('updates.step_swap'),
+                            'git_checkout'     => __('updates.step_git_checkout'),
+                            'composer_install' => __('updates.step_composer_install'),
+                            'finalize'         => __('updates.step_finalize'),
+                            'verify'           => __('updates.step_verify'),
                         ];
                         $currentStep = $applyStatus['step'] ?? $steps[0];
                         $stepIndex = array_search($currentStep, $steps, true);
@@ -278,7 +274,7 @@
                             </svg>
                             <span class="text-sm font-bold" style="color: var(--color-text-primary, #111827);">
                                 {{ $stepLabels[$currentStep] ?? ucfirst((string) $currentStep) }}&hellip;
-                                <span class="font-mono font-normal" style="color: var(--color-text-muted, #6b7280);">(step {{ min($stepIndex + 1, count($steps)) }} of {{ count($steps) }})</span>
+                                <span class="font-mono font-normal" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.step_of', ['current' => min($stepIndex + 1, count($steps)), 'total' => count($steps)]) }}</span>
                             </span>
                         </div>
                         <div class="h-1.5 w-full rounded-full overflow-hidden mb-3" style="background: var(--color-bg-inset, #f3f4f6);">
@@ -286,9 +282,7 @@
                                 style="width: {{ max(4, (int) round((min($stepIndex + 1, count($steps)) / count($steps)) * 100)) }}%; background: var(--primary-600, #2563eb);"></div>
                         </div>
                         <p class="text-xs" style="color: var(--color-text-muted, #6b7280);">
-                            Keep this window open — the page reloads automatically when the update finishes.
-                            Long steps (backup, download) can take a while; the browser tab title won't change,
-                            but no action is needed from you.
+                            {{ __('updates.keep_window_open') }}
                         </p>
                     </div>
                 @endif
@@ -302,15 +296,15 @@
                 style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                     <div>
-                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">New Version</div>
+                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.new_version') }}</div>
                         <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['latest_version'] }}</div>
                     </div>
                     <div>
-                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">Released</div>
+                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.released') }}</div>
                         <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['release_date'] ?? '—' }}</div>
                     </div>
                     <div>
-                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">DB Migrations</div>
+                        <div class="text-xs font-bold uppercase tracking-widest font-mono mb-1" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.db_migrations') }}</div>
                         <div class="text-lg font-bold font-mono" style="color: var(--color-text-primary, #111827);">{{ $s['migration_count'] ?? 0 }}</div>
                     </div>
                 </div>
@@ -318,7 +312,7 @@
                 @if(!empty($s['upgrade_path']) && count($s['upgrade_path']) > 1)
                     <div class="mb-4 p-3 rounded-xl text-sm"
                         style="background: var(--color-bg-inset, #f3f4f6); color: var(--color-text-muted, #6b7280);">
-                        This is a multi-step upgrade — apply in order:
+                        {{ __('updates.multi_step_upgrade') }}
                         <span class="font-mono" style="color: var(--color-text-primary, #111827);">{{ implode(' → ', $s['upgrade_path']) }}</span>
                     </div>
                 @endif
@@ -329,7 +323,7 @@
                            class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
                            style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
                             <x-heroicon-o-document-text class="w-3.5 h-3.5" />
-                            View changelog
+                            {{ __('updates.view_changelog') }}
                         </a>
                     @endif
                     @if(!empty($s['download_url']))
@@ -337,7 +331,7 @@
                            class="op-focus-ring inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
                            style="border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
                             <x-heroicon-o-arrow-down-tray class="w-3.5 h-3.5" />
-                            Download release (manual install)
+                            {{ __('updates.download_release_manual') }}
                         </a>
                     @endif
                 </div>
@@ -350,15 +344,15 @@
             <div class="op-card overflow-hidden" style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
                 <div class="flex items-center justify-between px-5 pt-5 pb-2">
                     <div class="text-xs font-bold uppercase tracking-widest font-mono" style="color: var(--color-text-muted, #6b7280);">
-                        Recent Updates
+                        {{ __('updates.recent_updates') }}
                     </div>
                     <a href="{{ \App\Filament\Pages\System\UpdateHistoryPage::getUrl() }}"
                        class="op-focus-ring text-xs font-bold uppercase tracking-wider" style="color: var(--primary-600, #2563eb);">
-                        View full history &rarr;
+                        {{ __('updates.view_full_history') }}
                     </a>
                 </div>
                 <div class="op-upd-row op-upd-row-head">
-                    <span>Version</span><span>Status</span><span style="text-align:right;">When</span>
+                    <span>{{ __('updates.version_col') }}</span><span>{{ __('updates.status_col') }}</span><span style="text-align:right;">{{ __('updates.when_col') }}</span>
                 </div>
                 @foreach($recent as $h)
                     @php
@@ -394,16 +388,16 @@
             @endphp
             <div class="op-card p-6" style="background: var(--color-bg-surface, #ffffff); border: 1px solid var(--color-border-subtle, #e5e7eb);">
                 <div class="text-xs font-bold uppercase tracking-widest font-mono mb-4" style="color: var(--color-text-muted, #6b7280);">
-                    Update Settings
+                    {{ __('updates.update_settings') }}
                 </div>
                 <div class="flex flex-wrap items-end gap-6">
                     <div>
-                        <label class="text-xs font-bold uppercase tracking-widest font-mono mb-2 block" style="color: var(--color-text-muted, #6b7280);">Release channel</label>
+                        <label class="text-xs font-bold uppercase tracking-widest font-mono mb-2 block" style="color: var(--color-text-muted, #6b7280);">{{ __('updates.release_channel') }}</label>
                         <select wire:model="settingsChannel"
                             class="px-4 py-2.5 text-sm rounded-xl"
                             style="background: var(--color-bg-inset, #f3f4f6); border: 1px solid var(--color-border-subtle, #e5e7eb); color: var(--color-text-primary, #111827);">
-                            <option value="stable">Stable</option>
-                            <option value="beta">Beta</option>
+                            <option value="stable">{{ __('updates.stable') }}</option>
+                            <option value="beta">{{ __('updates.beta') }}</option>
                         </select>
                     </div>
                     <div class="flex items-center gap-3">
@@ -412,12 +406,12 @@
                             class="{{ $settingsAutoApplySecurity ? $toggleOn : $toggleOff }}">
                             <div><div aria-hidden="true"></div><div aria-hidden="true"></div></div>
                         </button>
-                        <span class="text-sm" style="color: var(--color-text-primary, #111827);">Auto-apply security updates</span>
+                        <span class="text-sm" style="color: var(--color-text-primary, #111827);">{{ __('updates.auto_apply_security_updates') }}</span>
                     </div>
                     <button wire:click="saveUpdateSettings" wire:loading.attr="disabled"
                         class="op-focus-ring op-press px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider"
                         style="background: var(--primary-600, #2563eb); color: white;">
-                        Save
+                        {{ __('updates.save') }}
                     </button>
                 </div>
                 @error('settingsChannel')<div class="mt-2 text-xs" style="color: var(--danger-500, #dc2626);">{{ $message }}</div>@enderror
@@ -427,7 +421,7 @@
         {{-- Footer meta --}}
         @if(!empty($s['checked_at']))
             <p class="text-xs font-mono" style="color: var(--color-text-muted, #6b7280);">
-                Last checked: {{ \Illuminate\Support\Carbon::parse($s['checked_at'])->diffForHumans() }}
+                {{ __('updates.last_checked', ['time' => \Illuminate\Support\Carbon::parse($s['checked_at'])->diffForHumans()]) }}
             </p>
         @endif
     </div>

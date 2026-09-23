@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\System\SystemUpdates;
+use App\Filament\Pages\System\UpdateHistoryPage;
 use App\Models\Admin;
 use App\Models\UpdateHistory;
 use App\Services\Updates\RecoveryWindowFlag;
 use App\Services\Updates\UpdateChecker;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -27,8 +30,8 @@ class SystemUpdatesPageTest extends TestCase
         parent::setUp();
 
         $this->seed([
-            \Database\Seeders\SettingsSeeder::class,
-            \Database\Seeders\RolesSeeder::class,
+            SettingsSeeder::class,
+            RolesSeeder::class,
         ]);
 
         config()->set('updates.check.catalog_url', 'https://updates.test/releases.json');
@@ -49,7 +52,7 @@ class SystemUpdatesPageTest extends TestCase
         Http::fake([
             'updates.test/*' => Http::response(['channel' => 'stable', 'releases' => [
                 ['version' => '9.9.9', 'min_version_to_update_from' => '0.0.0', 'security' => $security,
-                 'download_url' => 'https://x/oeparts.zip', 'changelog_url' => 'https://x/CHANGELOG.md'],
+                    'download_url' => 'https://x/oeparts.zip', 'changelog_url' => 'https://x/CHANGELOG.md'],
             ]], 200),
             '*' => Http::response('', 500),
         ]);
@@ -89,6 +92,50 @@ class SystemUpdatesPageTest extends TestCase
         $status = $component->get('status');
         $this->assertTrue($status['update_available']);
         $this->assertSame('9.9.9', $status['latest_version']);
+    }
+
+    #[Test]
+    public function check_now_is_throttled_per_admin(): void
+    {
+        $this->fakeUpdateAvailable();
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+
+        // mount() itself performs one non-forced (cache-backed) check — count
+        // requests from here rather than asserting an absolute total.
+        $component = Livewire::test(SystemUpdates::class);
+        $baseline = Http::recorded()->count();
+
+        for ($i = 0; $i < 6; $i++) {
+            $component->call('checkNow');
+        }
+        Http::assertSentCount($baseline + 6); // 6 allowed forced checks
+
+        // The 7th call within the same minute must be a no-op — no extra
+        // request, just the "slow down" notification.
+        $component->call('checkNow');
+        Http::assertSentCount($baseline + 6);
+    }
+
+    #[Test]
+    public function the_page_renders_in_every_supported_locale(): void
+    {
+        $this->fakeUpdateAvailable(security: true);
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+
+        foreach (['en', 'de', 'es', 'fr', 'lt'] as $locale) {
+            app()->setLocale($locale);
+
+            $response = $this->get(SystemUpdates::getUrl());
+            $response->assertSuccessful();
+
+            // A known key must resolve to something (never fall through to a
+            // raw "updates.xxx" key, which would mean the file is missing a
+            // key present in en).
+            $this->assertNotSame('updates.system_updates', __('updates.system_updates'));
+        }
+
+        app()->setLocale('en');
     }
 
     #[Test]
@@ -199,7 +246,7 @@ class SystemUpdatesPageTest extends TestCase
         $component = Livewire::test(SystemUpdates::class);
 
         $this->assertCount(3, $component->instance()->recentUpdates());
-        $component->assertSeeHtml(\App\Filament\Pages\System\UpdateHistoryPage::getUrl());
+        $component->assertSeeHtml(UpdateHistoryPage::getUrl());
     }
 
     /**
