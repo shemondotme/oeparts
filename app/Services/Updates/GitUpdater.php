@@ -64,19 +64,31 @@ class GitUpdater
     public function checkout(string $version, ?string $expectedCommitSha = null): void
     {
         $this->run(['git', 'fetch', '--tags', '--force', 'origin']);
-        $this->run(['git', 'checkout', '--force', $this->tag($version)]);
 
+        // Verify the tag's target commit BEFORE switching the working tree
+        // onto it. This used to check out first and verify after — by the
+        // time a signature mismatch threw, the mismatched tag's files were
+        // already live on disk (git checkout --force is not undone by
+        // throwing an exception), and UpdateApplier's own rollback matrix
+        // treats a failure at this step as "before the destructive phase,
+        // nothing to roll back," so nothing ever put the working tree back.
+        // That silently defeated the entire point of this check for
+        // exactly the attack it exists to stop: a compromised or re-pushed
+        // remote tag was checked out and left running, not merely "trusted
+        // silently" as the old comment here warned against — worse, since
+        // the app would go on serving whatever that tag contained until
+        // someone noticed the failed UpdateHistory row and investigated.
         if ($expectedCommitSha !== null && $expectedCommitSha !== '') {
-            $actual = $this->currentCommitSha();
-            if ($actual === null || ! hash_equals(strtolower($expectedCommitSha), strtolower($actual))) {
+            $target = $this->resolveTagCommitSha($version);
+            if ($target === null || ! hash_equals(strtolower($expectedCommitSha), strtolower($target))) {
                 throw new UpdateException(
-                    'Checked-out commit ('.($actual ?? 'unknown').') does not match the signed release manifest ('
-                    .$expectedCommitSha.') for tag '.$this->tag($version).' — the git remote may be compromised '
-                    .'or the tag was re-pushed. Refusing to proceed.'
+                    'Tag '.$this->tag($version).' resolves to commit ('.($target ?? 'unknown').'), which does not match the signed release manifest ('
+                    .$expectedCommitSha.') — the git remote may be compromised or the tag was re-pushed. Refusing to proceed.'
                 );
             }
         }
 
+        $this->run(['git', 'checkout', '--force', $this->tag($version)]);
         $this->stripDevFilesFromWorkingTree();
     }
 
@@ -84,6 +96,20 @@ class GitUpdater
     public function currentCommitSha(): ?string
     {
         $process = $this->process(['git', 'rev-parse', 'HEAD']);
+        $process->run();
+
+        return $process->isSuccessful() ? trim($process->getOutput()) : null;
+    }
+
+    /**
+     * The commit SHA a tag points to, without checking anything out —
+     * dereferences an annotated tag to its underlying commit (a lightweight
+     * tag already points straight at one). What checkout() verifies against
+     * $expectedCommitSha before ever touching the working tree.
+     */
+    private function resolveTagCommitSha(string $version): ?string
+    {
+        $process = $this->process(['git', 'rev-parse', $this->tag($version).'^{commit}']);
         $process->run();
 
         return $process->isSuccessful() ? trim($process->getOutput()) : null;

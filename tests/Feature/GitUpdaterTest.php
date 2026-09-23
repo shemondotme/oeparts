@@ -254,6 +254,20 @@ class GitUpdaterTest extends TestCase
         $this->assertSame('v1.1.0', trim(file_get_contents($this->root.'/marker.txt')));
     }
 
+    /**
+     * Rehearsal finding (v1.0.19 self-update dry run,
+     * [[project_bulletproof_testing_2026_09]]): checkout() used to run the
+     * actual `git checkout --force` BEFORE verifying $expectedCommitSha —
+     * a mismatch threw only AFTER the working tree had already moved onto
+     * the unverified tag's files (checkout --force is not undone by an
+     * exception), and UpdateApplier's own rollback matrix treats a failure
+     * at this step as "before the destructive phase," so nothing ever put
+     * it back. That silently defeated the entire point of this check for
+     * exactly the attack it exists to stop — a compromised/re-pushed
+     * remote tag was left checked out and running. The exception message
+     * alone (asserted below) can't catch this class of bug; only checking
+     * the working tree was never touched can.
+     */
     #[Test]
     public function checkout_throws_when_the_expected_commit_sha_does_not_match(): void
     {
@@ -264,9 +278,19 @@ class GitUpdaterTest extends TestCase
         // comparing against the commit the signed manifest actually expects.
         $wrongSha = str_repeat('a', 40);
 
-        $this->expectException(UpdateException::class);
-        $this->expectExceptionMessageMatches('/does not match the signed release manifest/');
-        (new GitUpdater)->checkout('1.1.0', $wrongSha);
+        try {
+            (new GitUpdater)->checkout('1.1.0', $wrongSha);
+            $this->fail('Expected an UpdateException to be thrown.');
+        } catch (UpdateException $e) {
+            $this->assertStringContainsString('does not match the signed release manifest', $e->getMessage());
+        }
+
+        $this->assertSame(
+            'v1.0.0',
+            trim(file_get_contents($this->root.'/marker.txt')),
+            'A signature mismatch must never touch the working tree — it was still on v1.0.0 before this call.'
+        );
+        $this->assertSame('v1.0.0', (new GitUpdater)->currentTag());
     }
 
     /**
