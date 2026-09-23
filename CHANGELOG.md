@@ -2,7 +2,48 @@
 
 All notable changes to this project are documented here.
 
-## 1.0.18 — 2026-08-31
+## 1.0.19 — 2026-09-24
+
+A "bulletproof, zero critical-bug" testing pass across the entire application — every module, not just recent changes — plus a second payment gateway (Paysera), an admin-triggered production restore, and a self-update/build-freshness overhaul. This is the largest release since 1.0.0: 22 phases of dedicated audit work found and fixed real, previously-invisible bugs across security, finance, compliance, accessibility, backups, and the update system itself, on top of hardening the automated test suite (PHPStan static analysis, cross-browser/mobile e2e coverage, and a genuine concurrent-load test) so this class of bug is caught earlier next time. Every migration applies automatically; every new toggleable feature ships off/disabled by default.
+
+### Added
+- **Paysera** as a second card payment gateway alongside Airwallex, with its own webhook handling.
+- **Admin-triggered full production restore** (Backup Dashboard → "Restore into production"): rolls the live install (files + database) back to any full backup, with a pre-restore safety backup and automatic rollback if the restore itself fails.
+- **Payment dispute/chargeback alerts**: an Airwallex dispute webhook now notifies every active admin (bell) and emails every super_admin — alert-only, no order/payment state is changed automatically.
+- **Build-freshness check**: the storefront and admin panel now detect when the running deploy is stale (a build shipped while the tab was open) and prompt a refresh instead of silently continuing to run out-of-date code; a stale admin tab gets a clean session reload instead of acting on out-of-date component state.
+- **PHPStan/Larastan static analysis** wired into CI alongside the existing test suite and code coverage reporting.
+- **Cross-browser and mobile e2e coverage** (Firefox, WebKit, a mobile viewport) for the core storefront purchase journey, previously Chromium-only.
+- **WCAG 2.1 AA accessibility pass**: automated axe-core scans, keyboard-navigation checks, and text-zoom/reflow coverage added to the e2e suite.
+- **k6 load testing**: a real concurrent-HTTP-load test for the storefront's read-heavy pages, run via Docker.
+
+### Fixed — Security
+- Closed 7 real vulnerabilities found in a full OWASP Top 10 pass (SQL injection, CSV/formula injection, an XSS vector, a JSON-LD script-breakout, a timing attack on a secret comparison, a private-disk misconfiguration) plus every flagged Composer/npm dependency advisory (26+ prior).
+- Added an Origin/Referer verification layer to the guest cart/checkout API, closing a CSRF gap that existed alongside (not replacing) the browser's own SameSite cookie protection.
+- Coupon per-user usage limits can no longer be bypassed by checking out as a guest and then signing up under the same email, or by a second guest order from the same IP.
+- A real, live-confirmed bug: the admin's own error-monitoring dashboard never matched a single real log line and scrambled every field it did show when it did match — fixed, and used throughout this whole effort to find and fix similar issues.
+
+### Fixed — Financial & compliance
+- VAT was calculated on the pre-discount subtotal instead of the post-discount amount, overcharging tax on every coupon-discounted order (a violation of EU VAT Directive Art. 79(b); worst case was a 100%-off coupon still charging VAT as if the customer paid full price).
+- Cookie-consent banner choices (Accept/Decline/Customize) previously did nothing — GTM, GA4, the Facebook Pixel, and Crisp all fired unconditionally before consent. They're now genuinely gated behind a real choice.
+- Self-service account deletion left real PII behind indefinitely (home addresses, search history, login history) because Laravel's soft-delete on the `users` table silently defeats every `cascadeOnDelete()` foreign key that assumes a real row deletion — now explicitly cleaned up.
+- The mobile API's checkout endpoints could place and charge a real order without ever recording terms-of-service acceptance, bypassing a guard the web checkout flow already enforced structurally.
+
+### Fixed — Reliability & data integrity
+- Every support-reply email ever sent has silently shown neither the customer's original message nor the actual reply text — the HTML email template referenced the wrong variable names, and neither ever threw an error.
+- A repeated "cache the failure forever" bug across three unrelated files, worst on `LocaleRegistry` (the single source of truth for routing/hreflang/sitemap generation) — a single transient DB blip on first boot would have silently pinned the whole app to a 5-locale fallback forever.
+- The mobile API had no maintenance-mode gate at all — a client could place and pay for a real order while the storefront correctly showed a 503 page during a self-update or restore.
+- `CacheService` (the central cache helper behind nearly the entire storefront, including checkout coupon lookups) was almost entirely unguarded against a Redis outage — one bad blip would have 500'd most of the site.
+- The default log channel never rotated (`single`, unbounded growth) in both the code default and the real deployment template every install copies from — switched to a rotating, auto-pruned channel.
+- A long-standing "add to cart, then immediately view the cart, see it empty" race — the cart summary cache was being invalidated before the database write that should have triggered it had actually committed.
+- A backup restored from a `files_only` or `database_only` profile through the new full-production-restore action would silently skip the half it doesn't contain while still reporting success; that action is now only ever offered for a genuine full (files + database) backup, and the underlying service refuses the other profiles outright.
+- The update-result notification email described every production restore as a routine "Update ... applied via System → System Updates" — corrected to describe a restore as what it actually is, particularly important during an already-stressful disaster-recovery moment.
+- A car model with no recorded debut year was silently excluded from every year-filtered vehicle-fitment lookup, forever.
+- A UTF-8 byte-order mark (added automatically by Excel's "CSV UTF-8" export) broke both CSV importers' header detection.
+- Every one of six background email/notification jobs was missing retry backoff, and two were missing a null-recipient guard that could burn all retries on an order that could never receive the email anyway.
+- Two real scheduled-task race conditions: an admin manually regenerating the sitemap could corrupt it mid-write if the nightly scheduled regeneration fired at the same moment; two overlapping "auto-complete shipped orders" runs could both transition (and both email the customer about) the same order.
+
+### Changed
+- Consolidated 33 admin e2e test failures down to zero real ones — most were the dev database drifting out of the specific starting state a test assumed, now self-healing; the rest were fixed, including a Filament confirmation-dialog role mismatch (`alertdialog` vs `dialog`) that made every relation-manager Delete button unreachable to an accessibility-tree-based test.
 
 A large batch: a redesigned product detail page with admin-toggleable content sections and a Buy Now flow, a modernized SEO Health Dashboard with several new reports, an extensive SEO/structured-data/redirects/sitemap pass, an 8-phase reorganization of the entire admin Settings area, a comprehensive Playwright end-to-end test suite covering the full storefront and admin panel, and a sitewide responsive/multi-locale audit that found and fixed several real mobile layout bugs. Several critical admin-panel bugs (broken notifications, address book, customer creation, CSV export, a broken order tracking link) were found and fixed along the way. Every migration applies automatically; every new toggleable feature ships off/disabled by default — review and opt in at your own pace after updating.
 
