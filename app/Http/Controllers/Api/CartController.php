@@ -156,7 +156,12 @@ class CartController extends BaseApiController
         $cart = $this->cartService->getOrCreateCart($user, $guestToken);
 
         $summary = $this->cartService->getSummary($cart);
-        $result = $this->couponService->validate($validated['code'], (string) $summary['subtotal'], $user?->id);
+        // A guest hasn't entered their email yet at this stage — email is
+        // null here for a guest, so this preview only catches multi-account
+        // abuse by IP; the authoritative check (all 3 signals) is
+        // CheckoutService::createOrder()'s own re-validation at the moment
+        // the coupon is actually consumed.
+        $result = $this->couponService->validate($validated['code'], (string) $summary['subtotal'], $user?->id, $user?->email, $request->ip());
 
         if (! $result['valid']) {
             return response()->json([

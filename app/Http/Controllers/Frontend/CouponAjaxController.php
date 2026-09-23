@@ -55,7 +55,12 @@ class CouponAjaxController extends Controller
         $subtotal = $cartSummary['subtotal'];
         $userId = auth()->id();
 
-        $result = app(CouponService::class)->validate($request->code, $subtotal, $userId);
+        // A guest hasn't entered their email yet at this stage (that's
+        // step1 of checkout) — email is null here for a guest, so this
+        // preview only catches multi-account abuse by IP; the authoritative
+        // check (all 3 signals) is CheckoutService::createOrder()'s own
+        // re-validation at the moment the coupon is actually consumed.
+        $result = app(CouponService::class)->validate($request->code, $subtotal, $userId, auth()->user()?->email, $request->ip());
 
         if (! $result['valid']) {
             return response()->json([

@@ -15,7 +15,7 @@ class CouponService
     /**
      * Validate a coupon code against all eligibility rules.
      */
-    public function validate(string $code, string $subtotal, ?int $userId): array
+    public function validate(string $code, string $subtotal, ?int $userId, ?string $email = null, ?string $ipAddress = null): array
     {
         // 1. Coupon exists
         $coupon = app(CacheService::class)->rememberCouponByCode(
@@ -31,7 +31,7 @@ class CouponService
             ];
         }
 
-        return $this->validateCoupon($coupon, $subtotal, $userId);
+        return $this->validateCoupon($coupon, $subtotal, $userId, $email, $ipAddress);
     }
 
     /**
@@ -42,8 +42,14 @@ class CouponService
      * subtotal captured whenever the coupon was first applied earlier in
      * checkout — the customer may have changed cart contents since then,
      * which would otherwise leave a stale discount amount on the order.
+     *
+     * $email/$ipAddress are optional, additional identity signals for the
+     * per-user usage-limit check below (multi-account abuse mitigation) —
+     * callers that don't have them yet (e.g. the cart-page coupon preview,
+     * before a guest has entered an email) simply fall back to the
+     * user_id-only check, same as before this existed.
      */
-    public function validateCoupon(Coupon $coupon, string $subtotal, ?int $userId): array
+    public function validateCoupon(Coupon $coupon, string $subtotal, ?int $userId, ?string $email = null, ?string $ipAddress = null): array
     {
         // 2. Is active
         if (! $coupon->is_active) {
@@ -116,10 +122,18 @@ class CouponService
         // the > 0 guard this treated 0 as "0 uses allowed", blocking every
         // customer (including first-time ones) from a coupon the admin
         // intended to leave uncapped per-user.
-        if ($coupon->usage_limit_per_user !== null && $coupon->usage_limit_per_user > 0 && $userId !== null) {
-            $userUsageCount = CouponUsage::where('coupon_id', $coupon->id)
-                ->where('user_id', $userId)
-                ->count();
+        //
+        // Checked by every identity signal available, not just user_id: a
+        // bare user_id check is trivially defeated by creating a new
+        // account (multi-account coupon abuse — [[project_bulletproof_testing_2026_09]]
+        // Phase 9 found this and the user explicitly accepted the risk at
+        // the time; later revisited and closed). Email and IP address are
+        // both captured on every order already (orders.guest_email/
+        // ip_address), so this needs no new columns — just checking more
+        // of what's already there.
+        if ($coupon->usage_limit_per_user !== null && $coupon->usage_limit_per_user > 0
+            && ($userId !== null || $email !== null || $ipAddress !== null)) {
+            $userUsageCount = $this->usageCountForIdentity($coupon->id, $userId, $email, $ipAddress);
             if ($userUsageCount >= $coupon->usage_limit_per_user) {
                 return [
                     'valid' => false,
@@ -139,6 +153,37 @@ class CouponService
             'discount' => $discount,
             'message' => null,
         ];
+    }
+
+    /**
+     * How many times this coupon has already been used by whichever of
+     * $userId/$email/$ipAddress are given — email and IP are matched via
+     * the usage's linked order (orders.guest_email/ip_address, or the
+     * order's own user's email for an account that later signed in under
+     * a different identity than $userId).
+     */
+    private function usageCountForIdentity(int $couponId, ?int $userId, ?string $email, ?string $ipAddress): int
+    {
+        return CouponUsage::where('coupon_id', $couponId)
+            ->where(function ($query) use ($userId, $email, $ipAddress) {
+                if ($userId !== null) {
+                    $query->orWhere('user_id', $userId);
+                }
+                if ($email !== null || $ipAddress !== null) {
+                    $query->orWhereHas('order', function ($orderQuery) use ($email, $ipAddress) {
+                        $orderQuery->where(function ($q) use ($email, $ipAddress) {
+                            if ($email !== null) {
+                                $q->where('guest_email', $email)
+                                    ->orWhereHas('user', fn ($uq) => $uq->where('email', $email));
+                            }
+                            if ($ipAddress !== null) {
+                                $q->orWhere('ip_address', $ipAddress);
+                            }
+                        });
+                    });
+                }
+            })
+            ->count();
     }
 
     /**

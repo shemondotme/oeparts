@@ -188,6 +188,96 @@ class CouponServiceTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // validate()/validateCoupon() — multi-account abuse (email/IP identity),
+    // bulletproof-testing backlog: Phase 9 found usage_limit_per_user is
+    // trivially reset by creating a new account; the user explicitly
+    // accepted that risk at the time, later asked for it to be revisited.
+    // -------------------------------------------------------------------------
+
+    /**
+     * users.email is unique, so two separate ACCOUNTS can never share an
+     * email — the real gap the old user_id-only check left open is a
+     * GUEST checkout (user_id NULL, so the old check never even ran)
+     * followed by signing up for an account under that SAME email and
+     * trying again: the account's user_id never matched anything before,
+     * so the old check saw zero prior usages and let it through.
+     */
+    #[Test]
+    public function signing_up_after_a_guest_usage_with_the_same_email_is_still_rejected(): void
+    {
+        $coupon = Coupon::factory()->create([
+            'created_by' => $this->adminId, 'usage_limit_per_user' => 1, 'usage_limit' => null,
+            'min_order_amount' => null, 'expires_at' => null, 'is_active' => true,
+        ]);
+
+        $priorGuestOrder = Order::factory()->create(['user_id' => null, 'guest_email' => 'shopper@example.com']);
+        CouponUsage::create(['coupon_id' => $coupon->id, 'user_id' => null, 'order_id' => $priorGuestOrder->id, 'used_at' => now()]);
+
+        // Same person, now with an account under that same email — a
+        // user_id-only check would find zero prior usages for this
+        // brand-new user_id and let it through.
+        $newAccount = User::factory()->create(['email' => 'shopper@example.com']);
+
+        $result = $this->service->validate($coupon->code, '100.00', $newAccount->id, $newAccount->email, '10.0.0.1');
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('already used', $result['message']);
+    }
+
+    #[Test]
+    public function a_new_guest_checkout_with_the_same_ip_as_a_prior_usage_is_rejected(): void
+    {
+        $coupon = Coupon::factory()->create([
+            'created_by' => $this->adminId, 'usage_limit_per_user' => 1, 'usage_limit' => null,
+            'min_order_amount' => null, 'expires_at' => null, 'is_active' => true,
+        ]);
+
+        $priorOrder = Order::factory()->create(['user_id' => null, 'guest_email' => 'first@example.com', 'ip_address' => '203.0.113.5']);
+        CouponUsage::create(['coupon_id' => $coupon->id, 'user_id' => null, 'order_id' => $priorOrder->id, 'used_at' => now()]);
+
+        // A DIFFERENT guest email, but the SAME IP address as the prior usage.
+        $result = $this->service->validate($coupon->code, '100.00', null, 'second@example.com', '203.0.113.5');
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('already used', $result['message']);
+    }
+
+    #[Test]
+    public function a_genuinely_different_customer_is_not_blocked_by_someone_elses_usage(): void
+    {
+        $coupon = Coupon::factory()->create([
+            'created_by' => $this->adminId, 'usage_limit_per_user' => 1, 'usage_limit' => null,
+            'min_order_amount' => null, 'expires_at' => null, 'is_active' => true,
+        ]);
+
+        $priorOrder = Order::factory()->create(['user_id' => null, 'guest_email' => 'first@example.com', 'ip_address' => '203.0.113.5']);
+        CouponUsage::create(['coupon_id' => $coupon->id, 'user_id' => null, 'order_id' => $priorOrder->id, 'used_at' => now()]);
+
+        // Genuinely different email AND IP — must not be caught by the new check.
+        $result = $this->service->validate($coupon->code, '100.00', null, 'unrelated@example.com', '198.51.100.9');
+
+        $this->assertTrue($result['valid']);
+    }
+
+    #[Test]
+    public function without_email_or_ip_the_check_falls_back_to_user_id_only_same_as_before(): void
+    {
+        $coupon = Coupon::factory()->create([
+            'created_by' => $this->adminId, 'usage_limit_per_user' => 1, 'usage_limit' => null,
+            'min_order_amount' => null, 'expires_at' => null, 'is_active' => true,
+        ]);
+
+        $user = User::factory()->create();
+        $order = Order::factory()->create(['user_id' => $user->id]);
+        CouponUsage::create(['coupon_id' => $coupon->id, 'user_id' => $user->id, 'order_id' => $order->id, 'used_at' => now()]);
+
+        // Callers that don't pass email/ip (existing behavior preserved).
+        $result = $this->service->validate($coupon->code, '100.00', $user->id);
+
+        $this->assertFalse($result['valid']);
+    }
+
+    // -------------------------------------------------------------------------
     // validate() — personal coupons (B2B per-customer restriction)
     // -------------------------------------------------------------------------
 

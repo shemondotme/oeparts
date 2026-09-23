@@ -347,7 +347,16 @@ class CheckoutService
             if ($couponId) {
                 $coupon = Coupon::find($couponId);
                 if ($coupon) {
-                    $revalidated = $this->couponService->validateCoupon($coupon, $subtotal, $resolvedUserId);
+                    // Multi-account abuse check needs the REAL customer
+                    // identity, not just $resolvedUserId (trivially reset
+                    // by signing up again) — the authenticated user's own
+                    // email if there is one, else whatever guest_email this
+                    // checkout session collected in step1.
+                    $resolvedEmail = $resolvedUserId
+                        ? User::find($resolvedUserId)?->email
+                        : ($data['guest_email'] ?? null);
+
+                    $revalidated = $this->couponService->validateCoupon($coupon, $subtotal, $resolvedUserId, $resolvedEmail, $resolvedIp);
                     if ($revalidated['valid']) {
                         $discountAmount = $revalidated['discount'];
                     } else {
