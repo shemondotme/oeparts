@@ -115,7 +115,7 @@ class SeedScaleProducts extends Command
             $this->newLine();
         }
 
-        $this->info("Done. Total products now: ".Product::count());
+        $this->info('Done. Total products now: '.Product::count());
 
         return self::SUCCESS;
     }

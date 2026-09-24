@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
@@ -67,7 +68,7 @@ class PayseraOrdersEnumMigrationTest extends TestCase
 
         // Proof down() actually narrowed the enum back (not just "didn't
         // throw"): a 'paysera' order must now be rejected at the DB level.
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
 
         try {
             Order::factory()->create(['payment_method' => 'paysera']);
@@ -87,7 +88,7 @@ class PayseraOrdersEnumMigrationTest extends TestCase
         try {
             $migration->down();
             $this->fail('down() should have thrown on live paysera data, not succeeded silently.');
-        } catch (\Illuminate\Database\QueryException) {
+        } catch (QueryException) {
             // Expected — see class docblock. The real assertion is what
             // follows: nothing was corrupted by the failed attempt.
         }
