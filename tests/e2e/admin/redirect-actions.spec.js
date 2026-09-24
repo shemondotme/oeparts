@@ -86,7 +86,17 @@ test('redirect: test action makes a real check against the destination', async (
     // the notification can legitimately take that long to appear. Poll
     // immediately with a generous window rather than burning part of the
     // budget on a blind sleep first.
+    //
+    // 30s, not 15s: the app's own request has a 5s timeout, but that request
+    // is served by this same 4-worker dev server, which under sustained load
+    // (a full ~500-test run) answers in 5-13s per page — so the 5s check plus
+    // two slow Livewire round trips can exceed 15s. Confirmed 2026-09-24: it
+    // failed once at 15s in a full run and passed 3/3 in isolation (17-21s
+    // total each). The action always ends in one of the four notifications
+    // (its catch included), so a longer wait can only mask slowness, never a
+    // wrong outcome — the not-visible 'Internal Server Error' check below
+    // still catches a real crash.
     const outcome = page.getByText(/Destination responds|Destination itself redirects|Destination responded with HTTP|Could not reach the destination|Internal Server Error/);
-    await expect(outcome).toBeVisible({ timeout: 15000 });
+    await expect(outcome).toBeVisible({ timeout: 30000 });
     await expect(page.getByText('Internal Server Error')).not.toBeVisible();
 });
