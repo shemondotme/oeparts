@@ -29,6 +29,7 @@
     },
     "require-dev": {
         "brianium/paratest": "^7.8",
+        "composer/semver": "^3.4",
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^3.0",
         "laravel/pail": "^1.1",
@@ -91,6 +92,9 @@
         "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true,
+        "platform": {
+            "php": "8.3.0"
+        },
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true

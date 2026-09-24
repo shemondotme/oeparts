@@ -256,6 +256,16 @@ services:
     # behavior (the index.php/oe-recovery.php-only PHP-FPM carve-out, static
     # asset caching, nginx's own upload-size cap) gets caught locally instead
     # of first discovered live.
+    # Deliberately PHP 8.3 — the MINIMUM version the project supports
+    # (composer.json "php": "^8.3"; config.platform.php pins Composer to it) —
+    # so this profile is also the one place a dependency that quietly needs a
+    # newer PHP gets caught locally. It did: composer.lock had drifted to
+    # packages requiring >= 8.4.1 and this profile was the first thing to fail
+    # (tests/Unit/PlatformRequirementsTest.php now guards it).
+    # Running the test suite inside it: the image ships php.ini-production
+    # (memory_limit 128M) and `artisan test` does not pass -d flags to its
+    # child process, so call PHPUnit directly:
+    #   docker compose --profile nginx exec php-fpm php -d memory_limit=2G vendor/bin/phpunit
     php-fpm:
         build:
             context: './docker/php-fpm'
