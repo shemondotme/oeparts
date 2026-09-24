@@ -47,6 +47,7 @@
 # PHPUnit / Pest
 .phpunit.result.cache
 .phpunit.cache
+/coverage.xml
 
 # PHPStan (phpstan-baseline.neon IS committed — only the result cache isn't)
 /storage/framework/phpstan
