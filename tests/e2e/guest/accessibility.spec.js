@@ -56,8 +56,20 @@ const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 // page's resting state.
 const ANIMATION_SETTLE_MS = 1500;
 
-async function scanPage(page, path) {
-    await page.goto(path, { waitUntil: 'domcontentloaded' });
+async function scanPage(page, path, expectedStatus = 200) {
+    const response = await page.goto(path, { waitUntil: 'domcontentloaded' });
+
+    // An axe scan of the WRONG page passes just as happily as a scan of the
+    // right one — a 404 error page has no WCAG violations. Confirmed live
+    // 2026-09-24: with the default "en" Language row deleted, every /en/...
+    // URL 404'd and this file's homepage/search/brands/blog/cart/contact
+    // scans all reported green while scanning nothing but error pages. Assert
+    // the page actually is what its label claims before trusting the scan.
+    expect(
+        response?.status(),
+        `${path} returned HTTP ${response?.status()} but ${expectedStatus} was expected — a WCAG scan of an unintended error page would pass for the wrong reason`,
+    ).toBe(expectedStatus);
+
     await page.waitForTimeout(ANIMATION_SETTLE_MS);
     await dismissCookieBanner(page);
 
@@ -103,13 +115,14 @@ const PAGES = [
     { label: 'homepage', path: '/en/' },
     { label: 'search-console', path: '/en/parts' },
     { label: 'search-results-multi', path: `/en/parts/${FIXTURE_QUERY_MULTI}` },
-    { label: 'zero-results', path: '/en/parts/NOSUCHOEMXYZ999NOPE' },
+    // An unknown OEM legitimately answers 404 (with a search-again page) by design.
+    { label: 'zero-results', path: '/en/parts/NOSUCHOEMXYZ999NOPE', status: 404 },
     { label: 'brands-index', path: '/en/brands' },
     { label: 'manufacturer-show', path: `/en/brand/${FIXTURE_MANUFACTURER_SLUG}` },
     { label: 'blog-index', path: '/en/blog' },
     { label: 'cart-empty', path: '/en/cart' },
     { label: 'contact', path: '/en/contact' },
-    { label: 'error-404', path: '/en/this-page-does-not-exist-xyz-audit' },
+    { label: 'error-404', path: '/en/this-page-does-not-exist-xyz-audit', status: 404 },
 ];
 
 test.describe('Storefront accessibility (WCAG 2.1 A/AA)', () => {
@@ -125,7 +138,7 @@ test.describe('Storefront accessibility (WCAG 2.1 A/AA)', () => {
 
     for (const pg of PAGES) {
         test(`${pg.label}: no WCAG 2.1 A/AA violations`, async ({ page }) => {
-            const results = await scanPage(page, pg.path);
+            const results = await scanPage(page, pg.path, pg.status);
             expect(results.violations, formatViolations(results)).toEqual([]);
         });
     }

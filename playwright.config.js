@@ -17,6 +17,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
     testDir: './tests/e2e',
+    // Aborts the whole run up front, with a clear message, if the storefront
+    // itself isn't serving — see the file's own comment for the incident.
+    globalSetup: './tests/e2e/global-setup.js',
     // The local XAMPP dashboard is genuinely slow on first paint (every
     // widget runs its own queries on load, confirmed via tracing — a
     // bare login-to-dashboard round trip alone takes ~25-30s here), so
