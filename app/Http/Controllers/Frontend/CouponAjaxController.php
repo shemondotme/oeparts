@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Services\CartService;
+use App\Services\CheckoutService;
 use App\Services\CouponService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -33,7 +34,7 @@ class CouponAjaxController extends Controller
             ], 422);
         }
 
-        $cartId = Session::get("checkout.{$checkoutId}.cart_id");
+        $cartId = app(CheckoutService::class)->get($checkoutId)['cart_id'] ?? null;
 
         if (! $cartId) {
             return response()->json([
@@ -69,9 +70,11 @@ class CouponAjaxController extends Controller
             ], 422);
         }
 
-        // Store coupon in session
-        Session::put("checkout.{$checkoutId}.data.coupon_id", $result['coupon']->id);
-        Session::put("checkout.{$checkoutId}.data.discount_amount", $result['discount']);
+        // Store the coupon on the checkout state (not the session — see CheckoutStateStore).
+        app(CheckoutService::class)->update($checkoutId, [
+            'coupon_id' => $result['coupon']->id,
+            'discount_amount' => $result['discount'],
+        ]);
 
         return response()->json([
             'success' => true,

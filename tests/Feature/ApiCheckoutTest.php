@@ -19,6 +19,7 @@ use App\Models\User;
 use App\Services\CheckoutService;
 use App\Services\OtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Session;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -223,5 +224,111 @@ class ApiCheckoutTest extends TestCase
 
         $response->assertCreated();
         $this->assertDatabaseHas('orders', ['user_id' => $this->user->id]);
+    }
+
+    // ── stateless by design: state lives in the store, not the session ───────
+
+    #[Test]
+    public function a_started_checkout_can_be_continued_when_no_session_survives_between_requests(): void
+    {
+        // The API group has no session middleware in production, so anything
+        // written with Session::put() is gone when the request ends — verified
+        // against the real stack: POST /checkout/start returned an id and the
+        // very next GET for it answered 404. The array session driver used by
+        // the test suite persists in-process, which is why every other test
+        // here passed regardless. Wiping the session between requests is what
+        // production looks like.
+        $checkoutId = $this->startCheckout();
+        Session::flush();
+
+        $this->actingAs($this->user)->getJson("/api/checkout/{$checkoutId}")
+            ->assertOk()
+            ->assertJsonPath('data.step', 1);
+        Session::flush();
+
+        $this->actingAs($this->user)->postJson("/api/checkout/{$checkoutId}/step1", ['email' => 'shopper@example.com'])
+            ->assertOk()
+            ->assertJsonPath('data.step', 2);
+        Session::flush();
+
+        $this->actingAs($this->user)->getJson("/api/checkout/{$checkoutId}")
+            ->assertOk()
+            ->assertJsonPath('data.step', 2)
+            ->assertJsonPath('data.data.contact_email', 'shopper@example.com');
+    }
+
+    #[Test]
+    public function the_checkout_state_is_not_written_to_the_session_at_all(): void
+    {
+        $checkoutId = $this->startCheckout();
+
+        $this->assertArrayNotHasKey("checkout.{$checkoutId}", Session::all());
+        $this->assertNotNull(app(CheckoutService::class)->get($checkoutId));
+    }
+
+    // ── the id is a bearer credential, so the caller must own the cart ───────
+
+    #[Test]
+    public function another_user_cannot_read_or_change_a_checkout_they_do_not_own(): void
+    {
+        $checkoutId = $this->startCheckout();
+        $intruder = User::factory()->create();
+
+        $this->actingAs($intruder)->getJson("/api/checkout/{$checkoutId}")->assertNotFound();
+
+        $this->actingAs($intruder)->postJson("/api/checkout/{$checkoutId}/step1", ['email' => 'evil@example.com'])->assertNotFound();
+        $this->actingAs($intruder)->postJson("/api/checkout/{$checkoutId}/step2", [
+            'first_name' => 'E', 'last_name' => 'V', 'street' => 'x', 'city' => 'y', 'postal_code' => '1', 'country_code' => 'DE',
+        ])->assertNotFound();
+        $this->actingAs($intruder)->postJson("/api/checkout/{$checkoutId}/step5", ['payment_method' => 'bank_transfer'])->assertNotFound();
+
+        $state = app(CheckoutService::class)->get($checkoutId);
+        $this->assertSame(1, $state['step'], 'the rejected calls must not have advanced the owner\'s checkout');
+        $this->assertNull($state['data']['contact_email']);
+        $this->assertSame(0, Order::count());
+    }
+
+    #[Test]
+    public function an_anonymous_caller_cannot_use_a_user_owned_checkout(): void
+    {
+        $checkoutId = $this->startCheckout();
+
+        // actingAs() sticks to the guard for the rest of the test — drop it so
+        // the following calls really are anonymous.
+        $this->app['auth']->forgetGuards();
+
+        $this->getJson("/api/checkout/{$checkoutId}")->assertNotFound();
+        $this->postJson("/api/checkout/{$checkoutId}/step1", ['email' => 'anon@example.com'])->assertNotFound();
+    }
+
+    #[Test]
+    public function a_guest_checkout_is_only_usable_with_the_guest_token_of_its_own_cart(): void
+    {
+        $token = str_repeat('a', 32);
+        $cart = Cart::create(['user_id' => null, 'guest_token' => $token, 'expires_at' => now()->addDays(7)]);
+        CartItem::create(['cart_id' => $cart->id, 'product_id' => $this->product->id, 'quantity' => 1, 'price_at_add' => $this->product->price]);
+
+        // The JSON helpers only send cookies when withCredentials() is set.
+        $checkoutId = $this->withCredentials()->withUnencryptedCookie('guest_token', $token)
+            ->postJson('/api/checkout/start')
+            ->assertCreated()
+            ->json('data.checkout_id');
+
+        $this->withCredentials()->withUnencryptedCookie('guest_token', $token)
+            ->getJson("/api/checkout/{$checkoutId}")->assertOk();
+
+        // Somebody else's guest token — same treatment as a missing checkout.
+        $this->withCredentials()->withUnencryptedCookie('guest_token', str_repeat('b', 32))
+            ->getJson("/api/checkout/{$checkoutId}")->assertNotFound();
+
+        // No token at all (the cookies set above persist on the test case, so clear them).
+        $this->unencryptedCookies = [];
+        $this->withCredentials()->getJson("/api/checkout/{$checkoutId}")->assertNotFound();
+    }
+
+    #[Test]
+    public function an_unknown_checkout_id_is_a_404_not_a_server_error(): void
+    {
+        $this->actingAs($this->user)->getJson('/api/checkout/00000000-0000-0000-0000-000000000000')->assertNotFound();
     }
 }

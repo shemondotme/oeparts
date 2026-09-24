@@ -9,6 +9,7 @@ use App\Models\Coupon;
 use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Models\User;
+use App\Services\Checkout\CheckoutStateStore;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,7 @@ class CartService
      */
     public function getCartByCheckout(string $checkoutId): ?Cart
     {
-        $checkout = session("checkout.{$checkoutId}");
+        $checkout = app(CheckoutStateStore::class)->get($checkoutId);
         $cartId = $checkout['cart_id'] ?? null;
         if (! $cartId) {
             return null;

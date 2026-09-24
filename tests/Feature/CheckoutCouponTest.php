@@ -103,12 +103,12 @@ class CheckoutCouponTest extends TestCase
         $checkoutId = $checkoutService->start($cart);
 
         // Coupon applied while the cart subtotal is still €100 — 10% = €10,
-        // exactly what CouponAjaxController would have cached in the
-        // session at this point. coupon_id/discount_amount aren't in
-        // CheckoutService::update()'s $allowed key list — CouponAjaxController
-        // writes them straight into the session, so this mirrors that.
-        Session::put("checkout.{$checkoutId}.data.coupon_id", $coupon->id);
-        Session::put("checkout.{$checkoutId}.data.discount_amount", '10.00');
+        // exactly what CouponAjaxController would have stored on the
+        // checkout state at this point (via CheckoutService::update()).
+        app(CheckoutService::class)->update($checkoutId, [
+            'coupon_id' => $coupon->id,
+            'discount_amount' => '10.00',
+        ]);
 
         // Customer adds another item after applying the coupon — the real
         // subtotal is now €150, so a correct 10% discount is €15, not the
@@ -158,8 +158,10 @@ class CheckoutCouponTest extends TestCase
         $checkoutId = $checkoutService->start($cart);
 
         // Applied while subtotal (€150) still met the €120 minimum.
-        Session::put("checkout.{$checkoutId}.data.coupon_id", $coupon->id);
-        Session::put("checkout.{$checkoutId}.data.discount_amount", '20.00');
+        app(CheckoutService::class)->update($checkoutId, [
+            'coupon_id' => $coupon->id,
+            'discount_amount' => '20.00',
+        ]);
 
         // Customer removes the second item — subtotal drops to €100, below
         // the coupon's minimum order amount.
@@ -217,8 +219,10 @@ class CheckoutCouponTest extends TestCase
         $checkoutService = app(CheckoutService::class);
         $checkoutId = $checkoutService->start($cart);
 
-        Session::put("checkout.{$checkoutId}.data.coupon_id", $coupon->id);
-        Session::put("checkout.{$checkoutId}.data.discount_amount", '20.00');
+        app(CheckoutService::class)->update($checkoutId, [
+            'coupon_id' => $coupon->id,
+            'discount_amount' => '20.00',
+        ]);
 
         $checkoutService->update($checkoutId, [
             'step' => 5,
@@ -284,8 +288,10 @@ class CheckoutCouponTest extends TestCase
         $checkoutService = app(CheckoutService::class);
         $checkoutId = $checkoutService->start($cart);
 
-        Session::put("checkout.{$checkoutId}.data.coupon_id", $coupon->id);
-        Session::put("checkout.{$checkoutId}.data.discount_amount", '100.00');
+        app(CheckoutService::class)->update($checkoutId, [
+            'coupon_id' => $coupon->id,
+            'discount_amount' => '100.00',
+        ]);
 
         $checkoutService->update($checkoutId, [
             'step' => 5,

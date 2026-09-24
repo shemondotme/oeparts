@@ -6,9 +6,9 @@ use App\Enums\DiscountType;
 use App\Models\Coupon;
 use App\Models\CouponUsage;
 use App\Models\Order;
+use App\Services\Checkout\CheckoutStateStore;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
 
 class CouponService
 {
@@ -270,11 +270,14 @@ class CouponService
     }
 
     /**
-     * Remove coupon from session.
+     * Remove the applied coupon from the checkout state.
      */
     public function remove(string $checkoutId): void
     {
-        Session::forget("checkout.{$checkoutId}.data.coupon_id");
-        Session::forget("checkout.{$checkoutId}.data.discount_amount");
+        app(CheckoutStateStore::class)->mutate($checkoutId, function (array &$state): bool {
+            unset($state['data']['coupon_id'], $state['data']['discount_amount']);
+
+            return true;
+        });
     }
 }

@@ -14,9 +14,8 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Services\Checkout\CheckoutStateStore;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
 /**
@@ -29,8 +28,11 @@ use Illuminate\Support\Str;
  *   4. Review & accept terms
  *   5. Payment method & place order (creates Order, empties Cart)
  *
- * All checkout state is stored in the session under the key `checkout`.
- * The session data is validated and transformed into an Order at step 5.
+ * All checkout state lives in CheckoutStateStore (cache, keyed by checkout id)
+ * — deliberately NOT in the session, whose whole-blob re-save on every request
+ * let concurrent requests overwrite checkout progress, and which the stateless
+ * mobile API never persists at all. The state is validated and transformed into
+ * an Order at step 5.
  */
 class CheckoutService
 {
@@ -40,7 +42,8 @@ class CheckoutService
         private CartService $cartService,
         private ShippingService $shippingService,
         private TaxRateService $taxRateService,
-        private CouponService $couponService
+        private CouponService $couponService,
+        private CheckoutStateStore $store,
     ) {}
 
     /**
@@ -51,7 +54,7 @@ class CheckoutService
     {
         $checkoutId = Str::uuid()->toString();
 
-        Session::put("checkout.{$checkoutId}", [
+        $this->store->put($checkoutId, [
             'cart_id' => $cart->id,
             'step' => 1,
             'data' => [
@@ -81,20 +84,17 @@ class CheckoutService
      */
     public function advance(string $checkoutId): bool
     {
-        $checkout = $this->get($checkoutId);
-        if (! $checkout) {
-            return false;
-        }
+        return $this->store->mutate($checkoutId, function (array &$checkout) use ($checkoutId): bool {
+            $currentStep = (int) $checkout['step'];
 
-        $currentStep = $checkout['step'];
-        if (! $this->isStepComplete($checkoutId, $currentStep)) {
-            return false;
-        }
+            if (! $this->isStepComplete($checkoutId, $currentStep)) {
+                return false;
+            }
 
-        $checkout['step'] = min((int) settings('checkout.max_steps', 5), $currentStep + 1);
-        Session::put("checkout.{$checkoutId}", $checkout);
+            $checkout['step'] = min((int) settings('checkout.max_steps', 5), $currentStep + 1);
 
-        return true;
+            return true;
+        });
     }
 
     /**
@@ -102,15 +102,11 @@ class CheckoutService
      */
     public function goBack(string $checkoutId): bool
     {
-        $checkout = $this->get($checkoutId);
-        if (! $checkout) {
-            return false;
-        }
+        return $this->store->mutate($checkoutId, function (array &$checkout): bool {
+            $checkout['step'] = max(1, ((int) $checkout['step']) - 1);
 
-        $checkout['step'] = max(1, ((int) $checkout['step']) - 1);
-        Session::put("checkout.{$checkoutId}", $checkout);
-
-        return true;
+            return true;
+        });
     }
 
     /**
@@ -151,20 +147,7 @@ class CheckoutService
      */
     public function get(string $checkoutId): ?array
     {
-        $data = Session::get("checkout.{$checkoutId}");
-        if (! $data) {
-            return null;
-        }
-
-        // Check expiration
-        $expiresAt = Carbon::parse($data['expires_at']);
-        if ($expiresAt->isPast()) {
-            $this->clear($checkoutId);
-
-            return null;
-        }
-
-        return $data;
+        return $this->store->get($checkoutId);
     }
 
     /**
@@ -172,39 +155,33 @@ class CheckoutService
      */
     public function update(string $checkoutId, array $updates): bool
     {
-        $checkout = $this->get($checkoutId);
-        if (! $checkout) {
-            return false;
-        }
+        return $this->store->mutate($checkoutId, function (array &$checkout) use ($updates): bool {
+            $allowed = [
+                'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes',
+                'coupon_code', 'coupon_id', 'discount_amount',
+                'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'customer_note',
+                'urgent_processing', 'otp_pending_email', 'otp_pending_phone', 'terms_accepted',
+            ];
 
-        $allowed = [
-            'step', 'shipping_address', 'billing_address', 'shipping_method_id', 'payment_method', 'notes',
-            'coupon_code',
-            'contact_email', 'contact_phone', 'guest_email', 'otp_verified', 'customer_note',
-            'urgent_processing', 'otp_pending_email', 'otp_pending_phone', 'terms_accepted',
-        ];
-
-        foreach (['step', 'expires_at', 'created_at', 'cart_id'] as $topLevelKey) {
-            if (array_key_exists($topLevelKey, $updates)) {
-                $checkout[$topLevelKey] = $updates[$topLevelKey];
-                unset($updates[$topLevelKey]);
+            foreach (['step', 'expires_at', 'created_at', 'cart_id'] as $topLevelKey) {
+                if (array_key_exists($topLevelKey, $updates)) {
+                    $checkout[$topLevelKey] = $updates[$topLevelKey];
+                    unset($updates[$topLevelKey]);
+                }
             }
-        }
 
-        $updates = array_intersect_key($updates, array_flip($allowed));
+            $checkout['data'] = array_merge($checkout['data'], array_intersect_key($updates, array_flip($allowed)));
 
-        $checkout['data'] = array_merge($checkout['data'], $updates);
-        Session::put("checkout.{$checkoutId}", $checkout);
-
-        return true;
+            return true;
+        });
     }
 
     /**
-     * Clear the checkout session.
+     * Clear the checkout state.
      */
     public function clear(string $checkoutId): void
     {
-        Session::forget("checkout.{$checkoutId}");
+        $this->store->forget($checkoutId);
     }
 
     /**

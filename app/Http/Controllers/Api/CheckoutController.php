@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\OtpPurpose;
+use App\Models\Cart;
 use App\Services\CartService;
 use App\Services\CheckoutService;
 use App\Services\OtpService;
@@ -14,7 +15,9 @@ use Illuminate\Support\Facades\Auth;
  * API Checkout Controller — stateless checkout flow for mobile apps.
  *
  * The mobile app stores the checkout_id locally and submits each step.
- * No server-side session is used for checkout state.
+ * No server-side session is used for checkout state — it lives in
+ * CheckoutStateStore, keyed by the checkout id, and each request must
+ * prove it owns the underlying cart (see checkoutFor()).
  */
 class CheckoutController extends BaseApiController
 {
@@ -23,6 +26,43 @@ class CheckoutController extends BaseApiController
         private CartService $cartService,
         private OtpService $otpService,
     ) {}
+
+    /**
+     * The checkout for this id — but only if the caller owns its cart.
+     *
+     * Checkout state is keyed by an id the CLIENT holds ("the mobile app
+     * stores the checkout_id locally"), so the id is a bearer credential:
+     * without this, anyone who learned another shopper's id could read their
+     * address/email or complete their order. It used to be implicitly private
+     * only because the state sat in the owner's own session (which, for this
+     * stateless API, meant it never persisted at all — see CheckoutStateStore).
+     *
+     * A checkout whose cart the caller doesn't own is reported exactly like a
+     * missing one (404), so ids can't be probed for existence.
+     */
+    private function checkoutFor(Request $request, string $checkoutId): ?array
+    {
+        $checkout = $this->checkoutService->get($checkoutId);
+
+        if (! $checkout) {
+            return null;
+        }
+
+        $cart = Cart::find($checkout['cart_id']);
+
+        if (! $cart) {
+            return null;
+        }
+
+        $user = Auth::user();
+
+        $owns = $cart->user_id !== null
+            ? $user !== null && (int) $user->id === (int) $cart->user_id
+            : $cart->guest_token !== null
+                && hash_equals((string) $cart->guest_token, (string) $request->cookie('guest_token'));
+
+        return $owns ? $checkout : null;
+    }
 
     /**
      * Start a new checkout session.
@@ -52,9 +92,9 @@ class CheckoutController extends BaseApiController
      * Get current checkout state.
      * GET /api/v1/checkout/{checkoutId}
      */
-    public function show(string $checkoutId): JsonResponse
+    public function show(Request $request, string $checkoutId): JsonResponse
     {
-        $checkout = $this->checkoutService->get($checkoutId);
+        $checkout = $this->checkoutFor($request, $checkoutId);
 
         if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
@@ -80,7 +120,7 @@ class CheckoutController extends BaseApiController
             'otp' => 'nullable|string',
         ]);
 
-        $checkout = $this->checkoutService->get($checkoutId);
+        $checkout = $this->checkoutFor($request, $checkoutId);
         if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
@@ -143,7 +183,7 @@ class CheckoutController extends BaseApiController
             'country_code' => 'required|string|size:2|in:AT,BE,BG,HR,CY,CZ,DK,EE,FI,FR,DE,GR,HU,IE,IT,LV,LT,LU,MT,NL,PL,PT,RO,SK,SI,ES,SE',
         ]);
 
-        $checkout = $this->checkoutService->get($checkoutId);
+        $checkout = $this->checkoutFor($request, $checkoutId);
         if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
@@ -178,7 +218,7 @@ class CheckoutController extends BaseApiController
             'shipping_method_id' => 'required|integer|exists:shipping_methods,id',
         ]);
 
-        $checkout = $this->checkoutService->get($checkoutId);
+        $checkout = $this->checkoutFor($request, $checkoutId);
         if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
@@ -204,7 +244,7 @@ class CheckoutController extends BaseApiController
             'agree_terms' => 'required|accepted',
         ]);
 
-        $checkout = $this->checkoutService->get($checkoutId);
+        $checkout = $this->checkoutFor($request, $checkoutId);
         if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
@@ -229,7 +269,7 @@ class CheckoutController extends BaseApiController
             'customer_note' => 'nullable|string|max:500',
         ]);
 
-        $checkout = $this->checkoutService->get($checkoutId);
+        $checkout = $this->checkoutFor($request, $checkoutId);
         if (! $checkout) {
             return $this->errorResponse('Checkout not found or expired.', null, 404);
         }
