@@ -37,9 +37,25 @@ use Spatie\Permission\Models\Role;
  * way. Run standalone (`php artisan oeparts:e2e:cleanup-crud-leftovers`)
  * or wired into crud-create.spec.js's own afterAll so the suite cleans up
  * after itself going forward instead of only being swept manually.
+ *
+ * NEVER deletes a row named "E2E Edited ...": that prefix belongs to
+ * crud-edit.spec.js, which temporarily renames the lowest-id REAL row of
+ * each resource and reverts it at the end of the test. If a run is
+ * interrupted between the rename and the revert (a timeout, a killed
+ * process, Docker going down), the real row is left wearing that name — and
+ * a "delete everything named E2E ..." sweep would then permanently delete
+ * genuine data. Confirmed live 2026-09-24: this deleted the real "en"
+ * Language row, which 404'd every /en/... URL on the storefront (the whole
+ * site) and made ~430 e2e tests fail for a reason that had nothing to do
+ * with the code under test. Renamed-real rows are reported for manual
+ * restore instead. The default language is additionally exempt regardless
+ * of its name — it is the routing/hreflang/sitemap anchor.
  */
 class CleanupAdminE2eTestData extends Command
 {
+    /** crud-edit.spec.js's temporary rename of a REAL row — never a leaked, created one. */
+    private const EDITED_PREFIX = 'E2E Edited ';
+
     protected $signature = 'oeparts:e2e:cleanup-crud-leftovers';
 
     protected $description = 'Delete "E2E ..." rows left behind by the admin CRUD e2e suite on customer-facing tables';
@@ -65,15 +81,20 @@ class CleanupAdminE2eTestData extends Command
         // Gate::before trust anchor for every admin permission check, and a
         // prior test run renaming it away from that name broke admin
         // access panel-wide until manually restored.
-        $roles = Role::where('name', 'like', 'e2e_role_%')
-            ->orWhere('name', 'like', 'E2E %')
+        $roles = Role::where(function ($q) {
+            $q->where('name', 'like', 'e2e_role_%')
+                ->orWhere('name', 'like', 'E2E %');
+        })
             ->where('name', '!=', 'super_admin')
+            ->where('name', 'not like', self::EDITED_PREFIX.'%')
             ->get();
         if ($roles->isNotEmpty()) {
             $roles->each(fn ($role) => $role->delete());
             $this->line('  '.Role::class.': deleted '.$roles->count());
             $deleted += $roles->count();
         }
+
+        $this->reportRenamedRealRows(Role::class, 'name');
 
         $this->info("Deleted {$deleted} leaked E2E test row(s).");
 
@@ -82,7 +103,14 @@ class CleanupAdminE2eTestData extends Command
 
     private function sweep(string $modelClass, string $column): int
     {
-        $rows = $modelClass::where($column, 'like', 'E2E %')->get();
+        $query = $modelClass::where($column, 'like', 'E2E %')
+            ->where($column, 'not like', self::EDITED_PREFIX.'%');
+
+        if ($modelClass === Language::class) {
+            $query->where('is_default', false);
+        }
+
+        $rows = $query->get();
         $count = $rows->count();
 
         if ($count > 0) {
@@ -90,6 +118,15 @@ class CleanupAdminE2eTestData extends Command
             $this->line("  {$modelClass}: deleted {$count}");
         }
 
+        $this->reportRenamedRealRows($modelClass, $column);
+
         return $count;
+    }
+
+    private function reportRenamedRealRows(string $modelClass, string $column): void
+    {
+        foreach ($modelClass::where($column, 'like', self::EDITED_PREFIX.'%')->get() as $row) {
+            $this->warn("  {$modelClass} #{$row->getKey()} is still named \"{$row->getAttribute($column)}\" — an interrupted crud-edit run left a REAL row renamed. NOT deleted; restore its original name manually.");
+        }
     }
 }

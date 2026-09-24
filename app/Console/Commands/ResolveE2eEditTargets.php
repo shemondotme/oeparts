@@ -124,6 +124,17 @@ class ResolveE2eEditTargets extends Command
                 $query->where('name', '!=', 'super_admin');
             }
 
+            // Same reasoning for the default language (code "en"): it is the
+            // routing/hreflang/sitemap anchor — LocaleRegistry builds every
+            // /{locale}/... route from it — and it is almost always id 1, the
+            // lowest. crud-edit renames its target and reverts afterwards; an
+            // interruption in between followed by a cleanup sweep once
+            // deleted it outright and 404'd the entire storefront (see
+            // CleanupAdminE2eTestData). Never hand it to the edit suite.
+            if ($name === 'Language') {
+                $query->where('is_default', false);
+            }
+
             $ids[$name] = $query->value('id');
         }
 
