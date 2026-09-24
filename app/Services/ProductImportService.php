@@ -9,6 +9,7 @@ use App\Models\InventoryLog;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
+use App\Models\ProductImage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,7 +20,7 @@ class ProductImportService
 
     public const LANGUAGES = ['en', 'de', 'lt', 'fr', 'es'];
 
-    public const OPTIONAL_COLUMNS = ['moq', 'delivery_time', 'cross_oem_numbers'];
+    public const OPTIONAL_COLUMNS = ['moq', 'delivery_time', 'cross_oem_numbers', 'image_urls'];
 
     /** @var array<string, Manufacturer|null> */
     private array $manufacturerCache = [];
@@ -27,7 +28,10 @@ class ProductImportService
     /** @var array<string, Condition|null> */
     private array $conditionCache = [];  // slug → condition model or null
 
-    public function __construct(private OemNormalizerService $normalizer) {}
+    public function __construct(
+        private OemNormalizerService $normalizer,
+        private RemoteImageDownloadService $imageDownloader,
+    ) {}
 
     /**
      * Process an uploaded CSV file path.
@@ -236,6 +240,7 @@ class ProductImportService
                 }
 
                 $this->processCrossReferences($existing->id, $record['cross_oem_numbers'] ?? '');
+                $this->processImageUrls($existing->id, $record['image_urls'] ?? '');
 
                 return 'updated';
             }
@@ -265,6 +270,7 @@ class ProductImportService
             ]);
 
             $this->processCrossReferences($product->id, $record['cross_oem_numbers'] ?? '');
+            $this->processImageUrls($product->id, $record['image_urls'] ?? '');
 
             return 'created';
         });
@@ -306,6 +312,53 @@ class ProductImportService
                 ['product_id' => $productId, 'normalized_cross_oem' => $normalizedCross],
                 ['cross_oem_number' => $crossOem],
             );
+        }
+    }
+
+    /**
+     * Pipe-separated external image URLs, e.g. "https://a.test/1.jpg|https://a.test/2.jpg" —
+     * mirrors the single-product admin form's "fetch from an image URL" field
+     * (RemoteImageDownloadService), just applied per-row instead of per-click.
+     * A bad URL is logged and skipped rather than failing the whole row: the
+     * rest of the product's data (price, stock, etc.) is still valid and
+     * shouldn't be held hostage by one broken image link. Keyed by
+     * source_url so re-importing the same CSV never re-downloads/duplicates
+     * an image already fetched for this product.
+     */
+    private function processImageUrls(int $productId, string $raw): void
+    {
+        $urls = array_filter(array_map('trim', explode('|', $raw)));
+        if (empty($urls)) {
+            return;
+        }
+
+        $hasFeatured = ProductImage::where('product_id', $productId)->where('is_featured', true)->exists();
+        $nextSortOrder = ((int) ProductImage::where('product_id', $productId)->max('sort_order')) + 1;
+
+        foreach ($urls as $url) {
+            if (ProductImage::where('product_id', $productId)->where('source_url', $url)->exists()) {
+                continue;
+            }
+
+            try {
+                $path = $this->imageDownloader->downloadToProductImages($url);
+            } catch (\Throwable $e) {
+                Log::warning('CSV import: could not fetch a product image', [
+                    'product_id' => $productId, 'url' => $url, 'error' => $e->getMessage(),
+                ]);
+
+                continue;
+            }
+
+            ProductImage::create([
+                'product_id' => $productId,
+                'path' => $path,
+                'source_url' => $url,
+                'is_featured' => ! $hasFeatured,
+                'sort_order' => $nextSortOrder++,
+            ]);
+
+            $hasFeatured = true;
         }
     }
 

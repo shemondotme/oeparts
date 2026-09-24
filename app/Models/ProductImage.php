@@ -12,7 +12,7 @@ class ProductImage extends Model
     use HasFactory;
 
     protected $fillable = [
-        'product_id', 'path', 'thumbnail_path', 'medium_path',
+        'product_id', 'path', 'source_url', 'thumbnail_path', 'medium_path',
         'alt_text', 'is_featured', 'sort_order',
     ];
 
