@@ -11,6 +11,7 @@ use App\Http\Middleware\InstallerMiddleware;
 use App\Http\Middleware\IpBlocklist;
 use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
+use App\Http\Middleware\ReadOnlySession;
 use App\Http\Middleware\RedirectIfNotInstalled;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SyncRuntimeSettingsIntoConfig;
@@ -60,6 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'honeypot' => ProtectAgainstSpam::class,
             'auth.sanctum' => EnsureFrontendRequestsAreStateful::class,
             'verify.same-origin' => VerifySameOriginForStatefulCookies::class,
+            'session.readonly' => ReadOnlySession::class,
         ]);
 
         // Off by default (no behavior change for direct-to-PHP-FPM deployments).

@@ -104,7 +104,7 @@ Route::get('/health', HealthController::class)
 // no network); throttled since it's polled continuously by every open tab.
 Route::get('/build-version', BuildVersionController::class)
     ->name('build-version')
-    ->middleware('throttle:60,1');
+    ->middleware(['throttle:60,1', 'session.readonly']);
 
 /*
 |--------------------------------------------------------------------------
@@ -240,7 +240,7 @@ Route::prefix('{lang}')
 
         // Autocomplete endpoint
         Route::get('/search/autocomplete', [SearchController::class, 'autocomplete'])
-            ->middleware('throttle:'.settings('search.autocomplete_rate_limit', 60).',1')
+            ->middleware(['throttle:'.settings('search.autocomplete_rate_limit', 60).',1', 'session.readonly'])
             ->name('frontend.search.autocomplete');
 
         // Human-readable HTML sitemap (the machine-readable /sitemap.xml lives at root)
@@ -274,8 +274,15 @@ Route::prefix('{lang}')
 
         // Cart Routes
         Route::get('/cart', [CartController::class, 'index'])->name('frontend.cart.index');
-        Route::get('/cart/summary', [CartController::class, 'summary'])->name('frontend.cart.summary');
-        Route::get('/cart/preview', [CartController::class, 'preview'])->name('frontend.cart.preview');
+        // Background read-only XHRs fired by every page's navbar — session.readonly
+        // keeps them from overwriting a concurrent request's session write (see
+        // ReadOnlySession: this is what made checkout steps randomly revert).
+        Route::get('/cart/summary', [CartController::class, 'summary'])
+            ->middleware('session.readonly')
+            ->name('frontend.cart.summary');
+        Route::get('/cart/preview', [CartController::class, 'preview'])
+            ->middleware('session.readonly')
+            ->name('frontend.cart.preview');
         Route::post('/cart/add', [CartController::class, 'add'])
             ->middleware('throttle:30,1')
             ->name('frontend.cart.add');
