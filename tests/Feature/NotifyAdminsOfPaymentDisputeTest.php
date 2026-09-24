@@ -8,6 +8,7 @@ use App\Models\Admin;
 use App\Services\AdminNotificationService;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -59,6 +60,53 @@ class NotifyAdminsOfPaymentDisputeTest extends TestCase
         });
         Mail::assertNotSent(PaymentDisputeMail::class, fn ($mail) => $mail->hasTo($inactiveSuperAdmin->email));
         Mail::assertNotSent(PaymentDisputeMail::class, fn ($mail) => $mail->hasTo($manager->email));
+    }
+
+    #[Test]
+    public function the_bell_summary_names_the_real_airwallex_event_without_mangling_it(): void
+    {
+        Mail::fake();
+
+        $admin = Admin::factory()->create(['is_active' => true]);
+        $admin->assignRole('super_admin');
+
+        // Airwallex's real event is payment_dispute.created. A plain
+        // str_replace('dispute.', '') on it produced "payment_created".
+        (new NotifyAdminsOfPaymentDispute(
+            eventType: 'payment_dispute.created',
+            orderNumber: 'ORD-1001',
+            status: 'REQUIRES_RESPONSE',
+            amount: '49.99',
+            currency: 'EUR',
+        ))->handle(app(AdminNotificationService::class));
+
+        $stored = DB::table('notifications')->where('notifiable_id', $admin->id)->pluck('data')->implode(' ');
+
+        $this->assertStringContainsString('created', $stored);
+        $this->assertStringNotContainsString('payment_created', $stored);
+        $this->assertStringContainsString('REQUIRES_RESPONSE', $stored);
+    }
+
+    #[Test]
+    public function the_bell_summary_also_handles_the_paysera_chargeback_event_name(): void
+    {
+        Mail::fake();
+
+        $admin = Admin::factory()->create(['is_active' => true]);
+        $admin->assignRole('super_admin');
+
+        (new NotifyAdminsOfPaymentDispute(
+            eventType: 'paysera.payment.chargeback',
+            orderNumber: 'ORD-1001',
+            status: 'chargeback',
+            amount: '125.00',
+            currency: 'EUR',
+        ))->handle(app(AdminNotificationService::class));
+
+        $stored = DB::table('notifications')->where('notifiable_id', $admin->id)->pluck('data')->implode(' ');
+
+        $this->assertStringContainsString('paysera.payment.chargeback', $stored);
+        $this->assertStringContainsString('125.00', $stored);
     }
 
     #[Test]

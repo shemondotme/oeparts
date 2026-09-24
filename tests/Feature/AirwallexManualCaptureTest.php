@@ -109,7 +109,7 @@ class AirwallexManualCaptureTest extends TestCase
 
         app(PaymentService::class)->processAirwallexAuthorization([
             'id' => 'evt_1',
-            'type' => 'payment_intent.requires_capture',
+            'name' => 'payment_intent.requires_capture',
             'data' => ['object' => ['id' => 'int_authorized_1']],
         ]);
 
@@ -234,7 +234,7 @@ class AirwallexManualCaptureTest extends TestCase
         // This must not throw InvalidArgumentException("...Shipped to Processing...").
         app(PaymentService::class)->processSuccessfulPayment([
             'id' => 'evt_captured',
-            'type' => 'payment_intent.succeeded',
+            'name' => 'payment_intent.succeeded',
             'data' => ['object' => ['id' => 'int_captured_after_ship']],
         ]);
 

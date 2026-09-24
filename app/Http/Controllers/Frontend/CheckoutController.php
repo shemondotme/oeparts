@@ -648,7 +648,8 @@ class CheckoutController extends Controller
             'payment_id' => $intent['payment_id'],
             'env' => settings('payment.airwallex_environment', 'sandbox') === 'live' ? 'prod' : 'demo',
             'currency' => settings('general.currency', 'EUR'),
-            'amount' => (int) bcmul((string) $order->grand_total, '100', 0),
+            // Major units, same as the amount the intent was created with.
+            'amount' => $this->paymentService->airwallexAmount($order->grand_total),
             'country_code' => strtoupper((string) settings('payment.airwallex_merchant_country_code', 'LT')),
             'enable_apple_pay' => (bool) settings('checkout.enable_apple_pay', true),
             'enable_google_pay' => (bool) settings('checkout.enable_google_pay', true),

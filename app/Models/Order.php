@@ -119,9 +119,16 @@ class Order extends Model
         return $this->hasMany(OrderStatusHistory::class);
     }
 
+    /**
+     * The order's most recent payment attempt. An order can accumulate
+     * several (a failed card attempt, then a retry; a switch from card to
+     * Paysera), and a bare hasOne() returns an arbitrary — in practice the
+     * OLDEST — row, so the return/waiting page kept looking at a stale
+     * attempt and never saw the one that was actually paid.
+     */
     public function payment(): HasOne
     {
-        return $this->hasOne(Payment::class);
+        return $this->hasOne(Payment::class)->latestOfMany();
     }
 
     // payments(): HasMany kept alongside payment() for cases where multiple

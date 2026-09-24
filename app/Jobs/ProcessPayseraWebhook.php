@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\PaymentService;
+use App\Support\Payments\PayseraWebhookEvent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,13 +13,19 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Runs on the 'critical' queue for timely payment processing. Duplicate
- * webhook deliveries are detected and skipped upstream in the controller,
- * so this job itself doesn't need its own idempotency check.
+ * callbacks are detected and skipped upstream in the controller, and every
+ * handler is state-guarded, so this job needs no idempotency check of its own.
  *
- * Paysera POSTs the order resource itself to the callback URL (no
- * event-type envelope like Airwallex's {id, type, data}) — status values
- * per Paysera's Checkout Modern guide are pending_payment, paid, canceled,
- * closed.
+ * Acts on the shapes in Paysera's "Webhooks" guide (see PayseraWebhookEvent):
+ *
+ *  - order  + status `paid`      -> fulfil (order total equals amount paid)
+ *  - order  + status `canceled`  -> payment failed (canceled before anything was paid)
+ *  - payment + status `chargeback` -> alert admins (dispute initiated)
+ *
+ * Everything else is logged and ignored on purpose: `amount_paid_updated`
+ * while still `pending_payment` is a partial payment, and payment-level
+ * failed/rejected/expired statuses describe one ATTEMPT — the customer can
+ * retry through the same payment link, so they must not fail the order.
  */
 class ProcessPayseraWebhook implements ShouldQueue
 {
@@ -42,24 +49,27 @@ class ProcessPayseraWebhook implements ShouldQueue
 
     public function handle(PaymentService $paymentService): void
     {
-        $status = $this->webhookData['status'] ?? null;
-        $orderId = $this->webhookData['order_id'] ?? null;
+        $event = PayseraWebhookEvent::fromArray($this->webhookData);
 
         Log::info('Processing Paysera webhook job', [
-            'order_id' => $orderId,
-            'status' => $status,
+            'paysera_order_id' => $event->payseraOrderId,
+            'event_type' => $event->type,
+            'event_name' => $event->name,
+            'order_status' => $event->orderStatus,
+            'payment_status' => $event->paymentStatus,
         ]);
 
         try {
-            match ($status) {
-                'paid' => $paymentService->processSuccessfulPayseraPayment($this->webhookData),
-                'canceled', 'closed' => $paymentService->processFailedPayseraPayment($this->webhookData),
-                default => $this->handleUnknownStatus($status),
+            match (true) {
+                $event->isOrderEvent() && $event->orderStatus === 'paid' => $paymentService->processSuccessfulPayseraPayment($this->webhookData),
+                $event->isOrderEvent() && $event->orderStatus === 'canceled' => $paymentService->processFailedPayseraPayment($this->webhookData),
+                $event->isPaymentEvent() && $event->paymentStatus === 'chargeback' => $paymentService->processPayseraChargeback($this->webhookData),
+                default => $this->handleIgnoredEvent($event),
             };
         } catch (\Exception $e) {
             Log::error('Paysera webhook job failed', [
-                'order_id' => $orderId,
-                'status' => $status,
+                'paysera_order_id' => $event->payseraOrderId,
+                'event_name' => $event->name,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
@@ -69,11 +79,14 @@ class ProcessPayseraWebhook implements ShouldQueue
         }
     }
 
-    private function handleUnknownStatus(?string $status): void
+    private function handleIgnoredEvent(PayseraWebhookEvent $event): void
     {
-        Log::info('Paysera webhook unhandled status ignored', [
-            'status' => $status,
-            'order_id' => $this->webhookData['order_id'] ?? null,
+        Log::info('Paysera webhook event ignored (no action defined)', [
+            'paysera_order_id' => $event->payseraOrderId,
+            'event_type' => $event->type,
+            'event_name' => $event->name,
+            'order_status' => $event->orderStatus,
+            'payment_status' => $event->paymentStatus,
         ]);
     }
 
@@ -89,9 +102,11 @@ class ProcessPayseraWebhook implements ShouldQueue
 
     public function failed(\Throwable $exception): void
     {
+        $event = PayseraWebhookEvent::fromArray($this->webhookData);
+
         Log::critical('Paysera webhook job failed after all retries', [
-            'order_id' => $this->webhookData['order_id'] ?? null,
-            'status' => $this->webhookData['status'] ?? null,
+            'paysera_order_id' => $event->payseraOrderId,
+            'event_name' => $event->name,
             'error' => $exception->getMessage(),
             'trace' => $exception->getTraceAsString(),
         ]);

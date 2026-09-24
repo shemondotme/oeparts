@@ -2,13 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
-use App\Enums\PaymentStatus;
-use App\Enums\PaymentTransactionStatus;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Services\OrderService;
 use App\Services\PaymentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -44,7 +40,7 @@ class ProcessAirwallexWebhook implements ShouldQueue
 
     public function handle(PaymentService $paymentService): void
     {
-        $eventType = $this->webhookData['type'] ?? null;
+        $eventType = self::eventName($this->webhookData);
         $eventId = $this->webhookData['id'] ?? null;
 
         Log::info('Processing Airwallex webhook job', [
@@ -53,17 +49,23 @@ class ProcessAirwallexWebhook implements ShouldQueue
         ]);
 
         try {
-            if ($eventType !== null && str_starts_with($eventType, 'dispute.')) {
+            // Airwallex names disputes payment_dispute.* (not dispute.*).
+            // Matched by prefix so a sub-event added later still reaches admins.
+            if ($eventType !== null && str_starts_with($eventType, 'payment_dispute.')) {
                 $this->handleDispute($eventType);
 
                 return;
             }
 
+            // Event names per Airwallex's "Payment webhooks" reference. Note the
+            // British spelling of "cancelled", and that there is NO
+            // payment_intent.failed — a failed attempt is
+            // payment_intent.payment_failed.
             match ($eventType) {
                 'payment_intent.succeeded' => $this->handlePaymentSucceeded($paymentService),
                 'payment_intent.requires_capture' => $this->handlePaymentAuthorized($paymentService),
-                'payment_intent.failed' => $this->handlePaymentFailed($paymentService),
-                'payment_intent.canceled' => $this->handlePaymentCanceled($paymentService),
+                'payment_intent.payment_failed' => $this->handlePaymentFailed($paymentService),
+                'payment_intent.cancelled' => $this->handlePaymentCancelled($paymentService),
                 default => $this->handleUnknownEvent($eventType),
             };
         } catch (\Exception $e) {
@@ -77,6 +79,18 @@ class ProcessAirwallexWebhook implements ShouldQueue
             // Re-throw to trigger retry
             throw $e;
         }
+    }
+
+    /**
+     * The event type lives in `name` in Airwallex's envelope
+     * ({id, name, account_id, data:{object}, created_at, version}) — not
+     * `type`. `type` is accepted only as a fallback for older fixtures.
+     */
+    public static function eventName(array $envelope): ?string
+    {
+        $name = $envelope['name'] ?? $envelope['type'] ?? null;
+
+        return is_string($name) && $name !== '' ? $name : null;
     }
 
     private function handlePaymentSucceeded(PaymentService $paymentService): void
@@ -94,44 +108,15 @@ class ProcessAirwallexWebhook implements ShouldQueue
         $paymentService->processFailedPayment($this->webhookData);
     }
 
-    private function handlePaymentCanceled(PaymentService $paymentService): void
+    private function handlePaymentCancelled(PaymentService $paymentService): void
     {
-        $paymentIntentId = $this->webhookData['data']['object']['id'] ?? null;
-        if (! $paymentIntentId) {
-            return;
-        }
-
-        $payment = Payment::where('transaction_id', $paymentIntentId)
-            ->where('gateway', PaymentGateway::Airwallex)
-            ->first();
-
-        if ($payment) {
-            $payment->update([
-                'status' => PaymentTransactionStatus::Failed,
-                'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $this->webhookData]),
-            ]);
-
-            $order = $payment->order;
-            $order->update([
-                'payment_status' => PaymentStatus::Failed,
-            ]);
-
-            app(OrderService::class)->transitionStatus(
-                $order,
-                OrderStatus::Cancelled,
-                'Payment canceled via Airwallex webhook',
-            );
-
-            Log::warning('Payment canceled via webhook', [
-                'order_id' => $order->id,
-                'payment_id' => $payment->id,
-            ]);
-        }
+        $paymentService->processCancelledPayment($this->webhookData);
     }
 
     /**
-     * Payment Disputes (chargebacks) — dispute.created, dispute.won,
-     * dispute.lost, dispute.rfi_responded, etc. all share this handler
+     * Payment Disputes (chargebacks) — payment_dispute.created, .won, .lost,
+     * etc. (fields per Airwallex's Payment Dispute object: payment_intent_id,
+     * status, stage, reason.{description,type}) all share this handler
      * since they need identical treatment here: alert admins, touch
      * nothing else. Matched by prefix rather than an enumerated event
      * list so a dispute sub-event Airwallex adds later still reaches
@@ -173,7 +158,7 @@ class ProcessAirwallexWebhook implements ShouldQueue
         );
     }
 
-    private function handleUnknownEvent(string $eventType): void
+    private function handleUnknownEvent(?string $eventType): void
     {
         Log::info('Airwallex webhook unknown event type ignored', [
             'event_type' => $eventType,
@@ -195,7 +180,7 @@ class ProcessAirwallexWebhook implements ShouldQueue
     {
         Log::critical('Airwallex webhook job failed after all retries', [
             'event_id' => $this->webhookData['id'] ?? null,
-            'event_type' => $this->webhookData['type'] ?? null,
+            'event_type' => self::eventName($this->webhookData),
             'error' => $exception->getMessage(),
             'trace' => $exception->getTraceAsString(),
         ]);

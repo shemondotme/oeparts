@@ -805,13 +805,7 @@ class StoreOperationsSettings extends SettingsPage
                         Forms\Components\TextInput::make('paysera_client_secret')
                             ->label('Client Secret')
                             ->password()->revealable()
-                            ->helperText('Saved encrypted in database')->default(null),
-
-                        Forms\Components\TextInput::make('paysera_webhook_secret')
-                            ->label('Webhook Signoff Secret')
-                            ->password()->revealable()
-                            ->helperText('Saved encrypted in database. Best-effort HMAC verification — confirm the exact scheme against Paysera\'s real callback delivery once available.')
-                            ->default(null),
+                            ->helperText('Saved encrypted in database. Also used to verify Paysera\'s payment callbacks (HMAC-SHA256 of the request body, keyed with this secret) — there is no separate webhook secret. The callback URL is sent with every order, so nothing needs configuring in Paysera\'s dashboard.')->default(null),
 
                         Actions::make([$this->testPayseraAction()])
                             ->columnSpanFull(),

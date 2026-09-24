@@ -79,7 +79,9 @@ class NotifyAdminsOfPaymentDispute implements ShouldQueue
 
     private function summarize(): string
     {
-        $parts = [str_replace('dispute.', '', $this->eventType)];
+        // Airwallex's real event names are payment_dispute.created / .won / ...;
+        // a plain str_replace('dispute.', '') turned those into "payment_created".
+        $parts = [preg_replace('/^(?:payment_)?dispute\./', '', $this->eventType)];
 
         if ($this->status) {
             $parts[] = "status: {$this->status}";

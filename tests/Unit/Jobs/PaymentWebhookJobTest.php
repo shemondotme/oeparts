@@ -30,7 +30,7 @@ class PaymentWebhookJobTest extends TestCase
         Queue::fake();
         $webhookData = [
             'id' => 'evt_123',
-            'type' => 'payment_intent.succeeded',
+            'name' => 'payment_intent.succeeded',
         ];
 
         dispatch(new ProcessAirwallexWebhook($webhookData));
@@ -41,7 +41,7 @@ class PaymentWebhookJobTest extends TestCase
     #[Test]
     public function payment_webhook_job_has_three_retries(): void
     {
-        $webhookData = ['id' => 'evt_123', 'type' => 'payment_intent.succeeded'];
+        $webhookData = ['id' => 'evt_123', 'name' => 'payment_intent.succeeded'];
         $job = new ProcessAirwallexWebhook($webhookData);
 
         $this->assertEquals(3, $job->tries);
@@ -50,7 +50,7 @@ class PaymentWebhookJobTest extends TestCase
     #[Test]
     public function payment_webhook_job_has_backoff_delays(): void
     {
-        $webhookData = ['id' => 'evt_123', 'type' => 'payment_intent.succeeded'];
+        $webhookData = ['id' => 'evt_123', 'name' => 'payment_intent.succeeded'];
         $job = new ProcessAirwallexWebhook($webhookData);
 
         $this->assertEquals([60, 120, 300], $job->backoff());
@@ -69,7 +69,7 @@ class PaymentWebhookJobTest extends TestCase
 
         $webhookData = [
             'id' => 'evt_success_123',
-            'type' => 'payment_intent.succeeded',
+            'name' => 'payment_intent.succeeded',
             'data' => [
                 'object' => [
                     'id' => $payment->transaction_id,
@@ -81,8 +81,8 @@ class PaymentWebhookJobTest extends TestCase
         $job = new ProcessAirwallexWebhook($webhookData);
         $job->handle(app(PaymentService::class));
 
-        // Job should execute without errors
-        $this->assertTrue(true);
+        $this->assertSame(PaymentTransactionStatus::Captured, $payment->refresh()->status);
+        $this->assertSame(PaymentStatus::Paid, $order->refresh()->payment_status);
     }
 
     #[Test]
@@ -98,7 +98,7 @@ class PaymentWebhookJobTest extends TestCase
 
         $webhookData = [
             'id' => 'evt_failed_123',
-            'type' => 'payment_intent.failed',
+            'name' => 'payment_intent.payment_failed',
             'data' => [
                 'object' => [
                     'id' => $payment->transaction_id,
@@ -110,12 +110,12 @@ class PaymentWebhookJobTest extends TestCase
         $job = new ProcessAirwallexWebhook($webhookData);
         $job->handle(app(PaymentService::class));
 
-        // Job should execute without errors
-        $this->assertTrue(true);
+        $this->assertSame(PaymentTransactionStatus::Failed, $payment->refresh()->status);
+        $this->assertSame(PaymentStatus::Failed, $order->refresh()->payment_status);
     }
 
     #[Test]
-    public function payment_webhook_job_processes_canceled_event(): void
+    public function payment_webhook_job_processes_cancelled_event(): void
     {
         // Regression test for Option O's consolidation: this handler used to
         // call $order->update(['status' => ...]) directly with zero
@@ -137,7 +137,7 @@ class PaymentWebhookJobTest extends TestCase
 
         $webhookData = [
             'id' => 'evt_cancel_123',
-            'type' => 'payment_intent.canceled',
+            'name' => 'payment_intent.cancelled',
             'data' => [
                 'object' => [
                     'id' => 'pi_cancel_123',
@@ -181,7 +181,7 @@ class PaymentWebhookJobTest extends TestCase
 
         $webhookData = [
             'id' => 'evt_dispute_123',
-            'type' => 'dispute.created',
+            'name' => 'payment_dispute.created',
             'data' => [
                 'object' => [
                     'id' => 'dst_abc123',
@@ -190,7 +190,7 @@ class PaymentWebhookJobTest extends TestCase
                     'stage' => 'CHARGEBACK',
                     'amount' => '49.99',
                     'currency' => 'EUR',
-                    'reason' => ['type' => 'FRAUDULENT', 'description' => 'Fraudulent transaction'],
+                    'reason' => ['name' => 'FRAUDULENT', 'description' => 'Fraudulent transaction'],
                 ],
             ],
         ];
@@ -206,7 +206,7 @@ class PaymentWebhookJobTest extends TestCase
         $this->assertEquals(PaymentTransactionStatus::Captured, $payment->status);
 
         Queue::assertPushed(NotifyAdminsOfPaymentDispute::class, function ($job) use ($order) {
-            return $job->eventType === 'dispute.created'
+            return $job->eventType === 'payment_dispute.created'
                 && $job->orderId === $order->id
                 && $job->orderNumber === $order->order_number
                 && $job->disputeId === 'dst_abc123'
@@ -221,22 +221,22 @@ class PaymentWebhookJobTest extends TestCase
     #[Test]
     public function a_dispute_event_for_an_unrecognized_sub_type_still_alerts_admins(): void
     {
-        // Matched by prefix, not an enumerated list, so a dispute.won/
-        // dispute.lost/dispute.rfi_responded event Airwallex sends still
+        // Matched by prefix, not an enumerated list, so a payment_dispute.won/
+        // .lost/.rfi_responded event Airwallex sends still
         // reaches admins instead of silently falling into
         // handleUnknownEvent().
         Queue::fake();
 
         $webhookData = [
             'id' => 'evt_dispute_won_123',
-            'type' => 'dispute.won',
+            'name' => 'payment_dispute.won',
             'data' => ['object' => ['id' => 'dst_won_123']],
         ];
 
         $job = new ProcessAirwallexWebhook($webhookData);
         $job->handle(app(PaymentService::class));
 
-        Queue::assertPushed(NotifyAdminsOfPaymentDispute::class, fn ($job) => $job->eventType === 'dispute.won');
+        Queue::assertPushed(NotifyAdminsOfPaymentDispute::class, fn ($job) => $job->eventType === 'payment_dispute.won');
     }
 
     #[Test]
@@ -250,7 +250,7 @@ class PaymentWebhookJobTest extends TestCase
 
         $webhookData = [
             'id' => 'evt_dispute_orphan_123',
-            'type' => 'dispute.created',
+            'name' => 'payment_dispute.created',
             'data' => ['object' => ['id' => 'dst_orphan_123', 'payment_intent_id' => 'pi_does_not_exist']],
         ];
 
@@ -258,7 +258,7 @@ class PaymentWebhookJobTest extends TestCase
         $job->handle(app(PaymentService::class));
 
         Queue::assertPushed(NotifyAdminsOfPaymentDispute::class, function ($job) {
-            return $job->eventType === 'dispute.created'
+            return $job->eventType === 'payment_dispute.created'
                 && $job->orderId === null
                 && $job->orderNumber === null;
         });
@@ -269,7 +269,7 @@ class PaymentWebhookJobTest extends TestCase
     {
         $webhookData = [
             'id' => 'evt_unknown_123',
-            'type' => 'charge.refunded', // Unknown event type
+            'name' => 'charge.refunded', // Unknown event type
         ];
 
         $job = new ProcessAirwallexWebhook($webhookData);
@@ -285,7 +285,7 @@ class PaymentWebhookJobTest extends TestCase
         // For unknown event types, just verify the job handles it
         $webhookData = [
             'id' => 'evt_log_test_123',
-            'type' => 'unknown.event',
+            'name' => 'unknown.event',
         ];
 
         $job = new ProcessAirwallexWebhook($webhookData);
@@ -300,7 +300,7 @@ class PaymentWebhookJobTest extends TestCase
     {
         $webhookData = [
             'id' => 'evt_retrieve_123',
-            'type' => 'payment_intent.succeeded',
+            'name' => 'payment_intent.succeeded',
             'custom' => 'data',
         ];
 
@@ -312,7 +312,7 @@ class PaymentWebhookJobTest extends TestCase
     #[Test]
     public function payment_webhook_job_retry_until_10_minutes(): void
     {
-        $webhookData = ['id' => 'evt_123', 'type' => 'payment_intent.succeeded'];
+        $webhookData = ['id' => 'evt_123', 'name' => 'payment_intent.succeeded'];
         $job = new ProcessAirwallexWebhook($webhookData);
 
         $retryUntil = $job->retryUntil();
@@ -327,7 +327,7 @@ class PaymentWebhookJobTest extends TestCase
     {
         $webhookData = [
             'id' => 'evt_failure_123',
-            'type' => 'payment_intent.succeeded',
+            'name' => 'payment_intent.succeeded',
         ];
 
         $job = new ProcessAirwallexWebhook($webhookData);
@@ -340,5 +340,44 @@ class PaymentWebhookJobTest extends TestCase
 
         // Job should handle failures gracefully
         $this->assertTrue(true);
+    }
+
+    #[Test]
+    public function the_us_spelled_and_legacy_event_names_airwallex_never_sends_are_ignored(): void
+    {
+        // Airwallex has payment_intent.cancelled (British) and
+        // payment_intent.payment_failed — NOT payment_intent.canceled /
+        // payment_intent.failed / dispute.*. Matching those made the real
+        // events fall through to "unknown" while tests using the invented
+        // names stayed green.
+        Queue::fake();
+
+        $order = Order::factory()->create(['status' => OrderStatus::Processing, 'payment_status' => PaymentStatus::Pending]);
+        $payment = Payment::factory()->create([
+            'order_id' => $order->id,
+            'gateway' => PaymentGateway::Airwallex,
+            'status' => PaymentTransactionStatus::Pending,
+            'transaction_id' => 'pi_legacy_names',
+        ]);
+
+        foreach (['payment_intent.canceled', 'payment_intent.failed', 'dispute.created'] as $legacy) {
+            (new ProcessAirwallexWebhook([
+                'id' => 'evt_'.$legacy, 'name' => $legacy,
+                'data' => ['object' => ['id' => 'pi_legacy_names', 'payment_intent_id' => 'pi_legacy_names']],
+            ]))->handle(app(PaymentService::class));
+        }
+
+        $this->assertSame(PaymentTransactionStatus::Pending, $payment->refresh()->status);
+        $this->assertSame(OrderStatus::Processing, $order->refresh()->status);
+        Queue::assertNotPushed(NotifyAdminsOfPaymentDispute::class);
+    }
+
+    #[Test]
+    public function the_event_type_is_read_from_name_with_type_only_as_a_fallback(): void
+    {
+        $this->assertSame('payment_intent.succeeded', ProcessAirwallexWebhook::eventName(['name' => 'payment_intent.succeeded']));
+        $this->assertSame('payment_intent.succeeded', ProcessAirwallexWebhook::eventName(['type' => 'payment_intent.succeeded']));
+        $this->assertSame('a', ProcessAirwallexWebhook::eventName(['name' => 'a', 'type' => 'b']), '`name` wins');
+        $this->assertNull(ProcessAirwallexWebhook::eventName(['id' => 'x']));
     }
 }

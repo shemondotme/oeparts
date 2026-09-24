@@ -141,6 +141,77 @@ class PayseraPaymentServiceTest extends TestCase
     }
 
     #[Test]
+    public function the_order_identifier_is_accepted_under_id_as_well_as_order_id(): void
+    {
+        // Paysera's Payment Orders guide lists the response identifier as `id`
+        // (UUID) while its PHP sample reads $order['order_id'] — accept both.
+        $this->setPayseraSettings();
+        Http::fake([
+            self::TOKEN_URL => Http::response(['access_token' => 'fake_bearer_token', 'expires_in' => 3600], 200),
+            self::ORDERS_URL => Http::response(['id' => 'order-uuid-from-id', 'amount' => 2500, 'currency' => 'EUR', 'status' => 'pending_payment'], 201),
+            self::LINKS_URL => Http::response([
+                'link_id' => 'link-1', 'order_id' => 'order-uuid-from-id',
+                'payment_URL' => 'https://api.paysera.com/checkout-payment-link/payment-collection/v1/payment-links/xyz',
+            ], 201),
+        ]);
+
+        $order = Order::factory()->create(['guest_email' => 'buyer@example.com', 'user_id' => null]);
+
+        $result = app(PaymentService::class)->createPayseraPaymentLink($order);
+
+        $this->assertSame('order-uuid-from-id', $result['order_id']);
+        $this->assertDatabaseHas('payments', ['order_id' => $order->id, 'gateway' => 'paysera', 'transaction_id' => 'order-uuid-from-id']);
+        Http::assertSent(fn ($request) => $request->url() !== self::LINKS_URL || $request['order_id'] === 'order-uuid-from-id');
+    }
+
+    #[Test]
+    public function the_order_request_matches_the_documented_shape_with_integer_minor_units(): void
+    {
+        $this->setPayseraSettings();
+        $this->fakePayseraFlow();
+
+        $order = Order::factory()->create(['guest_email' => 'buyer@example.com', 'user_id' => null, 'grand_total' => 108.87]);
+
+        app(PaymentService::class)->createPayseraPaymentLink($order);
+
+        $recorded = Http::recorded(fn ($request) => $request->url() === self::ORDERS_URL);
+        $body = $recorded->first()[0]->data();
+
+        // Payment Orders guide: purchase.amount is an INTEGER in minor units (2500 = EUR 25.00).
+        $this->assertSame(10887, $body['purchase']['amount']);
+        $this->assertSame($order->order_number, $body['purchase']['reference']);
+        $this->assertSame('EUR', $body['purchase']['currency']);
+        $this->assertSame(route('webhooks.paysera'), $body['redirect_urls']['callback_url']);
+
+        $link = Http::recorded(fn ($request) => $request->url() === self::LINKS_URL)->first()[0]->data();
+        $this->assertSame(10887, $link['purchase']['amount']);
+    }
+
+    #[Test]
+    public function an_unsupported_site_locale_falls_back_to_english_for_the_required_language_field(): void
+    {
+        // experience.language is REQUIRED and Paysera only documents "en"/"lt".
+        // The site also serves de/fr/es — an unrecognised code risks a 422 that
+        // blocks the whole payment, English merely shows the hosted page in English.
+        $this->setPayseraSettings();
+
+        foreach (['de' => 'en', 'fr' => 'en', 'es' => 'en', 'lt' => 'lt', 'en' => 'en'] as $locale => $expected) {
+            Http::fake([
+                self::TOKEN_URL => Http::response(['access_token' => 'fake_bearer_token', 'expires_in' => 3600], 200),
+                self::ORDERS_URL => Http::response(['order_id' => 'order-uuid-'.$locale], 201),
+                self::LINKS_URL => Http::response(['link_id' => 'l', 'order_id' => 'order-uuid-'.$locale, 'payment_URL' => 'https://api.paysera.com/x'], 201),
+            ]);
+            app()->setLocale($locale);
+
+            $order = Order::factory()->create(['guest_email' => 'buyer@example.com', 'user_id' => null]);
+            app(PaymentService::class)->createPayseraPaymentLink($order);
+
+            $link = Http::recorded(fn ($request) => $request->url() === self::LINKS_URL)->last()[0]->data();
+            $this->assertSame($expected, $link['experience']['language'], "locale {$locale}");
+        }
+    }
+
+    #[Test]
     public function missing_credentials_throw_before_any_http_call(): void
     {
         $order = Order::factory()->create(['guest_email' => 'buyer@example.com', 'user_id' => null]);

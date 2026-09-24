@@ -160,8 +160,8 @@ class SettingsSeeder extends Seeder
             ['group' => 'payment', 'key' => 'airwallex_manual_capture_enabled',  'value' => '0',       'type' => $b],
             ['group' => 'payment', 'key' => 'paysera_environment',    'value' => 'sandbox', 'type' => $s],
             ['group' => 'payment', 'key' => 'paysera_client_id',      'value' => '',        'type' => $s],
+            // Also the key Paysera callbacks are verified with — there is no separate webhook secret.
             ['group' => 'payment', 'key' => 'paysera_client_secret',  'value' => '',        'type' => $e, 'encrypted' => true],
-            ['group' => 'payment', 'key' => 'paysera_webhook_secret', 'value' => '',        'type' => $e, 'encrypted' => true],
 
             // ── AUTH ─────────────────────────────────────────────────────────────
             ['group' => 'auth', 'key' => 'otp_length',                'value' => '6',   'type' => $i],
