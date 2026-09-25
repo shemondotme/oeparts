@@ -67,7 +67,7 @@ class ReleasePublisher
      */
     public function toCatalogEntry(array $manifest): array
     {
-        return [
+        $entry = [
             'version' => $manifest['version'] ?? null,
             'codename' => $manifest['codename'] ?? null,
             'release_date' => $manifest['release_date'] ?? null,
@@ -97,6 +97,24 @@ class ReleasePublisher
             'git_commit_sha' => $manifest['git_commit_sha'] ?? null,
             'git_signature' => $manifest['git_signature'] ?? null,
         ];
+
+        // The admin's "Review & apply update" panel reads breaking_changes and
+        // pre_update_notes off the release entry it was handed — and that is THIS
+        // catalog entry, not version.json (UpdateChecker prefers the catalog
+        // whenever it is reachable, exactly as for the git binding above). Left
+        // out, those warnings were written into version.json for every release
+        // yet never once shown to the admin about to click Apply. Only carried
+        // when set, so catalog entries stay compact.
+        $breaking = array_values(array_filter((array) ($manifest['breaking_changes'] ?? []), 'is_string'));
+        if ($breaking !== []) {
+            $entry['breaking_changes'] = $breaking;
+        }
+        $notes = $manifest['pre_update_notes'] ?? null;
+        if (is_string($notes) && trim($notes) !== '') {
+            $entry['pre_update_notes'] = $notes;
+        }
+
+        return $entry;
     }
 
     /**

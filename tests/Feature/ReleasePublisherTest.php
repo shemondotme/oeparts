@@ -83,6 +83,36 @@ class ReleasePublisherTest extends TestCase
     }
 
     #[Test]
+    public function catalog_entry_carries_the_warnings_the_apply_panel_shows(): void
+    {
+        // The admin's "Review & apply update" panel reads breaking_changes and
+        // pre_update_notes from the release entry it is handed, and
+        // UpdateChecker hands it the catalog entry (not version.json) whenever
+        // the catalog is reachable. Found by rehearsing the real 1.0.16 ->
+        // 2.0.0 self-update: the red "Breaking changes" box and the pre-update
+        // notes written into version.json never appeared in the panel.
+        $entry = $this->publisher()->toCatalogEntry($this->manifest([
+            'breaking_changes' => ['Setting X was removed.', 'Cache is reset.'],
+            'pre_update_notes' => 'Back up first.',
+        ]));
+
+        $this->assertSame(['Setting X was removed.', 'Cache is reset.'], $entry['breaking_changes']);
+        $this->assertSame('Back up first.', $entry['pre_update_notes']);
+    }
+
+    #[Test]
+    public function catalog_entry_leaves_out_empty_warnings_to_stay_compact(): void
+    {
+        $entry = $this->publisher()->toCatalogEntry($this->manifest([
+            'breaking_changes' => [],
+            'pre_update_notes' => '  ',
+        ]));
+
+        $this->assertArrayNotHasKey('breaking_changes', $entry);
+        $this->assertArrayNotHasKey('pre_update_notes', $entry);
+    }
+
+    #[Test]
     public function catalog_entry_carries_the_git_commit_binding(): void
     {
         // Found via a real end-to-end update rehearsal (fresh v1.0.16
