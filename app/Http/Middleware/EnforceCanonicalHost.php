@@ -47,7 +47,7 @@ class EnforceCanonicalHost
         // a host they were never configured to use.
         $canonicalHost = trim((string) settings('seo.canonical_host', ''));
 
-        $needsSchemeChange = $httpsConfigured && ! $request->secure();
+        $needsSchemeChange = $httpsConfigured && ! $this->arrivedOverHttps($request);
         $needsHostChange = $canonicalHost !== '' && $request->getHost() !== $canonicalHost;
 
         // Trailing-slash removal is GET/HEAD only — a 301 on a POST/PUT/etc.
@@ -78,5 +78,32 @@ class EnforceCanonicalHost
         $url = "{$scheme}://{$host}{$finalPath}".($query ? "?{$query}" : '');
 
         return redirect($url, 301);
+    }
+
+    /**
+     * True when the visitor is on https, INCLUDING when a proxy in front of the app
+     * terminated TLS and speaks plain http to it (Cloudflare "Flexible" SSL, a
+     * TLS-terminating load balancer/nginx). $request->secure() alone is false there
+     * unless the proxy is a trusted one, and forcing https on such a request sends
+     * the browser round in an endless 301 loop that takes the whole site down —
+     * which this middleware would have done to every such site on upgrade.
+     *
+     * Reading the forwarded-scheme headers unconditionally is safe for THIS use: they
+     * can only ever suppress a redirect to https, never cause one, so a forged header
+     * merely lets a client stay on the plain-http connection it already chose.
+     */
+    private function arrivedOverHttps(Request $request): bool
+    {
+        if ($request->secure()) {
+            return true;
+        }
+
+        $forwarded = strtolower(trim(explode(',', (string) $request->headers->get('X-Forwarded-Proto'))[0]));
+        if ($forwarded === 'https') {
+            return true;
+        }
+
+        // Cloudflare: CF-Visitor: {"scheme":"https"}
+        return str_contains((string) $request->headers->get('CF-Visitor'), '"scheme":"https"');
     }
 }

@@ -47,6 +47,33 @@ class CanonicalHostRedirectTest extends TestCase
     }
 
     #[Test]
+    public function a_request_whose_tls_a_proxy_already_terminated_is_not_redirected_in_a_loop(): void
+    {
+        // Cloudflare "Flexible" SSL / a TLS-terminating load balancer: the visitor IS on
+        // https, but the proxy talks plain http to the app, so $request->secure() is
+        // false (proxies are not trusted). Forcing https here 301s every request to
+        // itself forever — the whole site down right after an upgrade. Found while
+        // rehearsing the 1.0.16 -> 2.0.0 update: TRUSTED_PROXIES from .env is not
+        // applied at bootstrap, so relying on $request->secure() is not enough.
+        config(['app.url' => 'https://oeparts.com']);
+
+        $this->getWithRawUri('http://oeparts.com/en/parts', ['X-Forwarded-Proto' => 'https'])->assertStatus(200);
+        $this->getWithRawUri('http://oeparts.com/en/parts', ['X-Forwarded-Proto' => 'https, http'])->assertStatus(200);
+        $this->getWithRawUri('http://oeparts.com/en/parts', ['CF-Visitor' => '{"scheme":"https"}'])->assertStatus(200);
+    }
+
+    #[Test]
+    public function a_forwarded_http_scheme_still_redirects_to_https(): void
+    {
+        config(['app.url' => 'https://oeparts.com']);
+
+        $response = $this->getWithRawUri('http://oeparts.com/en/parts', ['X-Forwarded-Proto' => 'http']);
+
+        $response->assertStatus(301);
+        $this->assertStringStartsWith('https://', $response->headers->get('Location'));
+    }
+
+    #[Test]
     public function no_https_redirect_when_app_url_is_not_configured_for_https(): void
     {
         // Matches AppServiceProvider's own URL::forceScheme('https') gate —
