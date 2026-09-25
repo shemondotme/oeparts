@@ -12,6 +12,7 @@ use App\Services\Updates\RecoveryWindowFlag;
 use App\Services\Updates\ReleaseSignature;
 use App\Services\Updates\UpdateApplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -232,6 +233,38 @@ class UpdateApplierTest extends TestCase
         // Once the lock is free, a normal advance() proceeds as usual.
         $applier->advance($history->refresh());
         $this->assertSame(['backup'], $applier->log);
+    }
+
+    #[Test]
+    public function a_slow_step_keeps_its_lock_so_a_later_poll_cannot_start_it_a_second_time(): void
+    {
+        // Rehearsing a 1M-product 1.0.16 -> 2.0.0 update: `finalize` (migrations) outran the
+        // old 300 s lock, the next poll took the lock and started a second migrate on top
+        // of the first. The lock has to survive a step far longer than five minutes.
+        $applier = new class extends FakeUpdateApplier
+        {
+            public ?bool $rivalGotTheLock = null;
+
+            protected function doBackup(UpdateHistory $h): void
+            {
+                $this->log[] = 'backup';
+
+                // Twenty minutes into the step, another poll tries to take the same lock.
+                Carbon::setTestNow(now()->addMinutes(20));
+                $rival = Cache::lock('update_apply.advance.'.$h->getKey(), 10);
+                $this->rivalGotTheLock = $rival->get();
+                $rival->release();
+            }
+        };
+        $history = $applier->start($this->manifest());
+
+        try {
+            $applier->advance($history);
+        } finally {
+            Carbon::setTestNow();
+        }
+
+        $this->assertFalse($applier->rivalGotTheLock, 'a 20-minute step must still hold its lock');
     }
 
     #[Test]

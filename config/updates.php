@@ -187,6 +187,10 @@ return [
     // App\Services\Updates\UpdateWatchdog / oeparts:update:cleanup-stale.
     'stale_after_seconds' => (int) env('OE_UPDATE_STALE_AFTER', 7200), // 2h
 
+    // How long one advance() step may hold its per-update lock — see UpdateApplier::advance().
+    // Must exceed the slowest step (migrations on a very large catalog).
+    'advance_lock_seconds' => (int) env('OE_UPDATE_ADVANCE_LOCK', 3600),
+
     // A post-swap update (finalize/verify) that nothing has touched for this many
     // seconds is picked up by the next request that reaches the new code — see
     // App\Services\Updates\InterruptedUpdateResumer. Short on purpose: the tab that

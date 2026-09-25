@@ -137,7 +137,17 @@ class UpdateApplier
         // codebase (product import start, the HTTP cron-fallback trigger)
         // via the same non-blocking Cache::lock() pattern. A poll that loses
         // the race just returns the history unchanged; the next poll retries.
-        $lock = Cache::lock('update_apply.advance.'.$history->getKey(), 300);
+        //
+        // The TTL must outlast the LONGEST single step. `finalize` runs the whole
+        // release's migrations in one call, and on a million-product catalog every
+        // ALTER TABLE on `products` rebuilds the table and its FULLTEXT index — many
+        // minutes each. The old 300 s expired mid-migration, so the next poll (or the
+        // interrupted-update resume) started a SECOND migrate on top of the first: two
+        // identical ALTERs, one queued behind the other's metadata lock, and duplicate
+        // rows in `migrations` (found rehearsing a 1M-product 1.0.16 -> 2.0.0 update).
+        // A process that is killed outright leaves the lock until the TTL; the watchdog
+        // still reclaims the update after stale_after_seconds.
+        $lock = Cache::lock('update_apply.advance.'.$history->getKey(), (int) config('updates.advance_lock_seconds', 3600));
 
         if (! $lock->get()) {
             return $history;
