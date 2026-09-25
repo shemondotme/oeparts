@@ -92,6 +92,40 @@ class ProductColumnsOnePassMigrationTest extends TestCase
     }
 
     #[Test]
+    public function on_mysql_everything_missing_goes_into_a_single_alter_statement(): void
+    {
+        // Laravel's Blueprint compiles every added column into its OWN `alter table`, and each
+        // one rebuilds `products` (FULLTEXT index => no INSTANT/INPLACE) — minutes apiece at 1M
+        // rows. The first cut of this migration used Blueprint and saved nothing; the MySQL
+        // path is one hand-written statement. Pin the exact SQL: the suite has no MySQL server.
+        $sql = $this->migration()->mysqlStatement(['slug', 'specifications', 'warranty_months', 'video_url'], true);
+
+        $this->assertSame(
+            'ALTER TABLE `products` '
+            .'ADD COLUMN `slug` VARCHAR(220) NULL AFTER `normalized_oem`, '
+            .'ADD COLUMN `specifications` JSON NULL AFTER `description`, '
+            .'ADD COLUMN `warranty_months` SMALLINT UNSIGNED NULL AFTER `moq`, '
+            .'ADD COLUMN `video_url` VARCHAR(500) NULL AFTER `warranty_months`, '
+            .'ADD INDEX `products_slug_index` (`slug`)',
+            $sql
+        );
+        $this->assertSame(1, substr_count($sql, 'ALTER TABLE'), 'one statement, one table rebuild');
+    }
+
+    #[Test]
+    public function on_mysql_only_what_an_interrupted_update_left_missing_is_in_the_statement(): void
+    {
+        $this->assertSame(
+            'ALTER TABLE `products` ADD COLUMN `specifications` JSON NULL AFTER `description`, ADD COLUMN `video_url` VARCHAR(500) NULL AFTER `warranty_months`',
+            $this->migration()->mysqlStatement(['specifications', 'video_url'], false)
+        );
+        $this->assertSame(
+            'ALTER TABLE `products` ADD INDEX `products_slug_index` (`slug`)',
+            $this->migration()->mysqlStatement([], true)
+        );
+    }
+
+    #[Test]
     public function it_is_reversible(): void
     {
         $this->migration()->down();
