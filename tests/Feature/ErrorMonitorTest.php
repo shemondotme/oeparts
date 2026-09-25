@@ -64,7 +64,7 @@ class ErrorMonitorTest extends TestCase
         // formatter is configured anywhere). This fixture matches that
         // real, confirmed format exactly.
         $line = '['.now()->format('Y-m-d H:i:s').'] local.ERROR: Something broke'
-            .' {"exception":"[object] (App\\\\Services\\\\Foo(code: 0): Something broke at /var/www/html/app/Services/Foo.php:42)'."\n"
+            .' {"exception":"[object] (App\\\\Services\\\\Foo(code: 0): Something broke at '.base_path('app/Services/Foo.php').':42)'."\n"
             .'[stacktrace]'."\n"
             .'#0 {main}"}'."\n";
         file_put_contents($this->logPath, $line);
@@ -80,9 +80,9 @@ class ErrorMonitorTest extends TestCase
         // 'line' was always 0.
         $this->assertSame('ERROR', $errors[0]['type']);
         $this->assertSame('Something broke', $errors[0]['message']);
-        // base_path() is stripped for cleaner display — this test runs
-        // under the same /var/www/html root the fixture line was written
-        // against.
+        // base_path() is stripped for cleaner display. The fixture is built from
+        // base_path() itself — a hardcoded /var/www/html only matched the Docker dev
+        // container and failed on any other checkout (GitHub Actions runners).
         $this->assertSame('app/Services/Foo.php', $errors[0]['file']);
         $this->assertSame('42', (string) $errors[0]['line']);
     }
