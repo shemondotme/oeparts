@@ -29,14 +29,14 @@
     "post_update_notes": "After the update finishes: confirm your queue worker is running again (the update signals it to restart; your supervisor brings it back up); set LOG_STACK=daily in your .env if you want rotating, auto-pruned logs (existing installs keep their current value); and make one small test payment on each enabled gateway. 2.0.0 is the largest release since 1.0.0: a full-application testing pass that fixed real security, financial, compliance and reliability bugs (including checkout steps reverting under a slow background request, a mobile checkout API that never worked, VAT overcharged on coupon-discounted orders, and support-reply emails that lost their content), Paysera as a second payment gateway, an admin-triggered full production restore, a redesigned product page, a full SEO program, and a reorganised admin settings area. See CHANGELOG.md for the full list.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": null,
-    "size_bytes": null,
-    "signature": null,
+    "sha256": "fb33b6425db5452a91d58a634370c3c863488550bf9eccd18324ae447b4ef25f",
+    "size_bytes": 31641026,
+    "signature": "snWqrbBi8t2yRnQOZ8fq1qJ6G8lsIxIHb5Q2RpR9rj7MDI4CgHeiluruEsNfScB50w7M3ZL8O1Cn2f3PhRDCxPxY7rtRCRBbUW7eLOCiJl35wY00rNkizoYCoZ/hK+O62k20l/dZKAgD8/4SFHHsm/plhqxioEACYod1WTb22+FyKc/39EI7jsfvYw8RmfDmWJb0pg0hljuNDlE6z796EGZEzUd8jRh0SjHeu22XSezAOf990O05I+3uicpWR3lEhtVQyU3DS6XGZUzOIz0AYQWoa1trAefjB5ja8AotZc9NHRywksYnnUzWkIX/R4ug9JKG9wqEfJoOWubXQ2EtmcfdX/sc/g38iNkKccAqYJ+0UemFFMa93YFiUOW4173CVCNrQ4frxM1CCQ7uD7Ct55kNIRZir5NXryQzeTDNWTJ8SXFhEn0u4GhQ7G9Wzr42Rw1qe9xMKPGbGD0o9DSKF72edFq6Thvf8Iic854MAPg5RBGw8VewY5NUSxmnx/xeDES6GJ9xsO8mX94vGvYiklZ0oHZyLhXl+6VJqLrKNsW0JG2TQGhGSubIcFG51vb6z4mS7GxDjsVKISgVSuDgppEf7sTELh6lmi1RuP3UjgEqdfzhi78/AMCJ27cbYVoNPq8l9BsoIDIBZFETvoHdYT1pRKaj9r6N/1I4cZmiJrI=",
     "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.0.0/oeparts-2.0.0.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": null,
-    "git_signature": null
+    "git_commit_sha": "2bc26c1d2e9fa6706140a5d664dd86a9e9a364e0",
+    "git_signature": "nisXT7PdBZOuMu6v63aKqNn18PZJoClk7YiFN0xKoKyI90Soh6KqEg6ULgGfLMW4gvmfDKy0gCGMrVORZUsnccaVON+gxGw+m/iTAe9tL57N6jLLl823+T88t17vm4tplGzih94/+tslcmwEd4zs/C2FatZN24A812QAWLRL7zc7yBB6iFCLY9NVZqhDg2l37jezFjVCF4ruvTZEEi+orhIsmVopaVddjBk17A9iTqLf6GTW7ekIfTr1+8Zu/olGQF6LvOBZhqd63WXd0FnF3NY86NSDerYcTyr+/SzMd3jjsDK++7eWwUxmB7MugFWQcrR4xh5AFwc3cI0Wcqx6YiCfhFS2l17pqGCAIXbCSbY9mqIHAUTmKapMv85kpQT1Q2/ducPpW9XKDmFC+U8nEqCT54wVEg0LjrFAS729FPFp/ZgfWxKAhPndmUkRmvctzM/PkG0qM9BzoI10WX8BrRQOdifFoH7As5FZqbvzT2WTz1ljIJxnqK/AjRqhlbTXvDdkWr86G7Kj8Sh8Sbf5JVDTTovfpG1DQs+3SyvEg5KSHHGCfNhOn9s/AsBLalyC7rB9fNPixoJ5n7YqOELivqEfn14uDqUdcl1U26ZggzLYR42h7QpJN3P9Xz6NkDDe86oAqAbHKmwuH33yWd5KG2D3abr34Rf8Y16dBMe15q4="
 }
