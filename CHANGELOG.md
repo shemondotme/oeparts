@@ -2,11 +2,52 @@
 
 All notable changes to this project are documented here.
 
-## 1.0.19 — 2026-09-24
+## 2.0.0 — 2026-09-25
+
+The first major release. It replaces the 1.0.17, 1.0.18 and 1.0.19 lines entirely — none of them were ever installed anywhere — so **update straight from 1.0.16**. Everything since 1.0.16 ships here: a "bulletproof, zero critical-bug" testing pass across the whole application (which found and fixed real security, financial, compliance and reliability bugs), a second payment gateway (Paysera), both payment integrations re-aligned with their vendors' documentation, a checkout that can no longer be reverted by a slow background request, a working mobile checkout API, a full SEO program, a redesigned product page, and a reorganised admin. It also fixes several failure modes of the self-update engine itself, which is why the 1.0.16 → 2.0.0 hop is worth reading about first.
+
+### Upgrading from 1.0.16
+
+- Update from **Settings → System Updates**, exactly as before. The update runs **20 new database migrations**; all of them (and the older ones that were hardened) are idempotent, so a database left half-migrated by an earlier interrupted update attempt is handled instead of failing on "already exists".
+- **Run a queue worker restart after updating** (`php artisan queue:restart`, or restart your supervisor program). A long-running worker keeps the old code in memory until it is restarted.
+- Payments — read before enabling either gateway in production: both integrations were **rewritten against Airwallex's and Paysera's own documentation** (see Fixed — Payments below). They are covered by automated tests built from the documented payloads, but **have not been exercised against the vendors' live sandboxes yet** — do a sandbox payment end to end before taking real money, and confirm the Airwallex webhook URL is registered in the Airwallex dashboard and its signing secret is saved in your payment settings.
+- Paysera's separate "Webhook Signoff Secret" setting is gone: Paysera signs callbacks with your **Client Secret**, which is now what is used.
+- Checkout progress is now kept in the cache instead of the session. Customers who are part-way through checkout at the moment of the update (or whenever `php artisan cache:clear` runs) are asked to restart checkout from their cart, which is preserved.
+- Existing installs keep `LOG_STACK=single` in `.env`; set `LOG_STACK=daily` to get rotating, auto-pruned logs (new installs already get it).
+- PHP 8.3 is still the minimum. (A dependency lock that had drifted to require PHP 8.4.1 has been corrected, and a test now prevents it recurring.)
+
+### Since 1.0.19 — payments, checkout, updates and platform
+
+#### Fixed — Payments
+- **Airwallex charged 100x the order total**: the payment amount was sent in cents, but Airwallex specifies amounts in major currency units (9.99, not 999).
+- **No genuine Airwallex webhook could ever have been accepted**: the signature was computed over `timestamp.body` (Airwallex concatenates them with no separator), the timestamp was compared as seconds (Airwallex sends milliseconds), and the event type was read from `type` (Airwallex names it `name`). Events were also matched by names Airwallex never sends (`payment_intent.canceled`, `payment_intent.failed`, `dispute.*` instead of `payment_intent.cancelled`, `payment_intent.payment_failed`, `payment_dispute.*`), so cancellations, failed payments and the dispute/chargeback admin alerts never fired.
+- **Airwallex captures now include the required `request_id`.** Manual-capture-on-ship would have been rejected without it.
+- Airwallex events can arrive out of order (documented): a late "requires capture", "payment failed" or "cancelled" notice can no longer downgrade a captured payment or cancel a paid or shipped order; the duplicate-event window now really lasts the intended days (it was ~2.8 hours against a ~3-day retry schedule); and an event whose job could not be queued is released so the gateway's retry is processed instead of being acknowledged as a duplicate and lost.
+- Reloading the payment page reuses the still-valid pending intent instead of creating a new Airwallex intent and a new payment record every time, `Order::payment()` now returns the latest attempt (it returned the oldest), and the return URL is the waiting page rather than the thank-you page.
+- **Paysera**: callbacks are the documented nested JSON (not a flat `order_id`/`status`), verified as HMAC-SHA256 of the raw body with the OAuth client secret; a bad signature answers 403 (Paysera treats 401 as "stop retrying"); a `paid` callback is checked against the amount and currency before fulfilment; a `chargeback` payment status alerts admins; failed payment *attempts* no longer fail the order, since the customer can retry; the order id is accepted as `order_id` or `id`; unsupported site languages fall back to English for the required payment-page language field.
+- Dispute alert summaries no longer turn `payment_dispute.created` into "payment_created".
+
+#### Fixed — Checkout, cart and the mobile API
+- **Checkout could silently send a customer back a step with an empty form**: checkout progress lived in the session, which is re-saved in full on every request, so a slow background request (the navbar's mini-cart summary) could overwrite the step a customer had just completed. Checkout state now lives in its own cache entry keyed by the checkout id, protected by a per-checkout lock, so nothing that touches the session can clobber it. Background read-only endpoints (cart summary/preview, search autocomplete, the build-freshness poll) also no longer write the session at all.
+- **The mobile API checkout never worked in production**: it is designed to be stateless (the app keeps the checkout id), but its state was written to a session the API never persists, so every started checkout was "not found" on the next call. It now works, and because the checkout id is a client-held credential, every call is checked to belong to the caller's own cart or account.
+- Bulk product import can now attach product images: an optional `image_urls` column (pipe-separated, the same convention as `cross_oem_numbers`) fetches each image through the same validated, SSRF-protected path as the admin form, marks the first as featured, never duplicates an already-imported URL on a re-import, and never fails a product row because one image link is bad.
+
+#### Fixed — Self-update engine
+- A crashed or killed update (out of memory, process kill) left the site stuck in maintenance mode forever: the stale-update reclaimer marked the record failed without ever leaving maintenance mode. It now goes through the same failure handling as any other failed update.
+- A git-managed install checked a release tag's files out **before** verifying the tag against the signed release manifest, so a tampered or re-pushed tag stayed checked out and running. The signature is now verified first.
+
+#### Fixed — Platform
+- `composer.lock` had drifted to require PHP 8.4.1 (three Symfony packages) while everything else — README, installer, update pre-flight, CI — promised PHP 8.3. It now resolves for PHP 8.3, Composer is pinned to that minimum, and a test fails if a locked package ever needs more.
+
+#### Developer / test tooling
+- The admin end-to-end suite's cleanup step could delete a real record (it deleted the default language and took the whole storefront offline in the test environment) if a run was interrupted mid-edit; it now refuses to touch such rows. The suite also aborts early with a clear message when the storefront itself is down, and accessibility scans no longer pass on error pages.
+- Added a docker profile that runs nginx + PHP-FPM on the minimum supported PHP, and documented how to run the tests inside it.
+
+### Testing pass, second payment gateway and production restore (developed as 1.0.19)
 
 A "bulletproof, zero critical-bug" testing pass across the entire application — every module, not just recent changes — plus a second payment gateway (Paysera), an admin-triggered production restore, and a self-update/build-freshness overhaul. This is the largest release since 1.0.0: 22 phases of dedicated audit work found and fixed real, previously-invisible bugs across security, finance, compliance, accessibility, backups, and the update system itself, on top of hardening the automated test suite (PHPStan static analysis, cross-browser/mobile e2e coverage, and a genuine concurrent-load test) so this class of bug is caught earlier next time. Every migration applies automatically; every new toggleable feature ships off/disabled by default.
 
-### Added
+#### Added
 - **Paysera** as a second card payment gateway alongside Airwallex, with its own webhook handling.
 - **Admin-triggered full production restore** (Backup Dashboard → "Restore into production"): rolls the live install (files + database) back to any full backup, with a pre-restore safety backup and automatic rollback if the restore itself fails.
 - **Payment dispute/chargeback alerts**: an Airwallex dispute webhook now notifies every active admin (bell) and emails every super_admin — alert-only, no order/payment state is changed automatically.
@@ -16,19 +57,19 @@ A "bulletproof, zero critical-bug" testing pass across the entire application �
 - **WCAG 2.1 AA accessibility pass**: automated axe-core scans, keyboard-navigation checks, and text-zoom/reflow coverage added to the e2e suite.
 - **k6 load testing**: a real concurrent-HTTP-load test for the storefront's read-heavy pages, run via Docker.
 
-### Fixed — Security
+#### Fixed — Security
 - Closed 7 real vulnerabilities found in a full OWASP Top 10 pass (SQL injection, CSV/formula injection, an XSS vector, a JSON-LD script-breakout, a timing attack on a secret comparison, a private-disk misconfiguration) plus every flagged Composer/npm dependency advisory (26+ prior).
 - Added an Origin/Referer verification layer to the guest cart/checkout API, closing a CSRF gap that existed alongside (not replacing) the browser's own SameSite cookie protection.
 - Coupon per-user usage limits can no longer be bypassed by checking out as a guest and then signing up under the same email, or by a second guest order from the same IP.
 - A real, live-confirmed bug: the admin's own error-monitoring dashboard never matched a single real log line and scrambled every field it did show when it did match — fixed, and used throughout this whole effort to find and fix similar issues.
 
-### Fixed — Financial & compliance
+#### Fixed — Financial & compliance
 - VAT was calculated on the pre-discount subtotal instead of the post-discount amount, overcharging tax on every coupon-discounted order (a violation of EU VAT Directive Art. 79(b); worst case was a 100%-off coupon still charging VAT as if the customer paid full price).
 - Cookie-consent banner choices (Accept/Decline/Customize) previously did nothing — GTM, GA4, the Facebook Pixel, and Crisp all fired unconditionally before consent. They're now genuinely gated behind a real choice.
 - Self-service account deletion left real PII behind indefinitely (home addresses, search history, login history) because Laravel's soft-delete on the `users` table silently defeats every `cascadeOnDelete()` foreign key that assumes a real row deletion — now explicitly cleaned up.
 - The mobile API's checkout endpoints could place and charge a real order without ever recording terms-of-service acceptance, bypassing a guard the web checkout flow already enforced structurally.
 
-### Fixed — Reliability & data integrity
+#### Fixed — Reliability & data integrity
 - Every support-reply email ever sent has silently shown neither the customer's original message nor the actual reply text — the HTML email template referenced the wrong variable names, and neither ever threw an error.
 - A repeated "cache the failure forever" bug across three unrelated files, worst on `LocaleRegistry` (the single source of truth for routing/hreflang/sitemap generation) — a single transient DB blip on first boot would have silently pinned the whole app to a 5-locale fallback forever.
 - The mobile API had no maintenance-mode gate at all — a client could place and pay for a real order while the storefront correctly showed a 503 page during a self-update or restore.
@@ -42,19 +83,19 @@ A "bulletproof, zero critical-bug" testing pass across the entire application �
 - Every one of six background email/notification jobs was missing retry backoff, and two were missing a null-recipient guard that could burn all retries on an order that could never receive the email anyway.
 - Two real scheduled-task race conditions: an admin manually regenerating the sitemap could corrupt it mid-write if the nightly scheduled regeneration fired at the same moment; two overlapping "auto-complete shipped orders" runs could both transition (and both email the customer about) the same order.
 
-### Changed
+#### Changed
 - Consolidated 33 admin e2e test failures down to zero real ones — most were the dev database drifting out of the specific starting state a test assumed, now self-healing; the rest were fixed, including a Filament confirmation-dialog role mismatch (`alertdialog` vs `dialog`) that made every relation-manager Delete button unreachable to an accessibility-tree-based test.
 
 A large batch: a redesigned product detail page with admin-toggleable content sections and a Buy Now flow, a modernized SEO Health Dashboard with several new reports, an extensive SEO/structured-data/redirects/sitemap pass, an 8-phase reorganization of the entire admin Settings area, a comprehensive Playwright end-to-end test suite covering the full storefront and admin panel, and a sitewide responsive/multi-locale audit that found and fixed several real mobile layout bugs. Several critical admin-panel bugs (broken notifications, address book, customer creation, CSV export, a broken order tracking link) were found and fixed along the way. Every migration applies automatically; every new toggleable feature ships off/disabled by default — review and opt in at your own pace after updating.
 
-### Added — Product detail page redesign
+#### Added — Product detail page redesign
 - Rebuilt around a refined "Blueprint Pro" direction: a vertical thumbnail gallery with a full-screen zoom lightbox, a bordered spec ledger (availability/price/delivery/MOQ) with a real add-to-cart widget, trust badges matching the site footer, a Compatible Vehicle Fitment table, and a Fitment & Shipping FAQ.
 - New, individually toggleable sections (Settings → Product Page Sections, all off by default unless noted): specifications table, warranty block, product video, related products, and open customer reviews (admin-moderated — approve/reject from a new Reviews resource; only approved reviews render publicly). The manufacturer trust block (logo/verified-OEM badge/country) is always on.
 - **Buy Now** (off by default): skips the cart page entirely for a single-product purchase, reusing the existing checkout flow unmodified.
 - "Ask About Fitment" now opens the existing part-inquiry modal pre-filled with the product's OEM number.
 - VAT-inclusive/exclusive price display now matches the search page's own toggle — the detail page previously always showed the raw net price.
 
-### Added — SEO Health Dashboard & SEO program
+#### Added — SEO Health Dashboard & SEO program
 - Consolidated 7 disjoint stat widgets into one cohesive dashboard (Clarity design), with real Google Search Console Search Analytics (clicks/impressions/CTR/position, top queries/pages), an On-Page SEO Audit (meta-title/description coverage, duplicate titles, alt-text coverage, structured-data completeness, thin catalog entries, off-domain canonicals), a Core Web Vitals trend (new weekly snapshot), a 404-count trend, broken-redirect-target detection, and a Google Indexing Check for each active locale's homepage.
 - Product structured data (JSON-LD) now includes star ratings (AggregateRating/Review, once real reviews exist), FAQPage content, admin-entered specifications, and VideoObject metadata — each only emitted when its corresponding page section is actually visible, never claiming content the page has toggled off. Blog posts, the manufacturer page, and the homepage's Organization schema also gained several structured-data completeness fixes.
 - New image sitemap extension for product photos; blog posts, CMS pages, manufacturer pages, and car-model pages now push to IndexNow (previously products only) via a shared trait.
@@ -63,17 +104,17 @@ A large batch: a redesigned product detail page with admin-toggleable content se
 - A live, interpolated preview for every title/description template in the SEO Control Center, so a template mistake is visible before it goes live across every search page (or the whole homepage) at once.
 - Numerous smaller correctness fixes: sitemap `lastmod` no longer claims daily changes it didn't make; hreflang alternate links now carry the correct locale's own URL slug instead of one that immediately redirects; a filtered (not just partial-match) search-results page now correctly `noindex`es in favor of its own canonical; a discontinued/deactivated product now automatically gets a fallback redirect to its manufacturer's page instead of silently 404ing; the visible search-results breadcrumb now matches its own structured data; crawler verification (Googlebot/Bingbot bypass) now handles IPv6 and transient DNS failures instead of caching a false negative for 12 hours; an API key could leak into a logged error message on a network hiccup — now redacted.
 
-### Added — Admin Settings reorganization (8 phases)
+#### Added — Admin Settings reorganization (8 phases)
 - Consolidated roughly 40 scattered settings pages down to about a dozen tabbed pages, organized into a clearer hub structure (Security & Access, Platform, Brand & Storefront, Store & Commerce, Growth), with every tab directly reachable (not hidden an extra click deep) and deep-linkable.
 - New **Site Copy Library**: browse, search, and edit ~850 storefront text-override strings (cart/search/navbar/checkout/account/footer copy) without touching a translation file, grouped by category, with a warning shown on the Translations page when a language-file edit would have no visible effect because a Site Copy override already takes precedence.
 - Every old settings page URL still works — it 301s straight to the right tab on its new consolidated page, so an existing bookmark or link never breaks.
 - Fixed several settings-data bugs uncovered while merging pages onto shared multi-tab forms (where previously-independent pages now validate together, so one page's stale/invalid data could silently block saving an unrelated field): a legacy `currency_position` value, two field-name collisions between merged groups, and customer-facing checkout success/error messages that had regressed from real per-locale translations back to English-only in every locale.
 
-### Added — End-to-end test coverage (Playwright)
+#### Added — End-to-end test coverage (Playwright)
 - New comprehensive Playwright suites covering the full guest storefront journey (search, product detail, cart, a real 5-step checkout, account lifecycle, contact form — 50 tests) and the full admin panel (a smoke sweep across every resource and settings/system page, real create/edit/delete flows, custom actions like review/refund approval, relation managers, bulk actions, CSV import/export, and more — 300+ tests), plus a sitewide responsive/overflow audit across 4 viewports and all 5 locales.
 - This work is what found and fixed several of the bugs listed under Fixed below — most of them, including two admin panel pages that were completely unusable to a real browser user, had no prior end-to-end coverage at all.
 
-### Fixed — Admin panel (critical)
+#### Fixed — Admin panel (critical)
 - **Admin bell notifications were completely non-functional for new orders and refund requests** — a wrong class import made every such notification silently throw and die inside an empty catch block; no admin has ever seen one. A second, independent bug made job-failure/health-check alerts invisible to the same bell for an unrelated reason. Both fixed; a failure in this system now at least gets logged instead of vanishing.
 - **Customer address book (create/edit) was completely broken** for every customer — a required-but-never-collected field plus a form/database column name mismatch made every save fail.
 - **Creating a Customer from the admin always crashed** (no password field, but the column had no default) — now generates one automatically, the same way social-login signups already do.
@@ -85,58 +126,58 @@ A large batch: a redesigned product detail page with admin-toggleable content se
 - Two relation managers (Menu Items, Shipping Methods) 500'd on Edit for any translatable record title.
 - Adding a cross-reference OEM number through the admin always 500'd.
 
-### Fixed — Storefront responsive/visual bugs
+#### Fixed — Storefront responsive/visual bugs
 - A decorative corner-bracket border overlapped adjacent text at mobile widths on the preloader and homepage hero.
 - Several stat/spec grids (shipping carriers, homepage stats counter, search results price range, account dashboard KPI cards, checkout/cart order totals, CMS section headlines) could bleed a long word or value past their own cell/card border instead of wrapping — fixed sitewide, not just where first noticed.
 - The "Trusted Carriers" grid drew a stray double border on mobile because its divider logic only worked correctly at one specific column count.
 - A CSS animation side-effect on every homepage/page section could trap the OEM search's live-suggestion dropdown (and similar overlays) permanently underneath the next section on the page, regardless of its own stacking order — fixed at the animation's root cause, sitewide.
 - **The mobile navbar overflowed off-screen, pushing the cart and menu buttons past the edge of the viewport, on every single page in German, Lithuanian, French, and Spanish** (though not English) — the logo's tagline was forced onto one unbreakable line, and the longer non-English translations simply didn't fit. Only found via a genuine multi-locale audit; the site had never been checked in anything but English at mobile width before.
 
-### Fixed — Orders & carriers
+#### Fixed — Orders & carriers
 - **Customer order-tracking links have been broken for every order, on every carrier, since the carriers were first configured** — the link-building code substituted the wrong placeholder token, so the tracking URL sent to customers always contained the raw, unsubstituted placeholder text instead of their real tracking number.
 - As a related fix, the admin could never save *any* change to a real carrier (DHL, DPD, GLS, FedEx, UPS, Omniva, LP Express, Venipak) — the tracking-URL field's validation rejected its own documented placeholder syntax.
 - A confirm-payment action on an order in certain states (e.g. already refund-requested) crashed instead of showing the same graceful "Confirmation failed" message other invalid-transition attempts already get.
 
-### Fixed — Data integrity
+#### Fixed — Data integrity
 - Every one of the 14 seeded homepage sections stored its admin-facing title in a format the admin Edit form couldn't read — opening any section to edit it showed a blank title field, and saving without noticing would have silently erased the real one. Fixed for fresh installs and existing data alike.
 - A bulk-catalog-update log's timestamp was silently dropped on every insert, making the log's own date sort/filter meaningless.
 
-### Fixed — Local dev environment
+#### Fixed — Local dev environment
 - The local PHP development server handled only one request at a time by default, which could stall an otherwise-fast page (e.g. the live OEM search suggestions) for 20+ seconds under ordinary page-load request bursts. Now handles a small pool of requests concurrently.
 
-## 1.0.17 — 2026-08-12
+### SEO program, product pages, admin reorganisation and e2e coverage (developed as 1.0.17)
 
 A full SEO program aimed at getting every OEM part page indexed fast at 100k+-product scale, plus a same-scope fix to a settings-staleness issue found while evaluating (not adopting) Laravel Octane. Every migration applies automatically; every new behavior defaults to matching what the site already did — the new detail pages, IndexNow, and Bing ping all ship off/disabled until you opt in from the new SEO Control Center.
 
-### Added — Per-product detail pages
+#### Added — Per-product detail pages
 - Every product can now get its own indexable detail page at `/parts/{oem}/{id}-slug` (opt-in toggle, off by default) — image gallery (featured image + thumbnail strip, click a thumbnail to swap the main image), cross-reference OEM numbers, and a real breadcrumb trail.
 - A single confirmed exact/cross-reference match on the search-results hub now 301s straight to that product's detail page instead of showing a one-row hub; a lone *partial* match still shows the hub with its partial-match context, on purpose.
 - Discontinued or soft-deleted products, and any detail URL indexed while the feature was later turned back off, always 301 cleanly back to the hub — never a dead link.
 - Products with no manual description now get a real, per-product auto-generated one (fitment, delivery time, MOQ, condition, cross-reference count) instead of empty or generic boilerplate text — deliberately designed to vary product-to-product rather than repeat a fixed template.
 
-### Added — Cross-reference discoverability
+#### Added — Cross-reference discoverability
 - Cross-reference OEM numbers are now listed in the sitemap (deduped, pointing at the detail page when there's a single match) and in Product JSON-LD's `additionalProperty`, and now match in storefront autocomplete too.
 - A genuinely zero-result search now returns a real HTTP 404 instead of a 200 "soft 404".
 
-### Added — Crawling & indexing infrastructure
+#### Added — Crawling & indexing infrastructure
 - Googlebot/Bingbot are now verified (reverse+forward DNS, not just User-Agent string) and exempted from the search rate limiter — previously every crawler request counted against the same 30/min/IP limit as a regular visitor.
 - IndexNow support (pushes changed product URLs to Bing/Yandex/Naver/Seznam on save) and a Bing sitemap ping alongside the existing Google one — both admin-configurable, off by default. (Google does not support IndexNow — a common misconception; Google discovery still runs through the sitemap + ping.)
 - Per-bot AI-crawler allow/block policy (GPTBot, Google-Extended, PerplexityBot, ClaudeBot, etc., each independently configurable) and a new `/llms.txt`.
 - Redirect-loop detection now catches 3+ hop chains, not just a direct reverse pair.
 - Global scheme/host/trailing-slash canonicalization (one consistent 301 regardless of which web server fronts a given environment), and tuned OPcache settings for both the Docker and traditional PHP-FPM deployments.
 
-### Added — Structured data & hreflang
+#### Added — Structured data & hreflang
 - Product JSON-LD now includes `itemCondition`, a real product image, and every known OEM number (primary + cross-references); a BreadcrumbList block was added to the search-results hub page.
 - Hreflang now omits a locale entirely when a product has no genuine translation for it, instead of silently pointing at English-fallback content under that locale's tag — fixes a pre-existing bug on the hub page too, not just new pages.
 
-### Added — SEO Control Center & Health Dashboard
+#### Added — SEO Control Center & Health Dashboard
 - Replaced the old single-purpose SEO Settings page with a tabbed **SEO Control Center** (General / Search Results / Structured Data / Crawlers & AI / Sitemap & Indexing / Social) covering every setting above plus the pre-existing ones.
 - New **SEO Health Dashboard**: internal search analytics (exact/cross-reference/partial ratio, zero-result rate), content-translation health, feature adoption, IndexNow activity, redirect/404 health, and optional Google Search Console + Core Web Vitals widgets (add your own credentials to enable — both fully built and unit-tested, but need a real property/API key to verify end to end).
 
-### Fixed — Settings & background workers
+#### Fixed — Settings & background workers
 - Settings changes (SMTP host, Google/Facebook OAuth credentials, session lifetime, queue retry timing) now take effect on the very next request or queued job, instead of only at the next full process restart — previously affected the long-running queue worker the moment an admin changed one of these mid-shift. Found during an evaluation of Laravel Octane (not adopted this release — flagged as a future staged trial only if it's ever needed).
 
-### Fixed — Self-Update Engine (git-managed installs)
+#### Fixed — Self-Update Engine (git-managed installs)
 - **A git-managed install's self-update could fail every single time with "no signed git commit binding"** — the release catalog (releases.json) never carried the signed git-commit fields the pre-flight signature check needs, even though the single-release manifest (version.json) had them correctly. The catalog is what a real update check actually uses whenever it's reachable — the normal case — so this affected every git-managed install, unconditionally. Found and fixed via a real end-to-end update rehearsal (fresh install → self-update), not caught by existing unit tests because they exercised each piece with hand-built fixtures rather than the real generated catalog.
 - **A git-managed install's self-update could delete its own live `.env` file and wipe `storage/app/backups` (including the pre-update safety backup that same update had just taken)** — found immediately after fixing the bug above, once the update could actually proceed far enough to reach this step. The FSM itself still reported success (the already-running process kept its config in memory for that one request), masking the problem until the next request found no database credentials and nothing to roll back to. **Important:** this fix protects every update *from* 1.0.17 onward, but the 1.0.16→1.0.17 update itself is still carried out by the old, unfixed code — any git-managed install making this specific hop should back up `.env` by hand first, purely as a precaution. Zip/shared-hosting installs were never affected by either bug.
 
