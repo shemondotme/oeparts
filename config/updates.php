@@ -212,7 +212,7 @@ return [
             '.env', '.env.testing', '.env.backup',
             '.env.docker.example', '.env.docker.hostingsim', '.env.docker.overrides',
             '.editorconfig', '.vscode', '.devcontainer', '.idea', '.cursor',
-            'phpunit.xml', 'pint.json', '.php-cs-fixer.php', '.php-cs-fixer.dist.php', '.styleci.yml',
+            'phpunit.xml', 'pint.json', 'phpstan.neon', 'phpstan-baseline.neon', '.php-cs-fixer.php', '.php-cs-fixer.dist.php', '.styleci.yml',
             'storage/app/backups', 'storage/app/updates', 'storage/logs',
             // Local Docker dev environment (Sail) — never relevant to an installed release.
             'compose.yaml', 'docker',
