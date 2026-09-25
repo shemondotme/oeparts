@@ -18,14 +18,14 @@
     "min_mysql": "8.0.16",
     "min_mariadb": "10.11",
     "min_version_to_update_from": "1.0.16",
-    "migration_count": 20,
+    "migration_count": 21,
     "new_env_keys": [],
     "breaking_changes": [
         "Paysera: the separate 'Webhook Signoff Secret' setting is gone. Paysera signs its callbacks with your Client Secret, which is now what is verified. Re-check the Paysera fields in your payment settings after updating.",
         "Airwallex: webhooks are now verified and interpreted exactly as Airwallex documents them (the previous signature, timestamp and event-name handling could not have matched a real Airwallex webhook). Make sure the webhook URL is registered in your Airwallex dashboard and its signing secret is saved in your payment settings.",
         "Checkout progress is now held in the cache rather than the session, so customers who are part-way through checkout when the update finishes will be asked to restart checkout from their (preserved) cart."
     ],
-    "pre_update_notes": "Update straight from 1.0.16 \u2014 1.0.17, 1.0.18 and 1.0.19 were never published as installable releases, and everything from them ships in 2.0.0. The update takes a backup first and applies 20 database migrations, all of which are safe to re-run. Both payment gateways were rewritten to match Airwallex's and Paysera's own documentation in this release; they are covered by automated tests but have not yet been run against the vendors' live sandboxes, so make a test payment before relying on either in production.",
+    "pre_update_notes": "Update straight from 1.0.16 \u2014 1.0.17, 1.0.18 and 1.0.19 were never published as installable releases, and everything from them ships in 2.0.0. The update takes a backup first and applies 21 database migrations, all of which are safe to re-run. On a catalog of around a million products, adding the new columns rebuilds the products table once, which takes several minutes while the site is in maintenance mode \u2014 pick a quiet hour. Both payment gateways were rewritten to match Airwallex's and Paysera's own documentation in this release; they are covered by automated tests but have not yet been run against the vendors' live sandboxes, so make a test payment before relying on either in production.",
     "post_update_notes": "After the update finishes: confirm your queue worker is running again (the update signals it to restart; your supervisor brings it back up); set LOG_STACK=daily in your .env if you want rotating, auto-pruned logs (existing installs keep their current value); and make one small test payment on each enabled gateway. 2.0.0 is the largest release since 1.0.0: a full-application testing pass that fixed real security, financial, compliance and reliability bugs (including checkout steps reverting under a slow background request, a mobile checkout API that never worked, VAT overcharged on coupon-discounted orders, and support-reply emails that lost their content), Paysera as a second payment gateway, an admin-triggered full production restore, a redesigned product page, a full SEO program, and a reorganised admin settings area. See CHANGELOG.md for the full list.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
