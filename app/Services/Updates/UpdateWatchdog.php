@@ -39,6 +39,12 @@ class UpdateWatchdog
     /** @return int number of rows reclaimed */
     public function reclaimStale(): int
     {
+        // An update that got past the swap is FINISHABLE — the new code is on disk and
+        // only finalize/verify remain — so try to complete it before deciding it was
+        // abandoned and rolling it back (the request-driven resume normally beats this
+        // by hours; this covers a site nobody is visiting).
+        app(InterruptedUpdateResumer::class)->resume();
+
         $staleAfter = (int) config('updates.stale_after_seconds', 7200);
         $reclaimed = 0;
 

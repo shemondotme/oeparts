@@ -13,6 +13,7 @@ use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
 use App\Http\Middleware\ReadOnlySession;
 use App\Http\Middleware\RedirectIfNotInstalled;
+use App\Http\Middleware\ResumeInterruptedUpdate;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SyncRuntimeSettingsIntoConfig;
 use App\Http\Middleware\TrackUtm;
@@ -81,6 +82,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PORT
                 | Request::HEADER_X_FORWARDED_PROTO,
         );
+
+        // Global, and ahead of the other app middleware: the first request to reach
+        // freshly swapped-in code after a self-update finishes the update whose
+        // (old-release) browser tab can no longer drive it — see
+        // InterruptedUpdateResumer. A single is_file() when no update is in flight.
+        $middleware->append(ResumeInterruptedUpdate::class);
 
         // Global (not .web()-scoped) so a request that won't match any
         // route still gets canonicalized before routing decides it's a

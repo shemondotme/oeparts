@@ -365,7 +365,11 @@
                     @endphp
                     <div class="op-upd-row" wire:key="upd-row-{{ $h->id }}">
                         <span class="font-mono text-sm" style="color: var(--color-text-primary, #111827);">
-                            @if($h->type === \App\Models\UpdateHistory::TYPE_RESTORE)
+                            {{-- A literal, not the model's restore-type class constant: the request that swaps
+                                 a release in renders THIS view with the PREVIOUS release's model classes still
+                                 loaded, and a constant they lack is a fatal ("Undefined constant") that turned
+                                 the swap step's response into a 500. --}}
+                            @if($h->type === 'restore')
                                 <span class="op-status-pill op-status-pill-warn" style="margin-right: 6px;">Restore</span>
                             @endif
                             {{ $h->from_version }} &rarr; {{ $h->to_version }}

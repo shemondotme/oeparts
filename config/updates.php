@@ -187,6 +187,14 @@ return [
     // App\Services\Updates\UpdateWatchdog / oeparts:update:cleanup-stale.
     'stale_after_seconds' => (int) env('OE_UPDATE_STALE_AFTER', 7200), // 2h
 
+    // A post-swap update (finalize/verify) that nothing has touched for this many
+    // seconds is picked up by the next request that reaches the new code — see
+    // App\Services\Updates\InterruptedUpdateResumer. Short on purpose: the tab that
+    // started the update cannot continue it across a Livewire upgrade, and the site is
+    // in maintenance mode until it finishes. Only guards against stepping on the
+    // request that has just completed the swap or a poller that is mid-step.
+    'resume_grace_seconds' => (int) env('OE_UPDATE_RESUME_GRACE', 3),
+
     // Dedicated log channel (config/logging.php).
     'log_channel' => 'updates',
 
