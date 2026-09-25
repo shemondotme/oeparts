@@ -85,6 +85,41 @@ class InstallManagerTest extends TestCase
     }
 
     #[Test]
+    public function an_overlapping_advance_reports_progress_instead_of_running_the_step_twice(): void
+    {
+        // A slow step outlasts the web server's timeout, the wizard's JS re-polls, and the
+        // retry lands while the first request is still inside the step. Running migrate:fresh
+        // twice at once dropped tables under the first run (found installing the real 1.0.16
+        // release on nginx).
+        $manager = new class extends InstallManager
+        {
+            public array $ran = [];
+
+            public ?array $overlap = null;
+
+            protected function runStep(string $key, array $input): string
+            {
+                $this->ran[] = $key;
+
+                if ($key === 'migrate') {
+                    $this->overlap = $this->advance(); // the "retry" arriving mid-step
+                }
+
+                return "fake:{$key}";
+            }
+        };
+        $manager->start(['import_demo_data' => false]);
+
+        $first = $manager->advance();
+
+        $this->assertSame(['migrate'], $manager->ran, 'the step must run exactly once');
+        $this->assertSame('running', $manager->overlap['status']);
+        $this->assertSame(0, $manager->overlap['step_index'], 'the overlapping poll sees the step still in progress');
+        $this->assertSame(1, $first['step_index'], 'the original request completes the step');
+        $this->assertSame(2, $manager->advance()['step_index'], 'once the step is done the next poll moves on');
+    }
+
+    #[Test]
     public function advance_stops_and_reports_the_failing_step_on_error(): void
     {
         $manager = $this->fakeManager(['seed_roles' => new \RuntimeException('boom')]);

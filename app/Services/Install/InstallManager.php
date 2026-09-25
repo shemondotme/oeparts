@@ -101,6 +101,47 @@ class InstallManager
      */
     public function advance(): array
     {
+        // The wizard's JS re-polls after ANY failed response — including a gateway
+        // timeout on a slow step (migrate:fresh over ~150 migrations can outlast a
+        // web server's 30–60 s limit) — while the first request is still running.
+        // Without this guard the retry starts a second migrate:fresh on top of the
+        // first, dropping tables out from under it ("Base table or view not found"),
+        // and the two runs overwrite each other's state file. Found by installing the
+        // real 1.0.16 release on a stock nginx. An overlapping poll just reports
+        // progress; the JS keeps polling until the running step finishes.
+        $lock = $this->acquireAdvanceLock();
+        if ($lock === null) {
+            return $this->currentProgress();
+        }
+
+        try {
+            return $this->advanceStep();
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    /** A file lock, not a Cache/DB one: migrate:fresh drops every table, cache and lock tables included. */
+    private function acquireAdvanceLock()
+    {
+        File::ensureDirectoryExists(dirname($this->statePath()));
+
+        $handle = @fopen(dirname($this->statePath()).'/advance.lock', 'c');
+        if ($handle === false) {
+            return null;
+        }
+        if (! flock($handle, LOCK_EX | LOCK_NB)) {
+            fclose($handle);
+
+            return null;
+        }
+
+        return $handle;
+    }
+
+    private function advanceStep(): array
+    {
         $state = $this->readState();
 
         if ($state === null) {
