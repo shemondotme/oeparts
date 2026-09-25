@@ -102,7 +102,10 @@ return [
             ['command' => 'storage:link',      'critical' => false],
         ],
         // vendor:publish --tag=<tag> --force for each (default none — avoid clobbering).
-        'vendor_publish_tags' => [],
+        // 'oeparts-public-assets' re-delivers the static public/ files that live outside
+        // core_paths (see AppServiceProvider::boot()) — without it an install updating
+        // from an older release never gets e.g. public/images/product-placeholder.svg.
+        'vendor_publish_tags' => ['oeparts-public-assets'],
         // Idempotent reference seeders (db:seed --class --force), run automatically
         // after every future update — no manual SSH step required. Safe ONLY
         // because each of these four was deliberately rewritten (v1.0.14) to be

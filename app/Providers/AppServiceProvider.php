@@ -91,6 +91,16 @@ class AppServiceProvider extends ServiceProvider
         // NEVER call bcscale() again anywhere else in the codebase.
         bcscale(2);
 
+        // Static files that ship in public/ but sit OUTSIDE updates.core_paths: a zip
+        // self-update only ever replaces the paths its INSTALLED config lists, so an
+        // install updating from an older release would never receive them (a new
+        // public/ file is silently missing until someone re-uploads it by hand).
+        // The updater's finalize step publishes this tag on every update
+        // (updates.post_swap.vendor_publish_tags); the master copy lives under
+        // resources/ because that IS a core path. Any new static file added to
+        // public/ must be registered here too — PublicAssetsPublishTest enforces it.
+        $this->publishes([resource_path('public-assets') => public_path()], 'oeparts-public-assets');
+
         // Private-disk temporary URLs — currently only used by the refund-images
         // ImageEntry (RefundRequestResource\Pages\ViewRefundRequest). The signed
         // route it targets (admin.refund-images.show) only serves paths under
