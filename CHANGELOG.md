@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+Found and fixed on the real live 1.0.16 → 2.0.0 install, which turned out to be git-managed (not zip-installed, as assumed when 2.0.0 was prepared) and hit a class of failure 2.0.0's own rehearsals never exercised: its update was killed from outside PHP (the host's own request time limit, during a slow `git fetch`) while mid-`git_checkout` — the one step that, on a git-managed install, directly mutates the live files, with no separate atomic "swap" afterward the way a zip install has.
+
+#### Fixed
+- **A git-managed install killed mid-`git_checkout` was never rolled back.** The update engine treated a failure at this step as "nothing touched yet, same as a zip install's pre-swap steps" — wrong for git-managed installs specifically, where `git checkout --force` IS the destructive step. Both a live exception and the hourly watchdog's stale-row reclaim now correctly restore the previous release instead of leaving the site stranded on half-updated code with an un-migrated database.
+- The automatic "finish an interrupted update" recovery (added in 2.0.0) only covered a zip install's post-swap steps. It now also covers a git-managed install's `git_checkout`/`composer_install`, so a transient network blip gets a fast automatic retry instead of waiting for the 2-hour watchdog fallback.
+- `git checkout --force` writes every tracked file in one step; its own dev-file cleanup normally runs immediately after, but a request killed in between (or anywhere inside that one combined step) can leave `tests/`, `phpstan.neon`, etc. sitting on a live install. A new `oeparts:update:strip-dev-files` command, and a "Dev-Only Files" section on a new admin **System → Cleanup** page, re-run that cleanup safely and idempotently without SSH.
+- The web installer could start `migrate:fresh` a second time on top of itself on a slow server, since its progress page re-polls after any failed response, including a timeout.
+- A single update step could be started a second time on top of itself: the per-step lock's 5-minute timeout was shorter than a single `finalize` (migrations) step can take on a very large catalog.
+- The admin Cleanup page also adds a read-only database schema audit (compares the live database against what this install's own migration history says should exist) — report only, nothing here ever deletes a table or a row.
+- `README.md`, `SECURITY.md` and `CHANGELOG.md` no longer ship on an installed site — nothing in the app has ever read any of them from local disk. `LICENSE` and the generated `THIRD-PARTY-LICENSES.md` still ship, deliberately (open-source license compliance).
+
 ## 2.0.0 — 2026-09-25
 
 The first major release. It replaces the 1.0.17, 1.0.18 and 1.0.19 lines entirely — none of them were ever installed anywhere — so **update straight from 1.0.16**. Everything since 1.0.16 ships here: a "bulletproof, zero critical-bug" testing pass across the whole application (which found and fixed real security, financial, compliance and reliability bugs), a second payment gateway (Paysera), both payment integrations re-aligned with their vendors' documentation, a checkout that can no longer be reverted by a slow background request, a working mobile checkout API, a full SEO program, a redesigned product page, and a reorganised admin. It also fixes several failure modes of the self-update engine itself, which is why the 1.0.16 → 2.0.0 hop is worth reading about first.
