@@ -29,6 +29,8 @@ class InterruptedUpdateResumerTest extends TestCase
 
     private string $state;
 
+    private string $rootPath;
+
     private FakeUpdateApplier $applier;
 
     protected function setUp(): void
@@ -38,6 +40,17 @@ class InterruptedUpdateResumerTest extends TestCase
         $this->state = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-resume-'.getmypid();
         @mkdir($this->state, 0775, true);
         config(['updates.state_path' => $this->state]);
+
+        // FakeUpdateApplier hardcodes isGitMode() => false, but InterruptedUpdateResumer
+        // asks the REAL GitUpdater::isGitManaged() to pick its step list, which checks
+        // config('updates.root_path') ?: base_path() for a .git dir — and base_path()
+        // in this test run IS the real project checkout, which has one. Without this
+        // isolation these tests would silently pick GIT_RESUMABLE_STEPS instead of
+        // ZIP_RESUMABLE_STEPS (see [[feedback_never_call_real_updateapplier_rollback_in_tests]]
+        // for the same class of footgun, found the hard way).
+        $this->rootPath = sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-resume-root-'.getmypid();
+        @mkdir($this->rootPath, 0775, true);
+        config(['updates.root_path' => $this->rootPath]);
 
         // complete()/fail() dispatch an admin-notification job (see UpdateApplierTest).
         Queue::fake();
@@ -50,6 +63,8 @@ class InterruptedUpdateResumerTest extends TestCase
     {
         @array_map('unlink', glob($this->state.DIRECTORY_SEPARATOR.'*') ?: []);
         @rmdir($this->state);
+        @array_map('unlink', glob($this->rootPath.DIRECTORY_SEPARATOR.'*') ?: []);
+        @rmdir($this->rootPath);
         parent::tearDown();
     }
 
@@ -229,5 +244,89 @@ class InterruptedUpdateResumerTest extends TestCase
 
         $this->assertSame(UpdateHistory::STATUS_SUCCESS, $history->refresh()->status);
         $this->assertFalse($this->applier->rolledBack, 'a finishable update must be finished, not reverted');
+    }
+
+    /**
+     * Git-managed installs have no separate "swap" moment — git_checkout IS the
+     * destructive mutation, so (unlike the zip path) a request killed WHILE it runs
+     * must itself be resumable, not just the steps after it. Confirmed on a real
+     * production install: a `git fetch` outran the host's own request time limit and
+     * was killed from outside PHP, with no exception to catch and (before this fix)
+     * nothing eligible to resume it — the site sat on half-updated code for days.
+     */
+    private function gitHistoryStuckAt(FakeGitUpdateApplier $applier, string $step, int $secondsSinceLastCheckpoint = 30): UpdateHistory
+    {
+        $order = ['backup', 'git_checkout', 'composer_install'];
+        $history = $applier->start($this->manifest(), initiatedBy: 1);
+        foreach ($order as $s) {
+            if ($s === $step) {
+                break;
+            }
+            $applier->advance($history);
+        }
+
+        $history = $history->refresh();
+        $this->assertSame($step, $history->step);
+
+        DB::table('update_histories')->where('id', $history->id)
+            ->update(['updated_at' => now()->subSeconds($secondsSinceLastCheckpoint)]);
+
+        $applier->log = [];
+
+        return $history->refresh();
+    }
+
+    /** Makes GitUpdater::isGitManaged() see a .git directory for this test only. */
+    private function forceGitManaged(): void
+    {
+        @mkdir($this->rootPath.DIRECTORY_SEPARATOR.'.git', 0775, true);
+    }
+
+    #[Test]
+    public function it_finishes_a_git_checkout_that_got_killed_mid_step(): void
+    {
+        $this->forceGitManaged();
+        $applier = new FakeGitUpdateApplier;
+        $this->app->instance(UpdateApplier::class, $applier);
+
+        $history = $this->gitHistoryStuckAt($applier, 'git_checkout');
+
+        $this->assertTrue($this->resumer()->resume());
+
+        $history = $history->refresh();
+        $this->assertSame(['git_checkout', 'composer_install', 'finalize', 'verify'], $applier->log);
+        $this->assertSame(UpdateHistory::STATUS_SUCCESS, $history->status);
+    }
+
+    #[Test]
+    public function it_finishes_a_composer_install_that_got_killed_mid_step(): void
+    {
+        $this->forceGitManaged();
+        $applier = new FakeGitUpdateApplier;
+        $this->app->instance(UpdateApplier::class, $applier);
+
+        $history = $this->gitHistoryStuckAt($applier, 'composer_install');
+
+        $this->assertTrue($this->resumer()->resume());
+
+        $history = $history->refresh();
+        $this->assertSame(['composer_install', 'finalize', 'verify'], $applier->log);
+        $this->assertSame(UpdateHistory::STATUS_SUCCESS, $history->status);
+    }
+
+    #[Test]
+    public function a_git_checkout_that_genuinely_fails_rolls_back_instead_of_looping_forever(): void
+    {
+        $this->forceGitManaged();
+        $applier = new FakeGitUpdateApplier;
+        $applier->failAt = 'git_checkout';
+        $this->app->instance(UpdateApplier::class, $applier);
+
+        $history = $this->gitHistoryStuckAt($applier, 'git_checkout');
+
+        $this->assertTrue($this->resumer()->resume());
+
+        $this->assertSame(UpdateHistory::STATUS_ROLLED_BACK, $history->refresh()->status);
+        $this->assertTrue($applier->rolledBack);
     }
 }

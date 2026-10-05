@@ -451,11 +451,24 @@ class UpdateApplier
     protected function needsRollback(string $step): bool
     {
         if ($this->isGitMode()) {
-            // composer_install can fail partway through (network drop mid-install)
-            // and leave vendor/ inconsistent, unlike the zip path's atomic
-            // per-directory rename — so it needs the same rollback as a
-            // post-swap failure, one step earlier than the zip path's list.
-            return in_array($step, ['composer_install', 'finalize', 'verify'], true);
+            // git_checkout IS the destructive step for a git-managed install — unlike
+            // the zip path, there's no separate atomic "swap" afterward. `git checkout
+            // --force` mutates the live working tree file-by-file as it runs, so a
+            // failure recorded at this step can mean anything from "nothing touched
+            // yet" (git fetch failed) to "fully checked out, something after it broke"
+            // (the request was killed mid-command). Confirmed live: a production
+            // git-managed install's `git fetch` over a slow link outran the host's own
+            // request time limit and was killed from OUTSIDE PHP — no exception, so
+            // nothing ran fail()/rollback() in that request at all. Hours later the
+            // watchdog reclaimed the stale row, called fail('git_checkout', ...), and
+            // this returned false — the site was left on fully-swapped-in new code
+            // with an un-migrated database and no further automatic recovery,
+            // requiring manual SSH intervention to finish forward by hand.
+            // composer_install can similarly fail partway through (network drop
+            // mid-install) and leave vendor/ inconsistent — both need the same
+            // rollback as a post-swap failure, one (two) step(s) earlier than the
+            // zip path's list.
+            return in_array($step, ['git_checkout', 'composer_install', 'finalize', 'verify'], true);
         }
 
         // Only steps AFTER a successful swap require reversing files + DB.

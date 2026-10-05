@@ -6,39 +6,59 @@ use App\Models\UpdateHistory;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Finishes a self-update whose file swap succeeded but which nothing is driving
- * any more.
+ * Finishes a self-update whose destructive step already ran (or started
+ * running) but which nothing is driving any more.
  *
  * The apply FSM is poll-driven: the admin's browser tab calls advance() every
- * couple of seconds, and the steps after the swap (finalize = migrations,
- * verify) must run on a FRESH request that boots the NEW code (rule #46). But
- * the tab that started the update was rendered by the OLD release, and the moment
- * the swap lands its Livewire session can no longer talk to the new code — a
- * Livewire upgrade between two releases answers every further poll with
- * "419 page expired" (its release-token check), and a freshly loaded admin page
- * used to 500 until the migrations it depends on had run. Nothing then advanced
- * the update: the site sat in maintenance mode with the new code on disk and an
- * un-migrated database until the watchdog rolled it all back two hours later.
- * Found by rehearsing the real 1.0.16 -> 2.0.0 self-update: the swap step
- * answered 500, every later poll 419, and finalize never ran.
+ * couple of seconds. For a ZIP install, the steps after the swap (finalize =
+ * migrations, verify) must run on a FRESH request that boots the NEW code
+ * (rule #46) — but the tab that started the update was rendered by the OLD
+ * release, and the moment the swap lands its Livewire session can no longer
+ * talk to the new code (a Livewire upgrade between two releases answers every
+ * further poll with "419 page expired", and a freshly loaded admin page used
+ * to 500 until the migrations it depends on had run). Found by rehearsing the
+ * real 1.0.16 -> 2.0.0 self-update: the swap step answered 500, every later
+ * poll 419, and finalize never ran.
  *
- * The old release cannot be changed, but the release that just landed can drive
- * its own remaining steps. This runs from the first request that reaches the new
- * code — the dying tab's next poll, an admin reloading the page, a visitor being
- * shown the maintenance page, or the hourly watchdog — and carries the update to
- * a terminal state exactly as the UI poll would have (same advance(), same lock,
- * same failure/rollback handling), so it neither needs nor cares whether a
- * browser is still watching.
+ * For a GIT-managed install there's no separate "swap" moment at all —
+ * `git checkout --force` IS the destructive mutation, applied file-by-file as
+ * it runs (see UpdateApplier::needsRollback()). A request killed from OUTSIDE
+ * PHP (a host's own request-time limit, hit by a `git fetch` over a slow link
+ * to the remote) leaves no exception to catch and nothing to resume it —
+ * confirmed on a real production install: the working tree ended up fully on
+ * the new release with an un-migrated database, sitting broken until someone
+ * noticed and finished the update by hand over SSH.
+ *
+ * Either way, the release that has just landed (or is already, destructively,
+ * mid-landing) can drive its own remaining steps. This runs from the first
+ * request that reaches it — the dying tab's next poll, an admin reloading the
+ * page, a visitor being shown the maintenance page, or the hourly watchdog —
+ * and carries the update to a terminal state exactly as the UI poll would
+ * have (same advance(), same lock, same failure/rollback handling), so it
+ * neither needs nor cares whether a browser is still watching.
  */
 class InterruptedUpdateResumer
 {
-    /** Steps that only ever run AFTER the swap put the new code on disk. */
-    public const POST_SWAP_STEPS = ['finalize', 'verify', 'complete'];
+    /**
+     * Steps that have already (potentially) mutated the live install — the same
+     * boundary UpdateApplier::needsRollback() draws, plus the terminal 'complete'
+     * step. Kept as a literal list rather than reflecting into the protected
+     * needsRollback() method: the sets would diverge the moment one changes
+     * without the other, and GitUpdateApplierTest / UpdateApplierTest already
+     * pin needsRollback()'s own boundary, so a mismatch here fails loudly in
+     * this class's own tests instead of silently.
+     */
+    private const GIT_RESUMABLE_STEPS = ['git_checkout', 'composer_install', 'finalize', 'verify', 'complete'];
 
-    /** finalize -> verify -> complete, with headroom. */
+    private const ZIP_RESUMABLE_STEPS = ['finalize', 'verify', 'complete'];
+
+    /** Longest step list (git mode) plus headroom. */
     private const MAX_STEPS = 12;
 
-    public function __construct(private readonly RecoveryWindowFlag $window) {}
+    public function __construct(
+        private readonly RecoveryWindowFlag $window,
+        private readonly GitUpdater $gitUpdater,
+    ) {}
 
     /** True when at least one step was actually driven. Never throws. */
     public function resume(): bool
@@ -92,18 +112,23 @@ class InterruptedUpdateResumer
     }
 
     /**
-     * The newest non-terminal update that is past the swap and has not been
-     * touched for a moment. The grace period keeps this off the toes of the
-     * request that has only just finished the swap (its tail is still rendering)
-     * and of a healthy poller that is mid-step.
+     * The newest non-terminal update that is past this install's own destructive
+     * boundary and has not been touched for a moment. The grace period keeps this
+     * off the toes of the request that has only just mutated the install (its
+     * tail is still rendering) and of a healthy poller that is mid-step.
      */
     private function interrupted(): ?UpdateHistory
     {
+        // Mode is a property of THIS install (is there a .git dir?), not of any one
+        // history row, and can't change mid-update — same resolution UpdateApplier
+        // itself uses to pick the step list in the first place.
+        $steps = $this->gitUpdater->isGitManaged() ? self::GIT_RESUMABLE_STEPS : self::ZIP_RESUMABLE_STEPS;
+
         return UpdateHistory::query()
             ->whereNotIn('status', [
                 UpdateHistory::STATUS_SUCCESS, UpdateHistory::STATUS_FAILED, UpdateHistory::STATUS_ROLLED_BACK,
             ])
-            ->whereIn('step', self::POST_SWAP_STEPS)
+            ->whereIn('step', $steps)
             ->where('updated_at', '<', now()->subSeconds((int) config('updates.resume_grace_seconds', 3)))
             ->recent()
             ->first();
