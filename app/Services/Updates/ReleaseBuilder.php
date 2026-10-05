@@ -76,6 +76,28 @@ class ReleaseBuilder
     }
 
     /**
+     * Read-only counterpart to stripDevFiles(): the paths it WOULD remove, without
+     * touching the filesystem at all. Lets a caller (the admin cleanup dashboard)
+     * show an operator what's about to happen before they confirm it.
+     *
+     * @return list<string>
+     */
+    public function previewDevFiles(string $dir): array
+    {
+        $dir = rtrim($dir, '/\\');
+        $present = [];
+
+        foreach ($this->exclude as $rel) {
+            $abs = $dir.'/'.$rel;
+            if (is_dir($abs) || is_file($abs)) {
+                $present[] = $rel;
+            }
+        }
+
+        return $present;
+    }
+
+    /**
      * Build the per-file sha256 manifest for the export dir and write it to
      * manifest_file. Excluded paths and the manifest/licenses artefacts themselves are
      * never listed, so the manifest reflects exactly what ships.

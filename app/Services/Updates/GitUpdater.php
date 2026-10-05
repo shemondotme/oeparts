@@ -219,18 +219,38 @@ class GitUpdater
      */
     /**
      * Public (not just called internally from checkout()) so it can also be re-run
-     * on its own — e.g. by `oeparts:update:strip-dev-files` — as recovery for an
-     * install where THIS method itself didn't get to run or finish: checkout()'s
-     * `git fetch` / `git checkout --force` / this method all happen in one request
-     * with no checkpoint between them, so a request killed from outside PHP (a
-     * host's own time limit) partway through can leave a working tree that's
-     * fully on the new release's tracked files but never had this cleanup applied
-     * — confirmed live: a production install was left with tests/, phpstan.neon,
-     * etc. still present after an interrupted update. Idempotent either way:
-     * paths already gone are silently skipped by ReleaseBuilder::stripDevFiles().
+     * on its own — e.g. by `oeparts:update:strip-dev-files` and the admin Cleanup
+     * dashboard — as recovery for an install where THIS method itself didn't get
+     * to run or finish: checkout()'s `git fetch` / `git checkout --force` / this
+     * method all happen in one request with no checkpoint between them, so a
+     * request killed from outside PHP (a host's own time limit) partway through
+     * can leave a working tree that's fully on the new release's tracked files
+     * but never had this cleanup applied — confirmed live: a production install
+     * was left with tests/, phpstan.neon, etc. still present after an
+     * interrupted update. Idempotent either way: paths already gone are
+     * silently skipped by ReleaseBuilder::stripDevFiles().
+     *
+     * @return list<string> paths relative to root() that were actually removed.
      */
-    /** @return list<string> paths relative to root() that were actually removed. */
     public function stripDevFilesFromWorkingTree(): array
+    {
+        return $this->devFilesReleaseBuilder()->stripDevFiles($this->root());
+    }
+
+    /**
+     * Read-only counterpart: the paths stripDevFilesFromWorkingTree() would remove
+     * right now, without touching anything — what the admin Cleanup dashboard shows
+     * before an operator confirms the real thing.
+     *
+     * @return list<string>
+     */
+    public function previewDevFilesInWorkingTree(): array
+    {
+        return $this->devFilesReleaseBuilder()->previewDevFiles($this->root());
+    }
+
+    /** The build-exclude list, minus .env/storage/.git — never stripped from a LIVE install. */
+    private function devFilesReleaseBuilder(): ReleaseBuilder
     {
         $config = (array) config('updates.build', []);
         $protected = array_merge(['.git', '.gitignore', '.gitattributes'], (array) config('updates.preserve_paths', []));
@@ -250,8 +270,7 @@ class GitUpdater
             fn (string $path) => ! $isProtected($path)
         ));
 
-        return (new ReleaseBuilder(array_merge($config, ['exclude' => $exclude])))
-            ->stripDevFiles($this->root());
+        return new ReleaseBuilder(array_merge($config, ['exclude' => $exclude]));
     }
 
     private function run(array $command, int $timeout = 120): void
