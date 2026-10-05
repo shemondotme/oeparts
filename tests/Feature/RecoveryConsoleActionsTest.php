@@ -195,6 +195,21 @@ class RecoveryConsoleActionsTest extends TestCase
     }
 
     #[Test]
+    public function clear_caches_removes_bootstrap_and_compiled_view_caches_as_a_plain_filesystem_op(): void
+    {
+        $this->writeFile($this->base.'/bootstrap/cache/config.php', '<?php return [];');
+        $this->writeFile($this->base.'/storage/framework/views/abcdef.php', '<?php // compiled view');
+        $this->writeFile($this->base.'/storage/framework/cache/data/ab/cd/somehash', 'cached');
+
+        $result = $this->console()->clearCaches();
+
+        $this->assertTrue($result['ok'], json_encode($result));
+        $this->assertFileDoesNotExist($this->base.'/bootstrap/cache/config.php');
+        $this->assertFileDoesNotExist($this->base.'/storage/framework/views/abcdef.php');
+        $this->assertDirectoryDoesNotExist($this->base.'/storage/framework/cache/data/ab');
+    }
+
+    #[Test]
     public function reset_opcache_returns_a_structured_result(): void
     {
         $result = $this->console()->resetOpcache();

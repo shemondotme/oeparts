@@ -276,6 +276,209 @@ if (! class_exists('OeRecoveryConsole', false)) {
             return isset($this->env['OE_BACKUP_KEY']) && trim((string) $this->env['OE_BACKUP_KEY']) !== '';
         }
 
+        /* ---- Diagnostics: environment, log tail, git drift (Chunk 4.4) -- */
+
+        /**
+         * Mirrors config('updates.required_extensions') — hardcoded because this
+         * file cannot call config() (no framework). Keep in sync by hand.
+         */
+        private const REQUIRED_EXTENSIONS = ['pdo_mysql', 'zip', 'openssl', 'mbstring', 'curl', 'fileinfo', 'json'];
+
+        /** Mirrors config('updates.preflight.min_free_bytes')'s default. */
+        private const MIN_FREE_BYTES = 200 * 1024 * 1024;
+
+        /**
+         * The same "is this install actually healthy" questions PreflightService
+         * asks before an update — asked again here, read-only, for an operator who
+         * landed on this console because the site is ALREADY broken and wants to
+         * know why without SSH.
+         *
+         * @return array<int,array{label:string,ok:bool,message:string}>
+         */
+        public function environmentChecks(): array
+        {
+            $missingExt = array_values(array_filter(
+                self::REQUIRED_EXTENSIONS,
+                fn ($ext) => ! extension_loaded($ext)
+            ));
+
+            $free = @disk_free_space($this->baseDir);
+            $freeOk = $free !== false && $free >= self::MIN_FREE_BYTES;
+
+            return [
+                $this->diagnostic(
+                    'Composer autoload',
+                    is_file($this->baseDir.'/vendor/autoload.php'),
+                    'vendor/autoload.php is present.',
+                    'vendor/autoload.php is MISSING — composer install has not completed.'
+                ),
+                $this->diagnostic(
+                    'Required PHP extensions',
+                    $missingExt === [],
+                    'All required extensions are loaded.',
+                    'Missing: '.implode(', ', $missingExt).'.'
+                ),
+                $this->diagnostic(
+                    'storage/ writable',
+                    is_writable($this->baseDir.'/storage'),
+                    'storage/ is writable by this process.',
+                    'storage/ is NOT writable by this process.'
+                ),
+                $this->diagnostic(
+                    'bootstrap/cache writable',
+                    is_writable($this->baseDir.'/bootstrap/cache'),
+                    'bootstrap/cache is writable by this process.',
+                    'bootstrap/cache is NOT writable by this process.'
+                ),
+                $this->diagnostic(
+                    'Free disk space',
+                    $freeOk,
+                    $free !== false ? $this->humanBytes((float) $free).' free.' : 'Could not determine free disk space.',
+                    $free !== false ? 'Only '.$this->humanBytes((float) $free).' free (below 200 MB).' : 'Could not determine free disk space.'
+                ),
+            ];
+        }
+
+        /** @return array{label:string,ok:bool,message:string} */
+        private function diagnostic(string $label, bool $ok, string $okMessage, string $failMessage): array
+        {
+            return ['label' => $label, 'ok' => $ok, 'message' => $ok ? $okMessage : $failMessage];
+        }
+
+        private function humanBytes(float $bytes): string
+        {
+            $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+            $i = 0;
+            while ($bytes >= 1024 && $i < count($units) - 1) {
+                $bytes /= 1024;
+                $i++;
+            }
+
+            return round($bytes, 1).' '.$units[$i];
+        }
+
+        /**
+         * For a git-managed install: the working tree's ACTUAL current commit/tag,
+         * compared against what the armed window says it should be — catches a
+         * `git_checkout` that silently landed on the wrong ref. Read-only, local-only
+         * git plumbing (no network), safe to run synchronously on every page load.
+         *
+         * @return array{head:string,tag:?string}|null null when this isn't a git install
+         */
+        public function gitDrift(): ?array
+        {
+            if (! is_dir($this->baseDir.'/.git')) {
+                return null;
+            }
+
+            return [
+                'head' => $this->gitOutput(['git', 'rev-parse', '--short', 'HEAD']) ?? 'unknown',
+                'tag' => $this->gitOutput(['git', 'describe', '--tags', '--exact-match'], allowFail: true),
+            ];
+        }
+
+        private function gitOutput(array $command, bool $allowFail = false): ?string
+        {
+            if (! $this->procFunctionsAvailable()) {
+                return null;
+            }
+
+            $descriptors = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+            $process = @proc_open($command, $descriptors, $pipes, $this->baseDir);
+            if (! is_resource($process)) {
+                return null;
+            }
+
+            fclose($pipes[0]);
+            $out = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+            fclose($pipes[2]);
+            $code = proc_close($process);
+
+            if ($code !== 0 && ! $allowFail) {
+                return null;
+            }
+
+            $out = trim((string) $out);
+
+            return $out !== '' ? $out : null;
+        }
+
+        /**
+         * The current app log file. The 'daily' channel (this app's default, see
+         * config/logging.php) rotates to `laravel-YYYY-MM-DD.log`; a 'single'
+         * override (via LOG_CHANNEL env) writes plain `laravel.log`. Pick whichever
+         * was modified most recently rather than assuming a filename.
+         */
+        public function applicationLogPath(): ?string
+        {
+            $dir = $this->baseDir.'/storage/logs';
+            if (! is_dir($dir)) {
+                return null;
+            }
+
+            $candidates = glob($dir.'/laravel-*.log') ?: [];
+            if (is_file($dir.'/laravel.log')) {
+                $candidates[] = $dir.'/laravel.log';
+            }
+            if ($candidates === []) {
+                return null;
+            }
+
+            usort($candidates, fn ($a, $b) => filemtime($b) <=> filemtime($a));
+
+            return $candidates[0];
+        }
+
+        /**
+         * Last `$maxBytes` of a file without ever reading the whole thing — safe on
+         * a multi-GB log. The leading partial line (cut mid-word by the byte window)
+         * is dropped so the tail always starts on a real line boundary.
+         */
+        private function tailFile(string $path, int $maxBytes = 20000): string
+        {
+            if (! is_file($path) || ! is_readable($path)) {
+                return '';
+            }
+
+            $size = (int) filesize($path);
+            if ($size === 0) {
+                return '';
+            }
+
+            $handle = @fopen($path, 'rb');
+            if ($handle === false) {
+                return '';
+            }
+
+            $readBytes = min($maxBytes, $size);
+            fseek($handle, -$readBytes, SEEK_END);
+            $data = (string) fread($handle, $readBytes);
+            fclose($handle);
+
+            if ($readBytes < $size) {
+                $nl = strpos($data, "\n");
+                if ($nl !== false) {
+                    $data = substr($data, $nl + 1);
+                }
+            }
+
+            return $data;
+        }
+
+        private function procFunctionsAvailable(): bool
+        {
+            $disabled = array_map('trim', explode(',', (string) ini_get('disable_functions')));
+
+            foreach (['proc_open', 'proc_close', 'proc_get_status'] as $fn) {
+                if (! function_exists($fn) || in_array($fn, $disabled, true)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         /* ---- Security: clock / rate-limit / audit / tokens (Chunk 4.3) -- */
 
         public function setClock(callable $clock): void
@@ -475,6 +678,9 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 'db_reachable' => $this->pdo() !== null,
                 'updates'     => $this->recentUpdates(),
                 'backups'     => $this->restorableBackups(),
+                'environment' => $this->environmentChecks(),
+                'git_drift'   => $this->gitDrift(),
+                'app_log'     => $this->tailFile((string) $this->applicationLogPath()),
             ];
         }
 
@@ -574,11 +780,12 @@ if (! class_exists('OeRecoveryConsole', false)) {
         public function runAction(string $action): array
         {
             switch ($action) {
-                case 'restore_db':      return $this->restoreDatabase();
-                case 'rollback_files':  return $this->rollbackFiles();
-                case 'maintenance_off': return $this->forceMaintenanceOff();
-                case 'opcache_reset':   return $this->resetOpcache();
-                case 'disarm':          return $this->disarmConsole();
+                case 'restore_db':       return $this->restoreDatabase();
+                case 'rollback_files':   return $this->rollbackFiles();
+                case 'maintenance_off':  return $this->forceMaintenanceOff();
+                case 'opcache_reset':    return $this->resetOpcache();
+                case 'clear_caches':     return $this->clearCaches();
+                case 'disarm':           return $this->disarmConsole();
                 default:
                     return ['ok' => false, 'action' => $action, 'message' => 'Unknown recovery action.'];
             }
@@ -783,6 +990,68 @@ if (! class_exists('OeRecoveryConsole', false)) {
                     ? 'OPcache reset + realpath cache cleared.'
                     : 'OPcache not available on this SAPI; realpath cache cleared.',
                 'detail' => ['opcache' => $available]];
+        }
+
+        /**
+         * Framework-free twin of `php artisan optimize:clear`'s config/route/view
+         * caches — exactly the stale-cache class of problem a manually-SSH'd fix
+         * (composer install + migrate done outside the normal update flow) can leave
+         * behind. Pure filesystem; needs no shell.
+         */
+        public function clearCaches(): array
+        {
+            $removed = 0;
+            foreach (['config.php', 'routes-v7.php', 'routes.php', 'packages.php', 'services.php', 'events.php'] as $file) {
+                $path = $this->baseDir.'/bootstrap/cache/'.$file;
+                if (is_file($path) && @unlink($path)) {
+                    $removed++;
+                }
+            }
+            $removed += $this->clearDirContents($this->baseDir.'/storage/framework/views');
+            $removed += $this->clearDirContents($this->baseDir.'/storage/framework/cache/data');
+
+            $this->resetRuntimeCaches();
+
+            return ['ok' => true, 'action' => 'clear_caches',
+                'message' => "Cleared {$removed} cached file/folder entr".($removed === 1 ? 'y' : 'ies')
+                    .' (bootstrap cache, compiled views, data cache) + OPcache.',
+                'detail' => ['removed' => $removed]];
+        }
+
+        /** @return int entries removed (files + top-level subdirectories) */
+        private function clearDirContents(string $dir): int
+        {
+            if (! is_dir($dir)) {
+                return 0;
+            }
+
+            $removed = 0;
+            foreach (scandir($dir) ?: [] as $entry) {
+                if ($entry === '.' || $entry === '..' || $entry === '.gitignore') {
+                    continue;
+                }
+                $path = $dir.'/'.$entry;
+                if (is_dir($path)) {
+                    $this->removeTree($path);
+                } else {
+                    @unlink($path);
+                }
+                $removed++;
+            }
+
+            return $removed;
+        }
+
+        private function removeTree(string $dir): void
+        {
+            foreach (scandir($dir) ?: [] as $entry) {
+                if ($entry === '.' || $entry === '..') {
+                    continue;
+                }
+                $path = $dir.'/'.$entry;
+                is_dir($path) ? $this->removeTree($path) : @unlink($path);
+            }
+            @rmdir($dir);
         }
 
         /* ---- Action helpers -------------------------------------------- */
@@ -997,15 +1266,18 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 return $html.'</table>';
             };
 
-            $body = $banner.'<div class="grid">';
+            $topPills = '<div class="pillbar">'
+                .$this->pill($s['db_reachable'] ? 'ok' : 'err', 'Database '.($s['db_reachable'] ? 'reachable' : 'unreachable'))
+                .$this->pill($s['lock_held'] ? 'warn' : 'ok', 'Update lock '.($s['lock_held'] ? 'held' : 'free'))
+                .$this->pill('info', 'PHP '.$s['php_version'])
+                .'</div>';
+
+            $body = $topPills.$banner.'<div class="grid">';
 
             // Environment.
-            $body .= '<section><h2>Environment</h2>'.$rows([
+            $body .= '<section class="card"><h2>Environment</h2>'.$rows([
                 'Base directory' => $s['base_dir'],
                 'State directory' => $s['state_dir'],
-                'PHP version' => $s['php_version'],
-                'Database reachable' => $s['db_reachable'] ? 'yes' : 'no',
-                'Update lock held' => $s['lock_held'] ? 'yes' : 'no',
             ]).'</section>';
 
             // Armed update window.
@@ -1018,12 +1290,12 @@ if (! class_exists('OeRecoveryConsole', false)) {
                     'PID' => $arm['pid'] ?? '—',
                 ])
                 : '<p class="muted">Armed, but the flag carries no detail.</p>';
-            $body .= '<section><h2>Update window</h2>'.$armBody.'</section>';
+            $body .= '<section class="card"><h2>Update window</h2>'.$armBody.'</section>';
 
             // Swap map (rollback source of truth).
             if ($swap) {
                 $swapped = is_array($swap['swapped'] ?? null) ? $swap['swapped'] : [];
-                $body .= '<section><h2>Pending file swap</h2>'.$rows([
+                $body .= '<section class="card"><h2>Pending file swap</h2>'.$rows([
                     'Version' => $swap['version'] ?? '—',
                     'Completed' => ! empty($swap['completed']) ? 'yes' : 'no (interrupted)',
                     'Root' => $swap['root'] ?? '—',
@@ -1032,15 +1304,61 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 ]).'</section>';
             } elseif (($arm['deployment_type'] ?? null) === 'git') {
                 $from = $arm['from_version'] ?? '<previous version>';
-                $body .= '<section><h2>Pending file swap</h2><p class="muted">This is a git-managed install — '
+                $body .= '<section class="card"><h2>Pending file swap</h2><p class="muted">This is a git-managed install — '
                     .'updates apply via <code>git checkout</code> + <code>composer install</code>, not a file swap, '
                     .'so "Roll back files" below cannot act here. If the app is broken, recover manually via SSH: '
                     .'<code>git checkout v'.htmlspecialchars($from).' &amp;&amp; composer install --no-dev '
                     .'--optimize-autoloader &amp;&amp; php artisan migrate</code></p></section>';
             } else {
-                $body .= '<section><h2>Pending file swap</h2><p class="muted">No <code>last-swap.json</code> '
+                $body .= '<section class="card"><h2>Pending file swap</h2><p class="muted">No <code>last-swap.json</code> '
                     .'— no interrupted swap to reverse.</p></section>';
             }
+
+            // Preflight / environment health — the same questions a normal update
+            // asks beforehand, asked again here for an operator with no other way
+            // to see why the site is broken.
+            $body .= '<section class="card"><h2>Preflight checks</h2><ul class="checklist">';
+            foreach ($s['environment'] as $check) {
+                $body .= '<li>'.$this->pill($check['ok'] ? 'ok' : 'err', $check['label'])
+                    .'<span class="muted">'.$this->e($check['message']).'</span></li>';
+            }
+            $body .= '</ul></section>';
+
+            // Git drift (git-managed installs only).
+            if ($s['git_drift'] !== null) {
+                $drift = $s['git_drift'];
+                $expected = $arm['to_version'] ?? null;
+                $tagMatches = $expected === null || $drift['tag'] === null
+                    || $drift['tag'] === $expected || $drift['tag'] === 'v'.$expected;
+                $body .= '<section class="card"><h2>Deployment (git)</h2>'.$rows([
+                    'Checked-out HEAD' => $drift['head'],
+                    'Checked-out tag' => $drift['tag'] ?? '(detached, no exact tag)',
+                    'Armed target version' => $expected ?? '—',
+                ]);
+                if (! $tagMatches) {
+                    $body .= '<p class="err">Mismatch — the working tree is NOT on the armed target version. '
+                        .'A <code>git_checkout</code> may have landed on the wrong ref.</p>';
+                }
+                $body .= '</section>';
+            }
+
+            // Manual recovery commands — pre-filled + copyable, never executed by this
+            // console. composer install / migrate are deliberately NOT one-click
+            // actions here: this file is a public, key-gated-but-internet-reachable
+            // entry point, and giving it the ability to run shell commands was
+            // judged (correctly) too large a capability to add just because an
+            // operator asked for convenience. This gets most of the real value —
+            // no more "was it --no-dev or --no-interaction?" under incident
+            // pressure — with zero execution surface.
+            $body .= '<section class="card"><h2>Manual recovery commands</h2>'
+                .'<p class="muted small">Copies to clipboard. Run over SSH — this console never executes these.</p>'
+                .'<div class="cmdlist">';
+            foreach ($this->manualRecoveryCommands($s) as [$label, $cmd]) {
+                $body .= '<div class="cmdrow"><div><div class="cmdlabel">'.$this->e($label).'</div>'
+                    .'<code>'.$this->e($cmd).'</code></div>'
+                    .'<button type="button" class="copy-btn" data-copy="'.$this->e($cmd).'">Copy</button></div>';
+            }
+            $body .= '</div></section>';
 
             $body .= '</div>';
 
@@ -1050,13 +1368,51 @@ if (! class_exists('OeRecoveryConsole', false)) {
             // Restorable backups.
             $body .= '<h2>Restorable backups</h2>'.$this->tableOr($s['backups'], ['id', 'profile', 'app_version', 'part_count', 'finished_at'], 'No successful backups found (or DB unreachable).');
 
+            // Application log — the actual error, without SSH.
+            $body .= '<h2>Application log <span class="muted small">(last lines)</span></h2>';
+            $body .= $s['app_log'] !== ''
+                ? '<pre class="term">'.$this->e($s['app_log']).'</pre>'
+                : '<p class="muted">No application log found (or it is empty).</p>';
+
             $body .= $this->actionsSection($token);
 
-            $body .= '<div class="note">Recovery actions are live (Chunk 4.2). Rate-limiting, structured '
-                .'audit logging, POST-only keys and per-action confirmation tokens are hardened in Chunk 4.3. '
-                .'Every action here is destructive — a pre-update backup exists, but proceed deliberately.</div>';
+            $body .= '<div class="note">Every action below is destructive — a pre-update backup exists, but '
+                .'proceed deliberately. Rate-limiting, structured audit logging, and per-action confirmation '
+                .'tokens (never the raw key) protect every one of them.</div>';
 
             return $this->page('Recovery Console', $body);
+        }
+
+        private function pill(string $tone, string $label): string
+        {
+            return '<span class="pill '.$this->e($tone).'">'.$this->e($label).'</span>';
+        }
+
+        /**
+         * The exact SSH commands an operator would otherwise have to recall (or get
+         * wrong) under incident pressure — correct for THIS install's deployment
+         * type and armed target version. Display-only: see the docblock at the call
+         * site for why this console never runs these itself.
+         *
+         * @param  array<string,mixed>  $s  status() aggregate
+         * @return array<int,array{0:string,1:string}>
+         */
+        private function manualRecoveryCommands(array $s): array
+        {
+            $commands = [];
+
+            if ($s['git_drift'] !== null) {
+                $to = $s['arm_info']['to_version'] ?? null;
+                if ($to !== null) {
+                    $commands[] = ['Check out the target release', 'git checkout v'.$to];
+                }
+            }
+
+            $commands[] = ['Install dependencies', 'composer install --no-dev --optimize-autoloader --no-interaction'];
+            $commands[] = ['Run pending migrations', 'php artisan migrate --force --no-interaction'];
+            $commands[] = ['Clear compiled caches', 'php artisan optimize:clear'];
+
+            return $commands;
         }
 
         /** @param array<string,mixed>|null $result */
@@ -1084,29 +1440,44 @@ if (! class_exists('OeRecoveryConsole', false)) {
         private function actionsSection(?string $token): string
         {
             // Actions carry a short-lived confirm TOKEN (not the raw key) so the secret
-            // never sits in the DOM; the token is IP-bound + expiring (Chunk 4.3).
-            $tok = $this->e((string) ($token ?? ''));
-
-            $actions = [
-                ['restore_db', 'Restore database', 'Decrypt + apply the latest pre-update safety backup. Overwrites current data.'],
-                ['rollback_files', 'Roll back files', 'Reverse the interrupted file swap (restore the previous release from last-swap.json).'],
-                ['maintenance_off', 'Force maintenance OFF', 'Clear the maintenance flag so the storefront serves again.'],
-                ['opcache_reset', 'Reset OPcache', 'Flush the PHP OPcache + realpath cache.'],
-                ['disarm', 'Finish recovery & disarm', 'Close the update window and lock the console (do this when recovery is complete).'],
+            // never sits in the DOM; the token is IP-bound + expiring (Chunk 4.3). Tiers
+            // are ordered least → most destructive, matching how an operator should
+            // actually try things during an incident.
+            $tiers = [
+                ['Quick fixes', 'safe', [
+                    ['opcache_reset', 'Reset OPcache', 'Flush the PHP OPcache + realpath cache.'],
+                    ['clear_caches', 'Clear caches', 'Delete the compiled config/route/view/data caches so stale bytecode cannot mask a fix.'],
+                    ['maintenance_off', 'Force maintenance OFF', 'Clear the maintenance flag so the storefront serves again.'],
+                ]],
+                ['Recovery operations', 'warn', [
+                    ['rollback_files', 'Roll back files', 'Reverse the interrupted file swap (restore the previous release from last-swap.json).'],
+                ]],
+                ['Destructive — data loss risk', 'danger', [
+                    ['restore_db', 'Restore database', 'Decrypt + apply the latest pre-update safety backup. Overwrites current data.'],
+                ]],
+                ['Finish', 'info', [
+                    ['disarm', 'Finish recovery & disarm', 'Close the update window and lock the console (do this when recovery is complete).'],
+                ]],
             ];
 
-            $html = '<h2>Recovery actions</h2><div class="actions">';
-            foreach ($actions as [$act, $label, $desc]) {
-                $confirm = 'return confirm('.json_encode($label.' — are you sure? This cannot be undone.').')';
-                $html .= '<form method="post" class="action" onsubmit="'.$this->e($confirm).'">'
-                    .'<input type="hidden" name="token" value="'.$tok.'">'
-                    .'<input type="hidden" name="action" value="'.$this->e($act).'">'
-                    .'<button type="submit">'.$this->e($label).'</button>'
-                    .'<span class="muted">'.$this->e($desc).'</span>'
-                    .'</form>';
+            $tok = $this->e((string) ($token ?? ''));
+            $html = '<h2>Recovery actions</h2>';
+
+            foreach ($tiers as [$tierLabel, $tone, $actions]) {
+                $html .= '<div class="tier '.$this->e($tone).'"><h3>'.$this->e($tierLabel).'</h3><div class="actions">';
+                foreach ($actions as [$act, $label, $desc]) {
+                    $confirm = 'return confirm('.json_encode($label.' — are you sure? This cannot be undone.').')';
+                    $html .= '<form method="post" class="action" onsubmit="'.$this->e($confirm).'">'
+                        .'<input type="hidden" name="token" value="'.$tok.'">'
+                        .'<input type="hidden" name="action" value="'.$this->e($act).'">'
+                        .'<button type="submit">'.$this->e($label).'</button>'
+                        .'<span class="muted">'.$this->e($desc).'</span>'
+                        .'</form>';
+                }
+                $html .= '</div></div>';
             }
 
-            return $html.'</div>';
+            return $html;
         }
 
         /**
@@ -1157,40 +1528,88 @@ if (! class_exists('OeRecoveryConsole', false)) {
 
         private function page(string $title, string $body): string
         {
-            $css = 'body{font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;'
-                .'background:#f7f5ef;color:#1a1a1a;margin:0;padding:2rem}'
-                .'.wrap{max-width:960px;margin:0 auto}'
-                .'h1{font-size:1.4rem;margin:0 0 .25rem;letter-spacing:.02em}'
-                .'h2{font-size:1rem;margin:1.5rem 0 .5rem;border-bottom:1px solid #d8d2c4;padding-bottom:.25rem}'
-                .'.tag{display:inline-block;background:#1a1a1a;color:#f7f5ef;padding:.1rem .5rem;font-size:.7rem;letter-spacing:.1em}'
-                .'.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}'
-                .'section{border:1px solid #d8d2c4;padding:.75rem 1rem;background:#fffdf8}'
+            $css = ':root{'
+                    .'--bg:#f4f5f7;--surface:#ffffff;--border:#e2e5ea;--text:#1a2230;--muted:#667085;'
+                    .'--ok:#1a8a4a;--ok-bg:#eafbf1;--ok-border:#9fdfbd;'
+                    .'--warn:#9a6700;--warn-bg:#fff6e5;--warn-border:#f2d38a;'
+                    .'--err:#b42318;--err-bg:#fdecea;--err-border:#f3b4ac;'
+                    .'--info:#1d4fb8;--info-bg:#eef3ff;--info-border:#b9cdf5;'
+                .'}'
+                .'*{box-sizing:border-box}'
+                .'body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;'
+                .'background:var(--bg);color:var(--text);margin:0;padding:2rem 1.25rem}'
+                .'.wrap{max-width:1040px;margin:0 auto}'
+                .'.tag{display:inline-block;background:var(--text);color:#fff;padding:.2rem .6rem;border-radius:4px;'
+                .'font-size:.7rem;letter-spacing:.12em;font-weight:600}'
+                .'h1{font-size:1.5rem;margin:.6rem 0 .25rem;letter-spacing:-.01em}'
+                .'h2{font-size:1rem;margin:1.75rem 0 .6rem;color:var(--text);font-weight:600}'
+                .'h3{font-size:.85rem;margin:0 0 .5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}'
+                .'.pillbar{display:flex;gap:.5rem;flex-wrap:wrap;margin:.75rem 0 1.25rem}'
+                .'.pill{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .6rem;border-radius:999px;'
+                .'font-size:.75rem;font-weight:600;border:1px solid;white-space:nowrap}'
+                .'.pill.ok{color:var(--ok);background:var(--ok-bg);border-color:var(--ok-border)}'
+                .'.pill.warn{color:var(--warn);background:var(--warn-bg);border-color:var(--warn-border)}'
+                .'.pill.err{color:var(--err);background:var(--err-bg);border-color:var(--err-border)}'
+                .'.pill.info{color:var(--info);background:var(--info-bg);border-color:var(--info-border)}'
+                .'.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1rem}'
+                .'.card,section{border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;'
+                .'background:var(--surface);box-shadow:0 1px 2px rgba(16,24,40,.04)}'
                 .'table{border-collapse:collapse;width:100%}'
-                .'table.kv th{text-align:left;color:#6b6455;font-weight:400;padding:.15rem .5rem .15rem 0;vertical-align:top;white-space:nowrap}'
-                .'table.kv td{padding:.15rem 0;word-break:break-all}'
-                .'.scroll{overflow-x:auto}'
-                .'table.data th,table.data td{border:1px solid #d8d2c4;padding:.3rem .5rem;text-align:left;white-space:nowrap}'
-                .'table.data th{background:#efe9dc}'
-                .'code{background:#efe9dc;padding:.05rem .3rem}'
-                .'.muted{color:#6b6455}.err{color:#a11}'
+                .'table.kv th{text-align:left;color:var(--muted);font-weight:500;padding:.2rem .6rem .2rem 0;vertical-align:top;white-space:nowrap}'
+                .'table.kv td{padding:.2rem 0;word-break:break-all}'
+                .'.scroll{overflow-x:auto;border:1px solid var(--border);border-radius:10px}'
+                .'table.data{background:var(--surface)}'
+                .'table.data th,table.data td{padding:.5rem .75rem;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border)}'
+                .'table.data th{background:#fafbfc;color:var(--muted);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.03em}'
+                .'table.data tr:last-child td{border-bottom:0}'
+                .'code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f1f2f5;'
+                .'padding:.1rem .35rem;border-radius:4px;font-size:.85em}'
+                .'.muted{color:var(--muted)}.small{font-size:.75rem;font-weight:400;text-transform:none}.err{color:var(--err)}'
+                .'ul.checklist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.5rem}'
+                .'ul.checklist li{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}'
                 .'.login{display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap}'
-                .'input{font:inherit;padding:.4rem;border:1px solid #999;background:#fff}'
-                .'button{font:inherit;padding:.45rem 1rem;background:#1a1a1a;color:#f7f5ef;border:0;cursor:pointer}'
-                .'.note{margin-top:2rem;border:1px dashed #b7a; padding:.75rem 1rem;background:#fffdf8;color:#6b6455}'
-                .'.banner{padding:.6rem 1rem;margin-bottom:1rem;border:1px solid}'
-                .'.banner.ok{background:#eefbef;border-color:#7cbf88;color:#1c5b2a}'
-                .'.banner.err{background:#fdecec;border-color:#d99;color:#8a1c1c}'
-                .'.errs{margin:.25rem 0 1rem;padding-left:1.2rem;color:#8a1c1c}'
+                .'input{font:inherit;padding:.55rem .7rem;border:1px solid #cfd4dc;border-radius:6px;background:#fff}'
+                .'button{font:inherit;font-weight:600;padding:.55rem 1.1rem;background:var(--text);color:#fff;'
+                .'border:0;border-radius:6px;cursor:pointer}'
+                .'button:hover{opacity:.88}'
+                .'.note{margin-top:2rem;border:1px solid var(--border);border-radius:10px;padding:.9rem 1.1rem;'
+                .'background:var(--surface);color:var(--muted);font-size:.85rem}'
+                .'.banner{padding:.75rem 1rem;margin-bottom:1rem;border-radius:8px;border:1px solid;font-weight:500}'
+                .'.banner.ok{background:var(--ok-bg);border-color:var(--ok-border);color:var(--ok)}'
+                .'.banner.err{background:var(--err-bg);border-color:var(--err-border);color:var(--err)}'
+                .'.errs{margin:.5rem 0 1rem;padding-left:1.2rem;color:var(--err)}'
+                .'.term{background:#1a1d24;color:#d7dde5;border-radius:10px;padding:1rem 1.1rem;'
+                .'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;'
+                .'max-height:360px;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:0}'
+                .'.tier{border-left:3px solid var(--border);padding-left:1rem;margin:0 0 1.25rem}'
+                .'.tier.safe{border-left-color:var(--ok-border)}'
+                .'.tier.warn{border-left-color:var(--warn-border)}'
+                .'.tier.danger{border-left-color:var(--err-border)}'
+                .'.tier.info{border-left-color:var(--info-border)}'
                 .'.actions{display:flex;flex-direction:column;gap:.5rem}'
-                .'.action{display:flex;gap:.75rem;align-items:center;border:1px solid #d8d2c4;padding:.5rem .75rem;background:#fffdf8;margin:0;flex-wrap:wrap}'
-                .'.action button{white-space:nowrap}';
+                .'.action{display:flex;gap:.75rem;align-items:center;border:1px solid var(--border);border-radius:8px;'
+                .'padding:.6rem .85rem;background:var(--surface);margin:0;flex-wrap:wrap}'
+                .'.action button{white-space:nowrap}'
+                .'.cmdlist{display:flex;flex-direction:column;gap:.6rem}'
+                .'.cmdrow{display:flex;gap:.75rem;align-items:center;justify-content:space-between;flex-wrap:wrap}'
+                .'.cmdrow code{display:block;margin-top:.15rem;background:#f1f2f5;padding:.3rem .5rem;white-space:normal;word-break:break-all}'
+                .'.cmdlabel{font-size:.8rem;color:var(--muted)}'
+                .'.copy-btn{background:#fff;color:var(--text);border:1px solid #cfd4dc;font-weight:500;padding:.4rem .8rem;flex-shrink:0}';
+
+            $js = 'document.addEventListener("click",function(e){'
+                .'var b=e.target.closest(".copy-btn");if(!b)return;'
+                .'var t=b.getAttribute("data-copy")||"";'
+                .'(navigator.clipboard&&navigator.clipboard.writeText?navigator.clipboard.writeText(t):Promise.reject())'
+                .'.then(function(){var o=b.textContent;b.textContent="Copied";setTimeout(function(){b.textContent=o;},1200);})'
+                .'.catch(function(){var o=b.textContent;b.textContent="Copy failed";setTimeout(function(){b.textContent=o;},1200);});'
+                .'});';
 
             return "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
                 ."<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
                 ."<meta name=\"robots\" content=\"noindex,nofollow\">"
                 ."<title>".$this->e($title)." — OeParts Recovery</title><style>{$css}</style></head>"
                 ."<body><div class=\"wrap\"><span class=\"tag\">OEPARTS RECOVERY</span>"
-                ."<h1>".$this->e($title)."</h1>{$body}</div></body></html>";
+                ."<h1>".$this->e($title)."</h1>{$body}</div><script>{$js}</script></body></html>";
         }
 
         /* ---- HTTP entry point ------------------------------------------ */

@@ -44,6 +44,12 @@ class RecoveryConsoleTest extends TestCase
         file_put_contents($this->state.'/arm.flag', json_encode($payload));
     }
 
+    private function writeFile(string $path, string $contents): void
+    {
+        @mkdir(dirname($path), 0775, true);
+        file_put_contents($path, $contents);
+    }
+
     #[Test]
     public function it_parses_env_files_ignoring_comments_and_quotes(): void
     {
@@ -185,6 +191,108 @@ class RecoveryConsoleTest extends TestCase
         $offline->setPdo(null);
         $this->assertSame([], $offline->recentUpdates());
         $this->assertSame([], $offline->restorableBackups());
+    }
+
+    #[Test]
+    public function the_dashboard_shows_copyable_manual_commands_but_never_an_execute_action(): void
+    {
+        $this->arm(['from_version' => '2.0.0', 'to_version' => '2.0.1']);
+        $console = $this->console(['OE_RECOVERY_KEY' => 'k']);
+
+        [, , $html] = $console->handle('k', '127.0.0.1');
+
+        $this->assertStringContainsString('Manual recovery commands', $html);
+        $this->assertStringContainsString('composer install --no-dev --optimize-autoloader --no-interaction', $html);
+        $this->assertStringContainsString('php artisan migrate --force --no-interaction', $html);
+        $this->assertStringContainsString('class="copy-btn"', $html);
+
+        // This console must never offer to RUN composer/migrate itself — only to
+        // copy the command for the operator to run over SSH.
+        $this->assertStringNotContainsString('name="action" value="composer_install"', $html);
+        $this->assertStringNotContainsString('name="action" value="run_migrations"', $html);
+    }
+
+    /* ---- Diagnostics (Chunk 4.4) ---------------------------------------- */
+
+    #[Test]
+    public function environment_checks_flag_a_missing_autoload_and_report_disk_space(): void
+    {
+        $console = $this->console();
+
+        $checks = $console->environmentChecks();
+        $byLabel = [];
+        foreach ($checks as $c) {
+            $byLabel[$c['label']] = $c;
+        }
+
+        $this->assertFalse($byLabel['Composer autoload']['ok'], 'no vendor/autoload.php exists under the temp base dir yet');
+        $this->assertTrue($byLabel['Free disk space']['ok']);
+
+        $this->writeFile($this->base.'/vendor/autoload.php', '<?php');
+        $checks = $console->environmentChecks();
+        $byLabel = [];
+        foreach ($checks as $c) {
+            $byLabel[$c['label']] = $c;
+        }
+        $this->assertTrue($byLabel['Composer autoload']['ok']);
+    }
+
+    #[Test]
+    public function git_drift_is_null_on_a_non_git_install(): void
+    {
+        $this->assertNull($this->console()->gitDrift());
+    }
+
+    #[Test]
+    public function git_drift_reports_the_actual_checked_out_head_and_tag(): void
+    {
+        $process = new \Symfony\Component\Process\Process(['git', 'init'], $this->base);
+        $process->mustRun();
+        (new \Symfony\Component\Process\Process(['git', 'config', 'user.email', 'test@test.local'], $this->base))->mustRun();
+        (new \Symfony\Component\Process\Process(['git', 'config', 'user.name', 'Test'], $this->base))->mustRun();
+        $this->writeFile($this->base.'/README.md', 'x');
+        (new \Symfony\Component\Process\Process(['git', 'add', '.'], $this->base))->mustRun();
+        (new \Symfony\Component\Process\Process(['git', 'commit', '-m', 'init'], $this->base))->mustRun();
+        (new \Symfony\Component\Process\Process(['git', 'tag', 'v9.9.9'], $this->base))->mustRun();
+
+        $head = trim((new \Symfony\Component\Process\Process(['git', 'rev-parse', '--short', 'HEAD'], $this->base))->mustRun()->getOutput());
+
+        $drift = $this->console()->gitDrift();
+
+        $this->assertNotNull($drift);
+        $this->assertSame($head, $drift['head']);
+        $this->assertSame('v9.9.9', $drift['tag']);
+    }
+
+    #[Test]
+    public function the_application_log_tail_reads_only_the_end_of_a_large_file(): void
+    {
+        $log = $this->base.'/storage/logs/laravel-2026-10-05.log';
+        $this->writeFile($log, str_repeat('old line that must be dropped'.PHP_EOL, 2000).'the most recent line'.PHP_EOL);
+
+        $path = $this->console()->applicationLogPath();
+        $this->assertSame($log, $path);
+
+        $tail = (new \ReflectionClass(\OeRecoveryConsole::class))->getMethod('tailFile');
+        $tail->setAccessible(true);
+        $result = $tail->invoke($this->console(), $log, 500);
+
+        $this->assertStringContainsString('the most recent line', $result);
+        $this->assertLessThanOrEqual(500, strlen($result), 'the tail must never read more than the requested byte window');
+        $this->assertLessThan(filesize($log), strlen($result), 'a 500-byte tail of a huge file must not read the whole thing');
+    }
+
+    #[Test]
+    public function the_application_log_path_prefers_the_most_recently_modified_daily_file(): void
+    {
+        $this->writeFile($this->base.'/storage/logs/laravel-2026-10-01.log', 'stale');
+        touch($this->base.'/storage/logs/laravel-2026-10-01.log', time() - 100);
+        $this->writeFile($this->base.'/storage/logs/laravel-2026-10-05.log', 'fresh');
+
+        $this->assertSame(
+            $this->base.'/storage/logs/laravel-2026-10-05.log',
+            $this->console()->applicationLogPath()
+        );
     }
 
     private function rrmdir(string $dir): void
