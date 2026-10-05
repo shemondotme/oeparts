@@ -63,9 +63,26 @@ class InterruptedUpdateResumerTest extends TestCase
     {
         @array_map('unlink', glob($this->state.DIRECTORY_SEPARATOR.'*') ?: []);
         @rmdir($this->state);
-        @array_map('unlink', glob($this->rootPath.DIRECTORY_SEPARATOR.'*') ?: []);
-        @rmdir($this->rootPath);
+        // forceGitManaged() creates a .git SUBDIRECTORY — a flat glob+unlink can't
+        // remove that (unlink() fails on directories), silently leaking both it and
+        // the now-non-empty rootPath on every run that calls forceGitManaged().
+        $this->rrmdir($this->rootPath);
         parent::tearDown();
+    }
+
+    private function rrmdir(string $dir): void
+    {
+        if (! is_dir($dir)) {
+            return;
+        }
+        foreach (scandir($dir) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $path = $dir.DIRECTORY_SEPARATOR.$entry;
+            is_dir($path) ? $this->rrmdir($path) : @unlink($path);
+        }
+        @rmdir($dir);
     }
 
     private function manifest(): array
