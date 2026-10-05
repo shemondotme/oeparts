@@ -15,6 +15,12 @@ Found and fixed on the real live 1.0.16 → 2.0.0 install, which turned out to b
 - The admin Cleanup page also adds a read-only database schema audit (compares the live database against what this install's own migration history says should exist) — report only, nothing here ever deletes a table or a row.
 - `README.md`, `SECURITY.md` and `CHANGELOG.md` no longer ship on an installed site — nothing in the app has ever read any of them from local disk. `LICENSE` and the generated `THIRD-PARTY-LICENSES.md` still ship, deliberately (open-source license compliance).
 
+#### Improved — OE Recovery console
+- The framework-free recovery console (`public/oe-recovery.php` — the last resort when the app itself can't boot) got a full visual redesign: status pills, cards, color-coded preflight checks, a dark terminal-style panel for the real application log tail, and recovery actions grouped into tiers (quick fixes → recovery operations → destructive → finish) instead of one flat list.
+- New diagnostics, all read-only: an environment/preflight panel (composer autoload, required PHP extensions, storage/bootstrap writability, free disk space), a git HEAD/tag drift check for git-managed installs, and an application log viewer that tails `storage/logs/laravel-*.log` directly — no more SSH needed just to see the actual error.
+- New "Clear caches" action (bootstrap/config/route/view/data cache + OPcache) — pure filesystem, needs no shell.
+- New "Manual recovery commands" panel: the exact composer install / migrate / cache-clear commands for this install, each with a copy-to-clipboard button. Deliberately informational only — this console does not execute these itself.
+
 ## 2.0.0 — 2026-09-25
 
 The first major release. It replaces the 1.0.17, 1.0.18 and 1.0.19 lines entirely — none of them were ever installed anywhere — so **update straight from 1.0.16**. Everything since 1.0.16 ships here: a "bulletproof, zero critical-bug" testing pass across the whole application (which found and fixed real security, financial, compliance and reliability bugs), a second payment gateway (Paysera), both payment integrations re-aligned with their vendors' documentation, a checkout that can no longer be reverted by a slow background request, a working mobile checkout API, a full SEO program, a redesigned product page, and a reorganised admin. It also fixes several failure modes of the self-update engine itself, which is why the 1.0.16 → 2.0.0 hop is worth reading about first.
