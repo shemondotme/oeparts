@@ -148,4 +148,32 @@ class ReleaseBuilderTest extends TestCase
         }
         @rmdir($dir);
     }
+
+    /**
+     * This project's REAL config('updates.build') — not the hand-rolled fixture
+     * list above — for a "professional clean install" request: internal repo docs
+     * (README.md, SECURITY.md, CHANGELOG.md) must never reach a live site, but
+     * LICENSE and the generated THIRD-PARTY-LICENSES.md must ALWAYS survive — MIT
+     * and most of this project's dependencies' own licenses expect their notice to
+     * travel with distributed copies of the software, unlike internal repo docs.
+     */
+    #[Test]
+    public function the_real_app_config_strips_internal_docs_but_keeps_license_notices(): void
+    {
+        $this->writeFile('README.md', '# OeParts');
+        $this->writeFile('SECURITY.md', '# Security Policy');
+        $this->writeFile('CHANGELOG.md', '# Changelog');
+        $this->writeFile('LICENSE', 'MIT License');
+        $this->writeFile('THIRD-PARTY-LICENSES.md', '# Third-Party Licenses');
+
+        $removed = (new ReleaseBuilder((array) config('updates.build')))->stripDevFiles($this->dir);
+
+        foreach (['README.md', 'SECURITY.md', 'CHANGELOG.md'] as $rel) {
+            $this->assertContains($rel, $removed, "{$rel} should be stripped from a live install");
+            $this->assertFileDoesNotExist($this->dir.'/'.$rel);
+        }
+
+        $this->assertFileExists($this->dir.'/LICENSE', 'LICENSE must always ship — open-source license compliance');
+        $this->assertFileExists($this->dir.'/THIRD-PARTY-LICENSES.md', 'bundled dependency license notices must always ship');
+    }
 }

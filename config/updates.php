@@ -57,7 +57,11 @@ return [
     'core_paths' => [
         'app', 'bootstrap/app.php', 'config', 'database', 'lang',
         'public/build', 'resources', 'routes', 'vendor', 'artisan',
-        'composer.json', 'composer.lock', 'version.json', 'CHANGELOG.md',
+        'composer.json', 'composer.lock', 'version.json',
+        // CHANGELOG.md used to be listed here (and shipped) — it no longer does,
+        // see 'build.exclude' below for why. The in-app updater's own "View
+        // Changelog" link has only ever pointed at changelog_url (a raw GitHub
+        // URL), never a local copy, so nothing reads this file from disk.
         // Added with the nginx/PHP-FPM deploy docs (v1.0.14): without these,
         // a zip-updated (non-git) install never receives the root .htaccess
         // or deploy/ configs shipped in the release — the swap only ever
@@ -228,15 +232,26 @@ return [
             // GitHub community-health files — meaningful on the repo's GitHub page,
             // meaningless on a running install.
             'CODE_OF_CONDUCT.md',
-            // Internal dev docs (CHANGELOG.md + README.md still ship). Moved under
-            // docs/ during the root cleanup — CLAUDE.md stays at root (the project's
-            // own coding-standards file, read by contributors) so its entry doesn't.
+            // Internal dev docs. Moved under docs/ during the root cleanup —
+            // CLAUDE.md stays at root (the project's own coding-standards file,
+            // read by contributors) so its entry doesn't.
             'docs/UPDATE_SYSTEM_MASTER_WORKFLOW.md', 'docs/ADMIN_PANEL_MASTER_WORKFLOW.md',
             'docs/PRD.md', 'docs/ARCHITECTURE.md', 'CLAUDE.md',
+            // README.md / SECURITY.md / CHANGELOG.md used to ship on every install —
+            // nothing in the app ever reads any of them from local disk (the admin's
+            // "View Changelog" link has only ever pointed at changelog_url, a raw
+            // GitHub URL). They're meaningful on the repo's GitHub page, not on a
+            // production install's document root. LICENSE and THIRD-PARTY-LICENSES.md
+            // (below) are DELIBERATELY NOT in this list — MIT and most of this
+            // project's dependencies' own licenses expect their notice to travel
+            // with distributed copies of the software, which is a different kind of
+            // file than internal repo documentation.
+            'README.md', 'SECURITY.md', 'CHANGELOG.md',
         ],
         // Per-file sha256 manifest — enables modified-core detection (#44) + future delta.
         'manifest_file' => 'file-manifest.json',
-        // Bundled third-party license text (open-source compliance, decision #14).
+        // Bundled third-party license text (open-source compliance, decision #14) —
+        // deliberately still ships, see the 'exclude' comment above.
         'licenses_file' => 'THIRD-PARTY-LICENSES.md',
         // Release download URL template (Chunk 5.2). {version} = SemVer, {asset} = zip name.
         // Versioned (not /latest/) so the updater can resolve a sequential upgrade path.
