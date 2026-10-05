@@ -217,7 +217,20 @@ class GitUpdater
      * already treats preserve_paths as untouchable — this method just
      * wasn't consulting the same list.
      */
-    private function stripDevFilesFromWorkingTree(): void
+    /**
+     * Public (not just called internally from checkout()) so it can also be re-run
+     * on its own — e.g. by `oeparts:update:strip-dev-files` — as recovery for an
+     * install where THIS method itself didn't get to run or finish: checkout()'s
+     * `git fetch` / `git checkout --force` / this method all happen in one request
+     * with no checkpoint between them, so a request killed from outside PHP (a
+     * host's own time limit) partway through can leave a working tree that's
+     * fully on the new release's tracked files but never had this cleanup applied
+     * — confirmed live: a production install was left with tests/, phpstan.neon,
+     * etc. still present after an interrupted update. Idempotent either way:
+     * paths already gone are silently skipped by ReleaseBuilder::stripDevFiles().
+     */
+    /** @return list<string> paths relative to root() that were actually removed. */
+    public function stripDevFilesFromWorkingTree(): array
     {
         $config = (array) config('updates.build', []);
         $protected = array_merge(['.git', '.gitignore', '.gitattributes'], (array) config('updates.preserve_paths', []));
@@ -237,7 +250,7 @@ class GitUpdater
             fn (string $path) => ! $isProtected($path)
         ));
 
-        (new ReleaseBuilder(array_merge($config, ['exclude' => $exclude])))
+        return (new ReleaseBuilder(array_merge($config, ['exclude' => $exclude])))
             ->stripDevFiles($this->root());
     }
 

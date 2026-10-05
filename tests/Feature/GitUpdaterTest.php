@@ -159,6 +159,27 @@ class GitUpdaterTest extends TestCase
     }
 
     /**
+     * Public (not just an internal implementation detail of checkout()) so a
+     * recovery tool (oeparts:update:strip-dev-files) can re-run it on its own
+     * for an install where checkout() itself was killed before reaching this
+     * step. Called directly here, after a RAW git checkout that bypasses
+     * GitUpdater entirely — simulating exactly that interrupted state.
+     */
+    #[Test]
+    public function strip_dev_files_from_working_tree_can_be_run_standalone_and_reports_what_it_removed(): void
+    {
+        $this->initRepoWithTwoTaggedVersions();
+        $this->git(['checkout', '--force', 'v1.1.0']); // raw checkout, not GitUpdater::checkout() — strip never ran
+        $this->assertFileExists($this->root.'/compose.yaml');
+
+        $removed = (new GitUpdater)->stripDevFilesFromWorkingTree();
+
+        $this->assertContains('docker', $removed);
+        $this->assertContains('compose.yaml', $removed);
+        $this->assertFileDoesNotExist($this->root.'/compose.yaml');
+    }
+
+    /**
      * .git itself is one of the SAME excluded paths in the zip pipeline's
      * list (a throwaway export dir shouldn't carry git history) — but a
      * git-managed install's live working tree needs .git to remain a
