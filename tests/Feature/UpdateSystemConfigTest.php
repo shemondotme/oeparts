@@ -51,7 +51,7 @@ class UpdateSystemConfigTest extends TestCase
     #[Test]
     public function update_system_permissions_exist_on_admin_guard(): void
     {
-        foreach (['view updates', 'apply updates', 'manage backups', 'restore backups', 'run recovery'] as $name) {
+        foreach (['view updates', 'apply updates', 'manage backups', 'restore backups', 'run recovery', 'manage cleanup'] as $name) {
             $this->assertTrue(
                 Permission::where('guard_name', 'admin')->where('name', $name)->exists(),
                 "Permission [{$name}] should exist on the admin guard",

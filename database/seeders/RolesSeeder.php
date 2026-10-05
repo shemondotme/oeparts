@@ -179,6 +179,7 @@ class RolesSeeder extends Seeder
             'manage backups',
             'restore backups',
             'run recovery',
+            'manage cleanup',
         ];
 
         foreach ($permissions as $permission) {
