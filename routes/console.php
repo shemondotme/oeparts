@@ -129,3 +129,6 @@ Schedule::command('oeparts:invoices:clean-cache')->dailyAt('04:20');
 // until something forces a flush. withoutOverlapping(): OPTIMIZE TABLE
 // rebuilds the whole table, which can run long on a large catalog.
 Schedule::command('oeparts:products:optimize-search-index')->dailyAt('03:45')->withoutOverlapping();
+
+// Admin push: deliver quiet-hours digests + prune push bookkeeping — every minute.
+Schedule::command('oeparts:admin-push:flush')->everyMinute()->withoutOverlapping();

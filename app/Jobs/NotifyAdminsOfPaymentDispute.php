@@ -54,6 +54,7 @@ class NotifyAdminsOfPaymentDispute implements ShouldQueue
             actionUrl: $this->orderId
                 ? OrderResource::getUrl('view', ['record' => $this->orderId], panel: 'admin')
                 : null,
+            extra: ['push_topic' => 'payment_dispute'],
         );
 
         $recipients = Admin::role('super_admin')

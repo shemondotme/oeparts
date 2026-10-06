@@ -51,6 +51,7 @@ class RegenerateSitemap implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Sitemap regenerated')
+                    ->viewData(['push_topic' => 'task_completed'])
                     ->body(count($files).' file(s) written, requested by '.$this->triggeredBy.'.')
                     ->icon('heroicon-o-arrow-path')
                     ->iconColor('success')
@@ -67,6 +68,7 @@ class RegenerateSitemap implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Sitemap regeneration failed')
+                    ->viewData(['push_topic' => 'task_failed'])
                     ->body($e->getMessage())
                     ->icon('heroicon-o-arrow-path')
                     ->iconColor('danger')

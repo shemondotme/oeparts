@@ -50,6 +50,7 @@ class OrderObserver
                 ['super_admin', 'admin', 'manager'],
                 Notification::make()
                     ->title('New order placed')
+                    ->viewData(['push_topic' => 'new_order'])
                     ->body($order->order_number.' · '.format_money($order->grand_total))
                     ->icon('heroicon-o-shopping-bag')
                     ->iconColor('success')

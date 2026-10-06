@@ -220,6 +220,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Redirect CSV import finished')
+                    ->viewData(['push_topic' => 'task_completed'])
                     ->body($body)
                     ->icon('heroicon-o-arrow-up-tray')
                     ->iconColor($skipped > 0 && $created === 0 && $updated === 0 ? 'danger' : 'success')
@@ -243,6 +244,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Redirect CSV import failed')
+                    ->viewData(['push_topic' => 'task_failed'])
                     ->body($e->getMessage())
                     ->icon('heroicon-o-arrow-up-tray')
                     ->iconColor('danger')

@@ -89,6 +89,7 @@ class ProcessProductImage implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Product image processing failed')
+                    ->viewData(['push_topic' => 'task_failed'])
                     ->body("Image #{$this->productImageId}: {$e->getMessage()} — the gallery still serves the original upload.")
                     ->icon('heroicon-o-photo')
                     ->iconColor('danger')

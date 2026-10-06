@@ -10,6 +10,7 @@ use App\Events\OrderStatusChanged;
 use App\Events\PartInquiryReceived;
 use App\Events\PaymentReceived;
 use App\Events\RefundRequested;
+use App\Listeners\DispatchAdminPushOnNotification;
 use App\Listeners\LogEmailFailed;
 use App\Listeners\LogEmailSent;
 use App\Listeners\LogOrderStatusChange;
@@ -36,6 +37,7 @@ use Illuminate\Console\Events\ScheduledTaskStarting;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Mail\Events\MessageFailed;
 use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -50,6 +52,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        NotificationSent::class => [
+            DispatchAdminPushOnNotification::class,
         ],
         MessageSent::class => [
             LogEmailSent::class,

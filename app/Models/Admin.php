@@ -6,6 +6,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -35,6 +36,18 @@ class Admin extends Authenticatable implements FilamentUser
             'last_login_at' => 'datetime',
             'dashboard_preferences' => 'array',
         ];
+    }
+
+    /** @return HasMany<AdminPushSubscription, $this> */
+    public function pushSubscriptions(): HasMany
+    {
+        return $this->hasMany(AdminPushSubscription::class);
+    }
+
+    /** @return HasOne<AdminPushPreference, $this> */
+    public function pushPreference(): HasOne
+    {
+        return $this->hasOne(AdminPushPreference::class);
     }
 
     public function activityLogs(): HasMany

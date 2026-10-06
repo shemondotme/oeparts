@@ -81,6 +81,7 @@ class BulkUpdateProductStockStatus implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title("Bulk stock update finished: {$updated} product(s) {$label}")
+                    ->viewData(['push_topic' => 'task_completed'])
                     ->body("Requested by {$this->triggeredBy}.")
                     ->icon('heroicon-o-archive-box')
                     ->iconColor('success')
@@ -98,6 +99,7 @@ class BulkUpdateProductStockStatus implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Bulk stock update failed')
+                    ->viewData(['push_topic' => 'task_failed'])
                     ->body($e->getMessage())
                     ->icon('heroicon-o-archive-box')
                     ->iconColor('danger')

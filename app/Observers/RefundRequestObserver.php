@@ -52,6 +52,7 @@ class RefundRequestObserver
                 ['super_admin', 'admin', 'manager'],
                 Notification::make()
                     ->title('Refund requested')
+                    ->viewData(['push_topic' => 'refund_requested'])
                     ->body('Order '.$orderLabel)
                     ->icon('heroicon-o-receipt-refund')
                     ->iconColor('warning')

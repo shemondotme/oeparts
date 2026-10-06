@@ -73,6 +73,7 @@ class PushIndexNow implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('IndexNow push succeeded')
+                    ->viewData(['push_topic' => 'task_completed'])
                     ->body(count($this->urls).' URL(s) submitted.')
                     ->icon('heroicon-o-bolt')
                     ->iconColor('success')
@@ -91,6 +92,7 @@ class PushIndexNow implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('IndexNow push failed')
+                    ->viewData(['push_topic' => 'task_failed'])
                     ->body($e->getMessage())
                     ->icon('heroicon-o-bolt')
                     ->iconColor('danger')

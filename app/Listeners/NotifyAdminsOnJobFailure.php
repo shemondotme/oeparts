@@ -29,6 +29,7 @@ class NotifyAdminsOnJobFailure
     private const EXCLUDED_JOB_NAMES = [
         'DatabaseNotificationsSent',
         'SendQueuedNotifications',
+        'SendAdminWebPush',
     ];
 
     public function handle(JobFailed $event): void
@@ -45,6 +46,7 @@ class NotifyAdminsOnJobFailure
                 title: "Queue job failed: {$jobName}",
                 detail: substr($event->exception->getMessage(), 0, 120),
                 actionUrl: '/admin/system/failed-jobs',
+                extra: ['push_topic' => 'job_failed'],
             );
         } catch (\Throwable $e) {
             Log::error('NotifyAdminsOnJobFailure: '.$e->getMessage());

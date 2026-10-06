@@ -134,6 +134,7 @@ class BulkGenerateProductSeoMeta implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Bulk SEO meta generation finished')
+                    ->viewData(['push_topic' => 'task_completed'])
                     ->body("Updated {$updated} product(s), skipped {$skipped}, requested by {$this->triggeredBy}.")
                     ->icon('heroicon-o-document-text')
                     ->iconColor('success')
@@ -151,6 +152,7 @@ class BulkGenerateProductSeoMeta implements ShouldQueue
                 ['super_admin', 'admin'],
                 Notification::make()
                     ->title('Bulk SEO meta generation failed')
+                    ->viewData(['push_topic' => 'task_failed'])
                     ->body($e->getMessage())
                     ->icon('heroicon-o-document-text')
                     ->iconColor('danger')

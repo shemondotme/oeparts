@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminPushController;
 use App\Http\Controllers\Admin\CmsSectionController;
-use App\Http\Controllers\Admin\EditorController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes — OeParts
@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\EditorController;
 |
 */
 
+use App\Http\Controllers\Admin\EditorController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\MediaPickerController;
 use App\Http\Controllers\Admin\RefundImageController;
@@ -46,6 +47,7 @@ use App\Http\Controllers\LlmsTxtController;
 use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\WebhookController;
 use App\Support\LocaleRegistry;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -368,6 +370,25 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
 
         return response()->download($path, $filename)->deleteFileAfterSend(true);
     })->name('export.download')->where('filename', '[a-zA-Z0-9_\-]+\.csv$')->middleware('auth.admin');
+
+    // ── Installable admin app + Web Push ────────────────────────────────
+    // sw.js is served from /admin/ (not /public) so its default scope is /admin/.
+    Route::get('/sw.js', [AdminPushController::class, 'serviceWorker'])->name('push.sw');
+    Route::get('/manifest.webmanifest', [AdminPushController::class, 'manifest'])->name('push.manifest');
+
+    Route::middleware('auth.admin')->prefix('push')->name('push.')->group(function () {
+        Route::post('/subscribe', [AdminPushController::class, 'subscribe'])->name('subscribe');
+        Route::post('/unsubscribe', [AdminPushController::class, 'unsubscribe'])->name('unsubscribe');
+        Route::post('/test', [AdminPushController::class, 'test'])->name('test');
+        Route::get('/poll', [AdminPushController::class, 'poll'])->name('poll');
+    });
+
+    // Signed + CSRF-exempt: called by the service worker from a notification button.
+    Route::post('/push/read/{admin}/{id}', [AdminPushController::class, 'markRead'])
+        ->middleware('signed')
+        ->withoutMiddleware([ValidateCsrfToken::class])
+        ->name('push.read')
+        ->whereNumber('admin');
 
     // ── Settings reorg redirect shims (old slug -> new merged page) ────
     // Deleted SettingsPage classes leave Filament with no route for their

@@ -467,6 +467,7 @@ class CacheMetricsService
                 'Cache hit rate dropped below threshold',
                 "Hit rate is now {$health['hit_rate']}%, below the configured {$threshold}% threshold.",
                 CacheDashboard::getUrl(),
+                ['push_topic' => 'cache_alert'],
             );
         }
 

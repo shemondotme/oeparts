@@ -4,6 +4,10 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
+#### Added
+- **Admin device alerts + installable admin app.** Every admin can turn on browser/OS push notifications (with sound) on each phone or computer from a new top-bar button, and install the admin panel as an app (PWA). Alerts arrive even when the browser is closed. New **System → Alert control** (site-wide: master switch, per-kind on/off, urgency, sound, which roles receive it, delivery stats; new kinds appear automatically the first time they are sent) and **System → My alerts** (each admin's devices, personal per-kind choices, quiet hours, lock-screen privacy). Quiet hours hold back non-urgent alerts and deliver one summary afterwards; bursts of the same kind collapse into one "N new" notification; notifications deep-link to the item and offer "Mark as read"; the app icon shows the unread count. VAPID keys are generated automatically. Needs HTTPS in production; on iPhone the panel must first be added to the Home Screen.
+- Contact-form messages and part inquiries now actually appear in the admin bell (their notifications were stored in a format the bell never rendered) and are pushed like every other alert.
+
 Found and fixed on the real live 1.0.16 → 2.0.0 install, which turned out to be git-managed (not zip-installed, as assumed when 2.0.0 was prepared) and hit a class of failure 2.0.0's own rehearsals never exercised: its update was killed from outside PHP (the host's own request time limit, during a slow `git fetch`) while mid-`git_checkout` — the one step that, on a git-managed install, directly mutates the live files, with no separate atomic "swap" afterward the way a zip install has.
 
 #### Fixed

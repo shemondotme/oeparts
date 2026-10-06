@@ -97,6 +97,7 @@ class HealthCheckService
                     ucfirst($key).' health check failing',
                     "Status changed from ok to {$check['status']}: {$check['detail']}",
                     HealthCheckDashboard::getUrl(),
+                    ['push_topic' => 'health_alert'],
                 );
             }
         }

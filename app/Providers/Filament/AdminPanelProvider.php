@@ -65,6 +65,26 @@ class AdminPanelProvider extends PanelProvider
                     ['build' => AppBuildId::current()],
                 ),
             )
+            // Installable admin app (PWA) + device alerts: manifest/theme tags in <head>,
+            // the alerts button next to the user menu, and the boot script. See
+            // public/admin-push/ and App\Http\Controllers\Admin\AdminPushController.
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => '<link rel="manifest" href="'.e(url('/admin/manifest.webmanifest')).'">'
+                    .'<meta name="theme-color" content="#0B1A29">'
+                    .'<meta name="mobile-web-app-capable" content="yes">'
+                    .'<meta name="apple-mobile-web-app-capable" content="yes">'
+                    .'<meta name="apple-mobile-web-app-title" content="OE Admin">'
+                    .'<link rel="apple-touch-icon" href="'.e(asset('admin-push/icon-192.png')).'">',
+            )
+            ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                fn (): string => Blade::render('@include(\'filament.topbar.push-button\')'),
+            )
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => Blade::render('@include(\'filament.hooks.admin-push\')'),
+            )
             ->brandName('OeParts')
             ->brandLogo(fn () => view('filament.brand-logo'))
             ->brandLogoHeight('1.9rem')
