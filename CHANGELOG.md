@@ -2,7 +2,15 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 2.0.2 — 2026-10-06
+
+A rollup patch release. **Update straight from 2.0.0**: 2.0.1 was published but never managed to install on the live site (its update got stuck at the backup step — fixed below), so everything in 2.0.1 ships here too.
+
+#### Fixed — Self-update backup step
+- **The pre-update backup could never finish on a very large catalog.** The update engine ran the whole backup inside a single web request, which on a catalog of a million products outlasted the host's own request-time limit every time and restarted from zero on every retry, so an update stalled forever at step 1 ("backup"). The backup is now driven a few chunks per poll, exactly like the admin's manual "Run backup now" button, so no single request ever runs long.
+
+#### Added — Footer
+- An admin-editable **ISO Number** (General & Brand → Site Identity) shown under Contact in the storefront footer; empty hides it.
 
 #### Added
 - **Admin device alerts + installable admin app.** Every admin can turn on browser/OS push notifications (with sound) on each phone or computer from a new top-bar button, and install the admin panel as an app (PWA). Alerts arrive even when the browser is closed. New **System → Alert control** (site-wide: master switch, per-kind on/off, urgency, sound, which roles receive it, delivery stats; new kinds appear automatically the first time they are sent) and **System → My alerts** (each admin's devices, personal per-kind choices, quiet hours, lock-screen privacy). Quiet hours hold back non-urgent alerts and deliver one summary afterwards; bursts of the same kind collapse into one "N new" notification; notifications deep-link to the item and offer "Mark as read"; the app icon shows the unread count. VAPID keys are generated automatically. Needs HTTPS in production; on iPhone the panel must first be added to the Home Screen.
