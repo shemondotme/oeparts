@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.3 — 2026-10-06
+
+Patch for 2.0.2's device alerts on nginx hosts such as CloudPanel. **Update straight from 2.0.2** (or 2.0.0).
+
+#### Fixed
+- **Device alerts could not start on hosts whose nginx answers every `*.js` request from disk.** The alert service worker was served by PHP at `/admin/sw.js`; such hosts returned 404 for it without ever reaching Laravel, so the phone icon in the top bar did nothing. It is now served from `/admin/service-worker` (no file extension). Verified on a real Chrome install.
+
 ## 2.0.2 — 2026-10-06
 
 A rollup patch release. **Update straight from 2.0.0**: 2.0.1 was published but never managed to install on the live site (its update got stuck at the backup step — fixed below), so everything in 2.0.1 ships here too.
