@@ -245,7 +245,7 @@ class UpdateApplierTest extends TestCase
         {
             public ?bool $rivalGotTheLock = null;
 
-            protected function doBackup(UpdateHistory $h): void
+            protected function doBackup(UpdateHistory $h): bool
             {
                 $this->log[] = 'backup';
 
@@ -254,6 +254,8 @@ class UpdateApplierTest extends TestCase
                 $rival = Cache::lock('update_apply.advance.'.$h->getKey(), 10);
                 $this->rivalGotTheLock = $rival->get();
                 $rival->release();
+
+                return true;
             }
         };
         $history = $applier->start($this->manifest());
@@ -286,6 +288,55 @@ class UpdateApplierTest extends TestCase
         $this->assertTrue(app(BackupLock::class)->isLocked(), 'the updater still holds the lock after its backup step');
 
         app(BackupLock::class)->release();
+    }
+
+    #[Test]
+    public function a_backup_needing_many_chunks_polls_across_multiple_advance_calls_instead_of_blocking_one(): void
+    {
+        // The exact live bug this guards: doBackup() used to call
+        // BackupManager::run() (loop the WHOLE backup to completion inside ONE
+        // call). On a database large enough, that single call/request outlasts
+        // the host's own web-server timeout, which kills it mid-backup and
+        // leaves the update stuck at this step forever — every retry restarted
+        // the backup from zero since nothing was checkpointed, so it failed
+        // identically no matter how many times retried (confirmed live on a
+        // 1M+-product install). batch_seconds=0 forces DatabaseBackupStage::
+        // step() to do exactly ONE table-unit per advance() call, simulating
+        // what a large database needs in production: many advance() calls,
+        // never one that blocks until everything is done.
+        Storage::fake('local');
+        config([
+            'backup.disk' => 'local',
+            'backup.staging_disk' => 'local',
+            'backup.db.batch_seconds' => 0,
+        ]);
+
+        $applier = new class extends UpdateApplier
+        {
+            protected function gate(array $manifest): void {}
+
+            protected function isGitMode(): bool
+            {
+                return false;
+            }
+        };
+
+        $history = $applier->start($this->manifest());
+        $this->assertSame('backup', $history->step);
+
+        $polls = 0;
+        while ($history->step === 'backup' && $polls < 1000) {
+            $history = $applier->advance($history->refresh());
+            $polls++;
+        }
+
+        $this->assertLessThan(1000, $polls, 'the backup must eventually finish, not loop forever');
+        $this->assertGreaterThan(1, $polls, 'a backup with many tables must take more than a single poll — '
+            .'otherwise this test isn\'t actually exercising the chunked path');
+        $this->assertNotSame('backup', $history->step, 'the FSM must advance past backup once it genuinely finishes');
+        $this->assertNotNull($history->backup_run_id);
+        $this->assertSame(BackupRun::STATUS_SUCCESS, BackupRun::find($history->backup_run_id)->status);
+        $this->assertSame(1, BackupRun::count(), 'the SAME BackupRun must be resumed across polls, never restarted');
     }
 
     #[Test]

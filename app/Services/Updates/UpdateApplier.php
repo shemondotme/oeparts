@@ -164,9 +164,17 @@ class UpdateApplier
             $step = $steps[$index];
 
             try {
-                $this->{'do'.Str::studly($step)}($history);
+                // Most do*() steps are void (return null) and complete fully within
+                // one call. doBackup() is chunked (see its docblock) and returns
+                // false while there's still work left — false here means "stay on
+                // this step," not "step failed."
+                $stepComplete = $this->{'do'.Str::studly($step)}($history) !== false;
             } catch (\Throwable $e) {
                 return $this->fail($history, $step, $e->getMessage());
+            }
+
+            if (! $stepComplete) {
+                return $history;
             }
 
             $next = $index + 1;
@@ -184,8 +192,14 @@ class UpdateApplier
     /** Drive to a terminal state (CLI / sync / tests). The web UI polls advance(). */
     public function run(UpdateHistory $history): UpdateHistory
     {
+        // A chunked step (currently only 'backup' — see its docblock) can need far
+        // more than one advance() call on a large database; each chunk is bounded by
+        // its own time budget, not by this guard, and this method runs off a CLI
+        // command (AutoApplySecurityUpdate) with no web-server request timeout to
+        // respect, so a generous cap here only guards against a genuine infinite
+        // loop, never a slow-but-working one.
         $guard = 0;
-        while (! $history->isTerminal() && $guard++ < 100) {
+        while (! $history->isTerminal() && $guard++ < 100_000) {
             $this->advance($history->refresh());
         }
 
@@ -214,13 +228,44 @@ class UpdateApplier
         }
     }
 
-    protected function doBackup(UpdateHistory $history): void
+    /**
+     * Chunked across MULTIPLE advance() polls via BackupManager's own advance()
+     * primitive — the same pattern the admin's manual "Run backup now" button
+     * already uses (BackupDashboard::pollBackup()), and NOT BackupManager::run(),
+     * which loops the WHOLE backup to completion inside a single call. On a site
+     * with a large enough database, that one HTTP request can outlast the host's
+     * own web-server timeout, which kills it mid-backup and leaves the update
+     * stuck at this step forever — confirmed live (a 1M+-product install): every
+     * retry restarted the backup from zero, since nothing about progress was
+     * checkpointed on the UpdateHistory side, so it failed the exact same way
+     * every time regardless of how many times retried. Returning false tells
+     * advance() to keep the FSM on this step so the next poll resumes the SAME
+     * BackupRun from BackupManager's own checkpoint instead of restarting it.
+     */
+    protected function doBackup(UpdateHistory $history): bool
     {
-        // The updater already owns the shared lock — don't re-acquire it (rule #48).
-        $run = app(BackupManager::class)->start(
-            BackupRun::PROFILE_UPDATE_SAFETY, BackupRun::TRIGGER_PRE_UPDATE, [], acquireLock: false
-        );
-        $run = app(BackupManager::class)->run($run);
+        $manager = app(BackupManager::class);
+
+        $run = $history->backup_run_id ? BackupRun::find($history->backup_run_id) : null;
+
+        if ($run === null) {
+            // The updater already owns the shared lock — don't re-acquire it (rule #48).
+            $run = $manager->start(
+                BackupRun::PROFILE_UPDATE_SAFETY, BackupRun::TRIGGER_PRE_UPDATE, [], acquireLock: false
+            );
+            // Linked as soon as the run exists, not only on success — rollback()
+            // only ever consults this after backup has already SUCCEEDED (backup
+            // is never in needsRollback()'s step list), so an early link here is
+            // never read while the backup itself is still incomplete.
+            $history->backup_run_id = $run->getKey();
+            $history->save();
+        }
+
+        $manager->advance($run); // one time-budgeted chunk; mutates $run in place
+
+        if ($run->status === BackupRun::STATUS_RUNNING || $run->status === BackupRun::STATUS_PENDING) {
+            return false;
+        }
 
         if ($run->status !== BackupRun::STATUS_SUCCESS) {
             // doBackup() calls BackupManager directly (not via the RunBackup
@@ -235,8 +280,7 @@ class UpdateApplier
             throw new UpdateException('Pre-update backup failed: '.$run->error);
         }
 
-        $history->backup_run_id = $run->getKey();
-        $history->save();
+        return true;
     }
 
     protected function doDownload(UpdateHistory $history): void

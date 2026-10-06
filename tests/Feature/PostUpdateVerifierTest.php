@@ -153,7 +153,10 @@ class VerifyRollbackApplier extends UpdateApplier
 
     protected function exitMaintenance(): void {}
 
-    protected function doBackup(UpdateHistory $h): void {}
+    protected function doBackup(UpdateHistory $h): bool
+    {
+        return true;
+    }
 
     protected function doDownload(UpdateHistory $h): void {}
 

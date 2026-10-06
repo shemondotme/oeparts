@@ -67,9 +67,11 @@ class FakeUpdateApplier extends UpdateApplier
         return false;
     }
 
-    protected function doBackup(UpdateHistory $h): void
+    protected function doBackup(UpdateHistory $h): bool
     {
         $this->tick('backup');
+
+        return true;
     }
 
     protected function doDownload(UpdateHistory $h): void

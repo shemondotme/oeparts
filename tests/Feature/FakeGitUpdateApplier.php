@@ -28,9 +28,11 @@ class FakeGitUpdateApplier extends UpdateApplier
         return true;
     }
 
-    protected function doBackup(UpdateHistory $h): void
+    protected function doBackup(UpdateHistory $h): bool
     {
         $this->tick('backup');
+
+        return true;
     }
 
     protected function doGitCheckout(UpdateHistory $h): void
