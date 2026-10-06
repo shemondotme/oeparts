@@ -11,6 +11,7 @@ return [
     'phone_label' => 'Phone',
     'email_label' => 'Email',
     'hours_label' => 'Hours',
+    'iso_label' => 'ISO Number',
     'stat_parts_label' => 'OEM Numbers',
     'stat_countries_label' => 'Countries',
     'stat_languages_label' => 'Languages',

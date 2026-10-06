@@ -118,6 +118,13 @@ class GeneralBrandSettings extends SettingsPage
                             ->placeholder('+370 600 00000')
                             ->default(null),
 
+                        Forms\Components\TextInput::make('iso_number')
+                            ->label('ISO Number')
+                            ->helperText('Shown in the storefront footer under Contact (e.g. ISO 9001:2015). Leave empty to hide it.')
+                            ->maxLength(100)
+                            ->placeholder('ISO 9001:2015')
+                            ->default(null),
+
                         Placeholder::make('registered_address_note')
                             ->label('')
                             ->columnSpanFull()

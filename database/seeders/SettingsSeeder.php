@@ -49,6 +49,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'general', 'key' => 'site_url',        'value' => 'http://localhost',         'type' => $s],
             ['group' => 'general', 'key' => 'site_email',      'value' => 'info@oeparts.lt',           'type' => $s],
             ['group' => 'general', 'key' => 'site_phone',      'value' => '+370 600 00000',           'type' => $s],
+            ['group' => 'general', 'key' => 'iso_number',      'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'logo_id',         'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'favicon_id',      'value' => '',                         'type' => $s],
             ['group' => 'general', 'key' => 'header_scripts',  'value' => '',                         'type' => $s],

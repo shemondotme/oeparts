@@ -11,6 +11,7 @@ return [
     'phone_label' => 'Telefonas',
     'email_label' => 'El. paštas',
     'hours_label' => 'Darbo valandos',
+    'iso_label' => 'ISO numeris',
     'stat_parts_label' => 'OEM numeriai',
     'stat_countries_label' => 'Šalys',
     'stat_languages_label' => 'Kalbos',

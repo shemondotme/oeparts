@@ -5,6 +5,7 @@
     $phone    = settings('general.site_phone', '');
     $email    = settings('general.site_email', '');
     $hours    = settings_trans('contact.hours', 'MON–FRI · 09:00–18:00 CET');
+    $isoNumber = trim((string) settings('general.iso_number', ''));
     $showSocialInFooter = filter_var(settings('social_links.show_in_footer', true), FILTER_VALIDATE_BOOLEAN);
     $socialIconStyle    = settings('social_links.footer_icon_style', 'outlined');
     $socialBadgeClass   = $socialIconStyle === 'filled'
@@ -211,6 +212,12 @@
                         <dt class="bp-spec-light text-[9px]">{{ ui_copy('footer_hours_label', 'footer.hours_label') }}</dt>
                         <dd class="mt-1 font-mono text-ivory/80 text-[13px]">{{ $hours }}</dd>
                     </div>
+                    @if($isoNumber !== '')
+                    <div>
+                        <dt class="bp-spec-light text-[9px]">{{ ui_copy('footer_iso_label', 'footer.iso_label') }}</dt>
+                        <dd class="mt-1 font-mono text-ivory/80 text-[13px]">{{ $isoNumber }}</dd>
+                    </div>
+                    @endif
                 </dl>
 
                 @if($showSocialInFooter && ($facebook || $instagram || $twitter || $linkedin || $youtube || $tiktok))
