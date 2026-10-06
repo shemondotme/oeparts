@@ -146,7 +146,7 @@ class AdminPushTest extends TestCase
             ->assertJsonPath('start_url', '/admin')
             ->assertJsonPath('display', 'standalone');
 
-        $this->get(url('/admin/sw.js'))
+        $this->get(route('admin.push.sw'))
             ->assertOk()
             ->assertHeader('Service-Worker-Allowed', '/admin')
             ->assertSee('addEventListener(\'push\'', false);

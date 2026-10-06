@@ -372,8 +372,10 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
     })->name('export.download')->where('filename', '[a-zA-Z0-9_\-]+\.csv$')->middleware('auth.admin');
 
     // ── Installable admin app + Web Push ────────────────────────────────
-    // sw.js is served from /admin/ (not /public) so its default scope is /admin/.
-    Route::get('/sw.js', [AdminPushController::class, 'serviceWorker'])->name('push.sw');
+    // The worker is served by PHP from /admin/ (default scope /admin/). The URL must NOT end
+    // in .js: nginx setups such as CloudPanel's answer any *.js request from disk and return
+    // 404 without ever reaching Laravel.
+    Route::get('/service-worker', [AdminPushController::class, 'serviceWorker'])->name('push.sw');
     Route::get('/manifest.webmanifest', [AdminPushController::class, 'manifest'])->name('push.manifest');
 
     Route::middleware('auth.admin')->prefix('push')->name('push.')->group(function () {

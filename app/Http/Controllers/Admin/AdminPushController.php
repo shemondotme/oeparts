@@ -29,7 +29,7 @@ class AdminPushController extends Controller
 
         return response($source, 200, [
             'Content-Type' => 'application/javascript; charset=utf-8',
-            // Served from /admin/sw.js (default scope /admin/); widened to '/admin' so the
+            // Served from /admin/service-worker (default scope /admin/); widened to '/admin' so the
             // dashboard URL itself (/admin, no trailing slash) is inside the scope too.
             'Service-Worker-Allowed' => '/admin',
             'Cache-Control' => 'no-cache, max-age=0',

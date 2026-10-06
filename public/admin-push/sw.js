@@ -1,5 +1,5 @@
 /* OeParts admin service worker — installable app shell + Web Push.
- * Served from /admin/sw.js (scope /admin/). Keep this file dependency-free. */
+ * Served by PHP from /admin/service-worker (scope /admin). Keep this file dependency-free. */
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));

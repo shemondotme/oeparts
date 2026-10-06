@@ -22,7 +22,7 @@
         'soundEnabled' => (bool) $pref->sound_enabled,
         'soundUrl' => asset('admin-push/alert.wav'),
         'urls' => [
-            'sw' => url('/admin/sw.js'),
+            'sw' => route('admin.push.sw'),
             'subscribe' => route('admin.push.subscribe'),
             'unsubscribe' => route('admin.push.unsubscribe'),
             'test' => route('admin.push.test'),
