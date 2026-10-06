@@ -99,7 +99,7 @@ class HealthCheckServiceSnapshotTest extends TestCase
         $mock = Mockery::mock(AdminNotificationService::class);
         $mock->shouldReceive('createForAll')
             ->once()
-            ->with(AdminNotificationCategory::System, Mockery::type('string'), Mockery::type('string'), Mockery::any());
+            ->with(AdminNotificationCategory::System, Mockery::type('string'), Mockery::type('string'), Mockery::any(), ['push_topic' => 'health_alert']);
         $this->app->instance(AdminNotificationService::class, $mock);
 
         (new HealthCheckService)->snapshot();

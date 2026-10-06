@@ -114,7 +114,7 @@ class CacheSnapshotAlertTest extends TestCase
         $mock = Mockery::mock(AdminNotificationService::class);
         $mock->shouldReceive('createForAll')
             ->once()
-            ->with(AdminNotificationCategory::System, Mockery::type('string'), Mockery::type('string'), Mockery::any());
+            ->with(AdminNotificationCategory::System, Mockery::type('string'), Mockery::type('string'), Mockery::any(), ['push_topic' => 'cache_alert']);
         $this->app->instance(AdminNotificationService::class, $mock);
 
         // default threshold is 50 (dashboard.cache_hit_rate_alert_threshold)
