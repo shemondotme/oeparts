@@ -143,7 +143,11 @@ class HealthCheckService
         try {
             $start = microtime(true);
             $key = 'health_ping_'.uniqid();
-            Cache::put($key, 'ok', 1);
+            // TTL must comfortably outlive the put→get round trip. A 1s TTL
+            // made file/database stores (whole-second expiry timestamps)
+            // report a false "read/write mismatch" whenever the write landed
+            // late in a second, firing bogus "Cache health check failing" alerts.
+            Cache::put($key, 'ok', 30);
             $result = Cache::get($key);
             Cache::forget($key);
             $ms = (int) round((microtime(true) - $start) * 1000);
