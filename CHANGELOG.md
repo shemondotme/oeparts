@@ -2,6 +2,18 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.4 — 2026-10-08
+
+Patch release. **Update straight from 2.0.3** (or 2.0.0).
+
+#### Fixed
+- **Airwallex "hold until shipped" charged the card immediately.** With manual capture switched on, the payment form still captured the money the moment the customer paid, so the order showed as paid and the later capture on shipment had nothing to do. The card form is now told not to auto-capture. Checked against the Airwallex sandbox.
+- **Admin bell "View" buttons opened `http://localhost/...`.** Notifications created by the scheduler or queue stored an address built from the server's own URL setting. They now store only the page path, so the link opens on whatever domain you are using, and a one-off migration repairs the notifications already stored.
+- **False "Cache health check failing" alerts.** The cache health check wrote a test value that expired after one second, so on file or database cache stores it could vanish before it was read back and report a mismatch. It now uses a 30-second lifetime.
+
+#### Verified
+- Paysera's order, payment-link and token calls were exercised against the real API and match what the checkout sends. A real paid callback has not yet been captured, so that half remains unverified.
+
 ## 2.0.3 — 2026-10-06
 
 Patch for 2.0.2's device alerts on nginx hosts such as CloudPanel. **Update straight from 2.0.2** (or 2.0.0).
