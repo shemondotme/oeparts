@@ -7,12 +7,15 @@ use App\Listeners\NotifyAdminsOnJobFailure;
 use App\Models\Admin;
 use App\Models\Order;
 use App\Models\RefundRequest;
+use App\Notifications\AdminDashboardNotification;
 use App\Services\AdminNotificationService;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Contracts\Queue\Job;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -91,6 +94,35 @@ class AdminNotificationsTest extends TestCase
 
         $this->assertSame('/admin/system/health-check-dashboard?tab=cache#top', $notification->data['actions'][0]['url']);
         $this->assertSame('/admin/system/health-check-dashboard?tab=cache#top', $notification->data['action_url']);
+    }
+
+    #[Test]
+    public function the_cleanup_migration_rewrites_stored_localhost_links_and_leaves_relative_ones_alone(): void
+    {
+        $recipient = $this->adminWithRole('super_admin');
+
+        $row = fn (string $url) => [
+            'id' => (string) Str::uuid(),
+            'type' => AdminDashboardNotification::class,
+            'notifiable_type' => Admin::class,
+            'notifiable_id' => $recipient->id,
+            'data' => json_encode(['format' => 'filament', 'action_url' => $url, 'actions' => [['name' => 'view', 'url' => $url]]]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        $stale = $row('http://localhost/admin/system/health-check-dashboard?tab=1');
+        $fine = $row('/admin/system/failed-jobs');
+        DB::table('notifications')->insert([$stale, $fine]);
+
+        (require base_path('database/migrations/2026_10_08_000001_make_admin_notification_links_host_relative.php'))->up();
+
+        $fixed = json_decode(DB::table('notifications')->where('id', $stale['id'])->value('data'), true);
+        $this->assertSame('/admin/system/health-check-dashboard?tab=1', $fixed['action_url']);
+        $this->assertSame('/admin/system/health-check-dashboard?tab=1', $fixed['actions'][0]['url']);
+
+        $untouched = json_decode(DB::table('notifications')->where('id', $fine['id'])->value('data'), true);
+        $this->assertSame('/admin/system/failed-jobs', $untouched['actions'][0]['url']);
     }
 
     #[Test]
