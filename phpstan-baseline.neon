@@ -489,7 +489,7 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$form of method Filament\\Actions\\Action\:\:form\(\) expects array\<Filament\\Actions\\Action\|Filament\\Schemas\\Components\\Component\>\|Closure\|null, array\<int, Filament\\Forms\\Components\\Component\> given\.$#'
 			identifier: argument.type
-			count: 3
+			count: 4
 			path: app/Filament/Pages/System/BackupDashboard.php
 
 		-
@@ -497,18 +497,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Filament/Pages/System/BackupDashboard.php
-
-		-
-			message: '#^Offset 4 on array\{string, non\-falsy\-string, string, string, numeric\-string\} in isset\(\) always exists and is not nullable\.$#'
-			identifier: isset.offset
-			count: 1
-			path: app/Filament/Pages/System/ErrorMonitor.php
-
-		-
-			message: '#^Offset 5 on array\{string, non\-falsy\-string, string, string, numeric\-string\} on left side of \?\? does not exist\.$#'
-			identifier: nullCoalesce.offset
-			count: 1
-			path: app/Filament/Pages/System/ErrorMonitor.php
 
 		-
 			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
@@ -1483,12 +1471,6 @@ parameters:
 			path: app/Filament/Resources/ProductResource.php
 
 		-
-			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Filament/Resources/ProductResource.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$oem_number\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2077,12 +2059,6 @@ parameters:
 			path: app/Filament/Support/AdminUi.php
 
 		-
-			message: '#^Trait App\\Filament\\Support\\DispatchesToasts is used zero times and is not analysed\.$#'
-			identifier: trait.unused
-			count: 1
-			path: app/Filament/Support/DispatchesToasts.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2335,12 +2311,6 @@ parameters:
 			path: app/Http/Controllers/RobotsController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\WebhookController\:\:handleBankTransferConfirm\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
-			identifier: return.type
-			count: 6
-			path: app/Http/Controllers/WebhookController.php
-
-		-
 			message: '#^Access to an undefined property App\\Http\\Resources\\CarModelApiResource\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2549,18 +2519,6 @@ parameters:
 			identifier: identical.alwaysFalse
 			count: 1
 			path: app/Jobs/ImportRedirectsFromCsv.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/ProcessAirwallexWebhook.php
-
-		-
-			message: '#^Parameter \#1 \$order of method App\\Services\\OrderService\:\:transitionStatus\(\) expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Jobs/ProcessAirwallexWebhook.php
 
 		-
 			message: '#^Access to an undefined property App\\Models\\ProductImage\:\:\$path\.$#'
@@ -3174,30 +3132,6 @@ parameters:
 			path: app/Services/OrderService.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$price_at_add\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$quantity\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/OrderService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$total_price\.$#'
 			identifier: property.notFound
 			count: 1
@@ -3222,18 +3156,6 @@ parameters:
 			path: app/Services/OrderService.php
 
 		-
-			message: '#^Property App\\Services\\OrderService\:\:\$settings is never read, only written\.$#'
-			identifier: property.onlyWritten
-			count: 1
-			path: app/Services/OrderService.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Services/OrderService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 2
@@ -3242,31 +3164,31 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 4
+			count: 3
 			path: app/Services/PaymentService.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
 			identifier: property.notFound
-			count: 3
+			count: 2
 			path: app/Services/PaymentService.php
 
 		-
 			message: '#^Parameter \#1 \$order of class App\\Jobs\\SendOrderConfirmationEmail constructor expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
 			identifier: argument.type
-			count: 4
+			count: 3
 			path: app/Services/PaymentService.php
 
 		-
 			message: '#^Parameter \#1 \$order of event class App\\Events\\PaymentReceived constructor expects App\\Models\\Order in App\\Events\\PaymentReceived\:\:dispatch\(\), Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
 			identifier: argument.type
-			count: 2
+			count: 1
 			path: app/Services/PaymentService.php
 
 		-
 			message: '#^Parameter \#1 \$order of method App\\Services\\OrderService\:\:transitionStatus\(\) expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
 			identifier: argument.type
-			count: 4
+			count: 3
 			path: app/Services/PaymentService.php
 
 		-
