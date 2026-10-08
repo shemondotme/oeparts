@@ -254,6 +254,57 @@ class BackupEngineCoreTest extends TestCase
         $this->assertFalse($lock->isLocked(), 'stale lock should be released');
     }
 
+    /**
+     * Live incident (2.0.4 update, 1M+ products): a healthy pre-update backup
+     * that needs more than the stale window overall was reaped by the hourly
+     * janitor mid-run (staleness was measured from started_at), its files were
+     * deleted, and the next poll died with "Could not open source file for
+     * reading". Staleness is now measured from the run's last activity.
+     */
+    #[Test]
+    public function the_janitor_leaves_a_long_but_still_active_running_backup_alone(): void
+    {
+        Storage::disk('local')->put('backups/998/db/products.data.1.sql.gz', 'plain');
+
+        $run = BackupRun::create([
+            'profile' => BackupRun::PROFILE_UPDATE_SAFETY,
+            'status' => BackupRun::STATUS_RUNNING,
+            'trigger' => BackupRun::TRIGGER_PRE_UPDATE,
+            'disk' => 'local',
+            'started_at' => now()->subHours(3), // started long ago...
+        ]);
+        $run->parts()->create(['type' => 'db', 'sequence' => 0, 'disk' => 'local', 'path' => 'backups/998/db/products.data.1.sql.gz', 'bytes' => 5]);
+        // ...but was advanced a minute ago.
+        BackupRun::whereKey($run->id)->update(['updated_at' => now()->subMinute()]);
+
+        $lock = app(BackupLock::class);
+        file_put_contents($lock->path(), json_encode(['owner' => 'update', 'acquired_at' => now()->subHours(3)->toIso8601String()]));
+
+        $cleaned = app(BackupJanitor::class)->cleanupPartials();
+
+        $this->assertSame(0, $cleaned);
+        $this->assertSame(BackupRun::STATUS_RUNNING, $run->refresh()->status);
+        Storage::disk('local')->assertExists('backups/998/db/products.data.1.sql.gz');
+        $this->assertTrue($lock->isLocked(), 'an old lock still owned by an actively advancing run must not be released');
+    }
+
+    #[Test]
+    public function the_janitor_still_reaps_a_running_backup_with_no_recent_activity(): void
+    {
+        $run = BackupRun::create([
+            'profile' => BackupRun::PROFILE_FULL,
+            'status' => BackupRun::STATUS_RUNNING,
+            'trigger' => BackupRun::TRIGGER_MANUAL,
+            'disk' => 'local',
+            'started_at' => now()->subHours(3),
+        ]);
+        BackupRun::whereKey($run->id)->update(['updated_at' => now()->subHours(2)]);
+
+        app(BackupJanitor::class)->cleanupPartials();
+
+        $this->assertSame(BackupRun::STATUS_FAILED, $run->refresh()->status);
+    }
+
     #[Test]
     public function the_janitor_leaves_a_fresh_lock_alone(): void
     {

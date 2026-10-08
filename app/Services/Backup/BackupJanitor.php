@@ -36,8 +36,15 @@ class BackupJanitor
             ->where(function ($q) use ($staleAfter) {
                 $q->where('status', BackupRun::STATUS_FAILED)
                     ->orWhere(function ($q) use ($staleAfter) {
+                        // Staleness is measured from the run's last ACTIVITY, not
+                        // from when it started: every advance() poll saves the
+                        // run (checkpoint changes), bumping updated_at. Using
+                        // started_at made the hourly janitor delete the files of
+                        // a perfectly healthy backup that simply needs more than
+                        // an hour (1M+ products) — the next poll then died with
+                        // "Could not open source file for reading".
                         $q->where('status', BackupRun::STATUS_RUNNING)
-                            ->where('started_at', '<', now()->subSeconds($staleAfter));
+                            ->where('updated_at', '<', now()->subSeconds($staleAfter));
                     });
             })
             ->get();
@@ -113,10 +120,19 @@ class BackupJanitor
         return $ok;
     }
 
-    /** Release the shared lock if it's older than the stale threshold. */
+    /** A run that is still making progress (touched within the stale window) owns the lock, however old the lock is. */
+    private function hasActiveRun(int $staleAfter): bool
+    {
+        return BackupRun::query()
+            ->whereIn('status', [BackupRun::STATUS_PENDING, BackupRun::STATUS_RUNNING])
+            ->where('updated_at', '>=', now()->subSeconds($staleAfter))
+            ->exists();
+    }
+
+    /** Release the shared lock if it's older than the stale threshold and no run is actively using it. */
     private function releaseStaleLock(int $staleAfter): void
     {
-        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter)) {
+        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter) && ! $this->hasActiveRun($staleAfter)) {
             Log::channel(config('updates.log_channel', 'stack'))
                 ->warning('Janitor released a stale backup/update lock.', $this->lock->owner());
 
