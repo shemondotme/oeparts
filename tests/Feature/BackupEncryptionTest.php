@@ -154,6 +154,34 @@ class BackupEncryptionTest extends TestCase
         }
     }
 
+    /**
+     * Inside a Laravel app error_get_last() is always null after a suppressed
+     * fopen() failure, so the message used to read "(unknown reason)" for every
+     * cause. It must now say what is actually wrong.
+     */
+    #[Test]
+    public function the_failure_reason_is_never_unknown(): void
+    {
+        $dir = $this->statePath.'/exists';
+        @mkdir($dir, 0775, true);
+
+        try {
+            app(BackupCipher::class)->encryptFile($dir.'/gone.sql.gz', $dir.'/out.enc');
+            $this->fail('expected a BackupException');
+        } catch (BackupException $e) {
+            $this->assertStringNotContainsString('unknown reason', $e->getMessage());
+            $this->assertStringContainsString('file does not exist', $e->getMessage());
+            $this->assertStringContainsString('folder exists', $e->getMessage());
+        }
+
+        try {
+            app(BackupCipher::class)->encryptFile($this->statePath.'/no-folder/gone.sql.gz', $dir.'/out.enc');
+            $this->fail('expected a BackupException');
+        } catch (BackupException $e) {
+            $this->assertStringContainsString('folder do not exist', $e->getMessage());
+        }
+    }
+
     #[Test]
     public function an_unwritable_destination_reports_the_path_and_reason(): void
     {

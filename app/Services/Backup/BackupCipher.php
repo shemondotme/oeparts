@@ -51,28 +51,22 @@ class BackupCipher
     {
         $key = $this->key();
 
-        // @ suppresses fopen()'s own warning from being displayed/logged, but
-        // error_get_last() still captures the underlying reason regardless
-        // (PHP tracks it independently of error_reporting) — checked
-        // immediately after each call, before anything else can overwrite
-        // it. Previously the exception said only "Could not open files for
-        // encryption", with no path and no reason, making a real permission/
-        // missing-file/disk-space problem on a self-hosted server
-        // undiagnosable without SSH access and a code change just to find
-        // out which of the two files failed and why.
+        // @ keeps fopen()'s warning out of the logs, but inside a Laravel app
+        // error_get_last() is ALWAYS null afterwards (the framework's own error
+        // handler "handles" the warning, and PHP then records nothing) — so the
+        // old `error_get_last()['message'] ?? 'unknown reason'` could only ever
+        // say "unknown reason" (seen on a live update: "products.data.325.sql.gz
+        // (unknown reason)"). Work out the reason by inspecting the path instead.
         $in = @fopen($src, 'rb');
         if ($in === false) {
-            $reason = error_get_last()['message'] ?? 'unknown reason';
-
-            throw new BackupException("Could not open source file for reading: {$src} ({$reason}).");
+            throw new BackupException("Could not open source file for reading: {$src} (".$this->openFailureReason($src, false).').');
         }
 
         $out = @fopen($dst, 'wb');
         if ($out === false) {
-            $reason = error_get_last()['message'] ?? 'unknown reason';
             fclose($in);
 
-            throw new BackupException("Could not open destination file for writing: {$dst} ({$reason}).");
+            throw new BackupException("Could not open destination file for writing: {$dst} (".$this->openFailureReason($dst, true).').');
         }
 
         fwrite($out, self::MAGIC.chr(self::VERSION));
@@ -119,13 +113,72 @@ class BackupCipher
         ];
     }
 
+    /**
+     * Why fopen() failed on $path, worked out from the filesystem — see the
+     * comment in encryptFile() for why error_get_last() can't be used here.
+     */
+    private function openFailureReason(string $path, bool $forWriting): string
+    {
+        $who = function_exists('posix_geteuid') && function_exists('posix_getpwuid')
+            ? (posix_getpwuid(posix_geteuid())['name'] ?? (string) posix_geteuid())
+            : get_current_user();
+        $perms = static function (string $p): string {
+            $mode = @fileperms($p);
+            $owner = function_exists('posix_getpwuid') && ($uid = @fileowner($p)) !== false
+                ? (posix_getpwuid($uid)['name'] ?? (string) $uid)
+                : '?';
+
+            return $mode === false ? 'unknown perms' : sprintf('mode %04o, owner %s', $mode & 0777, $owner);
+        };
+
+        $dir = dirname($path);
+
+        if (! $forWriting) {
+            if (is_dir($path)) {
+                return 'it is a directory, not a file';
+            }
+            if (! file_exists($path)) {
+                return is_dir($dir)
+                    ? "file does not exist — its folder exists, so it was deleted or never written (e.g. cleaned up by another run) [PHP user: {$who}]"
+                    : "file and its folder do not exist — the run's directory was removed [PHP user: {$who}]";
+            }
+            if (! is_readable($path)) {
+                return "file exists but PHP user '{$who}' cannot read it ({$perms($path)})";
+            }
+
+            return "file exists and looks readable ({$perms($path)}) but could not be opened [PHP user: {$who}]";
+        }
+
+        if (! is_dir($dir)) {
+            return 'destination folder does not exist';
+        }
+        if (! is_writable($dir)) {
+            return "folder is not writable by PHP user '{$who}' ({$perms($dir)})";
+        }
+        if (file_exists($path) && ! is_writable($path)) {
+            return "file exists but is not writable by PHP user '{$who}' ({$perms($path)})";
+        }
+        $free = @disk_free_space($dir);
+        if ($free !== false && $free < 1048576) {
+            return 'the disk is full ('.round($free / 1024).' KB free)';
+        }
+
+        return "could not be opened for writing [PHP user: {$who}, folder {$perms($dir)}]";
+    }
+
     /** Decrypt $src → $dst (both absolute paths). Throws on any auth failure. */
     public function decryptFile(string $src, string $dst): void
     {
         $in = @fopen($src, 'rb');
         $out = @fopen($dst, 'wb');
         if ($in === false || $out === false) {
-            throw new BackupException('Could not open files for decryption.');
+            $in === false || fclose($in);
+            $out === false || fclose($out);
+
+            throw new BackupException(
+                'Could not open files for decryption: '
+                .($in === false ? "{$src} (".$this->openFailureReason($src, false).')' : "{$dst} (".$this->openFailureReason($dst, true).')')
+            );
         }
 
         try {
