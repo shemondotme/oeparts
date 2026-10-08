@@ -514,6 +514,12 @@
                             dropInOptions.googlePayRequestOptions = { countryCode: data.country_code };
                         }
                         dropInOptions.methods = dropInMethods;
+                        // Manual capture ("hold until shipped"): without this the
+                        // Drop-in's confirm overrides the intent's auto_capture=false
+                        // and charges the card immediately.
+                        if (data.auto_capture === false) {
+                            dropInOptions.autoCapture = false;
+                        }
 
                         const dropIn = await window.AirwallexComponentsSDK.createElement('dropIn', dropInOptions);
 

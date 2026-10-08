@@ -134,6 +134,37 @@ class AirwallexPaymentContractTest extends TestCase
         $this->assertSame(19.99, $service->airwallexAmount(19.99));
     }
 
+    /**
+     * Verified against the live Airwallex sandbox (2026-10-08): an intent created
+     * with auto_capture=false is still captured instantly if the confirm call
+     * doesn't repeat it, and the Drop-in only repeats it when created with
+     * `autoCapture: false`. The page JSON must therefore tell the Drop-in.
+     */
+    #[Test]
+    public function the_customer_payment_json_tells_the_dropin_not_to_auto_capture_when_manual_capture_is_on(): void
+    {
+        Setting::updateOrCreate(['group' => 'payment', 'key' => 'airwallex_manual_capture_enabled'], ['value' => '1', 'type' => SettingType::String]);
+        $this->fakeIntentApi();
+        $order = $this->order(20, ['payment_method' => 'card']);
+
+        $this->withSession(['owned_order_ids' => [$order->id]])
+            ->getJson(route('frontend.checkout.payment.intent', ['lang' => 'en', 'order' => $order->order_number]))
+            ->assertOk()
+            ->assertJsonPath('auto_capture', false);
+    }
+
+    #[Test]
+    public function the_customer_payment_json_keeps_auto_capture_on_by_default(): void
+    {
+        $this->fakeIntentApi();
+        $order = $this->order(20, ['payment_method' => 'card']);
+
+        $this->withSession(['owned_order_ids' => [$order->id]])
+            ->getJson(route('frontend.checkout.payment.intent', ['lang' => 'en', 'order' => $order->order_number]))
+            ->assertOk()
+            ->assertJsonPath('auto_capture', true);
+    }
+
     #[Test]
     public function the_customer_payment_json_reports_the_amount_in_major_units_too(): void
     {

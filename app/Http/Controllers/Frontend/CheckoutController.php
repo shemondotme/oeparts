@@ -653,6 +653,14 @@ class CheckoutController extends Controller
             'country_code' => strtoupper((string) settings('payment.airwallex_merchant_country_code', 'LT')),
             'enable_apple_pay' => (bool) settings('checkout.enable_apple_pay', true),
             'enable_google_pay' => (bool) settings('checkout.enable_google_pay', true),
+            // The intent's own auto_capture=false is NOT enough: the Drop-in's
+            // confirm call overrides it and captures immediately unless the
+            // element itself is created with autoCapture:false (verified
+            // against the Airwallex sandbox). Mirror the manual-capture setting.
+            'auto_capture' => ! filter_var(
+                settings('payment.airwallex_manual_capture_enabled', false),
+                FILTER_VALIDATE_BOOLEAN
+            ),
         ]);
     }
 
