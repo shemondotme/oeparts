@@ -8,12 +8,14 @@ use App\Filament\Resources\OrderResource\Pages\CreateOrder;
 use App\Filament\Resources\SeoMetaResource;
 use App\Filament\Resources\SeoMetaResource\Pages\ListSeoMetas;
 use App\Filament\Resources\ShippingZoneResource\Pages\CreateShippingZone;
+use App\Filament\Resources\TaxRateResource\Pages\CreateTaxRate;
 use App\Models\Admin;
 use App\Models\Carrier;
 use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
+use App\Models\TaxRate;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -107,6 +109,34 @@ class CommerceModuleCrudTest extends TestCase
 
         $this->assertTrue(ShippingZone::where('name', 'Test Zone')->exists());
         $this->assertSame('Test Zone', \DB::table('shipping_zones')->value('name'));
+    }
+
+    /**
+     * No prior test coverage of any kind for this resource — a 2026-10-06
+     * admin-panel e2e sweep hit a flaky "create form submits successfully"
+     * failure on it. The resource's own form/validation logic turned out to
+     * be entirely correct (this test passes cleanly); the real cause was
+     * the e2e suite's own test-data generator (uniqueCode2(), now fixed)
+     * being deterministic rather than random, so it eventually collided
+     * with one of 8 leftover "E2E Country ..." rows that had piled up since
+     * country_code is a 2-letter unique field admin-only TaxRate rows are
+     * never swept for (see CleanupAdminE2eTestData's documented scope).
+     * This test exists so the create path itself has real coverage going
+     * forward, independent of the e2e suite's data hygiene.
+     */
+    #[Test]
+    public function tax_rate_can_be_created(): void
+    {
+        Livewire::test(CreateTaxRate::class)
+            ->fillForm([
+                'country_code' => 'ZZ',
+                'country_name' => 'Test Country',
+                'rate' => '15',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertTrue(TaxRate::where('country_code', 'ZZ')->exists());
     }
 
     /**

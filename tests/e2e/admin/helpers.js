@@ -9,11 +9,24 @@ export function uniqueSuffix() {
     return `${Date.now()}${Math.floor(Math.random() * 1000)}`;
 }
 
-/** A safe 2-letter uppercase code, different enough run-to-run to avoid unique-constraint collisions. */
+/**
+ * A 2-letter uppercase code for a field validated as exactly 2 letters
+ * (TaxRate.country_code, Language.code) — can't lengthen it to dodge
+ * collisions, so it has to actually be random within that fixed space.
+ *
+ * The previous version derived both letters from Date.now() alone (mod 26,
+ * then mod 26 again on a /7 scaling of the SAME value) — not random at all,
+ * just two deterministic transforms of "what time is it", so two runs
+ * close together in time produced the same code. Confirmed live: TaxRate's
+ * create test started failing its uniqueness check once enough leftover
+ * "E2E Country ..." rows had piled up (TaxRate isn't swept by
+ * oeparts:e2e:cleanup-crud-leftovers — it's admin-only, not customer-facing,
+ * so by that command's own documented scope it's never been cleaned up) —
+ * the deterministic generator was always going to repeat eventually.
+ */
 export function uniqueCode2() {
-    const a = 65 + (Date.now() % 26);
-    const b = 65 + (Math.floor(Date.now() / 7) % 26);
-    return String.fromCharCode(a, b);
+    const n = Math.floor(Math.random() * 26 * 26);
+    return String.fromCharCode(65 + Math.floor(n / 26), 65 + (n % 26));
 }
 
 export async function fillText(page, key, value) {
