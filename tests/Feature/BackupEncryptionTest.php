@@ -7,6 +7,7 @@ use App\Models\BackupRun;
 use App\Services\Backup\BackupCipher;
 use App\Services\Backup\BackupManager;
 use App\Services\Backup\Exceptions\BackupException;
+use App\Services\Backup\Stages\EncryptTransportStage;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -195,6 +196,61 @@ class BackupEncryptionTest extends TestCase
         } catch (BackupException $e) {
             $this->assertStringContainsString($badDst, $e->getMessage());
             $this->assertStringContainsString('writing', $e->getMessage());
+        }
+    }
+
+    /**
+     * Same incident, stage level: this driver read a part row that another
+     * driver had NOT yet saved as encrypted, then found the plaintext gone
+     * (the other driver deletes it only AFTER saving the row). That is a
+     * finished part, not a failure.
+     */
+    #[Test]
+    public function a_part_secured_by_another_driver_between_query_and_read_is_not_a_failure(): void
+    {
+        $run = BackupRun::create([
+            'profile' => BackupRun::PROFILE_FULL, 'status' => BackupRun::STATUS_RUNNING,
+            'trigger' => BackupRun::TRIGGER_MANUAL, 'disk' => 'local', 'started_at' => now(),
+        ]);
+        $part = $run->parts()->create([
+            'type' => 'db', 'sequence' => 0, 'name' => 'products', 'disk' => 'local',
+            'path' => 'backups/'.$run->id.'/db/products.data.325.sql.gz', 'bytes' => 5,
+        ]);
+
+        $stale = BackupChunk::find($part->id); // what THIS driver read: not encrypted yet
+
+        // The other driver finishes: row saved as encrypted, plaintext never existed here.
+        $part->update(['meta' => ['encrypted' => true]]);
+
+        $stage = new EncryptTransportStage(app(BackupCipher::class));
+        $securePart = new \ReflectionMethod($stage, 'securePart');
+        $securePart->invoke($stage, $run, $stale);
+
+        $this->assertTrue((bool) ($part->refresh()->meta['encrypted'] ?? false));
+    }
+
+    /** A source that is missing while the row is STILL unencrypted is real data loss and must still fail loudly. */
+    #[Test]
+    public function a_missing_source_on_an_unencrypted_part_still_fails_with_a_clear_reason(): void
+    {
+        $run = BackupRun::create([
+            'profile' => BackupRun::PROFILE_FULL, 'status' => BackupRun::STATUS_RUNNING,
+            'trigger' => BackupRun::TRIGGER_MANUAL, 'disk' => 'local', 'started_at' => now(),
+        ]);
+        $part = $run->parts()->create([
+            'type' => 'db', 'sequence' => 0, 'name' => 'products', 'disk' => 'local',
+            'path' => 'backups/'.$run->id.'/db/lost.sql.gz', 'bytes' => 5,
+        ]);
+
+        $stage = new EncryptTransportStage(app(BackupCipher::class));
+        $securePart = new \ReflectionMethod($stage, 'securePart');
+
+        try {
+            $securePart->invoke($stage, $run, $part);
+            $this->fail('expected a BackupException');
+        } catch (BackupException $e) {
+            $this->assertStringContainsString('lost.sql.gz', $e->getMessage());
+            $this->assertStringNotContainsString('unknown reason', $e->getMessage());
         }
     }
 

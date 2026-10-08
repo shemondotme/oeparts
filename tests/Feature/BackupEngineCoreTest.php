@@ -13,6 +13,7 @@ use App\Services\Backup\Exceptions\BackupException;
 use App\Services\Backup\Exceptions\BackupLockException;
 use App\Services\Backup\StageStepResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -211,6 +212,35 @@ class BackupEngineCoreTest extends TestCase
         $this->assertStringContainsString('[files]', (string) $run->error);
         $this->assertNotNull($run->finished_at);
         $this->assertFalse(app(BackupLock::class)->isLocked());
+    }
+
+    /**
+     * Live incident (2.0.4 update): two overlapping advances of the SAME run
+     * both ran the encrypt stage on the same part; one deleted the plaintext
+     * the other was about to read and failed the whole pre-update backup.
+     * Advancing one run is now serialised: a second driver just reports
+     * "running" and does no work.
+     */
+    #[Test]
+    public function a_second_driver_cannot_advance_a_run_that_is_already_being_advanced(): void
+    {
+        $run = $this->manager()->start(BackupRun::PROFILE_FULL, BackupRun::TRIGGER_MANUAL);
+        $before = $run->refresh()->checkpoint();
+
+        $held = Cache::lock('backup_run.advance.'.$run->getKey(), 60);
+        $this->assertTrue($held->get());
+
+        $progress = $this->manager()->advance($run);
+
+        $this->assertSame(BackupRun::STATUS_RUNNING, $run->refresh()->status, 'the loser must neither finish nor fail the run');
+        $this->assertSame($before, $run->checkpoint(), 'the loser must not touch the checkpoint');
+        $this->assertSame(BackupRun::STATUS_RUNNING, $progress->toArray()['status'] ?? BackupRun::STATUS_RUNNING);
+
+        $held->release();
+
+        // Once the first driver is done, the run advances normally.
+        $this->manager()->advance($run);
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->refresh()->status);
     }
 
     #[Test]

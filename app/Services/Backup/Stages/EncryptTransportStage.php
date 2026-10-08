@@ -125,6 +125,22 @@ class EncryptTransportStage implements BackupStage
         $srcAbs = Storage::disk($srcDisk)->path($srcRel);
         $encAbs = Storage::disk($srcDisk)->path($encRel);
 
+        // The plaintext is only ever deleted AFTER the part row has been saved as
+        // encrypted. So a missing source means another driver of this same run
+        // already secured this part between our query and now (we read a stale,
+        // not-yet-encrypted row) — re-read the row instead of failing the whole
+        // backup. A source that is missing while the row is STILL unencrypted is
+        // genuine loss and falls through to encryptFile()'s descriptive error.
+        if (! Storage::disk($srcDisk)->exists($srcRel)) {
+            $part->refresh();
+
+            if (($part->meta['encrypted'] ?? false) === true) {
+                $this->deleteLeftoverPlaintext($part);
+
+                return;
+            }
+        }
+
         $meta = $this->cipher->encryptFile($srcAbs, $encAbs);
 
         $dest = $run->disk;                     // final destination (may be off-site)
