@@ -16,8 +16,8 @@ use App\Http\Controllers\Admin\CmsSectionController;
 |
 */
 
-use App\Http\Controllers\Admin\EditorController;
 use App\Http\Controllers\Admin\CustomInvoiceController;
+use App\Http\Controllers\Admin\EditorController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\MediaPickerController;
 use App\Http\Controllers\Admin\RefundImageController;

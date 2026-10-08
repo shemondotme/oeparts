@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use PHPUnit\Framework\Attributes\Test;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 /**
@@ -246,16 +247,16 @@ class RecoveryConsoleTest extends TestCase
     #[Test]
     public function git_drift_reports_the_actual_checked_out_head_and_tag(): void
     {
-        $process = new \Symfony\Component\Process\Process(['git', 'init'], $this->base);
+        $process = new Process(['git', 'init'], $this->base);
         $process->mustRun();
-        (new \Symfony\Component\Process\Process(['git', 'config', 'user.email', 'test@test.local'], $this->base))->mustRun();
-        (new \Symfony\Component\Process\Process(['git', 'config', 'user.name', 'Test'], $this->base))->mustRun();
+        (new Process(['git', 'config', 'user.email', 'test@test.local'], $this->base))->mustRun();
+        (new Process(['git', 'config', 'user.name', 'Test'], $this->base))->mustRun();
         $this->writeFile($this->base.'/README.md', 'x');
-        (new \Symfony\Component\Process\Process(['git', 'add', '.'], $this->base))->mustRun();
-        (new \Symfony\Component\Process\Process(['git', 'commit', '-m', 'init'], $this->base))->mustRun();
-        (new \Symfony\Component\Process\Process(['git', 'tag', 'v9.9.9'], $this->base))->mustRun();
+        (new Process(['git', 'add', '.'], $this->base))->mustRun();
+        (new Process(['git', 'commit', '-m', 'init'], $this->base))->mustRun();
+        (new Process(['git', 'tag', 'v9.9.9'], $this->base))->mustRun();
 
-        $head = trim((new \Symfony\Component\Process\Process(['git', 'rev-parse', '--short', 'HEAD'], $this->base))->mustRun()->getOutput());
+        $head = trim((new Process(['git', 'rev-parse', '--short', 'HEAD'], $this->base))->mustRun()->getOutput());
 
         $drift = $this->console()->gitDrift();
 
