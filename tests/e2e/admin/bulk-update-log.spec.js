@@ -34,7 +34,10 @@ test('bulk update log: revert restores the product to its pre-update state', asy
     await page.waitForTimeout(1500);
     await page.locator('input[type="checkbox"][wire\\:model\\.live="confirmed"]').check();
     await page.getByRole('button', { name: /Apply to \d+ Product/ }).click();
-    await page.waitForTimeout(1500);
+    // Wait for the apply to actually finish (its success toast) instead of a
+    // fixed 1.5s sleep — late in a full run the apply can take longer than
+    // that, and the log row this test goes looking for next doesn't exist yet.
+    await expect(page.getByText(/\d+ products? updated/).first()).toBeVisible({ timeout: 30000 });
 
     // The log's own list is sorted created_at desc, so the entry just
     // created is the first row.
