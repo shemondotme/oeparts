@@ -205,6 +205,36 @@ class BackupManagerPageTest extends TestCase
     }
 
     #[Test]
+    public function several_backups_can_be_bulk_deleted_with_a_password_and_running_ones_are_skipped(): void
+    {
+        $a = $this->makeRun();
+        $b = $this->makeRun();
+        $running = BackupRun::create([
+            'profile' => BackupRun::PROFILE_FULL,
+            'status' => BackupRun::STATUS_RUNNING,
+            'trigger' => BackupRun::TRIGGER_MANUAL,
+            'disk' => 'local',
+        ]);
+        $admin = $this->adminWithRole('super_admin', ['password' => Hash::make('secret-pass')]);
+        $this->actingAs($admin, 'admin');
+
+        // Wrong password: nothing is deleted.
+        Livewire::test(BackupDashboard::class)
+            ->callTableBulkAction('bulkDelete', [$a, $b, $running], ['password' => 'wrong']);
+        $this->assertModelExists($a);
+        $this->assertModelExists($b);
+
+        Livewire::test(BackupDashboard::class)
+            ->callTableBulkAction('bulkDelete', [$a, $b, $running], ['password' => 'secret-pass']);
+
+        $this->assertModelMissing($a);
+        $this->assertModelMissing($b);
+        $this->assertModelExists($running);
+        Storage::disk('local')->assertMissing('backups/'.$a->id.'/db/part.enc');
+        Storage::disk('local')->assertMissing('backups/'.$b->id.'/db/part.enc');
+    }
+
+    #[Test]
     public function restore_requires_password_and_dispatches_a_restore_job(): void
     {
         Queue::fake();

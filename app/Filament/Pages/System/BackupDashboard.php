@@ -22,6 +22,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -299,6 +300,11 @@ class BackupDashboard extends Page implements HasTable
                     $this->deleteAction(),
                 ]),
             ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    $this->bulkDeleteAction(),
+                ]),
+            ])
             ->headerActions([
                 Tables\Actions\Action::make('runNow')
                     ->label('Run backup now')
@@ -479,6 +485,58 @@ class BackupDashboard extends Page implements HasTable
                 $this->audit('delete', $record);
                 $record->delete();
                 Notification::make()->title('Backup deleted')->success()->send();
+            });
+    }
+
+    /**
+     * Delete many backups at once (files + history row). Same effect per
+     * backup as deleteAction(), but gated by a password re-check because one
+     * click can wipe every restore point. A backup that is still pending or
+     * running is skipped — its files are in use and the janitor owns reaping
+     * it if it dies.
+     */
+    private function bulkDeleteAction(): Tables\Actions\BulkAction
+    {
+        return Tables\Actions\BulkAction::make('bulkDelete')
+            ->label('Delete selected')
+            ->icon('heroicon-o-trash')
+            ->color('danger')
+            ->authorize('manage backups')
+            ->requiresConfirmation()
+            ->modalHeading('Delete selected backups')
+            ->modalDescription('Permanently deletes the selected backups and their files. This cannot be undone — make sure you keep at least one good backup.')
+            ->form($this->reauthForm('Confirm your password to delete multiple backups.'))
+            ->deselectRecordsAfterCompletion()
+            ->action(function (Collection $records, array $data): void {
+                $this->reauthenticate($data);
+
+                $janitor = app(BackupJanitor::class);
+                $deleted = 0;
+                $skipped = 0;
+
+                foreach ($records as $record) {
+                    /** @var BackupRun $record */
+                    if (! $record->isTerminal()) {
+                        $skipped++;
+
+                        continue;
+                    }
+
+                    $janitor->purgeFiles($record);
+                    $this->audit('delete', $record, ['bulk' => true]);
+                    $record->delete();
+                    $deleted++;
+                }
+
+                $notification = Notification::make()
+                    ->title("{$deleted} backup(s) deleted")
+                    ->success();
+
+                if ($skipped > 0) {
+                    $notification->body("{$skipped} backup(s) still running were skipped.");
+                }
+
+                $notification->send();
             });
     }
 
