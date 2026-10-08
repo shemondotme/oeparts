@@ -41,11 +41,13 @@ class AdminDashboardNotification extends Notification
             ->icon($this->category->filamentIcon())
             ->iconColor($this->category->filamentColor());
 
-        if (filled($this->actionUrl)) {
+        $actionUrl = self::toRelativeUrl($this->actionUrl);
+
+        if (filled($actionUrl)) {
             $notification->actions([
                 Action::make('view')
                     ->label('View')
-                    ->url($this->actionUrl)
+                    ->url($actionUrl)
                     ->markAsRead(),
             ]);
         }
@@ -57,8 +59,34 @@ class AdminDashboardNotification extends Notification
             // Filament's own are otherwise ignored by its renderer.
             'category' => $this->category->value,
             'detail' => $this->detail,
-            'action_url' => $this->actionUrl,
+            'action_url' => $actionUrl,
             ...$this->extra,
         ];
+    }
+
+    /**
+     * Notifications are often created from the scheduler/queue (CLI), where
+     * Filament's getUrl() builds an absolute URL from APP_URL — so a stored
+     * "http://localhost/admin/..." link pointed admins at localhost on the live
+     * site. Persist only path + query + fragment so the link resolves against
+     * whatever host the admin is actually browsing.
+     */
+    private static function toRelativeUrl(?string $url): ?string
+    {
+        if (blank($url)) {
+            return null;
+        }
+
+        $parts = parse_url($url);
+
+        if ($parts === false || ! isset($parts['host'])) {
+            return $url;
+        }
+
+        $path = ($parts['path'] ?? '') !== '' ? $parts['path'] : '/';
+
+        return $path
+            .(isset($parts['query']) ? '?'.$parts['query'] : '')
+            .(isset($parts['fragment']) ? '#'.$parts['fragment'] : '');
     }
 }

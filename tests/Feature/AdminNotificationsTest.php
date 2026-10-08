@@ -75,6 +75,25 @@ class AdminNotificationsTest extends TestCase
     }
 
     #[Test]
+    public function action_urls_are_stored_host_relative_so_they_never_point_at_localhost(): void
+    {
+        $recipient = $this->adminWithRole('super_admin');
+
+        app(AdminNotificationService::class)->create(
+            $recipient,
+            AdminNotificationCategory::System,
+            'Cache health check failing',
+            'detail',
+            'http://localhost/admin/system/health-check-dashboard?tab=cache#top',
+        );
+
+        $notification = DatabaseNotification::where('notifiable_id', $recipient->id)->firstOrFail();
+
+        $this->assertSame('/admin/system/health-check-dashboard?tab=cache#top', $notification->data['actions'][0]['url']);
+        $this->assertSame('/admin/system/health-check-dashboard?tab=cache#top', $notification->data['action_url']);
+    }
+
+    #[Test]
     public function creating_a_refund_request_sends_a_real_filament_compatible_bell_notification(): void
     {
         $recipient = $this->adminWithRole('admin');
