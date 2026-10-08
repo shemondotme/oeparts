@@ -64,6 +64,11 @@ class RolesSeeder extends Seeder
             'delete customers',
             'export customers',
 
+            // Custom (stand-alone) invoices
+            'view custom invoices',
+            'create custom invoices',
+            'edit custom invoices',
+
             // Coupons
             'view coupons',
             'create coupons',
@@ -209,6 +214,7 @@ class RolesSeeder extends Seeder
             'view orders', 'edit orders', 'cancel orders', 'export orders',
             'view refunds', 'process refunds',
             'view payments',
+            'view custom invoices', 'create custom invoices', 'edit custom invoices',
             'view tax rates',
             'view products', 'create products', 'edit products', 'delete products',
             'import products', 'bulk update products',
@@ -253,6 +259,7 @@ class RolesSeeder extends Seeder
             'view orders', 'edit orders', 'cancel orders', 'export orders',
             'view refunds', 'process refunds',
             'view payments',
+            'view custom invoices', 'create custom invoices', 'edit custom invoices',
             'view products', 'create products', 'edit products', 'delete products',
             'import products', 'bulk update products',
             'bulk update product prices', 'bulk update product stock', 'bulk update product details',

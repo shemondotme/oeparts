@@ -34,6 +34,7 @@ class InvoiceService
                 'items' => $order->items,
                 'billingAddress' => $snapshotAddress,
                 'shippingAddress' => $snapshotAddress,
+                'bank' => $this->bankDetails(),
                 'settings' => [
                     'company_name' => settings('company.name', 'OeParts'),
                     'company_address' => settings('company.address', ''),
@@ -60,6 +61,29 @@ class InvoiceService
 
             throw $e;
         }
+    }
+
+    /**
+     * Bank-transfer details for the invoice's "Payment Details" block, from
+     * Settings → Store Operations → B2B Offline Bank Transfer. Null when no
+     * IBAN is configured so the block is omitted rather than printed empty.
+     *
+     * @return array{bank_name: string, iban: string, bic: string, account_holder: string}|null
+     */
+    public function bankDetails(): ?array
+    {
+        $iban = trim((string) settings('payment.bank_iban', ''));
+
+        if ($iban === '') {
+            return null;
+        }
+
+        return [
+            'bank_name' => trim((string) settings('payment.bank_name', '')),
+            'iban' => $iban,
+            'bic' => trim((string) settings('payment.bank_bic', '')),
+            'account_holder' => trim((string) settings('payment.bank_account_holder', '')) ?: (string) settings('company.name', ''),
+        ];
     }
 
     /**

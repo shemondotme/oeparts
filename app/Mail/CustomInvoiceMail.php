@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Mail;
+
+use App\Models\CustomInvoice;
+use App\Services\InvoiceService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
+use Illuminate\Queue\SerializesModels;
+
+/**
+ * Sends a stand-alone invoice to the client with the PDF attached. The PDF
+ * bytes are rendered by the caller and passed in so the attachment is exactly
+ * what the admin previewed. Invoices are English-only documents.
+ */
+class CustomInvoiceMail extends Mailable
+{
+    use Queueable, SerializesModels;
+
+    public function __construct(
+        public readonly CustomInvoice $invoice,
+        private readonly string $pdfContent,
+    ) {
+        $this->locale = 'en';
+    }
+
+    public function envelope(): Envelope
+    {
+        return new Envelope(
+            subject: 'Invoice '.$this->invoice->invoice_number.' from '.settings('company.name', 'OeParts'),
+            tags: ['custom-invoice'],
+            metadata: [
+                'custom_invoice_id' => $this->invoice->id,
+                'template_type' => 'custom_invoice',
+            ],
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.custom-invoice',
+            text: 'emails.custom-invoice-text',
+            with: [
+                'invoice' => $this->invoice,
+                'bank' => app(InvoiceService::class)->bankDetails(),
+                'locale' => 'en',
+            ],
+        );
+    }
+
+    /**
+     * @return array<int, Attachment>
+     */
+    public function attachments(): array
+    {
+        return [
+            Attachment::fromData(fn () => $this->pdfContent, 'invoice-'.$this->invoice->invoice_number.'.pdf')
+                ->withMime('application/pdf'),
+        ];
+    }
+}

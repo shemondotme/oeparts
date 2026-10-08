@@ -16,6 +16,7 @@ use App\Models\Condition;
 use App\Models\ContactMessage;
 use App\Models\Coupon;
 use App\Models\CronLog;
+use App\Models\CustomInvoice;
 use App\Models\EmailLog;
 use App\Models\FailedSearchLog;
 use App\Models\Faq;
@@ -56,6 +57,7 @@ use App\Policies\ConditionPolicy;
 use App\Policies\ContactMessagePolicy;
 use App\Policies\CouponPolicy;
 use App\Policies\CronLogPolicy;
+use App\Policies\CustomInvoicePolicy;
 use App\Policies\EmailLogPolicy;
 use App\Policies\FailedSearchLogPolicy;
 use App\Policies\FaqPolicy;
@@ -103,6 +105,7 @@ class AuthServiceProvider extends ServiceProvider
         ContactMessage::class => ContactMessagePolicy::class,
         Coupon::class => CouponPolicy::class,
         CronLog::class => CronLogPolicy::class,
+        CustomInvoice::class => CustomInvoicePolicy::class,
         EmailLog::class => EmailLogPolicy::class,
         FailedSearchLog::class => FailedSearchLogPolicy::class,
         Faq::class => FaqPolicy::class,
