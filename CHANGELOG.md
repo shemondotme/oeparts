@@ -2,6 +2,38 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.6 — 2026-10-09
+
+Minor release. **Update straight from 2.0.5** (or any version from 2.0.0). Big upgrade to invoicing and admin-created orders, a new look for every invoice and email, and bulk actions across the admin. It applies 8 small additive database migrations (new columns and tables only); nothing in your products, orders or customers is changed or removed.
+
+#### Added — Orders
+- **Create an order from the admin with catalog parts.** Search parts by OEM number, prices fill in, and the subtotal, shipping, coupon discount and VAT are calculated for you (exports outside the EU are zero-rated; reverse charge is supported). Optional confirmation email to the customer.
+- Orders now store the customer's phone, address line 2, state/region and an optional separate billing address (the storefront checkout saves them too).
+- **Internal cost price per order line** with the margin shown in the order's items table. It is never shown to customers or printed on documents.
+
+#### Added — Invoicing (Invoices → Custom invoices)
+- **Quotations, proforma invoices, invoices and credit notes**, each with its own number series, and one-click conversion (quotation → proforma → invoice) and credit notes.
+- **Bank accounts per currency** (with SWIFT and intermediary bank), a payment section on every document, and optional payment-link or cash instructions. (Order invoices still use the single bank account in Settings → Checkout & Payments when no account is set up here.)
+- **Lines with part number, unit, discount, VAT rate and availability/lead time**, a catalog picker, percent or amount discount, VAT treatments (standard, reverse charge, intra-EU, export, exempt), supply date, PO number, delivery terms, terms & conditions and internal notes.
+- **Saved clients** with an EU VAT-number check (VIES), and a "Create quotation" button on every Part Inquiry.
+- **Partial payments, overdue tracking and payment reminders** (manual and scheduled).
+- **Document language:** English, German, Spanish, French or Lithuanian for the PDF and the email. The German, Spanish, French and Lithuanian wording is machine-translated: please have it checked before relying on it.
+- **Email options:** personal message, CC, BCC and a blind copy to yourself; PDF preview in a new tab; duplicate a document.
+
+#### Added — Admin
+- **Bulk actions:** Customers (activate/deactivate), Invoice Clients (language, currency), Custom Invoices (email, payment reminders, mark paid, cancel, download PDFs as one ZIP), Orders (mark shipped / delivered), Pages (publish / unpublish; the homepage is never unpublished) and activate/deactivate for Coupons, Carriers, Shipping Methods and Zones, Menus, Redirects, Tax Rates and Conditions.
+
+#### Changed — Design
+- **New invoice design** for order invoices, quotations, proformas, invoices and credit notes: compact brand header, number/date strip, side-by-side seller and buyer, a clear totals box and a payment panel that fits on the first page. Empty company fields are hidden; orders going outside the EU now show "Zero-rated export".
+- **New email design** for every email (customer, admin alerts, newsletters): slim brand header, status label, amber buttons. System alerts have their own "automatic message" footer instead of "you placed an order".
+
+#### Fixed
+- Customer emails showed the order number wrapped in raw `**` characters.
+- The "Refund requested" admin email printed an empty order total.
+- Orders created in the admin had an empty shipping method and "— Days" in the customer email.
+- The "Update available" banner touched the top bar; it now has a gap.
+- Backups: a second background process could advance the same backup at the same time; a per-run lock now prevents that.
+
 ## 2.0.5 — 2026-10-09
 
 Patch release. **Update straight from 2.0.4** (or 2.0.0). Mostly makes the pre-update backup dependable on very large catalogs, and adds stand-alone custom invoices.
