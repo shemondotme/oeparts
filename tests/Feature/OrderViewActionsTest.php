@@ -78,6 +78,16 @@ class OrderViewActionsTest extends TestCase
     }
 
     #[Test]
+    public function the_packing_slip_action_redirects_to_the_download_instead_of_spa_linking_to_it(): void
+    {
+        $order = Order::factory()->create();
+
+        $this->orderPage($order)
+            ->callAction('printPackingSlip')
+            ->assertRedirect(route('admin.orders.packing-slip', ['order' => $order]));
+    }
+
+    #[Test]
     public function an_order_can_be_marked_paid_and_back_to_unpaid_with_a_note(): void
     {
         $order = Order::factory()->create([

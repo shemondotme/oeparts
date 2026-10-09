@@ -219,7 +219,10 @@ class ViewOrder extends ViewRecord
                     ->icon('heroicon-o-clipboard-document-list')
                     ->color('gray')
                     ->authorize('update')
-                    ->url(fn (): string => route('admin.orders.packing-slip', ['order' => $this->getRecord()])),
+                    // A plain ->url() link would be fetched by the panel's SPA navigation and the PDF bytes pasted into
+                    // the page as text; a redirect from the action is a real browser navigation, so the file downloads
+                    // (same as the invoice actions above).
+                    ->action(fn () => redirect()->to(route('admin.orders.packing-slip', ['order' => $this->getRecord()]))),
                 Actions\Action::make('markPaid')
                     ->label('Mark as Paid')
                     ->icon('heroicon-o-banknotes')
