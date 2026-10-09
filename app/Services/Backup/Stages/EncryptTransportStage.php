@@ -130,7 +130,7 @@ class EncryptTransportStage implements BackupStage
         // already secured this part between our query and now (we read a stale,
         // not-yet-encrypted row) — re-read the row instead of failing the whole
         // backup. A source that is missing while the row is STILL unencrypted is
-        // genuine loss and falls through to encryptFile()'s descriptive error.
+        // genuine loss: say exactly what is (not) on disk so it can be diagnosed.
         if (! Storage::disk($srcDisk)->exists($srcRel)) {
             $part->refresh();
 
@@ -139,9 +139,34 @@ class EncryptTransportStage implements BackupStage
 
                 return;
             }
+
+            throw new BackupException(
+                "Backup run {$run->getKey()}, part #{$part->getKey()} ({$part->name}): the staged source file is missing "
+                ."and the part is not marked encrypted. Source: {$srcAbs} — missing. Its encrypted copy: "
+                .(Storage::disk($srcDisk)->exists($encRel) ? 'present' : 'absent')
+                .'. Another request advancing this run at the same time, or something deleting the files of this run, '
+                .'are the usual causes; retrying the update starts a fresh backup.'
+            );
         }
 
-        $meta = $this->cipher->encryptFile($srcAbs, $encAbs);
+        // Encrypt to a private temp name and rename into place, so a crash can never
+        // leave a half-written `.enc` that looks finished, and two writers can never
+        // interleave into one file.
+        $tmpAbs = $encAbs.'.'.getmypid().'.tmp';
+
+        try {
+            $meta = $this->cipher->encryptFile($srcAbs, $tmpAbs);
+        } catch (\Throwable $e) {
+            @unlink($tmpAbs);
+
+            throw $e;
+        }
+
+        if (! @rename($tmpAbs, $encAbs)) {
+            @unlink($tmpAbs);
+
+            throw new BackupException("Could not move the encrypted part into place: {$encAbs}.");
+        }
 
         $dest = $run->disk;                     // final destination (may be off-site)
         $localEncPath = null;

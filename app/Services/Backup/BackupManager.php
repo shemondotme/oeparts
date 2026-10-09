@@ -9,7 +9,6 @@ use App\Services\Backup\Exceptions\BackupException;
 use App\Services\Backup\Exceptions\BackupLockException;
 use App\Services\Updates\UpdateChecker;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -36,9 +35,6 @@ class BackupManager
 {
     /** Safety bound for the synchronous run() loop (defensive, never hit in practice). */
     private const MAX_STEPS = 1_000_000;
-
-    /** A single step is time-budgeted (seconds); this only has to outlive the slowest one. */
-    private const ADVANCE_LOCK_SECONDS = 900;
 
     public function __construct(
         private readonly StageRegistry $stages,
@@ -117,15 +113,17 @@ class BackupManager
         // Only ONE driver may advance a given run at a time. Two overlapping
         // advances read the same checkpoint and both run the same chunk — for
         // the encrypt stage that means one deletes the plaintext source while
-        // the other is about to read it (seen live: "Could not open source
-        // file for reading: …/products.data.325.sql.gz" with the .enc already
-        // sitting next to it). The update flow has its own lock, but other
-        // drivers (the admin Backup page, the CLI, a resumed poll) don't share
-        // it, so the run itself is the right thing to serialise on. A loser
-        // simply reports "running" and the next poll does the work.
-        $lock = Cache::lock('backup_run.advance.'.$run->getKey(), self::ADVANCE_LOCK_SECONDS);
+        // the other is about to read it (seen live, twice: "Could not open
+        // source file for reading: …/products.data.N.sql.gz" on the first
+        // attempt of an update). The mutex is a kernel flock() on a per-run
+        // file, NOT a cache lock: it is released by the OS the instant the
+        // holding process dies (a killed request can never leave a run stuck
+        // behind a TTL), and it doesn't depend on which cache store the web
+        // and CLI processes happen to resolve. A loser simply reports
+        // "running"; the next poll does the work.
+        $mutex = $this->acquireRunMutex($run);
 
-        if (! $lock->get()) {
+        if ($mutex === false) {
             return BackupProgress::running($run, null, 'Another request is advancing this backup', 0);
         }
 
@@ -144,7 +142,54 @@ class BackupManager
 
             return $this->advanceLocked($run);
         } finally {
-            $lock->release();
+            $this->releaseRunMutex($mutex, $run);
+        }
+    }
+
+    /**
+     * @return resource|false|null the held lock handle; false when another process
+     *                             is advancing this run; null when no lock file can
+     *                             be created here (then advance unprotected, as before)
+     */
+    private function acquireRunMutex(BackupRun $run)
+    {
+        $path = dirname($this->lock->path()).DIRECTORY_SEPARATOR.'advance-run-'.$run->getKey().'.lock';
+
+        if (! is_dir(dirname($path))) {
+            @mkdir(dirname($path), 0775, true);
+        }
+
+        $handle = @fopen($path, 'c');
+
+        if ($handle === false) {
+            Log::channel(config('updates.log_channel', 'stack'))
+                ->warning('Backup run '.$run->getKey().': cannot create its advance lock file ('.$path.'); advancing without it.');
+
+            return null;
+        }
+
+        if (! flock($handle, LOCK_EX | LOCK_NB)) {
+            fclose($handle);
+
+            return false;
+        }
+
+        return $handle;
+    }
+
+    /** @param  resource|null  $handle */
+    private function releaseRunMutex($handle, BackupRun $run): void
+    {
+        if (! is_resource($handle)) {
+            return;
+        }
+
+        flock($handle, LOCK_UN);
+        fclose($handle);
+
+        // A finished run is never advanced again, so its lock file is just litter.
+        if ($run->isTerminal()) {
+            @unlink(dirname($this->lock->path()).DIRECTORY_SEPARATOR.'advance-run-'.$run->getKey().'.lock');
         }
     }
 

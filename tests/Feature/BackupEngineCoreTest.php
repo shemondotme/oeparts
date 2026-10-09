@@ -13,7 +13,6 @@ use App\Services\Backup\Exceptions\BackupException;
 use App\Services\Backup\Exceptions\BackupLockException;
 use App\Services\Backup\StageStepResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -227,8 +226,10 @@ class BackupEngineCoreTest extends TestCase
         $run = $this->manager()->start(BackupRun::PROFILE_FULL, BackupRun::TRIGGER_MANUAL);
         $before = $run->refresh()->checkpoint();
 
-        $held = Cache::lock('backup_run.advance.'.$run->getKey(), 60);
-        $this->assertTrue($held->get());
+        // Hold the per-run OS lock the way a concurrently advancing request would.
+        $lockFile = dirname(app(BackupLock::class)->path()).DIRECTORY_SEPARATOR.'advance-run-'.$run->getKey().'.lock';
+        $held = fopen($lockFile, 'c');
+        $this->assertTrue(flock($held, LOCK_EX | LOCK_NB));
 
         $progress = $this->manager()->advance($run);
 
@@ -236,7 +237,9 @@ class BackupEngineCoreTest extends TestCase
         $this->assertSame($before, $run->checkpoint(), 'the loser must not touch the checkpoint');
         $this->assertSame(BackupRun::STATUS_RUNNING, $progress->toArray()['status'] ?? BackupRun::STATUS_RUNNING);
 
-        $held->release();
+        // A killed holder releases automatically: closing the handle is what the OS does on death.
+        flock($held, LOCK_UN);
+        fclose($held);
 
         // Once the first driver is done, the run advances normally.
         $this->manager()->advance($run);

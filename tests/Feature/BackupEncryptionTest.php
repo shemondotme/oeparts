@@ -254,6 +254,51 @@ class BackupEncryptionTest extends TestCase
         }
     }
 
+    /** The staged-source-missing error must name the part and say what IS on disk. */
+    #[Test]
+    public function a_lost_source_error_reports_the_run_the_part_and_whether_an_encrypted_copy_exists(): void
+    {
+        $run = BackupRun::create([
+            'profile' => BackupRun::PROFILE_FULL, 'status' => BackupRun::STATUS_RUNNING,
+            'trigger' => BackupRun::TRIGGER_MANUAL, 'disk' => 'local', 'started_at' => now(),
+        ]);
+        $part = $run->parts()->create([
+            'type' => 'db', 'sequence' => 0, 'name' => 'products', 'disk' => 'local',
+            'path' => 'backups/'.$run->id.'/db/products.data.216.sql.gz', 'bytes' => 5,
+        ]);
+
+        $stage = new EncryptTransportStage(app(BackupCipher::class));
+        $securePart = new \ReflectionMethod($stage, 'securePart');
+
+        try {
+            $securePart->invoke($stage, $run, $part);
+            $this->fail('expected a BackupException');
+        } catch (BackupException $e) {
+            $this->assertStringContainsString("run {$run->id}", $e->getMessage());
+            $this->assertStringContainsString("part #{$part->id}", $e->getMessage());
+            $this->assertStringContainsString('products.data.216.sql.gz', $e->getMessage());
+            $this->assertStringContainsString('encrypted copy: absent', $e->getMessage());
+        }
+    }
+
+    /** Encryption writes to a temp name and renames, so no half-written .enc can ever look finished. */
+    #[Test]
+    public function an_encrypted_part_is_moved_into_place_atomically_and_no_temp_file_is_left(): void
+    {
+        $run = app(BackupManager::class)->start(BackupRun::PROFILE_FULL);
+        $run = app(BackupManager::class)->run($run);
+
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status);
+
+        $leftovers = [];
+        foreach (Storage::disk('local')->allFiles('backups/'.$run->id) as $file) {
+            if (str_ends_with($file, '.tmp')) {
+                $leftovers[] = $file;
+            }
+        }
+        $this->assertSame([], $leftovers, 'no temp files may remain after a successful backup');
+    }
+
     /* ---- Transport stage (via the manager) ------------------------------ */
 
     #[Test]
