@@ -88,8 +88,8 @@ class AuthController extends Controller
                 $otp = $otpService->generate($user->email, OtpPurpose::EmailVerify, $request->ip());
 
                 // dispatch() runs synchronously on the 'sync' queue
-                // connection (local dev, and some shared-hosting installs
-                //), so a real SMTP failure throws right here.
+                // connection (local dev, and some shared-hosting installs),
+                // so a real SMTP failure throws right here.
                 // The OTP row above already exists regardless, so still
                 // send the user to the code-entry screen rather than
                 // stranding them with a raw crash — "Resend code" there

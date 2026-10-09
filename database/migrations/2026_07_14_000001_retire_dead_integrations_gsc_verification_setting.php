@@ -12,7 +12,6 @@ use Illuminate\Support\Facades\DB;
  * existing-target-wins logic as 2026_07_12_000001's tax VAT number fix)
  * before retiring the orphan, then remove the now-dead field from
  * IntegrationsSettings. Idempotent + reversible; single-row op
- *
  */
 return new class extends Migration
 {

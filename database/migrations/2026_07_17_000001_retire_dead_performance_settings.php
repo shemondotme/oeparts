@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\DB;
  * saved, editable inputs with zero code-path consultation — retired outright
  * (no live replacement to carry a value into) in favor of Placeholder notes
  * on the settings page. Idempotent + reversible; single-group op
- *
  */
 return new class extends Migration
 {
