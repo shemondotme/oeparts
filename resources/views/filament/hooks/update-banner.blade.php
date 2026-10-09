@@ -19,7 +19,7 @@
         audit-trail-detail.blade.php / backup-dashboard.blade.php.
     --}}
     <div @class([
-        'mb-4 rounded-xl border px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3',
+        'mt-4 mb-4 rounded-xl border px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3',
         'bg-red-50 border-red-300 dark:bg-red-950/20 dark:border-red-800' => $security,
         'bg-amber-50 border-amber-300 dark:bg-amber-950/20 dark:border-amber-800' => ! $security,
     ])>
