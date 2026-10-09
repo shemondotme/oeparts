@@ -7,7 +7,7 @@ namespace App\Services\Updates;
  * pipeline. It operates on an EXPORT DIRECTORY (a clean copy of the tree, never the
  * live repo): it strips dev/secret/internal files, bundles third-party licenses for
  * open-source compliance, and writes the per-file sha256 manifest that enables
- * modified-core detection (rule #44) and future delta updates (decision #14).
+ * modified-core detection and future delta updates.
  *
  * The shell orchestration (git export → composer --no-dev → npm build → zip) lives in
  * build/build.sh; the filesystem-shaping steps that benefit from tests live here and
@@ -138,7 +138,7 @@ class ReleaseBuilder
     }
 
     /**
-     * Compare an installed tree against a manifest (modified-core detection, rule #44).
+     * Compare an installed tree against a manifest (modified-core detection).
      *
      * @return array{changed:array<int,string>,missing:array<int,string>}
      */

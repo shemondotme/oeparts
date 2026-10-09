@@ -131,7 +131,7 @@ class SystemMaintenanceSettings extends SettingsPage
         if (IlluminateSchema::hasTable('settings')) {
             try {
                 // SHOW TABLE STATUS is MySQL-specific syntax (the mandated
-                // production driver per CLAUDE.md); guarded so any other
+                // production driver); guarded so any other
                 // driver degrades to an empty table list instead of a fatal
                 // query error.
                 $tables = DB::select('SHOW TABLE STATUS');

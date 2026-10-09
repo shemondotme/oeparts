@@ -29,12 +29,12 @@ class UpdateSystemConfigTest extends TestCase
     #[Test]
     public function backup_encryption_is_mandatory(): void
     {
-        // GDPR — backups hold customer PII (rule #45). Encryption must never be off.
+        // GDPR — backups hold customer PII. Encryption must never be off.
         $this->assertTrue(config('backup.encryption.enabled'));
         $this->assertSame('aes-256-gcm', config('backup.encryption.cipher'));
         $this->assertSame(7, config('backup.retention.daily'));
         // vendor/ is excluded by default — backing up + encrypting the entire vendor/
-        // tree previously segfaulted PHP on Windows for a real full backup (rule #49).
+        // tree previously segfaulted PHP on Windows for a real full backup.
         // composer.json/composer.lock ARE still backed up, so `composer install
         // --no-dev` reproduces vendor/ on restore. OE_BACKUP_INCLUDE_VENDOR=true opts
         // back into the old fully self-contained (but crash-prone) behaviour.

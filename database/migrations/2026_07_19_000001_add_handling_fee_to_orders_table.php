@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * urgent_processing_fee, the charged amount must be snapshotted onto the
  * order at creation time (settings can change later; historical orders must
  * keep the fee that was actually charged). Idempotent + reversible (rule
- * #42); single-table op (rule #44).
+ * Single-table op.
  */
 return new class extends Migration
 {

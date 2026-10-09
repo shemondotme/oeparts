@@ -31,7 +31,7 @@ class ProductsRelationManager extends RelationManager
                     ->label('Condition')
                     ->badge()
                     // condition.name is a relation.column dot-path — the state IS
-                    // already the resolved string (rule #26), not the Condition
+                    // already the resolved string, not the Condition
                     // model. `$state?->name` here always evaluated to null (PHP
                     // warns "Attempt to read property on string" and returns
                     // null), so this column silently rendered "—" for every row.

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * decorative, not a lookup key, so two products colliding on the same
  * base slug is harmless (ProductSlugService::generate()).
  *
- * Idempotent + reversible (rule #42) — via SafeSchema, not just a
+ * Idempotent + reversible — via SafeSchema, not just a
  * hasColumn() pre-check: this exact migration blocked a real live update
  * (v1.0.16 -> v1.0.18, 2026-09-01) when the column already existed on the
  * production DB but the migrations table didn't know it.

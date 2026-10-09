@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Schema;
 /**
  * The address form has always required and validated a "state / province"
  * field, but user_addresses never had a column for it — every submission
- * silently discarded the value (Expand-only, rule #43; idempotent +
- * reversible, rule #42).
+ * silently discarded the value (Expand-only; idempotent +
+ * reversible).
  */
 return new class extends Migration
 {

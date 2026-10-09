@@ -296,7 +296,7 @@ class ManufacturerResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         // 'name.en' removed — see ProductResource::getGloballySearchableAttributes()
-        // and CLAUDE.md FILAMENT rule #26. Filament's dot notation means
+        // for the details. Filament's dot notation means
         // relationship.column, never JSON-column.key; 'name.en' made every
         // search throw (Manufacturer has no name() relationship).
         return ['slug'];

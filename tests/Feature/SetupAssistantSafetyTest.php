@@ -16,7 +16,7 @@ use Tests\TestCase;
 
 /**
  * Regression tests for §5q #11: SetupAssistant's "Clear Cache" was a
- * forbidden Cache::flush() (rule #5 — kills sessions on production Redis)
+ * forbidden Cache::flush() (kills sessions on production Redis)
  * with modal copy claiming it cleared framework caches, and its maintenance
  * toggle drove `artisan down` — a second maintenance system, disconnected
  * from the settings-based MaintenanceMode middleware, whose 503 also locks
@@ -49,7 +49,7 @@ class SetupAssistantSafetyTest extends TestCase
         $this->assertSame(
             'still-here',
             Cache::get('session-critical-key'),
-            'clearCache() must not touch the application cache store (rule #5)',
+            'clearCache() must not touch the application cache store',
         );
     }
 

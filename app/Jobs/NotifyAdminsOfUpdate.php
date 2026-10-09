@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Mail;
  * Update & Recovery System (Module 21, Chunk 1.4) — emails every active
  * super_admin that a new release is available. Dispatched by the scheduled
  * CheckForUpdates command (with per-version dedupe), so it runs at most once
- * per new version. 'default' queue (rule #16).
+ * per new version. 'default' queue.
  */
 class NotifyAdminsOfUpdate implements ShouldQueue
 {

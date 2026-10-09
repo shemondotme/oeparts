@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
  * operator-entered legacy value across (same existing-target-wins logic as
  * 2026_07_12_000001's tax VAT number fix) before retiring the orphan, then
  * remove the now-dead field from CartSettings. Idempotent + reversible
- * (rule #42); single-row op (rule #44).
+ * Single-row op.
  */
 return new class extends Migration
 {

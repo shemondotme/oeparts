@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * [product_id, status] index is the exact shape of the PDP's "approved
  * reviews for this product" query and its average-rating aggregate.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

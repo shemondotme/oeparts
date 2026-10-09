@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  * oeparts:backup (Module 21, Chunk 2.6) — runs a full, encrypted Backup Engine
  * backup and prunes old ones (GFS). Scheduled daily; also the single path the
  * "Run backup now" admin action goes through (via RunBackupJob). Supersedes the
- * old db:backup / mysqldump command (rule #41).
+ * old db:backup / mysqldump command.
  *
  * On failure it alerts super_admins (queued) and returns a non-zero exit — the
  * scheduler / operator sees the failure.

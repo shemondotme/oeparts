@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Artisan;
 /**
  * UpdateFinalizer (Module 21, Chunk 3.4) — the post-swap boot.
  *
- * Runs on a FRESH request AFTER the file swap (rule #46), so the NEW code is
+ * Runs on a FRESH request AFTER the file swap, so the NEW code is
  * booted — opcache still holds the OLD classes in the swapping request, so this
  * must never run in the same request as the swap. Brings the DB + app state in
  * line with the new code:
  *   migrate --force (idempotent) → package:discover / filament:upgrade /
  *   storage:link → vendor:publish → idempotent seeders → config/route/view/event
- *   cache rebuild (NEVER Cache::flush(), rule #5) → queue:restart (if workers).
+ *   cache rebuild (NEVER Cache::flush()) → queue:restart (if workers).
  *
  * `migrate` is critical: its failure throws so the apply orchestrator (3.6) can
  * roll back (restore DB + reverse swap). Everything else is best-effort by

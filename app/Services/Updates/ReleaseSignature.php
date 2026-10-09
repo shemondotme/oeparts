@@ -12,7 +12,7 @@ use App\Services\Updates\Exceptions\UpdateException;
  * catalog or a tampered zip+manifest can't be applied even if it hashes cleanly.
  *
  * openssl (a required extension, guaranteed on shared hosting) — no ext-sodium
- * dependency (LOCKED DECISION #9 / rule #41). The signed payload binds version to
+ * dependency (shared-hosting-safe). The signed payload binds version to
  * hash ("{version}\n{sha256}") so a genuine old signature can't be replayed onto a
  * different version's manifest. Verification is ENFORCED only when a public key is
  * baked (opt-in rollout); the architecture was signature-ready since Chunk 0.2.

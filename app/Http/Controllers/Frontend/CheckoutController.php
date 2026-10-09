@@ -205,7 +205,7 @@ class CheckoutController extends Controller
 
                 // Sending the email is a separate failure mode — dispatch()
                 // runs synchronously on the 'sync' queue connection (used in
-                // local dev, and some shared-hosting installs per rule #41),
+                // local dev, and some shared-hosting installs),
                 // so a real SMTP failure throws right here. That used to be
                 // caught by the RuntimeException block above (Symfony's
                 // TransportException extends RuntimeException) and shown to

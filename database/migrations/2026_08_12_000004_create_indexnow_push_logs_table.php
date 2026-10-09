@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations. Idempotent (rule #42) via SafeSchema — see
+     * Run the migrations. Idempotent via SafeSchema — see
      * add_slug_to_products_table for why a bare create-and-hope isn't
      * enough on its own for a table a live upgrade actually passes through.
      */

@@ -14,9 +14,9 @@ use Illuminate\Support\Str;
 /**
  * DatabaseBackupStage (Module 14/21, Chunk 2.2) — the first concrete
  * {@see BackupStage}: a pure-PHP, shared-hosting-safe DB dump that replaces the
- * old `mysqldump`/`exec` command (rule #41).
+ * old `mysqldump`/`exec` command.
  *
- * Resumable, time-budgeted per step (rule #48): each step() writes one or more
+ * Resumable, time-budgeted per step: each step() writes one or more
  * WHOLE part files — a table's schema, or a keyset page of its rows, never a
  * partial one — until backup.db.batch_seconds elapses, then hands back a
  * checkpoint so a killed/closed run resumes at the exact table + cursor. This
@@ -46,7 +46,7 @@ class DatabaseBackupStage implements BackupStage
      * data page — never a partial one) within a soft wall-clock budget
      * (backup.db.batch_seconds), so a site with many small tables clears
      * several per poll instead of exactly one per 2s tick. Bounded by TIME,
-     * never by unit count, so a step still can't run unboundedly (rule #48).
+     * never by unit count, so a step still can't run unboundedly.
      */
     public function step(BackupRun $run, array $state): StageStepResult
     {

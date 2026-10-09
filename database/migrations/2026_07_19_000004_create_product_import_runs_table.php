@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Bulk Product Import redesign — one row per import run.
  * Drives the chunked, resumable Import Engine FSM (mirrors backup_runs).
- * Append-only, idempotent, reversible — see CLAUDE.md rule #42.
+ * Append-only, idempotent, reversible.
  */
 return new class extends Migration
 {

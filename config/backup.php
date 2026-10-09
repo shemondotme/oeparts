@@ -17,7 +17,7 @@ return [
 
     'enabled' => env('OE_BACKUP_ENABLED', true),
 
-    // MANDATORY encryption — backups hold customer PII (GDPR, CLAUDE.md rule #45).
+    // MANDATORY encryption — backups hold customer PII.
     // OE_BACKUP_KEY is a DEDICATED key (not APP_KEY). Losing it = losing every
     // encrypted backup — back it up somewhere safe.
     'encryption' => [
@@ -100,9 +100,8 @@ return [
         // vendor/ is EXCLUDED BY DEFAULT. It was originally included so a full-profile
         // restore is self-contained on shared hosting with no composer available, but
         // backing up + encrypting the entire vendor/ tree (tens of thousands of files)
-        // is exactly what segfaulted PHP on Windows during a real full backup (see
-        // CLAUDE.md rule #49) — a backup that crashes protects nothing. composer.json/
-        // composer.lock ARE still backed up, so `composer install --no-dev` reproduces
+        // is exactly what segfaulted PHP on Windows during a real full backup — a backup that crashes protects
+        // nothing. composer.json/composer.lock ARE still backed up, so `composer install --no-dev` reproduces
         // vendor/ on restore. Set OE_BACKUP_INCLUDE_VENDOR=true to opt back into the
         // fully self-contained (but crash-prone on large trees) behaviour.
         'exclude' => array_values(array_filter([

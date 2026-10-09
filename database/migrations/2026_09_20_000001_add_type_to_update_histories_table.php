@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  * the BackupRun it restored (no FK — same "keep history if the row is later
  * pruned" reasoning as the existing backup_run_id column on this table).
  *
- * Idempotent + reversible (rule #42), via SafeSchema — see
+ * Idempotent + reversible, via SafeSchema — see
  * add_slug_to_products_table's doc comment for why a bare hasColumn()
  * pre-check alone isn't sufficient against a real production desync.
  */

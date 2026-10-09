@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
  * a partial file left by a killed download is continued from its current size
  * (server 206), or restarted if the server ignores the range (200). Retries with
  * backoff on transient failure, then verifies the SHA-256 against the manifest —
- * mandatory (rule #11); a corrupt file is deleted so the next attempt starts clean.
+ * mandatory; a corrupt file is deleted so the next attempt starts clean.
  */
 class UpdateDownloader
 {

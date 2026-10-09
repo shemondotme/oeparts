@@ -13,8 +13,8 @@ use Illuminate\Support\Facades\DB;
  * search-query pages, which cuts against robots.txt's existing deliberate
  * strategy of disallowing faceted-filter/search-query params so only
  * canonical /parts/{oem} pages get indexed. Retired outright (no live
- * replacement to carry a value into). Idempotent + reversible (rule #42);
- * single-group op (rule #44).
+ * replacement to carry a value into). Idempotent + reversible;
+ * single-group op.
  */
 return new class extends Migration
 {

@@ -94,7 +94,7 @@ class AdminPanelProvider extends PanelProvider
             ->spa()
             ->darkMode()
             // Let power users collapse the sidebar to icons for more workspace.
-            // No group icons are set (rule #36) — item icons are kept, which is
+            // No group icons are set — item icons are kept, which is
             // what the collapsed rail shows.
             ->sidebarCollapsibleOnDesktop()
             // Native bell icon + notifications panel in the topbar. Fed by

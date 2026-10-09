@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * wrong. Carry any operator-entered legacy value across (same
  * existing-target-wins logic as 2026_07_11_000001's refund-window fix)
  * before retiring the orphan, then remove the now-dead field from
- * TaxSettings. Idempotent + reversible (rule #42); single-row op (rule #44).
+ * TaxSettings. Idempotent + reversible; single-row op.
  */
 return new class extends Migration
 {

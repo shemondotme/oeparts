@@ -12,14 +12,14 @@ use Illuminate\Console\Command;
  * an unencrypted manifest.json TOC copied from another install's backup
  * disk — App\Services\Backup\RestoreManager::importManifest(), built for
  * exactly this but never wired to anything reachable until now). CLI-only,
- * no queue worker, no admin panel required (rule #41) — this is exactly the
+ * no queue worker, no admin panel required — this is exactly the
  * tool an operator needs when moving to a new host or recovering a wiped
  * database, situations where a web UI (or even the old install) may not be
  * reachable at all. See README's "Moving to a new server" section.
  *
  * Deliberately CLI-only for now, not a Filament admin page: a "Restore"
  * button belongs behind the same re-auth + confirmation + audit trail this
- * project already requires for backup download (rule #45) — building that
+ * project already requires for backup download — building that
  * safely is a separate, more careful piece of work than this command.
  */
 class RestoreBackup extends Command

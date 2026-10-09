@@ -1,6 +1,6 @@
 <?php
 
-// Automatinis vertimas iš lang/en/admin.php — žr. CLAUDE.md taisyklę #60.
+// Automatinis vertimas iš lang/en/admin.php.
 // Prieš pasikliaujant šiuo failu, jį turėtų peržiūrėti gimtakalbis,
 // ypač finansinius / teisinius terminus (PVM, BDAR, grąžinimas).
 

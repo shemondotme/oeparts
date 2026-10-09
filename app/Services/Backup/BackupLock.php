@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
  * at a time on an instance (they touch the same files/DB), so both coordinate
  * through one lock file at config('updates.state_path')/lock.
  *
- * Pure filesystem, no queue/Redis dependency (rule #41 — shared-hosting-safe).
+ * Pure filesystem, no queue/Redis dependency (shared-hosting-safe).
  * Acquisition is atomic via O_EXCL (`fopen(..., 'x')`): the create fails if the
  * file already exists, so two concurrent requests can never both win.
  */

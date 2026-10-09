@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\Schema;
  * missing goes into the statement, so a database where some of it already
  * exists (an earlier interrupted update) is handled too.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

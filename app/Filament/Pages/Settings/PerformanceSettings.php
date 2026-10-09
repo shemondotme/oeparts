@@ -111,7 +111,7 @@ class PerformanceSettings extends SettingsPage
                     ->schema([
                         Forms\Components\Placeholder::make('cache_driver_note')
                             ->label('')
-                            ->content('The active cache driver is set via the CACHE_STORE environment variable (Redis required in production — CLAUDE.md rule #41), not this panel.'),
+                            ->content('The active cache driver is set via the CACHE_STORE environment variable (Redis recommended in production), not this panel.'),
 
                         Forms\Components\Placeholder::make('cache_settings_note')
                             ->label('')

@@ -53,7 +53,7 @@ class ContactController extends Controller
             'ip_address' => $request->ip(),
         ]);
 
-        // Best-effort — on a 'sync' queue connection (rule #41: many installs
+        // Best-effort — on a 'sync' queue connection (many installs
         // run without a worker) this notification's mail send happens inline,
         // so a real SMTP failure would otherwise throw right here and 500 a
         // submission whose ContactMessage row is already safely persisted.

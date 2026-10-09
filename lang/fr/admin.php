@@ -1,6 +1,6 @@
 <?php
 
-// Traduction automatique de lang/en/admin.php — voir CLAUDE.md règle #60.
+// Traduction automatique de lang/en/admin.php.
 // À faire relire par un locuteur natif avant de s'y fier, en particulier
 // les termes financiers/juridiques (TVA, RGPD, remboursement).
 

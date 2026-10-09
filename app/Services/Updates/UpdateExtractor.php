@@ -8,7 +8,7 @@ use App\Services\Updates\Exceptions\UpdateException;
  * UpdateExtractor (Module 21, Chunk 3.2) — unpacks a verified release zip into a
  * staging directory, safely.
  *
- * ZIP-SLIP / path-traversal guard on EVERY entry (rule #47 / security): absolute
+ * ZIP-SLIP / path-traversal guard on EVERY entry: absolute
  * paths, drive letters, and any `..` segment are rejected, and each resolved
  * target is confirmed to stay inside the staging root. Entries are streamed to
  * disk (flat memory). A free-disk re-check (sum of uncompressed sizes) runs before

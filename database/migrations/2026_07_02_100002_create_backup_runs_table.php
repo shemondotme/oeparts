@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Backup Engine (Module 14/21) — one row per backup run (update-safety or full).
- * Append-only, idempotent, reversible — see CLAUDE.md rule #42.
+ * Append-only, idempotent, reversible.
  */
 return new class extends Migration
 {
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('status', 24)->default('pending');    // pending | running | success | failed
             $table->string('trigger', 24)->default('manual');    // manual | scheduled | pre_update
             $table->string('disk', 48)->default('local');        // local | s3 | sftp
-            $table->boolean('encrypted')->default(true);         // AES-256-GCM (rule #45)
+            $table->boolean('encrypted')->default(true);         // AES-256-GCM
             $table->string('app_version', 32)->nullable();
             $table->string('php_version', 16)->nullable();
             $table->string('db_version', 32)->nullable();

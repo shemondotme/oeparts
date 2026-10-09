@@ -531,7 +531,7 @@ class RefundRequestResource extends Resource
 
     /**
      * dispatch() runs synchronously on the 'sync' queue connection (local
-     * dev, and some shared-hosting installs per rule #41) — a real SMTP
+     * dev, and some shared-hosting installs) — a real SMTP
      * failure throws right here, uncaught, and would blow up an otherwise
      * successful refund action with a raw Livewire/Filament error instead of
      * the intended success notification. The refund status change is

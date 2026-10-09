@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Update System (Module 21) — records every in-app update attempt.
- * Append-only, idempotent (guarded), reversible — see CLAUDE.md rule #42.
+ * Append-only, idempotent (guarded), reversible.
  * This table's schema must stay stable (the updater/recovery depend on it).
  */
 return new class extends Migration

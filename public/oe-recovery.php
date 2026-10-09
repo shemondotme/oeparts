@@ -6,7 +6,7 @@
  * An APP-INDEPENDENT safety net. This file MUST NOT bootstrap the Laravel
  * framework (no vendor/autoload, no Kernel) — it exists precisely for when the
  * upgraded app can no longer boot, so it cannot depend on the app it recovers
- * (CLAUDE rule #47). It uses ONLY raw PDO + the filesystem, and parses `.env`
+ *. It uses ONLY raw PDO + the filesystem, and parses `.env`
  * itself. It survives file swaps because public/ (except public/build) is not a
  * core path and is therefore preserved.
  *
@@ -699,7 +699,7 @@ if (! class_exists('OeRecoveryConsole', false)) {
                 return [404, self::STATE_DISABLED, $this->page(
                     'Recovery Console disabled',
                     '<p>The Recovery Console is not enabled on this install. Set <code>OE_RECOVERY_KEY</code> '
-                    .'in <code>.env</code> to arm it (keep it secret). See CLAUDE rule #47.</p>'
+                    .'in <code>.env</code> to arm it (keep it secret).</p>'
                 )];
             }
 

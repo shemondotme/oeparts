@@ -23,7 +23,7 @@ use App\Services\Backup\Contracts\BackupStage;
  *              one table's schema, or more than one already-tiny data chunk)
  *              into a single poll — bounded by the stage's OWN wall-clock
  *              budget, never by count — to cut the fixed per-poll overhead
- *              (rule #48 still applies: a step must never run unboundedly).
+ *              (a step must still never run unboundedly).
  */
 class StageStepResult
 {

@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
  *   where('is_active', true)->where('is_in_stock', false) — only single-
  *   column indexes exist on each, no composite covering both.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

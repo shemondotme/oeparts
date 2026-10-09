@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
  * The apply FSM is poll-driven: the admin's browser tab calls advance() every
  * couple of seconds. For a ZIP install, the steps after the swap (finalize =
  * migrations, verify) must run on a FRESH request that boots the NEW code
- * (rule #46) — but the tab that started the update was rendered by the OLD
+ * — but the tab that started the update was rendered by the OLD
  * release, and the moment the swap lands its Livewire session can no longer
  * talk to the new code (a Livewire upgrade between two releases answers every
  * further poll with "419 page expired", and a freshly loaded admin page used

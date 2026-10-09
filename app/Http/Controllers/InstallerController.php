@@ -338,7 +338,7 @@ class InstallerController extends Controller
     /**
      * Send a one-off test email using whatever SMTP settings are currently
      * in the step 5 form (not yet saved to .env). Deliberately synchronous
-     * (not queued, unlike rule #14's transactional emails) — the whole point
+     * (not queued, unlike the transactional emails) — the whole point
      * is immediate pass/fail feedback for a form the user is looking at
      * right now, before there's a queue worker, a database, or even an app
      * key to trust for job serialization.

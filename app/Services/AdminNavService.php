@@ -32,7 +32,7 @@ final class AdminNavService
      * Permission-safe view of recent() — drops any entry whose underlying
      * resource/page is no longer reachable in the admin's current (already
      * permission-filtered) navigation tree. Used by the topbar command
-     * palette's idle state ("Recently Viewed"). See CLAUDE.md rule #28:
+     * palette's idle state ("Recently Viewed").
      * re-derive against live nav, never trust a stored URL/label as still
      * permission-valid.
      *

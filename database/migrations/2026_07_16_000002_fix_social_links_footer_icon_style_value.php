@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\DB;
  * from the old seeder shows this field as an unmatched/blank selection in
  * the admin, despite a real row existing. Normalizes any existing 'outline'
  * value to the correct 'outlined' option key. Idempotent (only touches rows
- * still holding the legacy typo) + reversible-with-no-op-down (rule #42);
- * single-row op (rule #44).
+ * still holding the legacy typo) + reversible-with-no-op-down;
+ * single-row op.
  */
 return new class extends Migration
 {

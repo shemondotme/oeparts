@@ -69,7 +69,7 @@ class OrderService
 
             if ($notifyCustomer) {
                 // dispatch() runs synchronously on the 'sync' queue connection
-                // (local dev, and some shared-hosting installs per rule #41),
+                // (local dev, and some shared-hosting installs),
                 // so a real SMTP failure throws right here — and since this
                 // whole method runs inside DB::transaction(), an unguarded
                 // throw would roll back the status transition itself just

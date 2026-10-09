@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Backup Engine — individual chunked parts of a backup run (db table chunks,
  * file volumes, env). Enables resumable + partial restore.
- * Append-only, idempotent, reversible — see CLAUDE.md rule #42.
+ * Append-only, idempotent, reversible.
  */
 return new class extends Migration
 {

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * Emails active super_admins when a bulk product update affects more than
- * BulkUpdateProducts::LARGE_BATCH_THRESHOLD rows. 'default' queue (rule #16),
+ * BulkUpdateProducts::LARGE_BATCH_THRESHOLD rows. 'default' queue,
  * same shape as NotifyAdminsOfBackupFailure.
  */
 class NotifyAdminsOfBulkProductUpdate implements ShouldQueue

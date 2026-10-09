@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * ViewTestimonial both format the rating this way — str_repeat() rejects a
  * negative count).
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

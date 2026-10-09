@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Log;
  * SemVer, and resolves the sequential upgrade path (honouring each hop's
  * min_version_to_update_from). Result is cached; a forced check bypasses the
  * cache (manual "Check now"). Network failures degrade gracefully — never throw,
- * so a GitHub outage cannot break an admin page (rule #41 spirit).
+ * so a GitHub outage cannot break an admin page (pure-PHP, shared-hosting-safe).
  */
 class UpdateChecker
 {

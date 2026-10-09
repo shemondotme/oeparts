@@ -14,8 +14,8 @@ use Illuminate\Support\Facades\DB;
  * entirely. Rewired the footer + JSON-LD to social_links.*; this migration
  * carries any operator-entered legacy contact.* value across (same
  * existing-target-wins logic as 2026_07_12_000001's tax VAT number fix)
- * before retiring the two orphans. Idempotent + reversible (rule #42);
- * two-row op (rule #44).
+ * before retiring the two orphans. Idempotent + reversible;
+ * two-row op.
  */
 return new class extends Migration
 {

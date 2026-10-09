@@ -309,7 +309,7 @@ class CacheService
 
     /**
      * Remember a coupon lookup by code — hit on every cart/checkout
-     * coupon-apply request. Invalidated by CouponObserver on write (rule #6);
+     * coupon-apply request. Invalidated by CouponObserver on write;
      * the short TTL is a belt-and-suspenders freshness bound in case a coupon
      * is ever edited outside Eloquent. Wrapped in safeRemember() specifically
      * because this one sits directly in the checkout path — a cache-store
@@ -422,7 +422,7 @@ class CacheService
         Cache::forget($key);
     }
 
-    // ── Bulk key-scoped purge (NEVER Cache::flush() — rule #5) ───────────────
+    // ── Bulk key-scoped purge (NEVER Cache::flush()) ───────────────
 
     /**
      * Delete every application cache key by scanning the store's own key

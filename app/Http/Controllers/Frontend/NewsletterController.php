@@ -62,7 +62,7 @@ class NewsletterController extends Controller
 
             if ($doubleOptIn) {
                 $confirmUrl = route('frontend.newsletter.confirm', ['lang' => $locale, 'token' => $subscriber->unsubscribe_token]);
-                // Best-effort — a 'sync' queue connection (rule #41) runs this
+                // Best-effort — a 'sync' queue connection runs this
                 // inline, so a real SMTP failure must not 500 a subscription
                 // that already saved successfully.
                 try {

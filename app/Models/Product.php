@@ -36,7 +36,7 @@ class Product extends Model
     {
         // Homepage sections render stock/visibility state; invalidate the
         // cached payload on ANY mutation path (inline toggle, bulk actions,
-        // CSV import) — never Cache::flush() (rule #5).
+        // CSV import) — never Cache::flush().
         static::saved(function (Product $product): void {
             if ($product->wasChanged(['is_in_stock', 'is_active'])) {
                 Cache::forget('sections.homepage');

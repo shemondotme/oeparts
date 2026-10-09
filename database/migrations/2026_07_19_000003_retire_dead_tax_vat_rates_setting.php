@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
  * a legal-compliance decision, not a UI-wiring task, so this is retired
  * rather than built; a future compliance-driven chunk can reintroduce it
  * once the business has confirmed what's actually required. Idempotent +
- * reversible (rule #42); single-group op (rule #44).
+ * reversible; single-group op.
  */
 return new class extends Migration
 {

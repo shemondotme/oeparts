@@ -36,8 +36,8 @@ class MediaFile extends Model
      * path) fixes every existing row immediately, with no data migration,
      * and makes the next environment/domain move (production) immune to
      * this same bug. The stored file_url column is now write-only legacy
-     * data; a later migration can drop it (CLAUDE.md Expand/Migrate/Contract,
-     * rule #43) once nothing else reads it directly.
+     * data; a later migration can drop it (expand/migrate/contract)
+     * once nothing else reads it directly.
      */
     public function getFileUrlAttribute(): ?string
     {

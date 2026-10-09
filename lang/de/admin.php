@@ -1,6 +1,6 @@
 <?php
 
-// Machine-translated from lang/en/admin.php — see CLAUDE.md rule #60.
+// Machine-translated from lang/en/admin.php.
 // Flagged for native-speaker review before relying on it, especially the
 // financial/legal terms (VAT, GDPR, refund).
 

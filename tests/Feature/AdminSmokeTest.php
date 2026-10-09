@@ -603,8 +603,8 @@ class AdminSmokeTest extends TestCase
     public function sidebar_renders_via_stock_filament_with_per_item_icons(): void
     {
         // Stock Filament sidebar (the custom rail+panel override was removed in
-        // the Filament-purity cleanup — see ADMIN_PANEL_MASTER_WORKFLOW.md and
-        // CLAUDE.md rule #36). Navigation groups carry no ->icon() of their own
+        // the Filament-purity cleanup — the original
+        // decision). Navigation groups carry no ->icon() of their own
         // — group + item icons together would throw — so icons render per item.
         $response = $this->get('/admin');
         $response->assertStatus(200);

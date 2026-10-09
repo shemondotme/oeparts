@@ -11,7 +11,7 @@ use Spatie\Permission\PermissionRegistrar;
  * RolesSeeder). guard_name = 'admin' (Spatie is on the Admin model). These are
  * NOT assigned to any role — they belong to super_admin only, which bypasses
  * the gate via Gate::before() (LOCKED DECISION #1). Idempotent + reversible
- * (CLAUDE.md rule #42).
+ *
  */
 return new class extends Migration
 {

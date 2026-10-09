@@ -216,7 +216,7 @@ class CustomerResource extends Resource
                         $orderCount = $record->orders_count ?? 0;
                         $totalSpent = $record->orders_sum_grand_total ?? 0;
 
-                        // Thresholds are operator-tunable (rule #21).
+                        // Thresholds are operator-tunable.
                         if ($orderCount >= (int) settings('customers.vip_min_orders', 10)
                             && bccomp((string) $totalSpent, (string) settings('customers.vip_min_spent', '1000'), 2) >= 0) {
                             return 'VIP';

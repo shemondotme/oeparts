@@ -18,7 +18,7 @@ use Throwable;
  * At ~100k products (500k+ <loc> entries once split across locales),
  * generation can run long enough to risk the web request's timeout. On an
  * install with a real queue worker this defers the work off the request; on
- * a QUEUE_CONNECTION=sync install (shared hosting, rule #41 — no worker
+ * a QUEUE_CONNECTION=sync install (shared hosting — no worker
  * required) SyncQueue runs handle() inline in the same call, identical to
  * today, so this is never a regression there.
  *

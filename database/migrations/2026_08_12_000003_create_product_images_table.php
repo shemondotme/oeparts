@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * RelationManager, not a DB constraint — SQLite (tests) doesn't support
  * a portable partial-unique-index for this.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Schema;
  * unrelated customer's session instead. This table tracks admin-guard
  * sessions explicitly so that feature actually works.
  *
- * Idempotent + reversible (rule #42) — confirmed live (2026-08-11): a
+ * Idempotent + reversible — confirmed live (2026-08-11): a
  * database restore triggered by a failed update's rollback can leave this
  * table's own migration row reverted while the table itself (created by an
  * earlier, already-successful step of the same migrate batch) still exists,

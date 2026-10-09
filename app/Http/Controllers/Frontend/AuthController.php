@@ -89,7 +89,7 @@ class AuthController extends Controller
 
                 // dispatch() runs synchronously on the 'sync' queue
                 // connection (local dev, and some shared-hosting installs
-                // per rule #41), so a real SMTP failure throws right here.
+                //), so a real SMTP failure throws right here.
                 // The OTP row above already exists regardless, so still
                 // send the user to the code-entry screen rather than
                 // stranding them with a raw crash — "Resend code" there

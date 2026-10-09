@@ -75,7 +75,7 @@ class User extends Authenticatable
             'token' => $token,
         ], false)).'?email='.urlencode($this->email);
 
-        // Best-effort — on a 'sync' queue connection (rule #41: many installs
+        // Best-effort — on a 'sync' queue connection (many installs
         // run without a worker) this job's mail send happens inline, so a real
         // SMTP failure would otherwise throw right here and 500 the password
         // reset request even though the reset token was already generated.

@@ -27,7 +27,7 @@ use Tests\TestCase;
 
 /**
  * Regression tests for the "nobody ever mounted the View/Edit page" class of
- * bug (CLAUDE rule #38): the Catalog audit found 5 pages returning live 500s
+ * bug: the Catalog audit found 5 pages returning live 500s
  * that every list-only test had missed.
  */
 class CatalogViewPagesTest extends TestCase

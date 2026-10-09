@@ -390,7 +390,7 @@ class PreflightService
     /**
      * Warn (don't block) if the app-independent Recovery Console is disarmed by a
      * missing OE_RECOVERY_KEY. Without it, a failed update that leaves the app
-     * unbootable has no out-of-band recovery path (CLAUDE rule #47 / decision #6).
+     * unbootable has no out-of-band recovery path.
      */
     public function checkRecoveryConsole(): PreflightCheck
     {

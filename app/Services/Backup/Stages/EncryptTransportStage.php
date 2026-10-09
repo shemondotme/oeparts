@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
  * disk (config('backup.staging_disk')). This stage AES-256-GCM-encrypts each
  * staged part (BackupCipher) — batching as many WHOLE parts as fit within
  * backup.encryption.batch_seconds per step (never a partial part; bounded by
- * TIME, not count, so a step still can't run unboundedly — rule #48; most
+ * TIME, not count, so a step still can't run unboundedly; most
  * parts are a few KB-MB, so a single large volume can still fill an entire
  * step on its own), then:
  *   - destination == staging (local): drops the plaintext, keeps the `.enc`;
@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class EncryptTransportStage implements BackupStage
 {
-    /** EU S3 regions — off-site PII must stay in the EU (GDPR, rule #45). */
+    /** EU S3 regions — off-site PII must stay in the EU (GDPR). */
     private const EU_REGIONS = [
         'eu-west-1', 'eu-west-2', 'eu-west-3', 'eu-central-1', 'eu-central-2',
         'eu-north-1', 'eu-south-1', 'eu-south-2',
@@ -91,7 +91,7 @@ class EncryptTransportStage implements BackupStage
     private function initialise(BackupRun $run): array
     {
         if (! $this->cipher->hasKey()) {
-            // Mandatory encryption — refuse rather than write plaintext PII (rule #45).
+            // Mandatory encryption — refuse rather than write plaintext PII.
             throw new BackupException(
                 'OE_BACKUP_KEY is not set. Backups are mandatorily encrypted (GDPR — customer PII). '
                 .'Set OE_BACKUP_KEY in .env (e.g. '.$this->cipher->generateKey().') and store it safely: '
@@ -111,7 +111,7 @@ class EncryptTransportStage implements BackupStage
             // Crash-safety belt: if a prior attempt died between marking this
             // part encrypted and actually deleting the plaintext source below,
             // the plaintext survives on disk — unacceptable for mandatorily
-            // encrypted backups (rule #45, customer PII). Finish the cleanup
+            // encrypted backups (customer PII). Finish the cleanup
             // now; idempotent no-op once it's actually gone.
             $this->deleteLeftoverPlaintext($part);
 

@@ -90,7 +90,7 @@ class OrderItemsRelationManager extends RelationManager
     }
 
     /**
-     * Line total is always derived — never hand-typed (bcmath, rule #2).
+     * Line total is always derived — never hand-typed (bcmath).
      */
     private static function withComputedTotal(array $data): array
     {

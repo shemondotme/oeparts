@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * Emails every active super_admin about an uncaught exception in the admin
- * panel (App\Exceptions\AdminFatalErrorNotifier). 'default' queue (rule #16).
+ * panel (App\Exceptions\AdminFatalErrorNotifier). 'default' queue.
  */
 class NotifyAdminsOfFatalError implements ShouldQueue
 {

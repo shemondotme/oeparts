@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Schema;
 /**
  * template_type was a MySQL ENUM — every new mailable type required DDL (this
  * is already the column's second re-creation), and unknown values are a hard
- * insert error. A plain string accepts all existing values (Expand-safe,
- * rule #43); the value set is governed by the EmailTemplate PHP enum cast.
+ * insert error. A plain string accepts all existing values (Expand-safe);
+ * the value set is governed by the EmailTemplate PHP enum cast.
  */
 return new class extends Migration
 {

@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Artisan;
  * BackupManager::start() directly and advances it via a short-poll loop
  * (BackupDashboard::pollBackup()) instead, specifically BECAUSE dispatching
  * this job there would run the WHOLE backup inline under QUEUE_CONNECTION=sync
- * (shared hosting, rule #41), blocking the request well past the web server's
+ * (shared hosting), blocking the request well past the web server's
  * timeout. See BackupManagerPageTest's
  * run_now_starts_the_fsm_without_blocking_on_a_dispatched_job regression test.
  */

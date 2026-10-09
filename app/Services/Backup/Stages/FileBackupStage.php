@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
  * mtime + volume/segment map) is emitted as the final part — it doubles as the
  * hash baseline for the next incremental run.
  *
- * Resumable one-part-per-step (rule #48): init walks the tree once (+ diffs against
+ * Resumable one-part-per-step: init walks the tree once (+ diffs against
  * the baseline for incremental); each subsequent step archives a bounded batch of
  * files, appending to the open volume, and finalises a volume as a part the moment
  * it fills. A killed run resumes from the persisted file cursor.

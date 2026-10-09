@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * InstallManager — chunked, resumable installer FSM. Mirrors
- * App\Services\Backup\BackupManager's start()/advance() pattern (rule #48):
+ * App\Services\Backup\BackupManager's start()/advance() pattern:
  * one step per advance() call, so a single HTTP request never runs the whole
  * migrate+seed+admin-creation pipeline. That used to be exactly one big
  * synchronous call in InstallerController::install() — a real timeout risk
@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Schema;
  * table — the very first step (migrate:fresh) runs BEFORE any app table
  * exists, so there's nowhere in the DB to persist a checkpoint until after
  * that step completes. Same "state lives on disk, not in the app it's
- * building" philosophy as the Recovery Console (rule #50). All wizard
+ * building" philosophy as the Recovery Console. All wizard
  * decisions (admin credentials, site settings, mail config) are captured
  * into the state file at start() time rather than re-read from the Laravel
  * session on every advance() call — a long install shouldn't be able to
@@ -514,7 +514,7 @@ class InstallManager
         ];
     }
 
-    /** Dedicated per-day install log — readable without SSH/CLI (rule #41). */
+    /** Dedicated per-day install log — readable without SSH/CLI. */
     private function writeLog(string $level, string $message, array $context = []): void
     {
         try {

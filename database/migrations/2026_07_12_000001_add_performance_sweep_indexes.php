@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
  * Performance sweep (Phase 3): indexes for query shapes confirmed hot by a
  * grounded code audit but never indexed (see PREMIUM_GRADE_MASTER_WORKFLOW.md
  * §5s). Every add is guarded with hasIndex() so a resumed/re-run migration
- * never throws (rule #42).
+ * never throws.
  */
 return new class extends Migration
 {

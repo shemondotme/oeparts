@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\DB;
  * config-resolved-at-boot REDIS_QUEUE_RETRY_AFTER env var. All 6 were real,
  * saved, editable inputs with zero code-path consultation — retired outright
  * (no live replacement to carry a value into) in favor of Placeholder notes
- * on the settings page. Idempotent + reversible (rule #42); single-group op
- * (rule #44).
+ * on the settings page. Idempotent + reversible; single-group op
+ *
  */
 return new class extends Migration
 {

@@ -7,7 +7,7 @@ use App\Services\Backup\Exceptions\BackupException;
 /**
  * BackupCipher (Module 14/21, Chunk 2.4) — streamed AES-256-GCM for backup parts.
  *
- * Backups hold customer PII, so encryption is MANDATORY (GDPR, CLAUDE.md rule #45)
+ * Backups hold customer PII, so encryption is MANDATORY
  * and keyed on the DEDICATED OE_BACKUP_KEY (never APP_KEY). Losing the key loses
  * every backup — the app warns loudly and refuses to back up without one.
  *

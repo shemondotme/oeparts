@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * product detail page's PDP-overhaul renders them today because the columns
  * never existed, not because the view withheld them.
  *
- * Idempotent + reversible (rule #42) — via SafeSchema (see
+ * Idempotent + reversible — via SafeSchema (see
  * add_slug_to_products_table for why a bare hasColumn() pre-check on this
  * same table isn't enough on its own).
  */

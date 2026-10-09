@@ -54,7 +54,7 @@ class PartInquiryController extends Controller
             FailedSearchLog::where('id', $validated['failed_search_log_id'])->update(['inquiry_submitted' => true]);
         }
 
-        // Best-effort — on a 'sync' queue connection (rule #41: many installs
+        // Best-effort — on a 'sync' queue connection (many installs
         // run without a worker) this job's mail send happens inline, so a real
         // SMTP failure would otherwise throw right here and 500 a submission
         // whose PartInquiry row is already safely persisted.

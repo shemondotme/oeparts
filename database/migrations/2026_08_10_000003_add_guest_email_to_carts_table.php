@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Schema;
  * Carts therefore had no reachable address for any guest cart and silently
  * skipped the entire guest-checkout segment of abandoned-cart recovery.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

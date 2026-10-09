@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /** Idempotent (rule #42) via SafeSchema — see add_slug_to_products_table. */
+    /** Idempotent via SafeSchema — see add_slug_to_products_table. */
     public function up(): void
     {
         if (Schema::hasTable('core_web_vitals_snapshots')) {

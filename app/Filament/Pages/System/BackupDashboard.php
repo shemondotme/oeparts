@@ -35,9 +35,9 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
  * dashboard (Module 14).
  *
  * Access is `manage backups`; download/restore are the most sensitive (a backup
- * is a full PII export, rule #45) so they require password RE-AUTH and are
+ * is a full PII export) so they require password RE-AUTH and are
  * audited to the 'updates' log channel. Custom actions get NO automatic policy
- * enforcement (CLAUDE rule #31), so every mutating action carries an explicit
+ * enforcement, so every mutating action carries an explicit
  * ->authorize().
  */
 class BackupDashboard extends Page implements HasTable

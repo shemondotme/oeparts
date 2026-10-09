@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\DB;
  * on the Shipping Zones page) — confirmed the only live consumer anywhere in
  * checkout/cart. The global setting was never read. Retired outright (no
  * value to carry — the per-method column is a distinct, already-populated
- * data source, not a migration target). Idempotent + reversible (rule #42);
- * single-group op (rule #44).
+ * data source, not a migration target). Idempotent + reversible;
+ * single-group op.
  */
 return new class extends Migration
 {

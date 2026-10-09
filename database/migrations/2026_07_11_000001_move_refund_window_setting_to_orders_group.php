@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
  * orders.refund_window_days while enforcement read refund.refund_window_days
  * (a group no page manages). Enforcement now reads orders.* — carry any
  * operator-set legacy value across so their intent survives. Idempotent +
- * reversible (rule #42); single-row UPDATE, no batching needed (rule #44).
+ * reversible; single-row UPDATE, no batching needed.
  */
 return new class extends Migration
 {

@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  * which was already reality, so removing the misleading toggle changes
  * nothing except no longer lying to the operator.
  *
- * Idempotent + reversible (rule #42); all single-row ops (rule #44).
+ * Idempotent + reversible; all single-row ops.
  */
 return new class extends Migration
 {

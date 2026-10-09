@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * itself doesn't need to branch on this column — CheckoutService::createOrder()
  * deletes any cart it completes, buy-now or not, with no special-casing.
  *
- * Idempotent + reversible (rule #42) — via SafeSchema (see
+ * Idempotent + reversible — via SafeSchema (see
  * add_slug_to_products_table for why a bare hasColumn() pre-check isn't
  * enough on its own for a table that real live upgrades pass through).
  */

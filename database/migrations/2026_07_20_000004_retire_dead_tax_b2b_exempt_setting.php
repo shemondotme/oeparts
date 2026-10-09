@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * key tax.vat_validation_enabled is NOT touched here — it still gates the
  * generic /api/validate-vat endpoint (VatValidationController), which is
  * independent, still-functioning infrastructure the future B2B system can
- * reuse. Idempotent + reversible (rule #42); single-group op (rule #44).
+ * reuse. Idempotent + reversible; single-group op.
  */
 return new class extends Migration
 {

@@ -9,7 +9,7 @@ namespace App\Services\Updates;
  * arm.flag directly via raw filesystem calls, per the note below), so this
  * rename only touched UpdateApplier and its tests.
  *
- * The Recovery Console is OPT-IN-ARMED (LOCKED DECISION #6, rule #47): it only ever
+ * The Recovery Console is OPT-IN-ARMED (LOCKED DECISION #6): it only ever
  * operates during an update window, signalled by the presence of an `arm.flag` file
  * in the framework-independent state dir (config('updates.state_path')). The Update
  * Engine writes the flag when an apply begins (UpdateApplier::start) and removes it

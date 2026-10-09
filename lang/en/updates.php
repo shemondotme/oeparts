@@ -7,7 +7,7 @@
 |--------------------------------------------------------------------------
 |
 | Keys are machine-generated slugs of the original English text, same
-| convention as lang/en/admin.php (see CLAUDE.md rule #60). Machine-
+| convention as lang/en/admin.php (). Machine-
 | translated into de/es/fr/lt; flagged for human review before relying on
 | it for anything beyond internal staff use.
 |

@@ -27,7 +27,7 @@ use Illuminate\Support\Str;
  *               got (each row was its own DB transaction, so no rollback of
  *               already-processed rows).
  *
- * Pure PHP, no queue worker required (rule #41). The concrete work lives in
+ * Pure PHP, no queue worker required. The concrete work lives in
  * pluggable stages (config('imports.stages')); this class only orchestrates.
  */
 class ImportManager

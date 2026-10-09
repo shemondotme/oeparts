@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 /**
  * The admin Reply action only ever emailed the customer — nothing recorded
  * what was said, by whom, or when. These columns give replies an audit trail
- * (Expand-only, rule #43; idempotent + reversible, rule #42).
+ * (Expand-only; idempotent + reversible).
  */
 return new class extends Migration
 {

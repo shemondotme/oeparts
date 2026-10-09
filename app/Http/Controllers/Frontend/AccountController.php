@@ -496,7 +496,7 @@ class AccountController extends Controller
         ]);
 
         // dispatch() runs synchronously on the 'sync' queue connection (local
-        // dev, and some shared-hosting installs per rule #41) — a real SMTP
+        // dev, and some shared-hosting installs) — a real SMTP
         // failure throws right here, uncaught, and turns a genuinely
         // successful refund submission (already saved above) into a raw 500
         // error page for the customer. Confirmed live against a broken local

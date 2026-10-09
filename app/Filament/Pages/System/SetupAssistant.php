@@ -285,7 +285,7 @@ class SetupAssistant extends Page
     public function clearCache(): void
     {
         // Framework caches only. NEVER cache:clear here — that is
-        // Cache::flush() on the shared store (rule #5): it destroys
+        // Cache::flush() on the shared store: it destroys
         // sessions on production Redis and every cached settings group.
         Artisan::call('config:clear');
         Artisan::call('route:clear');

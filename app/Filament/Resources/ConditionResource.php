@@ -72,7 +72,7 @@ class ConditionResource extends Resource
                                             // real runtime argument is Schemas\Components\Utilities\Get),
                                             // confirmed live — auto-slug-from-name was completely broken on
                                             // Condition create, the only resource in the codebase using this
-                                            // stale v3-era type-hint (rule #38's "grep the whole codebase"
+                                            // stale v3-era type-hint ("grep the whole codebase"
                                             // lesson applies here too — every other resource already uses the
                                             // v5 Utilities namespace or doesn't use Get/Set at all).
                                             ->afterStateUpdated(function (Get $get, Set $set, ?string $state, ?Condition $record) {

@@ -13,7 +13,7 @@ use Tests\TestCase;
 
 /**
  * Performance sweep fix: the Products list search box searched raw `oem_number`
- * (unindexed leading-wildcard LIKE), not `normalized_oem` (rule #12's BTREE-indexed
+ * (unindexed leading-wildcard LIKE), not `normalized_oem` (BTREE-indexed
  * column). It also couldn't match a dashes/spaces-formatted query the way the
  * storefront and the global command-palette search already do.
  */

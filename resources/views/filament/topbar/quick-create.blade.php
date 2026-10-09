@@ -1,8 +1,8 @@
 {{--
   Topbar "+ New" quick-create dropdown (native Filament dropdown components).
   Each item is gated on an EXPLICIT permission string, never Resource::canCreate()
-  — orders/customers create-access is tied to the 'edit' permission, not 'create'
-  (see CLAUDE.md rule #27), so canCreate() would wrongly hide them.
+  — orders/customers create-access is tied to the 'edit' permission, not 'create',
+  so canCreate() would wrongly hide them.
 --}}
 @php
     $admin = auth('admin')->user();

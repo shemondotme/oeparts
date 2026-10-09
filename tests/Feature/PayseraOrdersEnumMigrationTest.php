@@ -12,7 +12,7 @@ use Tests\TestCase;
 /**
  * Phase 5 (Data Integrity & Migration Safety) — verifies
  * 2026_09_16_000001_add_paysera_to_orders_payment_method_enum.php against the
- * exact failure mode CLAUDE.md rule #42 exists for (see
+ * exact failure mode idempotent migrations exist for (see
  * add_slug_to_products_table's doc comment / commit f1fc67f): a restore or
  * interrupted prior update can leave the `migrations` tracking table out of
  * sync with the live schema even though each individually looks consistent.

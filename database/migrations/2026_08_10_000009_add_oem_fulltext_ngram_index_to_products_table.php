@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\Schema;
  * no-op there, matching Product::scopeOemContains()'s driver-aware
  * fallback to LIKE for tests.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

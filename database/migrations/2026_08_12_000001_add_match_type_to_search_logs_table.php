@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
  * path served it. The SEO Health Dashboard's internal-search-analytics
  * widget needs this breakdown and has no other source for it.
  *
- * Idempotent + reversible (rule #42) — via SafeSchema (see
+ * Idempotent + reversible — via SafeSchema (see
  * add_slug_to_products_table for why a bare hasColumn() pre-check isn't
  * enough on its own for a table that real live upgrades pass through).
  */

@@ -25,7 +25,7 @@ use Illuminate\Support\Str;
  * writes an UpdateHistory row; each advance() runs ONE step and checkpoints
  * (status/step/step_index) so a killed poll resumes. Because each advance() is a
  * separate HTTP poll = a separate request, `finalize` naturally runs in a FRESH
- * request after `swap` (rule #46 — opcache holds OLD classes in the swap request).
+ * request after `swap` (opcache holds OLD classes in the swap request).
  *
  * Failure handling follows the failure/rollback matrix: a failure BEFORE the swap
  * just cleans up (no changes to reverse); a failure AFTER the swap reverses the
@@ -249,7 +249,7 @@ class UpdateApplier
         $run = $history->backup_run_id ? BackupRun::find($history->backup_run_id) : null;
 
         if ($run === null) {
-            // The updater already owns the shared lock — don't re-acquire it (rule #48).
+            // The updater already owns the shared lock — don't re-acquire it.
             $run = $manager->start(
                 BackupRun::PROFILE_UPDATE_SAFETY, BackupRun::TRIGGER_PRE_UPDATE, [], acquireLock: false
             );
@@ -415,7 +415,7 @@ class UpdateApplier
             $this->exitMaintenance();
             // A completed rollback restored a known-good install → close the recovery
             // window. A hard failure (no rollback) may have left the app unbootable, so
-            // KEEP it armed — that is exactly when an operator needs the console (rule #47).
+            // KEEP it armed — that is exactly when an operator needs the console.
             if ($rolledBack) {
                 $this->disarmRecovery();
             }

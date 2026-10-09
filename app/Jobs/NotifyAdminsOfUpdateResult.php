@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Mail;
  * an update apply, whether it was a scheduled unattended security auto-apply
  * (App\Console\Commands\AutoApplySecurityUpdate) or an admin-triggered manual
  * apply (App\Filament\Pages\System\SystemUpdates::startApply()). Dispatched
- * exactly once per attempt, success or failure — 'default' queue (rule #16).
+ * exactly once per attempt, success or failure — 'default' queue.
  *
  * Formerly NotifyAdminsOfAutoUpdate — generalized because a manually-clicked
  * apply that fails while the admin's tab is closed previously notified

@@ -227,7 +227,7 @@ class PayseraPaymentServiceTest extends TestCase
 
     protected function tearDown(): void
     {
-        // Never Cache::flush() (rule #5) — forget only the specific keys
+        // Never Cache::flush() — forget only the specific keys
         // these tests populate, so the auth-token cache can't leak stale
         // fake tokens into a later, unrelated test.
         Cache::forget('paysera_auth_token:'.md5('test_client_idtest_client_secret'));

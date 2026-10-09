@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Schema;
  * migration in this install's own history is responsible for, so an operator
  * can look into them (a one-off table created by hand in phpMyAdmin, a leftover
  * from an unrelated tool, …) and decide for themselves whether to keep or drop
- * it. Deliberately conservative: migrations only ever ADD (rule #42, idempotent
+ * it. Deliberately conservative: migrations only ever ADD (idempotent
  * + reversible), so under normal operation this list should always be empty —
  * anything on it is a genuine "where did this come from?" signal, not routine
  * noise, and is never acted on automatically.
@@ -38,7 +38,7 @@ class SchemaAuditor
     /**
      * Tables this install's own migration history is expected to have created:
      * every literal `Schema::create('name', ...)` (and this codebase's own
-     * `SafeSchema::create('context', 'name', ...)` wrapper, rule #42 — see
+     * `SafeSchema::create('context', 'name', ...)` wrapper — see
      * App\Support\Database\SafeSchema — whose table name is its SECOND
      * argument) found in a migration's up() method, minus:
      *   - any later migration's up() that `Schema::drop(IfExists)?('name')`s it

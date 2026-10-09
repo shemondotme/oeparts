@@ -26,8 +26,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * until now. No Filament Schema/Form here on purpose, same precedent as
  * ProductImport.php: raw Livewire properties + wire:click/wire:model.live.
  *
- * Mutating methods carry their own explicit ->can() check (CLAUDE rule #31:
- * custom actions get no automatic policy enforcement). Changes are applied
+ * Mutating methods carry their own explicit ->can() check (custom
+ * actions get no automatic policy enforcement). Changes are applied
  * via a per-record ->save() loop (not a single mass UPDATE) so
  * Product::booted()'s cache-invalidation hook fires for every changed row.
  *

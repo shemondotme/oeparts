@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  * symbols stuck on EUR/€ while format_price() moved to the new currency — a
  * real display/charge mismatch. All 34 call sites were repointed to
  * general.currency(_symbol) in the same change that retires this pair.
- * Idempotent + reversible (rule #42); single-group op (rule #44).
+ * Idempotent + reversible; single-group op.
  */
 return new class extends Migration
 {

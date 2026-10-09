@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Mail;
 
 /**
  * Update & Recovery System (Module 21, Chunk 2.6) — emails active super_admins
- * that a backup failed. 'default' queue (rule #16).
+ * that a backup failed. 'default' queue.
  */
 class NotifyAdminsOfBackupFailure implements ShouldQueue
 {

@@ -29,7 +29,7 @@ use Illuminate\Support\Str;
  *   fail()    → marks failed, releases the lock; the partial files are left for
  *               the BackupJanitor to clean.
  *
- * Pure PHP, no queue worker required (rule #41). The concrete work lives in
+ * Pure PHP, no queue worker required. The concrete work lives in
  * pluggable stages (Chunks 2.2–2.4); this class only orchestrates them.
  */
 class BackupManager
@@ -80,7 +80,7 @@ class BackupManager
             'db_version' => $this->databaseVersion(),
             'started_at' => now(),
             // lock_owned=false lets the Update Engine own the shared lock across the
-            // WHOLE apply while its pre-update backup step runs (rule #48).
+            // WHOLE apply while its pre-update backup step runs.
             'meta' => array_merge($meta, ['lock_owned' => $acquireLock]),
         ]);
 

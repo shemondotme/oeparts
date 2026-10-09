@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Schema;
  * The filter-scoped search context (which manufacturer/car-model page a
  * zero-result search happened on) was lost for every row, ever.
  *
- * Idempotent + reversible (rule #42).
+ * Idempotent + reversible.
  */
 return new class extends Migration
 {

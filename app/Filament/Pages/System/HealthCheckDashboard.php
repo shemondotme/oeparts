@@ -111,7 +111,7 @@ class HealthCheckDashboard extends Page
         try {
             // Targeted key-scoped purge, NOT Artisan cache:clear — a full flush
             // nukes the whole cache store, sessions included if they share the
-            // same Redis connection (CLAUDE.md rule #5: never Cache::flush()).
+            // same Redis connection (never Cache::flush()).
             $count = app(CacheService::class)->purgeAllApplicationCacheKeys();
 
             if ($count === -1) {

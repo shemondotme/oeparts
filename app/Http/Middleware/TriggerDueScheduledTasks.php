@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
  * notice the dashboard's "Scheduler: stale" tile. This middleware triggers
  * `schedule:run` from a normal HTTP request's terminate() phase instead,
  * run in-process rather than a loopback HTTP request (simpler, no outbound
- * network call needed, matches rule #41's pure-PHP philosophy).
+ * network call needed, matches the project's pure-PHP philosophy).
  *
  * Runs in terminate(), AFTER the response is already sent — under PHP-FPM
  * (the dominant shared-hosting SAPI), Symfony's Response::send() already

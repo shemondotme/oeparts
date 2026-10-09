@@ -40,9 +40,9 @@ use Tests\TestCase;
  * for the relation columns they render. Two of them (Manufacturer/CarModel
  * ProductsRelationManager) also had a real display bug alongside the N+1 —
  * `formatStateUsing(fn ($state) => $state?->name ?? '—')` on a dot-path
- * column whose $state IS ALREADY the resolved string (rule #26), so the
+ * column whose $state IS ALREADY the resolved string, so the
  * Condition column silently rendered "—" for every row. These tests both
- * confirm the tabs still mount (rule #38 class) and that the condition name
+ * confirm the tabs still mount (same class of bug) and that the condition name
  * actually renders now.
  */
 class PerformanceSweepRelationManagerTest extends TestCase

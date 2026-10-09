@@ -10,7 +10,7 @@ use Tests\TestCase;
 /**
  * Update System (Module 21) — Chunk 0.2 schema.
  * Verifies the three tables exist with their expected columns, and that the
- * migrations honour CLAUDE.md rule #42: idempotent up() (safe to re-run) and
+ * migrations have an idempotent up() (safe to re-run) and a
  * reversible down().
  */
 class UpdateSystemSchemaTest extends TestCase
@@ -60,7 +60,7 @@ class UpdateSystemSchemaTest extends TestCase
     public function migration_up_is_idempotent(): void
     {
         // Tables already exist (RefreshDatabase). Re-running up() must NOT throw,
-        // thanks to the Schema::hasTable() guard (rule #42).
+        // thanks to the Schema::hasTable() guard.
         foreach (self::MIGRATIONS as $table => $file) {
             $migration = require database_path('migrations/'.$file);
             $migration->up();

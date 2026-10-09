@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Schema;
  * import idempotent — without it, re-uploading the same file would re-
  * download and re-store a duplicate image every time.
  *
- * Idempotent + reversible (rule #42) — via SafeSchema (see
+ * Idempotent + reversible — via SafeSchema (see
  * add_slug_to_products_table for why a bare hasColumn() pre-check isn't
  * enough on its own for a table that real live upgrades pass through).
  */

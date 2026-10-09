@@ -27,7 +27,7 @@ use Tests\TestCase;
 
 /**
  * Backup Manager page (Module 21, Chunk 2.6) — access control + run/restore/delete
- * actions. Download/restore are re-auth'd, audited PII exports (rule #45).
+ * actions. Download/restore are re-auth'd, audited PII exports.
  */
 class BackupManagerPageTest extends TestCase
 {
@@ -51,7 +51,7 @@ class BackupManagerPageTest extends TestCase
 
         // runNow/pollBackup now drive a real BackupManager FSM (not a dispatched
         // job) — scope the file stage to a tiny fixture dir, never the real repo
-        // (CLAUDE.md rule #49). The lock file also needs its own path per test:
+        // The lock file also needs its own path per test:
         // a run left non-terminal by one test (e.g. only checking the initial
         // "started" state) must not hold the shared lock into the next test.
         config(['backup.disk' => 'local', 'backup.staging_disk' => 'local']);
@@ -130,7 +130,7 @@ class BackupManagerPageTest extends TestCase
     public function run_now_starts_the_fsm_without_blocking_on_a_dispatched_job(): void
     {
         // Regression guard: dispatching RunBackupJob here would run the WHOLE
-        // backup inline under QUEUE_CONNECTION=sync (shared hosting, rule #41),
+        // backup inline under QUEUE_CONNECTION=sync (shared hosting),
         // blocking the request past the web server's timeout. runNow must only
         // call BackupManager::start() — fast — and hand off to pollBackup().
         Queue::fake();

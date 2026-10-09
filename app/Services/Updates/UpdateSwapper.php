@@ -13,13 +13,13 @@ use Illuminate\Support\Facades\Log;
  * rename() is atomic per-directory on one filesystem, so the "mixed" window is a
  * few millisecond renames (done inside maintenance mode). Every rename is recorded
  * in `last-swap.json` (state_path) BEFORE the next one, so if the process dies the
- * Recovery Console can finish reversing from that map (rule #47). A mid-swap
+ * Recovery Console can finish reversing from that map. A mid-swap
  * failure reverses the completed renames in place.
  *
  * PRESERVE paths (.env, storage/) are never in core_paths, so they're untouched.
  * After a successful swap it resets OPcache + realpath cache — but migrations run
  * on a FRESH request (Chunk 3.4), because opcache still holds the OLD classes in
- * the swapping request (rule #46). Symlink-release deployments are blocked by
+ * the swapping request. Symlink-release deployments are blocked by
  * pre-flight (Chunk 3.1), so only the dir-rename path is implemented in V1.
  */
 class UpdateSwapper

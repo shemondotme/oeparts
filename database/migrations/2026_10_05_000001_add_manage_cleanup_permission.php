@@ -11,7 +11,7 @@ use Spatie\Permission\PermissionRegistrar;
  * installs get it via RolesSeeder, already updated). guard_name = 'admin'.
  * NOT assigned to any role — super_admin only, via Gate::before() (LOCKED
  * DECISION #1), same as every other permission in this family. Idempotent +
- * reversible (CLAUDE.md rule #42).
+ * reversible.
  */
 return new class extends Migration
 {
