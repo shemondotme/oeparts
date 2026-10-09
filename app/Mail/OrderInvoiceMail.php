@@ -56,6 +56,7 @@ class OrderInvoiceMail extends Mailable
             with: [
                 'order' => $this->order,
                 'locale' => $this->locale,
+                'contactEmail' => company_contact_email(),
             ],
         );
     }

@@ -31,7 +31,7 @@
 {{ ucfirst(mb_strtolower($mt('mail_pay_online'))) }}: {{ $invoice->payment_link_url }}
 @endif
 
-{{ $mt('reminder_attached_again', ['email' => settings('company.email', 'info@oeparts.lt')]) }}
+{{ $mt('reminder_attached_again', ['email' => company_contact_email()]) }}
 
 ---
 {{ config('app.url') }}

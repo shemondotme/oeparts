@@ -10,7 +10,7 @@
 {{ trans('emails.order_invoice.order_number', [], $locale) }}: {{ $order->order_number }}
 {{ trans('emails.order_invoice.order_total', [], $locale) }}: {{ number_format($order->grand_total, 2) }} €
 
-{{ trans('emails.order_invoice.questions', ['email' => settings('company.email', 'info@oeparts.lt')], $locale) }}
+{{ trans('emails.order_invoice.questions', ['email' => $contactEmail], $locale) }}
 
 ---
 {{ config('app.url') }}

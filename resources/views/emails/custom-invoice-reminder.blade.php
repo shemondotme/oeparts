@@ -80,7 +80,7 @@
 
         <tr>
             <td style="font-size: 14px; line-height: 21px; color: #4E5A74;">
-                {{ $mt('reminder_attached_again', ['email' => settings('company.email', 'info@oeparts.lt')]) }}
+                {{ $mt('reminder_attached_again', ['email' => company_contact_email()]) }}
             </td>
         </tr>
     </table>

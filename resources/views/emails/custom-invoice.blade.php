@@ -106,7 +106,7 @@
 
         <tr>
             <td style="font-size: 14px; line-height: 21px; color: #4E5A74;">
-                {{ $mt('mail_questions', ['email' => settings('company.email', 'info@oeparts.lt')]) }}
+                {{ $mt('mail_questions', ['email' => company_contact_email()]) }}
             </td>
         </tr>
     </table>

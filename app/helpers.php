@@ -19,6 +19,16 @@ function settings(string $key, mixed $default = null): mixed
 }
 
 /**
+ * The address customers are told to write to in emails ("questions? write to ..."): Settings → Company,
+ * then the site email, then the mailbox the shop sends from. Never empty, so an email can't end in
+ * "write to ." on an install that has not filled in Settings → Company yet.
+ */
+function company_contact_email(): string
+{
+    return (string) (settings('company.email') ?: settings('general.site_email') ?: config('mail.reply_to.address') ?: config('mail.from.address'));
+}
+
+/**
  * `loading` attribute value for a below-the-fold `<img>` — 'lazy' unless the
  * admin has turned lazy-loading off in Performance settings, in which case
  * 'eager' preserves the pre-toggle browser default. NEVER use this for a

@@ -46,6 +46,19 @@
                                         </span>
                                     </td>
                                 </tr>
+                                {{-- Invoice (only when the PDF is attached) --}}
+                                @if(!empty($attachInvoice) && filled($order->invoice_number))
+                                <tr>
+                                    <td style="padding-bottom: 8px;">
+                                        <span class="spec-label" style="color: #4E5A74;">INVOICE NO.</span>
+                                    </td>
+                                    <td align="right" style="padding-bottom: 8px;">
+                                        <span class="font-mono" style="font-size: 14px; color: #0A1228;">
+                                            {{ $order->invoice_number }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endif
                                 {{-- Date --}}
                                 <tr>
                                     <td style="padding-bottom: 8px;">

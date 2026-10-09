@@ -47,7 +47,7 @@
 {{ $invoice->payment_instructions }}
 @endif
 
-{{ $mt('mail_questions', ['email' => settings('company.email', 'info@oeparts.lt')]) }}
+{{ $mt('mail_questions', ['email' => company_contact_email()]) }}
 
 ---
 {{ config('app.url') }}

@@ -7,8 +7,10 @@ use App\Mail\OrderConfirmation;
 use App\Mail\OrderInvoiceMail;
 use App\Models\Admin;
 use App\Models\Order;
+use App\Models\Setting;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -33,10 +35,33 @@ class OrderInvoiceEmailTest extends TestCase
         $mail = new OrderInvoiceMail($order);
 
         $this->assertStringContainsString('INV-77', $mail->render());
+        $this->assertStringContainsString('ORDER · INVOICE', $mail->render());
         $attachments = $mail->attachments();
         $this->assertCount(1, $attachments);
         $this->assertSame("invoice-{$order->order_number}.pdf", $attachments[0]->as);
         $this->assertSame('application/pdf', $attachments[0]->mime);
+    }
+
+    #[Test]
+    public function the_invoice_mail_never_prints_an_empty_contact_address(): void
+    {
+        $order = Order::factory()->create(['guest_email' => 'buyer@example.com', 'invoice_number' => 'INV-77']);
+        Setting::query()->where('group', 'company')->where('key', 'email')->delete();
+        Cache::flush();
+
+        $mail = new OrderInvoiceMail($order);
+
+        $this->assertStringNotContainsString('write to .', $mail->render());
+        $this->assertStringContainsString((string) (config('mail.reply_to.address') ?: config('mail.from.address')), $mail->render());
+    }
+
+    #[Test]
+    public function the_confirmation_shows_the_invoice_number_only_when_the_invoice_is_attached(): void
+    {
+        $order = Order::factory()->create(['guest_email' => 'buyer@example.com', 'invoice_number' => 'INV-4242']);
+
+        $this->assertStringContainsString('INV-4242', (new OrderConfirmation($order, 'en', true))->render());
+        $this->assertStringNotContainsString('INV-4242', (new OrderConfirmation($order))->render());
     }
 
     #[Test]

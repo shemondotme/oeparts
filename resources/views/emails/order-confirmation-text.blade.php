@@ -15,6 +15,9 @@
 {{ trans('emails.order_confirmation.order_summary', [], $locale) }}
 ----------------------------------------
 {{ trans('emails.order_confirmation.order_number', [], $locale) }}: {{ $order->order_number }}
+@if(!empty($attachInvoice) && filled($order->invoice_number))
+{{ trans('emails.order_invoice.invoice_number', [], $locale) }}: {{ $order->invoice_number }}
+@endif
 {{ trans('emails.order_confirmation.order_date', [], $locale) }}: {{ $order->created_at->format('d.m.Y') }}
 {{ trans('emails.order_confirmation.shipping_method', [], $locale) }}: {{ $order->shipping_method_name_snapshot }}
 {{ trans('emails.order_confirmation.shipping_address', [], $locale) }}:

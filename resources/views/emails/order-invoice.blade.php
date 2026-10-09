@@ -1,5 +1,7 @@
 @extends('emails.layout')
 
+@section('eyebrow', 'ORDER · INVOICE')
+
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
@@ -47,7 +49,7 @@
 
         <tr>
             <td style="font-size: 14px; line-height: 21px; color: #4E5A74;">
-                {{ trans('emails.order_invoice.questions', ['email' => settings('company.email', 'info@oeparts.lt')], $locale) }}
+                {{ trans('emails.order_invoice.questions', ['email' => $contactEmail], $locale) }}
             </td>
         </tr>
     </table>
