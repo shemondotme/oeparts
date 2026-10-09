@@ -5,14 +5,14 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    FINANCE · INVOICE
+                    FINANCE · {{ strtoupper($documentType->getLabel()) }}
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
-                    Invoice {{ $invoice->invoice_number }}<span class="text-amber">.</span>
+                    {{ $documentType->getLabel() }} {{ $invoice->invoice_number }}<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     Hello {{ $invoice->client_name }},<br>
-                    Please find your invoice attached as a PDF. A summary is below.
+                    Please find your {{ strtolower($documentType->getLabel()) }} attached as a PDF. A summary is below.
                 </p>
             </td>
         </tr>
@@ -24,15 +24,15 @@
                         <td style="padding: 20px;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td style="padding-bottom: 12px;"><span class="spec-label" style="color: #4E5A74;">INVOICE NO.</span></td>
+                                    <td style="padding-bottom: 12px;"><span class="spec-label" style="color: #4E5A74;">{{ strtoupper($documentType->getLabel()) }} NO.</span></td>
                                     <td align="right" style="padding-bottom: 12px;"><span class="font-mono" style="font-size: 14px; color: #0A1228; font-weight: bold;">{{ $invoice->invoice_number }}</span></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding-bottom: 12px;"><span class="spec-label" style="color: #4E5A74;">DUE DATE</span></td>
+                                    <td style="padding-bottom: 12px;"><span class="spec-label" style="color: #4E5A74;">{{ strtoupper($documentType->dueLabel()) }}</span></td>
                                     <td align="right" style="padding-bottom: 12px;"><span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ $invoice->due_date->format('d/m/Y') }}</span></td>
                                 </tr>
                                 <tr>
-                                    <td style="padding-top: 12px; border-top: 1px dashed #D8CFB6;"><span class="spec-label" style="color: #4E5A74;">AMOUNT DUE</span></td>
+                                    <td style="padding-top: 12px; border-top: 1px dashed #D8CFB6;"><span class="spec-label" style="color: #4E5A74;">{{ $documentType->isCredit() ? 'CREDIT AMOUNT' : ($documentType->requestsPayment() ? 'AMOUNT DUE' : 'TOTAL') }}</span></td>
                                     <td align="right" style="padding-top: 12px; border-top: 1px dashed #D8CFB6;"><span class="font-mono" style="font-size: 18px; color: #0A1228; font-weight: bold;">{{ format_price($invoice->total, $invoice->currency, 'en') }}</span></td>
                                 </tr>
                             </table>
@@ -66,7 +66,7 @@
         </tr>
         @endif
 
-        @if($invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
+        @if($documentType->requestsPayment() && $invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 10px 0; color: #4E5A74;">PAY ONLINE</p>
@@ -75,7 +75,7 @@
         </tr>
         @endif
 
-        @if($invoice->payment_method !== \App\Enums\InvoicePaymentMethod::None && filled($invoice->payment_instructions))
+        @if($documentType->requestsPayment() && $invoice->payment_method !== \App\Enums\InvoicePaymentMethod::None && filled($invoice->payment_instructions))
         <tr>
             <td style="padding-bottom: 24px; font-size: 14px; line-height: 21px; color: #0A1228;">
                 {!! nl2br(e($invoice->payment_instructions)) !!}

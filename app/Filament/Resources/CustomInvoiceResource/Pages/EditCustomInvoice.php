@@ -15,7 +15,12 @@ class EditCustomInvoice extends EditRecord
         return [
             CustomInvoiceResource::makeDownloadAction(),
             CustomInvoiceResource::makeSendAction(),
+            CustomInvoiceResource::makeAcceptAction(),
+            CustomInvoiceResource::makeDeclineAction(),
             CustomInvoiceResource::makeMarkPaidAction(),
+            ...CustomInvoiceResource::makeConvertActions(),
+            CustomInvoiceResource::makeCreditNoteAction(),
+            CustomInvoiceResource::makeDuplicateAction(),
             CustomInvoiceResource::makeCancelAction(),
         ];
     }

@@ -1,12 +1,12 @@
-Invoice {{ $invoice->invoice_number }}
+{{ $documentType->getLabel() }} {{ $invoice->invoice_number }}
 
 Hello {{ $invoice->client_name }},
 
-Please find your invoice attached as a PDF.
+Please find your {{ strtolower($documentType->getLabel()) }} attached as a PDF.
 
-Invoice no.: {{ $invoice->invoice_number }}
-Due date: {{ $invoice->due_date->format('d/m/Y') }}
-Amount due: {{ format_price($invoice->total, $invoice->currency, 'en') }}
+{{ $documentType->getLabel() }} no.: {{ $invoice->invoice_number }}
+{{ $documentType->dueLabel() }}: {{ $invoice->due_date->format('d/m/Y') }}
+{{ $documentType->isCredit() ? 'Credit amount' : ($documentType->requestsPayment() ? 'Amount due' : 'Total') }}: {{ format_price($invoice->total, $invoice->currency, 'en') }}
 @if(!empty($bank))
 
 Pay by bank transfer
@@ -21,11 +21,11 @@ IBAN: {{ $bank['iban'] }}
 @endif
 Payment reference: {{ $invoice->invoice_number }}
 @endif
-@if($invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
+@if($documentType->requestsPayment() && $invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
 
 Pay online: {{ $invoice->payment_link_url }}
 @endif
-@if($invoice->payment_method !== \App\Enums\InvoicePaymentMethod::None && filled($invoice->payment_instructions))
+@if($documentType->requestsPayment() && $invoice->payment_method !== \App\Enums\InvoicePaymentMethod::None && filled($invoice->payment_instructions))
 
 {{ $invoice->payment_instructions }}
 @endif

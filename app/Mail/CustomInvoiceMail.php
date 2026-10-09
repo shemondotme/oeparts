@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Enums\InvoicePaymentMethod;
 use App\Models\CustomInvoice;
+use App\Services\CustomInvoiceService;
 use App\Services\InvoiceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
@@ -31,7 +32,7 @@ class CustomInvoiceMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Invoice '.$this->invoice->invoice_number.' from '.settings('company.name', 'OeParts'),
+            subject: $this->invoice->document_type->getLabel().' '.$this->invoice->invoice_number.' from '.settings('company.name', 'OeParts'),
             tags: ['custom-invoice'],
             metadata: [
                 'custom_invoice_id' => $this->invoice->id,
@@ -47,7 +48,8 @@ class CustomInvoiceMail extends Mailable
             text: 'emails.custom-invoice-text',
             with: [
                 'invoice' => $this->invoice,
-                'bank' => $this->invoice->payment_method === InvoicePaymentMethod::BankTransfer
+                'documentType' => $this->invoice->document_type,
+                'bank' => $this->invoice->document_type->requestsPayment() && $this->invoice->payment_method === InvoicePaymentMethod::BankTransfer
                     ? app(InvoiceService::class)->bankDetailsFor($this->invoice->bank_account_id, $this->invoice->currency)
                     : null,
                 'locale' => 'en',
@@ -61,7 +63,7 @@ class CustomInvoiceMail extends Mailable
     public function attachments(): array
     {
         return [
-            Attachment::fromData(fn () => $this->pdfContent, 'invoice-'.$this->invoice->invoice_number.'.pdf')
+            Attachment::fromData(fn () => $this->pdfContent, app(CustomInvoiceService::class)->filename($this->invoice))
                 ->withMime('application/pdf'),
         ];
     }

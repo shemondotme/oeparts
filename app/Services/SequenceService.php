@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\InvoiceDocumentType;
 use App\Enums\SequenceType;
 use App\Models\Sequence;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,15 @@ class SequenceService
     public function nextInvoiceNumber(): string
     {
         return $this->next(SequenceType::Invoice);
+    }
+
+    /**
+     * Next number for a hand-written document, from that type's own series
+     * (invoices share the order-invoice series; quotes, proformas and credit notes have theirs).
+     */
+    public function nextDocumentNumber(InvoiceDocumentType $type): string
+    {
+        return $this->next($type->sequenceType());
     }
 
     /**
@@ -104,6 +114,9 @@ class SequenceService
             SequenceType::Order => settings('orders.order_number_prefix', 'ORD'),
             SequenceType::Invoice => settings('orders.invoice_number_prefix', 'INV'),
             SequenceType::Rma => settings('orders.rma_number_prefix', 'RMA'),
+            SequenceType::Quote => settings('orders.quote_number_prefix', 'QUO'),
+            SequenceType::Proforma => settings('orders.proforma_number_prefix', 'PRO'),
+            SequenceType::CreditNote => settings('orders.credit_note_number_prefix', 'CRN'),
         };
     }
 }

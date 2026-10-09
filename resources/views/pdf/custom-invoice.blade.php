@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Invoice {{ $invoice->invoice_number }}</title>
+    <title>{{ $documentType->getLabel() }} {{ $invoice->invoice_number }}</title>
     @include('pdf.partials.invoice-styles')
 </head>
 <body>
@@ -14,7 +14,9 @@
         $hasMixedRates = count($breakdown) > 1;
         $treatment = $invoice->effectiveTreatment();
         $standardVat = $treatment === \App\Enums\InvoiceVatTreatment::Standard;
-        $fmt = fn ($n) => format_price($n, $invoice->currency, 'en');
+        $isCredit = $documentType->isCredit();
+        // Credit notes show their amounts as negatives; a zero stays unsigned.
+        $fmt = fn ($n, $flip = true) => ($isCredit && $flip && bccomp((string) $n, '0', 2) !== 0 ? '-' : '').format_price($n, $invoice->currency, 'en');
         $trim = fn ($n) => rtrim(rtrim((string) $n, '0'), '.');
     @endphp
     <div class="header">
@@ -30,14 +32,19 @@
             <div>Phone: {{ $settings['company_phone'] }}</div>
         </div>
         <div class="invoice-info">
-            <p class="doc-eyebrow">OEPARTS · INVOICE</p>
-            <h2>INVOICE</h2>
+            <p class="doc-eyebrow">OEPARTS · {{ $documentType->pdfTitle() }}</p>
+            <h2>{{ $documentType->pdfTitle() }}</h2>
             <div class="meta-row"><span class="label">No.</span><span class="value">{{ $invoice->invoice_number }}</span></div>
             <div class="meta-row"><span class="label">Date</span><span class="value">{{ $invoice->issue_date->format('d/m/Y') }}</span></div>
             @if($invoice->supply_date)
                 <div class="meta-row"><span class="label">Supply date</span><span class="value">{{ $invoice->supply_date->format('d/m/Y') }}</span></div>
             @endif
-            <div class="meta-row"><span class="label">Due</span><span class="value">{{ $invoice->due_date->format('d/m/Y') }}</span></div>
+            @if($documentType !== \App\Enums\InvoiceDocumentType::CreditNote)
+                <div class="meta-row"><span class="label">{{ $documentType->dueLabel() }}</span><span class="value">{{ $invoice->due_date->format('d/m/Y') }}</span></div>
+            @endif
+            @if($invoice->parent)
+                <div class="meta-row"><span class="label">{{ $documentType->isCredit() ? 'Credit for' : 'Ref.' }}</span><span class="value">{{ $invoice->parent->invoice_number }}</span></div>
+            @endif
             @if($invoice->po_number)
                 <div class="meta-row"><span class="label">Your ref. / PO</span><span class="value">{{ $invoice->po_number }}</span></div>
             @endif
@@ -48,7 +55,7 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Bill To</div>
+        <div class="section-title">{{ $documentType === \App\Enums\InvoiceDocumentType::Quote ? 'Prepared For' : 'Bill To' }}</div>
         <div><strong>{{ $invoice->client_name }}</strong></div>
         @if($invoice->client_company)
             <div>{{ $invoice->client_company }}</div>
@@ -108,7 +115,7 @@
         @if(bccomp((string) $invoice->discount_amount, '0', 2) > 0)
         <div class="totals-row">
             <span>Discount{{ $invoice->discount_type === 'percent' ? ' ('.$trim($invoice->discount_percent).'%)' : '' }}:</span>
-            <span class="value">-{{ $fmt($invoice->discount_amount) }}</span>
+            <span class="value">{{ $isCredit ? '+' : '-' }}{{ $fmt($invoice->discount_amount, false) }}</span>
         </div>
         @endif
         @if(! $standardVat)
@@ -144,7 +151,13 @@
     </div>
     @endif
 
-    @include('pdf.partials.payment-section')
+    @if($documentType->disclaimer())
+    <div class="notice-box">{{ $documentType->disclaimer() }}</div>
+    @endif
+
+    @if($documentType->requestsPayment())
+        @include('pdf.partials.payment-section')
+    @endif
 
     @if($invoice->notes)
     <div class="notice-box">
@@ -161,8 +174,8 @@
 
     <div class="footer">
         <div>{{ settings_trans('invoice.thank_you_text', 'Thank you for your business!') }}</div>
-        <div>If you have any questions about this invoice, please contact {{ $settings['company_email'] }}</div>
-        <div class="mono">Invoice generated on {{ now()->format('d/m/Y H:i') }}</div>
+        <div>If you have any questions about this {{ strtolower($documentType->getLabel()) }}, please contact {{ $settings['company_email'] }}</div>
+        <div class="mono">Generated on {{ now()->format('d/m/Y H:i') }}</div>
     </div>
 </body>
 </html>

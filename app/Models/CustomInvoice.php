@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use App\Enums\CustomInvoiceStatus;
+use App\Enums\InvoiceDocumentType;
 use App\Enums\InvoicePaymentMethod;
 use App\Enums\InvoiceVatTreatment;
 use App\Services\InvoiceCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * A hand-written invoice for a client outside the storefront checkout.
@@ -26,6 +28,7 @@ class CustomInvoice extends Model
         'payment_method', 'bank_account_id', 'payment_instructions', 'payment_link_url',
         'vat_treatment', 'vat_exemption_note', 'supply_date', 'discount_type', 'discount_percent',
         'po_number', 'delivery_terms', 'terms_text', 'internal_notes',
+        'document_type', 'parent_id',
     ];
 
     /**
@@ -37,12 +40,14 @@ class CustomInvoice extends Model
         'payment_method' => 'bank_transfer',
         'vat_treatment' => 'standard',
         'discount_type' => 'amount',
+        'document_type' => 'invoice',
     ];
 
     protected $casts = [
         'status' => CustomInvoiceStatus::class,
         'payment_method' => InvoicePaymentMethod::class,
         'vat_treatment' => InvoiceVatTreatment::class,
+        'document_type' => InvoiceDocumentType::class,
         'issue_date' => 'date',
         'due_date' => 'date',
         'supply_date' => 'date',
@@ -69,6 +74,18 @@ class CustomInvoice extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by');
+    }
+
+    /** The document this one was created from (quote -> proforma -> invoice, invoice -> credit note). */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    /** Documents created from this one. */
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     public function bankAccount(): BelongsTo

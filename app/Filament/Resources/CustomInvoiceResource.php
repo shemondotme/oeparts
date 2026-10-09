@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\CustomInvoiceStatus;
+use App\Enums\InvoiceDocumentType;
 use App\Enums\InvoicePaymentMethod;
 use App\Enums\InvoiceVatTreatment;
 use App\Filament\Resources\CustomInvoiceResource\Pages;
@@ -45,12 +46,12 @@ class CustomInvoiceResource extends Resource
 
     public static function getNavigationLabel(): string
     {
-        return 'Custom Invoices';
+        return 'Quotes & Invoices';
     }
 
     public static function getModelLabel(): string
     {
-        return 'custom invoice';
+        return 'document';
     }
 
     /**
@@ -112,15 +113,31 @@ class CustomInvoiceResource extends Resource
                     ])
                     ->columns(2),
 
-                Section::make('Invoice details')
+                Section::make('Document')
                     ->icon('heroicon-o-calendar-days')
                     ->schema([
+                        Forms\Components\Select::make('document_type')
+                            ->label('Document type')
+                            ->options(fn (string $operation): array => $operation === 'create'
+                                ? [
+                                    InvoiceDocumentType::Quote->value => InvoiceDocumentType::Quote->getLabel(),
+                                    InvoiceDocumentType::Proforma->value => InvoiceDocumentType::Proforma->getLabel(),
+                                    InvoiceDocumentType::Invoice->value => InvoiceDocumentType::Invoice->getLabel(),
+                                ]
+                                : collect(InvoiceDocumentType::cases())->mapWithKeys(fn (InvoiceDocumentType $c): array => [$c->value => $c->getLabel()])->all())
+                            ->default(fn (): string => (InvoiceDocumentType::tryFrom((string) request()->query('type')) ?? InvoiceDocumentType::Invoice)->value)
+                            ->native(false)
+                            ->required()
+                            ->live()
+                            ->disabled(fn (string $operation): bool => $operation === 'edit')
+                            ->dehydrated()
+                            ->helperText('Quotation, proforma and invoice each have their own number series. A credit note is issued from an existing invoice.'),
                         Forms\Components\DatePicker::make('issue_date')
                             ->label('Issue date')
                             ->default(fn () => now())
                             ->required(),
                         Forms\Components\DatePicker::make('due_date')
-                            ->label('Due date')
+                            ->label(fn (Get $get): string => self::documentTypeOf($get('document_type'))->dueLabel())
                             ->default(fn () => now()->addDays((int) settings('invoice.payment_terms_days', 30)))
                             ->afterOrEqual('issue_date')
                             ->required(),
@@ -300,6 +317,7 @@ class CustomInvoiceResource extends Resource
 
                 Section::make('Payment')
                     ->icon('heroicon-o-banknotes')
+                    ->visible(fn (Get $get): bool => self::documentTypeOf($get('document_type'))->requestsPayment())
                     ->description('How the client should pay. This is printed on the PDF and in the email.')
                     ->schema([
                         Forms\Components\Select::make('payment_method')
@@ -345,6 +363,13 @@ class CustomInvoiceResource extends Resource
                     ])
                     ->columns(2),
             ]);
+    }
+
+    private static function documentTypeOf(mixed $state): InvoiceDocumentType
+    {
+        return $state instanceof InvoiceDocumentType
+            ? $state
+            : (InvoiceDocumentType::tryFrom((string) $state) ?? InvoiceDocumentType::Invoice);
     }
 
     private static function treatmentValue(mixed $state): string
@@ -417,8 +442,12 @@ class CustomInvoiceResource extends Resource
     {
         return AdminUi::configureTable($table)
             ->columns([
+                Tables\Columns\TextColumn::make('document_type')
+                    ->label('Type')
+                    ->badge()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('invoice_number')
-                    ->label('Invoice no.')
+                    ->label('Number')
                     ->searchable()
                     ->sortable()
                     ->weight('bold')
@@ -447,6 +476,10 @@ class CustomInvoiceResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                Tables\Filters\SelectFilter::make('document_type')
+                    ->label('Type')
+                    ->options(InvoiceDocumentType::class)
+                    ->native(false),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(CustomInvoiceStatus::class)
                     ->native(false),
@@ -456,14 +489,19 @@ class CustomInvoiceResource extends Resource
                     Actions\EditAction::make(),
                     static::makeDownloadAction(),
                     static::makeSendAction(),
+                    static::makeAcceptAction(),
+                    static::makeDeclineAction(),
                     static::makeMarkPaidAction(),
+                    ...static::makeConvertActions(),
+                    static::makeCreditNoteAction(),
+                    static::makeDuplicateAction(),
                     static::makeCancelAction(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-document-text')
-            ->emptyStateHeading('No custom invoices yet')
-            ->emptyStateDescription('Create an invoice for a client who is not ordering through the storefront, then email it to them as a PDF.');
+            ->emptyStateHeading('Nothing here yet')
+            ->emptyStateDescription('Write a quotation, proforma or invoice for a client who is not ordering through the storefront, then email it to them as a PDF.');
     }
 
     public static function getPages(): array
@@ -473,6 +511,119 @@ class CustomInvoiceResource extends Resource
             'create' => Pages\CreateCustomInvoice::route('/create'),
             'edit' => Pages\EditCustomInvoice::route('/{record}/edit'),
         ];
+    }
+
+    private static function isDocument(CustomInvoice $record, InvoiceDocumentType ...$types): bool
+    {
+        return in_array($record->document_type, $types, true);
+    }
+
+    /** A quotation the client has said yes or no to. */
+    public static function makeAcceptAction(): Actions\Action
+    {
+        return Actions\Action::make('acceptQuote')
+            ->label('Mark as accepted')
+            ->icon('heroicon-o-hand-thumb-up')
+            ->color('success')
+            ->authorize('update')
+            ->visible(fn (CustomInvoice $record): bool => self::isDocument($record, InvoiceDocumentType::Quote) && $record->status === CustomInvoiceStatus::Sent)
+            ->requiresConfirmation()
+            ->action(function (CustomInvoice $record): void {
+                $record->forceFill(['status' => CustomInvoiceStatus::Accepted])->save();
+                Notification::make()->title('Quotation marked as accepted')->success()->send();
+            });
+    }
+
+    public static function makeDeclineAction(): Actions\Action
+    {
+        return Actions\Action::make('declineQuote')
+            ->label('Mark as declined')
+            ->icon('heroicon-o-hand-thumb-down')
+            ->color('gray')
+            ->authorize('update')
+            ->visible(fn (CustomInvoice $record): bool => self::isDocument($record, InvoiceDocumentType::Quote) && $record->status === CustomInvoiceStatus::Sent)
+            ->requiresConfirmation()
+            ->action(function (CustomInvoice $record): void {
+                $record->forceFill(['status' => CustomInvoiceStatus::Declined])->save();
+                Notification::make()->title('Quotation marked as declined')->success()->send();
+            });
+    }
+
+    /** @return list<Actions\Action> one "Convert to …" action per target document type */
+    public static function makeConvertActions(): array
+    {
+        return array_map(
+            fn (InvoiceDocumentType $target): Actions\Action => Actions\Action::make('convertTo'.ucfirst($target->value))
+                ->label('Convert to '.strtolower($target->getLabel()))
+                ->icon('heroicon-o-arrow-right-circle')
+                ->color('primary')
+                ->authorize('create')
+                ->visible(fn (CustomInvoice $record): bool => in_array($target, app(CustomInvoiceService::class)->conversionTargets($record), true))
+                ->requiresConfirmation()
+                ->modalHeading('Convert to '.strtolower($target->getLabel()))
+                ->modalDescription('A new draft with its own number is created from this document and you can edit it before sending. The original stays as it is.')
+                ->action(function (CustomInvoice $record, Actions\Action $action) use ($target): void {
+                    try {
+                        $new = app(CustomInvoiceService::class)->convert($record, $target);
+                    } catch (\Throwable $e) {
+                        Notification::make()->title('Could not convert')->body($e->getMessage())->danger()->send();
+
+                        return;
+                    }
+
+                    Notification::make()->title($target->getLabel().' '.$new->invoice_number.' created')->success()->send();
+                    $action->redirect(static::getUrl('edit', ['record' => $new]));
+                }),
+            [InvoiceDocumentType::Proforma, InvoiceDocumentType::Invoice],
+        );
+    }
+
+    /** Correct an issued invoice: a credit note draft linked to it. */
+    public static function makeCreditNoteAction(): Actions\Action
+    {
+        return Actions\Action::make('issueCreditNote')
+            ->label('Issue credit note')
+            ->icon('heroicon-o-receipt-refund')
+            ->color('danger')
+            ->authorize('create')
+            ->visible(fn (CustomInvoice $record): bool => self::isDocument($record, InvoiceDocumentType::Invoice)
+                && in_array($record->status, [CustomInvoiceStatus::Sent, CustomInvoiceStatus::Paid], true))
+            ->modalHeading('Issue a credit note')
+            ->modalDescription('Creates a draft credit note with the same lines. Edit it down for a partial credit, then email it. The invoice itself is never changed.')
+            ->form([
+                Forms\Components\Textarea::make('reason')
+                    ->label('Reason (printed on the credit note)')
+                    ->rows(2)
+                    ->maxLength(500),
+            ])
+            ->action(function (CustomInvoice $record, array $data, Actions\Action $action): void {
+                try {
+                    $note = app(CustomInvoiceService::class)->issueCreditNote($record, $data['reason'] ?? null);
+                } catch (\Throwable $e) {
+                    Notification::make()->title('Could not issue the credit note')->body($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()->title('Credit note '.$note->invoice_number.' created')->success()->send();
+                $action->redirect(static::getUrl('edit', ['record' => $note]));
+            });
+    }
+
+    public static function makeDuplicateAction(): Actions\Action
+    {
+        return Actions\Action::make('duplicateDocument')
+            ->label('Duplicate as new draft')
+            ->icon('heroicon-o-document-duplicate')
+            ->color('gray')
+            ->authorize('create')
+            ->visible(fn (CustomInvoice $record): bool => ! self::isDocument($record, InvoiceDocumentType::CreditNote))
+            ->action(function (CustomInvoice $record, Actions\Action $action): void {
+                $new = app(CustomInvoiceService::class)->duplicate($record);
+
+                Notification::make()->title('Draft '.$new->invoice_number.' created')->success()->send();
+                $action->redirect(static::getUrl('edit', ['record' => $new]));
+            });
     }
 
     public static function makeDownloadAction(): Actions\Action
@@ -533,7 +684,8 @@ class CustomInvoiceResource extends Resource
             ->icon('heroicon-o-check-circle')
             ->color('success')
             ->authorize('update')
-            ->visible(fn (CustomInvoice $record): bool => in_array($record->status, [CustomInvoiceStatus::Draft, CustomInvoiceStatus::Sent], true))
+            ->visible(fn (CustomInvoice $record): bool => $record->document_type->requestsPayment()
+                && in_array($record->status, [CustomInvoiceStatus::Draft, CustomInvoiceStatus::Sent], true))
             ->requiresConfirmation()
             ->action(function (CustomInvoice $record): void {
                 app(CustomInvoiceService::class)->markPaid($record);
