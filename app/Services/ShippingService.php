@@ -83,6 +83,25 @@ class ShippingService
     {
         $method = ShippingMethod::find($methodId);
 
+        // Only look the cart up when a free-shipping threshold could actually apply.
+        $subtotal = $method && $method->is_active && $method->free_shipping_threshold !== null
+            ? (string) ($this->cartService->getSummary($cart)['subtotal'] ?? '0.00')
+            : '0.00';
+
+        return $this->calculateCostForSubtotal($methodId, $subtotal, $destinationCountryCode);
+    }
+
+    /**
+     * Same rules as calculateCost(), for callers that have no Cart (admin-created
+     * orders): inactive/unknown method = 0.00, destination must be served by the
+     * method's zone, and the free-shipping threshold is checked against $subtotal.
+     *
+     * @throws \RuntimeException if the method doesn't serve $destinationCountryCode
+     */
+    public function calculateCostForSubtotal(int $methodId, string $subtotal, ?string $destinationCountryCode = null): string
+    {
+        $method = ShippingMethod::find($methodId);
+
         if (! $method || ! $method->is_active) {
             return '0.00';
         }
@@ -97,14 +116,9 @@ class ShippingService
             }
         }
 
-        // Check free shipping threshold
-        if ($method->free_shipping_threshold !== null) {
-            $cartSummary = $this->cartService->getSummary($cart);
-            $subtotal = (string) ($cartSummary['subtotal'] ?? '0.00');
-
-            if (bccomp($subtotal, (string) $method->free_shipping_threshold, 2) >= 0) {
-                return '0.00';
-            }
+        if ($method->free_shipping_threshold !== null
+            && bccomp($subtotal, (string) $method->free_shipping_threshold, 2) >= 0) {
+            return '0.00';
         }
 
         return (string) $method->flat_rate;

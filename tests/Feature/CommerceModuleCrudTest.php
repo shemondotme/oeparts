@@ -170,6 +170,7 @@ class CommerceModuleCrudTest extends TestCase
                 'status' => 'pending',
                 'payment_method' => 'bank_transfer',
                 'payment_status' => 'pending',
+                'manual_totals' => true, // legacy hand-typed totals; no items
                 'subtotal' => '100.00',
                 'shipping_cost' => '10.00',
                 'vat_amount' => '21.00',

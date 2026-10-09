@@ -16,8 +16,15 @@ use App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationM
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendTrackingUpdateEmail;
 use App\Models\Carrier;
+use App\Models\Condition;
+use App\Models\Manufacturer;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\Product;
+use App\Models\User;
+use App\Models\UserAddress;
+use App\Services\AdminOrderCalculator;
+use App\Services\OemNormalizerService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\SequenceService;
@@ -31,6 +38,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -64,6 +73,121 @@ class OrderResource extends Resource
         return 'order_number';
     }
 
+    /**
+     * Recompute the totals of an order being created from its items, destination,
+     * shipping method, coupon and VAT status. $prefix is the path back to the form
+     * root when called from inside a repeater row ('../../').
+     */
+    public static function recalculate(Get $get, Set $set, string $prefix = ''): void
+    {
+        if ($get($prefix.'manual_totals')) {
+            return;
+        }
+
+        $items = collect($get($prefix.'line_items') ?? [])
+            ->map(fn (array $row): array => ['quantity' => $row['quantity'] ?? 0, 'unit_price' => $row['unit_price'] ?? 0])
+            ->all();
+
+        $r = app(AdminOrderCalculator::class)->compute(
+            $items,
+            $get($prefix.'shipping_country_code') ?: null,
+            $get($prefix.'shipping_method_id') ? (int) $get($prefix.'shipping_method_id') : null,
+            $get($prefix.'coupon_id') ? (int) $get($prefix.'coupon_id') : null,
+            $get($prefix.'user_id') ? (int) $get($prefix.'user_id') : null,
+            $get($prefix.'guest_email') ?: null,
+            (bool) $get($prefix.'vat_exempt'),
+        );
+
+        foreach (['subtotal', 'discount_amount', 'shipping_cost', 'vat_amount', 'grand_total'] as $field) {
+            $set($prefix.$field, $r[$field]);
+        }
+
+        $note = 'VAT '.rtrim(rtrim($r['vat_rate'], '0'), '.').'% — '.$r['vat_reason'].'.';
+        if ($r['warnings'] !== []) {
+            $note .= ' Warning: '.implode(' ', $r['warnings']);
+        }
+        $set($prefix.'calc_note', $note);
+    }
+
+    /** Copy a registered customer's saved details into the order form. */
+    public static function fillFromCustomer(mixed $userId, Get $get, Set $set): void
+    {
+        if (! $userId || ! ($user = User::find($userId))) {
+            return;
+        }
+
+        /** @var UserAddress|null $address */
+        $address = $user->addresses()->orderByDesc('is_default')->orderBy('id')->first();
+
+        $set('customer_phone', $address?->phone ?: $user->phone);
+        $set('shipping_name', ($address ? trim($address->first_name.' '.$address->last_name) : '') ?: $user->name);
+
+        if ($address) {
+            $set('shipping_address_line1', $address->address_line1);
+            $set('shipping_address_line2', $address->address_line2);
+            $set('shipping_city', $address->city);
+            $set('shipping_state', $address->state);
+            $set('shipping_postal_code', $address->postal_code);
+            $set('shipping_country_code', $address->country_code);
+            if (filled($address->company)) {
+                $set('company_name', $address->company);
+            }
+        }
+
+        self::recalculate($get, $set);
+    }
+
+    /** @return array<int|string, string> product id => label, indexed lookups only (the catalog has 1M+ rows). */
+    public static function searchProducts(string $search): array
+    {
+        $term = app(OemNormalizerService::class)->normalize($search);
+        if ($term === '') {
+            return [];
+        }
+
+        return Product::query()
+            ->with(['manufacturer', 'condition'])
+            ->where('normalized_oem', 'like', $term.'%')
+            ->orderByDesc('is_in_stock')
+            ->limit(25)
+            ->get()
+            ->mapWithKeys(fn (Product $p): array => [$p->id => self::productLabel($p)])
+            ->all();
+    }
+
+    public static function productLabel(?Product $p): ?string
+    {
+        if (! $p) {
+            return null;
+        }
+
+        /** @var Manufacturer|null $manufacturer */
+        $manufacturer = $p->manufacturer;
+        /** @var Condition|null $condition */
+        $condition = $p->condition;
+
+        return implode(' — ', array_filter([
+            $p->oem_number,
+            $manufacturer ? AdminUi::localizedName($manufacturer->name) : null,
+            $condition ? $condition->slug : null,
+            '€'.number_format((float) $p->price, 2),
+            $p->is_in_stock ? null : 'OUT OF STOCK',
+        ]));
+    }
+
+    /** Blank the billing_* columns unless the order really bills elsewhere, so "same as shipping" stays null. */
+    public static function normalizeBilling(array $data): array
+    {
+        if (! ($data['billing_different'] ?? filled($data['billing_address_line1'] ?? null))) {
+            foreach (['billing_name', 'billing_address_line1', 'billing_address_line2', 'billing_city', 'billing_state', 'billing_postal_code', 'billing_country_code'] as $key) {
+                $data[$key] = null;
+            }
+        }
+        unset($data['billing_different']);
+
+        return $data;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -90,15 +214,74 @@ class OrderResource extends Resource
                                         ->preload()
                                         ->nullable()
                                         ->placeholder('Select a registered customer...')
-                                        ->helperText('Registered customer placing this order. Leave empty for guest orders.'),
+                                        ->live()
+                                        ->afterStateUpdated(fn ($state, Get $get, Set $set) => self::fillFromCustomer($state, $get, $set))
+                                        ->helperText('Registered customer placing this order. Leave empty for guest orders. Choosing one fills in their saved name, phone and address.'),
                                     Forms\Components\TextInput::make('guest_email')
                                         ->email()
                                         ->label(__('admin.guest_email'))
                                         ->nullable()
                                         ->placeholder('e.g. customer@example.com')
                                         ->helperText('Fill this for guest checkout orders where no account exists.'),
+                                    Forms\Components\TextInput::make('customer_phone')
+                                        ->label('Customer phone')
+                                        ->tel()
+                                        ->nullable()
+                                        ->maxLength(50)
+                                        ->placeholder('e.g. +370 600 00000')
+                                        ->helperText('For the courier and for support follow-up.'),
                                 ])
                                 ->columns(2),
+                            Section::make('Items')
+                                ->icon('heroicon-o-cube')
+                                ->description('Search the catalog by OEM number. Prices fill in from the catalog and can be changed per line; totals below update automatically.')
+                                ->visibleOn('create')
+                                ->schema([
+                                    Forms\Components\Repeater::make('line_items')
+                                        ->hiddenLabel()
+                                        ->addActionLabel('Add part')
+                                        ->minItems(fn (Get $get): int => $get('manual_totals') ? 0 : 1)
+                                        ->defaultItems(1)
+                                        ->live()
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set))
+                                        ->columns(12)
+                                        ->schema([
+                                            Forms\Components\Select::make('product_id')
+                                                ->label('Part (OEM number)')
+                                                ->required(fn (Get $get): bool => ! $get('../../manual_totals'))
+                                                ->searchable()
+                                                ->native(false)
+                                                ->live()
+                                                ->columnSpan(6)
+                                                ->getSearchResultsUsing(fn (string $search): array => self::searchProducts($search))
+                                                ->getOptionLabelUsing(fn ($value): ?string => self::productLabel(Product::with(['manufacturer', 'condition'])->find($value)))
+                                                ->afterStateUpdated(function ($state, Get $get, Set $set): void {
+                                                    $price = $state ? Product::whereKey($state)->value('price') : null;
+                                                    $set('unit_price', $price !== null ? number_format((float) $price, 2, '.', '') : null);
+                                                    self::recalculate($get, $set, '../../');
+                                                }),
+                                            Forms\Components\TextInput::make('quantity')
+                                                ->label('Qty')
+                                                ->numeric()
+                                                ->integer()
+                                                ->minValue(1)
+                                                ->default(1)
+                                                ->required()
+                                                ->live(onBlur: true)
+                                                ->columnSpan(2)
+                                                ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set, '../../')),
+                                            Forms\Components\TextInput::make('unit_price')
+                                                ->label('Unit price')
+                                                ->numeric()
+                                                ->prefix('€')
+                                                ->minValue(0)
+                                                ->step(0.01)
+                                                ->required(fn (Get $get): bool => ! $get('../../manual_totals'))
+                                                ->live(onBlur: true)
+                                                ->columnSpan(4)
+                                                ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set, '../../')),
+                                        ]),
+                                ]),
                             Section::make('Shipping Address')
                                 ->icon('heroicon-o-map-pin')
                                 ->description('Delivery recipient and destination details.')
@@ -115,11 +298,23 @@ class OrderResource extends Resource
                                         ->maxLength(255)
                                         ->placeholder('e.g. Musterstraße 42')
                                         ->helperText('Primary street address including house number.'),
+                                    Forms\Components\TextInput::make('shipping_address_line2')
+                                        ->label('Address line 2')
+                                        ->nullable()
+                                        ->maxLength(255)
+                                        ->placeholder('Apartment, suite, unit …')
+                                        ->helperText('Optional.'),
                                     Forms\Components\TextInput::make('shipping_city')
                                         ->label(__('admin.city'))
                                         ->required()
                                         ->maxLength(100)
                                         ->placeholder('e.g. Berlin'),
+                                    Forms\Components\TextInput::make('shipping_state')
+                                        ->label('State / region')
+                                        ->nullable()
+                                        ->maxLength(100)
+                                        ->placeholder('e.g. Kanagawa')
+                                        ->helperText('Needed for destinations such as Japan or the US.'),
                                     Forms\Components\TextInput::make('shipping_postal_code')
                                         ->label(__('admin.postal_code'))
                                         ->required()
@@ -131,7 +326,58 @@ class OrderResource extends Resource
                                         ->options(config('countries'))
                                         ->searchable()
                                         ->native(false)
+                                        ->live()
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set))
                                         ->placeholder('Select country...'),
+                                ])
+                                ->columns(2),
+                            Section::make('Billing Address')
+                                ->icon('heroicon-o-document-text')
+                                ->description('Only if the invoice goes to a different address than the delivery (e.g. head office vs. workshop).')
+                                ->collapsed()
+                                ->schema([
+                                    Forms\Components\Toggle::make('billing_different')
+                                        ->label('Bill to a different address')
+                                        ->live()
+                                        ->dehydrated(true)
+                                        ->default(false)
+                                        ->afterStateHydrated(function (Forms\Components\Toggle $component, ?Order $record): void {
+                                            $component->state(filled($record?->billing_address_line1));
+                                        })
+                                        ->columnSpanFull(),
+                                    Forms\Components\TextInput::make('billing_name')
+                                        ->label('Name / company on invoice')
+                                        ->maxLength(255)
+                                        ->visible(fn (Get $get): bool => (bool) $get('billing_different')),
+                                    Forms\Components\TextInput::make('billing_address_line1')
+                                        ->label('Address line 1')
+                                        ->maxLength(255)
+                                        ->required(fn (Get $get): bool => (bool) $get('billing_different'))
+                                        ->visible(fn (Get $get): bool => (bool) $get('billing_different')),
+                                    Forms\Components\TextInput::make('billing_address_line2')
+                                        ->label('Address line 2')
+                                        ->maxLength(255)
+                                        ->visible(fn (Get $get): bool => (bool) $get('billing_different')),
+                                    Forms\Components\TextInput::make('billing_city')
+                                        ->label('City')
+                                        ->maxLength(100)
+                                        ->required(fn (Get $get): bool => (bool) $get('billing_different'))
+                                        ->visible(fn (Get $get): bool => (bool) $get('billing_different')),
+                                    Forms\Components\TextInput::make('billing_state')
+                                        ->label('State / region')
+                                        ->maxLength(100)
+                                        ->visible(fn (Get $get): bool => (bool) $get('billing_different')),
+                                    Forms\Components\TextInput::make('billing_postal_code')
+                                        ->label('Postal code')
+                                        ->maxLength(20)
+                                        ->visible(fn (Get $get): bool => (bool) $get('billing_different')),
+                                    Forms\Components\Select::make('billing_country_code')
+                                        ->label('Country')
+                                        ->options(config('countries'))
+                                        ->searchable()
+                                        ->native(false)
+                                        ->required(fn (Get $get): bool => (bool) $get('billing_different'))
+                                        ->visible(fn (Get $get): bool => (bool) $get('billing_different')),
                                 ])
                                 ->columns(2),
                             Section::make('Additional')
@@ -161,6 +407,12 @@ class OrderResource extends Resource
                                         ->native(false)
                                         ->placeholder('Select carrier...')
                                         ->helperText('Carriers are managed under Commerce → Carriers; the tracking link in customer emails is built from the carrier\'s URL template.'),
+                                    Forms\Components\Toggle::make('send_confirmation')
+                                        ->label('Email the order confirmation to the customer')
+                                        ->helperText('Off by default so a phone order is not emailed before you have checked it. Needs the customer email above.')
+                                        ->visibleOn('create')
+                                        ->dehydrated(true)
+                                        ->default(false),
                                     Forms\Components\Toggle::make('urgent_processing')
                                         ->label(__('admin.urgent_processing'))
                                         ->helperText('When enabled, this order is prioritized for same-day dispatch.')
@@ -183,7 +435,9 @@ class OrderResource extends Resource
                                         ->searchable()
                                         ->preload()
                                         ->nullable()
-                                        ->helperText('Select the coupon applied to this order, if any.'),
+                                        ->live()
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set))
+                                        ->helperText('Select the coupon applied to this order, if any. The discount is checked against the same rules as the storefront.'),
                                     Forms\Components\Select::make('shipping_method_id')
                                         ->label(__('admin.shipping_method'))
                                         ->relationship('shippingMethod', 'name')
@@ -200,7 +454,9 @@ class OrderResource extends Resource
                                         // manufacturer_id select.
                                         ->getOptionLabelFromRecordUsing(fn ($record) => AdminUi::localizedName($record->name))
                                         ->required()
-                                        ->helperText('The delivery method chosen by the customer.'),
+                                        ->live()
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set))
+                                        ->helperText('The delivery method. Its price fills in automatically (free above the threshold of the method) and it must serve the destination country.'),
                                 ])
                                 ->columns(2),
                         ])
@@ -252,8 +508,23 @@ class OrderResource extends Resource
                                 ->description('Order line-item costs and totals in EUR.')
                                 ->extraAttributes(['class' => 'op-financials-form'])
                                 ->schema([
+                                    Forms\Components\Toggle::make('manual_totals')
+                                        ->label('Adjust totals manually')
+                                        ->helperText('Off: subtotal, discount, shipping, VAT and total are calculated from the items. Turn on only to override them by hand (the values are then saved exactly as typed).')
+                                        ->visibleOn('create')
+                                        ->live()
+                                        ->dehydrated(true)
+                                        ->default(false)
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set)),
+                                    Forms\Components\Hidden::make('calc_note')->dehydrated(false),
+                                    Placeholder::make('calc_note_display')
+                                        ->hiddenLabel()
+                                        ->visibleOn('create')
+                                        ->content(fn (Get $get): string => (string) ($get('calc_note') ?: 'Add items to calculate totals.'))
+                                        ->extraAttributes(['class' => 'text-xs']),
                                     Forms\Components\TextInput::make('subtotal')
                                         ->label(__('admin.subtotal'))
+                                        ->readOnly(fn (Get $get, string $operation): bool => $operation === 'create' && ! $get('manual_totals'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -262,6 +533,7 @@ class OrderResource extends Resource
                                         ->extraAttributes(['class' => 'op-fin-input']),
                                     Forms\Components\TextInput::make('discount_amount')
                                         ->label(__('admin.discount'))
+                                        ->readOnly(fn (Get $get, string $operation): bool => $operation === 'create' && ! $get('manual_totals'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->default(0)
@@ -270,6 +542,7 @@ class OrderResource extends Resource
                                         ->extraAttributes(['class' => 'op-fin-input']),
                                     Forms\Components\TextInput::make('shipping_cost')
                                         ->label(__('admin.shipping'))
+                                        ->readOnly(fn (Get $get, string $operation): bool => $operation === 'create' && ! $get('manual_totals'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -278,6 +551,7 @@ class OrderResource extends Resource
                                         ->extraAttributes(['class' => 'op-fin-input']),
                                     Forms\Components\TextInput::make('vat_amount')
                                         ->label(__('admin.vat'))
+                                        ->readOnly(fn (Get $get, string $operation): bool => $operation === 'create' && ! $get('manual_totals'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -289,6 +563,7 @@ class OrderResource extends Resource
                                         ->extraAttributes(['class' => 'op-fin-form-divider']),
                                     Forms\Components\TextInput::make('grand_total')
                                         ->label(__('admin.grand_total'))
+                                        ->readOnly(fn (Get $get, string $operation): bool => $operation === 'create' && ! $get('manual_totals'))
                                         ->numeric()
                                         ->prefix('€')
                                         ->required()
@@ -318,6 +593,8 @@ class OrderResource extends Resource
                                         ->helperText('EU VAT registration number for reverse-charge transactions.'),
                                     Forms\Components\Toggle::make('vat_exempt')
                                         ->label(__('admin.vat_exempt'))
+                                        ->live()
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set))
                                         ->helperText('Enable if the B2B customer is exempt from VAT (reverse-charge).'),
                                 ])
                                 ->columns(1),

@@ -301,12 +301,42 @@ class ViewOrder extends ViewRecord
                                         ->weight('semibold'),
                                     TextEntry::make('shipping_address_line1')
                                         ->label('Address'),
+                                    TextEntry::make('shipping_address_line2')
+                                        ->label('Address line 2')
+                                        ->visible(fn ($record): bool => filled($record->shipping_address_line2)),
                                     TextEntry::make('shipping_city')
                                         ->label('City'),
+                                    TextEntry::make('shipping_state')
+                                        ->label('State / region')
+                                        ->visible(fn ($record): bool => filled($record->shipping_state)),
                                     TextEntry::make('shipping_postal_code')
                                         ->label('Postal Code'),
+                                    TextEntry::make('customer_phone')
+                                        ->label('Phone')
+                                        ->default('—')
+                                        ->url(fn ($record): ?string => filled($record->customer_phone) ? 'tel:'.preg_replace('/[^0-9+]/', '', $record->customer_phone) : null),
                                     TextEntry::make('shipping_country_code')
                                         ->label('Country')
+                                        ->formatStateUsing(fn (?string $state): string => $state
+                                            ? (config('countries')[$state] ?? $state)." ({$state})"
+                                            : '—')
+                                        ->badge()
+                                        ->color('gray'),
+                                ])
+                                ->columns(2),
+                            Section::make('Billing Address')
+                                ->icon('heroicon-o-document-text')
+                                ->visible(fn ($record): bool => filled($record->billing_address_line1))
+                                ->schema([
+                                    TextEntry::make('billing_name')->label('Name / company')->default('—'),
+                                    TextEntry::make('billing_address_line1')->label('Address'),
+                                    TextEntry::make('billing_address_line2')->label('Address line 2')
+                                        ->visible(fn ($record): bool => filled($record->billing_address_line2)),
+                                    TextEntry::make('billing_city')->label('City'),
+                                    TextEntry::make('billing_state')->label('State / region')
+                                        ->visible(fn ($record): bool => filled($record->billing_state)),
+                                    TextEntry::make('billing_postal_code')->label('Postal Code'),
+                                    TextEntry::make('billing_country_code')->label('Country')
                                         ->formatStateUsing(fn (?string $state): string => $state
                                             ? (config('countries')[$state] ?? $state)." ({$state})"
                                             : '—')

@@ -26,6 +26,11 @@ class EditOrder extends EditRecord
         return "Placed {$created} | Last updated {$updated}";
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        return OrderResource::normalizeBilling($data);
+    }
+
     protected function getHeaderActions(): array
     {
         return [

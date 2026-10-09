@@ -225,6 +225,9 @@ const RESOURCES = [
         name: 'Order',
         createUrl: '/admin/orders/create',
         fill: async (page) => {
+            // Totals are now calculated from catalog items; this generic CRUD sweep
+            // has no catalog part to pick, so it uses the hand-typed-totals path.
+            await page.getByRole('switch', { name: 'Adjust totals manually' }).click();
             await fillText(page, 'shipping_name', 'E2E Test Customer');
             await fillText(page, 'shipping_address_line1', 'Teststrasse 1');
             await fillText(page, 'shipping_city', 'Berlin');
