@@ -12,6 +12,7 @@ use App\Models\Manufacturer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ShippingMethod;
 use App\Services\AdminOrderCalculator;
 use App\Services\CouponService;
 use App\Services\SequenceService;
@@ -82,6 +83,14 @@ class CreateOrder extends CreateRecord
                     $data['coupon_id'] = null;
                 }
             }
+        }
+
+        // Same snapshot the storefront checkout takes, so the customer's emails and the invoice
+        // can name the shipping method and its delivery estimate.
+        if (! empty($data['shipping_method_id']) && ($shippingMethod = ShippingMethod::find($data['shipping_method_id']))) {
+            $data['shipping_method_name_snapshot'] = trans_field($shippingMethod->name);
+            $data['shipping_estimated_days_min'] = $shippingMethod->estimated_days_min;
+            $data['shipping_estimated_days_max'] = $shippingMethod->estimated_days_max;
         }
 
         /** @var Order $order */

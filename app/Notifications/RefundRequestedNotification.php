@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Filament\Resources\OrderResource;
 use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,10 +31,20 @@ class RefundRequestedNotification extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject("Refund Requested for Order {$this->order->order_number}")
-            ->line("Order Number: {$this->order->order_number}")
-            ->line("Customer: {$customerEmail}")
-            ->line("Order Total: {$this->order->total}")
-            ->when($this->reason, fn ($mail) => $mail->line("Reason: {$this->reason}"));
+            ->view(['emails.admin-notification', 'emails.admin-notification-text'], [
+                'eyebrow' => 'FINANCE · REFUND',
+                'label' => 'Refund requested',
+                'heading' => 'Order '.$this->order->order_number,
+                'rows' => [
+                    'Order' => $this->order->order_number,
+                    'Customer' => $customerEmail,
+                    'Order total' => format_price($this->order->grand_total),
+                ],
+                'bodyLabel' => 'Reason',
+                'body' => $this->reason,
+                'actionUrl' => OrderResource::getUrl('view', ['record' => $this->order->id], panel: 'admin'),
+                'actionLabel' => 'Open order',
+            ]);
     }
 
     public function toArray(object $notifiable): array

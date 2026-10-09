@@ -1,9 +1,12 @@
 @extends('emails.layout')
 
+@section('system', '1')
+@section('eyebrow', 'SYSTEM · ERROR')
+
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-            <td style="padding: 32px;">
+            <td style="padding: 0;">
                 <p style="margin: 0 0 4px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #B91C1C; font-weight: 700;">
                     Admin Panel Error
                 </p>
@@ -12,7 +15,7 @@
                     {{ $error['exception_class'] ?? 'Unknown' }}
                 </h1>
 
-                <p style="margin: 0 0 20px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; font-size: 14px; color: #7F1D1D; font-family: monospace;">
+                <p style="margin: 0 0 20px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FCA5A5; border-left: 3px solid #B3261E;  font-size: 14px; color: #7F1D1D; font-family: monospace;">
                     {{ $error['message'] ?? '' }}
                 </p>
 

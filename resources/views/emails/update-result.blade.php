@@ -1,9 +1,12 @@
 @extends('emails.layout')
 
+@section('system', '1')
+@section('eyebrow', 'SYSTEM · UPDATE')
+
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-            <td style="padding: 32px;">
+            <td style="padding: 0;">
                 @php
                     $success = (bool) ($result['success'] ?? false);
                     $rolledBack = (bool) ($result['rolled_back'] ?? false);
@@ -41,7 +44,7 @@
                 @endif
 
                 @if($success)
-                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #F0FDF4; border: 1px solid #86EFAC; border-radius: 8px; font-size: 14px; color: #14532D;">
+                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #F0FDF4; border: 1px solid #86EFAC; border-left: 3px solid #15803D;  font-size: 14px; color: #14532D;">
                         @if($isRestore)
                             The production restore completed successfully. No action needed.
                         @else
@@ -49,7 +52,7 @@
                         @endif
                     </p>
                 @elseif($rolledBack)
-                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 8px; font-size: 14px; color: #78350F;">
+                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #FFFBEB; border: 1px solid #FCD34D; border-left: 3px solid #B45309;  font-size: 14px; color: #78350F;">
                         The {{ $noun }} failed partway through and was <strong>automatically rolled back</strong> — files
                         @if($isRestore)
                             and database were restored back to their pre-restore state from the safety backup taken just before this run.
@@ -60,7 +63,7 @@
                     </p>
                     <p style="margin: 0 0 20px; font-size: 13px; color: #7F1D1D;">Error: {{ $result['error'] ?? 'unknown' }}</p>
                 @else
-                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; font-size: 14px; color: #7F1D1D;">
+                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FCA5A5; border-left: 3px solid #B3261E;  font-size: 14px; color: #7F1D1D;">
                         The {{ $noun }} failed and could not be automatically rolled back. If it never started (a pre-flight
                         check failing), nothing was changed. Otherwise the site may not be in a fully working state —
                         check it now and use the emergency recovery console if needed.

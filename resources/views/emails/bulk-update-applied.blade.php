@@ -1,9 +1,12 @@
 @extends('emails.layout')
 
+@section('system', '1')
+@section('eyebrow', 'SYSTEM · CATALOG')
+
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-            <td style="padding: 32px;">
+            <td style="padding: 0;">
                 <p style="margin: 0 0 4px; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #9A5A00; font-weight: 700;">
                     Bulk Update Applied
                 </p>
@@ -12,7 +15,7 @@
                     {{ number_format($affectedCount) }} products changed
                 </h1>
 
-                <p style="margin: 0 0 20px; padding: 12px 16px; background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; font-size: 14px; color: #7C4A03;">
+                <p style="margin: 0 0 20px; padding: 12px 16px; background: #FFFBEB; border: 1px solid #FDE68A;  font-size: 14px; color: #7C4A03;">
                     {{ $adminName }} applied &ldquo;{{ $actionLabel }}&rdquo; to {{ number_format($affectedCount) }} products — above the automatic large-batch alert threshold.
                 </p>
 

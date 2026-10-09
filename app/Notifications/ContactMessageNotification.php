@@ -32,10 +32,16 @@ class ContactMessageNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject("New Contact Message: {$this->subject}")
-            ->line("From: {$this->name} ({$this->email})")
-            ->line("Subject: {$this->subject}")
-            ->line('Message:')
-            ->line($this->message);
+            ->view(['emails.admin-notification', 'emails.admin-notification-text'], [
+                'eyebrow' => 'INBOX · CONTACT',
+                'label' => 'New contact message',
+                'heading' => $this->subject,
+                'rows' => ['From' => $this->name, 'Email' => $this->email],
+                'bodyLabel' => 'Message',
+                'body' => $this->message,
+                'actionUrl' => ContactMessageResource::getUrl('index', panel: 'admin'),
+                'actionLabel' => 'View messages',
+            ]);
     }
 
     /**

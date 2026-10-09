@@ -16,6 +16,7 @@ return [
         // previously hardcoded English via settings() instead of trans().
         'default_subject' => 'OeParts Notification',
         'header_text' => 'OEPARTS · NOTIFICATION',
+        'system_footer' => 'This is an automatic system message from :host, sent to administrators only.',
     ],
 
     // ─── OTP (One-Time Password) ─────────────────────────────────────────

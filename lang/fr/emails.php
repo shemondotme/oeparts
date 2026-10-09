@@ -7,6 +7,7 @@ return [
         'footer_line2' => 'Vous recevez cet email car vous avez un compte ou avez passé une commande chez nous.',
         'default_subject' => 'Notification OeParts',
         'header_text' => 'OEPARTS · NOTIFICATION',
+        'system_footer' => 'Ceci est un message système automatique de :host, envoyé uniquement aux administrateurs.',
     ],
     'otp' => [
         'subject' => 'Votre code de vérification : :code',

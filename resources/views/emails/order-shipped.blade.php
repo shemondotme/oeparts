@@ -20,7 +20,7 @@
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.order_shipped.greeting', ['name' => $order->shipping_name], $locale) }}
                     <br>
-                    {{ trans('emails.order_shipped.body', ['order_number' => $order->order_number], $locale) }}
+                    {!! email_text(trans('emails.order_shipped.body', ['order_number' => $order->order_number], $locale)) !!}
                 </p>
             </td>
         </tr>
@@ -118,13 +118,13 @@
                 @if($order->tracking_url)
                     <a href="{{ $order->tracking_url }}"
                        class="btn-primary"
-                       style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
+                       style="display: inline-block; padding: 13px 26px; background-color: #F59E0B; color: #0A1228 !important; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #F59E0B;">
                         TRACK PACKAGE →
                     </a>
                 @else
                     <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $order->id]) }}"
                        class="btn-primary"
-                       style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
+                       style="display: inline-block; padding: 13px 26px; background-color: #F59E0B; color: #0A1228 !important; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #F59E0B;">
                         VIEW ORDER STATUS →
                     </a>
                 @endif

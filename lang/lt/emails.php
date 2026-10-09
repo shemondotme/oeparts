@@ -7,6 +7,7 @@ return [
         'footer_line2' => 'Šį el. laišką gavote, nes turite paskyrą arba užsakymą pas mus.',
         'default_subject' => 'OeParts pranešimas',
         'header_text' => 'OEPARTS · PRANEŠIMAS',
+        'system_footer' => 'Tai automatinis sistemos pranešimas iš :host, siunčiamas tik administratoriams.',
     ],
     'otp' => [
         'subject' => 'Jūsų patvirtinimo kodas: :code',

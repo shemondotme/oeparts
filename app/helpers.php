@@ -5,6 +5,7 @@ use App\Services\SettingsService;
 use App\Support\LocaleRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\HtmlString;
 
 /**
  * Get a setting value by dot-notation key.
@@ -353,4 +354,15 @@ function brand_wordmark_parts(string $name): array
     }
 
     return [$name, ''];
+}
+
+if (! function_exists('email_text')) {
+    /**
+     * Email copy from the language files marks emphasis with **double asterisks**
+     * (e.g. the order number). Escape the text, then turn those marks into <strong>.
+     */
+    function email_text(?string $text): HtmlString
+    {
+        return new HtmlString(preg_replace('/\*\*(.+?)\*\*/s', '<strong>$1</strong>', e((string) $text)));
+    }
 }

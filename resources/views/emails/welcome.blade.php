@@ -106,7 +106,7 @@
             <td align="center" style="padding: 24px 0; border-top: 1px solid #D8CFB6; border-bottom: 1px solid #D8CFB6;">
                 <a href="{{ route('frontend.search.console', ['lang' => $locale]) }}"
                    class="btn-primary"
-                   style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
+                   style="display: inline-block; padding: 13px 26px; background-color: #F59E0B; color: #0A1228 !important; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #F59E0B;">
                     START SEARCHING →
                 </a>
             </td>

@@ -32,9 +32,16 @@ class PartInquiryNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject("New Part Inquiry: {$this->oemNumber}")
-            ->line("OEM Number: {$this->oemNumber}")
-            ->line("From: {$this->customerEmail}")
-            ->when($this->message, fn ($mail) => $mail->line("Message: {$this->message}"));
+            ->view(['emails.admin-notification', 'emails.admin-notification-text'], [
+                'eyebrow' => 'INBOX · INQUIRY',
+                'label' => 'New part inquiry',
+                'heading' => 'OEM '.$this->oemNumber,
+                'rows' => ['OEM number' => $this->oemNumber, 'From' => $this->customerEmail],
+                'bodyLabel' => 'Message',
+                'body' => $this->message,
+                'actionUrl' => PartInquiryResource::getUrl('view', ['record' => $this->partInquiryId], panel: 'admin'),
+                'actionLabel' => 'View inquiry',
+            ]);
     }
 
     /** Bell-visible (data.format = 'filament') — see ContactMessageNotification::toDatabase(). */

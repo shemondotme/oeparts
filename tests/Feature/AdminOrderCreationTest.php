@@ -151,6 +151,17 @@ class AdminOrderCreationTest extends TestCase
     }
 
     #[Test]
+    public function the_shipping_method_name_and_delivery_estimate_are_snapshotted_on_the_order(): void
+    {
+        Livewire::test(CreateOrder::class)->fillForm($this->baseForm())->call('create')->assertHasNoFormErrors();
+
+        $order = Order::where('guest_email', 'buyer@example.com')->firstOrFail();
+        $this->assertNotEmpty($order->shipping_method_name_snapshot);
+        $this->assertSame(2, (int) $order->shipping_estimated_days_min);
+        $this->assertSame(5, (int) $order->shipping_estimated_days_max);
+    }
+
+    #[Test]
     public function the_phone_and_the_extra_address_fields_are_saved(): void
     {
         Livewire::test(CreateOrder::class)->fillForm($this->baseForm())->call('create')->assertHasNoFormErrors();

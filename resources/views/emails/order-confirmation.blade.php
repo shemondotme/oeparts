@@ -20,7 +20,7 @@
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.order_confirmation.greeting', ['name' => $order->shipping_name], $locale) }}
                     <br>
-                    {{ trans('emails.order_confirmation.body', ['order_number' => $order->order_number], $locale) }}
+                    {!! email_text(trans('emails.order_confirmation.body', ['order_number' => $order->order_number], $locale)) !!}
                 </p>
             </td>
         </tr>
@@ -55,6 +55,7 @@
                                     </td>
                                 </tr>
                                 {{-- Shipping Method --}}
+                                @if(filled($order->shipping_method_name_snapshot))
                                 <tr>
                                     <td style="padding-bottom: 8px;">
                                         <span class="spec-label" style="color: #4E5A74;">SHIPPING</span>
@@ -65,7 +66,9 @@
                                         </span>
                                     </td>
                                 </tr>
+                                @endif
                                 {{-- Estimated Delivery --}}
+                                @if($order->shipping_estimated_days_max)
                                 <tr>
                                     <td style="padding-top: 8px; border-top: 1px dashed #D8CFB6;">
                                         <span class="spec-label" style="color: #4E5A74;">EST. DELIVERY</span>
@@ -76,6 +79,7 @@
                                         </span>
                                     </td>
                                 </tr>
+                                @endif
                             </table>
                         </td>
                     </tr>
@@ -278,7 +282,7 @@
                 </p>
                 <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $order->id]) }}"
                    class="btn-primary"
-                   style="display: inline-block; padding: 14px 28px; background-color: #0A1228; color: #F7F3E7 !important; text-decoration: none; font-family: 'Courier New', Courier, monospace; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.18em; border: 1px solid #0A1228;">
+                   style="display: inline-block; padding: 13px 26px; background-color: #F59E0B; color: #0A1228 !important; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #F59E0B;">
                     VIEW ORDER DETAILS →
                 </a>
             </td>

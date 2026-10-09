@@ -1,9 +1,12 @@
 @extends('emails.layout')
 
+@section('system', '1')
+@section('eyebrow', 'SYSTEM · UPDATE')
+
 @section('content')
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
-            <td style="padding: 32px;">
+            <td style="padding: 0;">
                 @php
                     $security = (bool) ($status['security'] ?? false);
                     $latest = $status['latest_version'] ?? '';
@@ -26,7 +29,7 @@
                 </p>
 
                 @if($security)
-                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FCA5A5; border-radius: 8px; font-size: 14px; color: #7F1D1D;">
+                    <p style="margin: 0 0 20px; padding: 12px 16px; background: #FEF2F2; border: 1px solid #FCA5A5; border-left: 3px solid #B3261E;  font-size: 14px; color: #7F1D1D;">
                         This is a <strong>security release</strong> — please review and update as soon as possible.
                     </p>
                 @endif
