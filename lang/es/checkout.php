@@ -71,6 +71,7 @@ return [
     'last_name_label' => 'Apellidos',
     'street_address_label' => 'Dirección',
     'street_placeholder' => 'p. ej. Calle Mayor 12',
+    'address_line2_label' => 'Piso, puerta, etc. (opcional)',
     'city_label' => 'Ciudad',
     'postal_code_label' => 'Código postal',
     'country_label' => 'País',

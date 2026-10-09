@@ -379,6 +379,9 @@
                         <p class="font-mono text-xs text-ink-muted">{{ $order->company_name }}</p>
                     @endif
                     <p class="font-mono text-xs text-ink-muted">{{ $order->shipping_address_line1 }}</p>
+                    @if($order->shipping_address_line2)
+                        <p class="font-mono text-xs text-ink-muted">{{ $order->shipping_address_line2 }}</p>
+                    @endif
                     <p class="font-mono text-xs text-ink-muted">
                         {{ $order->shipping_postal_code }} · {{ $order->shipping_city }}
                     </p>

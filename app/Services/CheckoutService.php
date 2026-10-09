@@ -401,6 +401,8 @@ class CheckoutService
                 'shipping_estimated_days_max' => $shippingMethod?->estimated_days_max,
                 'shipping_name' => $shippingName,
                 'shipping_address_line1' => $shippingAddress['street'] ?? null,
+                'shipping_address_line2' => $shippingAddress['address_line2'] ?? null,
+                'customer_phone' => $this->normalizePhone($data['contact_phone'] ?? null),
                 'shipping_city' => $shippingAddress['city'] ?? null,
                 'shipping_postal_code' => $shippingAddress['postal_code'] ?? null,
                 'shipping_country_code' => $shippingAddress['country_code'] ?? null,
@@ -458,6 +460,14 @@ class CheckoutService
 
             return $order;
         });
+    }
+
+    /** Trimmed phone as typed, or null when blank (the field is optional at checkout). */
+    private function normalizePhone(mixed $phone): ?string
+    {
+        $phone = trim((string) $phone);
+
+        return $phone === '' ? null : mb_substr($phone, 0, 50);
     }
 
     /**

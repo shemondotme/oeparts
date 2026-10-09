@@ -71,6 +71,7 @@ return [
     'last_name_label' => 'Nachname',
     'street_address_label' => 'Straße und Hausnummer',
     'street_placeholder' => 'z. B. Musterstraße 12',
+    'address_line2_label' => 'Adresszusatz (optional)',
     'city_label' => 'Stadt',
     'postal_code_label' => 'Postleitzahl',
     'country_label' => 'Land',

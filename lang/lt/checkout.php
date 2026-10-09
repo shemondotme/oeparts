@@ -71,6 +71,7 @@ return [
     'last_name_label' => 'Pavardė',
     'street_address_label' => 'Gatvė ir namo numeris',
     'street_placeholder' => 'pvz., Gedimino pr. 12',
+    'address_line2_label' => 'Buto, biuro Nr. ir kt. (neprivaloma)',
     'city_label' => 'Miestas',
     'postal_code_label' => 'Pašto kodas',
     'country_label' => 'Šalis',

@@ -26,14 +26,19 @@ class InvoiceService
         try {
             $order->loadMissing(['items.product']);
 
-            $snapshotAddress = $this->addressFromOrderSnapshot($order);
+            $shippingAddress = $this->addressFromOrderSnapshot($order, 'shipping');
+            // A separate billing address is optional; without one the invoice is
+            // billed to the delivery address, exactly as before.
+            $billingAddress = $order->billing_address_line1
+                ? $this->addressFromOrderSnapshot($order, 'billing')
+                : $shippingAddress;
 
             $data = [
                 'order' => $order,
                 'user' => $order->user,
                 'items' => $order->items,
-                'billingAddress' => $snapshotAddress,
-                'shippingAddress' => $snapshotAddress,
+                'billingAddress' => $billingAddress,
+                'shippingAddress' => $shippingAddress,
                 'bank' => $this->bankDetails(),
                 'settings' => [
                     'company_name' => settings('company.name', 'OeParts'),
@@ -89,25 +94,27 @@ class InvoiceService
     /**
      * Build a bill/ship address object from order shipping snapshot (no saved Address rows).
      */
-    private function addressFromOrderSnapshot(Order $order): object
+    private function addressFromOrderSnapshot(Order $order, string $kind = 'shipping'): object
     {
+        $billing = $kind === 'billing';
+
         // No case-normalization: this name is printed verbatim on the invoice
         // PDF, so lowercasing it (as this used to do) turned "John Doe" into
         // "john doe" on an official billing document.
-        $name = trim((string) ($order->shipping_name ?? ''));
+        $name = trim((string) ($billing ? ($order->billing_name ?: $order->shipping_name) : $order->shipping_name));
         $parts = $name === '' ? ['', ''] : preg_split('/\s+/u', $name, 2);
 
         return (object) [
             'first_name' => $parts[0] ?? '',
             'last_name' => $parts[1] ?? '',
             'company' => $order->company_name,
-            'address_line_1' => (string) ($order->shipping_address_line1 ?? ''),
-            'address_line_2' => null,
-            'city' => (string) ($order->shipping_city ?? ''),
-            'state' => '',
-            'postal_code' => (string) ($order->shipping_postal_code ?? ''),
-            'country_code' => (string) ($order->shipping_country_code ?? ''),
-            'phone' => null,
+            'address_line_1' => (string) ($billing ? $order->billing_address_line1 : $order->shipping_address_line1),
+            'address_line_2' => ($billing ? $order->billing_address_line2 : $order->shipping_address_line2) ?: null,
+            'city' => (string) ($billing ? $order->billing_city : $order->shipping_city),
+            'state' => (string) ($billing ? $order->billing_state : $order->shipping_state),
+            'postal_code' => (string) ($billing ? $order->billing_postal_code : $order->shipping_postal_code),
+            'country_code' => (string) ($billing ? $order->billing_country_code : $order->shipping_country_code),
+            'phone' => $order->customer_phone ?: null,
         ];
     }
 

@@ -71,6 +71,7 @@ return [
     'last_name_label' => 'Nom',
     'street_address_label' => 'Adresse',
     'street_placeholder' => 'ex. 12 rue de la Paix',
+    'address_line2_label' => "Complément d'adresse (facultatif)",
     'city_label' => 'Ville',
     'postal_code_label' => 'Code postal',
     'country_label' => 'Pays',

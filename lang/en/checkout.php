@@ -72,6 +72,7 @@ return [
     'last_name_label' => 'Last name',
     'street_address_label' => 'Street address',
     'street_placeholder' => 'e.g. Musterstraße 12',
+    'address_line2_label' => 'Apartment, suite, etc. (optional)',
     'city_label' => 'City',
     'postal_code_label' => 'Postal code',
     'country_label' => 'Country',

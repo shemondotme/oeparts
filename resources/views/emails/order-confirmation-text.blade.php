@@ -16,6 +16,9 @@
 {{ trans('emails.order_confirmation.shipping_method', [], $locale) }}: {{ $order->shipping_method_name_snapshot }}
 {{ trans('emails.order_confirmation.shipping_address', [], $locale) }}:
 {{ $order->shipping_address_line1 }}
+@if($order->shipping_address_line2)
+{{ $order->shipping_address_line2 }}
+@endif
 {{ $order->shipping_city }}, {{ $order->shipping_postal_code }}
 {{ $order->shipping_country_code }}
 

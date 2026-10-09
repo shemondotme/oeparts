@@ -81,6 +81,22 @@
         @enderror
     </div>
 
+    {{-- Address line 2 (optional) --}}
+    <div>
+        <label for="checkout_address_line2" class="bp-spec block mb-2 text-ink">
+            {{ ui_copy('checkout_address_line2_label', 'checkout.address_line2_label') }}
+        </label>
+        <div class="border border-ink bg-paper focus-within:border-amber-ink transition-colors @error('address_line2') border-red-600 @enderror">
+            <input type="text" id="checkout_address_line2" name="address_line2"
+                   value="{{ old('address_line2', $addr['address_line2'] ?? '') }}"
+                   autocomplete="address-line2" maxlength="255"
+                   class="w-full px-4 py-3 bg-transparent font-mono text-sm text-ink focus:outline-none">
+        </div>
+        @error('address_line2')
+            <p class="mt-2 font-mono text-[10px] tracking-[0.18em] uppercase text-red-600">{{ $message }}</p>
+        @enderror
+    </div>
+
     {{-- City + Postal --}}
     <div class="grid sm:grid-cols-2 gap-4">
         <div>
