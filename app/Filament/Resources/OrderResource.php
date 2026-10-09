@@ -986,6 +986,8 @@ class OrderResource extends Resource
                             }
                         },
                     )->authorize('update'),
+                    self::statusBulkAction('markShipped', 'Mark as Shipped', 'heroicon-o-truck', 'info', OrderStatus::Processing, OrderStatus::Shipped),
+                    self::statusBulkAction('markDelivered', 'Mark as Delivered', 'heroicon-o-check-badge', 'success', OrderStatus::Shipped, OrderStatus::Delivered),
                     AdminUi::exportCsvBulkAction('Export Orders', [
                         'order_number' => 'Order Number',
                         'shipping_name' => 'Customer',
@@ -1022,6 +1024,44 @@ class OrderResource extends Resource
             PaymentRelationManager::class,
             RefundRequestRelationManager::class,
         ];
+    }
+
+    /** Move every selected order that is in $from to $to through the normal status workflow (emails, history). */
+    private static function statusBulkAction(string $name, string $label, string $icon, string $color, OrderStatus $from, OrderStatus $to): Actions\BulkAction
+    {
+        return AdminUi::impactBulkAction(
+            name: $name,
+            label: $label,
+            color: $color,
+            icon: $icon,
+            summary: fn ($record): ?array => $record->status !== $from
+                ? null
+                : ['key' => $record->order_number, 'old' => $from->value, 'new' => $to->value],
+            visible: fn ($records): bool => $records->contains(fn ($r) => $r->status === $from),
+            action: function ($records) use ($from, $to, $label): void {
+                $service = app(OrderService::class);
+                $done = 0;
+                $failed = [];
+
+                foreach ($records as $record) {
+                    if ($record->status !== $from) {
+                        continue;
+                    }
+                    try {
+                        $service->transitionStatus($record, $to, 'Bulk status update', auth('admin')->id());
+                        $done++;
+                    } catch (\InvalidArgumentException) {
+                        $failed[] = $record->order_number;
+                    }
+                }
+
+                Notification::make()
+                    ->title("{$label}: {$done} done".($failed ? ', '.count($failed).' failed' : ''))
+                    ->body($failed ? 'Failed: '.implode(', ', $failed) : null)
+                    ->color($failed ? 'warning' : 'success')
+                    ->send();
+            },
+        )->authorizeIndividualRecords('update');
     }
 
     public static function getPages(): array

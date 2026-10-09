@@ -151,6 +151,7 @@ class CarrierResource extends Resource
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    ...AdminUi::activeToggleBulkActions(),
                     AdminUi::exportCsvBulkAction('Export Carriers', [
                         'name' => 'Carrier',
                         'tracking_url' => 'Tracking URL',

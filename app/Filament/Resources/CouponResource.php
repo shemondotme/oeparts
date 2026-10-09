@@ -249,6 +249,7 @@ class CouponResource extends Resource
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    ...AdminUi::activeToggleBulkActions(),
                     AdminUi::exportCsvBulkAction('Export Coupons', [
                         'code' => 'Coupon Code',
                         'name' => 'Name',

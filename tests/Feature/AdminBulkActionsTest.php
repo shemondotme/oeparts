@@ -2,16 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ContentStatus;
 use App\Enums\CustomInvoiceStatus;
 use App\Enums\InvoiceDocumentType;
+use App\Enums\OrderStatus;
+use App\Filament\Resources\CouponResource\Pages\ListCoupons;
 use App\Filament\Resources\CustomerResource\Pages\ListCustomers;
 use App\Filament\Resources\CustomInvoiceResource\Pages\ListCustomInvoices;
 use App\Filament\Resources\InvoiceClientResource\Pages\ListInvoiceClients;
+use App\Filament\Resources\OrderResource\Pages\ListOrders;
+use App\Filament\Resources\PageResource\Pages\ListPages;
 use App\Mail\CustomInvoiceMail;
 use App\Mail\CustomInvoiceReminderMail;
 use App\Models\Admin;
+use App\Models\Coupon;
 use App\Models\CustomInvoice;
 use App\Models\InvoiceClient;
+use App\Models\Order;
+use App\Models\Page;
 use App\Models\User;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -132,6 +140,50 @@ class AdminBulkActionsTest extends TestCase
         Livewire::test(ListCustomInvoices::class)
             ->callTableBulkAction('bulkDownloadPdfs', $docs)
             ->assertFileDownloaded();
+    }
+
+    #[Test]
+    public function coupons_can_be_switched_on_and_off_in_bulk(): void
+    {
+        $coupons = collect(['BULKA', 'BULKB'])->map(fn (string $code) => Coupon::factory()->create(['code' => $code, 'is_active' => true, 'created_by' => auth('admin')->id()]));
+
+        Livewire::test(ListCoupons::class)->callTableBulkAction('bulkDeactivate', $coupons->all());
+        $this->assertSame(0, Coupon::where('is_active', true)->count());
+
+        Livewire::test(ListCoupons::class)->callTableBulkAction('bulkActivate', $coupons->all());
+        $this->assertSame(2, Coupon::where('is_active', true)->count());
+    }
+
+    #[Test]
+    public function orders_move_forward_in_bulk_only_from_the_right_status(): void
+    {
+        $processing = Order::factory()->create(['status' => OrderStatus::Processing]);
+        $pending = Order::factory()->create(['status' => OrderStatus::Pending]);
+
+        Livewire::test(ListOrders::class)->callTableBulkAction('markShipped', [$processing, $pending]);
+        $this->assertSame(OrderStatus::Shipped, $processing->refresh()->status);
+        $this->assertSame(OrderStatus::Pending, $pending->refresh()->status);
+
+        Livewire::test(ListOrders::class)->callTableBulkAction('markDelivered', [$processing, $pending]);
+        $this->assertSame(OrderStatus::Delivered, $processing->refresh()->status);
+        $this->assertSame(OrderStatus::Pending, $pending->refresh()->status);
+    }
+
+    #[Test]
+    public function pages_publish_in_bulk_and_the_homepage_is_never_unpublished(): void
+    {
+        $adminId = auth('admin')->id();
+        $draft = Page::create(['title' => ['en' => 'About'], 'slug' => 'about', 'content' => ['en' => 'x'], 'status' => ContentStatus::Draft, 'created_by' => $adminId]);
+        $home = Page::create(['title' => ['en' => 'Home'], 'slug' => 'home', 'content' => ['en' => 'x'], 'status' => ContentStatus::Published, 'is_homepage' => true, 'created_by' => $adminId]);
+        $live = Page::create(['title' => ['en' => 'Terms'], 'slug' => 'terms', 'content' => ['en' => 'x'], 'status' => ContentStatus::Published, 'created_by' => $adminId]);
+
+        Livewire::test(ListPages::class)->callTableBulkAction('bulkPublish', [$draft]);
+        $this->assertSame(ContentStatus::Published, $draft->refresh()->status);
+        $this->assertNotNull($draft->published_at);
+
+        Livewire::test(ListPages::class)->callTableBulkAction('bulkUnpublish', [$home, $live]);
+        $this->assertSame(ContentStatus::Published, $home->refresh()->status);
+        $this->assertSame(ContentStatus::Draft, $live->refresh()->status);
     }
 
     #[Test]

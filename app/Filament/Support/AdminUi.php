@@ -522,6 +522,36 @@ final class AdminUi
     }
 
     /**
+     * "Activate" / "Deactivate" bulk actions for any resource with an `is_active` flag.
+     * Rows already in the target state are left out of the preview and the update.
+     *
+     * @param  Closure|null  $label  fn($record): string — what to show for a row in the preview (default: name, code or source URL)
+     * @return array<int, BulkAction>
+     */
+    public static function activeToggleBulkActions(?Closure $label = null): array
+    {
+        $label ??= fn ($record): string => self::localizedName($record->name ?? $record->code ?? $record->from_url ?? $record->getKey());
+
+        $make = fn (bool $to): BulkAction => self::impactBulkAction(
+            name: $to ? 'bulkActivate' : 'bulkDeactivate',
+            label: $to ? 'Activate' : 'Deactivate',
+            color: $to ? 'success' : 'danger',
+            icon: $to ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle',
+            summary: fn ($record): ?array => (bool) $record->is_active === $to
+                ? null
+                : ['key' => $label($record), 'old' => $to ? 'Inactive' : 'Active', 'new' => $to ? 'Active' : 'Inactive'],
+            action: fn ($records) => $records->each(function ($record) use ($to): void {
+                if ((bool) $record->is_active !== $to) {
+                    $record->update(['is_active' => $to]);
+                }
+            }),
+            visible: fn ($records): bool => $records->contains(fn ($r) => (bool) $r->is_active !== $to),
+        )->authorizeIndividualRecords('update');
+
+        return [$make(true), $make(false)];
+    }
+
+    /**
      * Reusable Export CSV bulk action.
      *
      * @param  array<string, string>  $columns  Column accessor => CSV header label

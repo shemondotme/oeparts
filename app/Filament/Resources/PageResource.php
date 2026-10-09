@@ -8,6 +8,7 @@ use App\Filament\Support\AdminUi;
 use App\Models\Page;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
@@ -297,6 +298,43 @@ class PageResource extends Resource
             ->actions(AdminUi::recordActions())
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    AdminUi::impactBulkAction(
+                        name: 'bulkPublish',
+                        label: 'Publish',
+                        color: 'success',
+                        icon: 'heroicon-o-eye',
+                        summary: fn ($record): ?array => $record->status === ContentStatus::Published
+                            ? null
+                            : ['key' => trans_field($record->title), 'old' => $record->status->value, 'new' => ContentStatus::Published->value],
+                        visible: fn ($records): bool => $records->contains(fn ($r) => $r->status !== ContentStatus::Published),
+                        action: function ($records): void {
+                            $records->each(function ($page): void {
+                                if ($page->status !== ContentStatus::Published) {
+                                    $page->update(['status' => ContentStatus::Published, 'published_at' => $page->published_at ?? now()]);
+                                }
+                            });
+                            Notification::make()->title('Pages published')->success()->send();
+                        },
+                    )->authorizeIndividualRecords('update'),
+                    AdminUi::impactBulkAction(
+                        name: 'bulkUnpublish',
+                        label: 'Unpublish (back to draft)',
+                        color: 'warning',
+                        icon: 'heroicon-o-eye-slash',
+                        summary: fn ($record): ?array => $record->status !== ContentStatus::Published || $record->is_homepage
+                            ? null
+                            : ['key' => trans_field($record->title), 'old' => ContentStatus::Published->value, 'new' => ContentStatus::Draft->value],
+                        visible: fn ($records): bool => $records->contains(fn ($r) => $r->status === ContentStatus::Published && ! $r->is_homepage),
+                        action: function ($records): void {
+                            $records->each(function ($page): void {
+                                // The homepage is never taken offline by a bulk action.
+                                if ($page->status === ContentStatus::Published && ! $page->is_homepage) {
+                                    $page->update(['status' => ContentStatus::Draft]);
+                                }
+                            });
+                            Notification::make()->title('Pages moved to draft')->body('The homepage is skipped.')->success()->send();
+                        },
+                    )->authorizeIndividualRecords('update'),
                     AdminUi::exportCsvBulkAction('Export Pages', [
                         'title' => 'Title',
                         'slug' => 'Slug',

@@ -210,6 +210,7 @@ class RedirectResource extends Resource
             ->actions(AdminUi::recordActionsWithoutView([static::testRedirectAction()]))
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    ...AdminUi::activeToggleBulkActions(),
                     AdminUi::exportCsvBulkAction('Export Redirects', [
                         'from_url' => 'From URL',
                         'to_url' => 'To URL',

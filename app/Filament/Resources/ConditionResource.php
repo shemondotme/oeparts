@@ -219,6 +219,7 @@ class ConditionResource extends Resource
             ])
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    ...AdminUi::activeToggleBulkActions(),
                     AdminUi::exportCsvBulkAction('Export Conditions', [
                         'name' => 'Name',
                         'slug' => 'Slug',

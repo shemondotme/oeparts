@@ -138,6 +138,7 @@ class TaxRateResource extends Resource
             ->actions(AdminUi::recordActions())
             ->bulkActions([
                 Actions\BulkActionGroup::make([
+                    ...AdminUi::activeToggleBulkActions(),
                     AdminUi::exportCsvBulkAction('Export Tax Rates', [
                         'country_code' => 'Code',
                         'country_name' => 'Country',
