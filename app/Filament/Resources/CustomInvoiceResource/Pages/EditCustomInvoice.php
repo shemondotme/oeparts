@@ -13,6 +13,7 @@ class EditCustomInvoice extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            CustomInvoiceResource::makePreviewAction(),
             CustomInvoiceResource::makeDownloadAction(),
             CustomInvoiceResource::makeSendAction(),
             CustomInvoiceResource::makeAcceptAction(),

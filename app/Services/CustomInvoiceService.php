@@ -10,6 +10,7 @@ use App\Mail\CustomInvoiceReminderMail;
 use App\Models\CustomInvoice;
 use App\Models\CustomInvoicePayment;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -34,9 +35,33 @@ class CustomInvoiceService
         return $this->sequences->nextDocumentNumber($type);
     }
 
+    /** Languages a document can be written in (the site's own locales). */
+    public const LANGUAGES = ['en', 'de', 'es', 'fr', 'lt'];
+
+    /** The language this document is written in; anything unknown falls back to English. */
+    public function languageOf(CustomInvoice $invoice): string
+    {
+        return in_array($invoice->language, self::LANGUAGES, true) ? (string) $invoice->language : 'en';
+    }
+
+    /** The document's HTML, rendered in its own language. */
+    public function html(CustomInvoice $invoice): string
+    {
+        // The app locale is switched only while this one document renders (settings_trans() and
+        // anything else locale-aware follow it), then put back, even if rendering throws.
+        $previous = App::getLocale();
+        App::setLocale($this->languageOf($invoice));
+
+        try {
+            return view('pdf.custom-invoice', $this->viewData($invoice))->render();
+        } finally {
+            App::setLocale($previous);
+        }
+    }
+
     public function pdf(CustomInvoice $invoice): \Barryvdh\DomPDF\PDF
     {
-        return Pdf::loadView('pdf.custom-invoice', $this->viewData($invoice));
+        return Pdf::loadHTML($this->html($invoice));
     }
 
     /**
@@ -45,10 +70,14 @@ class CustomInvoiceService
     public function viewData(CustomInvoice $invoice): array
     {
         $documentType = $invoice->document_type;
+        $locale = $this->languageOf($invoice);
 
         return [
             'invoice' => $invoice,
             'documentType' => $documentType,
+            'locale' => $locale,
+            // Label lookup in the document's language: {{ $t('subtotal') }}
+            't' => fn (string $key, array $replace = []): string => __('invoice_doc.'.$key, $replace, $locale),
             'items' => $invoice->normalizedItems(),
             'bank' => $documentType->requestsPayment() && $invoice->payment_method === InvoicePaymentMethod::BankTransfer
                 ? $this->invoices->bankDetailsFor($invoice->bank_account_id, $invoice->currency)
@@ -80,9 +109,13 @@ class CustomInvoiceService
      * Email the PDF to the client. A draft becomes "sent"; re-sending a sent
      * or paid invoice just resends it (and refreshes sent_at).
      *
+     * @param  array{cc?: array<int, string>, bcc?: array<int, string>, message?: ?string, copy_to_sender?: bool}  $options
+     *                                                                                                                       cc / bcc: extra recipients; message: a personal note shown above the summary;
+     *                                                                                                                       copy_to_sender: blind-copy the admin who sends it
+     *
      * @throws \RuntimeException when the invoice has no client email or is cancelled
      */
-    public function send(CustomInvoice $invoice): void
+    public function send(CustomInvoice $invoice, array $options = []): void
     {
         if ($invoice->status === CustomInvoiceStatus::Cancelled) {
             throw new \RuntimeException('A cancelled document cannot be sent.');
@@ -92,7 +125,21 @@ class CustomInvoiceService
             throw new \RuntimeException('This document has no client email address.');
         }
 
-        Mail::to($invoice->client_email)->send(new CustomInvoiceMail($invoice, $this->pdf($invoice)->output()));
+        $clean = fn (array $list): array => array_values(array_unique(array_filter(array_map('trim', $list), fn (string $e): bool => filter_var($e, FILTER_VALIDATE_EMAIL) !== false)));
+        $cc = $clean((array) ($options['cc'] ?? []));
+        $bcc = $clean((array) ($options['bcc'] ?? []));
+        if (! empty($options['copy_to_sender']) && ($self = auth('admin')->user()?->email)) {
+            $bcc = $clean([...$bcc, $self]);
+        }
+
+        $pending = Mail::to($invoice->client_email);
+        if ($cc !== []) {
+            $pending->cc($cc);
+        }
+        if ($bcc !== []) {
+            $pending->bcc($bcc);
+        }
+        $pending->send(new CustomInvoiceMail($invoice, $this->pdf($invoice)->output(), filled($options['message'] ?? null) ? trim((string) $options['message']) : null));
 
         $invoice->forceFill([
             'sent_at' => now(),

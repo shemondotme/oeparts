@@ -1,31 +1,37 @@
-Payment reminder: invoice {{ $invoice->invoice_number }}
+@php
+    $mt = fn (string $key, array $replace = []) => __('invoice_doc.'.$key, $replace, $locale);
+@endphp
+{{ $mt('name_invoice') }} {{ $invoice->invoice_number }}
 
-Hello {{ $invoice->client_name }},
+{{ $mt('mail_hello', ['name' => $invoice->client_name]) }}
 
-This is a friendly reminder that the invoice below is still open@if($daysOverdue > 0) (it was due {{ $daysOverdue }} {{ $daysOverdue === 1 ? 'day' : 'days' }} ago)@endif.
-If you have already paid it, please ignore this message and accept our thanks.
+{{ $mt('reminder_intro') }}@if($daysOverdue > 0) {{ trans_choice('invoice_doc.reminder_late', $daysOverdue, ['count' => $daysOverdue], $locale) }}@endif.
+{{ $mt('reminder_ignore') }}
 
-Invoice no.: {{ $invoice->invoice_number }}
-Due date: {{ $invoice->due_date->format('d/m/Y') }}
-Outstanding: {{ format_price($balance, $invoice->currency, 'en') }}
+{{ $mt('name_invoice') }} {{ $mt('number') }}: {{ $invoice->invoice_number }}
+{{ $mt('due') }}: {{ $invoice->due_date->format('d/m/Y') }}
+{{ ucfirst(mb_strtolower($mt('reminder_outstanding'))) }}: {{ format_price($balance, $invoice->currency, $locale) }}
 @if(!empty($bank))
 
-Pay by bank transfer
-@if(!empty($bank['account_holder']))Account holder: {{ $bank['account_holder'] }}
+{{ ucfirst(mb_strtolower($mt('mail_pay_bank'))) }}
+@if(!empty($bank['account_holder']))
+{{ $mt('account_holder') }}: {{ $bank['account_holder'] }}
 @endif
-@if(!empty($bank['bank_name']))Bank: {{ $bank['bank_name'] }}
+@if(!empty($bank['bank_name']))
+{{ $mt('bank') }}: {{ $bank['bank_name'] }}
 @endif
-IBAN: {{ $bank['iban'] }}
-@if(!empty($bank['bic']))SWIFT / BIC: {{ $bank['bic'] }}
+{{ $mt('iban') }}: {{ $bank['iban'] }}
+@if(!empty($bank['bic']))
+{{ $mt('swift') }}: {{ $bank['bic'] }}
 @endif
-Payment reference: {{ $invoice->invoice_number }}
+{{ $mt('payment_reference') }}: {{ $invoice->invoice_number }}
 @endif
 @if($invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
 
-Pay online: {{ $invoice->payment_link_url }}
+{{ ucfirst(mb_strtolower($mt('mail_pay_online'))) }}: {{ $invoice->payment_link_url }}
 @endif
 
-The invoice is attached again as a PDF. Questions? Contact {{ settings('company.email', 'info@oeparts.lt') }}.
+{{ $mt('reminder_attached_again', ['email' => settings('company.email', 'info@oeparts.lt')]) }}
 
 ---
 {{ config('app.url') }}

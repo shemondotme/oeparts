@@ -25,7 +25,7 @@ class InvoiceCalculator
     /**
      * @param  array<int, array<string, mixed>>  $items
      * @return array{
-     *     lines: list<array{description: string, part_number: string, unit: string, quantity: string, unit_price: string, discount_percent: string, vat_rate: string, line_total: string, product_id: ?int}>,
+     *     lines: list<array{description: string, part_number: string, lead_time: string, unit: string, quantity: string, unit_price: string, discount_percent: string, vat_rate: string, line_total: string, product_id: ?int}>,
      *     subtotal: string, discount_amount: string, vat_amount: string, total: string,
      *     breakdown: list<array{rate: string, base: string, vat: string}>, treatment: string
      * }
@@ -59,6 +59,7 @@ class InvoiceCalculator
             $lines[] = [
                 'description' => (string) ($item['description'] ?? ''),
                 'part_number' => (string) ($item['part_number'] ?? ''),
+                'lead_time' => (string) ($item['lead_time'] ?? ''),
                 'unit' => (string) ($item['unit'] ?? ''),
                 'quantity' => $quantity,
                 'unit_price' => $unit,

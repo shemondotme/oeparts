@@ -29,7 +29,7 @@ class CustomInvoice extends Model
         'vat_treatment', 'vat_exemption_note', 'supply_date', 'discount_type', 'discount_percent',
         'po_number', 'delivery_terms', 'terms_text', 'internal_notes',
         'document_type', 'parent_id', 'client_id', 'client_state',
-        'reminder_count', 'last_reminded_at',
+        'reminder_count', 'last_reminded_at', 'language',
     ];
 
     /**
@@ -42,6 +42,7 @@ class CustomInvoice extends Model
         'vat_treatment' => 'standard',
         'discount_type' => 'amount',
         'document_type' => 'invoice',
+        'language' => 'en',
     ];
 
     protected $casts = [
@@ -180,7 +181,7 @@ class CustomInvoice extends Model
     }
 
     /**
-     * @return list<array{description: string, part_number: string, unit: string, quantity: string, unit_price: string, discount_percent: string, vat_rate: string, line_total: string, product_id: ?int}>
+     * @return list<array{description: string, part_number: string, lead_time: string, unit: string, quantity: string, unit_price: string, discount_percent: string, vat_rate: string, line_total: string, product_id: ?int}>
      */
     public function normalizedItems(): array
     {

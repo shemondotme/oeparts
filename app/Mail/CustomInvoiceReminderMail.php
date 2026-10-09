@@ -25,13 +25,13 @@ class CustomInvoiceReminderMail extends Mailable
         public readonly CustomInvoice $invoice,
         private readonly string $pdfContent,
     ) {
-        $this->locale = 'en';
+        $this->locale = app(CustomInvoiceService::class)->languageOf($invoice);
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Payment reminder: invoice '.$this->invoice->invoice_number.' from '.settings('company.name', 'OeParts'),
+            subject: __('invoice_doc.reminder_subject', ['number' => $this->invoice->invoice_number, 'company' => settings('company.name', 'OeParts')], $this->locale),
             tags: ['custom-invoice-reminder'],
             metadata: [
                 'custom_invoice_id' => $this->invoice->id,
@@ -53,7 +53,7 @@ class CustomInvoiceReminderMail extends Mailable
                 'bank' => $this->invoice->payment_method === InvoicePaymentMethod::BankTransfer
                     ? app(InvoiceService::class)->bankDetailsFor($this->invoice->bank_account_id, $this->invoice->currency)
                     : null,
-                'locale' => 'en',
+                'locale' => $this->locale,
             ],
         );
     }

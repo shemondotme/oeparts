@@ -136,6 +136,12 @@ class InvoiceClientResource extends Resource
                             ->options(InvoiceBankAccountResource::currencies())
                             ->native(false)
                             ->placeholder('No preference'),
+                        Forms\Components\Select::make('language')
+                            ->label('Document language')
+                            ->options(['en' => 'English', 'de' => 'Deutsch', 'es' => 'Español', 'fr' => 'Français', 'lt' => 'Lietuvių'])
+                            ->native(false)
+                            ->placeholder('English (default)')
+                            ->helperText('Quotations and invoices for this client are written in this language.'),
                         Forms\Components\TextInput::make('address_line1')
                             ->label('Address line 1')
                             ->required()

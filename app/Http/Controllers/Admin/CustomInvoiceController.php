@@ -17,6 +17,11 @@ class CustomInvoiceController extends Controller
             abort(403, 'Unauthorized.');
         }
 
-        return $service->pdf($customInvoice)->download($service->filename($customInvoice));
+        $pdf = $service->pdf($customInvoice);
+
+        // ?inline=1 opens it in the browser tab (a preview); otherwise it is downloaded.
+        return request()->boolean('inline')
+            ? $pdf->stream($service->filename($customInvoice))
+            : $pdf->download($service->filename($customInvoice));
     }
 }

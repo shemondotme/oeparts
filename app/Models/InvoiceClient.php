@@ -14,7 +14,7 @@ class InvoiceClient extends Model
     protected $fillable = [
         'name', 'company', 'vat_number', 'email', 'phone',
         'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country_code',
-        'currency', 'notes', 'user_id',
+        'currency', 'language', 'notes', 'user_id',
     ];
 
     public function user(): BelongsTo
@@ -53,6 +53,7 @@ class InvoiceClient extends Model
             'client_state' => $this->state,
             'client_postal_code' => $this->postal_code,
             'client_country_code' => $this->country_code,
+            'language' => $this->language ?: 'en',
         ];
     }
 
@@ -76,6 +77,7 @@ class InvoiceClient extends Model
             'postal_code' => $data['client_postal_code'] ?? null,
             'country_code' => $data['client_country_code'] ?? '',
             'currency' => $data['currency'] ?? null,
+            'language' => $data['language'] ?? null,
         ]);
     }
 }

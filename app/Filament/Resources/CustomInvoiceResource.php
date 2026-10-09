@@ -194,6 +194,13 @@ class CustomInvoiceResource extends Resource
                             ->native(false)
                             ->live()
                             ->required(),
+                        Forms\Components\Select::make('language')
+                            ->label('Document language')
+                            ->options(['en' => 'English', 'de' => 'Deutsch', 'es' => 'Español', 'fr' => 'Français', 'lt' => 'Lietuvių'])
+                            ->default('en')
+                            ->native(false)
+                            ->required()
+                            ->helperText('The language of the PDF and the email. Non-English wording is machine-translated: have it checked before relying on it. The VAT legal notice stays English unless you write your own.'),
                         Forms\Components\TextInput::make('po_number')
                             ->label("Client's PO / reference no.")
                             ->maxLength(100)
@@ -273,6 +280,11 @@ class CustomInvoiceResource extends Resource
                                     ->default(0)
                                     ->live(onBlur: true)
                                     ->columnSpan(['default' => 1, 'md' => 2]),
+                                Forms\Components\TextInput::make('lead_time')
+                                    ->label('Availability / lead time')
+                                    ->maxLength(100)
+                                    ->placeholder('e.g. In stock, 5-7 days')
+                                    ->columnSpan(['default' => 1, 'md' => 3]),
                                 Forms\Components\TextInput::make('vat_rate')
                                     ->label('VAT % (line)')
                                     ->numeric()
@@ -553,6 +565,7 @@ class CustomInvoiceResource extends Resource
                 Actions\ActionGroup::make([
                     Actions\ViewAction::make(),
                     Actions\EditAction::make(),
+                    static::makePreviewAction(),
                     static::makeDownloadAction(),
                     static::makeSendAction(),
                     static::makeRecordPaymentAction(),
@@ -767,6 +780,18 @@ class CustomInvoiceResource extends Resource
             });
     }
 
+    /** Open the PDF in a new browser tab without downloading it (works on a draft too). */
+    public static function makePreviewAction(): Actions\Action
+    {
+        return Actions\Action::make('previewPdf')
+            ->label('Preview PDF')
+            ->icon('heroicon-o-eye')
+            ->color('gray')
+            ->authorize('view')
+            ->url(fn (CustomInvoice $record): string => route('admin.custom-invoices.pdf', ['customInvoice' => $record, 'inline' => 1]))
+            ->openUrlInNewTab();
+    }
+
     public static function makeDownloadAction(): Actions\Action
     {
         return Actions\Action::make('downloadPdf')
@@ -785,15 +810,37 @@ class CustomInvoiceResource extends Resource
             ->color('primary')
             ->authorize('update')
             ->visible(fn (CustomInvoice $record): bool => $record->status !== CustomInvoiceStatus::Cancelled)
-            ->requiresConfirmation()
-            ->modalHeading('Email invoice to client')
+            ->modalHeading(fn (CustomInvoice $record): string => 'Email '.strtolower($record->document_type->getLabel()).' to client')
             ->modalDescription(fn (CustomInvoice $record): string => filled($record->client_email)
-                ? "The invoice PDF will be emailed to {$record->client_email}. A draft is locked for editing once sent."
-                : 'This invoice has no client email address. Edit the draft and add one first.')
-            ->modalSubmitActionLabel('Send invoice')
-            ->action(function (CustomInvoice $record): void {
+                ? "The PDF will be emailed to {$record->client_email}. A draft is locked for editing once sent."
+                : 'This document has no client email address. Edit the draft and add one first.')
+            ->modalSubmitActionLabel('Send')
+            ->form([
+                Forms\Components\Textarea::make('message')
+                    ->label('Personal message (optional)')
+                    ->rows(3)
+                    ->maxLength(2000)
+                    ->helperText('Shown at the top of the email, above the summary.'),
+                Forms\Components\TagsInput::make('cc')
+                    ->label('CC')
+                    ->placeholder('Add an email and press Enter')
+                    ->nestedRecursiveRules(['email']),
+                Forms\Components\TagsInput::make('bcc')
+                    ->label('BCC')
+                    ->placeholder('Add an email and press Enter')
+                    ->nestedRecursiveRules(['email']),
+                Forms\Components\Toggle::make('copy_to_sender')
+                    ->label('Send me a blind copy')
+                    ->default(true),
+            ])
+            ->action(function (CustomInvoice $record, array $data): void {
                 try {
-                    app(CustomInvoiceService::class)->send($record);
+                    app(CustomInvoiceService::class)->send($record, [
+                        'message' => $data['message'] ?? null,
+                        'cc' => $data['cc'] ?? [],
+                        'bcc' => $data['bcc'] ?? [],
+                        'copy_to_sender' => (bool) ($data['copy_to_sender'] ?? false),
+                    ]);
                 } catch (\Throwable $e) {
                     Log::error('Custom invoice email failed', [
                         'custom_invoice_id' => $record->id,

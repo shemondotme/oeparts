@@ -25,14 +25,19 @@ class CustomInvoiceMail extends Mailable
     public function __construct(
         public readonly CustomInvoice $invoice,
         private readonly string $pdfContent,
+        public readonly ?string $customMessage = null,
     ) {
-        $this->locale = 'en';
+        $this->locale = app(CustomInvoiceService::class)->languageOf($invoice);
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: $this->invoice->document_type->getLabel().' '.$this->invoice->invoice_number.' from '.settings('company.name', 'OeParts'),
+            subject: __('invoice_doc.mail_subject', [
+                'type' => __('invoice_doc.name_'.$this->invoice->document_type->value, [], $this->locale),
+                'number' => $this->invoice->invoice_number,
+                'company' => settings('company.name', 'OeParts'),
+            ], $this->locale),
             tags: ['custom-invoice'],
             metadata: [
                 'custom_invoice_id' => $this->invoice->id,
@@ -52,7 +57,8 @@ class CustomInvoiceMail extends Mailable
                 'bank' => $this->invoice->document_type->requestsPayment() && $this->invoice->payment_method === InvoicePaymentMethod::BankTransfer
                     ? app(InvoiceService::class)->bankDetailsFor($this->invoice->bank_account_id, $this->invoice->currency)
                     : null,
-                'locale' => 'en',
+                'locale' => $this->locale,
+                'customMessage' => $this->customMessage,
             ],
         );
     }

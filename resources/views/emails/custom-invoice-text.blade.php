@@ -1,36 +1,53 @@
-{{ $documentType->getLabel() }} {{ $invoice->invoice_number }}
+@php
+    $mt = fn (string $key, array $replace = []) => __('invoice_doc.'.$key, $replace, $locale);
+    $typeName = $mt('name_'.$documentType->value);
+    $dueKey = match ($documentType) {
+        \App\Enums\InvoiceDocumentType::Quote => 'valid_until',
+        \App\Enums\InvoiceDocumentType::Proforma => 'pay_before',
+        default => 'due',
+    };
+@endphp
+{{ $typeName }} {{ $invoice->invoice_number }}
 
-Hello {{ $invoice->client_name }},
+{{ $mt('mail_hello', ['name' => $invoice->client_name]) }}
 
-Please find your {{ strtolower($documentType->getLabel()) }} attached as a PDF.
+{{ $mt('mail_attached', ['type' => mb_strtolower($typeName)]) }}
+@if(filled($customMessage ?? null))
 
-{{ $documentType->getLabel() }} no.: {{ $invoice->invoice_number }}
-{{ $documentType->dueLabel() }}: {{ $invoice->due_date->format('d/m/Y') }}
-{{ $documentType->isCredit() ? 'Credit amount' : ($documentType->requestsPayment() ? 'Amount due' : 'Total') }}: {{ format_price($invoice->total, $invoice->currency, 'en') }}
+{{ $customMessage }}
+@endif
+
+{{ $typeName }} {{ $mt('number') }}: {{ $invoice->invoice_number }}
+{{ $mt($dueKey) }}: {{ $invoice->due_date->format('d/m/Y') }}
+{{ ucfirst(mb_strtolower($documentType->isCredit() ? $mt('mail_credit_amount') : ($documentType->requestsPayment() ? $mt('mail_amount_due') : $mt('mail_total')))) }}: {{ format_price($invoice->total, $invoice->currency, $locale) }}
 @if(!empty($bank))
 
-Pay by bank transfer
-@if(!empty($bank['account_holder']))Account holder: {{ $bank['account_holder'] }}
+{{ ucfirst(mb_strtolower($mt('mail_pay_bank'))) }}
+@if(!empty($bank['account_holder']))
+{{ $mt('account_holder') }}: {{ $bank['account_holder'] }}
 @endif
-@if(!empty($bank['bank_name']))Bank: {{ $bank['bank_name'] }}
+@if(!empty($bank['bank_name']))
+{{ $mt('bank') }}: {{ $bank['bank_name'] }}
 @endif
-IBAN: {{ $bank['iban'] }}
-@if(!empty($bank['bic']))SWIFT / BIC: {{ $bank['bic'] }}
+{{ $mt('iban') }}: {{ $bank['iban'] }}
+@if(!empty($bank['bic']))
+{{ $mt('swift') }}: {{ $bank['bic'] }}
 @endif
-@if(!empty($bank['intermediary_bank']))Intermediary bank: {{ $bank['intermediary_bank'] }}
+@if(!empty($bank['intermediary_bank']))
+{{ $mt('intermediary') }}: {{ $bank['intermediary_bank'] }}
 @endif
-Payment reference: {{ $invoice->invoice_number }}
+{{ $mt('payment_reference') }}: {{ $invoice->invoice_number }}
 @endif
 @if($documentType->requestsPayment() && $invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
 
-Pay online: {{ $invoice->payment_link_url }}
+{{ ucfirst(mb_strtolower($mt('mail_pay_online'))) }}: {{ $invoice->payment_link_url }}
 @endif
 @if($documentType->requestsPayment() && $invoice->payment_method !== \App\Enums\InvoicePaymentMethod::None && filled($invoice->payment_instructions))
 
 {{ $invoice->payment_instructions }}
 @endif
 
-Questions? Contact {{ settings('company.email', 'info@oeparts.lt') }}.
+{{ $mt('mail_questions', ['email' => settings('company.email', 'info@oeparts.lt')]) }}
 
 ---
 {{ config('app.url') }}

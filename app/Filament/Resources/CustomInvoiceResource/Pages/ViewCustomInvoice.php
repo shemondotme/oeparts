@@ -33,6 +33,7 @@ class ViewCustomInvoice extends ViewRecord
     {
         return [
             Actions\EditAction::make()->visible(fn (CustomInvoice $record): bool => $record->isEditable()),
+            CustomInvoiceResource::makePreviewAction(),
             CustomInvoiceResource::makeDownloadAction(),
             CustomInvoiceResource::makeSendAction(),
             CustomInvoiceResource::makeRecordPaymentAction(),
