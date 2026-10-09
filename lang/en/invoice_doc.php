@@ -40,6 +40,9 @@ return [
     'phone' => 'Phone',
     'vat_id' => 'VAT',
     'reg_no' => 'Reg. No',
+    'seller' => 'Seller',
+    'bill_ship_to' => 'Bill & ship to',
+    'ship_to' => 'Ship To',
 
     // table
     'items' => 'Items',

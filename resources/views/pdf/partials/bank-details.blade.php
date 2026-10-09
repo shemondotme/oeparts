@@ -3,31 +3,34 @@
      $paymentReference is what the client must put on the transfer.
      $docLocale picks the language of the labels: a custom document passes its own;
      order invoices pass nothing and stay English, like the rest of that PDF. --}}
-@php $bt = fn (string $key) => __('invoice_doc.'.$key, [], $docLocale ?? 'en'); @endphp
+@php
+    $bt = fn (string $key) => __('invoice_doc.'.$key, [], $docLocale ?? 'en');
+    $pairs = array_values(array_filter([
+        [$bt('account_holder'), $bank['account_holder'] ?? '', false],
+        [$bt('bank'), $bank['bank_name'] ?? '', false],
+        [$bt('iban'), $bank['iban'] ?? '', true],
+        [$bt('swift'), $bank['bic'] ?? '', true],
+        [$bt('intermediary'), $bank['intermediary_bank'] ?? '', false],
+        [$bt('payment_reference'), $paymentReference ?? '', true],
+    ], fn ($pair) => filled($pair[1])));
+@endphp
 @if(!empty($bank))
-<div class="section" style="margin-top: 18px;">
-    <div class="section-title">{{ $bt('payment_bank') }}</div>
-    <table>
-        <tbody>
-            @if(!empty($bank['account_holder']))
-            <tr><td style="width: 32%;"><strong>{{ $bt('account_holder') }}</strong></td><td>{{ $bank['account_holder'] }}</td></tr>
-            @endif
-            @if(!empty($bank['bank_name']))
-            <tr><td style="width: 32%;"><strong>{{ $bt('bank') }}</strong></td><td>{{ $bank['bank_name'] }}</td></tr>
-            @endif
-            <tr><td style="width: 32%;"><strong>{{ $bt('iban') }}</strong></td><td class="mono">{{ $bank['iban'] }}</td></tr>
-            @if(!empty($bank['bic']))
-            <tr><td style="width: 32%;"><strong>{{ $bt('swift') }}</strong></td><td class="mono">{{ $bank['bic'] }}</td></tr>
-            @endif
-            @if(!empty($bank['intermediary_bank']))
-            <tr><td style="width: 32%;"><strong>{{ $bt('intermediary') }}</strong></td><td>{!! nl2br(e($bank['intermediary_bank'])) !!}</td></tr>
-            @endif
-            <tr><td style="width: 32%;"><strong>{{ $bt('payment_reference') }}</strong></td><td class="mono">{{ $paymentReference }}</td></tr>
-        </tbody>
-    </table>
+<table class="pay">
+    <tr class="pay-head"><td colspan="2">{{ $bt('payment_bank') }}</td></tr>
+    @foreach(array_chunk($pairs, 2) as $row)
+    <tr>
+        @foreach($row as [$pairLabel, $pairValue, $isMono])
+        <td style="width: 50%;">
+            <div class="label">{{ $pairLabel }}</div>
+            <div class="{{ $isMono ? 'value' : '' }}">{!! nl2br(e($pairValue)) !!}</div>
+        </td>
+        @endforeach
+        @if(count($row) === 1)<td></td>@endif
+    </tr>
+    @endforeach
     @if(!empty($bank['instructions']))
-    <div style="margin-top: 6px; font-size: 10px; color: #374151;">{!! nl2br(e($bank['instructions'])) !!}</div>
+    <tr><td colspan="2" class="pay-note" style="color: #374151;">{!! nl2br(e($bank['instructions'])) !!}</td></tr>
     @endif
-    <div style="margin-top: 6px; font-size: 10px; color: #6B7280;">{{ $bt('quote_reference') }}</div>
-</div>
+    <tr><td colspan="2" class="pay-note">{{ $bt('quote_reference') }}</td></tr>
+</table>
 @endif

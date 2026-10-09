@@ -10,17 +10,16 @@
     @if($method === 'bank_transfer')
         @include('pdf.partials.bank-details', ['bank' => $bank ?? null, 'paymentReference' => $invoice->invoice_number, 'docLocale' => $docLocale ?? 'en'])
     @elseif($method === 'payment_link' && $invoice->payment_link_url)
-        <div class="section" style="margin-top: 18px;">
-            <div class="section-title">{{ $pt('payment_online') }}</div>
-            <div>{{ $pt('pay_online_text') }}</div>
-            <div class="mono" style="margin-top: 4px; word-break: break-all;">{{ $invoice->payment_link_url }}</div>
-            <div style="margin-top: 6px; font-size: 10px; color: #6B7280;">{{ $pt('pay_online_ref', ['number' => $invoice->invoice_number]) }}</div>
-        </div>
+        <table class="pay">
+            <tr class="pay-head"><td>{{ $pt('payment_online') }}</td></tr>
+            <tr><td>{{ $pt('pay_online_text') }}<div class="value" style="margin-top: 4px; word-break: break-all;">{{ $invoice->payment_link_url }}</div></td></tr>
+            <tr><td class="pay-note">{{ $pt('pay_online_ref', ['number' => $invoice->invoice_number]) }}</td></tr>
+        </table>
     @elseif($method === 'cash')
-        <div class="section" style="margin-top: 18px;">
-            <div class="section-title">{{ $pt('payment_cash') }}</div>
-            <div>{{ $pt('cash_text', ['number' => $invoice->invoice_number]) }}</div>
-        </div>
+        <table class="pay">
+            <tr class="pay-head"><td>{{ $pt('payment_cash') }}</td></tr>
+            <tr><td>{{ $pt('cash_text', ['number' => $invoice->invoice_number]) }}</td></tr>
+        </table>
     @endif
 
     @if(filled($invoice->payment_instructions))

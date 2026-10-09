@@ -30,6 +30,9 @@ return [
     'phone' => 'Telefonas',
     'vat_id' => 'PVM kodas',
     'reg_no' => 'Įmonės kodas',
+    'seller' => 'Pardavėjas',
+    'bill_ship_to' => 'Atsiskaitymo ir pristatymo adresas',
+    'ship_to' => 'Pristatyti',
 
     'items' => 'Prekės',
     'part_no' => 'Detalės Nr.',

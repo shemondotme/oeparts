@@ -24,71 +24,53 @@
             \App\Enums\InvoiceDocumentType::Proforma => 'pay_before',
             default => 'due',
         };
+
+        $meta = [
+            $t('number') => $invoice->invoice_number,
+            $t('date') => $invoice->issue_date->format('d/m/Y'),
+            $t('supply_date') => $invoice->supply_date?->format('d/m/Y'),
+            $t($dueLabelKey) => $documentType !== \App\Enums\InvoiceDocumentType::CreditNote ? $invoice->due_date->format('d/m/Y') : null,
+            $t($isCredit ? 'credit_for' : 'ref') => $invoice->parent?->invoice_number,
+            $t('your_ref') => $invoice->po_number,
+            $t('delivery') => $invoice->delivery_terms,
+        ];
+
+        $parties = [
+            [
+                'label' => $t('seller'),
+                'lines' => [
+                    $settings['company_name'],
+                    $settings['company_address'],
+                    filled($settings['company_vat']) ? $t('vat_id').': '.$settings['company_vat'] : null,
+                    filled($settings['company_registration'] ?? null) ? $t('reg_no').': '.$settings['company_registration'] : null,
+                    filled($settings['company_email']) ? $t('email').': '.$settings['company_email'] : null,
+                    filled($settings['company_phone']) ? $t('phone').': '.$settings['company_phone'] : null,
+                ],
+            ],
+            [
+                'label' => $t($documentType === \App\Enums\InvoiceDocumentType::Quote ? 'prepared_for' : 'bill_to'),
+                'lines' => [
+                    $invoice->client_name,
+                    $invoice->client_company,
+                    filled($invoice->client_vat_number) ? $t('vat_id').': '.$invoice->client_vat_number : null,
+                    $invoice->client_address_line1,
+                    $invoice->client_address_line2,
+                    trim($invoice->client_postal_code.' '.$invoice->client_city),
+                    $invoice->client_state,
+                    $invoice->client_country_code,
+                    filled($invoice->client_email) ? $t('email').': '.$invoice->client_email : null,
+                    filled($invoice->client_phone) ? $t('phone').': '.$invoice->client_phone : null,
+                ],
+            ],
+        ];
     @endphp
-    <div class="header">
-        <div class="company-info">
-            @php [$wordmarkHeavy, $wordmarkLight] = brand_wordmark_parts($settings['company_name']); @endphp
-            <h1><span class="wordmark-heavy">{{ $wordmarkHeavy }}</span><span class="wordmark-light">{{ $wordmarkLight }}</span><span class="wordmark-dot">.</span></h1>
-            <div>{{ $settings['company_address'] }}</div>
-            <div class="mono">{{ $t('vat_id') }}: {{ $settings['company_vat'] }}</div>
-            @if(!empty($settings['company_registration']))
-                <div class="mono">{{ $t('reg_no') }}: {{ $settings['company_registration'] }}</div>
-            @endif
-            <div>{{ $t('email') }}: {{ $settings['company_email'] }}</div>
-            <div>{{ $t('phone') }}: {{ $settings['company_phone'] }}</div>
-        </div>
-        <div class="invoice-info">
-            <p class="doc-eyebrow">OEPARTS · {{ $t('title_'.$documentType->value) }}</p>
-            <h2>{{ $t('title_'.$documentType->value) }}</h2>
-            <div class="meta-row"><span class="label">{{ $t('number') }}</span><span class="value">{{ $invoice->invoice_number }}</span></div>
-            <div class="meta-row"><span class="label">{{ $t('date') }}</span><span class="value">{{ $invoice->issue_date->format('d/m/Y') }}</span></div>
-            @if($invoice->supply_date)
-                <div class="meta-row"><span class="label">{{ $t('supply_date') }}</span><span class="value">{{ $invoice->supply_date->format('d/m/Y') }}</span></div>
-            @endif
-            @if($documentType !== \App\Enums\InvoiceDocumentType::CreditNote)
-                <div class="meta-row"><span class="label">{{ $t($dueLabelKey) }}</span><span class="value">{{ $invoice->due_date->format('d/m/Y') }}</span></div>
-            @endif
-            @if($invoice->parent)
-                <div class="meta-row"><span class="label">{{ $t($isCredit ? 'credit_for' : 'ref') }}</span><span class="value">{{ $invoice->parent->invoice_number }}</span></div>
-            @endif
-            @if($invoice->po_number)
-                <div class="meta-row"><span class="label">{{ $t('your_ref') }}</span><span class="value">{{ $invoice->po_number }}</span></div>
-            @endif
-            @if($invoice->delivery_terms)
-                <div class="meta-row"><span class="label">{{ $t('delivery') }}</span><span class="value">{{ $invoice->delivery_terms }}</span></div>
-            @endif
-        </div>
-    </div>
 
-    <div class="section">
-        <div class="section-title">{{ $t($documentType === \App\Enums\InvoiceDocumentType::Quote ? 'prepared_for' : 'bill_to') }}</div>
-        <div><strong>{{ $invoice->client_name }}</strong></div>
-        @if($invoice->client_company)
-            <div>{{ $invoice->client_company }}</div>
-        @endif
-        @if($invoice->client_vat_number)
-            <div class="mono">{{ $t('vat_id') }}: {{ $invoice->client_vat_number }}</div>
-        @endif
-        <div>{{ $invoice->client_address_line1 }}</div>
-        @if($invoice->client_address_line2)
-            <div>{{ $invoice->client_address_line2 }}</div>
-        @endif
-        <div>{{ trim($invoice->client_postal_code.' '.$invoice->client_city) }}</div>
-        @if($invoice->client_state)
-            <div>{{ $invoice->client_state }}</div>
-        @endif
-        <div>{{ $invoice->client_country_code }}</div>
-        @if($invoice->client_email)
-            <div>{{ $t('email') }}: {{ $invoice->client_email }}</div>
-        @endif
-        @if($invoice->client_phone)
-            <div>{{ $t('phone') }}: {{ $invoice->client_phone }}</div>
-        @endif
-    </div>
+    @include('pdf.partials.doc-header', ['docTitle' => $t('title_'.$documentType->value), 'meta' => $meta])
 
-    <div class="section">
-        <div class="section-title">{{ $t('items') }}</div>
-        <table>
+    <div class="content">
+        @include('pdf.partials.parties', ['parties' => $parties])
+
+        <table class="items">
             <thead>
                 <tr>
                     @if($hasPartNumbers)<th>{{ $t('part_no') }}</th>@endif
@@ -103,7 +85,7 @@
             </thead>
             <tbody>
                 @foreach($items as $item)
-                <tr style="{{ $loop->even ? 'background-color: #FBF9F2;' : '' }}">
+                <tr>
                     @if($hasPartNumbers)<td class="mono">{{ $item['part_number'] }}</td>@endif
                     <td>{!! nl2br(e($item['description'])) !!}</td>
                     @if($hasLeadTimes)<td>{{ $item['lead_time'] }}</td>@endif
@@ -116,77 +98,80 @@
                 @endforeach
             </tbody>
         </table>
-    </div>
 
-    <div class="totals">
-        <div class="totals-row">
-            <span>{{ $t('subtotal') }}:</span>
-            <span class="value">{{ $fmt($invoice->subtotal) }}</span>
-        </div>
-        @if(bccomp((string) $invoice->discount_amount, '0', 2) > 0)
-        <div class="totals-row">
-            <span>{{ $t('discount') }}{{ $invoice->discount_type === 'percent' ? ' ('.$trim($invoice->discount_percent).'%)' : '' }}:</span>
-            <span class="value">{{ $isCredit ? '+' : '-' }}{{ $fmt($invoice->discount_amount, false) }}</span>
+        <table class="summary">
+            <tr>
+                <td style="width: 56%; padding-right: 24px;">
+                    @if($invoice->vatNotice())
+                    <div class="notice-box">
+                        <strong>{{ $treatment === \App\Enums\InvoiceVatTreatment::ReverseCharge ? $t('reverse_charge') : $t('vat') }}</strong> — {{ $invoice->vatNotice() }}
+                        @if($invoice->client_vat_number && in_array($treatment, [\App\Enums\InvoiceVatTreatment::ReverseCharge, \App\Enums\InvoiceVatTreatment::IntraEu], true))
+                            {{ $t('buyer_vat_id') }}: <span class="mono">{{ $invoice->client_vat_number }}</span>.
+                        @endif
+                    </div>
+                    @endif
+                    @if($documentType->disclaimer())
+                    <div class="notice-box">{{ $t('disclaimer_'.$documentType->value) }}</div>
+                    @endif
+                    @if($invoice->notes)
+                    <div class="notice-box">{!! nl2br(e($invoice->notes)) !!}</div>
+                    @endif
+                </td>
+                <td style="width: 44%;">
+                    <table class="totals">
+                        <tr>
+                            <td>{{ $t('subtotal') }}</td>
+                            <td class="value">{{ $fmt($invoice->subtotal) }}</td>
+                        </tr>
+                        @if(bccomp((string) $invoice->discount_amount, '0', 2) > 0)
+                        <tr>
+                            <td>{{ $t('discount') }}{{ $invoice->discount_type === 'percent' ? ' ('.$trim($invoice->discount_percent).'%)' : '' }}</td>
+                            <td class="value">{{ $isCredit ? '+' : '-' }}{{ $fmt($invoice->discount_amount, false) }}</td>
+                        </tr>
+                        @endif
+                        @if(! $standardVat)
+                        <tr>
+                            <td>{{ $t('vat') }}</td>
+                            <td class="value">{{ $fmt('0.00') }}</td>
+                        </tr>
+                        @elseif($hasMixedRates)
+                            @foreach($breakdown as $row)
+                            <tr>
+                                <td>{{ $t('vat_of', ['rate' => $trim($row['rate']), 'base' => $fmt($row['base'], false)]) }}</td>
+                                <td class="value">{{ $fmt($row['vat']) }}</td>
+                            </tr>
+                            @endforeach
+                        @elseif(!empty($breakdown) && bccomp($breakdown[0]['rate'], '0', 2) > 0)
+                        <tr>
+                            <td>{{ $t('vat_rate', ['rate' => $trim($breakdown[0]['rate'])]) }}</td>
+                            <td class="value">{{ $fmt($invoice->vat_amount) }}</td>
+                        </tr>
+                        @endif
+                        <tr class="grand">
+                            <td>{{ $t('total') }}</td>
+                            <td class="value">{{ $fmt($invoice->total) }}</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        @if($documentType->requestsPayment())
+            @include('pdf.partials.payment-section', ['docLocale' => $locale])
+        @endif
+
+        @if($invoice->terms_text)
+        <div class="section" style="margin-top: 16px;">
+            <div class="section-title">{{ $t('terms') }}</div>
+            <div style="font-size: 10px; color: #4B5563;">{!! nl2br(e($invoice->terms_text)) !!}</div>
         </div>
         @endif
-        @if(! $standardVat)
-        <div class="totals-row">
-            <span>{{ $t('vat') }}:</span>
-            <span class="value">{{ $fmt('0.00') }}</span>
+
+        <div class="footer">
+            <div>{{ settings_trans('invoice.thank_you_text', 'Thank you for your business!') }}</div>
+            @if(filled($settings['company_email']))<div>{{ $t('questions', ['email' => $settings['company_email']]) }}</div>@endif
+            <div class="mono">{{ $t('generated_on') }} {{ now()->format('d/m/Y H:i') }}</div>
         </div>
-        @elseif($hasMixedRates)
-            @foreach($breakdown as $row)
-            <div class="totals-row">
-                <span>{{ $t('vat_of', ['rate' => $trim($row['rate']), 'base' => $fmt($row['base'], false)]) }}:</span>
-                <span class="value">{{ $fmt($row['vat']) }}</span>
-            </div>
-            @endforeach
-        @elseif(!empty($breakdown) && bccomp($breakdown[0]['rate'], '0', 2) > 0)
-        <div class="totals-row">
-            <span>{{ $t('vat_rate', ['rate' => $trim($breakdown[0]['rate'])]) }}:</span>
-            <span class="value">{{ $fmt($invoice->vat_amount) }}</span>
-        </div>
-        @endif
-        <div class="totals-row total">
-            <span>{{ $t('total') }}:</span>
-            <span class="value">{{ $fmt($invoice->total) }}</span>
-        </div>
-    </div>
-
-    @if($invoice->vatNotice())
-    <div class="notice-box">
-        <strong>{{ $treatment === \App\Enums\InvoiceVatTreatment::ReverseCharge ? $t('reverse_charge') : $t('vat') }}</strong> — {{ $invoice->vatNotice() }}
-        @if($invoice->client_vat_number && in_array($treatment, [\App\Enums\InvoiceVatTreatment::ReverseCharge, \App\Enums\InvoiceVatTreatment::IntraEu], true))
-            {{ $t('buyer_vat_id') }}: <span class="mono">{{ $invoice->client_vat_number }}</span>.
-        @endif
-    </div>
-    @endif
-
-    @if($documentType->disclaimer())
-    <div class="notice-box">{{ $t('disclaimer_'.$documentType->value) }}</div>
-    @endif
-
-    @if($documentType->requestsPayment())
-        @include('pdf.partials.payment-section', ['docLocale' => $locale])
-    @endif
-
-    @if($invoice->notes)
-    <div class="notice-box">
-        {!! nl2br(e($invoice->notes)) !!}
-    </div>
-    @endif
-
-    @if($invoice->terms_text)
-    <div class="section" style="margin-top: 14px;">
-        <div class="section-title">{{ $t('terms') }}</div>
-        <div style="font-size: 10px; color: #4B5563;">{!! nl2br(e($invoice->terms_text)) !!}</div>
-    </div>
-    @endif
-
-    <div class="footer">
-        <div>{{ settings_trans('invoice.thank_you_text', 'Thank you for your business!') }}</div>
-        <div>{{ $t('questions', ['email' => $settings['company_email']]) }}</div>
-        <div class="mono">{{ $t('generated_on') }} {{ now()->format('d/m/Y H:i') }}</div>
     </div>
 </body>
 </html>

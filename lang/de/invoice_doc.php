@@ -30,6 +30,9 @@ return [
     'phone' => 'Telefon',
     'vat_id' => 'USt-IdNr.',
     'reg_no' => 'Handelsregister-Nr.',
+    'seller' => 'Verkäufer',
+    'bill_ship_to' => 'Rechnungs- und Lieferadresse',
+    'ship_to' => 'Lieferadresse',
 
     'items' => 'Positionen',
     'part_no' => 'Teilenr.',

@@ -30,6 +30,9 @@ return [
     'phone' => 'Téléphone',
     'vat_id' => 'TVA',
     'reg_no' => 'N° d\'immatriculation',
+    'seller' => 'Vendeur',
+    'bill_ship_to' => 'Facturation et livraison',
+    'ship_to' => 'Livrer à',
 
     'items' => 'Articles',
     'part_no' => 'Réf. pièce',

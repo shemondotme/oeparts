@@ -30,6 +30,9 @@ return [
     'phone' => 'Teléfono',
     'vat_id' => 'NIF-IVA',
     'reg_no' => 'N.º de registro',
+    'seller' => 'Vendedor',
+    'bill_ship_to' => 'Facturar y enviar a',
+    'ship_to' => 'Enviar a',
 
     'items' => 'Artículos',
     'part_no' => 'Ref. pieza',
