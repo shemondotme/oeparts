@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Enums\InvoicePaymentMethod;
 use App\Models\CustomInvoice;
 use App\Services\InvoiceService;
 use Illuminate\Bus\Queueable;
@@ -46,7 +47,9 @@ class CustomInvoiceMail extends Mailable
             text: 'emails.custom-invoice-text',
             with: [
                 'invoice' => $this->invoice,
-                'bank' => app(InvoiceService::class)->bankDetails(),
+                'bank' => $this->invoice->payment_method === InvoicePaymentMethod::BankTransfer
+                    ? app(InvoiceService::class)->bankDetailsFor($this->invoice->bank_account_id, $this->invoice->currency)
+                    : null,
                 'locale' => 'en',
             ],
         );

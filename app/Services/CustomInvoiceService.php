@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CustomInvoiceStatus;
+use App\Enums\InvoicePaymentMethod;
 use App\Mail\CustomInvoiceMail;
 use App\Models\CustomInvoice;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -41,7 +42,9 @@ class CustomInvoiceService
         return [
             'invoice' => $invoice,
             'items' => $invoice->normalizedItems(),
-            'bank' => $this->invoices->bankDetails(),
+            'bank' => $invoice->payment_method === InvoicePaymentMethod::BankTransfer
+                ? $this->invoices->bankDetailsFor($invoice->bank_account_id, $invoice->currency)
+                : null,
             'settings' => [
                 'company_name' => settings('company.name', 'OeParts'),
                 'company_address' => settings('company.address', ''),

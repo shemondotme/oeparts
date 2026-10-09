@@ -57,8 +57,28 @@
                     @if(!empty($bank['bic']))
                     <tr><td style="padding: 3px 0; color: #4E5A74;">SWIFT / BIC</td><td align="right" class="font-mono">{{ $bank['bic'] }}</td></tr>
                     @endif
+                    @if(!empty($bank['intermediary_bank']))
+                    <tr><td style="padding: 3px 0; color: #4E5A74;">Intermediary bank</td><td align="right">{!! nl2br(e($bank['intermediary_bank'])) !!}</td></tr>
+                    @endif
                     <tr><td style="padding: 3px 0; color: #4E5A74;">Payment reference</td><td align="right" class="font-mono">{{ $invoice->invoice_number }}</td></tr>
                 </table>
+            </td>
+        </tr>
+        @endif
+
+        @if($invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
+        <tr>
+            <td style="padding-bottom: 24px;">
+                <p class="spec-label" style="margin: 0 0 10px 0; color: #4E5A74;">PAY ONLINE</p>
+                <p style="margin: 0; font-size: 14px;"><a href="{{ $invoice->payment_link_url }}" style="color: #9A5A00;">{{ $invoice->payment_link_url }}</a></p>
+            </td>
+        </tr>
+        @endif
+
+        @if($invoice->payment_method !== \App\Enums\InvoicePaymentMethod::None && filled($invoice->payment_instructions))
+        <tr>
+            <td style="padding-bottom: 24px; font-size: 14px; line-height: 21px; color: #0A1228;">
+                {!! nl2br(e($invoice->payment_instructions)) !!}
             </td>
         </tr>
         @endif

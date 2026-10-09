@@ -16,9 +16,15 @@
             @if(!empty($bank['bic']))
             <tr><td style="width: 32%;"><strong>SWIFT / BIC</strong></td><td class="mono">{{ $bank['bic'] }}</td></tr>
             @endif
+            @if(!empty($bank['intermediary_bank']))
+            <tr><td style="width: 32%;"><strong>Intermediary bank</strong></td><td>{!! nl2br(e($bank['intermediary_bank'])) !!}</td></tr>
+            @endif
             <tr><td style="width: 32%;"><strong>Payment reference</strong></td><td class="mono">{{ $paymentReference }}</td></tr>
         </tbody>
     </table>
+    @if(!empty($bank['instructions']))
+    <div style="margin-top: 6px; font-size: 10px; color: #374151;">{!! nl2br(e($bank['instructions'])) !!}</div>
+    @endif
     <div style="margin-top: 6px; font-size: 10px; color: #6B7280;">Please quote the payment reference exactly so your transfer can be matched to this invoice. Bank charges are borne by the payer.</div>
 </div>
 @endif

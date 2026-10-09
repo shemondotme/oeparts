@@ -3,15 +3,19 @@
 namespace App\Filament\Resources;
 
 use App\Enums\CustomInvoiceStatus;
+use App\Enums\InvoicePaymentMethod;
 use App\Filament\Resources\CustomInvoiceResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\CustomInvoice;
+use App\Models\InvoiceBankAccount;
 use App\Services\CustomInvoiceService;
+use App\Services\InvoiceService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -130,6 +134,7 @@ class CustomInvoiceResource extends Resource
                             ])
                             ->default(fn () => (string) settings('general.currency', 'EUR'))
                             ->native(false)
+                            ->live()
                             ->required(),
                     ])
                     ->columns(3),
@@ -189,7 +194,82 @@ class CustomInvoiceResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columns(3),
+
+                Section::make('Payment')
+                    ->icon('heroicon-o-banknotes')
+                    ->description('How the client should pay. This is printed on the PDF and in the email.')
+                    ->schema([
+                        Forms\Components\Select::make('payment_method')
+                            ->label('Payment method')
+                            ->options(InvoicePaymentMethod::class)
+                            ->default(InvoicePaymentMethod::BankTransfer)
+                            ->native(false)
+                            ->required()
+                            ->live(),
+                        Forms\Components\Select::make('bank_account_id')
+                            ->label('Bank account')
+                            ->options(fn (): array => InvoiceBankAccount::query()
+                                ->where('is_active', true)
+                                ->orderBy('sort_order')
+                                ->orderBy('id')
+                                ->get()
+                                ->mapWithKeys(fn (InvoiceBankAccount $a): array => [$a->id => $a->label.' — '.$a->formattedIban()])
+                                ->all())
+                            ->placeholder('Automatic (account for this currency, else the default)')
+                            ->native(false)
+                            ->live()
+                            ->visible(fn (Get $get): bool => self::methodValue($get('payment_method')) === 'bank_transfer')
+                            ->helperText('Accounts are managed under Sales → Bank Accounts; the default one is in Settings.'),
+                        Forms\Components\Placeholder::make('bank_preview')
+                            ->label('This invoice will print')
+                            ->visible(fn (Get $get): bool => self::methodValue($get('payment_method')) === 'bank_transfer')
+                            ->content(fn (Get $get): string => self::bankPreview($get('bank_account_id'), $get('currency')))
+                            ->columnSpanFull(),
+                        Forms\Components\TextInput::make('payment_link_url')
+                            ->label('Online payment link')
+                            ->url()
+                            ->maxLength(500)
+                            ->placeholder('https://…')
+                            ->helperText('A payment page you created at your payment provider for this invoice.')
+                            ->visible(fn (Get $get): bool => self::methodValue($get('payment_method')) === 'payment_link')
+                            ->required(fn (Get $get): bool => self::methodValue($get('payment_method')) === 'payment_link'),
+                        Forms\Components\Textarea::make('payment_instructions')
+                            ->label('Extra payment instructions')
+                            ->rows(3)
+                            ->maxLength(2000)
+                            ->helperText('Optional free text printed under the payment details, e.g. "50% in advance, balance before shipping" or "Bank charges: OUR".')
+                            ->columnSpanFull(),
+                    ])
+                    ->columns(2),
             ]);
+    }
+
+    /** Enum or raw string from the form state, as the plain method value. */
+    private static function methodValue(mixed $state): string
+    {
+        return $state instanceof \BackedEnum ? (string) $state->value : (string) $state;
+    }
+
+    /** One-line summary of the bank account an invoice would print, with a clear warning when there is none. */
+    public static function bankPreview(mixed $bankAccountId, mixed $currency): string
+    {
+        $currency = filled($currency) ? strtoupper((string) $currency) : null;
+        $bank = app(InvoiceService::class)->bankDetailsFor($bankAccountId ? (int) $bankAccountId : null, $currency);
+
+        if ($bank === null) {
+            return 'Nothing — no bank account is set up. Add the IBAN under Settings → Store Operations, or add an account under Sales → Bank Accounts, otherwise the invoice shows no payment details.';
+        }
+
+        $line = trim($bank['account_holder'].' · '.$bank['iban'].($bank['bic'] !== '' ? ' · '.$bank['bic'] : '').($bank['bank_name'] !== '' ? ' · '.$bank['bank_name'] : ''), ' ·');
+
+        $usesAccountTable = $bankAccountId
+            || ($currency && InvoiceBankAccount::where('is_active', true)->where('currency', $currency)->exists());
+
+        if (! $usesAccountTable && $currency && $currency !== strtoupper((string) settings('general.currency', 'EUR'))) {
+            return $line.' — note: no account is set up for '.$currency.', so the default account is printed.';
+        }
+
+        return $line;
     }
 
     public static function table(Table $table): Table

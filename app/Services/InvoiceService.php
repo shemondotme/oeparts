@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\InvoiceBankAccount;
 use App\Models\Order;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Response;
@@ -73,7 +74,7 @@ class InvoiceService
      * Settings → Store Operations → B2B Offline Bank Transfer. Null when no
      * IBAN is configured so the block is omitted rather than printed empty.
      *
-     * @return array{bank_name: string, iban: string, bic: string, account_holder: string}|null
+     * @return array{bank_name: string, iban: string, bic: string, account_holder: string, intermediary_bank: string, instructions: string}|null
      */
     public function bankDetails(): ?array
     {
@@ -88,6 +89,51 @@ class InvoiceService
             'iban' => $iban,
             'bic' => trim((string) settings('payment.bank_bic', '')),
             'account_holder' => trim((string) settings('payment.bank_account_holder', '')) ?: (string) settings('company.name', ''),
+            'intermediary_bank' => '',
+            'instructions' => '',
+        ];
+    }
+
+    /**
+     * The bank account an invoice should print. An explicitly chosen account wins
+     * (even if it has since been deactivated, so an old invoice keeps what it was
+     * issued with); otherwise the active account set up for the invoice currency;
+     * otherwise the default account from Settings.
+     *
+     * @return array{bank_name: string, iban: string, bic: string, account_holder: string, intermediary_bank: string, instructions: string}|null
+     */
+    public function bankDetailsFor(?int $bankAccountId, ?string $currency): ?array
+    {
+        if ($bankAccountId && ($account = InvoiceBankAccount::find($bankAccountId))) {
+            return $this->accountDetails($account);
+        }
+
+        if (filled($currency)) {
+            $auto = InvoiceBankAccount::query()
+                ->where('is_active', true)
+                ->where('currency', strtoupper((string) $currency))
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first();
+
+            if ($auto) {
+                return $this->accountDetails($auto);
+            }
+        }
+
+        return $this->bankDetails();
+    }
+
+    /** @return array{bank_name: string, iban: string, bic: string, account_holder: string, intermediary_bank: string, instructions: string} */
+    private function accountDetails(InvoiceBankAccount $account): array
+    {
+        return [
+            'bank_name' => (string) $account->bank_name,
+            'iban' => $account->formattedIban(),
+            'bic' => (string) $account->bic,
+            'account_holder' => (string) $account->account_holder,
+            'intermediary_bank' => (string) $account->intermediary_bank,
+            'instructions' => (string) $account->instructions,
         ];
     }
 

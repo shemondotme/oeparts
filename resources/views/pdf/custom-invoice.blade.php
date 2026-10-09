@@ -112,9 +112,7 @@
     </div>
     @endif
 
-    @if($invoice->status !== \App\Enums\CustomInvoiceStatus::Paid)
-        @include('pdf.partials.bank-details', ['bank' => $bank ?? null, 'paymentReference' => $invoice->invoice_number])
-    @endif
+    @include('pdf.partials.payment-section')
 
     @if($invoice->notes)
     <div class="notice-box">

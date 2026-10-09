@@ -68,6 +68,7 @@ class RolesSeeder extends Seeder
             'view custom invoices',
             'create custom invoices',
             'edit custom invoices',
+            'manage bank accounts',
 
             // Coupons
             'view coupons',

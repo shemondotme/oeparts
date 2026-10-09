@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CustomInvoiceStatus;
+use App\Enums\InvoicePaymentMethod;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,10 +21,21 @@ class CustomInvoice extends Model
         'currency', 'issue_date', 'due_date',
         'items', 'discount_amount', 'vat_rate', 'reverse_charge',
         'notes', 'sent_at', 'paid_at', 'created_by',
+        'payment_method', 'bank_account_id', 'payment_instructions', 'payment_link_url',
+    ];
+
+    /**
+     * New instances behave like the database default, so code that builds an
+     * invoice without choosing a payment method (and never reloads it) still
+     * prints the bank-transfer block, as every invoice did before this existed.
+     */
+    protected $attributes = [
+        'payment_method' => 'bank_transfer',
     ];
 
     protected $casts = [
         'status' => CustomInvoiceStatus::class,
+        'payment_method' => InvoicePaymentMethod::class,
         'issue_date' => 'date',
         'due_date' => 'date',
         'items' => 'array',
@@ -47,6 +59,11 @@ class CustomInvoice extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Admin::class, 'created_by');
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceBankAccount::class, 'bank_account_id');
     }
 
     public function isEditable(): bool

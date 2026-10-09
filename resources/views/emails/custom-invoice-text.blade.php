@@ -17,7 +17,17 @@ Pay by bank transfer
 IBAN: {{ $bank['iban'] }}
 @if(!empty($bank['bic']))SWIFT / BIC: {{ $bank['bic'] }}
 @endif
+@if(!empty($bank['intermediary_bank']))Intermediary bank: {{ $bank['intermediary_bank'] }}
+@endif
 Payment reference: {{ $invoice->invoice_number }}
+@endif
+@if($invoice->payment_method === \App\Enums\InvoicePaymentMethod::PaymentLink && $invoice->payment_link_url)
+
+Pay online: {{ $invoice->payment_link_url }}
+@endif
+@if($invoice->payment_method !== \App\Enums\InvoicePaymentMethod::None && filled($invoice->payment_instructions))
+
+{{ $invoice->payment_instructions }}
 @endif
 
 Questions? Contact {{ settings('company.email', 'info@oeparts.lt') }}.
