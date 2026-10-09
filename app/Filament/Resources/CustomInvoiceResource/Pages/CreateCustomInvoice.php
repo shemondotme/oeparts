@@ -7,6 +7,7 @@ use App\Enums\InvoiceDocumentType;
 use App\Filament\Concerns\DisablesCreateAnother;
 use App\Filament\Resources\CustomInvoiceResource;
 use App\Models\InvoiceClient;
+use App\Models\PartInquiry;
 use App\Services\CustomInvoiceService;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -29,6 +30,33 @@ class CreateCustomInvoice extends CreateRecord
         if ($client) {
             $this->form->fill(array_merge($this->data ?? [], $client->toInvoiceFields(), array_filter(['currency' => $client->currency])));
         }
+
+        // Arriving from a Part Inquiry's "Create quotation" button pre-fills the contact and the part.
+        $inquiry = PartInquiry::find((int) request()->query('inquiry'));
+        if ($inquiry) {
+            $this->form->fill(array_merge($this->data ?? [], static::inquiryFields($inquiry)));
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function inquiryFields(PartInquiry $inquiry): array
+    {
+        $vehicle = trim(implode(' ', array_filter([$inquiry->manufacturer, $inquiry->car_model, $inquiry->year])));
+
+        return [
+            'client_name' => $inquiry->email ?: 'Customer',
+            'client_email' => $inquiry->email,
+            'client_phone' => $inquiry->phone,
+            'internal_notes' => trim("From part inquiry #{$inquiry->id}".($inquiry->vin_number ? " · VIN {$inquiry->vin_number}" : '').($inquiry->notes ? "
+{$inquiry->notes}" : '')),
+            'items' => [[
+                'description' => 'OEM '.$inquiry->oem_number.($vehicle !== '' ? " — {$vehicle}" : ''),
+                'part_number' => $inquiry->oem_number,
+                'quantity' => max(1, (int) $inquiry->quantity),
+            ]],
+        ];
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array

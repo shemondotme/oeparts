@@ -25,6 +25,7 @@ class ViewPartInquiry extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            PartInquiryResource::makeCreateQuoteAction(),
             PartInquiryResource::makeMarkSourcedAction()
                 ->after(fn () => $this->refreshFormData(['status'])),
             PartInquiryResource::makeMarkUnavailableAction()

@@ -252,7 +252,7 @@ class OrderResource extends Resource
                                                 ->searchable()
                                                 ->native(false)
                                                 ->live()
-                                                ->columnSpan(6)
+                                                ->columnSpan(5)
                                                 ->getSearchResultsUsing(fn (string $search): array => self::searchProducts($search))
                                                 ->getOptionLabelUsing(fn ($value): ?string => self::productLabel(Product::with(['manufacturer', 'condition'])->find($value)))
                                                 ->afterStateUpdated(function ($state, Get $get, Set $set): void {
@@ -278,8 +278,15 @@ class OrderResource extends Resource
                                                 ->step(0.01)
                                                 ->required(fn (Get $get): bool => ! $get('../../manual_totals'))
                                                 ->live(onBlur: true)
-                                                ->columnSpan(4)
+                                                ->columnSpan(3)
                                                 ->afterStateUpdated(fn (Get $get, Set $set) => self::recalculate($get, $set, '../../')),
+                                            Forms\Components\TextInput::make('cost_price')
+                                                ->label('Cost (internal)')
+                                                ->numeric()
+                                                ->prefix('€')
+                                                ->minValue(0)
+                                                ->step(0.01)
+                                                ->columnSpan(2),
                                         ]),
                                 ]),
                             Section::make('Shipping Address')

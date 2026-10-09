@@ -6,6 +6,7 @@ use App\Enums\PartInquiryStatus;
 use App\Filament\Resources\PartInquiryResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendPartInquiryStatusEmail;
+use App\Models\CustomInvoice;
 use App\Models\PartInquiry;
 use App\Support\NavBadge;
 use Filament\Actions;
@@ -239,6 +240,7 @@ class PartInquiryResource extends Resource
             ])
             ->filtersFormColumns(2)
             ->actions(AdminUi::recordActions(after: [
+                static::makeCreateQuoteAction(),
                 static::makeMarkSourcedAction(),
                 static::makeMarkUnavailableAction(),
             ]))
@@ -365,6 +367,20 @@ class PartInquiryResource extends Resource
         if (filled($record->email)) {
             dispatch(new SendPartInquiryStatusEmail($record, $status));
         }
+    }
+
+    /** Open the quotation form pre-filled from this inquiry (customer contact + the requested part). */
+    public static function makeCreateQuoteAction(): Actions\Action
+    {
+        return Actions\Action::make('createQuote')
+            ->label('Create quotation')
+            ->icon('heroicon-o-document-text')
+            ->color('primary')
+            ->visible(fn (): bool => auth('admin')->user()?->can('create', CustomInvoice::class) ?? false)
+            ->url(fn (PartInquiry $record): string => CustomInvoiceResource::getUrl('create', [
+                'type' => 'quote',
+                'inquiry' => $record->id,
+            ]));
     }
 
     public static function makeMarkSourcedAction(): Actions\Action

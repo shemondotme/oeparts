@@ -133,6 +133,24 @@ class AdminOrderCreationTest extends TestCase
     }
 
     #[Test]
+    public function an_internal_cost_price_can_be_saved_per_line_and_stays_optional(): void
+    {
+        Livewire::test(CreateOrder::class)
+            ->fillForm($this->baseForm(['line_items' => [
+                ['product_id' => $this->partA->id, 'quantity' => 2, 'unit_price' => '100.00', 'cost_price' => '60.00'],
+                ['product_id' => $this->partB->id, 'quantity' => 1, 'unit_price' => '50.00'],
+            ]]))
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $order = Order::where('guest_email', 'buyer@example.com')->firstOrFail();
+        $costed = $order->items->firstWhere('product_id', $this->partA->id);
+        $this->assertSame('60.00', $costed->cost_price);
+        $this->assertSame('80.00', $costed->margin());
+        $this->assertNull($order->items->firstWhere('product_id', $this->partB->id)->cost_price);
+    }
+
+    #[Test]
     public function the_phone_and_the_extra_address_fields_are_saved(): void
     {
         Livewire::test(CreateOrder::class)->fillForm($this->baseForm())->call('create')->assertHasNoFormErrors();

@@ -114,6 +114,7 @@ class CreateOrder extends CreateRecord
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,
                     'total_price' => bcmul((string) $quantity, $unitPrice, 2),
+                    'cost_price' => is_numeric($line['cost_price'] ?? null) ? number_format((float) $line['cost_price'], 2, '.', '') : null,
                 ]);
             }
 

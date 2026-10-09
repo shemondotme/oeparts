@@ -48,6 +48,13 @@ class OrderItemsRelationManager extends RelationManager
                     ->step(0.01)
                     ->prefix('€')
                     ->helperText('Line total and order totals are recalculated automatically on save.'),
+                Forms\Components\TextInput::make('cost_price')
+                    ->label('Cost price (internal)')
+                    ->numeric()
+                    ->minValue(0)
+                    ->step(0.01)
+                    ->prefix('€')
+                    ->helperText('What this part cost you per unit. Only used for the margin below; never shown to the customer.'),
             ]);
     }
 
@@ -72,6 +79,14 @@ class OrderItemsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('total_price')
                     ->label('Total')
                     ->getStateUsing(fn ($record): string => format_money($record->total_price))
+                    ->alignEnd()
+                    ->fontMono(),
+                Tables\Columns\TextColumn::make('cost_price')
+                    ->label('Margin')
+                    ->getStateUsing(fn ($record): string => $record->margin() === null
+                        ? '—'
+                        : format_money($record->margin()).($record->marginPercent() !== null ? " ({$record->marginPercent()}%)" : ''))
+                    ->color(fn ($record): string => $record->margin() !== null && bccomp($record->margin(), '0', 2) < 0 ? 'danger' : 'gray')
                     ->alignEnd()
                     ->fontMono(),
             ])
