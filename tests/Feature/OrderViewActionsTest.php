@@ -72,7 +72,7 @@ class OrderViewActionsTest extends TestCase
 
         $response->assertOk();
         $this->assertSame('application/pdf', $response->headers->get('content-type'));
-        $html = view('pdf.packing-slip', ['order' => $order->load('items.product'), 'company' => 'X'])->render();
+        $html = view('pdf.packing-slip', ['order' => $order->load('items.product'), 'settings' => ['company_name' => 'X', 'company_email' => '', 'company_phone' => '']])->render();
         $this->assertStringContainsString($order->order_number, $html);
         $this->assertStringNotContainsString('Unit price', $html);
     }

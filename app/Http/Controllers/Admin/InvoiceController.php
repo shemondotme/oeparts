@@ -39,7 +39,11 @@ class InvoiceController extends Controller
 
         return Pdf::loadView('pdf.packing-slip', [
             'order' => $order,
-            'company' => settings('company.name', 'OeParts'),
+            'settings' => [
+                'company_name' => settings('company.name', 'OeParts'),
+                'company_email' => settings('company.email', ''),
+                'company_phone' => settings('company.phone', ''),
+            ],
         ])->download("packing-slip-{$order->order_number}.pdf");
     }
 }
