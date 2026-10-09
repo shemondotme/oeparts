@@ -2,6 +2,21 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.7 — 2026-10-10
+
+Patch release. **Update straight from 2.0.6** (or any version from 2.0.0). More actions on the admin order page, invoices by email, and one single place for your bank details. It applies 1 small database migration that copies your existing bank account once; nothing in your products, orders or customers is changed or removed.
+
+#### Added — Orders
+- **Email Invoice to Customer** on the order page: sends the invoice PDF to the customer's email and writes a note on the order.
+- **The order confirmation can carry the invoice PDF.** For an order created in the admin, the confirmation email now attaches the invoice when "Email the order confirmation to the customer" is on. Storefront orders are unchanged.
+- **More actions on the order page:** Resend Order Confirmation (with or without the invoice), Send Tracking Info, Print Packing Slip (a PDF without prices for the warehouse), Mark as Paid / Unpaid (with a note), Duplicate Order, Copy Order Link, Open Customer Profile and Cancel Order (with a reason, and an optional email to the customer).
+
+#### Fixed
+- Invoice emails could end with "write to ." when Settings → Company has no email. They now fall back to the site email, then to the address the shop sends from.
+
+#### Changed — Bank details
+- **Sales → Bank Accounts is now the single place for your bank details.** Checkout, order invoices and emails all read from it. Your existing account from Settings → Checkout & Payments is copied there once during the update, and Settings now shows a link instead of a second form.
+
 ## 2.0.6 — 2026-10-09
 
 Minor release. **Update straight from 2.0.5** (or any version from 2.0.0). Big upgrade to invoicing and admin-created orders, a new look for every invoice and email, and bulk actions across the admin. It applies 8 small additive database migrations (new columns and tables only); nothing in your products, orders or customers is changed or removed.
